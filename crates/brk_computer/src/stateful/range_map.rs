@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use brk_vecs::{CompressedVec, RawVec, StoredCompressed, StoredIndex, StoredRaw};
+use vecdb::{CompressedVec, RawVec, StoredCompressed, StoredIndex, StoredRaw};
 
 #[derive(Debug)]
 pub struct RangeMap<I, T>(BTreeMap<I, T>);

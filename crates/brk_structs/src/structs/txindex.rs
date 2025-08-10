@@ -1,9 +1,9 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{CheckedSub, Printable, StoredCompressed};
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;

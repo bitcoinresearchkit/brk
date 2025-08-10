@@ -494,7 +494,7 @@ dependencies = [
  "brk_server",
  "brk_store",
  "brk_structs",
- "brk_vecs",
+ "vecdb",
 ]
 
 [[package]]
@@ -521,7 +521,6 @@ dependencies = [
  "brk_logger",
  "brk_parser",
  "brk_server",
- "brk_vecs",
  "clap",
  "clap_derive",
  "color-eyre",
@@ -530,6 +529,7 @@ dependencies = [
  "serde",
  "tokio",
  "toml",
+ "vecdb",
  "zip",
 ]
 
@@ -545,11 +545,11 @@ dependencies = [
  "brk_logger",
  "brk_parser",
  "brk_structs",
- "brk_vecs",
  "derive_deref",
  "log",
  "rayon",
  "serde",
+ "vecdb",
  "zerocopy",
  "zerocopy-derive",
 ]
@@ -559,11 +559,11 @@ name = "brk_error"
 version = "0.0.85"
 dependencies = [
  "bitcoincore-rpc",
- "brk_vecs",
  "fjall",
  "jiff",
  "minreq",
  "serde_json",
+ "vecdb",
  "zerocopy",
 ]
 
@@ -590,10 +590,10 @@ dependencies = [
  "brk_parser",
  "brk_store",
  "brk_structs",
- "brk_vecs",
  "fjall",
  "log",
  "rayon",
+ "vecdb",
 ]
 
 [[package]]
@@ -604,13 +604,13 @@ dependencies = [
  "brk_error",
  "brk_indexer",
  "brk_structs",
- "brk_vecs",
  "derive_deref",
  "schemars 1.0.4",
  "serde",
  "serde_json",
  "serde_with",
  "tabled",
+ "vecdb",
 ]
 
 [[package]]
@@ -650,9 +650,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0faa9da00a4fc50c5a4f331850c37bf69529e7a88890e08962c1e9a32ca11dbd"
+checksum = "34e99c51043db05e5d77c381124c1705c9a360f9a88bef0af44397134929d730"
 dependencies = [
  "base64 0.22.1",
  "brk_rmcp-macros",
@@ -680,9 +680,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp-macros"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6078c726658d7abc2ec1b55196791fcfb58f20f1dd9f78401c749c5138a79562"
+checksum = "c19a9e21ea5789ad190ce5c572bdbba50e589f9dd01acd19600b86442b56f02d"
 dependencies = [
  "darling 0.21.1",
  "proc-macro2",
@@ -1025,7 +1025,6 @@ dependencies = [
  "brk_logger",
  "brk_mcp",
  "brk_parser",
- "brk_vecs",
  "jiff",
  "log",
  "quick_cache",
@@ -1033,6 +1032,7 @@ dependencies = [
  "tokio",
  "tower-http",
  "tracing",
+ "vecdb",
 ]
 
 [[package]]
@@ -1065,42 +1065,15 @@ dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
  "brk_error",
- "brk_vecs",
  "byteview",
  "derive_deref",
  "jiff",
  "rapidhash",
  "serde",
  "serde_bytes",
+ "vecdb",
  "zerocopy",
  "zerocopy-derive",
-]
-
-[[package]]
-name = "brk_vecs"
-version = "0.0.85"
-dependencies = [
- "brk_vecs_macros",
- "ctrlc",
- "libc",
- "log",
- "memmap2",
- "parking_lot",
- "pco",
- "rayon",
- "serde",
- "serde_derive",
- "serde_json",
- "zerocopy",
- "zerocopy-derive",
-]
-
-[[package]]
-name = "brk_vecs_macros"
-version = "0.0.85"
-dependencies = [
- "quote",
- "syn 2.0.104",
 ]
 
 [[package]]
@@ -1168,9 +1141,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.31"
+version = "1.2.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3a42d84bb6b69d3a8b3eaacf0d88f179e1929695e1ad012b6cf64d9caaa5fd2"
+checksum = "2352e5597e9c544d5e6d9c95190d5d27738ade584fa8db0a16e130e5c2b5296e"
 dependencies = [
  "jobserver",
  "libc",
@@ -1990,9 +1963,9 @@ checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 
 [[package]]
 name = "hashbrown"
-version = "0.15.4"
+version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5971ac85611da7067dbfcabef3c70ebb5606018acd9e2a3903a0da507521e0d5"
+checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
  "allocator-api2",
  "equivalent",
@@ -2268,7 +2241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe4cd85333e22411419a0bcae1297d25e58c9443848b11dc6a86fefe8c78a661"
 dependencies = [
  "equivalent",
- "hashbrown 0.15.4",
+ "hashbrown 0.15.5",
  "serde",
 ]
 
@@ -2812,7 +2785,7 @@ checksum = "5c67f2b817263a72b6cc5b46e32467bc4077496f88315ce08c1796647fed84d4"
 dependencies = [
  "allocator-api2",
  "bumpalo",
- "hashbrown 0.15.4",
+ "hashbrown 0.15.5",
  "oxc_data_structures",
  "oxc_estree",
  "rustc-hash",
@@ -3314,7 +3287,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54acf3a685220b533e437e264e4d932cfbdc4cc7ec0cd232ed73c08d03b8a7ca"
 dependencies = [
  "fixedbitset",
- "hashbrown 0.15.4",
+ "hashbrown 0.15.5",
  "indexmap 2.10.0",
  "serde",
 ]
@@ -3498,7 +3471,7 @@ checksum = "9ad6644cb07b7f3488b9f3d2fde3b4c0a7fa367cafefb39dff93a659f76eb786"
 dependencies = [
  "ahash",
  "equivalent",
- "hashbrown 0.15.4",
+ "hashbrown 0.15.5",
  "parking_lot",
 ]
 
@@ -3597,9 +3570,9 @@ dependencies = [
 
 [[package]]
 name = "rapidhash"
-version = "3.0.0"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ef3d82b018f786967b1a5d34a08ebc3c7a9ab35b5bcbe3e2e057a0a453f26c8"
+checksum = "efee4b7317469c6c6e7fdeee3d094313af846a97678d6ed971d83a852d730083"
 
 [[package]]
 name = "rayon"
@@ -3685,7 +3658,7 @@ version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "145bb27393fe455dd64d6cbc8d059adfa392590a45eadf079c01b11857e7b010"
 dependencies = [
- "hashbrown 0.15.4",
+ "hashbrown 0.15.5",
  "memchr",
 ]
 
@@ -3772,9 +3745,9 @@ dependencies = [
 
 [[package]]
 name = "rustversion"
-version = "1.0.21"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a0d197bd2c9dc6e53b84da9556a69ba4cdfab8619eb41a8bd1cc2027a0f6b1d"
+checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "ryu"
@@ -3887,6 +3860,19 @@ name = "seq-macro"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
+
+[[package]]
+name = "seqdb"
+version = "0.0.2"
+dependencies = [
+ "libc",
+ "log",
+ "memmap2",
+ "parking_lot",
+ "rayon",
+ "zerocopy",
+ "zerocopy-derive",
+]
 
 [[package]]
 name = "serde"
@@ -4050,9 +4036,9 @@ checksum = "56199f7ddabf13fe5074ce809e7d3f42b42ae711800501b5b16ea82ad029c39d"
 
 [[package]]
 name = "slab"
-version = "0.4.10"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04dc19736151f35336d325007ac991178d504a119863a2fcb3758cdb5e52c50d"
+checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "smallvec"
@@ -4699,6 +4685,32 @@ name = "varint-rs"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
+
+[[package]]
+name = "vecdb"
+version = "0.0.2"
+dependencies = [
+ "ctrlc",
+ "log",
+ "parking_lot",
+ "pco",
+ "rayon",
+ "seqdb",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "vecdb_derive",
+ "zerocopy",
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "vecdb_derive"
+version = "0.0.2"
+dependencies = [
+ "quote",
+ "syn 2.0.104",
+]
 
 [[package]]
 name = "version_check"

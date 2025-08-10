@@ -9,8 +9,8 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::Height;
-use brk_vecs::{AnyCollectableVec, AnyStoredVec};
 use tabled::settings::Style;
+use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod deser;
 mod format;

@@ -1,9 +1,9 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{StoredU16, Version};
-use brk_vecs::{AnyCollectableVec, AnyVec, Computation, Exit, File, Format};
+use vecdb::{AnyCollectableVec, AnyVec, Computation, Database, Exit, Format};
 
 use crate::grouped::Source;
 
@@ -17,7 +17,7 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
 
     pub constant_0: ComputedVecsFromHeight<StoredU16>,
     pub constant_1: ComputedVecsFromHeight<StoredU16>,
@@ -33,11 +33,11 @@ impl Vecs {
         format: Format,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("constants"))?);
+        let db = Database::open(&parent.join("constants"))?;
 
         Ok(Self {
             constant_0: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "constant_0",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -47,7 +47,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_1: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "constant_1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -57,7 +57,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_50: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "constant_50",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -67,7 +67,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_100: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "constant_100",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -77,7 +77,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -89,7 +89,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(())
     }
 

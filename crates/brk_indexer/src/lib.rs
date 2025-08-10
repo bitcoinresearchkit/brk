@@ -3,7 +3,7 @@
 #![doc = include_str!("../examples/indexer.rs")]
 #![doc = "```"]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, sync::Arc, thread, time::Instant};
+use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
@@ -15,9 +15,9 @@ use brk_structs::{
     OutputType, Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
     TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
 };
-use brk_vecs::{AnyVec, Exit, File, GenericStoredVec, PAGE_SIZE, Reader, VecIterator};
 use log::{error, info};
 use rayon::prelude::*;
+use vecdb::{AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, Reader, VecIterator};
 mod indexes;
 mod stores;
 mod vecs;
@@ -27,23 +27,23 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(908_700);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(909_150);
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
-    pub file: Arc<File>,
+    pub db: Database,
     pub vecs: Vecs,
     pub stores: Stores,
 }
 
 impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
-        let file = Arc::new(File::open(&outputs_dir.join("indexed/vecs"))?);
+        let db = Database::open(&outputs_dir.join("indexed/vecs"))?;
 
-        let vecs = Vecs::forced_import(&file, VERSION + Version::ZERO)?;
+        let vecs = Vecs::forced_import(&db, VERSION + Version::ZERO)?;
 
-        file.set_min_len(PAGE_SIZE * 50_000_000)?;
+        db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         Ok(Self {
             vecs,
@@ -51,7 +51,7 @@ impl Indexer {
                 &outputs_dir.join("indexed/stores"),
                 VERSION + Version::ZERO,
             )?,
-            file,
+            db,
         })
     }
 
@@ -62,10 +62,10 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
-        let file = self.file.clone();
+        let db = self.db.clone();
 
-        // dbg!(self.file.regions().id_to_index());
-        // dbg!(self.file.layout());
+        // dbg!(self.db.regions().id_to_index());
+        // dbg!(self.db.layout());
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
             .unwrap_or_else(|_report| Indexes::default());
@@ -111,8 +111,8 @@ impl Indexer {
                 vecs.flush(height)?;
                 info!("Flushed vecs in {}s", i.elapsed().as_secs());
                 let i = Instant::now();
-                file.flush()?;
-                info!("Flushed file in {}s", i.elapsed().as_secs());
+                db.flush()?;
+                info!("Flushed db in {}s", i.elapsed().as_secs());
                 Ok(())
             };
 
@@ -799,8 +799,8 @@ impl Indexer {
         }
 
         let i = Instant::now();
-        file.punch_holes()?;
-        info!("Punched holes in file in {}s", i.elapsed().as_secs());
+        db.punch_holes()?;
+        info!("Punched holes in db in {}s", i.elapsed().as_secs());
 
         Ok(starting_indexes)
     }

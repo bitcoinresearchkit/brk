@@ -1,6 +1,6 @@
-use brk_vecs::StoredCompressed;
 use jiff::{Span, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
+use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{DateIndex, Timestamp};

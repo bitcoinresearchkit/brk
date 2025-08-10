@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -6,8 +6,8 @@ use brk_structs::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, Timestamp, Version,
     Weight,
 };
-use brk_vecs::{
-    AnyCollectableVec, Computation, EagerVec, Exit, File, Format, PAGE_SIZE, VecIterator,
+use vecdb::{
+    AnyCollectableVec, Computation, Database, EagerVec, Exit, Format, PAGE_SIZE, VecIterator,
 };
 
 use crate::grouped::Source;
@@ -22,7 +22,7 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
 
     pub height_to_interval: EagerVec<Height, Timestamp>,
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
@@ -44,18 +44,18 @@ impl Vecs {
         format: Format,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("blocks"))?);
-        file.set_min_len(PAGE_SIZE * 1_000_000)?;
+        let db = Database::open(&parent.join("blocks"))?;
+        db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
-                &file,
+                &db,
                 "interval",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "timestamp",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -65,7 +65,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "block_interval",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -78,7 +78,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_block_count: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "block_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -88,7 +88,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "block_weight",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -98,7 +98,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "block_size",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -108,13 +108,13 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
-                &file,
+                &db,
                 "vbytes",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "block_vbytes",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -124,19 +124,19 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
-                &file,
+                &db,
                 "timestamp",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import(
-                &file,
+                &db,
                 "timestamp",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -148,7 +148,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(())
     }
 

@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use brk_vecs::{
-    AnyCollectableVec, CollectableVec, Computation, EagerVec, Exit, File, Format, StoredVec,
+use vecdb::{
+    AnyCollectableVec, CollectableVec, Computation, Database, EagerVec, Exit, Format, StoredVec,
 };
 
 use crate::{
@@ -28,7 +26,7 @@ const VERSION: Version = Version::ZERO;
 impl ComputedValueVecsFromDateIndex {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         name: &str,
         source: Source<DateIndex, Sats>,
         version: Version,
@@ -40,7 +38,7 @@ impl ComputedValueVecsFromDateIndex {
     ) -> Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromDateIndex::forced_import(
-                file,
+                db,
                 name,
                 source,
                 version + VERSION,
@@ -50,7 +48,7 @@ impl ComputedValueVecsFromDateIndex {
                 options,
             )?,
             bitcoin: ComputedVecsFromDateIndex::forced_import(
-                file,
+                db,
                 &format!("{name}_in_btc"),
                 Source::Compute,
                 version + VERSION,
@@ -61,7 +59,7 @@ impl ComputedValueVecsFromDateIndex {
             )?,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    file,
+                    db,
                     &format!("{name}_in_usd"),
                     Source::Compute,
                     version + VERSION,

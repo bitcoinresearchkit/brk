@@ -1,4 +1,4 @@
-use std::{ops::Deref, path::Path, sync::Arc};
+use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -10,16 +10,16 @@ use brk_structs::{
     P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64,
     Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::{
+use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, Computation, ComputedVec, ComputedVecFrom1,
-    ComputedVecFrom2, EagerVec, Exit, File, Format, PAGE_SIZE, StoredIndex, VecIterator,
+    ComputedVecFrom2, Database, EagerVec, Exit, Format, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
 
     pub dateindex_to_date: EagerVec<DateIndex, Date>,
     pub dateindex_to_dateindex: EagerVec<DateIndex, DateIndex>,
@@ -105,12 +105,12 @@ impl Vecs {
         computation: Computation,
         format: Format,
     ) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("indexes"))?);
-        file.set_min_len(PAGE_SIZE * 10_000_000)?;
+        let db = Database::open(&parent.join("indexes"))?;
+        db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let outputindex_to_outputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "outputindex",
             version + VERSION + Version::ZERO,
             format,
@@ -120,7 +120,7 @@ impl Vecs {
 
         let inputindex_to_inputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "inputindex",
             version + VERSION + Version::ZERO,
             format,
@@ -130,7 +130,7 @@ impl Vecs {
 
         let txindex_to_txindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "txindex",
             version + VERSION + Version::ZERO,
             format,
@@ -140,7 +140,7 @@ impl Vecs {
 
         let txindex_to_input_count = ComputedVec::forced_import_or_init_from_2(
             computation,
-            &file,
+            &db,
             "input_count",
             version + VERSION + Version::ZERO,
             format,
@@ -163,7 +163,7 @@ impl Vecs {
 
         let txindex_to_output_count = ComputedVec::forced_import_or_init_from_2(
             computation,
-            &file,
+            &db,
             "output_count",
             version + VERSION + Version::ZERO,
             format,
@@ -186,7 +186,7 @@ impl Vecs {
 
         let p2pk33addressindex_to_p2pk33addressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2pk33addressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -195,7 +195,7 @@ impl Vecs {
         )?;
         let p2pk65addressindex_to_p2pk65addressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2pk65addressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -204,7 +204,7 @@ impl Vecs {
         )?;
         let p2pkhaddressindex_to_p2pkhaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2pkhaddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -213,7 +213,7 @@ impl Vecs {
         )?;
         let p2shaddressindex_to_p2shaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2shaddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -222,7 +222,7 @@ impl Vecs {
         )?;
         let p2traddressindex_to_p2traddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2traddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -231,7 +231,7 @@ impl Vecs {
         )?;
         let p2wpkhaddressindex_to_p2wpkhaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2wpkhaddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -240,7 +240,7 @@ impl Vecs {
         )?;
         let p2wshaddressindex_to_p2wshaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2wshaddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -249,7 +249,7 @@ impl Vecs {
         )?;
         let p2aaddressindex_to_p2aaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2aaddressindex",
             version + VERSION + Version::ZERO,
             format,
@@ -258,7 +258,7 @@ impl Vecs {
         )?;
         let p2msoutputindex_to_p2msoutputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "p2msoutputindex",
             version + VERSION + Version::ZERO,
             format,
@@ -267,7 +267,7 @@ impl Vecs {
         )?;
         let emptyoutputindex_to_emptyoutputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "emptyoutputindex",
             version + VERSION + Version::ZERO,
             format,
@@ -276,7 +276,7 @@ impl Vecs {
         )?;
         let unknownoutputindex_to_unknownoutputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "unknownoutputindex",
             version + VERSION + Version::ZERO,
             format,
@@ -285,7 +285,7 @@ impl Vecs {
         )?;
         let opreturnindex_to_opreturnindex = ComputedVec::forced_import_or_init_from_1(
             computation,
-            &file,
+            &db,
             "opreturnindex",
             version + VERSION + Version::ZERO,
             format,
@@ -313,265 +313,265 @@ impl Vecs {
             unknownoutputindex_to_unknownoutputindex,
 
             dateindex_to_date: EagerVec::forced_import(
-                &file,
+                &db,
                 "date",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_dateindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_first_height: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_monthindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_weekindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             decadeindex_to_decadeindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             decadeindex_to_first_yearindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_yearindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             difficultyepoch_to_difficultyepoch: EagerVec::forced_import(
-                &file,
+                &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             difficultyepoch_to_first_height: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             halvingepoch_to_first_height: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             halvingepoch_to_halvingepoch: EagerVec::forced_import(
-                &file,
+                &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_date: EagerVec::forced_import(
-                &file,
+                &db,
                 "date",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_difficultyepoch: EagerVec::forced_import(
-                &file,
+                &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_halvingepoch: EagerVec::forced_import(
-                &file,
+                &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_height: EagerVec::forced_import(
-                &file,
+                &db,
                 "height",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_first_dateindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_monthindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_quarterindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_semesterindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_yearindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             quarterindex_to_first_monthindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             semesterindex_to_first_monthindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             weekindex_to_first_dateindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             yearindex_to_first_monthindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             quarterindex_to_quarterindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             semesterindex_to_semesterindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             weekindex_to_weekindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             yearindex_to_decadeindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             yearindex_to_yearindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_date_fixed: EagerVec::forced_import(
-                &file,
+                &db,
                 "date_fixed",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_dateindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             txindex_to_height: EagerVec::forced_import(
-                &file,
+                &db,
                 "height",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_timestamp_fixed: EagerVec::forced_import(
-                &file,
+                &db,
                 "timestamp_fixed",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_txindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "txindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_height_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             weekindex_to_dateindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             difficultyepoch_to_height_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_dateindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             quarterindex_to_monthindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             semesterindex_to_monthindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             yearindex_to_monthindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             decadeindex_to_yearindex_count: EagerVec::forced_import(
-                &file,
+                &db,
                 "yearindex_count",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             outputindex_to_txindex: EagerVec::forced_import(
-                &file,
+                &db,
                 "txindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -582,7 +582,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         let idxs = self.compute_(indexer, starting_indexes, exit)?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(idxs)
     }
 

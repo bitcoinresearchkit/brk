@@ -1,4 +1,4 @@
-use brk_vecs::{Printable, StoredCompressed};
+use vecdb::{Printable, StoredCompressed};
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};

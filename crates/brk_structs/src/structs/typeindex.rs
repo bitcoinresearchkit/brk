@@ -1,8 +1,8 @@
 use std::ops::Add;
 
-use brk_vecs::{CheckedSub, StoredCompressed};
 use byteview::ByteView;
 use serde::Serialize;
+use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy::IntoBytes;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 

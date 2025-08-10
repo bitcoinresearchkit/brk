@@ -1,6 +1,6 @@
 use brk_structs::{ByAddressType, Height};
-use brk_vecs::VecIterator;
 use derive_deref::{Deref, DerefMut};
+use vecdb::VecIterator;
 
 use crate::stateful::addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount;
 

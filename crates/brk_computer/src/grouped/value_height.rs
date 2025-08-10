@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use brk_vecs::{AnyCollectableVec, CollectableVec, EagerVec, Exit, File, Format, StoredVec};
+use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
 
 use crate::{
     Indexes,
@@ -23,7 +21,7 @@ const VERSION: Version = Version::ZERO;
 
 impl ComputedHeightValueVecs {
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
@@ -32,18 +30,18 @@ impl ComputedHeightValueVecs {
     ) -> Result<Self> {
         Ok(Self {
             sats: source.is_compute().then(|| {
-                EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
+                EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)
                     .unwrap()
             }),
             bitcoin: EagerVec::forced_import(
-                file,
+                db,
                 &format!("{name}_in_btc"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dollars: compute_dollars.then(|| {
                 EagerVec::forced_import(
-                    file,
+                    db,
                     &format!("{name}_in_usd"),
                     version + VERSION + Version::ZERO,
                     format,

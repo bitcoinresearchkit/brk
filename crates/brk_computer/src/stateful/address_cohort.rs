@@ -1,10 +1,10 @@
-use std::{ops::Deref, path::Path, sync::Arc};
+use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
-use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation, EagerVec, Exit, File,
+use vecdb::{
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation, Database, EagerVec, Exit,
     Format, GenericStoredVec, VecIterator,
 };
 
@@ -25,7 +25,7 @@ const VERSION: Version = Version::ZERO;
 pub struct Vecs {
     starting_height: Height,
 
-    pub state: AddressCohortState,
+    pub state: Option<AddressCohortState>,
 
     pub inner: common::Vecs,
 
@@ -36,14 +36,14 @@ pub struct Vecs {
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         cohort_name: Option<&str>,
         computation: Computation,
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        states_path: &Path,
+        states_path: Option<&Path>,
         compute_relative_to_all: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
@@ -52,19 +52,22 @@ impl Vecs {
 
         Ok(Self {
             starting_height: Height::ZERO,
-            state: AddressCohortState::default_and_import(
-                states_path,
-                cohort_name.unwrap_or_default(),
-                compute_dollars,
-            )?,
+            state: states_path.map(|states_path| {
+                AddressCohortState::default_and_import(
+                    states_path,
+                    cohort_name.unwrap_or_default(),
+                    compute_dollars,
+                )
+                .unwrap()
+            }),
             height_to_address_count: EagerVec::forced_import(
-                file,
+                db,
                 &suffix("address_count"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_address_count: ComputedVecsFromHeight::forced_import(
-                file,
+                db,
                 &suffix("address_count"),
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -74,7 +77,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
-                file,
+                db,
                 cohort_name,
                 computation,
                 format,
@@ -82,6 +85,7 @@ impl Vecs {
                 indexes,
                 price,
                 compute_relative_to_all,
+                false,
                 false,
             )?,
         })
@@ -91,7 +95,9 @@ impl Vecs {
 impl DynCohortVecs for Vecs {
     fn starting_height(&self) -> Height {
         [
-            self.state.height().map_or(Height::MAX, |h| h.incremented()),
+            self.state.as_ref().map_or(Height::MAX, |state| {
+                state.height().map_or(Height::MAX, |h| h.incremented())
+            }),
             self.height_to_address_count.len().into(),
             self.inner.starting_height(),
         ]
@@ -108,19 +114,21 @@ impl DynCohortVecs for Vecs {
         self.starting_height = starting_height;
 
         if let Some(prev_height) = starting_height.decremented() {
-            self.state.address_count = *self
+            self.state.as_mut().unwrap().address_count = *self
                 .height_to_address_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
         }
 
-        self.inner
-            .init(&mut self.starting_height, &mut self.state.inner);
+        self.inner.init(
+            &mut self.starting_height,
+            &mut self.state.as_mut().unwrap().inner,
+        );
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.height_to_address_count
-            .validate_computed_version_or_reset_file(
+            .validate_computed_version_or_reset(
                 base_version + self.height_to_address_count.inner_version(),
             )?;
 
@@ -134,11 +142,12 @@ impl DynCohortVecs for Vecs {
 
         self.height_to_address_count.forced_push_at(
             height,
-            self.state.address_count.into(),
+            self.state.as_ref().unwrap().address_count.into(),
             exit,
         )?;
 
-        self.inner.forced_pushed_at(height, exit, &self.state.inner)
+        self.inner
+            .forced_pushed_at(height, exit, &self.state.as_ref().unwrap().inner)
     }
 
     fn compute_then_force_push_unrealized_states(
@@ -155,7 +164,7 @@ impl DynCohortVecs for Vecs {
             dateindex,
             date_price,
             exit,
-            &self.state.inner,
+            &self.state.as_ref().unwrap().inner,
         )
     }
 
@@ -163,7 +172,7 @@ impl DynCohortVecs for Vecs {
         self.height_to_address_count.safe_flush(exit)?;
 
         self.inner
-            .safe_flush_stateful_vecs(height, exit, &mut self.state.inner)
+            .safe_flush_stateful_vecs(height, exit, &mut self.state.as_mut().unwrap().inner)
     }
 
     #[allow(clippy::too_many_arguments)]

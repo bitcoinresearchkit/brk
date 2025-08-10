@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
-use brk_vecs::CheckedSub;
 use serde::Serialize;
+use vecdb::CheckedSub;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};

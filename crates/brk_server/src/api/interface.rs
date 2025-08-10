@@ -9,8 +9,8 @@ use axum::{
 };
 use brk_error::{Error, Result};
 use brk_interface::{Format, Output, Params};
-use brk_vecs::Stamp;
 use quick_cache::sync::GuardResult;
+use vecdb::Stamp;
 
 use crate::{HeaderMapExtended, ResponseExtended};
 
@@ -112,6 +112,7 @@ fn req_to_response_res(
     headers.insert_cors();
 
     headers.insert_etag(&etag);
+    headers.insert_cache_control_must_revalidate();
 
     match format {
         Some(format) => {

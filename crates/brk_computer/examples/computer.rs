@@ -9,7 +9,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_vecs::Exit;
+use vecdb::Exit;
 
 pub fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")));
@@ -38,7 +38,7 @@ pub fn main() -> Result<()> {
 
             let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-            let fetcher = Fetcher::import(None)?;
+            let fetcher = Fetcher::import(true, None)?;
 
             let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
-use brk_vecs::{
+use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, StoredIndex,
     VecIterator, Version,
 };
@@ -32,7 +32,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + closes.version(),
         )?;
 
@@ -83,7 +83,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + closes.version(),
         )?;
 
@@ -143,7 +143,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ONE + self.inner_version() + stacks.version(),
         )?;
 
@@ -176,7 +176,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + stacks.version(),
         )?;
 
@@ -218,7 +218,7 @@ where
         sats: &impl AnyIterableVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + sats.version(),
         )?;
 
@@ -254,7 +254,7 @@ where
         price: &impl AnyIterableVec<I, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + bitcoin.version(),
         )?;
 
@@ -292,7 +292,7 @@ where
         ath: &impl AnyIterableVec<I, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             Version::ZERO + self.inner_version() + ath.version() + close.version(),
         )?;
 

@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use brk_error::Result;
 
 use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, Height, Version};
-use brk_vecs::{AnyCollectableVec, EagerVec, Exit, File, Format};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, Format};
 
 use crate::{Indexes, indexes};
 
@@ -29,17 +27,16 @@ where
     f64: From<T>,
 {
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         name: &str,
         version: Version,
         format: Format,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let height =
-            EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)?;
+        let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)?;
 
         let height_extra = EagerVecBuilder::forced_import(
-            file,
+            db,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -52,13 +49,13 @@ where
             height,
             height_extra,
             difficultyepoch: EagerVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
                 options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(file, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 

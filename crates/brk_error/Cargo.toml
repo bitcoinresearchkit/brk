@@ -9,7 +9,7 @@ repository.workspace = true
 build = "build.rs"
 
 [dependencies]
-brk_vecs = { workspace = true }
+vecdb = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 fjall = { workspace = true }
 jiff = { workspace = true }

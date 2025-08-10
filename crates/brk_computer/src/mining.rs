@@ -1,9 +1,9 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
-use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, PAGE_SIZE, VecIterator};
+use vecdb::{AnyCollectableVec, Computation, Database, Exit, Format, PAGE_SIZE, VecIterator};
 
 use crate::grouped::Source;
 
@@ -17,7 +17,7 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
 
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_difficultyepoch: ComputedVecsFromDateIndex<DifficultyEpoch>,
@@ -32,12 +32,12 @@ impl Vecs {
         format: Format,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("mining"))?);
-        file.set_min_len(PAGE_SIZE * 1_000_000)?;
+        let db = Database::open(&parent.join("mining"))?;
+        db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "difficulty",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -47,7 +47,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "difficultyepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -57,7 +57,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "halvingepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -67,7 +67,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -79,7 +79,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(())
     }
 

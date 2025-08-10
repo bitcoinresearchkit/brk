@@ -7,7 +7,7 @@ use brk_structs::{
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
     TxIndex, TypeIndex, UnknownOutputIndex,
 };
-use brk_vecs::{
+use vecdb::{
     AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw, VecIterator,
 };
 

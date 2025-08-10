@@ -9,8 +9,8 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_structs::Version;
-use brk_vecs::{AnyCollectableVec, Computation, Exit, Format};
 use log::info;
+use vecdb::{AnyCollectableVec, Computation, Exit, Format};
 
 mod blocks;
 mod cointime;

@@ -1,14 +1,12 @@
-use std::sync::Arc;
-
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Computation, EagerVec,
-    Exit, File, Format, GenericStoredVec, StoredIndex, VecIterator,
+use vecdb::{
+    AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Computation, Database,
+    EagerVec, Exit, Format, GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -46,7 +44,7 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         name: &str,
         source: Source<TxIndex, T>,
         version: Version,
@@ -57,13 +55,13 @@ where
     ) -> Result<Self> {
         let txindex = source.is_compute().then(|| {
             Box::new(
-                EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
+                EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)
                     .unwrap(),
             )
         });
 
         let height = EagerVecBuilder::forced_import(
-            file,
+            db,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -73,7 +71,7 @@ where
         let options = options.remove_percentiles();
 
         let dateindex = EagerVecBuilder::forced_import(
-            file,
+            db,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -82,7 +80,7 @@ where
 
         Ok(Self {
             weekindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -93,7 +91,7 @@ where
                 options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -104,7 +102,7 @@ where
                 options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -115,7 +113,7 @@ where
                 options.into(),
             )?,
             semesterindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -126,7 +124,7 @@ where
                 options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -137,7 +135,7 @@ where
                 options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -152,13 +150,13 @@ where
             height,
             dateindex,
             difficultyepoch: EagerVecBuilder::forced_import(
-                file,
+                db,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
                 options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(file, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 
@@ -325,7 +323,7 @@ impl ComputedVecsFromTxindex<Bitcoin> {
         };
 
         self.height
-            .validate_computed_version_or_reset_file(txindex_version)?;
+            .validate_computed_version_or_reset(txindex_version)?;
 
         let starting_index = self.height.starting_index(starting_indexes.height);
 
@@ -504,7 +502,7 @@ impl ComputedVecsFromTxindex<Dollars> {
         };
 
         self.height
-            .validate_computed_version_or_reset_file(txindex_version)?;
+            .validate_computed_version_or_reset(txindex_version)?;
 
         let starting_index = self.height.starting_index(starting_indexes.height);
 

@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use brk_vecs::{CheckedSub, Printable};
+use vecdb::{CheckedSub, Printable};
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};

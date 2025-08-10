@@ -1,9 +1,9 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
-use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, PAGE_SIZE, VecIterator};
+use vecdb::{AnyCollectableVec, Computation, Database, Exit, Format, PAGE_SIZE, VecIterator};
 
 use super::{
     Indexes,
@@ -18,7 +18,7 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
 
     pub indexes_to_coinblocks_created: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coinblocks_stored: ComputedVecsFromHeight<StoredF64>,
@@ -55,14 +55,14 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("cointime"))?);
-        file.set_min_len(PAGE_SIZE * 1_000_000)?;
+        let db = Database::open(&parent.join("cointime"))?;
+        db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
 
         Ok(Self {
             indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "coinblocks_created",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -72,7 +72,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coinblocks_stored: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "coinblocks_stored",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -82,7 +82,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_liveliness: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "liveliness",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -92,7 +92,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaultedness: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "vaultedness",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -102,7 +102,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_activity_to_vaultedness_ratio: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "activity_to_vaultedness_ratio",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -112,7 +112,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_supply: ComputedValueVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "vaulted_supply",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -123,7 +123,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_active_supply: ComputedValueVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "active_supply",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -134,7 +134,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_thermo_cap: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "thermo_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -144,7 +144,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_investor_cap: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "investor_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -154,7 +154,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_cap: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "vaulted_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -164,7 +164,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_cap: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "active_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -174,7 +174,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "vaulted_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -184,7 +184,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "vaulted_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -194,7 +194,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_active_price: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "active_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -204,7 +204,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "active_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -214,7 +214,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_true_market_mean: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "true_market_mean",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -224,7 +224,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_true_market_mean_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "true_market_mean",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -234,7 +234,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_cointime_value_destroyed: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "cointime_value_destroyed",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -244,7 +244,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_created: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "cointime_value_created",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -254,7 +254,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_stored: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "cointime_value_stored",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -264,7 +264,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_price: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "cointime_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -274,7 +274,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_cap: ComputedVecsFromHeight::forced_import(
-                &file,
+                &db,
                 "cointime_cap",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -284,7 +284,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &file,
+                &db,
                 "cointime_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -294,7 +294,7 @@ impl Vecs {
                 true,
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -318,7 +318,7 @@ impl Vecs {
             stateful,
             exit,
         )?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(())
     }
 

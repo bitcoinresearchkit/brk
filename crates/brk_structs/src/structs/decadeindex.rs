@@ -3,7 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use brk_vecs::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 

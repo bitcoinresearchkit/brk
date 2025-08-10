@@ -68,8 +68,8 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_server`](https://crates.io/crates/brk_server): A server with an API for anything from BRK
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_structs`](https://crates.io/crates/brk_structs): Structs used throughout BRK
-- [`brk_vecs`](https://crates.io/crates/brk_vecs): A KISS index/value store
-- [`brk_vecs_macros`](https://crates.io/crates/brk_vecs_macros): Macros for [`brk_vecs`](https://crates.io/crates/brk_vecs)
+- [`vecdb`](https://crates.io/crates/vecdb): A KISS index-value storage engine
+- [`vecdb_macros`](https://crates.io/crates/vecdb_macros): Macros for [`vecdb`](https://crates.io/crates/vecdb)
 
 ## Hosting as a service
 
