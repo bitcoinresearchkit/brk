@@ -8,6 +8,7 @@ package.version = "0.0.87"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
+package.rust-version = "1.89"
 
 [profile.release]
 lto = "fat"

@@ -2109,29 +2109,38 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   {
                     name: "sopr",
                     title: `Spent Output Profit Ratio ${title}`,
-                    bottom: list.flatMap(({ color, name, key }) => [
-                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                        type: "Baseline",
-                        key: `${fixKey(key)}spent_output_profit_ratio`,
-                        title: "sopr",
-                        options: {
-                          createPriceLine: {
-                            value: 1,
+                    bottom: list.flatMap(({ color, name, key }) => {
+                      const soprKey = `${fixKey(key)}spent_output_profit_ratio`;
+                      const asoprKey = `${fixKey(key)}adjusted_spent_output_profit_ratio`;
+
+                      return [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: soprKey,
+                          title: "sopr",
+                          options: {
+                            createPriceLine: {
+                              value: 1,
+                            },
                           },
-                        },
-                      }),
-                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                        type: "Baseline",
-                        key: `${fixKey(key)}adjusted_spent_output_profit_ratio`,
-                        title: "asopr",
-                        colors: [colors.yellow, colors.pink],
-                        options: {
-                          createPriceLine: {
-                            value: 1,
-                          },
-                        },
-                      }),
-                    ]),
+                        }),
+                        ...(asoprKey in vecIdToIndexes
+                          ? [
+                              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                                type: "Baseline",
+                                key: asoprKey,
+                                title: "asopr",
+                                colors: [colors.yellow, colors.pink],
+                                options: {
+                                  createPriceLine: {
+                                    value: 1,
+                                  },
+                                },
+                              }),
+                            ]
+                          : []),
+                      ];
+                    }),
                   },
                 ]
               : [
@@ -2333,25 +2342,41 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           }),
                         ]),
                       },
-                      {
-                        name: "Adjusted",
-                        title: `Adjusted Spent Output Profit Ratio ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => [
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
+                      ...(() => {
+                        const reducedList = list
+                          .map(({ color, name, key }) => ({
+                            color,
+                            name,
                             key: `${fixKey(
                               key,
                             )}adjusted_spent_output_profit_ratio`,
-                            title: name,
-                            color,
-                            options: {
-                              createPriceLine: {
-                                value: 1,
+                          }))
+                          .filter(({ key }) => key in vecIdToIndexes);
+
+                        return reducedList.length
+                          ? [
+                              {
+                                name: "Adjusted",
+                                title: `Adjusted Spent Output Profit Ratio ${title}`,
+                                bottom: reducedList.flatMap(
+                                  ({ color, name, key }) => [
+                                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                                      type: "Baseline",
+                                      key,
+                                      title: name,
+                                      color,
+                                      options: {
+                                        createPriceLine: {
+                                          value: 1,
+                                        },
+                                      },
+                                    }),
+                                  ],
+                                ),
                               },
-                            },
-                          }),
-                        ]),
-                      },
+                            ]
+                          : [];
+                      })(),
                     ],
                   },
                 ]),
