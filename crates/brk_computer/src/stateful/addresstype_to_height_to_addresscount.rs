@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, Height, StoredU64};
-use brk_vecs::{EagerVec, Exit, GenericStoredVec};
+use vecdb::{EagerVec, Exit, GenericStoredVec};
 use derive_deref::{Deref, DerefMut};
 
 use crate::stateful::addresstype_to_addresscount::AddressTypeToAddressCount;

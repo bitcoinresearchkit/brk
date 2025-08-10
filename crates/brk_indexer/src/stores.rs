@@ -6,9 +6,9 @@ use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
     OutputType, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
-use brk_vecs::VecIterator;
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
+use vecdb::VecIterator;
 
 use crate::Indexes;
 

@@ -1,8 +1,8 @@
 use std::ops::Add;
 
-use brk_vecs::{CheckedSub, Printable};
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::{CheckedSub, Printable};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;

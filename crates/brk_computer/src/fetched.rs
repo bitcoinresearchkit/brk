@@ -1,19 +1,19 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_structs::{DateIndex, Height, OHLCCents, Version};
-use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Exit, File, GenericStoredVec, RawVec,
-    StoredIndex, VecIterator,
+use vecdb::{
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec,
+    RawVec, StoredIndex, VecIterator,
 };
 
 use super::{Indexes, indexes};
 
 #[derive(Clone)]
 pub struct Vecs {
-    file: Arc<File>,
+    db: Database,
     fetcher: Fetcher,
 
     pub dateindex_to_ohlc_in_cents: RawVec<DateIndex, OHLCCents>,
@@ -22,23 +22,23 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(parent: &Path, fetcher: Fetcher, version: Version) -> Result<Self> {
-        let file = Arc::new(File::open(&parent.join("fetched"))?);
+        let db = Database::open(&parent.join("fetched"))?;
 
         Ok(Self {
             fetcher,
 
             dateindex_to_ohlc_in_cents: RawVec::forced_import(
-                &file,
+                &db,
                 "ohlc_in_cents",
                 version + Version::ZERO,
             )?,
             height_to_ohlc_in_cents: RawVec::forced_import(
-                &file,
+                &db,
                 "ohlc_in_cents",
                 version + Version::ZERO,
             )?,
 
-            file,
+            db,
         })
     }
 
@@ -50,7 +50,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
-        self.file.flush_then_punch()?;
+        self.db.flush_then_punch()?;
         Ok(())
     }
 

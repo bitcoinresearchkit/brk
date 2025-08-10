@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, StoredU64};
-use brk_vecs::{AnyCollectableVec, Exit};
 use derive_deref::{Deref, DerefMut};
+use vecdb::{AnyCollectableVec, Exit};
 
 use crate::{
     Indexes, grouped::ComputedVecsFromHeight, indexes,

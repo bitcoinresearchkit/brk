@@ -1,6 +1,6 @@
 use bitcoin::absolute::LockTime;
-use brk_vecs::StoredCompressed;
 use serde::Serialize;
+use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(

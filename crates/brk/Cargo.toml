@@ -37,7 +37,7 @@ parser = ["brk_parser"]
 server = ["brk_server"]
 store = ["brk_store"]
 structs = ["brk_structs"]
-vecs = ["brk_vecs"]
+vecs = ["vecdb"]
 
 [dependencies]
 brk_bundler = { workspace = true, optional = true }
@@ -53,7 +53,7 @@ brk_parser = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
 brk_structs = { workspace = true, optional = true }
-brk_vecs = { workspace = true, optional = true }
+vecdb = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true

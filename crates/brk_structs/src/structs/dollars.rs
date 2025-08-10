@@ -4,9 +4,9 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
-use brk_vecs::{CheckedSub, StoredCompressed};
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
+use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};

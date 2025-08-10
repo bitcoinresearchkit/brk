@@ -4,9 +4,9 @@ use std::{
 };
 
 use bitcoin::Amount;
-use brk_vecs::{CheckedSub, StoredCompressed};
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
+use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;

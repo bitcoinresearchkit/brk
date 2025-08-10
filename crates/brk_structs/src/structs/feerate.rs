@@ -3,8 +3,8 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use brk_vecs::StoredCompressed;
 use serde::Serialize;
+use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredU64};

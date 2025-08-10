@@ -23,16 +23,16 @@ const TRIES: usize = 12 * 60;
 
 #[derive(Clone)]
 pub struct Fetcher {
-    binance: Binance,
-    kraken: Kraken,
+    binance: Option<Binance>,
+    kraken: Option<Kraken>,
     brk: BRK,
 }
 
 impl Fetcher {
-    pub fn import(hars_path: Option<&Path>) -> Result<Self> {
+    pub fn import(exchanges: bool, hars_path: Option<&Path>) -> Result<Self> {
         Ok(Self {
-            binance: Binance::init(hars_path),
-            kraken: Kraken::default(),
+            binance: exchanges.then(|| Binance::init(hars_path)),
+            kraken: exchanges.then(Kraken::default),
             brk: BRK::default(),
         })
     }
@@ -43,10 +43,17 @@ impl Fetcher {
 
     fn get_date_(&mut self, date: Date, tries: usize) -> Result<OHLCCents> {
         self.kraken
-            .get_from_1d(&date)
+            .as_mut()
+            .map_or(Err(Error::Str("Kraken off")), |kraken| {
+                kraken.get_from_1d(&date)
+            })
             .or_else(|_| {
                 // eprintln!("{e}");
-                self.binance.get_from_1d(&date)
+                self.binance
+                    .as_mut()
+                    .map_or(Err(Error::Str("Binance off")), |binance| {
+                        binance.get_from_1d(&date)
+                    })
             })
             .or_else(|_| {
                 // eprintln!("{e}");
@@ -93,11 +100,17 @@ impl Fetcher {
 
         let ohlc = self
             .kraken
-            .get_from_1mn(timestamp, previous_timestamp)
+            .as_mut()
+            .map_or(Err(Error::Str("Kraken off")), |kraken| {
+                kraken.get_from_1mn(timestamp, previous_timestamp)
+            })
             .unwrap_or_else(|_report| {
                 // eprintln!("{_report}");
                 self.binance
-                    .get_from_1mn(timestamp, previous_timestamp)
+                    .as_mut()
+                    .map_or(Err(Error::Str("Binance off")), |binance| {
+                        binance.get_from_1mn(timestamp, previous_timestamp)
+                    })
                     .unwrap_or_else(|_report| {
                         //         // eprintln!("{_report}");
                         self.brk.get_from_height(height).unwrap_or_else(|_report| {
@@ -187,8 +200,12 @@ How to fix this:
     }
 
     pub fn clear(&mut self) {
-        self.kraken.clear();
-        self.binance.clear();
+        if let Some(kraken) = self.kraken.as_mut() {
+            kraken.clear()
+        }
+        if let Some(binance) = self.binance.as_mut() {
+            binance.clear()
+        }
         self.brk.clear();
     }
 }

@@ -1,9 +1,9 @@
-use std::{ops::Deref, path::Path, sync::Arc};
+use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
-use brk_vecs::{AnyCollectableVec, AnyIterableVec, Computation, Exit, File, Format};
+use vecdb::{AnyCollectableVec, AnyIterableVec, Computation, Database, Exit, Format};
 
 use crate::{
     Indexes, UTXOCohortState, indexes, market, price,
@@ -17,7 +17,7 @@ use crate::{
 pub struct Vecs {
     starting_height: Height,
 
-    pub state: UTXOCohortState,
+    pub state: Option<UTXOCohortState>,
 
     inner: common::Vecs,
 }
@@ -25,30 +25,34 @@ pub struct Vecs {
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         cohort_name: Option<&str>,
         computation: Computation,
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        states_path: &Path,
+        states_path: Option<&Path>,
         compute_relative_to_all: bool,
         ratio_extended: bool,
+        compute_adjusted: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
         Ok(Self {
             starting_height: Height::ZERO,
 
-            state: UTXOCohortState::default_and_import(
-                states_path,
-                cohort_name.unwrap_or_default(),
-                compute_dollars,
-            )?,
+            state: states_path.map(|states_path| {
+                UTXOCohortState::default_and_import(
+                    states_path,
+                    cohort_name.unwrap_or_default(),
+                    compute_dollars,
+                )
+                .unwrap()
+            }),
 
             inner: common::Vecs::forced_import(
-                file,
+                db,
                 cohort_name,
                 computation,
                 format,
@@ -57,6 +61,7 @@ impl Vecs {
                 price,
                 compute_relative_to_all,
                 ratio_extended,
+                compute_adjusted,
             )?,
         })
     }
@@ -65,7 +70,9 @@ impl Vecs {
 impl DynCohortVecs for Vecs {
     fn starting_height(&self) -> Height {
         [
-            self.state.height().map_or(Height::MAX, |h| h.incremented()),
+            self.state.as_ref().map_or(Height::MAX, |state| {
+                state.height().map_or(Height::MAX, |h| h.incremented())
+            }),
             self.inner.starting_height(),
         ]
         .into_iter()
@@ -80,7 +87,8 @@ impl DynCohortVecs for Vecs {
 
         self.starting_height = starting_height;
 
-        self.inner.init(&mut self.starting_height, &mut self.state);
+        self.inner
+            .init(&mut self.starting_height, self.state.as_mut().unwrap());
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -92,7 +100,8 @@ impl DynCohortVecs for Vecs {
             return Ok(());
         }
 
-        self.inner.forced_pushed_at(height, exit, &self.state)
+        self.inner
+            .forced_pushed_at(height, exit, self.state.as_ref().unwrap())
     }
 
     fn compute_then_force_push_unrealized_states(
@@ -109,13 +118,13 @@ impl DynCohortVecs for Vecs {
             dateindex,
             date_price,
             exit,
-            &self.state,
+            self.state.as_mut().unwrap(),
         )
     }
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.inner
-            .safe_flush_stateful_vecs(height, exit, &mut self.state)
+            .safe_flush_stateful_vecs(height, exit, self.state.as_mut().unwrap())
     }
 
     #[allow(clippy::too_many_arguments)]

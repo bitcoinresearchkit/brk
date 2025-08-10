@@ -12,7 +12,7 @@ build = "build.rs"
 axum = { workspace = true }
 brk_interface = { workspace = true }
 log = { workspace = true }
-brk_rmcp = { version = "0.4.1", features = [
+brk_rmcp = { version = "0.5.0", features = [
     "transport-worker",
     "transport-streamable-http-server",
 ] }

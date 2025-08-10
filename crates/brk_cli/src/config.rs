@@ -32,10 +32,15 @@ pub struct Config {
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
-    /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: true, saved
+    /// Activate fetching prices from BRK's API and the computation of all price related datasets, default: true, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short = 'F', long, value_name = "BOOL")]
     fetch: Option<bool>,
+
+    /// Activate fetching prices from exchanges APIs if `fetch` is also set to `true`, default: true, saved
+    #[serde(default, deserialize_with = "default_on_error")]
+    #[arg(long, value_name = "BOOL")]
+    exchanges: Option<bool>,
 
     /// Website served by the server (if active), default: default, saved
     #[serde(default, deserialize_with = "default_on_error")]
@@ -117,6 +122,10 @@ impl Config {
                 config_saved.fetch = Some(fetch);
             }
 
+            if let Some(exchanges) = config_args.exchanges.take() {
+                config_saved.exchanges = Some(exchanges);
+            }
+
             if let Some(website) = config_args.website.take() {
                 config_saved.website = Some(website);
             }
@@ -196,7 +205,9 @@ impl Config {
 
         if self.rpc_auth().is_err() {
             println!(
-                "No way found to authenticate the RPC client, please either set --rpccookiefile or --rpcuser and --rpcpassword.\nRun the program with '-h' for help."
+                "Unsuccessful authentication with the RPC client.
+First make sure that `bitcoind` is running. If it is then please either set --rpccookiefile or --rpcuser and --rpcpassword as the default values seemed to have failed.
+Finally, you can run the program with '-h' for help."
             );
             std::process::exit(1);
         }
@@ -311,9 +322,13 @@ impl Config {
         self.fetch.is_none_or(|b| b)
     }
 
+    pub fn exchanges(&self) -> bool {
+        self.exchanges.is_none_or(|b| b)
+    }
+
     pub fn fetcher(&self) -> Option<Fetcher> {
         self.fetch()
-            .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
+            .then(|| Fetcher::import(self.exchanges(), Some(self.harsdir().as_path())).unwrap())
     }
 
     pub fn check_collisions(&self) -> bool {

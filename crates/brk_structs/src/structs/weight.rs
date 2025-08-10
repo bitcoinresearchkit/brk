@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign, Div};
 
-use brk_vecs::StoredCompressed;
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(

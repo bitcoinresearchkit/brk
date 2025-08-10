@@ -4,7 +4,7 @@ use std::{
 };
 
 use brk_error::Error;
-use brk_vecs::{CheckedSub, FromCoarserIndex, Printable, StoredCompressed};
+use vecdb::{CheckedSub, FromCoarserIndex, Printable, StoredCompressed};
 use jiff::Span;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};

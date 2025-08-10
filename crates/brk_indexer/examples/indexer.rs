@@ -8,7 +8,7 @@ use std::{
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_vecs::Exit;
+use vecdb::Exit;
 
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")));

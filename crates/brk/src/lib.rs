@@ -53,4 +53,4 @@ pub use brk_store as store;
 
 #[cfg(feature = "vecs")]
 #[doc(inline)]
-pub use brk_vecs as vecs;
+pub use vecdb as vecs;

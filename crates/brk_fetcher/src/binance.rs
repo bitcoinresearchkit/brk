@@ -11,7 +11,7 @@ use brk_structs::{Cents, OHLCCents, Timestamp};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, retry};
+use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, default_retry};
 
 #[derive(Clone)]
 pub struct Binance {
@@ -68,17 +68,13 @@ impl Binance {
     pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Binance...");
 
-        retry(
-            |_| {
-                Self::json_to_timestamp_to_ohlc(
-                    &minreq::get(Self::url("interval=1m&limit=1000"))
-                        .send()?
-                        .json()?,
-                )
-            },
-            30,
-            10,
-        )
+        default_retry(|_| {
+            Self::json_to_timestamp_to_ohlc(
+                &minreq::get(Self::url("interval=1m&limit=1000"))
+                    .send()?
+                    .json()?,
+            )
+        })
     }
 
     pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
@@ -97,11 +93,9 @@ impl Binance {
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Binance...");
 
-        retry(
-            |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?),
-            30,
-            10,
-        )
+        default_retry(|_| {
+            Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?)
+        })
     }
 
     fn read_har(&self) -> Result<BTreeMap<Timestamp, OHLCCents>> {

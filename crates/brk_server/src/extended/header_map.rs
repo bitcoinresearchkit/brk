@@ -59,7 +59,7 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_cache_control_must_revalidate(&mut self) {
         self.insert(
             header::CACHE_CONTROL,
-            "public, max-age=0, must-revalidate".parse().unwrap(),
+            "public, max-age=1, must-revalidate".parse().unwrap(),
         );
     }
 

@@ -5,7 +5,7 @@ use brk_structs::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Times
 use log::info;
 use serde_json::Value;
 
-use crate::{Fetcher, retry};
+use crate::{Fetcher, default_retry};
 
 #[derive(Default, Clone)]
 pub struct Kraken {
@@ -35,11 +35,9 @@ impl Kraken {
     pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Kraken...");
 
-        retry(
-            |_| Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url(1)).send()?.json()?),
-            30,
-            10,
-        )
+        default_retry(|_| {
+            Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url(1)).send()?.json()?)
+        })
     }
 
     pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
@@ -57,11 +55,7 @@ impl Kraken {
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
-        retry(
-            |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url(1440)).send()?.json()?),
-            30,
-            10,
-        )
+        default_retry(|_| Self::json_to_date_to_ohlc(&minreq::get(Self::url(1440)).send()?.json()?))
     }
 
     fn json_to_timestamp_to_ohlc(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {

@@ -11,11 +11,13 @@ pub enum Error {
     BitcoinRPC(bitcoincore_rpc::Error),
     Jiff(jiff::Error),
     Fjall(fjall::Error),
+    VecDB(vecdb::Error),
+    SeqDB(vecdb::SeqDBError),
     Minreq(minreq::Error),
     SystemTimeError(time::SystemTimeError),
     SerdeJson(serde_json::Error),
     ZeroCopyError,
-    Vecs(brk_vecs::Error),
+    Vecs(vecdb::Error),
 
     WrongLength,
     WrongAddressType,
@@ -43,6 +45,18 @@ impl From<io::Error> for Error {
     }
 }
 
+impl From<vecdb::Error> for Error {
+    fn from(value: vecdb::Error) -> Self {
+        Self::VecDB(value)
+    }
+}
+
+impl From<vecdb::SeqDBError> for Error {
+    fn from(value: vecdb::SeqDBError) -> Self {
+        Self::SeqDB(value)
+    }
+}
+
 impl From<bitcoincore_rpc::Error> for Error {
     fn from(value: bitcoincore_rpc::Error) -> Self {
         Self::BitcoinRPC(value)
@@ -52,12 +66,6 @@ impl From<bitcoincore_rpc::Error> for Error {
 impl From<minreq::Error> for Error {
     fn from(value: minreq::Error) -> Self {
         Self::Minreq(value)
-    }
-}
-
-impl From<brk_vecs::Error> for Error {
-    fn from(value: brk_vecs::Error) -> Self {
-        Self::Vecs(value)
     }
 }
 
@@ -91,6 +99,8 @@ impl fmt::Display for Error {
             Error::IO(error) => Display::fmt(&error, f),
             Error::Minreq(error) => Display::fmt(&error, f),
             Error::SerdeJson(error) => Display::fmt(&error, f),
+            Error::VecDB(error) => Display::fmt(&error, f),
+            Error::SeqDB(error) => Display::fmt(&error, f),
             Error::Vecs(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
             Error::SystemTimeError(error) => Display::fmt(&error, f),

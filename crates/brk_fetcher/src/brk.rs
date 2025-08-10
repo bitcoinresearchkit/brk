@@ -5,7 +5,7 @@ use brk_structs::{Cents, CheckedSub, Date, DateIndex, Height, OHLCCents};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Dollars, High, Low, Open, retry};
+use crate::{Close, Dollars, High, Low, Open, default_retry};
 
 #[derive(Default, Clone)]
 #[allow(clippy::upper_case_acronyms)]
@@ -15,7 +15,6 @@ pub struct BRK {
 }
 
 const API_URL: &str = "https://bitcoinresearchkit.org/api/vecs";
-const RETRIES: usize = 10;
 const CHUNK_SIZE: usize = 10_000;
 
 impl BRK {
@@ -45,25 +44,21 @@ impl BRK {
     fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCents>> {
         info!("Fetching BRK height {height} prices...");
 
-        retry(
-            |_| {
-                let url = format!(
-                    "{API_URL}/height-to-ohlc?from={}&to={}",
-                    height,
-                    height + CHUNK_SIZE
-                );
+        default_retry(|_| {
+            let url = format!(
+                "{API_URL}/height-to-ohlc?from={}&to={}",
+                height,
+                height + CHUNK_SIZE
+            );
 
-                let body: Value = minreq::get(url).send()?.json()?;
+            let body: Value = minreq::get(url).send()?.json()?;
 
-                body.as_array()
-                    .ok_or(Error::Str("Expect to be an array"))?
-                    .iter()
-                    .map(Self::value_to_ohlc)
-                    .collect::<Result<Vec<_>, _>>()
-            },
-            30,
-            RETRIES,
-        )
+            body.as_array()
+                .ok_or(Error::Str("Expect to be an array"))?
+                .iter()
+                .map(Self::value_to_ohlc)
+                .collect::<Result<Vec<_>, _>>()
+        })
     }
 
     pub fn get_from_date(&mut self, date: Date) -> Result<OHLCCents> {
@@ -94,25 +89,21 @@ impl BRK {
     fn fetch_date_prices(dateindex: DateIndex) -> Result<Vec<OHLCCents>> {
         info!("Fetching BRK dateindex {dateindex} prices...");
 
-        retry(
-            |_| {
-                let url = format!(
-                    "{API_URL}/dateindex-to-ohlc?from={}&to={}",
-                    dateindex,
-                    dateindex + CHUNK_SIZE
-                );
+        default_retry(|_| {
+            let url = format!(
+                "{API_URL}/dateindex-to-ohlc?from={}&to={}",
+                dateindex,
+                dateindex + CHUNK_SIZE
+            );
 
-                let body: Value = minreq::get(url).send()?.json()?;
+            let body: Value = minreq::get(url).send()?.json()?;
 
-                body.as_array()
-                    .ok_or(Error::Str("Expect to be an array"))?
-                    .iter()
-                    .map(Self::value_to_ohlc)
-                    .collect::<Result<Vec<_>, _>>()
-            },
-            30,
-            RETRIES,
-        )
+            body.as_array()
+                .ok_or(Error::Str("Expect to be an array"))?
+                .iter()
+                .map(Self::value_to_ohlc)
+                .collect::<Result<Vec<_>, _>>()
+        })
     }
 
     fn value_to_ohlc(value: &Value) -> Result<OHLCCents> {

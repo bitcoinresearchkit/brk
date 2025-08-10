@@ -1,9 +1,9 @@
 use std::ops::{Add, AddAssign, Div};
 
-use brk_vecs::{CheckedSub, StoredCompressed};
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use serde::Serialize;
+use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Date;

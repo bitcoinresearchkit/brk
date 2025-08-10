@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use brk_error::{Error, Result};
 use brk_structs::{CheckedSub, StoredU64, Version};
-use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, File, Format,
+use vecdb::{
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
     GenericStoredVec, StoredIndex, StoredRaw,
 };
 
@@ -39,7 +37,7 @@ where
     T: ComputedType,
 {
     pub fn forced_import(
-        file: &Arc<File>,
+        db: &Database,
         name: &str,
         version: Version,
         format: Format,
@@ -61,7 +59,7 @@ where
             first: options.first.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("first"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -71,13 +69,13 @@ where
             }),
             last: options.last.then(|| {
                 Box::new(
-                    EagerVec::forced_import(file, name, version + Version::ZERO, format).unwrap(),
+                    EagerVec::forced_import(db, name, version + Version::ZERO, format).unwrap(),
                 )
             }),
             min: options.min.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("min"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -88,7 +86,7 @@ where
             max: options.max.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("max"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -99,7 +97,7 @@ where
             median: options.median.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("median"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -110,7 +108,7 @@ where
             average: options.average.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("average"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -121,7 +119,7 @@ where
             sum: options.sum.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &(if !options.last && !options.average && !options.min && !options.max {
                             name.to_string()
                         } else {
@@ -136,7 +134,7 @@ where
             cumulative: options.cumulative.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -147,7 +145,7 @@ where
             _90p: options._90p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("90p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -158,7 +156,7 @@ where
             _75p: options._75p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("75p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -169,7 +167,7 @@ where
             _25p: options._25p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("25p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -180,7 +178,7 @@ where
             _10p: options._10p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        file,
+                        db,
                         &maybe_suffix("10p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -203,7 +201,7 @@ where
             return Ok(());
         };
 
-        self.validate_computed_version_or_reset_file(source.version())?;
+        self.validate_computed_version_or_reset(source.version())?;
 
         let index = self.starting_index(max_from);
 
@@ -234,7 +232,7 @@ where
     where
         I2: StoredIndex + StoredRaw + CheckedSub<I2>,
     {
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             source.version() + first_indexes.version() + count_indexes.version(),
         )?;
 
@@ -253,10 +251,10 @@ where
 
         first_indexes
             .iter_at(index)
-            .try_for_each(|(i, first_index)| -> Result<()> {
+            .try_for_each(|(index, first_index)| -> Result<()> {
                 let first_index = first_index.into_owned();
 
-                let count_index = count_indexes_iter.unwrap_get_inner(i);
+                let count_index = count_indexes_iter.unwrap_get_inner(index);
 
                 if let Some(first) = self.first.as_mut() {
                     let f = source_iter
@@ -305,7 +303,7 @@ where
 
                         if let Some(max) = self.max.as_mut() {
                             max.forced_push_at(
-                                i,
+                                index,
                                 *values
                                     .last()
                                     .ok_or(Error::Str("expect some"))
@@ -327,27 +325,27 @@ where
                         }
 
                         if let Some(_90p) = self._90p.as_mut() {
-                            _90p.forced_push_at(i, get_percentile(&values, 0.90), exit)?;
+                            _90p.forced_push_at(index, get_percentile(&values, 0.90), exit)?;
                         }
 
                         if let Some(_75p) = self._75p.as_mut() {
-                            _75p.forced_push_at(i, get_percentile(&values, 0.75), exit)?;
+                            _75p.forced_push_at(index, get_percentile(&values, 0.75), exit)?;
                         }
 
                         if let Some(median) = self.median.as_mut() {
-                            median.forced_push_at(i, get_percentile(&values, 0.50), exit)?;
+                            median.forced_push_at(index, get_percentile(&values, 0.50), exit)?;
                         }
 
                         if let Some(_25p) = self._25p.as_mut() {
-                            _25p.forced_push_at(i, get_percentile(&values, 0.25), exit)?;
+                            _25p.forced_push_at(index, get_percentile(&values, 0.25), exit)?;
                         }
 
                         if let Some(_10p) = self._10p.as_mut() {
-                            _10p.forced_push_at(i, get_percentile(&values, 0.10), exit)?;
+                            _10p.forced_push_at(index, get_percentile(&values, 0.10), exit)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
-                            min.forced_push_at(i, *values.first().unwrap(), exit)?;
+                            min.forced_push_at(index, *values.first().unwrap(), exit)?;
                         }
                     }
 
@@ -357,18 +355,18 @@ where
 
                         if let Some(average) = self.average.as_mut() {
                             let avg = sum / len;
-                            average.forced_push_at(i, avg, exit)?;
+                            average.forced_push_at(index, avg, exit)?;
                         }
 
                         if needs_sum_or_cumulative {
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(i, sum, exit)?;
+                                sum_vec.forced_push_at(index, sum, exit)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
                                 let t = cumulative.unwrap() + sum;
                                 cumulative.replace(t);
-                                cumulative_vec.forced_push_at(i, t, exit)?;
+                                cumulative_vec.forced_push_at(index, t, exit)?;
                             }
                         }
                     }
@@ -403,7 +401,7 @@ where
             panic!("unsupported");
         }
 
-        self.validate_computed_version_or_reset_file(
+        self.validate_computed_version_or_reset(
             VERSION + first_indexes.version() + count_indexes.version(),
         )?;
 
@@ -426,10 +424,10 @@ where
 
         first_indexes
             .iter_at(index)
-            .try_for_each(|(i, first_index, ..)| -> Result<()> {
+            .try_for_each(|(index, first_index, ..)| -> Result<()> {
                 let first_index = first_index.into_owned();
 
-                let count_index = count_indexes_iter.unwrap_get_inner(i);
+                let count_index = count_indexes_iter.unwrap_get_inner(index);
 
                 if let Some(first) = self.first.as_mut() {
                     let v = source_first_iter
@@ -468,7 +466,7 @@ where
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            max.forced_push_at(i, *values.last().unwrap(), exit)?;
+                            max.forced_push_at(index, *values.last().unwrap(), exit)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
@@ -479,7 +477,7 @@ where
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            min.forced_push_at(i, *values.first().unwrap(), exit)?;
+                            min.forced_push_at(index, *values.first().unwrap(), exit)?;
                         }
                     }
 
@@ -497,7 +495,7 @@ where
                             // TODO: Multiply by count then divide by cumulative
                             // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
                             let avg = cumulative / len;
-                            average.forced_push_at(i, avg, exit)?;
+                            average.forced_push_at(index, avg, exit)?;
                         }
 
                         if needs_sum_or_cumulative {
@@ -511,13 +509,13 @@ where
                             let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(i, sum, exit)?;
+                                sum_vec.forced_push_at(index, sum, exit)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
                                 let t = cumulative.unwrap() + sum;
                                 cumulative.replace(t);
-                                cumulative_vec.forced_push_at(i, t, exit)?;
+                                cumulative_vec.forced_push_at(index, t, exit)?;
                             }
                         }
                     }
@@ -665,42 +663,42 @@ where
         Ok(())
     }
 
-    pub fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
+    pub fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
         if let Some(first) = self.first.as_mut() {
-            first.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            first.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(last) = self.last.as_mut() {
-            last.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            last.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(min) = self.min.as_mut() {
-            min.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            min.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(max) = self.max.as_mut() {
-            max.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            max.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(median) = self.median.as_mut() {
-            median.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            median.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(average) = self.average.as_mut() {
-            average.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            average.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(sum) = self.sum.as_mut() {
-            sum.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            sum.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(cumulative) = self.cumulative.as_mut() {
-            cumulative.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            cumulative.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(_90p) = self._90p.as_mut() {
-            _90p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            _90p.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(_75p) = self._75p.as_mut() {
-            _75p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            _75p.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(_25p) = self._25p.as_mut() {
-            _25p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            _25p.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
         if let Some(_10p) = self._10p.as_mut() {
-            _10p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+            _10p.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
 
         Ok(())

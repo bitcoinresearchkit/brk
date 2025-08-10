@@ -3,8 +3,8 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use brk_vecs::{CheckedSub, Printable, StoredCompressed};
 use serde::{Deserialize, Serialize};
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex};

@@ -3,7 +3,14 @@ use std::{fmt::Debug, thread::sleep, time::Duration};
 use brk_error::Result;
 use log::info;
 
-pub fn retry<T>(function: impl Fn(usize) -> Result<T>, sleep_in_s: u64, retries: usize) -> Result<T>
+pub fn default_retry<T>(function: impl Fn(usize) -> Result<T>) -> Result<T>
+where
+    T: Debug,
+{
+    retry(function, 5, 6)
+}
+
+fn retry<T>(function: impl Fn(usize) -> Result<T>, sleep_in_s: u64, retries: usize) -> Result<T>
 where
     T: Debug,
 {

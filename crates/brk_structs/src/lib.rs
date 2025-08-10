@@ -6,4 +6,4 @@ mod structs;
 pub use groups::*;
 pub use structs::*;
 
-pub use brk_vecs::{CheckedSub, Exit, Printable, Version};
+pub use vecdb::{CheckedSub, Exit, Printable, Version};

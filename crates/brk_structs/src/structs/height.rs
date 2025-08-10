@@ -4,10 +4,10 @@ use std::{
 };
 
 use bitcoincore_rpc::{Client, RpcApi};
-use brk_vecs::{CheckedSub, Printable, Stamp, StoredCompressed};
 use byteview::ByteView;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
+use vecdb::{CheckedSub, Printable, Stamp, StoredCompressed};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 

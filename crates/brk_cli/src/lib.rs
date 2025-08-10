@@ -14,8 +14,8 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
 use brk_server::{Server, VERSION};
-use brk_vecs::Exit;
 use log::info;
+use vecdb::Exit;
 
 mod bridge;
 mod config;
@@ -136,9 +136,9 @@ pub fn run() -> color_eyre::Result<()> {
                 info!("{} blocks found.", block_count + 1);
 
                 let starting_indexes =
-                    indexer.index(&parser, rpc, &exit, config.check_collisions())?;
+                    indexer.index(&parser, rpc, &exit, config.check_collisions()).unwrap();
 
-                computer.compute(&indexer, starting_indexes, &exit)?;
+                computer.compute(&indexer, starting_indexes, &exit).unwrap();
 
                 if let Some(delay) = config.delay() {
                     sleep(Duration::from_secs(delay))

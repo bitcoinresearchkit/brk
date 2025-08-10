@@ -4,9 +4,9 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
-use brk_vecs::{CheckedSub, Printable, StoredCompressed};
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars};
