@@ -53,12 +53,11 @@ impl Vecs {
         Ok(Self {
             starting_height: Height::ZERO,
             state: states_path.map(|states_path| {
-                AddressCohortState::default_and_import(
+                AddressCohortState::new(
                     states_path,
                     cohort_name.unwrap_or_default(),
                     compute_dollars,
                 )
-                .unwrap()
             }),
             height_to_address_count: EagerVec::forced_import(
                 db,
@@ -95,9 +94,6 @@ impl Vecs {
 impl DynCohortVecs for Vecs {
     fn starting_height(&self) -> Height {
         [
-            self.state.as_ref().map_or(Height::MAX, |state| {
-                state.height().map_or(Height::MAX, |h| h.incremented())
-            }),
             self.height_to_address_count.len().into(),
             self.inner.starting_height(),
         ]
@@ -106,7 +102,7 @@ impl DynCohortVecs for Vecs {
         .unwrap()
     }
 
-    fn init(&mut self, starting_height: Height) {
+    fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
         if starting_height > self.starting_height() {
             unreachable!()
         }
@@ -120,10 +116,10 @@ impl DynCohortVecs for Vecs {
                 .unwrap_get_inner(prev_height);
         }
 
-        self.inner.init(
+        self.inner.import_state_at(
             &mut self.starting_height,
             &mut self.state.as_mut().unwrap().inner,
-        );
+        )
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {

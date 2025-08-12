@@ -19,7 +19,6 @@ impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToInd
 impl AddressTypeToIndexesToAddressCount {
     pub fn compute(
         &mut self,
-        // height: Height,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -75,7 +74,7 @@ impl AddressTypeToIndexesToAddressCount {
         )?;
         Ok(())
     }
-    //
+
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         self.0
             .as_typed_vec()

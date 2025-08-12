@@ -12,7 +12,7 @@ use brk_parser::Parser;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    brk_logger::init(Some(Path::new(".log")));
+    brk_logger::init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
         .join("Library")

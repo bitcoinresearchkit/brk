@@ -29,7 +29,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     fs::create_dir_all(dot_brk_path())?;
 
-    brk_logger::init(Some(&dot_brk_log_path()));
+    brk_logger::init(Some(&dot_brk_log_path()))?;
 
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
@@ -108,9 +108,7 @@ pub fn run() -> color_eyre::Result<()> {
 
                 interface.generate_bridge_file(website, websites_path.as_path())?;
 
-                let watch = config.watch();
-
-                Some(bundle(&websites_path, website.to_folder_name(), watch).await?)
+                Some(bundle(&websites_path, website.to_folder_name(), true).await?)
             } else {
                 None
             };
@@ -120,10 +118,8 @@ pub fn run() -> color_eyre::Result<()> {
                 bundle_path,
             );
 
-            let mcp = config.mcp();
-
             tokio::spawn(async move {
-                server.serve(mcp).await.unwrap();
+                server.serve(true).await.unwrap();
             });
 
             sleep(Duration::from_secs(1));
@@ -139,10 +135,6 @@ pub fn run() -> color_eyre::Result<()> {
                     indexer.index(&parser, rpc, &exit, config.check_collisions()).unwrap();
 
                 computer.compute(&indexer, starting_indexes, &exit).unwrap();
-
-                if let Some(delay) = config.delay() {
-                    sleep(Duration::from_secs(delay))
-                }
 
                 info!("Waiting for new blocks...");
 

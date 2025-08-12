@@ -44,19 +44,12 @@ const VERSION: Version = Version::new(21);
 pub struct Vecs {
     db: Database,
 
+    // ---
+    // States
+    // ---
+
+    // Rollback: diff on stamped_flush + add rollback to stamp
     pub chain_state: RawVec<Height, SupplyState>,
-
-    pub height_to_unspendable_supply: EagerVec<Height, Sats>,
-    pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
-    pub height_to_opreturn_supply: EagerVec<Height, Sats>,
-    pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    pub addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount,
-    pub addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount,
-    pub addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount,
-    pub addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount,
-    pub utxo_cohorts: utxo_cohorts::Vecs,
-    pub address_cohorts: address_cohorts::Vecs,
-
     pub p2pk33addressindex_to_anyaddressindex: RawVec<P2PK33AddressIndex, AnyAddressIndex>,
     pub p2pk65addressindex_to_anyaddressindex: RawVec<P2PK65AddressIndex, AnyAddressIndex>,
     pub p2pkhaddressindex_to_anyaddressindex: RawVec<P2PKHAddressIndex, AnyAddressIndex>,
@@ -68,6 +61,22 @@ pub struct Vecs {
     pub loadedaddressindex_to_loadedaddressdata: RawVec<LoadedAddressIndex, LoadedAddressData>,
     pub emptyaddressindex_to_emptyaddressdata: RawVec<EmptyAddressIndex, EmptyAddressData>,
 
+    // Rollback: inner state: save price_to_amount_STAMP instead of price_to_amount
+    pub utxo_cohorts: utxo_cohorts::Vecs,
+    pub address_cohorts: address_cohorts::Vecs,
+
+    pub height_to_unspendable_supply: EagerVec<Height, Sats>,
+    pub height_to_opreturn_supply: EagerVec<Height, Sats>,
+    pub addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount,
+    pub addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount,
+
+    // ---
+    // Computed
+    // ---
+    pub addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount,
+    pub addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount,
+    pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
+    pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredU64>,
 }
@@ -678,43 +687,57 @@ impl Vecs {
         };
 
         let starting_height = starting_indexes.height.min(stateful_starting_height);
-
-        if starting_height.is_zero() {
-            info!("Starting processing utxos from the start");
-
-            // TODO: rollback instead
-
-            chain_state = vec![];
-            chain_state_starting_height = Height::ZERO;
-
-            self.p2pk33addressindex_to_anyaddressindex.reset()?;
-            self.p2pk65addressindex_to_anyaddressindex.reset()?;
-            self.p2pkhaddressindex_to_anyaddressindex.reset()?;
-            self.p2shaddressindex_to_anyaddressindex.reset()?;
-            self.p2traddressindex_to_anyaddressindex.reset()?;
-            self.p2wpkhaddressindex_to_anyaddressindex.reset()?;
-            self.p2wshaddressindex_to_anyaddressindex.reset()?;
-            self.p2aaddressindex_to_anyaddressindex.reset()?;
-            self.loadedaddressindex_to_loadedaddressdata.reset()?;
-            self.emptyaddressindex_to_emptyaddressdata.reset()?;
-
-            info!("Resetting utxo price maps...");
-
-            separate_utxo_vecs
-                .par_iter_mut()
-                .flat_map(|(_, v)| v.state.as_mut())
-                .try_for_each(|state| state.reset_price_to_amount())?;
-
-            info!("Resetting address price maps...");
-
-            separate_address_vecs
-                .par_iter_mut()
-                .try_for_each(|(_, v)| v.state.as_mut().unwrap().reset_price_to_amount())?;
-        };
-
         let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
-
         if starting_height <= last_height {
+            let starting_height = if separate_utxo_vecs
+                .par_iter_mut()
+                .try_for_each(|(_, v)| v.import_state_at(starting_height))
+                .is_err()
+                || separate_address_vecs
+                    .par_iter_mut()
+                    .try_for_each(|(_, v)| v.import_state_at(starting_height))
+                    .is_err()
+            {
+                Height::ZERO
+            } else {
+                starting_height
+            };
+
+            if starting_height.is_zero() {
+                info!("Starting processing utxos from the start");
+
+                chain_state = vec![];
+                chain_state_starting_height = Height::ZERO;
+
+                self.p2pk33addressindex_to_anyaddressindex.reset()?;
+                self.p2pk65addressindex_to_anyaddressindex.reset()?;
+                self.p2pkhaddressindex_to_anyaddressindex.reset()?;
+                self.p2shaddressindex_to_anyaddressindex.reset()?;
+                self.p2traddressindex_to_anyaddressindex.reset()?;
+                self.p2wpkhaddressindex_to_anyaddressindex.reset()?;
+                self.p2wshaddressindex_to_anyaddressindex.reset()?;
+                self.p2aaddressindex_to_anyaddressindex.reset()?;
+                self.loadedaddressindex_to_loadedaddressdata.reset()?;
+                self.emptyaddressindex_to_emptyaddressdata.reset()?;
+
+                info!("Resetting utxo price maps...");
+
+                separate_utxo_vecs
+                    .par_iter_mut()
+                    .flat_map(|(_, v)| v.state.as_mut())
+                    .try_for_each(|state| state.reset_price_to_amount_if_needed())?;
+
+                info!("Resetting address price maps...");
+
+                separate_address_vecs
+                    .par_iter_mut()
+                    .try_for_each(|(_, v)| {
+                        v.state.as_mut().unwrap().reset_price_to_amount_if_needed()
+                    })?;
+            }
+
+            starting_indexes.update_from_height(starting_height, indexes);
+
             let inputindex_to_outputindex_reader = inputindex_to_outputindex.create_reader();
             let outputindex_to_value_reader = outputindex_to_value.create_reader();
             let outputindex_to_outputtype_reader = outputindex_to_outputtype.create_reader();
@@ -745,16 +768,6 @@ impl Vecs {
             let mut height_to_date_fixed_iter = height_to_date_fixed.into_iter();
             let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
             let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
-
-            starting_indexes.update_from_height(starting_height, indexes);
-
-            separate_utxo_vecs
-                .par_iter_mut()
-                .for_each(|(_, v)| v.init(starting_height));
-
-            separate_address_vecs
-                .par_iter_mut()
-                .for_each(|(_, v)| v.init(starting_height));
 
             let height_to_close_vec =
                 height_to_close.map(|height_to_close| height_to_close.collect().unwrap());

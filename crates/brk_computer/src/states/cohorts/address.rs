@@ -14,19 +14,15 @@ pub struct AddressCohortState {
 }
 
 impl AddressCohortState {
-    pub fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
-        Ok(Self {
+    pub fn new(path: &Path, name: &str, compute_dollars: bool) -> Self {
+        Self {
             address_count: 0,
-            inner: CohortState::default_and_import(path, name, compute_dollars)?,
-        })
+            inner: CohortState::new(path, name, compute_dollars),
+        }
     }
 
-    pub fn height(&self) -> Option<Height> {
-        self.inner.height()
-    }
-
-    pub fn reset_price_to_amount(&mut self) -> Result<()> {
-        self.inner.reset_price_to_amount()
+    pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
+        self.inner.reset_price_to_amount_if_needed()
     }
 
     pub fn reset_single_iteration_values(&mut self) {

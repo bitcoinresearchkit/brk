@@ -1,75 +1,65 @@
 use std::{
     collections::BTreeMap,
     fs,
-    io::{Cursor, Read},
     path::{Path, PathBuf},
+    time::SystemTime,
 };
 
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_structs::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
+use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
-use zerocopy::{FromBytes, IntoBytes};
 
 use crate::states::SupplyState;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
     pathbuf: PathBuf,
-    height: Option<Height>,
-    state: State,
+    state: Option<State>,
 }
 
+const STATE_AT_: &str = "state_at_";
+const STATE_TO_KEEP: usize = 10;
+
 impl PriceToAmount {
-    pub fn forced_import(path: &Path, name: &str) -> Self {
-        Self::import(path, name).unwrap_or_else(|_| {
-            // dbg!(e);
-            Self {
-                pathbuf: Self::path_(path, name),
-                height: None,
-                state: State::default(),
-            }
-        })
+    pub fn create(path: &Path, name: &str) -> Self {
+        Self {
+            pathbuf: path.join(format!("{name}_price_to_amount")),
+            state: None,
+        }
     }
 
-    pub fn import(path: &Path, name: &str) -> Result<Self> {
-        let path = Self::path_(path, name);
-        fs::create_dir_all(&path)?;
-
-        let state = State::deserialize(&fs::read(Self::path_state_(&path))?)?;
-
-        Ok(Self {
-            height: Height::try_from(Self::path_height_(&path).as_path()).ok(),
-            pathbuf: path,
-            state,
-        })
+    pub fn import_at(&mut self, height: Height) -> Result<()> {
+        self.state = Some(State::deserialize(&fs::read(self.path_state(height))?)?);
+        Ok(())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
-        self.state.iter()
+        self.state.as_ref().unwrap().iter()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.state.is_empty()
+        self.state.as_ref().unwrap().is_empty()
     }
 
     pub fn first_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.state.first_key_value()
+        self.state.as_ref().unwrap().first_key_value()
     }
 
     pub fn last_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.state.last_key_value()
+        self.state.as_ref().unwrap().last_key_value()
     }
 
     pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
-        *self.state.entry(price).or_default() += supply_state.value;
+        *self.state.as_mut().unwrap().entry(price).or_default() += supply_state.value;
     }
 
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
-        if let Some(amount) = self.state.get_mut(&price) {
+        if let Some(amount) = self.state.as_mut().unwrap().get_mut(&price) {
             *amount -= supply_state.value;
             if *amount == Sats::ZERO {
-                self.state.remove(&price);
+                self.state.as_mut().unwrap().remove(&price);
             }
         } else {
             dbg!(&self.state, price, &self.pathbuf);
@@ -77,83 +67,89 @@ impl PriceToAmount {
         }
     }
 
-    pub fn reset(&mut self) -> Result<()> {
-        self.state.clear();
-        self.height = None;
-        fs::remove_dir_all(&self.pathbuf)?;
+    pub fn init(&mut self) {
+        self.state.replace(State::default());
+    }
+
+    pub fn clean(&mut self) -> Result<()> {
+        let _ = fs::remove_dir_all(&self.pathbuf);
         fs::create_dir_all(&self.pathbuf)?;
         Ok(())
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.height = Some(height);
-        height.write(&self.path_height())?;
-        fs::write(self.path_state(), self.state.serialize())?;
+        let mut files: Vec<(SystemTime, PathBuf)> = fs::read_dir(&self.pathbuf)?
+            .filter_map(|entry| {
+                let path = entry.ok()?.path();
+                let name = path.file_name()?.to_str()?;
+                if name.starts_with(STATE_AT_) && name[STATE_AT_.len() + 1..].parse::<u64>().is_ok()
+                {
+                    let modified = fs::metadata(&path).ok()?.modified().ok()?;
+                    Some((modified, path))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        files.sort_unstable_by_key(|(time, _)| *time);
+
+        for (_, path) in files.iter().take(files.len().saturating_sub(STATE_TO_KEEP)) {
+            fs::remove_file(path)?;
+        }
+
+        fs::write(
+            self.path_state(height),
+            self.state.as_ref().unwrap().serialize()?,
+        )?;
+
         Ok(())
     }
 
-    pub fn height(&self) -> Option<Height> {
-        self.height
+    fn path_state(&self, height: Height) -> PathBuf {
+        Self::path_state_(&self.pathbuf, height)
     }
-
-    fn path_(path: &Path, name: &str) -> PathBuf {
-        path.join(format!("{name}_price_to_amount"))
-    }
-
-    fn path_state(&self) -> PathBuf {
-        Self::path_state_(&self.pathbuf)
-    }
-    fn path_state_(path: &Path) -> PathBuf {
-        path.join("state")
-    }
-
-    fn path_height(&self) -> PathBuf {
-        Self::path_height_(&self.pathbuf)
-    }
-    fn path_height_(path: &Path) -> PathBuf {
-        path.join("height")
+    fn path_state_(path: &Path, height: Height) -> PathBuf {
+        path.join(format!("{STATE_AT_}{}", height))
     }
 }
 
 #[derive(Clone, Default, Debug, Deref, DerefMut, Serialize, Deserialize)]
 struct State(BTreeMap<Dollars, Sats>);
 
+const COMPRESSION_LEVEL: usize = 4;
+
 impl State {
-    fn serialize(&self) -> Vec<u8> {
-        let len = self.len();
+    fn serialize(&self) -> vecdb::Result<Vec<u8>> {
+        let keys: Vec<f64> = self.keys().cloned().map(f64::from).collect();
+        let values: Vec<u64> = self.values().cloned().map(u64::from).collect();
 
-        let mut buffer = Vec::with_capacity(8 + len * 16);
+        let compressed_keys = simpler_compress(&keys, COMPRESSION_LEVEL)?;
+        let compressed_values = simpler_compress(&values, COMPRESSION_LEVEL)?;
 
-        buffer.extend(len.as_bytes());
+        let mut buffer = Vec::new();
+        buffer.extend(&(keys.len() as u64).to_ne_bytes());
+        buffer.extend(&(compressed_keys.len() as u64).to_ne_bytes());
+        buffer.extend(compressed_keys);
+        buffer.extend(compressed_values);
 
-        self.iter().for_each(|(key, value)| {
-            buffer.extend(key.as_bytes());
-            buffer.extend(value.as_bytes());
-        });
-
-        buffer
+        Ok(buffer)
     }
 
-    fn deserialize(data: &[u8]) -> Result<Self> {
-        let mut cursor = Cursor::new(data);
-        let mut buffer = [0u8; 8];
+    fn deserialize(data: &[u8]) -> vecdb::Result<Self> {
+        let entry_count = u64::from_ne_bytes(data[0..8].try_into().unwrap()) as usize;
+        let keys_len = u64::from_ne_bytes(data[8..16].try_into().unwrap()) as usize;
 
-        cursor
-            .read_exact(&mut buffer)
-            .map_err(|_| Error::Str("Failed to read entry count"))?;
-        let entry_count = usize::read_from_bytes(&buffer)?;
+        let keys: Vec<f64> = simple_decompress(&data[16..16 + keys_len])?;
+        let values: Vec<u64> = simple_decompress(&data[16 + keys_len..])?;
 
-        let mut map = BTreeMap::new();
+        let map: BTreeMap<Dollars, Sats> = keys
+            .into_iter()
+            .zip(values)
+            .map(|(k, v)| (Dollars::from(k), Sats::from(v)))
+            .collect();
 
-        for _ in 0..entry_count {
-            cursor.read_exact(&mut buffer)?;
-            let key = Dollars::read_from_bytes(&buffer)?;
-
-            cursor.read_exact(&mut buffer)?;
-            let value = Sats::read_from_bytes(&buffer)?;
-
-            map.insert(key, value);
-        }
+        assert_eq!(map.len(), entry_count);
 
         Ok(Self(map))
     }
