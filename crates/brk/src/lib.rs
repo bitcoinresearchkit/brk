@@ -1,4 +1,4 @@
-#![doc = include_str!(concat!("../", env!("CARGO_PKG_README")))]
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "bundler")]
 #[doc(inline)]

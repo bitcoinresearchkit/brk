@@ -1,69 +1,105 @@
-# BRK Indexer
+# brk_indexer
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_indexer">
-    <img src="https://img.shields.io/crates/v/brk_indexer" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_indexer">
-    <img src="https://img.shields.io/docsrs/brk_indexer" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_indexer" alt="Size" />
-  <a href="https://deps.rs/crate/brk_indexer">
-    <img src="https://deps.rs/crate/brk_indexer/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Bitcoin blockchain indexer that processes raw block data from Bitcoin Core and creates efficient storage structures using vectors and key-value stores for fast data retrieval and analysis. This crate builds the foundation for BRK's data pipeline by extracting and organizing blockchain data into optimized storage formats.
 
-A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../brk_parser`) and creates a database of the vecs (`brk_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
+## Features
 
-The crate only stores the bare minimum to be self sufficient and not have to use an RPC client (except for scripts which are not stored). If you need more data, checkout `../computer` which uses the outputs from the indexer to compute a whole range of datasets.
+- **Block-by-block processing**: Iterates through blockchain using brk_parser
+- **Dual storage architecture**: Combines vectors (brk_vec) for time-series data and key-value stores (brk_store) for lookups
+- **Memory efficient**: ~5GB peak RAM usage during indexing
+- **Collision detection**: Validates data integrity with optional collision checking
+- **Incremental updates**: Supports resuming from last indexed height
+- **Rollback protection**: Automatic rollback on interruption or errors
 
-Vecs are used sparingly instead of stores for multiple reasons:
+## Storage Strategy
 
-- Only stores the relevant data since the key is an index
-- Saved as uncompressed bytes and thus can be parsed manually (with any programming language) without relying on a server or library
-- Easy to work with and predictable
+### Vectors (brk_vec)
+
+Used for sequential, time-indexed data:
+- Block metadata (height, timestamp, hash)
+- Transaction counts and statistics
+- Price data and market metrics
+- Efficient for range queries and analytics
+
+### Key-Value Stores (brk_store)
+
+Used for lookup operations:
+- Address mappings and balances
+- Transaction and UTXO data
+- Script and output type indices
+- Fast point queries by hash/address
 
 ## Usage
 
-Storage wise, the expected overhead should be around 30% of the chain itself.
+```rust
+use brk_indexer::Indexer;
+use brk_parser::Parser;
+use bitcoincore_rpc::{Auth, Client};
+use vecdb::Exit;
+use std::path::Path;
 
-Peaks at 5 GB of RAM
+fn main() -> brk_error::Result<()> {
+    // Setup paths and RPC
+    let bitcoin_dir = Path::new("~/.bitcoin");
+    let outputs_dir = Path::new("./brk_data");
 
-## Outputs
+    let rpc = Box::leak(Box::new(Client::new(
+        "http://localhost:8332",
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?));
 
-Vecs: `src/storage/vecs/mod.rs`
+    // Create parser and indexer
+    let parser = Parser::new(
+        bitcoin_dir.join("blocks"),
+        outputs_dir.to_path_buf(),
+        rpc
+    );
 
-Stores: `src/storage/stores/mod.rs`
+    let mut indexer = Indexer::forced_import(outputs_dir)?;
 
-## Benchmark
+    // Setup exit handler
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
 
-### `v0.0.21`
+    // Index the blockchain
+    let indexes = indexer.index(&parser, rpc, &exit, true)?;
 
-- machine: `MBP M3 Pro (36GB RAM)`
-- mode: `raw`
-- from: `0`
-- to: `892_098`
-- time: `7 hours 10 min 22s`
-- peak memory: `6.1GB`
-- disk usage: `270 GB`
-- overhead: `36%` (`270 GB / 741 GB`)
+    println!("Indexed up to height: {}", indexes.height);
 
-### `v0.0.31`
+    Ok(())
+}
+```
 
-- machine: `MBP M3 Pro (36GB RAM)`
-- mode: `raw`
-- disk usage: `208 GB`
-- overhead: `28%` (`208 GB / 744 GB`)
-- peak memory: `5.7GB`
+## Performance
+
+Benchmarked on MacBook Pro M3 Pro (36GB RAM):
+- **Full sync to ~892k blocks**: 7-8 hours
+- **Peak memory usage**: 5-6GB
+- **Storage overhead**: ~27% of Bitcoin Core `/blocks` size (193GB as of 2025/08)
+- **Incremental updates**: Resumes from last height efficiently
+
+## Data Organization
+
+The indexer creates the following storage structure:
+```
+brk_data/
+├── indexed/
+│   ├── vecs/          # Vector storage for time-series data
+│   └── stores/        # Key-value stores for lookups
+└── ...
+```
+
+## Requirements
+
+- Running Bitcoin Core node with RPC access
+- Access to Bitcoin Core's block files
+- Minimum 500GB free storage space
+- 8GB+ RAM recommended for optimal performance
+
+## Incremental Indexing
+
+The indexer supports continuous operation:
+- Automatically detects last indexed height
+- Processes new blocks as they arrive
+- Handles blockchain reorganizations
+- Provides graceful shutdown with Ctrl+C

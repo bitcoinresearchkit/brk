@@ -1,34 +1,81 @@
-# BRK Interface
+# brk_interface
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_interface">
-    <img src="https://img.shields.io/crates/v/brk_interface" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_interface">
-    <img src="https://img.shields.io/docsrs/brk_interface" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_interface" alt="Size" />
-  <a href="https://deps.rs/crate/brk_interface">
-    <img src="https://deps.rs/crate/brk_interface/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Data query and formatting interface that provides a unified API for accessing Bitcoin datasets from both the indexer and computer components with flexible output formats and pagination support. This crate serves as the primary data access layer for BRK's web API and MCP endpoints.
 
-A crate that searches for datasets from either `brk_indexer` or `brk_computer` according to given parameters.
+## Features
 
-It's possible to search for one or multiple dataset if they have the same index and specify range with both the `from` and `to` being optional and supporting negative values.
+- **Unified data access**: Query indexed blockchain data and computed analytics
+- **Multiple output formats**: JSON, CSV, TSV, and Markdown table formatting
+- **Flexible pagination**: Range queries with positive/negative indexing support
+- **Multi-dataset queries**: Retrieve multiple datasets with the same index
+- **Dynamic search**: Find datasets by ID with automatic fallbacks
+- **Schema generation**: JSON Schema support for API documentation
 
-The output will depend on the format choson which can be Markdown, Json, CSV or TSV and might vary if there is a one or mutiple datasets, and if one dataset one or multiple values.
+## Query Parameters
 
-In the future, it will support more features similar to a real query engine like in a Postgres databases and presets to fetch data grouped by address, transaction or blockhash/height.
+### Core Parameters
+
+- **index**: Time frame for data retrieval (height, date, week, month, etc.)
+- **ids**: Dataset identifiers (comma or space separated)
+- **from**: Starting index (negative values count from end)
+- **to**: Ending index (optional, exclusive)
+- **count**: Maximum number of results to return
+- **format**: Output format (json, csv, tsv, md)
+
+## Usage
+
+```rust
+use brk_interface::{Interface, Params, ParamsOpt, Index, Format};
+use brk_indexer::Indexer;
+use brk_computer::Computer;
+use std::path::Path;
+
+fn main() -> brk_error::Result<()> {
+    let outputs_dir = Path::new("./brk_data");
+
+    // Load indexer and computer
+    let indexer = Indexer::forced_import(outputs_dir)?;
+    let computer = Computer::forced_import(outputs_dir, &indexer, None)?;
+
+    // Create interface
+    let interface = Interface::build(&indexer, &computer);
+
+    // Query latest block data
+    let params = Params {
+        index: Index::Height,
+        ids: vec!["date", "timestamp"].into(),
+        rest: ParamsOpt::default()
+            .set_from(-1)  // Latest block
+            .set_format(Format::JSON),
+    };
+
+    let result = interface.search_and_format(params)?;
+    println!("{}", result);
+
+    // Query price data for last 10 blocks
+    let params = Params {
+        index: Index::Height,
+        ids: vec!["price_usd"].into(),
+        rest: ParamsOpt::default()
+            .set_from(-10)
+            .set_count(10)
+            .set_format(Format::CSV),
+    };
+
+    let result = interface.search_and_format(params)?;
+    println!("{}", result);
+
+    Ok(())
+}
+```
+
+## API Integration
+
+The interface provides methods for different use cases:
+
+- `search()`: Find datasets matching parameters
+- `format()`: Format search results into specified output format
+- `search_and_format()`: Combined search and format operation
+- `get_indexes()`: List available time indices
+- `get_vecids()`: List available dataset identifiers
+- `get_height()`: Get current blockchain height

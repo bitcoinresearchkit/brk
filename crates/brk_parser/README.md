@@ -1,60 +1,87 @@
-# BRK Parser
+# brk_parser
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_parser">
-    <img src="https://img.shields.io/crates/v/brk_parser" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_parser">
-    <img src="https://img.shields.io/docsrs/brk_parser" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_parser" alt="Size" />
-  <a href="https://deps.rs/crate/brk_parser">
-    <img src="https://deps.rs/crate/brk_parser/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+High-performance Bitcoin block parser that reads raw Bitcoin Core block files (`blkXXXXX.dat`) and provides a sequential iterator over blocks with fork filtering and XOR support. This crate processes the entire Bitcoin blockchain efficiently using parallel processing and maintains state for fast restarts.
 
-A very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
+## Features
 
-The element returned by the iterator is a tuple which includes the:
-- Height: `Height`
-- Block: `Block` (from `bitcoin-rust`)
-- Block's Hash: `BlockHash` (also from `bitcoin-rust`)
-
-Tested with Bitcoin Core `v25.0..=v28.1`
+- **Fast sequential parsing**: Iterates blocks in height order (0, 1, 2, ...)
+- **Fork filtering**: Uses Bitcoin Core RPC to exclude orphaned blocks
+- **XOR support**: Handles XOR-encrypted block files automatically
+- **Parallel processing**: Multi-threaded parsing and decoding for maximum speed
+- **State caching**: Saves parsing state for faster subsequent runs
+- **Memory efficient**: ~500MB peak memory usage
+- **Range queries**: Parse specific height ranges or single blocks
 
 ## Requirements
 
-Even though it reads *blkXXXXX.dat* files, it **needs** `bitcoind` (with no particular parameters) to run with the RPC server to filter out forks.
+- Running Bitcoin Core node with RPC enabled
+- Access to Bitcoin Core's `blocks/` directory containing `blkXXXXX.dat` files
+- Bitcoin Core versions v25.0 through v29.0 supported
 
-Peak memory should be around 500MB.
+## Usage
 
-XOR-ed blocks are supported.
+```rust
+use brk_parser::Parser;
+use brk_structs::Height;
+use bitcoincore_rpc::{Auth, Client};
+use std::path::Path;
 
-## Disclaimer
+fn main() -> bitcoincore_rpc::Result<()> {
+    // Setup Bitcoin Core RPC client
+    let rpc = Box::leak(Box::new(Client::new(
+        "http://localhost:8332",
+        Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
+    )?));
 
-A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but doesn't yet support locking. Thus, it is highly recommended to run one instance of `brk_parser` at a time.
+    // Create parser
+    let parser = Parser::new(
+        Path::new("~/.bitcoin/blocks").to_path_buf(),
+        Path::new("./brk_data").to_path_buf(),  // Output directory
+        rpc,
+    );
 
-## Benchmark
+    // Parse all blocks
+    parser.parse(None, None)
+        .iter()
+        .for_each(|(height, block, hash)| {
+            println!("Block {}: {} ({} transactions)",
+                height, hash, block.txdata.len());
+        });
 
-|  | [brk_parser](https://crates.io/crates/brk_parser) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator)* |
-| --- | --- | --- | --- |
-| Runs **with** `bitcoind` | Yes ✅ | No ❌ | Yes ✅ |
-| Runs **without** `bitcoind` | No ❌ | Yes ✅ | Yes ✅ |
-| `0..=855_000` | 4mn 10s | 4mn 45s | > 2h |
-| `800_000..=855_000` | 0mn 52s (4mn 10s if first run) | 0mn 55s | > 2h |
+    // Parse specific range
+    let start = Some(Height::new(800_000));
+    let end = Some(Height::new(800_100));
 
-\* `blocks_iterator` is with the default config (and thus with `skip_prevout = false` which does a lot more than just iterate over blocks) so it isn't an apples to apples comparaison and the numbers are misleading. You should expect much closer times. Will update the benchmark with `skip_prevout = true` as soon as possible.
+    parser.parse(start, end)
+        .iter()
+        .for_each(|(height, block, hash)| {
+            println!("Block {}: {}", height, hash);
+        });
 
-*Benchmarked on a Macbook Pro M3 Pro*
+    // Get single block
+    let block = parser.get(Height::new(0)); // Genesis block
+    println!("Genesis block has {} transactions", block.txdata.len());
+
+    Ok(())
+}
+```
+
+## Output Format
+
+The parser returns tuples containing:
+- `Height`: Block height (0, 1, 2, ...)
+- `Block`: Complete block data (from `bitcoin` crate)
+- `BlockHash`: Block's cryptographic hash
+
+## Performance
+
+Benchmarked on MacBook Pro M3 Pro:
+- Full blockchain (0 to 855,000): **4 minutes 10 seconds**
+- Recent blocks (800,000 to 855,000): **52 seconds** (4m 10s on first run)
+- Peak memory usage: ~500MB
+
+## State Management
+
+The parser saves state in `{output_dir}/blk_index_to_blk_recap.json` for faster restarts. This file tracks block file indices and heights to avoid re-scanning unchanged files.
+
+**Note**: Only one parser instance should run at a time as the state file doesn't yet support concurrent access.

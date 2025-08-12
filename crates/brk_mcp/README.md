@@ -1,49 +1,34 @@
-# BRK MCP
+# brk_mcp
 
-A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK
+Model Context Protocol (MCP) endpoint that provides LLMs with access to Bitcoin Research Kit data and functionality.
 
-## URLs
+This crate implements a stateless MCP endpoint that integrates with `brk_server` to expose BRK's Bitcoin blockchain data through a standardized protocol, enabling LLMs like Claude to directly query blockchain metrics, transaction data, market prices, and time-series data.
 
-- https://eu1.bitcoinresearchkit.org/mcp
-- https://eu2.bitcoinresearchkit.org/mcp
+The stateless design makes it compatible with load balancers by default.
+
+## Tools Available
+
+- `get_index_count` - Count of available data indexes
+- `get_vecid_count` - Count of available vector identifiers
+- `get_vec_count` - Total count of all vectors
+- `get_indexes` - List all available indexes
+- `get_accepted_indexes` - Index types and their variants
+- `get_vecids` - Paginated list of vector identifiers
+- `get_index_to_vecids` - Vectors supporting specific indexes
+- `get_vecid_to_indexes` - Indexes supported by specific vectors
+- `get_vecs` - Query vector data with flexible parameters
+- `get_version` - BRK version information
 
 ## Usage
 
-To connect to the MCP use any of the previous URL, no token or auth is needed.
+The MCP server is automatically exposed at `/mcp` when BRK's HTTP server is running with MCP enabled.
 
-This implementation has only been tested with Claude and the [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector).
+### With Claude Desktop
 
-Please be aware that the technology is evolving very rapidly, thus having issues is probably expected. If you, you can join the discord see if there is a solution.
+Add the MCP endpoint to Claude Desktop.
 
-### Claude
+For example:
 
-#### Step 1
-
-First we need to connect BRK to Claude. To do that we need to go to the "Connect apps" menu from the home screen of Claude desktop.
-
-![Image of Claude Desktop home screen](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step1.png)
-
-#### Step 2
-
-Then simply go to "Add integration".
-
-![Image of the Connect app" menu of Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step2.png)
-
-#### Step 3
-
-Claude's MCP client is (for now?) session based thus using a URL pointing to a load balancer will not work.
-
-Use one of the following URL instead:
-
-- https://eu1.bitcoinresearchkit.org/mcp
-- https://eu2.bitcoinresearchkit.org/mcp
-
-![Image of Add Integration menu of Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step3.png)
-
-#### Step 4
-
-Verify that it has access to BRK's tools.
-
-Optionally and highly recommended, giving it unsupervised access gives a more fluid experience and prevents possible issues and errors.
-
-![Image of edit integration meny on Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step4.png)
+```
+https://bitcoinresearchkit.org/mcp
+```

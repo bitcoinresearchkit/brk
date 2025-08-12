@@ -1,28 +1,57 @@
-# BRK Fetcher
+# brk_fetcher
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_fetcher">
-    <img src="https://img.shields.io/crates/v/brk_fetcher" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_fetcher">
-    <img src="https://img.shields.io/docsrs/brk_fetcher" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_fetcher" alt="Size" />
-  <a href="https://deps.rs/crate/brk_fetcher">
-    <img src="https://deps.rs/crate/brk_fetcher/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Bitcoin price fetcher that retrieves historical OHLC (Open, High, Low, Close) data by date or block height from multiple sources including Binance, Kraken, and the main BRK instance. This crate provides a unified interface with automatic fallback between exchanges and retry logic for reliable price data collection.
 
-A crate that can fetch the Bitcoin price, either by date or height, from Binance, Kraken and the main instance of BRK.
+## Features
+
+- **Multiple data sources**: Binance, Kraken APIs, and BRK instance
+- **Flexible queries**: Fetch prices by date or block height with timestamp
+- **Automatic fallback**: Tries sources in order (Kraken → Binance → BRK)
+- **Retry logic**: Built-in retry mechanism
+- **Time resolution**: 1-minute and 1-day interval support
+- **HAR file import**: Import Binance chart data from browser for historical prices
+
+## Usage
+
+```rust
+use brk_fetcher::Fetcher;
+use brk_structs::{Date, Height};
+
+fn main() -> brk_error::Result<()> {
+    // Initialize fetcher with exchange APIs enabled
+    let mut fetcher = Fetcher::import(true, None)?;
+
+    // Fetch price by date
+    let price = fetcher.get_date(Date::new(2025, 1, 15))?;
+    println!("Price on 2025-01-15: ${}", price.close.dollars());
+
+    // Fetch price by block height
+    let price = fetcher.get_height(
+        Height::new(900_000),
+        timestamp,
+        previous_timestamp,
+    )?;
+    println!("Price at block 900,000: ${}", price.close.dollars());
+
+    Ok(())
+}
+```
+
+## Individual Sources
+
+Each exchange can be used independently:
+
+```rust
+use brk_fetcher::{Binance, Kraken, BRK};
+
+// Fetch from specific exchanges
+let binance_data = Binance::fetch_1d()?;
+let kraken_data = Kraken::fetch_1mn()?;
+let brk_data = BRK::default().get_from_height(Height::new(800_000))?;
+```
+
+## Limitations
+
+- **1-minute data**: Limited to last 16 hours (Binance) or 10 hours (Kraken)
+- **Network dependent**: Requires internet connection for exchange APIs
+- **Rate limits**: Subject to exchange API rate limiting
