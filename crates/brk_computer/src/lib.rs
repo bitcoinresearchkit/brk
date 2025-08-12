@@ -45,7 +45,7 @@ pub struct Computer {
     pub cointime: cointime::Vecs,
 }
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::TWO;
 
 impl Computer {
     /// Do NOT import multiple times or things will break !!!

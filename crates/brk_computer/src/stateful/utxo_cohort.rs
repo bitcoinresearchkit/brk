@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    starting_height: Height,
+    starting_height: Option<Height>,
 
     pub state: Option<UTXOCohortState>,
 
@@ -40,15 +40,14 @@ impl Vecs {
         let compute_dollars = price.is_some();
 
         Ok(Self {
-            starting_height: Height::ZERO,
+            starting_height: None,
 
             state: states_path.map(|states_path| {
-                UTXOCohortState::default_and_import(
+                UTXOCohortState::new(
                     states_path,
                     cohort_name.unwrap_or_default(),
                     compute_dollars,
                 )
-                .unwrap()
             }),
 
             inner: common::Vecs::forced_import(
@@ -69,26 +68,20 @@ impl Vecs {
 
 impl DynCohortVecs for Vecs {
     fn starting_height(&self) -> Height {
-        [
-            self.state.as_ref().map_or(Height::MAX, |state| {
-                state.height().map_or(Height::MAX, |h| h.incremented())
-            }),
-            self.inner.starting_height(),
-        ]
-        .into_iter()
-        .min()
-        .unwrap()
+        self.inner.starting_height()
     }
 
-    fn init(&mut self, starting_height: Height) {
+    fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
         if starting_height > self.starting_height() {
             unreachable!()
         }
 
-        self.starting_height = starting_height;
+        self.starting_height = Some(starting_height);
 
-        self.inner
-            .init(&mut self.starting_height, self.state.as_mut().unwrap());
+        self.inner.import_state_at(
+            self.starting_height.as_mut().unwrap(),
+            self.state.as_mut().unwrap(),
+        )
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -96,7 +89,7 @@ impl DynCohortVecs for Vecs {
     }
 
     fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        if self.starting_height > height {
+        if self.starting_height.unwrap() > height {
             return Ok(());
         }
 

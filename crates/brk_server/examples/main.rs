@@ -12,7 +12,7 @@ use brk_server::Server;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    brk_logger::init(Some(Path::new(".log")));
+    brk_logger::init(Some(Path::new(".log")))?;
 
     let process = true;
 

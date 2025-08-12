@@ -6,7 +6,7 @@
 use std::{
     fmt::Display,
     fs::{self, OpenOptions},
-    io::Write,
+    io::{self, Write},
     path::Path,
 };
 
@@ -15,7 +15,7 @@ use jiff::{Timestamp, tz};
 pub use owo_colors::OwoColorize;
 
 #[inline]
-pub fn init(path: Option<&Path>) {
+pub fn init(path: Option<&Path>) -> io::Result<()> {
     let file = path.map(|path| {
         let _ = fs::remove_file(path);
         OpenOptions::new()
@@ -71,6 +71,8 @@ pub fn init(path: Option<&Path>) {
         )
     })
     .init();
+
+    Ok(())
 }
 
 fn write(

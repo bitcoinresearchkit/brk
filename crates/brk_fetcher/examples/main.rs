@@ -3,7 +3,7 @@ use brk_fetcher::{BRK, Binance, Fetcher, Kraken};
 use brk_structs::{Date, Height};
 
 fn main() -> Result<()> {
-    brk_logger::init(None);
+    brk_logger::init(None)?;
 
     let mut brk = BRK::default();
     dbg!(brk.get_from_height(Height::new(900_000))?);

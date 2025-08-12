@@ -29,7 +29,6 @@ bitcoincore-rpc = "0.19.0"
 brk_bundler = { version = "0.0.88", path = "crates/brk_bundler" }
 brk_cli = { version = "0.0.88", path = "crates/brk_cli" }
 brk_computer = { version = "0.0.88", path = "crates/brk_computer" }
-brk_structs = { version = "0.0.88", path = "crates/brk_structs" }
 brk_error = { version = "0.0.88", path = "crates/brk_error" }
 brk_fetcher = { version = "0.0.88", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.0.88", path = "crates/brk_indexer" }
@@ -39,8 +38,7 @@ brk_mcp = { version = "0.0.88", path = "crates/brk_mcp" }
 brk_parser = { version = "0.0.88", path = "crates/brk_parser" }
 brk_server = { version = "0.0.88", path = "crates/brk_server" }
 brk_store = { version = "0.0.88", path = "crates/brk_store" }
-vecdb = { version = "0.1.0", features = ["derive"]}
-# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+brk_structs = { version = "0.0.88", path = "crates/brk_structs" }
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
@@ -54,6 +52,8 @@ serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.142", features = ["float_roundtrip"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
+# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+vecdb = { version = "0.1.1", features = ["derive"]}
 zerocopy = "0.8.26"
 zerocopy-derive = "0.8.26"
 
@@ -68,3 +68,4 @@ cargo-dist-version = "0.29.0"
 ci = "github"
 installers = []
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]
+rust-toolchain-version = "1.89"

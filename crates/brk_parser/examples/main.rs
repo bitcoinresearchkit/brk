@@ -1,22 +1,20 @@
 use std::path::Path;
 
-use bitcoincore_rpc::{Auth, Client};
+use bitcoincore_rpc::{Auth, Client, Result};
 use brk_parser::Parser;
 use brk_structs::Height;
 
-fn main() {
+#[allow(clippy::needless_doctest_main)]
+fn main() -> Result<()> {
     let i = std::time::Instant::now();
 
     let bitcoin_dir = Path::new("").join("");
     let brk_dir = Path::new("").join("");
 
-    let rpc = Box::leak(Box::new(
-        Client::new(
-            "http://localhost:8332",
-            Auth::CookieFile(bitcoin_dir.join(".cookie")),
-        )
-        .unwrap(),
-    ));
+    let rpc = Box::leak(Box::new(Client::new(
+        "http://localhost:8332",
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?));
 
     let start = None;
     let end = None;
@@ -57,4 +55,6 @@ fn main() {
     );
 
     dbg!(i.elapsed());
+
+    Ok(())
 }

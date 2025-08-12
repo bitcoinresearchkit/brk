@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
@@ -1111,7 +1111,11 @@ impl Vecs {
         .unwrap()
     }
 
-    pub fn init(&mut self, starting_height: &mut Height, state: &mut CohortState) {
+    pub fn import_state_at(
+        &mut self,
+        starting_height: &mut Height,
+        state: &mut CohortState,
+    ) -> Result<()> {
         if let Some(prev_height) = starting_height.decremented() {
             state.supply.value = self
                 .height_to_supply
@@ -1126,7 +1130,12 @@ impl Vecs {
                 state.realized.as_mut().unwrap().cap = height_to_realized_cap
                     .into_iter()
                     .unwrap_get_inner(prev_height);
+
+                state.import_at(prev_height)?;
             }
+            Ok(())
+        } else {
+            Err(Error::Str("Unset"))
         }
     }
 

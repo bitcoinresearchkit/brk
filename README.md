@@ -68,8 +68,6 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_server`](https://crates.io/crates/brk_server): A server with an API for anything from BRK
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_structs`](https://crates.io/crates/brk_structs): Structs used throughout BRK
-- [`vecdb`](https://crates.io/crates/vecdb): A KISS index-value storage engine
-- [`vecdb_macros`](https://crates.io/crates/vecdb_macros): Macros for [`vecdb`](https://crates.io/crates/vecdb)
 
 ## Hosting as a service
 
@@ -81,7 +79,7 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 - Updates delivered at your convenience
 - Direct communication for feature requests and support
 - Bitcoin Core or Knots with desired version
-- Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`
+- Optional subdomains: `*.bitcoinresearchkit.org`, `*.brekit.org`, `*.kibo.money` and `*.satonomics.xyz`
 - Logo featured in the Readme if desired
 
 Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`

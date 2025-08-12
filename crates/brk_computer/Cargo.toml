@@ -21,6 +21,7 @@ brk_parser = { workspace = true }
 vecdb = { workspace = true }
 derive_deref = { workspace = true }
 log = { workspace = true }
+pco = "0.4.6"
 rayon = { workspace = true }
 serde = { workspace = true }
 zerocopy = { workspace = true }
