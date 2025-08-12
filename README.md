@@ -52,23 +52,6 @@ The primary goal of this project is to be fully-featured and accessible for ever
 
 In contrast, existing alternatives tend to be either [very costly](https://studio.glassnode.com/pricing) or missing essential features, with the vast majority being closed-source and unverifiable, which fundamentally undermines the principles of Bitcoin.
 
-## Crates
-
-- [`brk`](https://crates.io/crates/brk): A wrapper around all other `brk-*` crates
-- [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)
-- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a BRK instance
-- [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer built on top of [`brk_indexer`](https://crates.io/crates/brk_indexer)
-- [`brk_error`](https://crates.io/crates/brk_error): Errors used throughout BRK
-- [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
-- [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin indexer built on top of [`brk_parser`](https://crates.io/crates/brk_parser)
-- [`brk_interface`](https://crates.io/crates/brk_interface): An interface to find and format data from BRK
-- [`brk_logger`](https://crates.io/crates/brk_logger): A thin wrapper around [`env_logger`](https://crates.io/crates/env_logger)
-- [`brk_mcp`](https://crates.io/crates/brk_mcp): A bridge for LLMs to access BRK
-- [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin block parser and iterator built on top of [`bitcoin-rust`](https://crates.io/crates/bitcoin)
-- [`brk_server`](https://crates.io/crates/brk_server): A server with an API for anything from BRK
-- [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
-- [`brk_structs`](https://crates.io/crates/brk_structs): Structs used throughout BRK
-
 ## Hosting as a service
 
 If you'd like to have your own instance hosted for you please contact [hosting@bitcoinresearchkit.org](mailto:hosting@bitcoinresearchkit.org).
@@ -89,6 +72,23 @@ Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
 
 Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [bitcoinresearchkit.org](https://bitcoinresearchkit.org) public instance.
+
+## Crates
+
+- [`brk`](https://crates.io/crates/brk): A wrapper around all other `brk-*` crates
+- [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)
+- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a BRK instance
+- [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer built on top of [`brk_indexer`](https://crates.io/crates/brk_indexer)
+- [`brk_error`](https://crates.io/crates/brk_error): Errors used throughout BRK
+- [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
+- [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin indexer built on top of [`brk_parser`](https://crates.io/crates/brk_parser)
+- [`brk_interface`](https://crates.io/crates/brk_interface): An interface to find and format data from BRK
+- [`brk_logger`](https://crates.io/crates/brk_logger): A thin wrapper around [`env_logger`](https://crates.io/crates/env_logger)
+- [`brk_mcp`](https://crates.io/crates/brk_mcp): A bridge for LLMs to access BRK
+- [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin block parser and iterator built on top of [`bitcoin-rust`](https://crates.io/crates/bitcoin)
+- [`brk_server`](https://crates.io/crates/brk_server): A server with an API for anything from BRK
+- [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
+- [`brk_structs`](https://crates.io/crates/brk_structs): Structs used throughout BRK
 
 ## Donate
 

@@ -74,6 +74,7 @@ pub struct Config {
 
     /// DEV: Activate checking address hashes for collisions when indexing, default: false, saved
     #[serde(default, deserialize_with = "default_on_error")]
+    #[arg(skip)]
     check_collisions: Option<bool>,
 }
 

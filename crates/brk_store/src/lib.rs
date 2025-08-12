@@ -1,7 +1,4 @@
 #![doc = include_str!("../README.md")]
-#![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("../examples/main.rs")]
-#![doc = "```"]
 
 use std::{
     borrow::Cow,

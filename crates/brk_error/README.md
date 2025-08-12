@@ -1,28 +1,57 @@
-# BRK Core
+# brk_error
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_structs">
-    <img src="https://img.shields.io/crates/v/brk_structs" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_structs">
-    <img src="https://img.shields.io/docsrs/brk_structs" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_structs" alt="Size" />
-  <a href="https://deps.rs/crate/brk_structs">
-    <img src="https://deps.rs/crate/brk_structs/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Centralized error handling for the Bitcoin Research Kit that provides a unified error type and result type for consistent error propagation across all BRK crates. This crate consolidates errors from external dependencies and defines domain-specific error variants used throughout the BRK ecosystem.
 
-A list of structs that are used throughout the project as units, think of `Date`, `Height`, `Sats`, `Txindex` or anything that can be either a key and/or a value of a dataset.
+## Error Types
+
+### External Library Errors
+- **IO**: Standard I/O operations (`std::io::Error`)
+- **BitcoinRPC**: Bitcoin Core RPC client errors
+- **Jiff**: Date/time parsing and manipulation errors
+- **Fjall**: Key-value store errors
+- **VecDB/SeqDB**: Vector database errors
+- **Minreq**: HTTP client errors
+- **SerdeJson**: JSON serialization/deserialization errors
+- **ZeroCopy**: Memory layout conversion errors
+- **SystemTime**: System time errors
+
+### Domain-Specific Errors
+- **WrongLength**: Invalid data length
+- **WrongAddressType**: Unsupported Bitcoin address type
+- **UnindexableDate**: Date outside indexable range (before 2009-01-03)
+- **QuickCacheError**: Cache operation failures
+- **Str/String**: Custom error messages
+
+## Usage
+
+```rust
+use brk_error::{Error, Result};
+
+fn process_bitcoin_data() -> Result<()> {
+    // Operations that may fail with various error types
+    let data = std::fs::read("blocks.dat")?;  // IO error
+    let parsed = parse_data(&data)?;          // Custom error
+    Ok(())
+}
+
+fn parse_data(data: &[u8]) -> Result<ParsedData> {
+    if data.len() < 80 {
+        return Err(Error::WrongLength);
+    }
+    // ... parsing logic
+    Ok(parsed_data)
+}
+```
+
+## Type Alias
+
+The crate exports `Result<T, E = Error>` as the standard result type, allowing for concise error handling:
+
+```rust
+use brk_error::Result;
+
+fn my_function() -> Result<String> {
+    // Automatically uses brk_error::Error as the error type
+    Ok("success".to_string())
+}
+```

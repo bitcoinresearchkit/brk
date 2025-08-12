@@ -1,90 +1,73 @@
-# BRK CLI
+# brk_cli
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_cli">
-    <img src="https://img.shields.io/crates/v/brk_cli" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_cli">
-    <img src="https://img.shields.io/docsrs/brk_cli" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_cli" alt="Size" />
-  <a href="https://deps.rs/crate/brk_cli">
-    <img src="https://deps.rs/crate/brk_cli/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Command line interface for running BRK (Bitcoin Research Kit) instances. Orchestrates the complete pipeline: parsing Bitcoin Core blocks, indexing data, computing analytics, and serving via HTTP API.
 
-A command line interface to run a Bitcoin Research Kit instance.
+## Overview
 
-It's very customizable with all parameters from the underlying tools (crates) used inside.
+**Core Operation**: Continuous loop that waits for Bitcoin node sync, indexes new blocks, computes analytics, and serves data via HTTP.
 
-Run `brk -h` for more information.
+**Key Components**:
+- **Parser**: Reads Bitcoin Core block files
+- **Indexer**: Processes and stores blockchain data in vecs/stores
+- **Computer**: Computes analytics across 9 specialized domains
+- **Server**: HTTP API with multiple output formats (JSON, CSV, TSV, Markdown)
+- **Website**: Optional web interface (none/default/custom)
 
 ## Requirements
 
-### Hardware
+- **Bitcoin Core**: Fully synced node with RPC enabled
+- **Storage**: ~32% of blockchain size (~233GB currently)
+- **Memory**: ~7-8GB peak during indexing, ~4-5GB steady state
+- **OS**: macOS or Linux (Ubuntu: `sudo apt install libssl-dev pkg-config`)
 
-#### Recommended
-
-- [Latest base model Mac mini](https://www.apple.com/mac-mini/)
-- [Thunderbolt 4 SSD enclosure](https://satechi.net/products/usb4-nvme-ssd-pro-enclosure/Z2lkOi8vc2hvcGlmeS9Qcm9kdWN0VmFyaWFudC80MDE4ODQ3MDA2NzI4OA==?queryID=7961465089021ee203a60db7e62e90d2)
-- [2 TB NVMe SSD](https://shop.sandisk.com/products/ssd/internal-ssd/wd-black-sn850x-nvme-ssd?sku=WDS200T2X0E-00BCA0)
-
-#### Minimum
-
-To be determined
-
-### Software
-
-- [Bitcoin](https://bitcoin.org/en/full-node)
-- [Rust](https://www.rust-lang.org/tools/install)
-- Unix based operating system (Mac OS or Linux)
-
-> [!IMPORTANT]
-> Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
-
-## Download
-
-### Binaries
-
-You can find a pre-built binary for your operating system in the [releases page](https://github.com/bitcoinresearchkit/brk/releases/latest).
-
-### Cargo
+## Installation
 
 ```bash
-# Install
-cargo install brk --locked # or `cargo install brk_cli`, the result is the same
+# Binary
+# https://github.com/bitcoinresearchkit/brk/releases/latest
 
-# Update
-cargo install brk --locked # or `cargo install-update -a` if you have `cargo-update` installed
-```
+# Via cargo
+cargo install brk --locked
 
-### Source
-
-```bash
+# From source
 git clone https://github.com/bitcoinresearchkit/brk.git
-cd brk/crates/brk
-cargo run -r
+cd brk && cargo build --release
 ```
 
 ## Usage
 
-Run `brk -h` to view each available parameter and their respective description.
+```bash
+# First run (set configuration)
+brk --brkdir ./my_data --fetch true --website default
 
-> [!TIP]
-> Every parameter set will be saved at `~/.brk/config.toml`, which allows you to simply run `brk` next time.
+# Subsequent runs (uses saved config)
+brk
 
-## Tunnel
+# View all options
+brk --help
+```
 
-The easiest way to let others access your server is to use `cloudflared` which will also cache requests. For more information see [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) documentation.
+## Configuration
+
+All options auto-save to `~/.brk/config.toml` for subsequent runs:
+
+```bash
+# Core paths
+--bitcoindir <PATH>      # Bitcoin directory (default: ~/.bitcoin)
+--blocksdir <PATH>       # Block files (default: bitcoindir/blocks)
+--brkdir <PATH>          # BRK output directory (default: ~/.brk)
+
+# Data sources
+-F, --fetch <BOOL>       # Enable price data fetching (default: true)
+--exchanges <BOOL>       # Use exchange APIs for prices (default: true)
+
+# Server
+-w, --website <WEBSITE>  # Web interface: none|default|custom
+
+# Bitcoin RPC
+--rpcconnect <IP>        # RPC host (default: localhost)
+--rpcport <PORT>         # RPC port (default: 8332)
+--rpccookiefile <PATH>   # Cookie auth (default: bitcoindir/.cookie)
+--rpcuser <USERNAME>     # Username auth (alternative to cookie)
+--rpcpassword <PASSWORD> # Password auth (alternative to cookie)
+```

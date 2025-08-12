@@ -1,30 +1,37 @@
-# BRK Logger
+# brk_logger
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_logger">
-    <img src="https://img.shields.io/crates/v/brk_logger" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_logger">
-    <img src="https://img.shields.io/docsrs/brk_logger" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_logger" alt="Size" />
-  <a href="https://deps.rs/crate/brk_logger">
-    <img src="https://deps.rs/crate/brk_logger/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-</p>
+Colorful logging utility built on `env_logger` that provides clean, timestamped console output with optional file logging. This crate wraps `env_logger` to display logs from the `log` crate in a readable format with color-coded log levels and configurable filtering to suppress noisy third-party library logs.
 
-A simple crate built on top of [`env_logger`](https://crates.io/crates/env_logger) to display logs from the [`log`](https://crates.io/crates/log) crate in a colorful and clean format.
+## Features
 
-It can also save logs into a file if desired.
+- **Colorized output**: Log levels are color-coded (error=red, warn=yellow, info=green, debug=blue, trace=cyan)
+- **Timestamps**: Each log entry includes a formatted timestamp
+- **File logging**: Optional file output alongside console logging
+- **Noise filtering**: Pre-configured to suppress verbose logs from Bitcoin Core RPC and other dependencies
+- **Environment control**: Respects `RUST_LOG` environment variable for custom filtering
+
+## Usage
+
+```rust
+use log::info;
+
+fn main() -> std::io::Result<()> {
+    // Initialize with console output only
+    brk_logger::init(None)?;
+
+    // Or initialize with file logging
+    brk_logger::init(Some(std::path::Path::new("app.log")))?;
+
+    info!("Application started");
+    Ok(())
+}
+```
+
+## Default Log Filtering
+
+By default, the following crates are filtered to `off` to reduce noise:
+- `bitcoin`, `bitcoincore-rpc` - Bitcoin Core libraries
+- `fjall`, `lsm_tree` - Storage engine logs
+- `rolldown`, `brk_rolldown` - Bundler logs
+- `rmcp`, `brk_rmcp` - MCP protocol logs
+- `tracing` - Tracing framework logs
