@@ -1,5 +1,5 @@
-mod builder_computed;
 mod builder_eager;
+mod builder_lazy;
 mod computed;
 mod from_dateindex;
 mod from_height;
@@ -12,8 +12,8 @@ mod value_from_height;
 mod value_from_txindex;
 mod value_height;
 
-pub use builder_computed::*;
 pub use builder_eager::*;
+pub use builder_lazy::*;
 use computed::*;
 pub use from_dateindex::*;
 pub use from_height::*;

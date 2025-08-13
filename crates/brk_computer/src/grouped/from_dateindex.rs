@@ -5,11 +5,10 @@ use brk_structs::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation, Database, EagerVec,
-    Exit, Format,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit, Format,
 };
 
-use crate::{Indexes, grouped::ComputedVecBuilder, indexes};
+use crate::{Indexes, grouped::LazyVecBuilder, indexes};
 
 use super::{ComputedType, EagerVecBuilder, Source, VecBuilderOptions};
 
@@ -20,12 +19,12 @@ where
 {
     pub dateindex: Option<EagerVec<DateIndex, T>>,
     pub dateindex_extra: EagerVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
-    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex, YearIndex>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
+    pub weekindex: LazyVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
+    pub monthindex: LazyVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: LazyVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: LazyVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: LazyVecBuilder<YearIndex, T, DateIndex, YearIndex>,
+    pub decadeindex: LazyVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -40,11 +39,11 @@ where
         name: &str,
         source: Source<DateIndex, T>,
         version: Version,
-        format: Format,
-        computation: Computation,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
+        let format = Format::Compressed;
+
         let dateindex = source.is_compute().then(|| {
             EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format).unwrap()
         });
@@ -62,72 +61,54 @@ where
         let dateindex_source = source.vec().or(dateindex.as_ref().map(|v| v.boxed_clone()));
 
         Ok(Self {
-            weekindex: ComputedVecBuilder::forced_import(
-                db,
+            weekindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.weekindex_to_weekindex.boxed_clone(),
                 options.into(),
-            )?,
-            monthindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            monthindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.monthindex_to_monthindex.boxed_clone(),
                 options.into(),
-            )?,
-            quarterindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            quarterindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.quarterindex_to_quarterindex.boxed_clone(),
                 options.into(),
-            )?,
-            semesterindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            semesterindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.semesterindex_to_semesterindex.boxed_clone(),
                 options.into(),
-            )?,
-            yearindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            yearindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.yearindex_to_yearindex.boxed_clone(),
                 options.into(),
-            )?,
-            decadeindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            decadeindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.decadeindex_to_decadeindex.boxed_clone(),
                 options.into(),
-            )?,
+            ),
             dateindex,
             dateindex_extra,
         })
@@ -159,12 +140,11 @@ where
         )?;
 
         let dateindex: Option<&EagerVec<DateIndex, T>> = None;
-        self.compute_rest(indexes, starting_indexes, exit, dateindex)
+        self.compute_rest(starting_indexes, exit, dateindex)
     }
 
     pub fn compute_rest(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         dateindex: Option<&impl AnyIterableVec<DateIndex, T>>,
@@ -178,42 +158,6 @@ where
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;
         }
-
-        self.weekindex.compute_if_necessary(
-            starting_indexes.weekindex,
-            &indexes.weekindex_to_dateindex_count,
-            exit,
-        )?;
-
-        self.monthindex.compute_if_necessary(
-            starting_indexes.monthindex,
-            &indexes.monthindex_to_dateindex_count,
-            exit,
-        )?;
-
-        self.quarterindex.compute_if_necessary(
-            starting_indexes.quarterindex,
-            &indexes.quarterindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.semesterindex.compute_if_necessary(
-            starting_indexes.semesterindex,
-            &indexes.semesterindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.yearindex.compute_if_necessary(
-            starting_indexes.yearindex,
-            &indexes.yearindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.decadeindex.compute_if_necessary(
-            starting_indexes.decadeindex,
-            &indexes.decadeindex_to_yearindex_count,
-            exit,
-        )?;
 
         Ok(())
     }

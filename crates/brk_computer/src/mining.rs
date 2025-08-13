@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
-use vecdb::{AnyCollectableVec, Computation, Database, Exit, Format, PAGE_SIZE, VecIterator};
+use vecdb::{AnyCollectableVec, Database, Exit, PAGE_SIZE, VecIterator};
 
 use crate::grouped::Source;
 
@@ -25,13 +25,7 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        computation: Computation,
-        format: Format,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("mining"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
@@ -41,8 +35,6 @@ impl Vecs {
                 "difficulty",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -51,8 +43,6 @@ impl Vecs {
                 "difficultyepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -61,8 +51,6 @@ impl Vecs {
                 "halvingepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,

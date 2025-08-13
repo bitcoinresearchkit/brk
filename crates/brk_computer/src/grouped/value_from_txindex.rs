@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Computation, ComputedVecFrom3,
-    Database, Exit, Format, LazyVecFrom1, StoredIndex, StoredVec,
+    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Database, Exit, Format,
+    LazyVecFrom1, LazyVecFrom3, StoredIndex, StoredVec,
 };
 
 use crate::{Indexes, grouped::Source, indexes, price};
@@ -17,16 +17,7 @@ pub struct ComputedValueVecsFromTxindex {
     pub bitcoin: ComputedVecsFromTxindex<Bitcoin>,
     #[allow(clippy::type_complexity)]
     pub dollars_txindex: Option<
-        ComputedVecFrom3<
-            TxIndex,
-            Dollars,
-            TxIndex,
-            Bitcoin,
-            TxIndex,
-            Height,
-            Height,
-            Close<Dollars>,
-        >,
+        LazyVecFrom3<TxIndex, Dollars, TxIndex, Bitcoin, TxIndex, Height, Height, Close<Dollars>>,
     >,
     pub dollars: Option<ComputedVecsFromTxindex<Dollars>>,
 }
@@ -41,7 +32,6 @@ impl ComputedValueVecsFromTxindex {
         indexes: &indexes::Vecs,
         source: Source<TxIndex, Sats>,
         version: Version,
-        computation: Computation,
         format: Format,
         price: Option<&price::Vecs>,
         options: VecBuilderOptions,
@@ -57,7 +47,6 @@ impl ComputedValueVecsFromTxindex {
             source.clone(),
             version + VERSION,
             format,
-            computation,
             indexes,
             options,
         )?;
@@ -82,18 +71,14 @@ impl ComputedValueVecsFromTxindex {
             Source::None,
             version + VERSION,
             format,
-            computation,
             indexes,
             options,
         )?;
 
         let dollars_txindex = price.map(|price| {
-            ComputedVecFrom3::forced_import_or_init_from_3(
-                computation,
-                db,
+            LazyVecFrom3::init(
                 &name_in_usd,
                 version + VERSION,
-                format,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
                 price.chainindexes_to_close.height.boxed_clone(),
@@ -115,7 +100,6 @@ impl ComputedValueVecsFromTxindex {
                     })
                 },
             )
-            .unwrap()
         });
 
         Ok(Self {
@@ -130,7 +114,6 @@ impl ComputedValueVecsFromTxindex {
                     Source::None,
                     version + VERSION,
                     format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -207,12 +190,6 @@ impl ComputedValueVecsFromTxindex {
 
         if let Some(dollars) = self.dollars.as_mut() {
             let dollars_txindex = self.dollars_txindex.as_mut().unwrap();
-
-            dollars_txindex.compute_if_necessary(
-                starting_indexes.txindex,
-                &indexer.vecs.txindex_to_txid,
-                exit,
-            )?;
 
             dollars.compute_rest_from_bitcoin(
                 indexer,

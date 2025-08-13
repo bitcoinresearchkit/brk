@@ -30,9 +30,10 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        format: Format,
         options: VecBuilderOptions,
     ) -> Result<Self> {
+        let format = Format::Compressed;
+
         let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)?;
 
         let height_extra = EagerVecBuilder::forced_import(

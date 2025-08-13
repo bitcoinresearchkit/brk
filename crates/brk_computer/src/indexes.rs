@@ -11,8 +11,8 @@ use brk_structs::{
     Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, Computation, ComputedVec, ComputedVecFrom1,
-    ComputedVecFrom2, Database, EagerVec, Exit, Format, PAGE_SIZE, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, Database, EagerVec, Exit, Format, LazyVecFrom1,
+    LazyVecFrom2, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -34,7 +34,7 @@ pub struct Vecs {
     pub difficultyepoch_to_first_height: EagerVec<DifficultyEpoch, Height>,
     pub difficultyepoch_to_height_count: EagerVec<DifficultyEpoch, StoredU64>,
     pub emptyoutputindex_to_emptyoutputindex:
-        ComputedVecFrom1<EmptyOutputIndex, EmptyOutputIndex, EmptyOutputIndex, TxIndex>,
+        LazyVecFrom1<EmptyOutputIndex, EmptyOutputIndex, EmptyOutputIndex, TxIndex>,
     pub halvingepoch_to_first_height: EagerVec<HalvingEpoch, Height>,
     pub halvingepoch_to_halvingepoch: EagerVec<HalvingEpoch, HalvingEpoch>,
     pub height_to_date: EagerVec<Height, Date>,
@@ -45,7 +45,7 @@ pub struct Vecs {
     pub height_to_height: EagerVec<Height, Height>,
     pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
     pub height_to_txindex_count: EagerVec<Height, StoredU64>,
-    pub inputindex_to_inputindex: ComputedVecFrom1<InputIndex, InputIndex, InputIndex, OutputIndex>,
+    pub inputindex_to_inputindex: LazyVecFrom1<InputIndex, InputIndex, InputIndex, OutputIndex>,
     pub monthindex_to_dateindex_count: EagerVec<MonthIndex, StoredU64>,
     pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
@@ -53,27 +53,27 @@ pub struct Vecs {
     pub monthindex_to_semesterindex: EagerVec<MonthIndex, SemesterIndex>,
     pub monthindex_to_yearindex: EagerVec<MonthIndex, YearIndex>,
     pub opreturnindex_to_opreturnindex:
-        ComputedVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
-    pub outputindex_to_outputindex: ComputedVecFrom1<OutputIndex, OutputIndex, OutputIndex, Sats>,
+        LazyVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
+    pub outputindex_to_outputindex: LazyVecFrom1<OutputIndex, OutputIndex, OutputIndex, Sats>,
     pub outputindex_to_txindex: EagerVec<OutputIndex, TxIndex>,
     pub p2aaddressindex_to_p2aaddressindex:
-        ComputedVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
+        LazyVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
     pub p2msoutputindex_to_p2msoutputindex:
-        ComputedVecFrom1<P2MSOutputIndex, P2MSOutputIndex, P2MSOutputIndex, TxIndex>,
+        LazyVecFrom1<P2MSOutputIndex, P2MSOutputIndex, P2MSOutputIndex, TxIndex>,
     pub p2pk33addressindex_to_p2pk33addressindex:
-        ComputedVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
+        LazyVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
     pub p2pk65addressindex_to_p2pk65addressindex:
-        ComputedVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
+        LazyVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
     pub p2pkhaddressindex_to_p2pkhaddressindex:
-        ComputedVecFrom1<P2PKHAddressIndex, P2PKHAddressIndex, P2PKHAddressIndex, P2PKHBytes>,
+        LazyVecFrom1<P2PKHAddressIndex, P2PKHAddressIndex, P2PKHAddressIndex, P2PKHBytes>,
     pub p2shaddressindex_to_p2shaddressindex:
-        ComputedVecFrom1<P2SHAddressIndex, P2SHAddressIndex, P2SHAddressIndex, P2SHBytes>,
+        LazyVecFrom1<P2SHAddressIndex, P2SHAddressIndex, P2SHAddressIndex, P2SHBytes>,
     pub p2traddressindex_to_p2traddressindex:
-        ComputedVecFrom1<P2TRAddressIndex, P2TRAddressIndex, P2TRAddressIndex, P2TRBytes>,
+        LazyVecFrom1<P2TRAddressIndex, P2TRAddressIndex, P2TRAddressIndex, P2TRBytes>,
     pub p2wpkhaddressindex_to_p2wpkhaddressindex:
-        ComputedVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
+        LazyVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
     pub p2wshaddressindex_to_p2wshaddressindex:
-        ComputedVecFrom1<P2WSHAddressIndex, P2WSHAddressIndex, P2WSHAddressIndex, P2WSHBytes>,
+        LazyVecFrom1<P2WSHAddressIndex, P2WSHAddressIndex, P2WSHAddressIndex, P2WSHBytes>,
     pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
     pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredU64>,
     pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
@@ -82,12 +82,12 @@ pub struct Vecs {
     pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
     pub txindex_to_input_count:
-        ComputedVecFrom2<TxIndex, StoredU64, TxIndex, InputIndex, InputIndex, OutputIndex>,
+        LazyVecFrom2<TxIndex, StoredU64, TxIndex, InputIndex, InputIndex, OutputIndex>,
     pub txindex_to_output_count:
-        ComputedVecFrom2<TxIndex, StoredU64, TxIndex, OutputIndex, OutputIndex, Sats>,
-    pub txindex_to_txindex: ComputedVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
+        LazyVecFrom2<TxIndex, StoredU64, TxIndex, OutputIndex, OutputIndex, Sats>,
+    pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub unknownoutputindex_to_unknownoutputindex:
-        ComputedVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
+        LazyVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
     pub weekindex_to_dateindex_count: EagerVec<WeekIndex, StoredU64>,
     pub weekindex_to_first_dateindex: EagerVec<WeekIndex, DateIndex>,
     pub weekindex_to_weekindex: EagerVec<WeekIndex, WeekIndex>,
@@ -98,52 +98,34 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        indexer: &Indexer,
-        computation: Computation,
-        format: Format,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexer: &Indexer) -> Result<Self> {
         let db = Database::open(&parent.join("indexes"))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
-        let outputindex_to_outputindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        let outputindex_to_outputindex = LazyVecFrom1::init(
             "outputindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.outputindex_to_value.boxed_clone(),
             |index, _| Some(index),
-        )?;
+        );
 
-        let inputindex_to_inputindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        let inputindex_to_inputindex = LazyVecFrom1::init(
             "inputindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             |index, _| Some(index),
-        )?;
+        );
 
-        let txindex_to_txindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        let txindex_to_txindex = LazyVecFrom1::init(
             "txindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_txid.boxed_clone(),
             |index, _| Some(index),
-        )?;
+        );
 
-        let txindex_to_input_count = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            &db,
+        let txindex_to_input_count = LazyVecFrom2::init(
             "input_count",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_first_inputindex.boxed_clone(),
             indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             |index: TxIndex, txindex_to_first_inputindex_iter, inputindex_to_outputindex_iter| {
@@ -159,14 +141,11 @@ impl Vecs {
                         StoredU64::from((start..end).count())
                     })
             },
-        )?;
+        );
 
-        let txindex_to_output_count = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            &db,
+        let txindex_to_output_count = LazyVecFrom2::init(
             "output_count",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_first_outputindex.boxed_clone(),
             indexer.vecs.outputindex_to_value.boxed_clone(),
             |index: TxIndex, txindex_to_first_outputindex_iter, outputindex_to_value_iter| {
@@ -182,116 +161,80 @@ impl Vecs {
                         StoredU64::from((start..end).count())
                     })
             },
-        )?;
+        );
 
-        let p2pk33addressindex_to_p2pk33addressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        let p2pk33addressindex_to_p2pk33addressindex = LazyVecFrom1::init(
             "p2pk33addressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2pk33addressindex_to_p2pk33bytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2pk65addressindex_to_p2pk65addressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2pk65addressindex_to_p2pk65addressindex = LazyVecFrom1::init(
             "p2pk65addressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2pk65addressindex_to_p2pk65bytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2pkhaddressindex_to_p2pkhaddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2pkhaddressindex_to_p2pkhaddressindex = LazyVecFrom1::init(
             "p2pkhaddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2shaddressindex_to_p2shaddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2shaddressindex_to_p2shaddressindex = LazyVecFrom1::init(
             "p2shaddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2shaddressindex_to_p2shbytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2traddressindex_to_p2traddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2traddressindex_to_p2traddressindex = LazyVecFrom1::init(
             "p2traddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2traddressindex_to_p2trbytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2wpkhaddressindex_to_p2wpkhaddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2wpkhaddressindex_to_p2wpkhaddressindex = LazyVecFrom1::init(
             "p2wpkhaddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2wshaddressindex_to_p2wshaddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2wshaddressindex_to_p2wshaddressindex = LazyVecFrom1::init(
             "p2wshaddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2wshaddressindex_to_p2wshbytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2aaddressindex_to_p2aaddressindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2aaddressindex_to_p2aaddressindex = LazyVecFrom1::init(
             "p2aaddressindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2aaddressindex_to_p2abytes.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let p2msoutputindex_to_p2msoutputindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let p2msoutputindex_to_p2msoutputindex = LazyVecFrom1::init(
             "p2msoutputindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.p2msoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let emptyoutputindex_to_emptyoutputindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let emptyoutputindex_to_emptyoutputindex = LazyVecFrom1::init(
             "emptyoutputindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.emptyoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let unknownoutputindex_to_unknownoutputindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let unknownoutputindex_to_unknownoutputindex = LazyVecFrom1::init(
             "unknownoutputindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.unknownoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
-        )?;
-        let opreturnindex_to_opreturnindex = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        );
+        let opreturnindex_to_opreturnindex = LazyVecFrom1::init(
             "opreturnindex",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.opreturnindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
-        )?;
+        );
 
         Ok(Self {
             emptyoutputindex_to_emptyoutputindex,
@@ -316,259 +259,259 @@ impl Vecs {
                 &db,
                 "date",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             dateindex_to_dateindex: EagerVec::forced_import(
                 &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             dateindex_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             dateindex_to_monthindex: EagerVec::forced_import(
                 &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             dateindex_to_weekindex: EagerVec::forced_import(
                 &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             decadeindex_to_decadeindex: EagerVec::forced_import(
                 &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             decadeindex_to_first_yearindex: EagerVec::forced_import(
                 &db,
                 "first_yearindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             difficultyepoch_to_difficultyepoch: EagerVec::forced_import(
                 &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             difficultyepoch_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             halvingepoch_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             halvingepoch_to_halvingepoch: EagerVec::forced_import(
                 &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_date: EagerVec::forced_import(
                 &db,
                 "date",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_difficultyepoch: EagerVec::forced_import(
                 &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_halvingepoch: EagerVec::forced_import(
                 &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_height: EagerVec::forced_import(
                 &db,
                 "height",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_first_dateindex: EagerVec::forced_import(
                 &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_monthindex: EagerVec::forced_import(
                 &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_quarterindex: EagerVec::forced_import(
                 &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_semesterindex: EagerVec::forced_import(
                 &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_yearindex: EagerVec::forced_import(
                 &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             quarterindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             semesterindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             weekindex_to_first_dateindex: EagerVec::forced_import(
                 &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             yearindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             quarterindex_to_quarterindex: EagerVec::forced_import(
                 &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             semesterindex_to_semesterindex: EagerVec::forced_import(
                 &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             weekindex_to_weekindex: EagerVec::forced_import(
                 &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             yearindex_to_decadeindex: EagerVec::forced_import(
                 &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             yearindex_to_yearindex: EagerVec::forced_import(
                 &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_date_fixed: EagerVec::forced_import(
                 &db,
                 "date_fixed",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_dateindex: EagerVec::forced_import(
                 &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             txindex_to_height: EagerVec::forced_import(
                 &db,
                 "height",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_timestamp_fixed: EagerVec::forced_import(
                 &db,
                 "timestamp_fixed",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             height_to_txindex_count: EagerVec::forced_import(
                 &db,
                 "txindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             dateindex_to_height_count: EagerVec::forced_import(
                 &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             weekindex_to_dateindex_count: EagerVec::forced_import(
                 &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             difficultyepoch_to_height_count: EagerVec::forced_import(
                 &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             monthindex_to_dateindex_count: EagerVec::forced_import(
                 &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             quarterindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             semesterindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             yearindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             decadeindex_to_yearindex_count: EagerVec::forced_import(
                 &db,
                 "yearindex_count",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
             outputindex_to_txindex: EagerVec::forced_import(
                 &db,
                 "txindex",
                 version + VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
             )?,
 
             db,
@@ -596,24 +539,6 @@ impl Vecs {
         // OutputIndex
         // ---
 
-        self.outputindex_to_outputindex.compute_if_necessary(
-            starting_indexes.outputindex,
-            &indexer.vecs.outputindex_to_value,
-            exit,
-        )?;
-
-        self.txindex_to_output_count.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
-        self.txindex_to_input_count.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
         self.outputindex_to_txindex.compute_inverse_less_to_more(
             starting_indexes.txindex,
             &indexer.vecs.txindex_to_first_outputindex,
@@ -621,108 +546,9 @@ impl Vecs {
             exit,
         )?;
 
-        self.p2pk33addressindex_to_p2pk33addressindex
-            .compute_if_necessary(
-                starting_indexes.p2pk33addressindex,
-                &indexer.vecs.p2pk33addressindex_to_p2pk33bytes,
-                exit,
-            )?;
-
-        self.p2pk65addressindex_to_p2pk65addressindex
-            .compute_if_necessary(
-                starting_indexes.p2pk65addressindex,
-                &indexer.vecs.p2pk65addressindex_to_p2pk65bytes,
-                exit,
-            )?;
-
-        self.p2pkhaddressindex_to_p2pkhaddressindex
-            .compute_if_necessary(
-                starting_indexes.p2pkhaddressindex,
-                &indexer.vecs.p2pkhaddressindex_to_p2pkhbytes,
-                exit,
-            )?;
-
-        self.p2shaddressindex_to_p2shaddressindex
-            .compute_if_necessary(
-                starting_indexes.p2shaddressindex,
-                &indexer.vecs.p2shaddressindex_to_p2shbytes,
-                exit,
-            )?;
-
-        self.p2traddressindex_to_p2traddressindex
-            .compute_if_necessary(
-                starting_indexes.p2traddressindex,
-                &indexer.vecs.p2traddressindex_to_p2trbytes,
-                exit,
-            )?;
-
-        self.p2wpkhaddressindex_to_p2wpkhaddressindex
-            .compute_if_necessary(
-                starting_indexes.p2wpkhaddressindex,
-                &indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes,
-                exit,
-            )?;
-
-        self.p2wshaddressindex_to_p2wshaddressindex
-            .compute_if_necessary(
-                starting_indexes.p2wshaddressindex,
-                &indexer.vecs.p2wshaddressindex_to_p2wshbytes,
-                exit,
-            )?;
-
-        self.emptyoutputindex_to_emptyoutputindex
-            .compute_if_necessary(
-                starting_indexes.emptyoutputindex,
-                &indexer.vecs.emptyoutputindex_to_txindex,
-                exit,
-            )?;
-
-        self.p2msoutputindex_to_p2msoutputindex
-            .compute_if_necessary(
-                starting_indexes.p2msoutputindex,
-                &indexer.vecs.p2msoutputindex_to_txindex,
-                exit,
-            )?;
-
-        self.opreturnindex_to_opreturnindex.compute_if_necessary(
-            starting_indexes.opreturnindex,
-            &indexer.vecs.opreturnindex_to_txindex,
-            exit,
-        )?;
-
-        self.p2aaddressindex_to_p2aaddressindex
-            .compute_if_necessary(
-                starting_indexes.p2aaddressindex,
-                &indexer.vecs.p2aaddressindex_to_p2abytes,
-                exit,
-            )?;
-
-        self.unknownoutputindex_to_unknownoutputindex
-            .compute_if_necessary(
-                starting_indexes.unknownoutputindex,
-                &indexer.vecs.unknownoutputindex_to_txindex,
-                exit,
-            )?;
-
-        // ---
-        // InputIndex
-        // ---
-
-        self.inputindex_to_inputindex.compute_if_necessary(
-            starting_indexes.inputindex,
-            &indexer.vecs.inputindex_to_outputindex,
-            exit,
-        )?;
-
         // ---
         // TxIndex
         // ---
-
-        self.txindex_to_txindex.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,

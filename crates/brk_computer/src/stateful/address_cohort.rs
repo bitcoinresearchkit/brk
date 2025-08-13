@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation, Database, EagerVec, Exit,
-    Format, GenericStoredVec, VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
+    GenericStoredVec, VecIterator,
 };
 
 use crate::{
@@ -38,7 +38,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         cohort_name: Option<&str>,
-        computation: Computation,
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
@@ -70,15 +69,12 @@ impl Vecs {
                 &suffix("address_count"),
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
                 db,
                 cohort_name,
-                computation,
                 format,
                 version,
                 indexes,

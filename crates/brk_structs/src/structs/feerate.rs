@@ -12,22 +12,24 @@ use super::{Sats, StoredU64};
 #[derive(
     Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, StoredCompressed,
 )]
-pub struct Feerate(f32);
+pub struct Feerate(f64);
 
 impl From<(Sats, StoredU64)> for Feerate {
     fn from((sats, vsize): (Sats, StoredU64)) -> Self {
-        Self((f64::from(sats) / f64::from(vsize)) as f32)
+        let sats = u64::from(sats);
+        let vsize = u64::from(vsize);
+        Self(((sats * 1000 + vsize.checked_sub(1).unwrap()) / vsize) as f64 / 1000.0)
     }
 }
 
 impl From<f64> for Feerate {
     fn from(value: f64) -> Self {
-        Self(value as f32)
+        Self(value)
     }
 }
 impl From<Feerate> for f64 {
     fn from(value: Feerate) -> Self {
-        value.0 as f64
+        value.0
     }
 }
 
@@ -47,13 +49,13 @@ impl AddAssign for Feerate {
 impl Div<usize> for Feerate {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self((self.0 as f64 / rhs as f64) as f32)
+        Self(self.0 / rhs as f64)
     }
 }
 
 impl From<usize> for Feerate {
     fn from(value: usize) -> Self {
-        Self(value as f32)
+        Self(value as f64)
     }
 }
 

@@ -5,13 +5,13 @@ use brk_structs::{
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Computation, Database,
-    EagerVec, Exit, Format, GenericStoredVec, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
+    Format, GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{
     Indexes,
-    grouped::{ComputedVecBuilder, Source},
+    grouped::{LazyVecBuilder, Source},
     indexes, price,
 };
 
@@ -25,14 +25,14 @@ where
     pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
     pub height: EagerVecBuilder<Height, T>,
     pub dateindex: EagerVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
+    pub weekindex: LazyVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
     pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
-    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex, YearIndex>,
+    pub monthindex: LazyVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: LazyVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: LazyVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: LazyVecBuilder<YearIndex, T, DateIndex, YearIndex>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
+    pub decadeindex: LazyVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -49,7 +49,6 @@ where
         source: Source<TxIndex, T>,
         version: Version,
         format: Format,
-        computation: Computation,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
@@ -79,72 +78,54 @@ where
         )?;
 
         Ok(Self {
-            weekindex: ComputedVecBuilder::forced_import(
-                db,
+            weekindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 None,
                 &dateindex,
                 indexes.weekindex_to_weekindex.boxed_clone(),
                 options.into(),
-            )?,
-            monthindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            monthindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 None,
                 &dateindex,
                 indexes.monthindex_to_monthindex.boxed_clone(),
                 options.into(),
-            )?,
-            quarterindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            quarterindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 None,
                 &dateindex,
                 indexes.quarterindex_to_quarterindex.boxed_clone(),
                 options.into(),
-            )?,
-            semesterindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            semesterindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 None,
                 &dateindex,
                 indexes.semesterindex_to_semesterindex.boxed_clone(),
                 options.into(),
-            )?,
-            yearindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            yearindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 None,
                 &dateindex,
                 indexes.yearindex_to_yearindex.boxed_clone(),
                 options.into(),
-            )?,
-            decadeindex: ComputedVecBuilder::forced_import(
-                db,
+            ),
+            decadeindex: LazyVecBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                format,
-                Computation::Lazy,
                 None,
                 &dateindex,
                 indexes.decadeindex_to_decadeindex.boxed_clone(),
                 options.into(),
-            )?,
+            ),
 
             txindex,
             height,
@@ -234,42 +215,6 @@ where
             &self.height,
             &indexes.dateindex_to_first_height,
             &indexes.dateindex_to_height_count,
-            exit,
-        )?;
-
-        self.weekindex.compute_if_necessary(
-            starting_indexes.weekindex,
-            &indexes.weekindex_to_first_dateindex,
-            exit,
-        )?;
-
-        self.monthindex.compute_if_necessary(
-            starting_indexes.monthindex,
-            &indexes.monthindex_to_dateindex_count,
-            exit,
-        )?;
-
-        self.quarterindex.compute_if_necessary(
-            starting_indexes.quarterindex,
-            &indexes.quarterindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.semesterindex.compute_if_necessary(
-            starting_indexes.semesterindex,
-            &indexes.semesterindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.yearindex.compute_if_necessary(
-            starting_indexes.yearindex,
-            &indexes.yearindex_to_monthindex_count,
-            exit,
-        )?;
-
-        self.decadeindex.compute_if_necessary(
-            starting_indexes.decadeindex,
-            &indexes.decadeindex_to_yearindex_count,
             exit,
         )?;
 
