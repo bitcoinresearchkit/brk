@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Computation, Database,
-    EagerVec, Exit, Format, GenericStoredVec, StoredIndex, VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec,
+    Exit, GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes, price, utils::get_percentile};
@@ -62,8 +62,6 @@ impl ComputedRatioVecsFromDateIndex {
         name: &str,
         source: Source<DateIndex, Dollars>,
         version: Version,
-        format: Format,
-        computation: Computation,
         indexes: &indexes::Vecs,
         extended: bool,
     ) -> Result<Self> {
@@ -76,8 +74,6 @@ impl ComputedRatioVecsFromDateIndex {
                     name,
                     Source::Compute,
                     version + VERSION,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -88,8 +84,6 @@ impl ComputedRatioVecsFromDateIndex {
                 &format!("{name}_ratio"),
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 options,
             )?,
@@ -99,8 +93,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -112,8 +104,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1w_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -125,8 +115,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1m_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -138,8 +126,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1y_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -151,8 +137,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_4y_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -164,8 +148,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1y_sma_momentum_oscillator"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -177,8 +159,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -190,8 +170,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_4y_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -203,8 +181,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1y_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -216,8 +192,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99_9"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -229,8 +203,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99_5"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -242,8 +214,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -255,8 +225,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p1"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -268,8 +236,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p0_5"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -281,8 +247,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p0_1"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -294,8 +258,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p1sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -307,8 +269,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p2sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -320,8 +280,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p3sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -333,8 +291,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m1sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -346,8 +302,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m2sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -359,8 +313,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m3sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -372,8 +324,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99_9_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -385,8 +335,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99_5_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -398,8 +346,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p99_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -411,8 +357,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p1_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -424,8 +368,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p0_5_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -437,8 +379,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p0_1_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -450,8 +390,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p1sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -463,8 +401,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p2sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -476,8 +412,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_p3sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -489,8 +423,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m1sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -502,8 +434,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m2sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -515,8 +445,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_m3sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -528,8 +456,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -541,8 +467,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_4y_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -554,8 +478,6 @@ impl ComputedRatioVecsFromDateIndex {
                     &format!("{name}_ratio_1y_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -1084,91 +1006,76 @@ impl ComputedRatioVecsFromDateIndex {
             .try_for_each(|v| v.safe_flush(exit))?;
 
         self.ratio_p99_9.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p99_5.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p99.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p1.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p0_5.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p0_1.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_4y_sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_1y_sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p1sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p2sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_p3sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_m1sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_m2sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
         self.ratio_m3sd.as_mut().unwrap().compute_rest(
-            indexes,
             starting_indexes,
             exit,
             None as Option<&EagerVec<_, _>>,

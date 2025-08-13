@@ -4,8 +4,8 @@ use brk_structs::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation,
-    Database, EagerVec, Exit, Format, GenericStoredVec, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database,
+    EagerVec, Exit, Format, GenericStoredVec, VecIterator,
 };
 
 use crate::{
@@ -128,7 +128,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         cohort_name: Option<&str>,
-        computation: Computation,
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
@@ -209,8 +208,6 @@ impl Vecs {
                     &suffix("supply_in_profit"),
                     dateindex_to_supply_in_profit.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -233,8 +230,6 @@ impl Vecs {
                     &suffix("supply_even"),
                     dateindex_to_supply_even.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -257,8 +252,6 @@ impl Vecs {
                     &suffix("supply_in_loss"),
                     dateindex_to_supply_in_loss.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -281,8 +274,6 @@ impl Vecs {
                     &suffix("unrealized_profit"),
                     dateindex_to_unrealized_profit.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -322,8 +313,6 @@ impl Vecs {
                     &suffix("unrealized_loss"),
                     dateindex_to_unrealized_loss.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -345,8 +334,6 @@ impl Vecs {
                     &suffix("realized_cap"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -358,8 +345,6 @@ impl Vecs {
                     &suffix("min_price_paid"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -371,8 +356,6 @@ impl Vecs {
                     &suffix("max_price_paid"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -397,8 +380,6 @@ impl Vecs {
                 &suffix("supply"),
                 Source::Compute,
                 version + VERSION + Version::ONE,
-                format,
-                computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                 indexes,
@@ -414,8 +395,6 @@ impl Vecs {
                 &suffix("utxo_count"),
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -425,8 +404,6 @@ impl Vecs {
                     &suffix("realized_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -438,8 +415,6 @@ impl Vecs {
                     &suffix("realized_price"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                    computation,
                     indexes,
                     ratio_extended,
                 )
@@ -460,8 +435,6 @@ impl Vecs {
                     &suffix("realized_profit"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default()
                         .add_sum()
@@ -484,8 +457,6 @@ impl Vecs {
                     &suffix("realized_loss"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default()
                         .add_sum()
@@ -499,8 +470,6 @@ impl Vecs {
                     &suffix("negative_realized_loss"),
                     Source::Compute,
                     version + VERSION + Version::ONE,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
@@ -521,8 +490,6 @@ impl Vecs {
                     &suffix("value_created"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -534,8 +501,6 @@ impl Vecs {
                     &suffix("realized_value"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -556,8 +521,6 @@ impl Vecs {
                     &suffix("adjusted_value_created"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -578,8 +541,6 @@ impl Vecs {
                     &suffix("value_destroyed"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -600,8 +561,6 @@ impl Vecs {
                     &suffix("adjusted_value_destroyed"),
                     Source::None,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -613,8 +572,6 @@ impl Vecs {
                     &suffix("realized_cap_30d_change"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -626,8 +583,6 @@ impl Vecs {
                     &suffix("net_realized_profit_and_loss"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default()
                         .add_sum()
@@ -675,8 +630,6 @@ impl Vecs {
                 &suffix("halved_supply"),
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-               computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                indexes,
@@ -696,8 +649,6 @@ impl Vecs {
                     &suffix("negative_unrealized_loss"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -718,8 +669,6 @@ impl Vecs {
                     &suffix("net_unrealized_profit_and_loss"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -743,8 +692,6 @@ impl Vecs {
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
-                        format,
-                       computation,
                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -757,8 +704,6 @@ impl Vecs {
                     &suffix("realized_profit_relative_to_realized_cap"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -770,8 +715,6 @@ impl Vecs {
                     &suffix("realized_loss_relative_to_realized_cap"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -784,8 +727,6 @@ impl Vecs {
                         &suffix("net_realized_profit_and_loss_relative_to_realized_cap"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
-                        format,
-                       computation,
                        indexes,
                         VecBuilderOptions::default().add_sum(),
                     )
@@ -858,8 +799,6 @@ impl Vecs {
                     &suffix("supply_even_relative_to_own_supply"),
                     Source::Compute,
                     version + VERSION + Version::ONE,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -871,8 +810,6 @@ impl Vecs {
                     &suffix("supply_in_loss_relative_to_own_supply"),
                     Source::Compute,
                     version + VERSION + Version::ONE,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -884,8 +821,6 @@ impl Vecs {
                     &suffix("supply_in_profit_relative_to_own_supply"),
                     Source::Compute,
                     version + VERSION + Version::ONE,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -897,8 +832,6 @@ impl Vecs {
                     &suffix("supply_relative_to_circulating_supply"),
                     Source::Compute,
                     version + VERSION + Version::ONE,
-                    format,
-                    computation,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -945,8 +878,6 @@ impl Vecs {
                         &suffix("supply_even_relative_to_circulating_supply"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
-                        format,
-                       computation,
                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -960,8 +891,6 @@ impl Vecs {
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
-                        format,
-                       computation,
                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -975,8 +904,6 @@ impl Vecs {
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
-                        format,
-                       computation,
                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -999,8 +926,6 @@ impl Vecs {
                 &suffix("coinblocks_destroyed"),
                 Source::Compute,
                 version + VERSION + Version::TWO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -1009,8 +934,6 @@ impl Vecs {
                 &suffix("coindays_destroyed"),
                 Source::Compute,
                 version + VERSION + Version::TWO,
-                format,
-               computation,
                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -1020,8 +943,6 @@ impl Vecs {
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change"),
                     Source::Compute,
                     version + VERSION + Version::new(3),
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last()
                 )
@@ -1033,8 +954,6 @@ impl Vecs {
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap"),
                     Source::Compute,
                     version + VERSION + Version::new(3),
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last()
                 )
@@ -1046,8 +965,6 @@ impl Vecs {
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap"),
                     Source::Compute,
                     version + VERSION + Version::new(3),
-                    format,
-                   computation,
                    indexes,
                     VecBuilderOptions::default().add_last()
                 )
@@ -2310,7 +2227,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexes,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_unrealized_profit.as_ref().unwrap()),
@@ -2319,7 +2235,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexes,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_unrealized_loss.as_ref().unwrap()),

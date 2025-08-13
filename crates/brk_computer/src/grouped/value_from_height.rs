@@ -1,9 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{
-    AnyCollectableVec, CollectableVec, Computation, Database, EagerVec, Exit, Format, StoredVec,
-};
+use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
     Indexes,
@@ -30,8 +28,6 @@ impl ComputedValueVecsFromHeight {
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
-        format: Format,
-        computation: Computation,
         options: VecBuilderOptions,
         compute_dollars: bool,
         indexes: &indexes::Vecs,
@@ -42,8 +38,6 @@ impl ComputedValueVecsFromHeight {
                 name,
                 source,
                 version + VERSION,
-                format,
-                computation,
                 indexes,
                 options,
             )?,
@@ -52,8 +46,6 @@ impl ComputedValueVecsFromHeight {
                 &format!("{name}_in_btc"),
                 Source::Compute,
                 version + VERSION,
-                format,
-                computation,
                 indexes,
                 options,
             )?,
@@ -63,8 +55,6 @@ impl ComputedValueVecsFromHeight {
                     &format!("{name}_in_usd"),
                     Source::Compute,
                     version + VERSION,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )

@@ -1,9 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use vecdb::{
-    AnyCollectableVec, CollectableVec, Computation, Database, EagerVec, Exit, Format, StoredVec,
-};
+use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
     Indexes,
@@ -30,8 +28,6 @@ impl ComputedValueVecsFromDateIndex {
         name: &str,
         source: Source<DateIndex, Sats>,
         version: Version,
-        format: Format,
-        computation: Computation,
         options: VecBuilderOptions,
         compute_dollars: bool,
         indexes: &indexes::Vecs,
@@ -42,8 +38,6 @@ impl ComputedValueVecsFromDateIndex {
                 name,
                 source,
                 version + VERSION,
-                format,
-                computation,
                 indexes,
                 options,
             )?,
@@ -52,8 +46,6 @@ impl ComputedValueVecsFromDateIndex {
                 &format!("{name}_in_btc"),
                 Source::Compute,
                 version + VERSION,
-                format,
-                computation,
                 indexes,
                 options,
             )?,
@@ -63,8 +55,6 @@ impl ComputedValueVecsFromDateIndex {
                     &format!("{name}_in_usd"),
                     Source::Compute,
                     version + VERSION,
-                    format,
-                    computation,
                     indexes,
                     options,
                 )
@@ -116,7 +106,7 @@ impl ComputedValueVecsFromDateIndex {
     ) -> Result<()> {
         if let Some(dateindex) = dateindex {
             self.sats
-                .compute_rest(indexes, starting_indexes, exit, Some(dateindex))?;
+                .compute_rest(starting_indexes, exit, Some(dateindex))?;
 
             self.bitcoin.compute_all(
                 indexer,
@@ -130,8 +120,7 @@ impl ComputedValueVecsFromDateIndex {
         } else {
             let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
 
-            self.sats
-                .compute_rest(indexes, starting_indexes, exit, dateindex)?;
+            self.sats.compute_rest(starting_indexes, exit, dateindex)?;
 
             self.bitcoin.compute_all(
                 indexer,

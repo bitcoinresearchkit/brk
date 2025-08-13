@@ -6,9 +6,7 @@ use brk_structs::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, Timestamp, Version,
     Weight,
 };
-use vecdb::{
-    AnyCollectableVec, Computation, Database, EagerVec, Exit, Format, PAGE_SIZE, VecIterator,
-};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, Format, PAGE_SIZE, VecIterator};
 
 use crate::grouped::Source;
 
@@ -40,7 +38,6 @@ impl Vecs {
     pub fn forced_import(
         parent: &Path,
         version: Version,
-        computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
@@ -59,8 +56,6 @@ impl Vecs {
                 "timestamp",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_first(),
             )?,
@@ -69,8 +64,6 @@ impl Vecs {
                 "block_interval",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -82,8 +75,6 @@ impl Vecs {
                 "block_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -92,8 +83,6 @@ impl Vecs {
                 "block_weight",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -102,8 +91,6 @@ impl Vecs {
                 "block_size",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -118,8 +105,6 @@ impl Vecs {
                 "block_vbytes",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,

@@ -7,7 +7,7 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_structs::Version;
 use log::info;
-use vecdb::{AnyCollectableVec, Computation, Exit, Format};
+use vecdb::{AnyCollectableVec, Exit, Format};
 
 mod blocks;
 mod cointime;
@@ -53,65 +53,42 @@ impl Computer {
     ) -> Result<Self> {
         let computed_path = outputs_path.join("computed");
 
-        let computation = Computation::Lazy;
-        let format = Format::Compressed;
-
-        let indexes = indexes::Vecs::forced_import(
-            &computed_path,
-            VERSION + Version::ZERO,
-            indexer,
-            computation,
-            format,
-        )?;
+        let indexes =
+            indexes::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, indexer)?;
 
         let fetched = fetcher.map(|fetcher| {
             fetched::Vecs::forced_import(outputs_path, fetcher, VERSION + Version::ZERO).unwrap()
         });
 
+        let format = Format::Compressed;
+
         let price = fetched.is_some().then(|| {
-            price::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                computation,
-                format,
-                &indexes,
-            )
-            .unwrap()
+            price::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, format, &indexes)
+                .unwrap()
         });
 
         Ok(Self {
             blocks: blocks::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                computation,
                 format,
                 &indexes,
             )?,
-            mining: mining::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                computation,
-                format,
-                &indexes,
-            )?,
+            mining: mining::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
             constants: constants::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                computation,
-                format,
                 &indexes,
             )?,
             market: market::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                computation,
                 format,
                 &indexes,
             )?,
             stateful: stateful::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                computation,
                 format,
                 &indexes,
                 price.as_ref(),
@@ -122,15 +99,12 @@ impl Computer {
                 VERSION + Version::ZERO,
                 indexer,
                 &indexes,
-                computation,
                 format,
                 price.as_ref(),
             )?,
             cointime: cointime::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                computation,
-                format,
                 &indexes,
                 price.as_ref(),
             )?,

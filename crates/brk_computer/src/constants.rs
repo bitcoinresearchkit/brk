@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{StoredU16, Version};
-use vecdb::{AnyCollectableVec, AnyVec, Computation, Database, Exit, Format};
+use vecdb::{AnyCollectableVec, AnyVec, Database, Exit};
 
 use crate::grouped::Source;
 
@@ -26,13 +26,7 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        computation: Computation,
-        format: Format,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("constants"))?;
 
         Ok(Self {
@@ -41,8 +35,6 @@ impl Vecs {
                 "constant_0",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -51,8 +43,6 @@ impl Vecs {
                 "constant_1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -61,8 +51,6 @@ impl Vecs {
                 "constant_50",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -71,8 +59,6 @@ impl Vecs {
                 "constant_100",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,

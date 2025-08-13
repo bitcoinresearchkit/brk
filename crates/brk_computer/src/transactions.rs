@@ -7,9 +7,8 @@ use brk_structs::{
     StoredU32, StoredU64, TxIndex, TxVersion, Version, Weight,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation, ComputedVec,
-    ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, Database, Exit, Format, PAGE_SIZE,
-    StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit, Format,
+    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
 use crate::grouped::{
@@ -34,19 +33,11 @@ pub struct Vecs {
     pub indexes_to_feerate: ComputedVecsFromTxindex<Feerate>,
     /// Value == 0 when Coinbase
     pub txindex_to_input_value:
-        ComputedVecFrom3<TxIndex, Sats, TxIndex, InputIndex, TxIndex, StoredU64, InputIndex, Sats>,
+        LazyVecFrom3<TxIndex, Sats, TxIndex, InputIndex, TxIndex, StoredU64, InputIndex, Sats>,
     // pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU64>,
-    pub txindex_to_output_value: ComputedVecFrom3<
-        TxIndex,
-        Sats,
-        TxIndex,
-        OutputIndex,
-        TxIndex,
-        StoredU64,
-        OutputIndex,
-        Sats,
-    >,
+    pub txindex_to_output_value:
+        LazyVecFrom3<TxIndex, Sats, TxIndex, OutputIndex, TxIndex, StoredU64, OutputIndex, Sats>,
     // pub indexes_to_output_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_p2a_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_p2ms_count: ComputedVecsFromHeight<StoredU64>,
@@ -67,16 +58,14 @@ pub struct Vecs {
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
     pub inputindex_to_value:
-        ComputedVecFrom2<InputIndex, Sats, InputIndex, OutputIndex, OutputIndex, Sats>,
+        LazyVecFrom2<InputIndex, Sats, InputIndex, OutputIndex, OutputIndex, Sats>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
-    pub txindex_to_is_coinbase:
-        ComputedVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
+    pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,
-    pub txindex_to_vsize: ComputedVecFrom1<TxIndex, StoredU64, TxIndex, Weight>,
-    pub txindex_to_weight:
-        ComputedVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
-    pub txindex_to_fee: ComputedVecFrom2<TxIndex, Sats, TxIndex, Sats, TxIndex, Sats>,
-    pub txindex_to_feerate: ComputedVecFrom2<TxIndex, Feerate, TxIndex, Sats, TxIndex, StoredU64>,
+    pub txindex_to_vsize: LazyVecFrom1<TxIndex, StoredU64, TxIndex, Weight>,
+    pub txindex_to_weight: LazyVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
+    pub txindex_to_fee: EagerVec<TxIndex, Sats>,
+    pub txindex_to_feerate: EagerVec<TxIndex, Feerate>,
     pub indexes_to_exact_utxo_count: ComputedVecsFromHeight<StoredU64>,
 }
 
@@ -86,7 +75,6 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        computation: Computation,
         format: Format,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
@@ -95,12 +83,9 @@ impl Vecs {
 
         let compute_dollars = price.is_some();
 
-        let inputindex_to_value = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            &db,
+        let inputindex_to_value = LazyVecFrom2::init(
             "value",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             indexer.vecs.outputindex_to_value.boxed_clone(),
             |index: InputIndex, inputindex_to_outputindex_iter, outputindex_to_value_iter| {
@@ -120,14 +105,11 @@ impl Vecs {
                         }
                     })
             },
-        )?;
+        );
 
-        let txindex_to_weight = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            &db,
+        let txindex_to_weight = LazyVecFrom2::init(
             "weight",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_base_size.boxed_clone(),
             indexer.vecs.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
@@ -148,14 +130,11 @@ impl Vecs {
                         Weight::from(bitcoin::Weight::from_wu_usize(wu))
                     })
             },
-        )?;
+        );
 
-        let txindex_to_vsize = ComputedVec::forced_import_or_init_from_1(
-            computation,
-            &db,
+        let txindex_to_vsize = LazyVecFrom1::init(
             "vsize",
             version + VERSION + Version::ZERO,
-            format,
             txindex_to_weight.boxed_clone(),
             |index: TxIndex, iter| {
                 let index = index.unwrap_to_usize();
@@ -165,14 +144,11 @@ impl Vecs {
                     )
                 })
             },
-        )?;
+        );
 
-        let txindex_to_is_coinbase = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            &db,
+        let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version + VERSION + Version::ZERO,
-            format,
             indexes.txindex_to_height.boxed_clone(),
             indexer.vecs.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
@@ -188,14 +164,11 @@ impl Vecs {
                         StoredBool::from(index == txindex)
                     })
             },
-        )?;
+        );
 
-        let txindex_to_input_value = ComputedVec::forced_import_or_init_from_3(
-            computation,
-            &db,
+        let txindex_to_input_value = LazyVecFrom3::init(
             "input_value",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_first_inputindex.boxed_clone(),
             indexes.txindex_to_input_count.boxed_clone(),
             inputindex_to_value.boxed_clone(),
@@ -224,7 +197,7 @@ impl Vecs {
                         })
                     })
             },
-        )?;
+        );
 
         // let indexes_to_input_value: ComputedVecsFromTxindex<Sats> =
         //     ComputedVecsFromTxindex::forced_import(
@@ -240,12 +213,9 @@ impl Vecs {
         //             .add_cumulative(),
         //     )?;
 
-        let txindex_to_output_value = ComputedVec::forced_import_or_init_from_3(
-            computation,
-            &db,
+        let txindex_to_output_value = LazyVecFrom3::init(
             "output_value",
             version + VERSION + Version::ZERO,
-            format,
             indexer.vecs.txindex_to_first_outputindex.boxed_clone(),
             indexes.txindex_to_output_count.boxed_clone(),
             indexer.vecs.outputindex_to_value.boxed_clone(),
@@ -274,7 +244,7 @@ impl Vecs {
                         })
                     })
             },
-        )?;
+        );
 
         // let indexes_to_output_value: ComputedVecsFromTxindex<Sats> =
         //     ComputedVecsFromTxindex::forced_import(
@@ -290,47 +260,18 @@ impl Vecs {
         //             .add_cumulative(),
         //     )?;
 
-        let txindex_to_fee = ComputedVecFrom2::forced_import_or_init_from_2(
-            Computation::Eager,
+        let txindex_to_fee = EagerVec::forced_import(
             &db,
             "fee",
             version + VERSION + Version::ZERO,
-            format,
-            txindex_to_input_value.boxed_clone(),
-            txindex_to_output_value.boxed_clone(),
-            |txindex: TxIndex, input_iter, output_iter| {
-                let txindex = txindex.unwrap_to_usize();
-                input_iter.next_at(txindex).and_then(|(_, value)| {
-                    let input = value.into_owned();
-                    if input.is_zero() {
-                        return Some(Sats::ZERO);
-                    }
-                    output_iter.next_at(txindex).map(|(_, value)| {
-                        let output = value.into_owned();
-                        input.checked_sub(output).unwrap()
-                    })
-                })
-            },
+            Format::Compressed,
         )?;
 
-        let txindex_to_feerate = ComputedVecFrom2::forced_import_or_init_from_2(
-            Computation::Eager,
+        let txindex_to_feerate = EagerVec::forced_import(
             &db,
             "feerate",
             version + VERSION + Version::ZERO,
-            format,
-            txindex_to_fee.boxed_clone(),
-            txindex_to_vsize.boxed_clone(),
-            |txindex: TxIndex, fee_iter, vsize_iter| {
-                let txindex = txindex.unwrap_to_usize();
-                fee_iter.next_at(txindex).and_then(|(_, value)| {
-                    let fee = value.into_owned();
-                    vsize_iter.next_at(txindex).map(|(_, value)| {
-                        let vsize = value.into_owned();
-                        Feerate::from((fee, vsize))
-                    })
-                })
-            },
+            Format::Compressed,
         )?;
 
         Ok(Self {
@@ -339,8 +280,6 @@ impl Vecs {
                 "tx_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -355,7 +294,6 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -370,7 +308,6 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -384,8 +321,6 @@ impl Vecs {
                 "tx_v1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -394,8 +329,6 @@ impl Vecs {
                 "tx_v2",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -404,8 +337,6 @@ impl Vecs {
                 "tx_v3",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -415,7 +346,6 @@ impl Vecs {
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
                 version + VERSION + Version::ZERO,
-                computation,
                 format,
                 price,
                 VecBuilderOptions::default()
@@ -431,7 +361,6 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -444,7 +373,6 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -457,7 +385,6 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -469,8 +396,6 @@ impl Vecs {
                 "subsidy",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_sum()
@@ -485,8 +410,6 @@ impl Vecs {
                 "coinbase",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 VecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
@@ -501,8 +424,6 @@ impl Vecs {
                 "unclaimed_rewards",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
                 compute_dollars,
                 indexes,
@@ -512,8 +433,6 @@ impl Vecs {
                 "p2a_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -527,8 +446,6 @@ impl Vecs {
                 "p2ms_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -542,8 +459,6 @@ impl Vecs {
                 "p2pk33_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -557,8 +472,6 @@ impl Vecs {
                 "p2pk65_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -572,8 +485,6 @@ impl Vecs {
                 "p2pkh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -587,8 +498,6 @@ impl Vecs {
                 "p2sh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -602,8 +511,6 @@ impl Vecs {
                 "p2tr_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -617,8 +524,6 @@ impl Vecs {
                 "p2wpkh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -632,8 +537,6 @@ impl Vecs {
                 "p2wsh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -647,8 +550,6 @@ impl Vecs {
                 "opreturn_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -662,8 +563,6 @@ impl Vecs {
                 "unknownoutput_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -677,8 +576,6 @@ impl Vecs {
                 "emptyoutput_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -692,8 +589,6 @@ impl Vecs {
                 "exact_utxo_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
-                format,
-                computation,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -792,36 +687,6 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        self.txindex_to_is_coinbase.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
-        self.txindex_to_weight.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
-        self.txindex_to_vsize.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
-        self.inputindex_to_value.compute_if_necessary(
-            starting_indexes.inputindex,
-            &indexer.vecs.inputindex_to_outputindex,
-            exit,
-        )?;
-
-        self.txindex_to_output_value.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
         // self.indexes_to_output_value.compute_all(
         //     indexer,
         //     indexes,
@@ -837,12 +702,6 @@ impl Vecs {
         //         )
         //     },
         // )?;
-
-        self.txindex_to_input_value.compute_if_necessary(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
 
         // self.indexes_to_input_value.compute_all(
         //     indexer,
@@ -860,15 +719,18 @@ impl Vecs {
         //     },
         // )?;
 
-        self.txindex_to_fee.compute_if_necessary(
+        self.txindex_to_fee.compute_subtract(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
+            &self.txindex_to_input_value,
+            &self.txindex_to_output_value,
             exit,
         )?;
 
-        self.txindex_to_feerate.compute_if_necessary(
+        self.txindex_to_feerate.compute_transform2(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_txid,
+            &self.txindex_to_fee,
+            &self.txindex_to_vsize,
+            |(txindex, fee, vsize, ..)| (txindex, Feerate::from((fee, vsize))),
             exit,
         )?;
 

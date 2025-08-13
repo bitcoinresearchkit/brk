@@ -3,7 +3,7 @@ use std::{ops::Deref, path::Path};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{AnyCollectableVec, AnyIterableVec, Computation, Database, Exit, Format};
+use vecdb::{AnyCollectableVec, AnyIterableVec, Database, Exit, Format};
 
 use crate::{
     Indexes, UTXOCohortState, indexes, market, price,
@@ -27,7 +27,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         cohort_name: Option<&str>,
-        computation: Computation,
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
@@ -53,7 +52,6 @@ impl Vecs {
             inner: common::Vecs::forced_import(
                 db,
                 cohort_name,
-                computation,
                 format,
                 version,
                 indexes,
