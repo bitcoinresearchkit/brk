@@ -45,7 +45,7 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### Indexer Module
 - **Optimized**: Integration with updated computer module patterns
 
-## [v0.0.88] - 2025-08-10
+## [v0.0.88](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.88) - 2025-08-10
 
 ### Website
 - **Fixed**: Conditional rendering of adjusted SOPR (Adjusted Spent Output Profit Ratio) charts in website options
@@ -57,7 +57,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Updated**: Bumped all crate versions from 0.0.87 to 0.0.88
 - **Added**: Minimum supported Rust version constraint (1.89) to workspace configuration
 
-## [v0.0.87] - 2025-08-10
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.87...v0.0.88)
+
+## [v0.0.87](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.87) - 2025-08-10
 
 ### Major Architecture Change
 - **BREAKING**: Extracted `brk_vecs` into separate external crate `vecdb`
@@ -88,7 +90,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Updated**: All crate versions from 0.0.85 to 0.0.87
 - **Added**: New dependency on external `vecdb` crate with derive features
 
-## [v0.0.85] - 2025-08-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.85...v0.0.87)
+
+## [v0.0.85](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.85) - 2025-08-07
 
 ### MCP (Model Context Protocol)
 - **Updated**: Upgraded MCP implementation
@@ -101,7 +105,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### Build System
 - **Updated**: Bumped version from 0.0.84 to 0.0.85
 
-## [v0.0.84] - 2025-08-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.84...v0.0.85)
+
+## [v0.0.84](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.84) - 2025-08-07
 
 ### Build System
 - **Added**: Per-crate `build.rs` files for better build configuration
@@ -113,13 +119,17 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Fixed**: Race condition in vector operations
 - **Improved**: Vector storage stability and performance
 
-## [v0.0.83] - 2025-07-26
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.83...v0.0.84)
+
+## [v0.0.83](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.83) - 2025-07-26
 
 ### Vector Storage
 - **Added**: Linux punch hole implementation for better disk space management
 - **Enhanced**: Memory-mapped file handling improvements
 
-## [v0.0.82] - 2025-07-26
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.82...v0.0.83)
+
+## [v0.0.82](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.82) - 2025-07-26
 
 ### Dependencies
 - **Updated**: Cleaned up Cargo dependencies
@@ -131,7 +141,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Improved**: Memory management and performance optimizations
 - **Added**: Flush and punch operations for better disk usage
 
-## [v0.0.81] - 2025-07-17
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.81...v0.0.82)
+
+## [v0.0.81](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.81) - 2025-07-17
 
 ### Vector Storage
 - **Fixed**: Holes export functionality in vector storage
@@ -145,7 +157,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Fixed**: Stateful operations
 - **Enhanced**: Vector-to-store conversion process (parts 1 & 2)
 
-## [v0.0.80] - 2025-07-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.80...v0.0.81)
+
+## [v0.0.80](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.80) - 2025-07-13
 
 ### MCP (Model Context Protocol)
 - **Removed**: Claude results examples due to dead links
@@ -158,7 +172,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### Dependencies
 - **Updated**: Multiple crate upgrades for better compatibility
 
-## [v0.0.79] - 2025-07-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.79...v0.0.80)
+
+## [v0.0.79](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.79) - 2025-07-13
 
 ### Dependencies
 - **Updated**: Upgraded multiple crates for better compatibility and performance
@@ -177,7 +193,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Optimized**: Memory usage for future v3 improvements
 - **Fixed**: Missing store-related files
 
-## [v0.0.78] - 2025-07-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.78...v0.0.79)
+
+## [v0.0.78](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.78) - 2025-07-13
 
 ### Build System
 - **Updated**: All crate versions bumped for version consistency across workspace
@@ -196,24 +214,32 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Fixed**: Various global module issues
 - **Enhanced**: Performance and resource improvements
 
-## [v0.0.76] - 2025-07-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.76...v0.0.78)
+
+## [v0.0.76](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.76) - 2025-07-09
 
 ### Bundler
 - **Updated**: Upgraded Rolldown dependency for better bundling performance
 
-## [v0.0.75] - 2025-07-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.75...v0.0.76)
+
+## [v0.0.75](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.75) - 2025-07-09
 
 ### Computer Module
 - **Fixed**: Reduced parallel thread count for `compute_rest_part2` to prevent external drive crashes
 - **Improved**: Better handling of external storage devices during computation
 
-## [v0.0.74] - 2025-07-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.74...v0.0.75)
+
+## [v0.0.74](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.74) - 2025-07-09
 
 ### Computer Module
 - **Fixed**: Parallel computation crashes on external drives
 - **Enhanced**: Storage device compatibility improvements
 
-## [v0.0.73] - 2025-07-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.73...v0.0.74)
+
+## [v0.0.73](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.73) - 2025-07-09
 
 ### Website
 - **Fixed**: Chart panes now maintain equal sizes
@@ -245,31 +271,41 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Added**: MCP (Model Context Protocol) README documentation
 - **Enhanced**: Developer documentation
 
-## [v0.0.71] - 2025-06-25
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.71...v0.0.73)
+
+## [v0.0.71](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.71) - 2025-06-25
 
 ### MCP (Model Context Protocol)
 - **Enhanced**: Small improvements to MCP functionality
 - **Updated**: MCP integration refinements
 
-## [v0.0.70] - 2025-06-25
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.70...v0.0.71)
+
+## [v0.0.70](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.70) - 2025-06-25
 
 ### Fetcher Module
 - **Fixed**: BRK API URL endpoints
 - **Enhanced**: Price fetching reliability
 
-## [v0.0.69] - 2025-06-24
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.69...v0.0.70)
+
+## [v0.0.69](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.69) - 2025-06-24
 
 ### Vector Storage
 - **Reverted**: Storing file in struct (was overwhelming system resources)
 - **Improved**: Memory management for vector operations
 
-## [v0.0.68] - 2025-06-24
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.68...v0.0.69)
+
+## [v0.0.68](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.68) - 2025-06-24
 
 ### Core System
 - **Increased**: Maximum open files limit for better file handling
 - **Enhanced**: System resource management
 
-## [v0.0.67] - 2025-06-24
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.67...v0.0.68)
+
+## [v0.0.67](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.67) - 2025-06-24
 
 ### Server Module
 - **Changed**: Now uses ETag for vectors instead of date modified for better caching
@@ -297,7 +333,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Updated**: MCP documentation
 - **Updated**: Changelog titles
 
-## [v0.0.66] - 2025-06-19
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.66...v0.0.67)
+
+## [v0.0.66](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.66) - 2025-06-19
 
 ### Cointime Implementation
 - **Added**: Cointime functionality part 1
@@ -312,7 +350,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Merged**: Pull request #18 with typo fixes from StevenBlack
 - **Improved**: Code quality and documentation accuracy
 
-## [v0.0.65] - 2025-06-17
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.65...v0.0.66)
+
+## [v0.0.65](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.65) - 2025-06-17
 
 ### Website
 - **Fixed**: Hang issue when candles fetched are slightly different than before
@@ -322,7 +362,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Improved**: Minor refinements to brk_cli README
 - **Enhanced**: CLI documentation clarity
 
-## [v0.0.64] - 2025-06-17
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.64...v0.0.65)
+
+## [v0.0.64](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.64) - 2025-06-17
 
 ### Datasets
 - **Added**: Multiple new realized datasets and charts
@@ -331,20 +373,26 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Added**: Mayer's Multiple indicator
 - **Enhanced**: Financial analysis capabilities
 
-## [v0.0.63] - 2025-06-16
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.63...v0.0.64)
+
+## [v0.0.63](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.63) - 2025-06-16
 
 ### Website
 - **Fixed**: Web interface stutter issue (follow-up fix)
 - **Added**: PWA (Progressive Web App) assets
 - **Enhanced**: User experience improvements
 
-## [v0.0.62] - 2025-06-16
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.62...v0.0.63)
+
+## [v0.0.62](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.62) - 2025-06-16
 
 ### Website
 - **Fixed**: Stutter on update and save default chart settings to URL parameters
 - **Enhanced**: Chart settings persistence
 
-## [v0.0.61] - 2025-06-15
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.61...v0.0.62)
+
+## [v0.0.61](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.61) - 2025-06-15
 
 ### Website
 - **Fixed**: Error in Safari lockdown mode
@@ -354,13 +402,17 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Fixed**: OHLC data opening when fetched from different API than previous OHLC (preparation fix)
 - **Enhanced**: API data source consistency
 
-## [v0.0.59] - 2025-06-15
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.59...v0.0.61)
+
+## [v0.0.59](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.59) - 2025-06-15
 
 ### Computer Module
 - **Fixed**: Open of OHLC data when fetched from different API than previous OHLC
 - **Enhanced**: API data consistency handling
 
-## [v0.0.58] - 2025-06-15
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.58...v0.0.59)
+
+## [v0.0.58](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.58) - 2025-06-15
 
 ### Bundler
 - **Fixed**: BRK bundler usage
@@ -374,19 +426,25 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Enhanced**: Website serving performance
 - **Enhanced**: Static file serving performance
 
-## [v0.0.56] - 2025-06-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.56...v0.0.58)
+
+## [v0.0.56](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.56) - 2025-06-13
 
 ### Computer Module
 - **Enhanced**: Stateful operations now reset when blockchain reorganization detected
 - **Improved**: Blockchain state management reliability
 
-## [v0.0.55] - 2025-06-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.55...v0.0.56)
+
+## [v0.0.55](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.55) - 2025-06-13
 
 ### Global
 - **Fixed**: Multiple system-wide fixes and improvements
 - **Enhanced**: Overall system stability
 
-## [v0.0.54] - 2025-06-12
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.54...v0.0.55)
+
+## [v0.0.54](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.54) - 2025-06-12
 
 ### Website
 - **Enhanced**: Filter possible index choices in charts (initial implementation)
@@ -408,24 +466,32 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Fixed**: Global system fixes
 - **Fixed**: Various global fixes
 
-## [v0.0.52] - 2025-06-11
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.52...v0.0.54)
+
+## [v0.0.52](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.52) - 2025-06-11
 
 ### Website
 - **Fixed**: Service worker and related components
 - **Enhanced**: Progressive Web App functionality
 
-## [v0.0.51] - 2025-06-11
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.51...v0.0.52)
+
+## [v0.0.51](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.51) - 2025-06-11
 
 ### Website
 - **Enhanced**: Default website improvements and fixes
 
-## [v0.0.50] - 2025-06-11
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.50...v0.0.51)
+
+## [v0.0.50](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.50) - 2025-06-11
 
 ### Website
 - **Fixed**: Minimum bar spacing for charts
 - **Enhanced**: Chart display improvements
 
-## [v0.0.49] - 2025-06-11
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.49...v0.0.50)
+
+## [v0.0.49](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.49) - 2025-06-11
 
 ### Build System
 - **Updated**: Set full version of all crates for better versioning consistency
@@ -437,12 +503,16 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### Documentation
 - **Updated**: README improvements
 
-## [v0.0.48] - 2025-06-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.48...v0.0.49)
+
+## [v0.0.48](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.48) - 2025-06-09
 
 ### Website
 - **Enhanced**: Default website snapshots and continued development
 
-## [v0.0.47] - 2025-06-08
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.47...v0.0.48)
+
+## [v0.0.47](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.47) - 2025-06-08
 
 ### Server
 - **Added**: Documentation for index-t-value functionality
@@ -453,32 +523,42 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### CLI
 - **Added**: Count parameter to query functionality
 
-## [v0.0.46] - 2025-06-08
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.46...v0.0.47)
+
+## [v0.0.46](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.46) - 2025-06-08
 
 ### Server
 - **Added**: DDoS protection for better server security
 - **Enhanced**: Request rate limiting and protection
 
-## [v0.0.45] - 2025-06-08
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.45...v0.0.46)
+
+## [v0.0.45](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.45) - 2025-06-08
 
 ### Website
 - **Moved**: Service worker to root directory
 - **Updated**: Service worker functionality
 - **Enhanced**: PWA capabilities
 
-## [v0.0.44] - 2025-06-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.44...v0.0.45)
+
+## [v0.0.44](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.44) - 2025-06-07
 
 ### Server
 - **Fixed**: Existing folder endpoints functionality
 - **Enhanced**: File serving reliability
 
-## [v0.0.43] - 2025-06-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.43...v0.0.44)
+
+## [v0.0.43](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.43) - 2025-06-07
 
 ### Website
 - **Updated**: Dependencies and fixed CSS issues
 - **Enhanced**: Styling and layout improvements
 
-## [v0.0.42] - 2025-06-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.42...v0.0.43)
+
+## [v0.0.42](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.42) - 2025-06-07
 
 ### Global System
 - **Fixed**: Multiple system fixes and improvements
@@ -499,14 +579,18 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 ### Documentation
 - **Reset**: Changelog for clean organization
 
-## [v0.0.40] - 2025-05-25
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.40...v0.0.42)
+
+## [v0.0.40](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.40) - 2025-05-25
 
 ### Global System
 - **Fixed**: Multiple system-wide issues
 - **Enhanced**: Overall stability and performance
 - **Resolved**: Data accuracy issues in global computations
 
-## [v0.0.39] - 2025-05-25
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.39...v0.0.40)
+
+## [v0.0.39](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.39) - 2025-05-25
 
 ### UTXO System
 - **Implemented**: UTXO dataset functionality (initial part 1)
@@ -514,19 +598,25 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Added**: Foundation for unspent transaction output analysis
 - **Added**: Unspent transaction output tracking and analysis
 
-## [v0.0.37] - 2025-05-14
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.37...v0.0.39)
+
+## [v0.0.37](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.37) - 2025-05-14
 
 ### DCA Analysis
 - **Added**: Dollar-Cost Averaging (DCA) classes and analysis
 - **Enhanced**: Investment strategy analytics
 
-## [v0.0.36] - 2025-05-13
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.36...v0.0.37)
+
+## [v0.0.36](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.36) - 2025-05-13
 
 ### Website
 - **Added**: Price line functionality to charts
 - **Enhanced**: Chart visualization capabilities
 
-## [v0.0.35] - 2025-05-12
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.35...v0.0.36)
+
+## [v0.0.35](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.35) - 2025-05-12
 
 ### Financial Analytics
 - **Added**: Investment return analysis (lump sum vs DCA)
@@ -534,27 +624,35 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Added**: Market Simple Moving Averages (SMAs)
 - **Enhanced**: Financial analysis tools
 
-## [v0.0.34] - 2025-05-09
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.34...v0.0.35)
+
+## [v0.0.34](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.34) - 2025-05-09
 
 ### Website
 - **Added**: Market charts functionality
 - **Enhanced**: Chart display and interaction
 
-## [v0.0.33] - 2025-05-08
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.33...v0.0.34)
+
+## [v0.0.33](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.33) - 2025-05-08
 
 ### Vector Storage
 - **Fixed**: Computed vector eager path functionality
 - **Enhanced**: Path deletion for lazy vectors
 - **Improved**: Vector storage reliability
 
-## [v0.0.32] - 2025-05-08
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.32...v0.0.33)
+
+## [v0.0.32](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.32) - 2025-05-08
 
 ### Vector Storage - Lazy Computation
 - **Completed**: Lazy computation implementation
 - **Enhanced**: On-demand vector calculation
 - **Improved**: Memory efficiency for large datasets
 
-## [v0.0.31] - 2025-04-30
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.31...v0.0.32)
+
+## [v0.0.31](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.31) - 2025-04-30
 
 ### Global System
 - **Fixed**: Multiple system fixes and improvements
@@ -569,7 +667,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Improved**: Vector iteration with `into_iter` for range collection
 - **Enhanced**: Iterator performance and memory usage
 
-## [v0.0.30] - 2025-04-23
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.30...v0.0.31)
+
+## [v0.0.30](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.30) - 2025-04-23
 
 ### Website
 - **Fixed**: Chart data fetching issues
@@ -588,14 +688,18 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Implemented**: Lazy/eager computation model
 - **Enhanced**: Flexible computation strategies
 
-## [v0.0.29] - 2025-04-22
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.29...v0.0.30)
+
+## [v0.0.29](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.29) - 2025-04-22
 
 ### Website (Kibo)
 - **Fixed**: TypeScript ignore additions for better compilation
 - **Enhanced**: Database functionality (part 2)
 - **Improved**: Database integration and management
 
-## [v0.0.28] - 2025-04-19
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.28...v0.0.29)
+
+## [v0.0.28](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.28) - 2025-04-19
 
 ### Website (Kibo)
 - **Implemented**: Database functionality (part 1)
@@ -605,26 +709,34 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Enhanced**: Computer + kibo integration (part 14) with fixes
 - **Improved**: Cross-module functionality
 
-## [v0.0.27] - 2025-04-18
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.27...v0.0.28)
+
+## [v0.0.27](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.27) - 2025-04-18
 
 ### Distribution
 - **Fixed**: Tag version formatting issues
 - **Enhanced**: Release packaging improvements
 
-## [v0.0.26] - 2025-04-18
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.26...v0.0.27)
+
+## [v0.0.26](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.26) - 2025-04-18
 
 ### Distribution
 - **Fixed**: Ubuntu version compatibility
 - **Enhanced**: Linux distribution support
 
-## [v0.0.25] - 2025-04-18
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.25...v0.0.26)
+
+## [v0.0.25](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.25) - 2025-04-18
 
 ### Distribution
 - **Updated**: Ubuntu version for better compatibility
 - **Added**: Manual trigger for GitHub Actions
 - **Enhanced**: CI/CD pipeline flexibility
 
-## [v0.0.24] - 2025-04-18
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.24...v0.0.25)
+
+## [v0.0.24](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.24) - 2025-04-18
 
 ### Dependencies
 - **Updated**: Upgraded multiple crates for better performance
@@ -640,7 +752,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Enhanced**: Documentation clarity and completeness
 - **Updated**: Discord community links
 
-## [v0.0.23] - 2025-04-14
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.23...v0.0.24)
+
+## [v0.0.23](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.23) - 2025-04-14
 
 ### Dependencies
 - **Updated**: Dependency upgrades across the workspace
@@ -652,13 +766,17 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Improved**: Cross-component functionality
 - **Improved**: Cross-module functionality
 
-## [v0.0.21] - 2025-04-11
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.21...v0.0.23)
+
+## [v0.0.21](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.21) - 2025-04-11
 
 ### Computer Module
 - **Enhanced**: Computer + kibo integration (part 9)
 - **Continued**: Ongoing computer module development
 
-## [v0.0.20] - 2025-04-10
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.20...v0.0.21)
+
+## [v0.0.20](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.20) - 2025-04-10
 
 ### Global Cleanup
 - **Cleaned**: Old files and legacy code
@@ -669,19 +787,25 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Optimized**: Performance improvements
 - **Enhanced**: Memory efficiency
 
-## [v0.0.19] - 2025-04-07
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.19...v0.0.20)
+
+## [v0.0.19](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.19) - 2025-04-07
 
 ### Computer Module
 - **Enhanced**: Computer functionality (parts 5-7)
 - **Improved**: Data processing capabilities
 
-## [v0.0.18] - 2025-04-05
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.18...v0.0.19)
+
+## [v0.0.18](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.18) - 2025-04-05
 
 ### Computer Module
 - **Enhanced**: Computer functionality (part 4)
 - **Continued**: Core computer development
 
-## [v0.0.17] - 2025-04-05
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.17...v0.0.18)
+
+## [v0.0.17](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.17) - 2025-04-05
 
 ### Distribution
 - **Moved**: Configuration to `config.toml` format
@@ -691,25 +815,33 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Initialized**: Disk-based storage functionality
 - **Enhanced**: Data persistence capabilities
 
-## [v0.0.16] - 2025-04-04
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.16...v0.0.17)
+
+## [v0.0.16](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.16) - 2025-04-04
 
 ### Server
 - **Fixed**: Repository version path issues
 - **Enhanced**: Static file serving
 
-## [v0.0.15] - 2025-04-04
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.15...v0.0.16)
+
+## [v0.0.15](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.15) - 2025-04-04
 
 ### Server
 - **Fixed**: Missing 'v' in version handling
 - **Enhanced**: Version management
 
-## [v0.0.14] - 2025-04-04
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.14...v0.0.15)
+
+## [v0.0.14](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.14) - 2025-04-04
 
 ### Server
 - **Fixed**: Downloaded repository version path
 - **Enhanced**: File path resolution
 
-## [v0.0.13] - 2025-04-04
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.13...v0.0.14)
+
+## [v0.0.13](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.13) - 2025-04-04
 
 ### Global System
 - **Enhanced**: System-wide improvements and snapshots
@@ -729,7 +861,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Added**: API documentation
 - **Enhanced**: Development experience
 
-## [v0.0.12] - 2025-04-02
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.12...v0.0.13)
+
+## [v0.0.12](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.12) - 2025-04-02
 
 ### Server
 - **Enhanced**: API documentation and functionality
@@ -748,7 +882,9 @@ All notable changes to the Bitcoin Research Kit (BRK) project will be documented
 - **Updated**: Crate updates across workspace
 - **Enhanced**: Compatibility and performance
 
-## [v0.0] - 2025-02-23
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0...v0.0.12)
+
+## [v0.0](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0) - 2025-02-23
 
 ### Major Project Rewrite
 - **BREAKING**: Complete rewrite from legacy "kibo" to modern "BRK" (Bitcoin Research Kit)
