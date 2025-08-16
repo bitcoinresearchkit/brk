@@ -28,5 +28,6 @@ flamegraph.svg
 *.trace
 
 # AI
+.claude
 CLAUDE.md
 CLAUDE*.md
