@@ -2,7 +2,6 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
-    time::SystemTime,
 };
 
 use brk_error::Result;
@@ -10,6 +9,7 @@ use brk_structs::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
+use zerocopy::{FromBytes, IntoBytes};
 
 use crate::states::SupplyState;
 
@@ -78,23 +78,31 @@ impl PriceToAmount {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        let mut files: Vec<(SystemTime, PathBuf)> = fs::read_dir(&self.pathbuf)?
+        let files: BTreeMap<Height, PathBuf> = fs::read_dir(&self.pathbuf)?
             .filter_map(|entry| {
                 let path = entry.ok()?.path();
                 let name = path.file_name()?.to_str()?;
-                if name.starts_with(STATE_AT_) && name[STATE_AT_.len() + 1..].parse::<u64>().is_ok()
-                {
-                    let modified = fs::metadata(&path).ok()?.modified().ok()?;
-                    Some((modified, path))
+                if let Some(height_str) = name.strip_prefix(STATE_AT_) {
+                    if let Ok(h) = height_str.parse::<u64>().map(Height::from) {
+                        if h < height {
+                            Some((h, path))
+                        } else {
+                            let _ = fs::remove_file(path);
+                            None
+                        }
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
             })
             .collect();
 
-        files.sort_unstable_by_key(|(time, _)| *time);
-
-        for (_, path) in files.iter().take(files.len().saturating_sub(STATE_TO_KEEP)) {
+        for (_, path) in files
+            .iter()
+            .take(files.len().saturating_sub(STATE_TO_KEEP - 1))
+        {
             fs::remove_file(path)?;
         }
 
@@ -128,8 +136,8 @@ impl State {
         let compressed_values = simpler_compress(&values, COMPRESSION_LEVEL)?;
 
         let mut buffer = Vec::new();
-        buffer.extend(&(keys.len() as u64).to_ne_bytes());
-        buffer.extend(&(compressed_keys.len() as u64).to_ne_bytes());
+        buffer.extend(keys.len().as_bytes());
+        buffer.extend(compressed_keys.len().as_bytes());
         buffer.extend(compressed_keys);
         buffer.extend(compressed_values);
 
@@ -137,8 +145,8 @@ impl State {
     }
 
     fn deserialize(data: &[u8]) -> vecdb::Result<Self> {
-        let entry_count = u64::from_ne_bytes(data[0..8].try_into().unwrap()) as usize;
-        let keys_len = u64::from_ne_bytes(data[8..16].try_into().unwrap()) as usize;
+        let entry_count = usize::read_from_bytes(&data[0..8])?;
+        let keys_len = usize::read_from_bytes(&data[8..16])?;
 
         let keys: Vec<f64> = simple_decompress(&data[16..16 + keys_len])?;
         let values: Vec<u64> = simple_decompress(&data[16 + keys_len..])?;

@@ -6,7 +6,7 @@ use brk_structs::{
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
-    Format, GenericStoredVec, StoredIndex, VecIterator,
+    GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -48,32 +48,29 @@ where
         name: &str,
         source: Source<TxIndex, T>,
         version: Version,
-        format: Format,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
         let txindex = source.is_compute().then(|| {
             Box::new(
-                EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)
+                EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO)
                     .unwrap(),
             )
         });
 
-        let height = EagerVecBuilder::forced_import(
+        let height = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options,
         )?;
 
         let options = options.remove_percentiles();
 
-        let dateindex = EagerVecBuilder::forced_import(
+        let dateindex = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options,
         )?;
 
@@ -130,11 +127,10 @@ where
             txindex,
             height,
             dateindex,
-            difficultyepoch: EagerVecBuilder::forced_import(
+            difficultyepoch: EagerVecBuilder::forced_import_compressed(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
-                format,
                 options,
             )?,
             // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,

@@ -62,7 +62,7 @@ fn req_to_response_res(
 
     if weight > MAX_WEIGHT {
         return Err(Error::Str(
-            "Request is too heavy, max weight is {MAX_WEIGHT}",
+            "Request is too heavy, max weight is {MAX_WEIGHT} bytes",
         ));
     }
 

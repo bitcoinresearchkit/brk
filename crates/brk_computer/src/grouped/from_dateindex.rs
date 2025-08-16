@@ -4,9 +4,7 @@ use brk_indexer::Indexer;
 use brk_structs::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit, Format,
-};
+use vecdb::{AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, grouped::LazyVecBuilder, indexes};
 
@@ -42,17 +40,14 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let format = Format::Compressed;
-
         let dateindex = source.is_compute().then(|| {
-            EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format).unwrap()
+            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO).unwrap()
         });
 
-        let dateindex_extra = EagerVecBuilder::forced_import(
+        let dateindex_extra = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options.copy_self_extra(),
         )?;
 

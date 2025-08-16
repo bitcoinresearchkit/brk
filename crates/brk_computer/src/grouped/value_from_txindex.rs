@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Database, Exit, Format,
-    LazyVecFrom1, LazyVecFrom3, StoredIndex, StoredVec,
+    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Database, Exit, LazyVecFrom1,
+    LazyVecFrom3, StoredIndex, StoredVec,
 };
 
 use crate::{Indexes, grouped::Source, indexes, price};
@@ -32,7 +32,6 @@ impl ComputedValueVecsFromTxindex {
         indexes: &indexes::Vecs,
         source: Source<TxIndex, Sats>,
         version: Version,
-        format: Format,
         price: Option<&price::Vecs>,
         options: VecBuilderOptions,
     ) -> Result<Self> {
@@ -46,7 +45,6 @@ impl ComputedValueVecsFromTxindex {
             name,
             source.clone(),
             version + VERSION,
-            format,
             indexes,
             options,
         )?;
@@ -70,7 +68,6 @@ impl ComputedValueVecsFromTxindex {
             &name_in_btc,
             Source::None,
             version + VERSION,
-            format,
             indexes,
             options,
         )?;
@@ -113,7 +110,6 @@ impl ComputedValueVecsFromTxindex {
                     &name_in_usd,
                     Source::None,
                     version + VERSION,
-                    format,
                     indexes,
                     options,
                 )

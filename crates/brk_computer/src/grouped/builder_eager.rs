@@ -36,6 +36,15 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
+    pub fn forced_import_compressed(
+        db: &Database,
+        name: &str,
+        version: Version,
+        options: VecBuilderOptions,
+    ) -> Result<Self> {
+        Self::forced_import(db, name, version, Format::Compressed, options)
+    }
+
     pub fn forced_import(
         db: &Database,
         name: &str,
