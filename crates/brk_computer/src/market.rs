@@ -3,9 +3,7 @@ use std::{path::Path, thread};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
-use vecdb::{
-    AnyCollectableVec, Database, EagerVec, Exit, Format, PAGE_SIZE, StoredIndex, VecIterator,
-};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, PAGE_SIZE, StoredIndex, VecIterator};
 
 use crate::{
     grouped::Source,
@@ -170,33 +168,25 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        format: Format,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("market"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
-            height_to_marketcap: EagerVec::forced_import(
+            height_to_marketcap: EagerVec::forced_import_compressed(
                 &db,
                 "marketcap",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            height_to_ath: EagerVec::forced_import(
+            height_to_ath: EagerVec::forced_import_compressed(
                 &db,
                 "ath",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            height_to_drawdown: EagerVec::forced_import(
+            height_to_drawdown: EagerVec::forced_import_compressed(
                 &db,
                 "drawdown",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             indexes_to_marketcap: ComputedVecsFromDateIndex::forced_import(
                 &db,

@@ -6,7 +6,7 @@ use brk_structs::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, Timestamp, Version,
     Weight,
 };
-use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, Format, PAGE_SIZE, VecIterator};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, PAGE_SIZE, VecIterator};
 
 use crate::grouped::Source;
 
@@ -35,21 +35,15 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        format: Format,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("blocks"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
-            height_to_interval: EagerVec::forced_import(
+            height_to_interval: EagerVec::forced_import_compressed(
                 &db,
                 "interval",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 &db,
@@ -94,11 +88,10 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
-            height_to_vbytes: EagerVec::forced_import(
+            height_to_vbytes: EagerVec::forced_import_compressed(
                 &db,
                 "vbytes",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 &db,
@@ -108,17 +101,15 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
-            difficultyepoch_to_timestamp: EagerVec::forced_import(
+            difficultyepoch_to_timestamp: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            halvingepoch_to_timestamp: EagerVec::forced_import(
+            halvingepoch_to_timestamp: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
 
             db,

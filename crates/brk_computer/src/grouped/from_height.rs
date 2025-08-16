@@ -5,9 +5,7 @@ use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
-use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit, Format,
-};
+use vecdb::{AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{
     Indexes,
@@ -51,25 +49,21 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let format = Format::Compressed;
-
         let height = source.is_compute().then(|| {
-            EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format).unwrap()
+            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO).unwrap()
         });
 
-        let height_extra = EagerVecBuilder::forced_import(
+        let height_extra = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options.copy_self_extra(),
         )?;
 
-        let dateindex = EagerVecBuilder::forced_import(
+        let dateindex = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options,
         )?;
 
@@ -128,11 +122,10 @@ where
             height,
             height_extra,
             dateindex,
-            difficultyepoch: EagerVecBuilder::forced_import(
+            difficultyepoch: EagerVecBuilder::forced_import_compressed(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
-                format,
                 options,
             )?,
         })

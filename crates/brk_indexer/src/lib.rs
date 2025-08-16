@@ -782,16 +782,17 @@ impl Indexer {
             },
         )?;
 
+        txindex_to_first_outputindex_reader_opt.take();
+        p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
+        p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
+        p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
+        p2shaddressindex_to_p2shbytes_reader_opt.take();
+        p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.take();
+        p2wshaddressindex_to_p2wshbytes_reader_opt.take();
+        p2traddressindex_to_p2trbytes_reader_opt.take();
+        p2aaddressindex_to_p2abytes_reader_opt.take();
+
         if should_export(idxs.height, true) {
-            txindex_to_first_outputindex_reader_opt.take();
-            p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
-            p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
-            p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
-            p2shaddressindex_to_p2shbytes_reader_opt.take();
-            p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.take();
-            p2wshaddressindex_to_p2wshbytes_reader_opt.take();
-            p2traddressindex_to_p2trbytes_reader_opt.take();
-            p2aaddressindex_to_p2abytes_reader_opt.take();
             export(stores, vecs, idxs.height, exit)?;
         }
 

@@ -7,7 +7,7 @@ use brk_structs::{
     StoredU32, StoredU64, TxIndex, TxVersion, Version, Weight,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit, Format,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
     LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
@@ -75,7 +75,6 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        format: Format,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let db = Database::open(&parent.join("transactions"))?;
@@ -260,19 +259,11 @@ impl Vecs {
         //             .add_cumulative(),
         //     )?;
 
-        let txindex_to_fee = EagerVec::forced_import(
-            &db,
-            "fee",
-            version + VERSION + Version::ZERO,
-            Format::Compressed,
-        )?;
+        let txindex_to_fee =
+            EagerVec::forced_import_compressed(&db, "fee", version + VERSION + Version::ZERO)?;
 
-        let txindex_to_feerate = EagerVec::forced_import(
-            &db,
-            "feerate",
-            version + VERSION + Version::ZERO,
-            Format::Compressed,
-        )?;
+        let txindex_to_feerate =
+            EagerVec::forced_import_compressed(&db, "feerate", version + VERSION + Version::ZERO)?;
 
         Ok(Self {
             indexes_to_tx_count: ComputedVecsFromHeight::forced_import(
@@ -293,7 +284,6 @@ impl Vecs {
                 "input_count",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -307,7 +297,6 @@ impl Vecs {
                 "output_count",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -346,7 +335,6 @@ impl Vecs {
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
                 version + VERSION + Version::ZERO,
-                format,
                 price,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -360,7 +348,6 @@ impl Vecs {
                 "feerate",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -372,7 +359,6 @@ impl Vecs {
                 "tx_vsize",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -384,7 +370,6 @@ impl Vecs {
                 "tx_weight",
                 Source::None,
                 version + VERSION + Version::ZERO,
-                format,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()

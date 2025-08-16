@@ -60,36 +60,23 @@ impl Computer {
             fetched::Vecs::forced_import(outputs_path, fetcher, VERSION + Version::ZERO).unwrap()
         });
 
-        let format = Format::Compressed;
-
         let price = fetched.is_some().then(|| {
-            price::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, format, &indexes)
-                .unwrap()
+            price::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes).unwrap()
         });
 
         Ok(Self {
-            blocks: blocks::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                format,
-                &indexes,
-            )?,
+            blocks: blocks::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
             mining: mining::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
             constants: constants::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
                 &indexes,
             )?,
-            market: market::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                format,
-                &indexes,
-            )?,
+            market: market::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
             stateful: stateful::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
-                format,
+                Format::Compressed,
                 &indexes,
                 price.as_ref(),
                 &computed_path.join("states"),
@@ -99,7 +86,6 @@ impl Computer {
                 VERSION + Version::ZERO,
                 indexer,
                 &indexes,
-                format,
                 price.as_ref(),
             )?,
             cointime: cointime::Vecs::forced_import(

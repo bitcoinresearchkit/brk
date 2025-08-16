@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, Height, Version};
-use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, Format};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};
 
@@ -32,15 +32,13 @@ where
         version: Version,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let format = Format::Compressed;
+        let height =
+            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO)?;
 
-        let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)?;
-
-        let height_extra = EagerVecBuilder::forced_import(
+        let height_extra = EagerVecBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
-            format,
             options.copy_self_extra(),
         )?;
 
@@ -49,11 +47,10 @@ where
         Ok(Self {
             height,
             height_extra,
-            difficultyepoch: EagerVecBuilder::forced_import(
+            difficultyepoch: EagerVecBuilder::forced_import_compressed(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
-                format,
                 options,
             )?,
             // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,

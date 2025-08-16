@@ -7,7 +7,7 @@ use brk_structs::{
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
     GenericStoredVec, PAGE_SIZE, RawVec,
 };
 
@@ -73,12 +73,7 @@ const VERSION: Version = Version::ZERO;
 const VERSION_IN_SATS: Version = Version::ZERO;
 
 impl Vecs {
-    pub fn forced_import(
-        parent: &Path,
-        version: Version,
-        format: Format,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("price"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
@@ -93,29 +88,25 @@ impl Vecs {
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            dateindex_to_close_in_cents: EagerVec::forced_import(
+            dateindex_to_close_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "close_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            dateindex_to_high_in_cents: EagerVec::forced_import(
+            dateindex_to_high_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "high_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            dateindex_to_low_in_cents: EagerVec::forced_import(
+            dateindex_to_low_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "low_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            dateindex_to_open_in_cents: EagerVec::forced_import(
+            dateindex_to_open_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "open_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             height_to_ohlc: RawVec::forced_import(&db, "ohlc", version + VERSION + Version::ZERO)?,
             height_to_ohlc_in_sats: RawVec::forced_import(
@@ -123,29 +114,25 @@ impl Vecs {
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            height_to_close_in_cents: EagerVec::forced_import(
+            height_to_close_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "close_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            height_to_high_in_cents: EagerVec::forced_import(
+            height_to_high_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "high_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            height_to_low_in_cents: EagerVec::forced_import(
+            height_to_low_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "low_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
-            height_to_open_in_cents: EagerVec::forced_import(
+            height_to_open_in_cents: EagerVec::forced_import_compressed(
                 &db,
                 "open_in_cents",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             timeindexes_to_open: ComputedVecsFromDateIndex::forced_import(
                 &db,

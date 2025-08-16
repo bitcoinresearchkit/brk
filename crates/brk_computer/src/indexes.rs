@@ -11,7 +11,7 @@ use brk_structs::{
     Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, Database, EagerVec, Exit, Format, LazyVecFrom1,
+    AnyCloneableIterableVec, AnyCollectableVec, Database, EagerVec, Exit, LazyVecFrom1,
     LazyVecFrom2, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
@@ -255,263 +255,220 @@ impl Vecs {
             txindex_to_txindex,
             unknownoutputindex_to_unknownoutputindex,
 
-            dateindex_to_date: EagerVec::forced_import(
+            dateindex_to_date: EagerVec::forced_import_compressed(
                 &db,
                 "date",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            dateindex_to_dateindex: EagerVec::forced_import(
+            dateindex_to_dateindex: EagerVec::forced_import_compressed(
                 &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            dateindex_to_first_height: EagerVec::forced_import(
+            dateindex_to_first_height: EagerVec::forced_import_compressed(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            dateindex_to_monthindex: EagerVec::forced_import(
+            dateindex_to_monthindex: EagerVec::forced_import_compressed(
                 &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            dateindex_to_weekindex: EagerVec::forced_import(
+            dateindex_to_weekindex: EagerVec::forced_import_compressed(
                 &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            decadeindex_to_decadeindex: EagerVec::forced_import(
+            decadeindex_to_decadeindex: EagerVec::forced_import_compressed(
                 &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            decadeindex_to_first_yearindex: EagerVec::forced_import(
+            decadeindex_to_first_yearindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_yearindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            difficultyepoch_to_difficultyepoch: EagerVec::forced_import(
+            difficultyepoch_to_difficultyepoch: EagerVec::forced_import_compressed(
                 &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            difficultyepoch_to_first_height: EagerVec::forced_import(
+            difficultyepoch_to_first_height: EagerVec::forced_import_compressed(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            halvingepoch_to_first_height: EagerVec::forced_import(
+            halvingepoch_to_first_height: EagerVec::forced_import_compressed(
                 &db,
                 "first_height",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            halvingepoch_to_halvingepoch: EagerVec::forced_import(
+            halvingepoch_to_halvingepoch: EagerVec::forced_import_compressed(
                 &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_date: EagerVec::forced_import(
+            height_to_date: EagerVec::forced_import_compressed(
                 &db,
                 "date",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_difficultyepoch: EagerVec::forced_import(
+            height_to_difficultyepoch: EagerVec::forced_import_compressed(
                 &db,
                 "difficultyepoch",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_halvingepoch: EagerVec::forced_import(
+            height_to_halvingepoch: EagerVec::forced_import_compressed(
                 &db,
                 "halvingepoch",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_height: EagerVec::forced_import(
+            height_to_height: EagerVec::forced_import_compressed(
                 &db,
                 "height",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_first_dateindex: EagerVec::forced_import(
+            monthindex_to_first_dateindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_monthindex: EagerVec::forced_import(
+            monthindex_to_monthindex: EagerVec::forced_import_compressed(
                 &db,
                 "monthindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_quarterindex: EagerVec::forced_import(
+            monthindex_to_quarterindex: EagerVec::forced_import_compressed(
                 &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_semesterindex: EagerVec::forced_import(
+            monthindex_to_semesterindex: EagerVec::forced_import_compressed(
                 &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_yearindex: EagerVec::forced_import(
+            monthindex_to_yearindex: EagerVec::forced_import_compressed(
                 &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            quarterindex_to_first_monthindex: EagerVec::forced_import(
+            quarterindex_to_first_monthindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            semesterindex_to_first_monthindex: EagerVec::forced_import(
+            semesterindex_to_first_monthindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            weekindex_to_first_dateindex: EagerVec::forced_import(
+            weekindex_to_first_dateindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_dateindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            yearindex_to_first_monthindex: EagerVec::forced_import(
+            yearindex_to_first_monthindex: EagerVec::forced_import_compressed(
                 &db,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            quarterindex_to_quarterindex: EagerVec::forced_import(
+            quarterindex_to_quarterindex: EagerVec::forced_import_compressed(
                 &db,
                 "quarterindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            semesterindex_to_semesterindex: EagerVec::forced_import(
+            semesterindex_to_semesterindex: EagerVec::forced_import_compressed(
                 &db,
                 "semesterindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            weekindex_to_weekindex: EagerVec::forced_import(
+            weekindex_to_weekindex: EagerVec::forced_import_compressed(
                 &db,
                 "weekindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            yearindex_to_decadeindex: EagerVec::forced_import(
+            yearindex_to_decadeindex: EagerVec::forced_import_compressed(
                 &db,
                 "decadeindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            yearindex_to_yearindex: EagerVec::forced_import(
+            yearindex_to_yearindex: EagerVec::forced_import_compressed(
                 &db,
                 "yearindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_date_fixed: EagerVec::forced_import(
+            height_to_date_fixed: EagerVec::forced_import_compressed(
                 &db,
                 "date_fixed",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_dateindex: EagerVec::forced_import(
+            height_to_dateindex: EagerVec::forced_import_compressed(
                 &db,
                 "dateindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            txindex_to_height: EagerVec::forced_import(
+            txindex_to_height: EagerVec::forced_import_compressed(
                 &db,
                 "height",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_timestamp_fixed: EagerVec::forced_import(
+            height_to_timestamp_fixed: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp_fixed",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            height_to_txindex_count: EagerVec::forced_import(
+            height_to_txindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "txindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            dateindex_to_height_count: EagerVec::forced_import(
+            dateindex_to_height_count: EagerVec::forced_import_compressed(
                 &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            weekindex_to_dateindex_count: EagerVec::forced_import(
+            weekindex_to_dateindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            difficultyepoch_to_height_count: EagerVec::forced_import(
+            difficultyepoch_to_height_count: EagerVec::forced_import_compressed(
                 &db,
                 "height_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            monthindex_to_dateindex_count: EagerVec::forced_import(
+            monthindex_to_dateindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "dateindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            quarterindex_to_monthindex_count: EagerVec::forced_import(
+            quarterindex_to_monthindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            semesterindex_to_monthindex_count: EagerVec::forced_import(
+            semesterindex_to_monthindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            yearindex_to_monthindex_count: EagerVec::forced_import(
+            yearindex_to_monthindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            decadeindex_to_yearindex_count: EagerVec::forced_import(
+            decadeindex_to_yearindex_count: EagerVec::forced_import_compressed(
                 &db,
                 "yearindex_count",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
-            outputindex_to_txindex: EagerVec::forced_import(
+            outputindex_to_txindex: EagerVec::forced_import_compressed(
                 &db,
                 "txindex",
                 version + VERSION + Version::ZERO,
-                Format::Compressed,
             )?,
 
             db,

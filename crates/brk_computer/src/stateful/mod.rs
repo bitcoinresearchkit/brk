@@ -105,11 +105,10 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
             )?,
 
-            height_to_unspendable_supply: EagerVec::forced_import(
+            height_to_unspendable_supply: EagerVec::forced_import_compressed(
                 &db,
                 "unspendable_supply",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
                 &db,
@@ -120,11 +119,10 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            height_to_opreturn_supply: EagerVec::forced_import(
+            height_to_opreturn_supply: EagerVec::forced_import_compressed(
                 &db,
                 "opreturn_supply",
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
                 &db,
@@ -153,105 +151,89 @@ impl Vecs {
             )?,
             addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
-                    p2pk65: EagerVec::forced_import(
+                    p2pk65: EagerVec::forced_import_compressed(
                         &db,
                         "p2pk65_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2pk33: EagerVec::forced_import(
+                    p2pk33: EagerVec::forced_import_compressed(
                         &db,
                         "p2pk33_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2pkh: EagerVec::forced_import(
+                    p2pkh: EagerVec::forced_import_compressed(
                         &db,
                         "p2pkh_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2sh: EagerVec::forced_import(
+                    p2sh: EagerVec::forced_import_compressed(
                         &db,
                         "p2sh_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2wpkh: EagerVec::forced_import(
+                    p2wpkh: EagerVec::forced_import_compressed(
                         &db,
                         "p2wpkh_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2wsh: EagerVec::forced_import(
+                    p2wsh: EagerVec::forced_import_compressed(
                         &db,
                         "p2wsh_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2tr: EagerVec::forced_import(
+                    p2tr: EagerVec::forced_import_compressed(
                         &db,
                         "p2tr_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2a: EagerVec::forced_import(
+                    p2a: EagerVec::forced_import_compressed(
                         &db,
                         "p2a_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
                 },
             ),
             addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
-                    p2pk65: EagerVec::forced_import(
+                    p2pk65: EagerVec::forced_import_compressed(
                         &db,
                         "p2pk65_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2pk33: EagerVec::forced_import(
+                    p2pk33: EagerVec::forced_import_compressed(
                         &db,
                         "p2pk33_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2pkh: EagerVec::forced_import(
+                    p2pkh: EagerVec::forced_import_compressed(
                         &db,
                         "p2pkh_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2sh: EagerVec::forced_import(
+                    p2sh: EagerVec::forced_import_compressed(
                         &db,
                         "p2sh_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2wpkh: EagerVec::forced_import(
+                    p2wpkh: EagerVec::forced_import_compressed(
                         &db,
                         "p2wpkh_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2wsh: EagerVec::forced_import(
+                    p2wsh: EagerVec::forced_import_compressed(
                         &db,
                         "p2wsh_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2tr: EagerVec::forced_import(
+                    p2tr: EagerVec::forced_import_compressed(
                         &db,
                         "p2tr_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
-                    p2a: EagerVec::forced_import(
+                    p2a: EagerVec::forced_import_compressed(
                         &db,
                         "p2a_empty_address_count",
                         version + VERSION + Version::ZERO,
-                        format,
                     )?,
                 },
             ),
