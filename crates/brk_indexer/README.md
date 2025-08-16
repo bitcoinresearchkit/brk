@@ -1,105 +1,190 @@
 # brk_indexer
 
-Bitcoin blockchain indexer that processes raw block data from Bitcoin Core and creates efficient storage structures using vectors and key-value stores for fast data retrieval and analysis. This crate builds the foundation for BRK's data pipeline by extracting and organizing blockchain data into optimized storage formats.
+**High-performance Bitcoin blockchain indexer with dual storage architecture**
 
-## Features
+`brk_indexer` processes raw Bitcoin Core block data and creates efficient storage structures using both vectors (time-series) and key-value stores (lookups). It serves as the foundation of BRK's data pipeline, organizing all blockchain data into optimized formats for fast retrieval and analysis.
 
-- **Block-by-block processing**: Iterates through blockchain using brk_parser
-- **Dual storage architecture**: Combines vectors (brk_vec) for time-series data and key-value stores (brk_store) for lookups
-- **Memory efficient**: ~5GB peak RAM usage during indexing
-- **Collision detection**: Validates data integrity with optional collision checking
-- **Incremental updates**: Supports resuming from last indexed height
-- **Rollback protection**: Automatic rollback on interruption or errors
+## What it provides
 
-## Storage Strategy
+- **Dual Storage Architecture**: Vectors for time-series data, key-value stores for lookups
+- **Memory Efficiency**: ~5-6GB peak RAM usage during full blockchain indexing
+- **Incremental Processing**: Resume from last indexed height with rollback protection
+- **Data Integrity**: Collision detection and validation during indexing
+- **All Bitcoin Data Types**: Complete support for blocks, transactions, inputs, outputs, and addresses
 
-### Vectors (brk_vec)
+## Key Features
 
-Used for sequential, time-indexed data:
-- Block metadata (height, timestamp, hash)
-- Transaction counts and statistics
-- Price data and market metrics
+### Storage Strategy
+
+**Vector Storage (time-series data):**
+- Block metadata (height, timestamp, hash, difficulty, size)
+- Transaction data (version, locktime, RBF flag, indices)
+- Input/Output mappings and values
+- Address bytes for all output types
 - Efficient for range queries and analytics
 
-### Key-Value Stores (brk_store)
+**Key-Value Storage (lookups):**
+- Block hash prefixes → heights
+- Transaction ID prefixes → transaction indices  
+- Address byte hashes → type indices
+- Fast point queries by hash or address
 
-Used for lookup operations:
-- Address mappings and balances
-- Transaction and UTXO data
-- Script and output type indices
-- Fast point queries by hash/address
+### Performance Features
+- **Parallel Processing**: Concurrent transaction and output processing using Rayon
+- **Batch Operations**: Periodic commits every 1,000 blocks for optimal I/O
+- **Memory Efficiency**: Optimized data structures minimize RAM usage
+- **Incremental Updates**: Handles blockchain reorganizations automatically
+
+### Address Type Support
+Complete support for all Bitcoin address types:
+- P2PK (65-byte and 33-byte), P2PKH, P2SH
+- P2WPKH, P2WSH, P2TR, P2A
+- P2MS (multisig), OpReturn, Empty, Unknown
 
 ## Usage
+
+### Basic Indexing
 
 ```rust
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use bitcoincore_rpc::{Auth, Client};
 use vecdb::Exit;
-use std::path::Path;
 
-fn main() -> brk_error::Result<()> {
-    // Setup paths and RPC
-    let bitcoin_dir = Path::new("~/.bitcoin");
-    let outputs_dir = Path::new("./brk_data");
+// Setup Bitcoin Core RPC connection
+let rpc = Box::leak(Box::new(Client::new(
+    "http://localhost:8332",
+    Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
+)?));
 
-    let rpc = Box::leak(Box::new(Client::new(
-        "http://localhost:8332",
-        Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
+// Create parser for Bitcoin Core block files
+let parser = Parser::new(
+    Path::new("~/.bitcoin/blocks").to_path_buf(),
+    Path::new("./brk_data").to_path_buf(),
+    rpc
+);
 
-    // Create parser and indexer
-    let parser = Parser::new(
-        bitcoin_dir.join("blocks"),
-        outputs_dir.to_path_buf(),
-        rpc
-    );
+// Create indexer with forced import (resets if needed)
+let mut indexer = Indexer::forced_import(Path::new("./brk_data"))?;
 
-    let mut indexer = Indexer::forced_import(outputs_dir)?;
+// Setup graceful shutdown handler
+let exit = Exit::new();
+exit.set_ctrlc_handler();
 
-    // Setup exit handler
-    let exit = Exit::new();
-    exit.set_ctrlc_handler();
+// Index the blockchain
+let indexes = indexer.index(&parser, rpc, &exit, true)?;
+println!("Indexed up to height: {}", indexes.height);
+```
 
-    // Index the blockchain
+### Continuous Indexing
+
+```rust
+use std::time::{Duration, Instant};
+use std::thread::sleep;
+
+// Continuous indexing loop for real-time updates
+loop {
+    let start_time = Instant::now();
+    
+    // Index new blocks
     let indexes = indexer.index(&parser, rpc, &exit, true)?;
-
-    println!("Indexed up to height: {}", indexes.height);
-
-    Ok(())
+    
+    println!("Indexed to height {} in {:?}", 
+             indexes.height, start_time.elapsed());
+    
+    // Check for exit signal
+    if exit.is_signaled() {
+        println!("Graceful shutdown requested");
+        break;
+    }
+    
+    // Wait before next update cycle
+    sleep(Duration::from_secs(5 * 60));
 }
 ```
 
-## Performance
+### Accessing Indexed Data
 
-Benchmarked on MacBook Pro M3 Pro (36GB RAM):
-- **Full sync to ~892k blocks**: 7-8 hours
+```rust
+// Access the underlying storage structures
+let vecs = &indexer.vecs;
+let stores = &indexer.stores;
+
+// Get block hash at specific height
+let block_hash = vecs.height_to_blockhash.get(Height::new(800_000))?;
+
+// Look up transaction by prefix
+let tx_prefix = TxidPrefix::from(&txid);
+let tx_index = stores.txidprefix_to_txindex.get(&tx_prefix)?;
+
+// Get address data
+let address_hash = AddressBytesHash::from(&address_bytes);
+let type_index = stores.addressbyteshash_to_anyaddressindex.get(&address_hash)?;
+```
+
+## Performance Characteristics
+
+**Benchmarked on MacBook Pro M3 Pro (36GB RAM):**
+- **Full blockchain sync** (to ~892k blocks): 7-8 hours
 - **Peak memory usage**: 5-6GB
-- **Storage overhead**: ~27% of Bitcoin Core `/blocks` size (193GB as of 2025/08)
-- **Incremental updates**: Resumes from last height efficiently
+- **Storage overhead**: ~27% of Bitcoin Core block size
+- **Incremental updates**: Very fast, efficient resume from last height
 
 ## Data Organization
 
-The indexer creates the following storage structure:
+The indexer creates this storage structure:
 ```
 brk_data/
 ├── indexed/
-│   ├── vecs/          # Vector storage for time-series data
-│   └── stores/        # Key-value stores for lookups
-└── ...
+│   ├── vecs/              # Vector storage
+│   │   ├── height_to_*    # Height-indexed data
+│   │   ├── txindex_to_*   # Transaction-indexed data
+│   │   └── outputindex_to_* # Output-indexed data
+│   └── stores/            # Key-value stores
+│       ├── hash_lookups/  # Block/TX hash mappings
+│       └── address_maps/  # Address type mappings
+└── metadata/              # Versioning and state
+```
+
+## Indexes Tracking
+
+The indexer maintains current indices during processing:
+
+```rust
+pub struct Indexes {
+    pub height: Height,                      // Current block height
+    pub txindex: TxIndex,                    // Current transaction index
+    pub inputindex: InputIndex,              // Current input index
+    pub outputindex: OutputIndex,            // Current output index
+    pub p2pkhaddressindex: P2PKHAddressIndex, // P2PKH address index
+    // ... indices for all address types
+}
 ```
 
 ## Requirements
 
-- Running Bitcoin Core node with RPC access
-- Access to Bitcoin Core's block files
-- Minimum 500GB free storage space
-- 8GB+ RAM recommended for optimal performance
+- **Bitcoin Core node** with RPC enabled
+- **Block file access** to `~/.bitcoin/blocks/`
+- **Storage space**: Minimum 500GB (scales with blockchain growth)
+- **Memory**: 8GB+ RAM recommended
+- **CPU**: Multi-core recommended for parallel processing
 
-## Incremental Indexing
+## Rollback and Recovery
 
-The indexer supports continuous operation:
-- Automatically detects last indexed height
-- Processes new blocks as they arrive
-- Handles blockchain reorganizations
-- Provides graceful shutdown with Ctrl+C
+- **Automatic rollback** on interruption or blockchain reorgs
+- **State persistence** for efficient restart
+- **Version management** for storage format compatibility
+- **Graceful shutdown** with Ctrl+C handling
+
+## Dependencies
+
+- `brk_parser` - Bitcoin block parsing and sequential access
+- `brk_store` - Key-value storage wrapper (fjall-based)
+- `vecdb` - Vector database for time-series storage
+- `bitcoin` - Bitcoin protocol types and parsing
+- `rayon` - Parallel processing framework
+- `bitcoincore_rpc` - Bitcoin Core RPC client
+
+---
+
+*This README was generated by Claude Code*

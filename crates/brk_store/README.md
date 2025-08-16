@@ -1,79 +1,147 @@
 # brk_store
 
-Thin wrapper around the Fjall embedded key-value store that provides typed, transactional storage for Bitcoin blockchain data with height-based versioning and batch operations. This crate adds BRK-specific functionality like height tracking, metadata management, and optimized configurations for Bitcoin data storage patterns.
+**Blockchain-aware key-value storage wrapper for Bitcoin data**
 
-## Features
+`brk_store` is a thin, typed wrapper around the [Fjall](https://github.com/fjall-rs/fjall) embedded key-value store, specifically designed for Bitcoin blockchain data storage. It provides height-based versioning, batch operations, and optimized configurations for Bitcoin data patterns.
 
-- **Typed interface**: Generic over key and value types with automatic serialization
-- **Height tracking**: Built-in blockchain height awareness for data versioning
-- **Batch operations**: Efficient batch inserts and deletes with transaction support
-- **Metadata management**: Automatic version and height metadata storage
-- **Performance optimized**: Configured write buffers and memtable sizes for Bitcoin data
-- **Bloom filters**: Configurable bloom filters for faster key lookups
-- **Reset capability**: Clean store reset for reindexing operations
+## What it provides
+
+- **Blockchain-aware storage**: Built-in height tracking and versioning for Bitcoin block processing
+- **Type-safe interface**: Generic over key and value types with automatic serialization
+- **Batch operations**: Efficient batched inserts/deletes with transactional support
+- **Metadata management**: Automatic version checking and height progression tracking
+- **Performance optimization**: Pre-configured for Bitcoin data patterns
+
+## Key Features
+
+### Height-Based Processing
+- **Height tracking**: Each store tracks the last processed blockchain height
+- **Conditional operations**: Insert only when blockchain height requires it
+- **Automatic versioning**: Combines Fjall version + user version for compatibility
+
+### Batch Operations
+- **In-memory staging**: Changes staged before atomic commit
+- **Transactional safety**: All changes written atomically or none at all
+- **Efficient processing**: Minimizes disk I/O through batching
+
+### Performance Optimization
+- **Optimized configurations**: 32MB write buffers, 8MB memtables for Bitcoin data
+- **Configurable bloom filters**: Optional for faster key lookups
+- **Memory efficiency**: Reused read transactions, minimal overhead
 
 ## Usage
+
+### Basic Operations
 
 ```rust
 use brk_store::{Store, open_keyspace};
 use brk_structs::{Height, Version};
-use std::path::Path;
 
-fn main() -> brk_error::Result<()> {
-    // Open the keyspace
-    let keyspace = open_keyspace(Path::new("./data"))?;
+// Open keyspace
+let keyspace = open_keyspace(Path::new("./data"))?;
 
-    // Create a typed store
-    let mut store: Store<String, u64> = Store::import(
-        &keyspace,
-        Path::new("./data"),
-        "my_store",
-        Version::ZERO,
-        Some(true), // Enable bloom filters
-    )?;
+// Create typed store
+let mut store: Store<String, u64> = Store::import(
+    &keyspace,
+    Path::new("./data"),
+    "store_name",
+    Version::ZERO,
+    Some(true), // Enable bloom filters
+)?;
 
-    // Insert data if needed at this height
-    store.insert_if_needed(
-        "key1".to_string(),
-        42u64,
-        Height::new(800_000)
-    );
+// Conditional insertion based on height
+store.insert_if_needed("key1".to_string(), 42u64, Height::new(800_000));
 
-    // Commit changes
-    store.commit(Height::new(800_000))?;
+// Batch commit changes
+store.commit(Height::new(800_000))?;
 
-    // Persist to disk
-    store.persist()?;
+// Persist to disk
+store.persist()?;
+```
 
-    // Query data
-    if let Some(value) = store.get(&"key1".to_string())? {
-        println!("Value: {}", value);
-    }
+### Querying Data
 
-    Ok(())
+```rust
+// Get value (checks pending puts first, then disk)
+if let Some(value) = store.get(&"key1".to_string())? {
+    println!("Value: {}", value);
+}
+
+// Check if store needs processing at height
+if store.needs(Height::new(800_000)) {
+    // Process this height
 }
 ```
 
-## Store Lifecycle
-
-- **Import**: Create or open existing store with version checking
-- **Insert**: Add key-value pairs with height-based conditional insertion
-- **Commit**: Write batched changes to disk atomically
-- **Persist**: Force sync all data to storage
-- **Reset**: Clear all data for reindexing if needed
-
-## AnyStore Trait
-
-The `AnyStore` trait provides a type-erased interface for managing multiple stores:
+### Managing Multiple Stores
 
 ```rust
 use brk_store::AnyStore;
 
-fn process_store(store: &mut dyn AnyStore) -> brk_error::Result<()> {
-    if store.needs(Height::new(800_000)) {
-        // Process this height
-        store.commit(Height::new(800_000))?;
+fn process_stores(stores: &mut [Box<dyn AnyStore>]) -> brk_error::Result<()> {
+    let height = Height::new(800_000);
+    
+    for store in stores {
+        if store.needs(height) {
+            // Process data for this store
+            store.commit(height)?;
+        }
     }
+    
+    // Persist all stores
+    for store in stores {
+        store.persist()?;
+    }
+    
     Ok(())
 }
 ```
+
+### Store Reset and Reindexing
+
+```rust
+// Reset store for complete reindexing
+store.reset()?;
+
+// Store automatically recreated on next import
+let mut fresh_store: Store<String, u64> = Store::import(
+    &keyspace,
+    path,
+    "store_name", 
+    Version::ZERO,
+    Some(true)
+)?;
+```
+
+## Store Lifecycle
+
+1. **Import**: Create or open existing store with version checking
+2. **Insert**: Add key-value pairs with height-based conditional insertion  
+3. **Commit**: Write batched changes to disk atomically
+4. **Persist**: Force sync all data to storage
+5. **Reset**: Clear all data for reindexing if needed
+
+## Type Requirements
+
+Keys and values must implement:
+- `Debug + Clone + From<ByteView> + Ord` for keys
+- `Debug + Clone + From<ByteView>` for values
+
+This enables automatic serialization and type-safe storage operations.
+
+## Version Management
+
+- **Automatic migration**: Detects version mismatches and resets stores automatically
+- **File-based metadata**: Stores version and height info for persistence
+- **Compatibility checking**: Prevents data corruption from version incompatibilities
+
+## Dependencies
+
+- `fjall` - Embedded key-value store engine
+- `byteview` - Zero-copy byte view operations
+- `brk_structs` - Bitcoin-aware type system
+- `brk_error` - Unified error handling
+
+---
+
+*This README was generated by Claude Code*

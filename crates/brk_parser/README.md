@@ -1,87 +1,153 @@
 # brk_parser
 
-High-performance Bitcoin block parser that reads raw Bitcoin Core block files (`blkXXXXX.dat`) and provides a sequential iterator over blocks with fork filtering and XOR support. This crate processes the entire Bitcoin blockchain efficiently using parallel processing and maintains state for fast restarts.
+**High-performance Bitcoin block parser for raw Bitcoin Core block files**
 
-## Features
+`brk_parser` provides efficient sequential access to Bitcoin Core's raw block files (`blkXXXXX.dat`), delivering blocks in height order with automatic fork filtering and XOR encryption support. Built for blockchain analysis and indexing applications that need complete Bitcoin data access.
 
-- **Fast sequential parsing**: Iterates blocks in height order (0, 1, 2, ...)
-- **Fork filtering**: Uses Bitcoin Core RPC to exclude orphaned blocks
-- **XOR support**: Handles XOR-encrypted block files automatically
-- **Parallel processing**: Multi-threaded parsing and decoding for maximum speed
-- **State caching**: Saves parsing state for faster subsequent runs
-- **Memory efficient**: ~500MB peak memory usage
-- **Range queries**: Parse specific height ranges or single blocks
+## What it provides
 
-## Requirements
+- **Sequential block access**: Blocks delivered in height order (0, 1, 2, ...) regardless of physical file storage
+- **Fork filtering**: Automatically excludes orphaned blocks using Bitcoin Core RPC verification
+- **XOR encryption support**: Transparently handles XOR-encrypted block files 
+- **High performance**: Multi-threaded parsing with ~500MB peak memory usage
+- **State persistence**: Caches parsing state for fast restarts
 
-- Running Bitcoin Core node with RPC enabled
-- Access to Bitcoin Core's `blocks/` directory containing `blkXXXXX.dat` files
-- Bitcoin Core versions v25.0 through v29.0 supported
+## Key Features
+
+### Performance Optimization
+- **Multi-threaded pipeline**: 3-stage processing (file reading, decoding, ordering)
+- **Parallel decoding**: Uses rayon for concurrent block deserialization
+- **Memory efficient**: Bounded channels prevent memory bloat
+- **State caching**: Saves parsing state to avoid re-scanning unchanged files
+
+### Bitcoin Integration
+- **RPC verification**: Uses Bitcoin Core RPC to filter orphaned blocks
+- **Confirmation checks**: Only processes blocks with positive confirmations
+- **Height ordering**: Ensures sequential delivery regardless of storage order
+
+### XOR Encryption Support
+- **Transparent decryption**: Automatically handles XOR-encrypted block files
+- **Streaming processing**: Applies XOR decryption on-the-fly during parsing
 
 ## Usage
+
+### Basic Block Parsing
 
 ```rust
 use brk_parser::Parser;
 use brk_structs::Height;
 use bitcoincore_rpc::{Auth, Client};
-use std::path::Path;
 
-fn main() -> bitcoincore_rpc::Result<()> {
-    // Setup Bitcoin Core RPC client
-    let rpc = Box::leak(Box::new(Client::new(
-        "http://localhost:8332",
-        Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
-    )?));
+// Setup RPC client (must have static lifetime)
+let rpc = Box::leak(Box::new(Client::new(
+    "http://localhost:8332",
+    Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
+)?));
 
-    // Create parser
-    let parser = Parser::new(
-        Path::new("~/.bitcoin/blocks").to_path_buf(),
-        Path::new("./brk_data").to_path_buf(),  // Output directory
-        rpc,
-    );
+// Create parser
+let parser = Parser::new(
+    Path::new("~/.bitcoin/blocks").to_path_buf(),
+    Path::new("./output").to_path_buf(),
+    rpc,
+);
 
-    // Parse all blocks
+// Parse all blocks sequentially
+parser.parse(None, None)
+    .iter()
+    .for_each(|(height, block, hash)| {
+        println!("Block {}: {} ({} txs)", height, hash, block.txdata.len());
+    });
+```
+
+### Range Parsing
+
+```rust
+// Parse specific height range
+let start = Some(Height::new(800_000));
+let end = Some(Height::new(800_100));
+
+parser.parse(start, end)
+    .iter()
+    .for_each(|(height, block, hash)| {
+        // Process blocks 800,000 to 800,100
+    });
+```
+
+### Single Block Access
+
+```rust
+// Get single block by height
+let genesis = parser.get(Height::new(0));
+println!("Genesis has {} transactions", genesis.txdata.len());
+```
+
+### Real-world Usage Example
+
+```rust
+use brk_parser::Parser;
+use bitcoin::Block;
+
+fn analyze_blockchain(parser: &Parser) {
+    let mut total_transactions = 0;
+    let mut total_outputs = 0;
+    
     parser.parse(None, None)
         .iter()
-        .for_each(|(height, block, hash)| {
-            println!("Block {}: {} ({} transactions)",
-                height, hash, block.txdata.len());
+        .for_each(|(height, block, _hash)| {
+            total_transactions += block.txdata.len();
+            total_outputs += block.txdata.iter()
+                .map(|tx| tx.output.len())
+                .sum::<usize>();
+                
+            if height.0 % 10000 == 0 {
+                println!("Processed {} blocks", height);
+            }
         });
-
-    // Parse specific range
-    let start = Some(Height::new(800_000));
-    let end = Some(Height::new(800_100));
-
-    parser.parse(start, end)
-        .iter()
-        .for_each(|(height, block, hash)| {
-            println!("Block {}: {}", height, hash);
-        });
-
-    // Get single block
-    let block = parser.get(Height::new(0)); // Genesis block
-    println!("Genesis block has {} transactions", block.txdata.len());
-
-    Ok(())
+        
+    println!("Total transactions: {}", total_transactions);
+    println!("Total outputs: {}", total_outputs);
 }
 ```
 
 ## Output Format
 
-The parser returns tuples containing:
-- `Height`: Block height (0, 1, 2, ...)
-- `Block`: Complete block data (from `bitcoin` crate)
+The parser returns tuples for each block:
+- `Height`: Block height (sequential: 0, 1, 2, ...)
+- `Block`: Complete block data from the `bitcoin` crate
 - `BlockHash`: Block's cryptographic hash
 
-## Performance
+## Performance Characteristics
 
 Benchmarked on MacBook Pro M3 Pro:
-- Full blockchain (0 to 855,000): **4 minutes 10 seconds**
-- Recent blocks (800,000 to 855,000): **52 seconds** (4m 10s on first run)
-- Peak memory usage: ~500MB
+- **Full blockchain** (0 to 855,000): ~4 minutes
+- **Recent blocks** (800,000 to 855,000): ~52 seconds
+- **Peak memory usage**: ~500MB
+- **Restart performance**: Subsequent runs much faster due to state caching
+
+## Requirements
+
+- Running Bitcoin Core node with RPC enabled
+- Access to Bitcoin Core's `blocks/` directory
+- Bitcoin Core versions v25.0 through v29.0 supported
+- RPC authentication (cookie file or username/password)
 
 ## State Management
 
-The parser saves state in `{output_dir}/blk_index_to_blk_recap.json` for faster restarts. This file tracks block file indices and heights to avoid re-scanning unchanged files.
+The parser saves parsing state in `{output_dir}/blk_index_to_blk_recap.json` containing:
+- Block file indices and maximum heights
+- File modification times for change detection
+- Restart optimization metadata
 
-**Note**: Only one parser instance should run at a time as the state file doesn't yet support concurrent access.
+**Note**: Only one parser instance should run at a time as the state file doesn't support concurrent access.
+
+## Dependencies
+
+- `bitcoin` - Bitcoin protocol types and block parsing
+- `bitcoincore_rpc` - RPC communication with Bitcoin Core
+- `crossbeam` - Multi-producer, multi-consumer channels
+- `rayon` - Data parallelism for block decoding
+- `serde` - State serialization and persistence
+
+---
+
+*This README was generated by Claude Code*
