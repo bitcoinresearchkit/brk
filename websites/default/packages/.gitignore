@@ -1,0 +1,11 @@
+LICENSE
+*.json
+*webcomponent*
+README.md
+cli*
+extras/
+*.cjs
+dev.js
+*.development*
+*.iife.*
+nano.*

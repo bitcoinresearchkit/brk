@@ -3,7 +3,7 @@
 
 # Builds
 target
-dist
+websites/dist
 vecid-to-indexes.js
 
 # Copies

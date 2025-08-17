@@ -69,17 +69,19 @@ impl DynCohortVecs for Vecs {
         self.inner.starting_height()
     }
 
+    fn set_starting_height(&mut self, starting_height: Height) {
+        self.starting_height = Some(starting_height);
+    }
+
     fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
         if starting_height > self.starting_height() {
             unreachable!()
         }
 
-        self.starting_height = Some(starting_height);
+        self.set_starting_height(starting_height);
 
-        self.inner.import_state_at(
-            self.starting_height.as_mut().unwrap(),
-            self.state.as_mut().unwrap(),
-        )
+        self.inner
+            .import_state_at(self.starting_height.unwrap(), self.state.as_mut().unwrap())
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {

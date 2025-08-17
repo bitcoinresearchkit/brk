@@ -3,9 +3,9 @@
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType } from "./options"
  * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, LineData, BaselineData, PartialLineStyleOptions, PartialBaselineStyleOptions, PartialCandlestickStyleOptions } from "../packages/lightweight-charts/wrapper"
- * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
+ * @import * as _ from "../packages/leeoniya-ufuzzy/1.0.18/dist/uFuzzy.d.ts"
  * @import { SerializedChartableIndex } from "./chart";
- * @import { Signal, Signals, Accessor } from "../packages/solid-signals/wrapper";
+ * @import { Signal, Signals, Accessor } from "../packages/solidjs-signals/wrapper";
  * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
  */
 
@@ -63,7 +63,7 @@ const localhost = window.location.hostname === "localhost";
 function initPackages() {
   const imports = {
     async signals() {
-      return import("../packages/solid-signals/wrapper.js").then(
+      return import("../packages/solidjs-signals/wrapper.js").then(
         (d) => d.default,
       );
     },
@@ -75,10 +75,10 @@ function initPackages() {
       );
     },
     async leanQr() {
-      return import("../packages/lean-qr/v2.5.0/script.js").then((d) => d);
+      return import("../packages/lean-qr/2.5.0/index.mjs").then((d) => d);
     },
     async ufuzzy() {
-      return import("../packages/ufuzzy/v1.0.18/script.js").then(
+      return import("../packages/leeoniya-ufuzzy/1.0.18/dist/uFuzzy.mjs").then(
         ({ default: d }) => d,
       );
     },

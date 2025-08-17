@@ -7,6 +7,7 @@ use crate::{Indexes, indexes, market, price};
 
 pub trait DynCohortVecs: Send + Sync {
     fn starting_height(&self) -> Height;
+    fn set_starting_height(&mut self, starting_height: Height);
 
     fn import_state_at(&mut self, starting_height: Height) -> Result<()>;
 

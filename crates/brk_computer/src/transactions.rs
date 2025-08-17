@@ -234,12 +234,12 @@ impl Vecs {
                             .into_owned();
                         let range = first_index..first_index + count as usize;
                         range.into_iter().fold(Sats::ZERO, |total, outputindex| {
-                            total
-                                + outputindex_to_value_iter
-                                    .next_at(outputindex)
-                                    .unwrap()
-                                    .1
-                                    .into_owned()
+                            let v = outputindex_to_value_iter
+                                .next_at(outputindex)
+                                .unwrap()
+                                .1
+                                .into_owned();
+                            total + v
                         })
                     })
             },
@@ -704,10 +704,21 @@ impl Vecs {
         //     },
         // )?;
 
-        self.txindex_to_fee.compute_subtract(
+        self.txindex_to_fee.compute_transform3(
             starting_indexes.txindex,
             &self.txindex_to_input_value,
             &self.txindex_to_output_value,
+            &self.txindex_to_is_coinbase,
+            |(i, input, output, coinbase, ..)| {
+                (
+                    i,
+                    if coinbase.is_true() {
+                        Sats::ZERO
+                    } else {
+                        input.checked_sub(output).unwrap()
+                    },
+                )
+            },
             exit,
         )?;
 

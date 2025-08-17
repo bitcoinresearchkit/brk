@@ -1,0 +1,6 @@
+LICENSE
+*.json
+webcomponent*
+README.md
+cli*
+extras/
