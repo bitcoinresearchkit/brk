@@ -1,6 +1,6 @@
-use vecdb::{Printable, StoredCompressed};
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::{Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -25,6 +25,14 @@ pub struct StoredBool(u16);
 impl StoredBool {
     pub const FALSE: Self = Self(0);
     pub const TRUE: Self = Self(1);
+
+    pub fn is_true(&self) -> bool {
+        *self == Self::TRUE
+    }
+
+    pub fn is_false(&self) -> bool {
+        *self == Self::FALSE
+    }
 }
 
 impl From<bool> for StoredBool {

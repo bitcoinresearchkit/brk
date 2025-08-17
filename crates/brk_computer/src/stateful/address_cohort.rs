@@ -23,7 +23,7 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    starting_height: Height,
+    starting_height: Option<Height>,
 
     pub state: Option<AddressCohortState>,
 
@@ -50,7 +50,7 @@ impl Vecs {
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
         Ok(Self {
-            starting_height: Height::ZERO,
+            starting_height: None,
             state: states_path.map(|states_path| {
                 AddressCohortState::new(
                     states_path,
@@ -98,12 +98,16 @@ impl DynCohortVecs for Vecs {
         .unwrap()
     }
 
+    fn set_starting_height(&mut self, starting_height: Height) {
+        self.starting_height = Some(starting_height);
+    }
+
     fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
         if starting_height > self.starting_height() {
             unreachable!()
         }
 
-        self.starting_height = starting_height;
+        self.set_starting_height(starting_height);
 
         if let Some(prev_height) = starting_height.decremented() {
             self.state.as_mut().unwrap().address_count = *self
@@ -113,7 +117,7 @@ impl DynCohortVecs for Vecs {
         }
 
         self.inner.import_state_at(
-            &mut self.starting_height,
+            self.starting_height.unwrap(),
             &mut self.state.as_mut().unwrap().inner,
         )
     }
@@ -128,7 +132,7 @@ impl DynCohortVecs for Vecs {
     }
 
     fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        if self.starting_height > height {
+        if self.starting_height.unwrap() > height {
             return Ok(());
         }
 

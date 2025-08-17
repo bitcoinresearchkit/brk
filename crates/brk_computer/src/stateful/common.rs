@@ -1030,7 +1030,7 @@ impl Vecs {
 
     pub fn import_state_at(
         &mut self,
-        starting_height: &mut Height,
+        starting_height: Height,
         state: &mut CohortState,
     ) -> Result<()> {
         if let Some(prev_height) = starting_height.decremented() {

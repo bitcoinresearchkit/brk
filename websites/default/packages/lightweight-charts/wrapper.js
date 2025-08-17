@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './v5.0.8/types' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './5.0.8/dist/typings' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -49,7 +49,7 @@ import {
   CandlestickSeries,
   LineSeries,
   BaselineSeries,
-} from "./v5.0.8/script.js";
+} from "./5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 const oklchToRGBA = createOklchToRGBA();
 
