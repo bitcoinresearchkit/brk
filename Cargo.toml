@@ -52,8 +52,8 @@ serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.142", features = ["float_roundtrip"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
-vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
-# vecdb = { version = "0.1.2", features = ["derive"]}
+# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+vecdb = { version = "0.2.4", features = ["derive"]}
 zerocopy = "0.8.26"
 zerocopy-derive = "0.8.26"
 

@@ -21,7 +21,17 @@ impl LoadedAddressData {
     }
 
     pub fn realized_price(&self) -> Dollars {
-        (self.realized_cap / Bitcoin::from(self.amount())).round_to_4_digits()
+        let p = (self.realized_cap / Bitcoin::from(self.amount())).round_to(4);
+        if p.is_negative() {
+            dbg!((
+                self.realized_cap,
+                self.amount(),
+                Bitcoin::from(self.amount()),
+                p
+            ));
+            panic!("");
+        }
+        p
     }
 
     #[inline]
@@ -38,7 +48,12 @@ impl LoadedAddressData {
         self.received += amount;
         self.outputs_len += 1;
         if let Some(price) = price {
-            self.realized_cap += price * amount;
+            let added = price * amount;
+            self.realized_cap += added;
+            if added.is_negative() || self.realized_cap.is_negative() {
+                dbg!((self.realized_cap, price, amount, added));
+                panic!();
+            }
         }
     }
 
@@ -49,10 +64,20 @@ impl LoadedAddressData {
         self.sent += amount;
         self.outputs_len -= 1;
         if let Some(previous_price) = previous_price {
-            self.realized_cap = self
-                .realized_cap
-                .checked_sub(previous_price * amount)
-                .unwrap();
+            let subtracted = previous_price * amount;
+            let realized_cap = self.realized_cap.checked_sub(subtracted).unwrap();
+            if self.realized_cap.is_negative() || realized_cap.is_negative() {
+                dbg!((
+                    self,
+                    realized_cap,
+                    previous_price,
+                    amount,
+                    previous_price * amount,
+                    subtracted
+                ));
+                panic!();
+            }
+            self.realized_cap = realized_cap;
         }
         Ok(())
     }

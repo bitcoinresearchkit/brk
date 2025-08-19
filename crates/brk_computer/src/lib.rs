@@ -26,6 +26,7 @@ mod utils;
 
 use indexes::Indexes;
 
+pub use states::PriceToAmount;
 use states::*;
 
 #[derive(Clone)]
@@ -79,7 +80,6 @@ impl Computer {
                 Format::Compressed,
                 &indexes,
                 price.as_ref(),
-                &computed_path.join("states"),
             )?,
             transactions: transactions::Vecs::forced_import(
                 &computed_path,

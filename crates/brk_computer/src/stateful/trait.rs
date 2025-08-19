@@ -6,10 +6,10 @@ use vecdb::{AnyCollectableVec, AnyIterableVec, Exit};
 use crate::{Indexes, indexes, market, price};
 
 pub trait DynCohortVecs: Send + Sync {
-    fn starting_height(&self) -> Height;
-    fn set_starting_height(&mut self, starting_height: Height);
+    fn min_height_vecs_len(&self) -> usize;
+    fn reset_state_starting_height(&mut self);
 
-    fn import_state_at(&mut self, starting_height: Height) -> Result<()>;
+    fn import_state(&mut self, starting_height: Height) -> Result<Height>;
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
 

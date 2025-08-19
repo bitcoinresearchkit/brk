@@ -203,6 +203,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic-waker"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -650,9 +656,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34e99c51043db05e5d77c381124c1705c9a360f9a88bef0af44397134929d730"
+checksum = "5788307976c7fbc3b549b56c70fd6b1893d609e08e82d470d6938b748742cf54"
 dependencies = [
  "base64 0.22.1",
  "brk_rmcp-macros",
@@ -680,9 +686,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp-macros"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c19a9e21ea5789ad190ce5c572bdbba50e589f9dd01acd19600b86442b56f02d"
+checksum = "8b49ac541e14b18e43696144176faeabc547ce198cb10d575c13fcc6245d337c"
 dependencies = [
  "darling 0.21.2",
  "proc-macro2",
@@ -2047,19 +2053,21 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hyper"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc2b571658e38e0c01b1fdca3bbbe93c00d3d71693ff2770043f8c29bc7d6f80"
+checksum = "eb3aa54a13a0dfe7fbe3a59e0c76093041720fdc77b110cc0fc260fafb4dc51e"
 dependencies = [
+ "atomic-waker",
  "bytes",
  "futures-channel",
- "futures-util",
+ "futures-core",
  "http",
  "http-body",
  "httparse",
  "httpdate",
  "itoa",
  "pin-project-lite",
+ "pin-utils",
  "smallvec",
  "tokio",
 ]
@@ -3065,9 +3073,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "4.0.5"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d6057a9bbd4a84bb4146539123642ee66e0f5ac700b0fcddd193cabcb2e0460"
+checksum = "d5e78344e5a6cdd74250bc9bb144a4c3215b6107fe4fd47973f4bd175372ccb2"
 dependencies = [
  "base64-simd",
  "rustc-hash",
@@ -3863,7 +3871,9 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 
 [[package]]
 name = "seqdb"
-version = "0.2.0"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567d567faf0a305d66eb0419fc50ba8faec58a3baa8624d7a1fd1c798395044c"
 dependencies = [
  "libc",
  "log",
@@ -4688,7 +4698,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.2.0"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "236493fb96b34fe7900a3bf62cbb1bd1c5991bc9db563dbbe7ce5cc8c3037cb1"
 dependencies = [
  "ctrlc",
  "log",
@@ -4706,7 +4718,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.2.0"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d117eb4f82c996a7de2dd5bca1f53da20fa39ae97646405af29eccde67be041"
 dependencies = [
  "quote",
  "syn 2.0.106",

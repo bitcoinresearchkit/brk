@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    starting_height: Option<Height>,
+    state_starting_height: Option<Height>,
 
     pub state: Option<UTXOCohortState>,
 
@@ -39,7 +39,7 @@ impl Vecs {
         let compute_dollars = price.is_some();
 
         Ok(Self {
-            starting_height: None,
+            state_starting_height: None,
 
             state: states_path.map(|states_path| {
                 UTXOCohortState::new(
@@ -65,23 +65,22 @@ impl Vecs {
 }
 
 impl DynCohortVecs for Vecs {
-    fn starting_height(&self) -> Height {
-        self.inner.starting_height()
+    fn min_height_vecs_len(&self) -> usize {
+        self.inner.min_height_vecs_len()
     }
 
-    fn set_starting_height(&mut self, starting_height: Height) {
-        self.starting_height = Some(starting_height);
+    fn reset_state_starting_height(&mut self) {
+        self.state_starting_height = Some(Height::ZERO);
     }
 
-    fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
-        if starting_height > self.starting_height() {
-            unreachable!()
-        }
+    fn import_state(&mut self, starting_height: Height) -> Result<Height> {
+        let starting_height = self
+            .inner
+            .import_state(starting_height, self.state.as_mut().unwrap())?;
 
-        self.set_starting_height(starting_height);
+        self.state_starting_height = Some(starting_height);
 
-        self.inner
-            .import_state_at(self.starting_height.unwrap(), self.state.as_mut().unwrap())
+        Ok(starting_height)
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -89,7 +88,7 @@ impl DynCohortVecs for Vecs {
     }
 
     fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        if self.starting_height.unwrap() > height {
+        if self.state_starting_height.unwrap() > height {
             return Ok(());
         }
 

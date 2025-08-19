@@ -88,26 +88,26 @@ impl Vecs {
 }
 
 impl DynCohortVecs for Vecs {
-    fn starting_height(&self) -> Height {
+    fn min_height_vecs_len(&self) -> usize {
         [
-            self.height_to_address_count.len().into(),
-            self.inner.starting_height(),
+            self.height_to_address_count.len(),
+            self.inner.min_height_vecs_len(),
         ]
         .into_iter()
         .min()
         .unwrap()
     }
 
-    fn set_starting_height(&mut self, starting_height: Height) {
-        self.starting_height = Some(starting_height);
+    fn reset_state_starting_height(&mut self) {
+        self.starting_height = Some(Height::ZERO);
     }
 
-    fn import_state_at(&mut self, starting_height: Height) -> Result<()> {
-        if starting_height > self.starting_height() {
-            unreachable!()
-        }
+    fn import_state(&mut self, starting_height: Height) -> Result<Height> {
+        let starting_height = self
+            .inner
+            .import_state(starting_height, &mut self.state.as_mut().unwrap().inner)?;
 
-        self.set_starting_height(starting_height);
+        self.starting_height = Some(starting_height);
 
         if let Some(prev_height) = starting_height.decremented() {
             self.state.as_mut().unwrap().address_count = *self
@@ -116,10 +116,7 @@ impl DynCohortVecs for Vecs {
                 .unwrap_get_inner(prev_height);
         }
 
-        self.inner.import_state_at(
-            self.starting_height.unwrap(),
-            &mut self.state.as_mut().unwrap().inner,
-        )
+        Ok(starting_height)
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {

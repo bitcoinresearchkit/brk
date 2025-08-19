@@ -28,10 +28,11 @@ fn main() -> Result<()> {
             println!("{height}: {hash}");
         });
 
+    let block_0 = parser.get(Height::new(0));
+
     println!(
         "{}",
-        parser
-            .get(Height::new(0))
+        block_0
             .txdata
             .first()
             .unwrap()
@@ -41,10 +42,11 @@ fn main() -> Result<()> {
             .script_pubkey
     );
 
+    let block_840_000 = parser.get(Height::new(840_000));
+
     println!(
         "{}",
-        parser
-            .get(Height::new(840_000))
+        block_840_000
             .txdata
             .first()
             .unwrap()

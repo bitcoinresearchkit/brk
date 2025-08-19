@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# unpkg-downloader.sh - Download complete packages from unpkg.com
-# Usage: ./unpkg-downloader.sh <package-name> <version> [output-dir]
-# Example: ./unpkg-downloader.sh "@solidjs/signals" "0.4.1"
-
 set -e
 
 # Colors for output
@@ -407,4 +403,9 @@ main() {
 }
 
 # Run the main function with all arguments
-main "$@"
+# main "$@"
+
+main "@solidjs/signals"
+main "@leeoniya/ufuzzy"
+main "lean-qr"
+main "lightweight-charts"

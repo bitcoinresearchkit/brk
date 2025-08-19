@@ -27,11 +27,12 @@ impl CohortState {
         }
     }
 
-    pub fn import_at(&mut self, height: Height) -> Result<()> {
+    pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
         if let Some(price_to_amount) = self.price_to_amount.as_mut() {
-            price_to_amount.import_at(height)?;
+            price_to_amount.import_at_or_before(height)
+        } else {
+            Ok(height)
         }
-        Ok(())
     }
 
     pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {

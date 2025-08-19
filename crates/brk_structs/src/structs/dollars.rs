@@ -39,8 +39,12 @@ impl Dollars {
         Dollars((self.0 * 100.0).round() / 100.0)
     }
 
-    pub fn round_to_4_digits(self) -> Self {
-        Self::from(Cents::from(self).round_to_4_digits())
+    pub fn round_to(self, digits: i32) -> Self {
+        Self::from(Cents::from(self).round_to(digits))
+    }
+
+    pub fn is_negative(&self) -> bool {
+        self.0 < 0.0
     }
 }
 
