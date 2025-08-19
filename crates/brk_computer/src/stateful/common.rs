@@ -973,7 +973,7 @@ impl Vecs {
         })
     }
 
-    pub fn starting_height(&self) -> Height {
+    pub fn min_height_vecs_len(&self) -> usize {
         [
             self.height_to_supply.len(),
             self.height_to_utxo_count.len(),
@@ -1023,17 +1023,20 @@ impl Vecs {
             self.height_to_satblocks_destroyed.len(),
         ]
         .into_iter()
-        .map(Height::from)
         .min()
         .unwrap()
     }
 
-    pub fn import_state_at(
+    pub fn import_state(
         &mut self,
         starting_height: Height,
         state: &mut CohortState,
-    ) -> Result<()> {
-        if let Some(prev_height) = starting_height.decremented() {
+    ) -> Result<Height> {
+        if let Some(mut prev_height) = starting_height.decremented() {
+            if self.height_to_realized_cap.as_mut().is_some() {
+                prev_height = state.import_at_or_before(prev_height)?;
+            }
+
             state.supply.value = self
                 .height_to_supply
                 .into_iter()
@@ -1047,10 +1050,9 @@ impl Vecs {
                 state.realized.as_mut().unwrap().cap = height_to_realized_cap
                     .into_iter()
                     .unwrap_get_inner(prev_height);
-
-                state.import_at(prev_height)?;
             }
-            Ok(())
+
+            Ok(prev_height.incremented())
         } else {
             Err(Error::Str("Unset"))
         }

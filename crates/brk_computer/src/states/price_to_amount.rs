@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_structs::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
@@ -30,9 +30,14 @@ impl PriceToAmount {
         }
     }
 
-    pub fn import_at(&mut self, height: Height) -> Result<()> {
-        self.state = Some(State::deserialize(&fs::read(self.path_state(height))?)?);
-        Ok(())
+    pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
+        let files = self.read_dir(None)?;
+        let (&height, path) = files
+            .range(..=height)
+            .next_back()
+            .ok_or(Error::Str("Not found"))?;
+        self.state = Some(State::deserialize(&fs::read(path)?)?);
+        Ok(height)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
@@ -77,27 +82,28 @@ impl PriceToAmount {
         Ok(())
     }
 
-    pub fn flush(&mut self, height: Height) -> Result<()> {
-        let files: BTreeMap<Height, PathBuf> = fs::read_dir(&self.pathbuf)?
+    fn read_dir(&self, keep_only_before: Option<Height>) -> Result<BTreeMap<Height, PathBuf>> {
+        Ok(fs::read_dir(&self.pathbuf)?
             .filter_map(|entry| {
                 let path = entry.ok()?.path();
                 let name = path.file_name()?.to_str()?;
-                if let Some(height_str) = name.strip_prefix(STATE_AT_) {
-                    if let Ok(h) = height_str.parse::<u64>().map(Height::from) {
-                        if h < height {
-                            Some((h, path))
-                        } else {
-                            let _ = fs::remove_file(path);
-                            None
-                        }
+                let height_str = name.strip_prefix(STATE_AT_).unwrap_or(name);
+                if let Ok(h) = height_str.parse::<u32>().map(Height::from) {
+                    if keep_only_before.is_none_or(|height| h < height) {
+                        Some((h, path))
                     } else {
+                        let _ = fs::remove_file(path);
                         None
                     }
                 } else {
                     None
                 }
             })
-            .collect();
+            .collect::<BTreeMap<Height, PathBuf>>())
+    }
+
+    pub fn flush(&mut self, height: Height) -> Result<()> {
+        let files = self.read_dir(Some(height))?;
 
         for (_, path) in files
             .iter()
@@ -118,7 +124,7 @@ impl PriceToAmount {
         Self::path_state_(&self.pathbuf, height)
     }
     fn path_state_(path: &Path, height: Height) -> PathBuf {
-        path.join(format!("{STATE_AT_}{}", height))
+        path.join(u32::from(height).to_string())
     }
 }
 
@@ -130,6 +136,7 @@ const COMPRESSION_LEVEL: usize = 4;
 impl State {
     fn serialize(&self) -> vecdb::Result<Vec<u8>> {
         let keys: Vec<f64> = self.keys().cloned().map(f64::from).collect();
+
         let values: Vec<u64> = self.values().cloned().map(u64::from).collect();
 
         let compressed_keys = simpler_compress(&keys, COMPRESSION_LEVEL)?;

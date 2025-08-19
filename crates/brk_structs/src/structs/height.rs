@@ -66,6 +66,10 @@ impl Height {
     pub fn is_zero(self) -> bool {
         self == Self::ZERO
     }
+
+    pub fn is_not_zero(self) -> bool {
+        self != Self::ZERO
+    }
 }
 
 impl PartialEq<u64> for Height {

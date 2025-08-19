@@ -1,13 +1,17 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_structs::{Dollars, Timestamp};
+use serde::Serialize;
 
 use super::SupplyState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BlockState {
+    #[serde(flatten)]
     pub supply: SupplyState,
+    #[serde(skip)]
     pub price: Option<Dollars>,
+    #[serde(skip)]
     pub timestamp: Timestamp,
 }
 

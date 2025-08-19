@@ -1,4 +1,10 @@
-use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+    mem,
+    path::Path,
+    thread,
+};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -87,19 +93,19 @@ impl Vecs {
         format: Format,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        states_path: &Path,
     ) -> Result<Self> {
-        let db = Database::open(&parent.join("stateful"))?;
+        let db_path = parent.join("stateful");
+        let states_path = db_path.join("states");
+
+        let db = Database::open(&db_path)?;
         db.set_min_len(PAGE_SIZE * 20_000_000)?;
         db.set_min_regions(50_000)?;
 
         let compute_dollars = price.is_some();
 
-        let chain_db = Database::open(&parent.join("chain"))?;
-
         Ok(Self {
             chain_state: RawVec::forced_import_with(
-                ImportOptions::new(&chain_db, "chain", version + VERSION + Version::ZERO)
+                ImportOptions::new(&db, "chain", version + VERSION + Version::ZERO)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
@@ -377,7 +383,7 @@ impl Vecs {
                 format,
                 indexes,
                 price,
-                states_path,
+                &states_path,
             )?,
             address_cohorts: address_cohorts::Vecs::forced_import(
                 &db,
@@ -385,7 +391,7 @@ impl Vecs {
                 format,
                 indexes,
                 price,
-                states_path,
+                &states_path,
             )?,
 
             p2aaddressindex_to_anyaddressindex: RawVec::forced_import_with(
@@ -558,17 +564,16 @@ impl Vecs {
                 base_version + self.height_to_opreturn_supply.inner_version(),
             )?;
 
-        let mut chain_state: Vec<BlockState> = vec![];
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
         let stateful_starting_height = match separate_utxo_vecs
             .par_iter_mut()
-            .map(|(_, v)| v.starting_height())
+            .map(|(_, v)| Height::from(v.min_height_vecs_len()))
             .min()
             .unwrap_or_default()
             .min(
                 separate_address_vecs
                     .par_iter_mut()
-                    .map(|(_, v)| v.starting_height())
+                    .map(|(_, v)| Height::from(v.min_height_vecs_len()))
                     .min()
                     .unwrap_or_default(),
             )
@@ -588,7 +593,82 @@ impl Vecs {
             .cmp(&chain_state_starting_height)
         {
             Ordering::Greater => unreachable!(),
-            Ordering::Equal => {
+            Ordering::Equal => chain_state_starting_height,
+            Ordering::Less => Height::ZERO,
+        };
+
+        // dbg!(stateful_starting_height);
+        // let stateful_starting_height = stateful_starting_height
+        //     .checked_sub(Height::new(1))
+        //     .unwrap_or_default();
+        // dbg!(stateful_starting_height);
+
+        let starting_height = starting_indexes.height.min(stateful_starting_height);
+        // dbg!(starting_height);
+        let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
+        // dbg!(last_height);
+        if starting_height <= last_height {
+            // dbg!(starting_height);
+
+            let starting_height = if starting_height.is_not_zero() {
+                let mut set = separate_utxo_vecs
+                    .iter_mut()
+                    .map(|(_, v)| v.import_state(starting_height).unwrap_or_default())
+                    .collect::<BTreeSet<Height>>();
+                if set.len() == 1 {
+                    set.pop_first().unwrap()
+                } else {
+                    Height::ZERO
+                }
+            } else {
+                Height::ZERO
+            };
+            // dbg!(starting_height);
+
+            let starting_height = if starting_height.is_not_zero()
+                && separate_address_vecs
+                    .iter_mut()
+                    .map(|(_, v)| v.import_state(starting_height).unwrap_or_default())
+                    .chain(
+                        [
+                            self.chain_state.rollback_before(starting_height.into())?,
+                            self.p2pk33addressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2pk65addressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2pkhaddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2shaddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2traddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2wpkhaddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2wshaddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.p2aaddressindex_to_anyaddressindex
+                                .rollback_before(starting_height.into())?,
+                            self.loadedaddressindex_to_loadedaddressdata
+                                .rollback_before(starting_height.into())?,
+                            self.emptyaddressindex_to_emptyaddressdata
+                                .rollback_before(starting_height.into())?,
+                        ]
+                        .into_iter()
+                        .map(Height::from)
+                        .map(Height::incremented),
+                    )
+                    .all(|h| h == starting_height)
+            {
+                starting_height
+            } else {
+                Height::ZERO
+            };
+
+            // dbg!(starting_height);
+            // std::process::exit(0);
+
+            let mut chain_state: Vec<BlockState>;
+            if starting_height.is_not_zero() {
                 chain_state = self
                     .chain_state
                     .collect_range(None, None)?
@@ -607,33 +687,10 @@ impl Vecs {
                         }
                     })
                     .collect::<Vec<_>>();
-                chain_state_starting_height
-            }
-            Ordering::Less => Height::ZERO,
-        };
-
-        let starting_height = starting_indexes.height.min(stateful_starting_height);
-        let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
-        if starting_height <= last_height {
-            let starting_height = if separate_utxo_vecs
-                .par_iter_mut()
-                .try_for_each(|(_, v)| v.import_state_at(starting_height))
-                .is_err()
-                || separate_address_vecs
-                    .par_iter_mut()
-                    .try_for_each(|(_, v)| v.import_state_at(starting_height))
-                    .is_err()
-            {
-                Height::ZERO
             } else {
-                starting_height
-            };
-
-            if starting_height.is_zero() {
                 info!("Starting processing utxos from the start");
 
                 chain_state = vec![];
-                chain_state_starting_height = Height::ZERO;
 
                 self.p2pk33addressindex_to_anyaddressindex.reset()?;
                 self.p2pk65addressindex_to_anyaddressindex.reset()?;
@@ -647,17 +704,19 @@ impl Vecs {
                 self.emptyaddressindex_to_emptyaddressdata.reset()?;
 
                 separate_utxo_vecs.par_iter_mut().try_for_each(|(_, v)| {
-                    v.set_starting_height(starting_height);
+                    v.reset_state_starting_height();
                     v.state.as_mut().unwrap().reset_price_to_amount_if_needed()
                 })?;
 
                 separate_address_vecs
                     .par_iter_mut()
                     .try_for_each(|(_, v)| {
-                        v.set_starting_height(starting_height);
+                        v.reset_state_starting_height();
                         v.state.as_mut().unwrap().reset_price_to_amount_if_needed()
                     })?;
             }
+
+            chain_state_starting_height = starting_height;
 
             starting_indexes.update_from_height(starting_height, indexes);
 
@@ -971,7 +1030,7 @@ impl Vecs {
                                     }
 
                                     height_to_addresstype_to_typedindex_to_data
-                                        .entry(height)
+                                        .entry(prev_height)
                                         .or_default()
                                         .get_mut(output_type)
                                         .unwrap()
