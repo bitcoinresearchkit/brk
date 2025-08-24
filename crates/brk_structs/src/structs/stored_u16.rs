@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign, Div};
 
-use vecdb::{CheckedSub, Printable, StoredCompressed};
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
@@ -33,8 +33,8 @@ pub struct StoredU16(u16);
 impl StoredU16 {
     pub const ZERO: Self = Self(0);
 
-    pub fn new(counter: u16) -> Self {
-        Self(counter)
+    pub fn new(v: u16) -> Self {
+        Self(v)
     }
 }
 

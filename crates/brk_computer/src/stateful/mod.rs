@@ -597,24 +597,52 @@ impl Vecs {
             Ordering::Less => Height::ZERO,
         };
 
-        // dbg!(stateful_starting_height);
+        // info!("stateful_starting_height = {stateful_starting_height}");
         // let stateful_starting_height = stateful_starting_height
         //     .checked_sub(Height::new(1))
         //     .unwrap_or_default();
-        // dbg!(stateful_starting_height);
+        // info!("stateful_starting_height = {stateful_starting_height}");
 
         let starting_height = starting_indexes.height.min(stateful_starting_height);
-        // dbg!(starting_height);
+        info!("starting_height = {starting_height}");
         let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
-        // dbg!(last_height);
+        info!("last_height = {last_height}");
         if starting_height <= last_height {
-            // dbg!(starting_height);
+            info!("starting_height = {starting_height}");
 
             let starting_height = if starting_height.is_not_zero() {
-                let mut set = separate_utxo_vecs
-                    .iter_mut()
-                    .map(|(_, v)| v.import_state(starting_height).unwrap_or_default())
-                    .collect::<BTreeSet<Height>>();
+                let mut set = [
+                    self.chain_state.rollback_before(starting_height.into())?,
+                    self.p2pk33addressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2pk65addressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2pkhaddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2shaddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2traddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2wpkhaddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2wshaddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.p2aaddressindex_to_anyaddressindex
+                        .rollback_before(starting_height.into())?,
+                    self.loadedaddressindex_to_loadedaddressdata
+                        .rollback_before(starting_height.into())?,
+                    self.emptyaddressindex_to_emptyaddressdata
+                        .rollback_before(starting_height.into())?,
+                ]
+                .into_iter()
+                .enumerate()
+                .map(|(i, s)| {
+                    let h = Height::from(s).incremented();
+                    dbg!((i, s, h));
+                    h
+                })
+                .collect::<BTreeSet<Height>>();
+
                 if set.len() == 1 {
                     set.pop_first().unwrap()
                 } else {
@@ -623,40 +651,23 @@ impl Vecs {
             } else {
                 Height::ZERO
             };
-            // dbg!(starting_height);
+
+            let starting_height = if starting_height.is_not_zero()
+                && separate_utxo_vecs
+                    .iter_mut()
+                    .map(|(_, v)| v.import_state(starting_height).unwrap_or_default())
+                    .all(|h| h == starting_height)
+            {
+                starting_height
+            } else {
+                Height::ZERO
+            };
+            info!("starting_height = {starting_height}");
 
             let starting_height = if starting_height.is_not_zero()
                 && separate_address_vecs
                     .iter_mut()
                     .map(|(_, v)| v.import_state(starting_height).unwrap_or_default())
-                    .chain(
-                        [
-                            self.chain_state.rollback_before(starting_height.into())?,
-                            self.p2pk33addressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2pk65addressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2pkhaddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2shaddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2traddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2wpkhaddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2wshaddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.p2aaddressindex_to_anyaddressindex
-                                .rollback_before(starting_height.into())?,
-                            self.loadedaddressindex_to_loadedaddressdata
-                                .rollback_before(starting_height.into())?,
-                            self.emptyaddressindex_to_emptyaddressdata
-                                .rollback_before(starting_height.into())?,
-                        ]
-                        .into_iter()
-                        .map(Height::from)
-                        .map(Height::incremented),
-                    )
                     .all(|h| h == starting_height)
             {
                 starting_height
@@ -664,8 +675,7 @@ impl Vecs {
                 Height::ZERO
             };
 
-            // dbg!(starting_height);
-            // std::process::exit(0);
+            info!("starting_height = {starting_height}");
 
             let mut chain_state: Vec<BlockState>;
             if starting_height.is_not_zero() {
@@ -689,6 +699,8 @@ impl Vecs {
                     .collect::<Vec<_>>();
             } else {
                 info!("Starting processing utxos from the start");
+
+                // std::process::exit(0);
 
                 chain_state = vec![];
 

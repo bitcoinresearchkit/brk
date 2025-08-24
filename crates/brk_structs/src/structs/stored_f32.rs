@@ -1,6 +1,7 @@
 use core::panic;
 use std::{
     cmp::Ordering,
+    f32,
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
@@ -25,6 +26,10 @@ use super::{Dollars, StoredF64};
     StoredCompressed,
 )]
 pub struct StoredF32(f32);
+
+impl StoredF32 {
+    pub const NAN: Self = StoredF32(f32::NAN);
+}
 
 impl From<f32> for StoredF32 {
     fn from(value: f32) -> Self {

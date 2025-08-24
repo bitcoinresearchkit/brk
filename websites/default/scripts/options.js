@@ -9,33 +9,41 @@
  * @property {"Baseline"} type
  * @property {Color} [color]
  * @property {[Color, Color]} [colors]
- * @property {PartialBaselineStyleOptions} [options]
+ * @property {BaselineSeriesPartialOptions} [options]
  * @property {Accessor<BaselineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & BaselineSeriesBlueprintSpecific} BaselineSeriesBlueprint
  *
  * @typedef {Object} CandlestickSeriesBlueprintSpecific
  * @property {"Candlestick"} type
  * @property {Color} [color]
- * @property {PartialCandlestickStyleOptions} [options]
+ * @property {CandlestickSeriesPartialOptions} [options]
  * @property {Accessor<CandlestickData[]>} [data]
  * @typedef {BaseSeriesBlueprint & CandlestickSeriesBlueprintSpecific} CandlestickSeriesBlueprint
  *
  * @typedef {Object} LineSeriesBlueprintSpecific
  * @property {"Line"} [type]
  * @property {Color} [color]
- * @property {PartialLineStyleOptions} [options]
+ * @property {LineSeriesPartialOptions} [options]
  * @property {Accessor<LineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
- * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
+ * @typedef {Object} HistogramSeriesBlueprintSpecific
+ * @property {"Histogram"} type
+ * @property {Color} color
+ * @property {HistogramSeriesPartialOptions} [options]
+ * @property {Accessor<HistogramData[]>} [data]
+ * @typedef {BaseSeriesBlueprint & HistogramSeriesBlueprintSpecific} HistogramSeriesBlueprint
+ *
+ * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint | HistogramSeriesBlueprint} AnySeriesBlueprint
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ key: VecId, unit?: Unit | Unit[] }} FetchedAnySeriesOptions
+ * @typedef {{ key: VecId, unit?: Unit }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
  * @typedef {LineSeriesBlueprint & FetchedAnySeriesOptions} FetchedLineSeriesBlueprint
+ * @typedef {HistogramSeriesBlueprint & FetchedAnySeriesOptions} FetchedHistogramSeriesBlueprint
  * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
  * @typedef {Object} PartialOption
@@ -997,6 +1005,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
 
   const cointimePrices = /** @type {const} */ ([
     {
+      key: `true_market_mean`,
+      name: "True market mean",
+      title: "True market mean",
+      color: colors.blue,
+    },
+    {
       key: `vaulted_price`,
       name: "Vaulted",
       title: "Vaulted Price",
@@ -1009,12 +1023,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
       color: colors.rose,
     },
     {
-      key: `true_market_mean`,
-      name: "True market mean",
-      title: "True market mean",
-      color: colors.blue,
-    },
-    {
       key: `cointime_price`,
       name: "cointime",
       title: "Cointime Price",
@@ -1024,16 +1032,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
 
   const cointimeCapitalizations = /** @type {const} */ ([
     {
-      key: `thermo_cap`,
-      name: "Thermo",
-      title: "Thermo Capitalization",
-      color: colors.emerald,
-    },
-    {
-      key: `investor_cap`,
-      name: "Investor",
-      title: "Investor Capitalization",
-      color: colors.fuchsia,
+      key: `vaulted_cap`,
+      name: "Vaulted",
+      title: "Vaulted Capitalization",
+      color: colors.lime,
     },
     {
       key: `active_cap`,
@@ -1042,32 +1044,92 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
       color: colors.rose,
     },
     {
-      key: `vaulted_cap`,
-      name: "Vaulted",
-      title: "Vaulted Capitalization",
-      color: colors.lime,
-    },
-    {
       key: `cointime_cap`,
       name: "Cointime",
       title: "Cointime Capitalization",
       color: colors.yellow,
     },
+    {
+      key: `investor_cap`,
+      name: "Investor",
+      title: "Investor Capitalization",
+      color: colors.fuchsia,
+    },
+    {
+      key: `thermo_cap`,
+      name: "Thermo",
+      title: "Thermo Capitalization",
+      color: colors.emerald,
+    },
   ]);
+
+  /**
+   * @param {Object} args
+   * @param {number} [args.number]
+   * @param {boolean} [args.defaultActive]
+   * @param {Unit} args.unit
+   */
+  function createPriceLine({ number = 0, unit, defaultActive }) {
+    return /** @satisfies {FetchedLineSeriesBlueprint} */ ({
+      key: `constant_${number >= 0 ? number : `minus_${Math.abs(number)}`}`,
+      title: `${number}`,
+      unit,
+      defaultActive,
+      color: colors.gray,
+      options: {
+        lineStyle: 4,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      },
+    });
+  }
+
+  /**
+   * @param {Object} args
+   * @param {number[]} args.numbers
+   * @param {boolean} [args.defaultActive]
+   * @param {Unit} args.unit
+   */
+  function createPriceLines({ numbers, unit }) {
+    return numbers.map(
+      (number) =>
+        /** @satisfies {FetchedLineSeriesBlueprint} */ ({
+          key: `constant_${number >= 0 ? number : `minus_${Math.abs(number)}`}`,
+          title: `${number}`,
+          unit,
+          defaultActive: !number,
+          color: colors.gray,
+          options: {
+            lineStyle: 4,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          },
+        }),
+    );
+  }
 
   /**
    * @param {Object} args
    * @param {VecId} args.key
    * @param {string} args.name
    * @param {Color} [args.color]
+   * @param {Unit} [args.unit]
    * @param {boolean} [args.defaultActive]
-   * @param {PartialLineStyleOptions} [args.options]
+   * @param {LineSeriesPartialOptions} [args.options]
    */
-  function createBaseSeries({ key, name, color, defaultActive, options }) {
+  function createBaseSeries({
+    key,
+    name,
+    color,
+    defaultActive,
+    unit,
+    options,
+  }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
       key,
       title: name,
       color,
+      unit,
       defaultActive,
       options,
     });
@@ -1217,255 +1279,355 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    * @param {VecIdRatioZScoreCapBase} args.key
    * @param {Color} [args.color]
    */
-  function createPriceWithRatio({ name, title, legend, key, color }) {
-    return {
-      name,
-      title,
-      top: [
-        createBaseSeries({
-          key,
-          name: legend,
-          color,
-        }),
-        ...(`${key}_ratio_p1sd_as_price` in vecIdToIndexes
-          ? [
-              createBaseSeries({
-                key: `${key}_ratio_p1sd_as_price`,
-                name: "+1σ",
-                color: colors.orange,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p2sd_as_price`,
-                name: "+2σ",
-                color: colors.red,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p3sd_as_price`,
-                name: "+3σ",
-                color: colors.pink,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m1sd_as_price`,
-                name: "−1σ",
-                color: colors.cyan,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m2sd_as_price`,
-                name: "−2σ",
-                color: colors.blue,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m3sd_as_price`,
-                name: "−3σ",
-                color: colors.violet,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99_as_price`,
-                name: "p99",
-                color: colors.orange,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99_5_as_price`,
-                name: "p99.5",
-                color: colors.red,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99_9_as_price`,
-                name: "p99.9",
-                color: colors.pink,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p1_as_price`,
-                name: "p1",
-                color: colors.cyan,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p0_5_as_price`,
-                name: "p0.5",
-                color: colors.blue,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p0_1_as_price`,
-                name: "p0.1",
-                color: colors.violet,
-                defaultActive: false,
-              }),
-            ]
-          : []),
-      ],
-      bottom: [
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio`,
-          title: "Ratio",
-          type: "Baseline",
-          options: {
-            baseValue: { price: 1 },
-            createPriceLine: {
-              value: 1,
+  function createPriceWithRatioOptions({ name, title, legend, key, color }) {
+    return [
+      {
+        name: "price",
+        title,
+        top: [
+          createBaseSeries({
+            key,
+            name: legend,
+            color,
+          }),
+        ],
+      },
+      {
+        name: "Ratio",
+        title: `${title} Ratio`,
+        top: [
+          createBaseSeries({
+            key,
+            name: legend,
+            color,
+          }),
+          ...(`${key}_ratio_p1sd_as_price` in vecIdToIndexes
+            ? [
+                createBaseSeries({
+                  key: `${key}_ratio_p1_as_price`,
+                  name: "p1",
+                  color: colors.indigo,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p2_as_price`,
+                  name: "p2",
+                  color: colors.violet,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p5_as_price`,
+                  name: "p5",
+                  color: colors.purple,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p95_as_price`,
+                  name: "p95",
+                  color: colors.amber,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p98_as_price`,
+                  name: "p98",
+                  color: colors.orange,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p99_as_price`,
+                  name: "p99",
+                  color: colors.red,
+                  defaultActive: false,
+                }),
+              ]
+            : []),
+        ],
+        bottom: [
+          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+            key: `${key}_ratio`,
+            title: "Ratio",
+            type: "Baseline",
+            options: {
+              baseValue: { price: 1 },
             },
-          },
-        }),
-        ...(`${key}_ratio_p1sd` in vecIdToIndexes
-          ? [
-              createBaseSeries({
-                key: `${key}_ratio_p1sd`,
-                name: "+1σ",
-                color: colors.orange,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p2sd`,
-                name: "+2σ",
-                color: colors.red,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p3sd`,
-                name: "+3σ",
-                color: colors.pink,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m1sd`,
-                name: "−1σ",
-                color: colors.cyan,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m2sd`,
-                name: "−2σ",
-                color: colors.blue,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_m3sd`,
-                name: "−3σ",
-                color: colors.violet,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99`,
-                name: "p99",
-                color: colors.orange,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99_5`,
-                name: "p99.5",
-                color: colors.red,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p99_9`,
-                name: "p99.9",
-                color: colors.pink,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p1`,
-                name: "p1",
-                color: colors.cyan,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p0_5`,
-                name: "p0.5",
-                color: colors.blue,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_p0_1`,
-                name: "p0.1",
-                color: colors.violet,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_1w_sma`,
-                name: "1w sma",
-                color: colors.fuchsia,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_1m_sma`,
-                name: "1m sma",
-                color: colors.pink,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_1y_sma`,
-                name: "1y sma",
-                color: colors.rose,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_4y_sma`,
-                name: "4y_sma",
-                color: colors.purple,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                key: `${key}_ratio_sma`,
-                name: "sma",
-                color: colors.yellow,
-                defaultActive: false,
-              }),
-              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                key: `${key}_ratio_1y_sma_momentum_oscillator`,
-                title: "1Y Momentum",
-                type: "Baseline",
-                options: {
-                  createPriceLine: {
-                    value: 0,
-                  },
+          }),
+          ...(`${key}_ratio_p1sd` in vecIdToIndexes
+            ? [
+                createBaseSeries({
+                  key: `${key}_ratio_p1`,
+                  name: "p1",
+                  color: colors.indigo,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p2`,
+                  name: "p2",
+                  color: colors.violet,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p5`,
+                  name: "p5",
+                  color: colors.purple,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p95`,
+                  name: "p95",
+                  color: colors.amber,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p98`,
+                  name: "p98",
+                  color: colors.orange,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_p99`,
+                  name: "p99",
+                  color: colors.red,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_1w_sma`,
+                  name: "1w sma",
+                  color: colors.rose,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_1m_sma`,
+                  name: "1m sma",
+                  color: colors.pink,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_1y_sma`,
+                  name: "1y sma",
+                  color: colors.fuchsia,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_2y_sma`,
+                  name: "2y sma",
+                  color: colors.purple,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_4y_sma`,
+                  name: "4y sma",
+                  color: colors.violet,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: `${key}_ratio_sma`,
+                  name: "sma",
+                  color: colors.indigo,
+                  defaultActive: false,
+                }),
+              ]
+            : []),
+          createPriceLine({
+            number: 1,
+            unit: "Ratio",
+          }),
+        ],
+      },
+      ...(`${key}_ratio_zscore` in vecIdToIndexes
+        ? [
+            {
+              name: "ZScores",
+              tree: [
+                {
+                  name: "compare",
+                  title: `Compare ${title} ZScores`,
+                  top: [
+                    createBaseSeries({
+                      key,
+                      name: legend,
+                      color,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_1y_0sd_as_price`,
+                      name: "1y 0sd",
+                      color: colors.fuchsia,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_2y_0sd_as_price`,
+                      name: "2y 0sd",
+                      color: colors.purple,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_4y_0sd_as_price`,
+                      name: "4y 0sd",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_0sd_as_price`,
+                      name: "0sd",
+                      color: colors.indigo,
+                      defaultActive: false,
+                    }),
+                  ],
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}_ratio_zscore`,
+                      title: "All",
+                      type: "Baseline",
+                    }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}_ratio_4y_zscore`,
+                      colors: [colors.lime, colors.rose],
+                      title: "4y",
+                      type: "Baseline",
+                    }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}_ratio_2y_zscore`,
+                      colors: [colors.avocado, colors.pink],
+                      title: "2y",
+                      type: "Baseline",
+                    }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}_ratio_1y_zscore`,
+                      colors: [colors.yellow, colors.fuchsia],
+                      title: "1Y",
+                      type: "Baseline",
+                    }),
+                    ...createPriceLines({
+                      numbers: [0, 1, 2, 3, 4, -1, -2, -3, -4],
+                      unit: "Ratio",
+                    }),
+                  ],
                 },
-              }),
-              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                key: `${key}_ratio_zscore`,
-                title: "All time",
-                type: "Baseline",
-                options: {
-                  createPriceLine: {
-                    value: 0,
+                ...[
+                  {
+                    nameAddon: "all",
+                    titleAddon: "",
+                    keyAddon: "",
                   },
-                },
-              }),
-              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                key: `${key}_ratio_4y_zscore`,
-                title: "4y",
-                type: "Baseline",
-                colors: [colors.yellow, colors.pink],
-                options: {
-                  createPriceLine: {
-                    value: 0,
+                  {
+                    nameAddon: "4y",
+                    titleAddon: "4y",
+                    keyAddon: "4y_",
                   },
-                },
-              }),
-              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                key: `${key}_ratio_1y_zscore`,
-                title: "1y",
-                type: "Baseline",
-                colors: [colors.orange, colors.purple],
-                options: {
-                  createPriceLine: {
-                    value: 0,
+                  {
+                    nameAddon: "2y",
+                    titleAddon: "2y",
+                    keyAddon: "2y_",
                   },
-                },
-              }),
-            ]
-          : []),
-      ],
-    };
+                  {
+                    nameAddon: "1y",
+                    titleAddon: "1y",
+                    keyAddon: "1y_",
+                  },
+                ].flatMap(({ nameAddon, titleAddon, keyAddon }) => ({
+                  name: nameAddon,
+                  title: `${title} ${titleAddon} ZScore`,
+                  top: [
+                    createBaseSeries({
+                      key,
+                      name: legend,
+                      color,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}0sd_as_price`,
+                      name: "0σ",
+                      color: colors.lime,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p0_5sd_as_price`,
+                      name: "+0.5σ",
+                      color: colors.yellow,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p1sd_as_price`,
+                      name: "+1σ",
+                      color: colors.amber,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p1_5sd_as_price`,
+                      name: "+1.5σ",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p2sd_as_price`,
+                      name: "+2σ",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p2_5sd_as_price`,
+                      name: "+2.5σ",
+                      color: colors.rose,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}p3sd_as_price`,
+                      name: "+3σ",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m0_5sd_as_price`,
+                      name: "−0.5σ",
+                      color: colors.teal,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m1sd_as_price`,
+                      name: "−1σ",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m1_5sd_as_price`,
+                      name: "−1.5σ",
+                      color: colors.sky,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m2sd_as_price`,
+                      name: "−2σ",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m2_5sd_as_price`,
+                      name: "−2.5σ",
+                      color: colors.indigo,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}_ratio_${keyAddon}m3sd_as_price`,
+                      name: "−3σ",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                  ],
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}_ratio_${keyAddon}zscore`,
+                      title: "All time",
+                      type: "Baseline",
+                    }),
+                    ...createPriceLines({
+                      numbers: [0, 1, 2, 3, 4, -1, -2, -3, -4],
+                      unit: "Ratio",
+                    }),
+                  ],
+                })),
+              ],
+            },
+          ]
+        : []),
+    ];
   }
 
   /**
@@ -1910,15 +2072,36 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
         {
           name: "Realized",
           tree: [
+            ...("list" in args
+              ? [
+                  {
+                    name: "Price",
+                    title: `Realized Price ${title}`,
+                    top: args.list.map(({ color, name, key }) =>
+                      createBaseSeries({
+                        key: `${fixKey(key)}realized_price`,
+                        name,
+                        color,
+                      }),
+                    ),
+                  },
+                ]
+              : createPriceWithRatioOptions({
+                  title: `Realized Price ${title}`,
+                  key: `${fixKey(args.key)}realized_price`,
+                  name: "price",
+                  legend: "realized",
+                  color: args.color,
+                })),
             {
-              name: "cap",
+              name: "capitalization",
               title: `Realized Capitalization ${title}`,
               bottom: list.flatMap(({ color, name, key: _key }) => {
                 const key = fixKey(_key);
                 return /** @type {const} */ ([
                   createBaseSeries({
                     key: `${key}realized_cap`,
-                    name: useGroupName ? name : "Cap",
+                    name: useGroupName ? name : "Capitalization",
                     color,
                   }),
                   ...(!("list" in args)
@@ -1928,36 +2111,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           key: `${key}realized_cap_30d_change`,
                           title: "30d change",
                           defaultActive: false,
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
+                        }),
+                        createPriceLine({
+                          unit: "USD",
+                          defaultActive: false,
                         }),
                       ]
                     : []),
                 ]);
               }),
             },
-            "list" in args
-              ? {
-                  name: "Price",
-                  title: `Realized Price ${title}`,
-                  top: args.list.map(({ color, name, key }) =>
-                    createBaseSeries({
-                      key: `${fixKey(key)}realized_price`,
-                      name,
-                      color,
-                    }),
-                  ),
-                }
-              : createPriceWithRatio({
-                  title: `Realized Price ${title}`,
-                  key: `${fixKey(args.key)}realized_price`,
-                  name: "price",
-                  legend: "realized",
-                  color: args.color,
-                }),
             ...(!("list" in args)
               ? [
                   {
@@ -2007,11 +2170,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         )}realized_profit_relative_to_realized_cap`,
                         title: "Profit",
                         color: colors.green,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -2020,11 +2178,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         )}realized_loss_relative_to_realized_cap`,
                         title: "Loss",
                         color: colors.red,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                      }),
+                      createPriceLine({
+                        unit: "%rcap",
+                      }),
+                      createPriceLine({
+                        unit: "USD",
+                        defaultActive: false,
                       }),
                     ],
                   },
@@ -2035,74 +2195,54 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(key)}net_realized_profit_and_loss`,
-                        title: "Net",
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                        title: "Raw",
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
                           key,
                         )}net_realized_profit_and_loss_cumulative`,
-                        title: "Cumulative net",
+                        title: "Cumulative",
                         defaultActive: false,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
                           key,
                         )}net_realized_profit_and_loss_cumulative_30d_change`,
-                        title: "cum net 30d change",
+                        title: "cumulative 30d change",
                         defaultActive: false,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
                           key,
                         )}net_realized_profit_and_loss_relative_to_realized_cap`,
-                        title: "Net",
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                        title: "Raw",
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
                           key,
                         )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
-                        title: "cum net 30d change",
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                        title: "cumulative 30d change",
+                        defaultActive: false,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
                           key,
                         )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
-                        title: "cumulative net 30d change",
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                        title: "cumulative 30d change",
+                      }),
+                      createPriceLine({
+                        unit: "%mcap",
+                      }),
+                      createPriceLine({
+                        unit: "%rcap",
+                      }),
+                      createPriceLine({
+                        unit: "USD",
                       }),
                     ]),
                   },
@@ -2112,15 +2252,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     bottom: list.flatMap(({ color, name, key }) => {
                       const soprKey = `${fixKey(key)}spent_output_profit_ratio`;
                       const asoprKey = `${fixKey(key)}adjusted_spent_output_profit_ratio`;
-
                       return [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
                           key: soprKey,
                           title: "sopr",
                           options: {
-                            createPriceLine: {
-                              value: 1,
+                            baseValue: {
+                              price: 1,
                             },
                           },
                         }),
@@ -2132,13 +2271,17 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                                 title: "asopr",
                                 colors: [colors.yellow, colors.pink],
                                 options: {
-                                  createPriceLine: {
-                                    value: 1,
+                                  baseValue: {
+                                    price: 1,
                                   },
                                 },
                               }),
                             ]
                           : []),
+                        createPriceLine({
+                          number: 1,
+                          unit: "Ratio",
+                        }),
                       ];
                     }),
                   },
@@ -2147,82 +2290,80 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   {
                     name: "profit",
                     title: `Realized Profit ${title}`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
-                      const key = fixKey(_key);
-                      return /** @type {const} */ ([
-                        createBaseSeries({
-                          key: `${key}realized_profit`,
-                          name,
-                          color,
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          type: "Baseline",
-                          key: `${key}realized_profit_relative_to_realized_cap`,
-                          title: name,
-                          color,
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                      ]);
-                    }),
+                    bottom: [
+                      ...list.flatMap(({ color, name, key: _key }) => {
+                        const key = fixKey(_key);
+                        return /** @type {const} */ ([
+                          createBaseSeries({
+                            key: `${key}realized_profit`,
+                            name,
+                            color,
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `${key}realized_profit_relative_to_realized_cap`,
+                            title: name,
+                            color,
+                          }),
+                        ]);
+                      }),
+                      createPriceLine({
+                        unit: "USD",
+                      }),
+                    ],
                   },
                   {
                     name: "loss",
                     title: `Realized Loss ${title}`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
-                      const key = fixKey(_key);
-                      return /** @type {const} */ ([
-                        createBaseSeries({
-                          key: `${key}realized_loss`,
-                          name,
-                          color,
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          type: "Baseline",
-                          key: `${key}realized_loss_relative_to_realized_cap`,
-                          title: name,
-                          color,
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                      ]);
-                    }),
+                    bottom: [
+                      ...list.flatMap(({ color, name, key: _key }) => {
+                        const key = fixKey(_key);
+                        return /** @type {const} */ ([
+                          createBaseSeries({
+                            key: `${key}realized_loss`,
+                            name,
+                            color,
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `${key}realized_loss_relative_to_realized_cap`,
+                            title: name,
+                            color,
+                          }),
+                        ]);
+                      }),
+                      createPriceLine({
+                        unit: "USD",
+                      }),
+                    ],
                   },
                   {
                     name: "Net pnl",
                     title: `Net Realized Profit And Loss ${title}`,
-                    bottom: list.flatMap(({ color, name, key }) => [
-                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                        type: "Baseline",
-                        key: `${fixKey(key)}net_realized_profit_and_loss`,
-                        title: name,
-                        color,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                    bottom: [
+                      ...list.flatMap(({ color, name, key }) => [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${fixKey(key)}net_realized_profit_and_loss`,
+                          title: name,
+                          color,
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${fixKey(
+                            key,
+                          )}net_realized_profit_and_loss_relative_to_realized_cap`,
+                          title: name,
+                          color,
+                        }),
+                      ]),
+                      createPriceLine({
+                        unit: "USD",
                       }),
-                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                        type: "Baseline",
-                        key: `${fixKey(
-                          key,
-                        )}net_realized_profit_and_loss_relative_to_realized_cap`,
-                        title: name,
-                        color,
-                        options: {
-                          createPriceLine: {
-                            value: 0,
-                          },
-                        },
+                      createPriceLine({
+                        unit: "%rcap",
                       }),
-                    ]),
+                    ],
                   },
                   {
                     name: "cumulative",
@@ -2258,67 +2399,63 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       {
                         name: "Net pnl",
                         title: `Cumulative Net Realized Profit And Loss ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => [
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
-                            key: `${fixKey(
-                              key,
-                            )}net_realized_profit_and_loss_cumulative`,
-                            title: name,
-                            color,
-                            defaultActive: false,
-                            options: {
-                              createPriceLine: {
-                                value: 0,
-                              },
-                            },
+                        bottom: [
+                          ...list.flatMap(({ color, name, key }) => [
+                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                              type: "Baseline",
+                              key: `${fixKey(
+                                key,
+                              )}net_realized_profit_and_loss_cumulative`,
+                              title: name,
+                              color,
+                              defaultActive: false,
+                            }),
+                          ]),
+                          createPriceLine({
+                            unit: "USD",
                           }),
-                        ]),
+                        ],
                       },
                       {
                         name: "Net pnl 30d change",
                         title: `Cumulative Net Realized Profit And Loss 30 Day Change ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => [
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
-                            key: `${fixKey(
-                              key,
-                            )}net_realized_profit_and_loss_cumulative_30d_change`,
-                            title: name,
-                            color,
-                            options: {
-                              createPriceLine: {
-                                value: 0,
-                              },
-                            },
+                        bottom: [
+                          ...list.flatMap(({ color, name, key }) => [
+                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                              type: "Baseline",
+                              key: `${fixKey(
+                                key,
+                              )}net_realized_profit_and_loss_cumulative_30d_change`,
+                              title: name,
+                              color,
+                            }),
+                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                              type: "Baseline",
+                              key: `${fixKey(
+                                key,
+                              )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
+                              title: name,
+                              color,
+                            }),
+                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                              type: "Baseline",
+                              key: `${fixKey(
+                                key,
+                              )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
+                              title: name,
+                              color,
+                            }),
+                          ]),
+                          createPriceLine({
+                            unit: "USD",
                           }),
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
-                            key: `${fixKey(
-                              key,
-                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
-                            title: name,
-                            color,
-                            options: {
-                              createPriceLine: {
-                                value: 0,
-                              },
-                            },
+                          createPriceLine({
+                            unit: "%mcap",
                           }),
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
-                            key: `${fixKey(
-                              key,
-                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
-                            title: name,
-                            color,
-                            options: {
-                              createPriceLine: {
-                                value: 0,
-                              },
-                            },
+                          createPriceLine({
+                            unit: "%rcap",
                           }),
-                        ]),
+                        ],
                       },
                     ],
                   },
@@ -2328,19 +2465,20 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       {
                         name: "Normal",
                         title: `Spent Output Profit Ratio ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => [
-                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                            type: "Baseline",
-                            key: `${fixKey(key)}spent_output_profit_ratio`,
-                            title: name,
-                            color,
-                            options: {
-                              createPriceLine: {
-                                value: 1,
-                              },
-                            },
+                        bottom: [
+                          ...list.flatMap(({ color, name, key }) => [
+                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                              type: "Baseline",
+                              key: `${fixKey(key)}spent_output_profit_ratio`,
+                              title: name,
+                              color,
+                            }),
+                          ]),
+                          createPriceLine({
+                            number: 1,
+                            unit: "Ratio",
                           }),
-                        ]),
+                        ],
                       },
                       ...(() => {
                         const reducedList = list
@@ -2358,21 +2496,22 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                               {
                                 name: "Adjusted",
                                 title: `Adjusted Spent Output Profit Ratio ${title}`,
-                                bottom: reducedList.flatMap(
-                                  ({ color, name, key }) => [
-                                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                                      type: "Baseline",
-                                      key,
-                                      title: name,
-                                      color,
-                                      options: {
-                                        createPriceLine: {
-                                          value: 1,
-                                        },
-                                      },
-                                    }),
-                                  ],
-                                ),
+                                bottom: [
+                                  ...reducedList.flatMap(
+                                    ({ color, name, key }) => [
+                                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                                        type: "Baseline",
+                                        key,
+                                        title: name,
+                                        color,
+                                      }),
+                                    ],
+                                  ),
+                                  createPriceLine({
+                                    number: 1,
+                                    unit: "Ratio",
+                                  }),
+                                ],
                               },
                             ]
                           : [];
@@ -2402,14 +2541,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     name: "pnl",
                     title: `Unrealized Profit And Loss ${title}`,
                     bottom: [
-                      // createBaseSeries({
-                      //   key: `0`,
-                      //   name: "Base",
-                      //   color: colors.gray,
-                      //   options: {
-                      //     lineStyle: 4,
-                      //   },
-                      // }),
                       createBaseSeries({
                         key: `${fixKey(args.key)}unrealized_profit`,
                         name: "Profit",
@@ -2425,6 +2556,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         key: `${fixKey(args.key)}negative_unrealized_loss`,
                         name: "Negative Loss",
                         color: colors.red,
+                      }),
+                      createPriceLine({
+                        unit: "USD",
+                        defaultActive: false,
                       }),
                     ],
                   },
@@ -2462,32 +2597,30 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             {
               name: "Net pnl",
               title: `Net Unrealized Profit And Loss ${title}`,
-              bottom: list.flatMap(({ color, name, key }) => [
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(key)}net_unrealized_profit_and_loss`,
-                  title: useGroupName ? name : "Net",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 0,
-                    },
-                  },
+              bottom: [
+                ...list.flatMap(({ color, name, key }) => [
+                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                    type: "Baseline",
+                    key: `${fixKey(key)}net_unrealized_profit_and_loss`,
+                    title: useGroupName ? name : "Net",
+                    color: useGroupName ? color : undefined,
+                  }),
+                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                    type: "Baseline",
+                    key: `${fixKey(
+                      key,
+                    )}net_unrealized_profit_and_loss_relative_to_market_cap`,
+                    title: useGroupName ? name : "Net",
+                    color: useGroupName ? color : undefined,
+                  }),
+                ]),
+                createPriceLine({
+                  unit: "USD",
                 }),
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(
-                    key,
-                  )}net_unrealized_profit_and_loss_relative_to_market_cap`,
-                  title: useGroupName ? name : "Net",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 0,
-                    },
-                  },
+                createPriceLine({
+                  unit: "%mcap",
                 }),
-              ]),
+              ],
             },
           ],
         },
@@ -2679,15 +2812,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     }),
                   ),
                 },
-                ...averages.map(({ key, name, color }) =>
-                  createPriceWithRatio({
+                ...averages.map(({ key, name, color }) => ({
+                  name,
+                  tree: createPriceWithRatioOptions({
                     key: `${key}_sma`,
                     name,
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
                   }),
-                ),
+                })),
               ],
             },
             {
@@ -2714,12 +2848,22 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     key: `${key}_returns`,
                     title: "Returns",
                     type: "Baseline",
-                    options: {
-                      createPriceLine: {
-                        value: 0,
-                      },
-                    },
                   }),
+                  createPriceLine({
+                    unit: "performance",
+                  }),
+                  ...(`${key}_cagr` in vecIdToIndexes
+                    ? [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}_cagr`,
+                          title: "cagr",
+                          type: "Baseline",
+                        }),
+                        createPriceLine({
+                          unit: "cagr",
+                        }),
+                      ]
+                    : []),
                 ],
               })),
             },
@@ -2786,21 +2930,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_returns`,
                           title: "lump sum",
                           type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
+                        }),
+                        createPriceLine({
+                          unit: "performance",
                         }),
                       ],
                     }),
@@ -2836,42 +2973,25 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_dca_cagr`,
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_returns`,
                           title: "lump sum",
                           type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_cagr`,
                           title: "lump sum",
                           type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
+                        }),
+                        createPriceLine({
+                          unit: "performance",
                         }),
                       ],
                     }),
@@ -2910,11 +3030,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           key: `dca_class_${year}_returns`,
                           title: "dca",
                           type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
+                        }),
+                        createPriceLine({
+                          unit: "performance",
                         }),
                       ],
                     }),
@@ -3419,99 +3537,30 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
           name: "Cointime",
           tree: [
             {
-              name: "Coinblocks",
-              title: "Coinblocks",
-              bottom: [
-                createBaseSeries({
-                  key: "coinblocks_destroyed",
-                  name: "Destroyed",
-                  color: colors.red,
-                }),
-                createBaseSeries({
-                  key: "coinblocks_destroyed_cumulative",
-                  name: "Cumulative Destroyed",
-                  color: colors.red,
-                  defaultActive: false,
-                }),
-                createBaseSeries({
-                  key: "coinblocks_created",
-                  name: "created",
-                  color: colors.orange,
-                }),
-                createBaseSeries({
-                  key: "coinblocks_created_cumulative",
-                  name: "Cumulative created",
-                  color: colors.orange,
-                  defaultActive: false,
-                }),
-                createBaseSeries({
-                  key: "coinblocks_stored",
-                  name: "stored",
-                  color: colors.green,
-                }),
-                createBaseSeries({
-                  key: "coinblocks_stored_cumulative",
-                  name: "Cumulative stored",
-                  color: colors.green,
-                  defaultActive: false,
-                }),
-              ],
-            },
-            {
-              name: "Liveliness & Vaultedness",
-              title: "Liveliness & Vaultedness",
-              bottom: [
-                createBaseSeries({
-                  key: "liveliness",
-                  name: "Liveliness",
-                  color: colors.rose,
-                }),
-                createBaseSeries({
-                  key: "vaultedness",
-                  name: "Vaultedness",
-                  color: colors.lime,
-                }),
-              ],
-            },
-            {
-              name: "Supply",
-              title: "Cointime Supply",
-              bottom: /** @type {const} */ ([
+              name: "Prices",
+              tree: [
                 {
-                  name: "all",
-                  color: colors.orange,
+                  name: "Compare",
+                  title: "Compare Cointime Prices",
+                  top: cointimePrices.map(({ key, name, color }) =>
+                    createBaseSeries({
+                      key,
+                      name,
+                      color,
+                    }),
+                  ),
                 },
-                {
-                  name: "vaulted",
-                  color: colors.lime,
-                },
-                { name: "active", color: colors.rose },
-              ]).flatMap(
-                ({ name, color }) =>
-                  /** @type {const} */ ([
-                    createBaseSeries({
-                      key: `${
-                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
-                      }supply`,
-                      name,
-                      color,
-                    }),
-                    createBaseSeries({
-                      key: `${
-                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
-                      }supply_in_btc`,
-                      name,
-                      color,
-                    }),
-                    createBaseSeries({
-                      key: `${
-                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
-                      }supply_in_usd`,
-                      name,
-                      color,
-                    }),
-                  ]),
-              ),
+                ...cointimePrices.map(({ key, name, color, title }) => ({
+                  name,
+                  tree: createPriceWithRatioOptions({
+                    key,
+                    legend: name,
+                    color,
+                    name,
+                    title,
+                  }),
+                })),
+              ],
             },
             {
               name: "Capitalization",
@@ -3565,28 +3614,98 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               ],
             },
             {
-              name: "Prices",
-              tree: [
+              name: "Supply",
+              title: "Cointime Supply",
+              bottom: /** @type {const} */ ([
                 {
-                  name: "Compare",
-                  title: "Compare Cointime Prices",
-                  top: cointimePrices.map(({ key, name, color }) =>
+                  name: "all",
+                  color: colors.orange,
+                },
+                {
+                  name: "vaulted",
+                  color: colors.lime,
+                },
+                { name: "active", color: colors.rose },
+              ]).flatMap(
+                ({ name, color }) =>
+                  /** @type {const} */ ([
                     createBaseSeries({
-                      key,
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
+                      }supply`,
                       name,
                       color,
                     }),
-                  ),
-                },
-                ...cointimePrices.map(({ key, name, color, title }) =>
-                  createPriceWithRatio({
-                    key,
-                    legend: name,
-                    color,
-                    name,
-                    title,
-                  }),
-                ),
+                    createBaseSeries({
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
+                      }supply_in_btc`,
+                      name,
+                      color,
+                    }),
+                    createBaseSeries({
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}_`) : ""
+                      }supply_in_usd`,
+                      name,
+                      color,
+                    }),
+                  ]),
+              ),
+            },
+            {
+              name: "Liveliness & Vaultedness",
+              title: "Liveliness & Vaultedness",
+              bottom: [
+                createBaseSeries({
+                  key: "liveliness",
+                  name: "Liveliness",
+                  color: colors.rose,
+                }),
+                createBaseSeries({
+                  key: "vaultedness",
+                  name: "Vaultedness",
+                  color: colors.lime,
+                }),
+              ],
+            },
+            {
+              name: "Coinblocks",
+              title: "Coinblocks",
+              bottom: [
+                createBaseSeries({
+                  key: "coinblocks_destroyed",
+                  name: "Destroyed",
+                  color: colors.red,
+                }),
+                createBaseSeries({
+                  key: "coinblocks_destroyed_cumulative",
+                  name: "Cumulative Destroyed",
+                  color: colors.red,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: "coinblocks_created",
+                  name: "created",
+                  color: colors.orange,
+                }),
+                createBaseSeries({
+                  key: "coinblocks_created_cumulative",
+                  name: "Cumulative created",
+                  color: colors.orange,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: "coinblocks_stored",
+                  name: "stored",
+                  color: colors.green,
+                }),
+                createBaseSeries({
+                  key: "coinblocks_stored_cumulative",
+                  name: "Cumulative stored",
+                  color: colors.green,
+                  defaultActive: false,
+                }),
               ],
             },
           ],
@@ -3743,7 +3862,7 @@ export function initOptions({
       if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
         throw Error(`${blueprint.key} not recognized`);
       }
-      const unit = utils.vecidToUnit(blueprint.key);
+      const unit = blueprint.unit ?? utils.vecidToUnit(blueprint.key);
       record[unit] ??= [];
       record[unit].push(blueprint);
       return record;

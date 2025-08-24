@@ -67,7 +67,7 @@ impl PriceToAmount {
                 self.state.as_mut().unwrap().remove(&price);
             }
         } else {
-            dbg!(&self.state, price, &self.pathbuf);
+            dbg!(price, &self.pathbuf);
             unreachable!();
         }
     }
