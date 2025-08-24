@@ -2,7 +2,7 @@
 
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType } from "./options"
- * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, LineData, BaselineData, PartialLineStyleOptions, PartialBaselineStyleOptions, PartialCandlestickStyleOptions } from "../packages/lightweight-charts/wrapper"
+ * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions } from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/leeoniya-ufuzzy/1.0.18/dist/uFuzzy.d.ts"
  * @import { SerializedChartableIndex } from "./chart";
  * @import { Signal, Signals, Accessor } from "../packages/solidjs-signals/wrapper";
@@ -45,6 +45,7 @@
  *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
+ *   "%pnl" |
  *   "constant" |
  *   "cagr" |
  *   "vB" |
@@ -53,7 +54,6 @@
  *   "Epoch" |
  *   "Height" |
  *   "Type" |
- *   "zscore" |
  *   "Bytes"
  * } Unit
  */
@@ -196,12 +196,12 @@ function createUtils() {
     createSpanName(name) {
       const spanName = window.document.createElement("span");
       spanName.classList.add("name");
-      const [first, second, third] = name.split("-");
+      const [first, second, third] = name.split(" - ");
       spanName.innerHTML = first;
 
       if (second) {
         const smallRest = window.document.createElement("small");
-        smallRest.innerHTML = `— ${second}`;
+        smallRest.innerHTML = ` — ${second}`;
         spanName.append(smallRest);
 
         if (third) {
@@ -776,16 +776,18 @@ function createUtils() {
     if (
       ((!unit || thoroughUnitCheck) &&
         (id.endsWith("ratio") ||
-          (id.includes("ratio") && id.endsWith("sma")) ||
+          (id.includes("ratio") &&
+            (id.endsWith("sma") || id.endsWith("zscore"))) ||
+          id.endsWith("_5sd") ||
           id.endsWith("1sd") ||
           id.endsWith("2sd") ||
           id.endsWith("3sd") ||
-          id.endsWith("p0_1") ||
-          id.endsWith("p0_5") ||
           id.endsWith("p1") ||
-          id.endsWith("p99") ||
-          id.endsWith("p99_5") ||
-          id.endsWith("p99_9"))) ||
+          id.endsWith("p2") ||
+          id.endsWith("p5") ||
+          id.endsWith("p95") ||
+          id.endsWith("p98") ||
+          id.endsWith("p99"))) ||
       id.includes("liveliness") ||
       id.includes("vaultedness")
     ) {
@@ -827,10 +829,6 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id.endsWith("returns")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "performance";
-    }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("zscore")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "zscore";
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("locktime")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -933,6 +931,14 @@ function createUtils() {
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%all";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.includes("relative_to_realized_profit") ||
+        id.includes("relative_to_realized_loss"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%pnl";
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_own_supply")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);

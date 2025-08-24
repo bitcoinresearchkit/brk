@@ -28,7 +28,7 @@ minreq = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 toml = "0.9.5"
-zip = { version = "4.3.0", default-features = false, features = ["deflate"] }
+zip = { version = "4.5.0", default-features = false, features = ["deflate"] }
 
 [[bin]]
 name = "brk"

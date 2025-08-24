@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './5.0.8/dist/typings' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './5.0.8/dist/typings' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -13,8 +13,14 @@
  *
  * @typedef {_ISeriesApi<SeriesType, number>} ISeries
  * @typedef {_ISeriesApi<'Candlestick', number>} CandlestickISeries
+ * @typedef {_ISeriesApi<'Histogram', number>} HistogramISeries
  * @typedef {_ISeriesApi<'Line', number>} LineISeries
  * @typedef {_ISeriesApi<'Baseline', number>} BaselineISeries
+ *
+ * @typedef {_LineSeriesPartialOptions} LineSeriesPartialOptions
+ * @typedef {_HistogramSeriesPartialOptions} HistogramSeriesPartialOptions
+ * @typedef {_BaselineSeriesPartialOptions} BaselineSeriesPartialOptions
+ * @typedef {_CandlestickSeriesPartialOptions} CandlestickSeriesPartialOptions
  *
  * @typedef {Object} Series
  * @property {ISeries} inner
@@ -28,27 +34,18 @@
  * @typedef {_CandlestickData<number>} CandlestickData
  * @typedef {_LineData<number>} LineData
  * @typedef {_BaselineData<number>} BaselineData
+ * @typedef {_HistogramData<number>} HistogramData
  *
  * @typedef {function({ iseries: ISeries; unit: Unit; index: Index }): void} SetDataCallback
- *
- * @typedef {Object} CreatePriceLine
- * @property {number} value
- *
- * @typedef {Object} CreatePriceLineOptions
- * @property {CreatePriceLine} createPriceLine
- *
- * @typedef {Partial<CreatePriceLineOptions>} PartialCreatePriceLineOptions
- *
- * @typedef {LineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialLineStyleOptions
- * @typedef {CandlestickSeriesPartialOptions & PartialCreatePriceLineOptions} PartialCandlestickStyleOptions
- * @typedef {BaselineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialBaselineStyleOptions
  */
 
 import {
   createChart,
   CandlestickSeries,
+  HistogramSeries,
   LineSeries,
   BaselineSeries,
+  // } from "./5.0.8/dist/lightweight-charts.standalone.development.mjs";
 } from "./5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 const oklchToRGBA = createOklchToRGBA();
@@ -561,7 +558,7 @@ function createChartElement({
      * @param {boolean} [args.defaultActive]
      * @param {boolean} [args.inverse]
      * @param {SetDataCallback} [args.setDataCallback]
-     * @param {PartialCandlestickStyleOptions} [args.options]
+     * @param {CandlestickSeriesPartialOptions} [args.options]
      */
     addCandlestickSeries({
       vecId,
@@ -573,6 +570,7 @@ function createChartElement({
       setDataCallback,
       data,
       inverse,
+      options,
     }) {
       const green = inverse ? colors.red : colors.green;
       const red = inverse ? colors.green : colors.red;
@@ -588,6 +586,7 @@ function createChartElement({
             wickDownColor: red(),
             borderVisible: false,
             visible: defaultActive !== false,
+            ...options,
           },
           paneIndex,
         )
@@ -612,13 +611,65 @@ function createChartElement({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
+     * @param {Color} args.color
+     * @param {VecId} [args.vecId]
+     * @param {Accessor<HistogramData[]>} [args.data]
+     * @param {number} [args.paneIndex]
+     * @param {boolean} [args.defaultActive]
+     * @param {SetDataCallback} [args.setDataCallback]
+     * @param {HistogramSeriesPartialOptions} [args.options]
+     */
+    addHistogramSeries({
+      vecId,
+      name,
+      unit,
+      color,
+      order,
+      paneIndex = 0,
+      defaultActive,
+      setDataCallback,
+      data,
+      options,
+    }) {
+      /** @type {HistogramISeries} */
+      const iseries = /** @type {any} */ (
+        ichart.addSeries(
+          /** @type {SeriesDefinition<'Histogram'>} */ (HistogramSeries),
+          {
+            color: color(),
+            visible: defaultActive !== false,
+            priceLineVisible: false,
+          },
+          paneIndex,
+        )
+      );
+
+      return addSeries({
+        colors: [color],
+        iseries,
+        name,
+        order,
+        paneIndex,
+        seriesType: "Bar",
+        unit,
+        data,
+        setDataCallback,
+        defaultActive,
+        vecId,
+      });
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.name
+     * @param {Unit} args.unit
+     * @param {number} args.order
      * @param {Accessor<LineData[]>} [args.data]
      * @param {VecId} [args.vecId]
      * @param {Color} [args.color]
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
-     * @param {PartialLineStyleOptions} [args.options]
+     * @param {LineSeriesPartialOptions} [args.options]
      */
     addLineSeries({
       vecId,
@@ -649,11 +700,6 @@ function createChartElement({
         )
       );
 
-      const priceLineOptions = options?.createPriceLine;
-      if (priceLineOptions) {
-        createPriceLine(iseries, priceLineOptions, colors);
-      }
-
       return addSeries({
         colors: [color],
         iseries,
@@ -678,7 +724,7 @@ function createChartElement({
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
-     * @param {PartialBaselineStyleOptions} [args.options]
+     * @param {BaselineSeriesPartialOptions} [args.options]
      */
     addBaselineSeries({
       vecId,
@@ -701,7 +747,7 @@ function createChartElement({
             lineWidth: /** @type {any} */ (1.5),
             visible: defaultActive !== false,
             baseValue: {
-              price: options?.createPriceLine?.value ?? 0,
+              price: options?.baseValue?.price ?? 0,
             },
             ...options,
             topLineColor: options?.topLineColor ?? colors.green(),
@@ -716,11 +762,6 @@ function createChartElement({
           paneIndex,
         )
       );
-
-      const priceLineOptions = options?.createPriceLine;
-      if (priceLineOptions) {
-        createPriceLine(iseries, priceLineOptions, colors);
-      }
 
       return addSeries({
         colors: [
@@ -756,6 +797,16 @@ function createChartElement({
         chart.addBaselineSeries({
           name: blueprint.title,
           unit,
+          data: blueprint.data,
+          defaultActive: blueprint.defaultActive,
+          paneIndex,
+          order,
+        });
+      } else if (blueprint.type === "Histogram") {
+        chart.addHistogramSeries({
+          name: blueprint.title,
+          unit,
+          color: blueprint.color,
           data: blueprint.data,
           defaultActive: blueprint.defaultActive,
           paneIndex,
@@ -925,21 +976,6 @@ function createLegend({ signals, utils }) {
       legends.splice(start).forEach((child) => child.remove());
     },
   };
-}
-
-/**
- * @param {ISeries} series
- * @param {DeepPartial<CreatePriceLine>} options
- * @param {Colors} colors
- */
-function createPriceLine(series, options, colors) {
-  series.createPriceLine({
-    price: options.value || 0,
-    color: colors.gray(),
-    axisLabelVisible: false,
-    lineWidth: 1,
-    lineStyle: 4,
-  });
 }
 
 /**

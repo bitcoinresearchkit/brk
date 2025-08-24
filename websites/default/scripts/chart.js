@@ -425,10 +425,26 @@ export function init({
                     );
                     break;
                   }
+                  case "Histogram": {
+                    seriesList.push(
+                      chart.addHistogramSeries({
+                        vecId: blueprint.key,
+                        name: blueprint.title,
+                        unit,
+                        color: blueprint.color,
+                        defaultActive: blueprint.defaultActive,
+                        paneIndex,
+                        options: blueprint.options,
+                        order,
+                      }),
+                    );
+                    break;
+                  }
                   case "Candlestick": {
                     throw Error("TODO");
                   }
-                  default:
+                  case "Line":
+                  case undefined:
                     seriesList.push(
                       chart.addLineSeries({
                         vecId: blueprint.key,

@@ -1,31 +1,236 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="height: 100%">
   <head>
     <meta charset="utf-8" />
     <title>Custom</title>
   </head>
-  <body>
-    <h1>Infinite Code: A Digital Symphony</h1>
-
-    <p>
-      Unleash the inner coder within you and weave a tapestry of innovation in a
-      digital realm where every line of code becomes your palette. Picture an
-      endless HTML canvas, each tag an invitation to dream, every element a
-      window to possibilities. Let your JavaScript spirit soar like a dynamic
-      function—fluid yet unforgivingly creative—transforming mere logic into
-      animated expressions of art. And as you style your thoughts with CSS, each
-      hex color shines like a beacon of brilliance, every property a stroke of
-      imaginative genius.
-    </p>
-
-    <p>
-      In this universe of web development, the DOM is your poetic playground,
-      where algorithms dance with beauty and creativity is written in the syntax
-      of tomorrow. Create without boundaries, let your code be as rich and
-      expansive as an infinite loop of passion, where every variable holds the
-      whisper of your inspiration, and every function unveils a new horizon of
-      digital artistry. The web is your canvas; the sky, a limitless expanse of
-      code.
-    </p>
+  <body
+    style="
+      background-color: black;
+      color: white;
+      font-family: monospace;
+      height: 100%;
+      margin: 0;
+    "
+  >
+    <div id="chart" style="height: 100%; width: 100%"></div>
   </body>
+  <script type="module">
+    import * as lc from "https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.development.mjs";
+
+    const chartOptions = {
+      layout: {
+        textColor: "white",
+        background: "transparent",
+        fontFamily: "monospace",
+        attributionLogo: false,
+      },
+      grid: {
+        vertLines: { visible: false },
+        horzLines: { visible: false },
+      },
+    };
+    const chart = lc.createChart(
+      document.getElementById("chart"),
+      chartOptions,
+    );
+
+    const minDate = "2022-11-09";
+    // const minDate = "2023-11-09";
+
+    let dates = await (
+      await fetch(
+        "https://next.bitray.xyz/api/vecs/dateindex-to-date?from=-10000",
+      )
+    ).json();
+    let i = 0;
+    console.log(
+      dates.find((d, _i) => {
+        i = _i;
+        return d == minDate;
+      }),
+    );
+    dates = dates.splice(i);
+    const from = dates.length;
+
+    const ohlcs = await (
+      await fetch(
+        `https://next.bitray.xyz/api/vecs/dateindex-to-ohlc?from=-${from}`,
+      )
+    ).json();
+
+    chart.addSeries(lc.CandlestickSeries, {}, 0).setData(
+      ohlcs.map(([open, high, low, close], i) => ({
+        open,
+        high,
+        low,
+        close,
+        time: dates[i],
+      })),
+    );
+
+    const cohort = "5m";
+
+    const sopr = (
+      await (
+        await fetch(
+          `https://next.bitray.xyz/api/vecs/dateindex-to-utxos-up-to-${cohort}-old-spent-output-profit-ratio?from=-${from}`,
+        )
+      ).json()
+    ).map((v) => v - 1);
+
+    chart
+      .addSeries(
+        lc.BaselineSeries,
+        {
+          // color: "green",
+          lineWidth: 1.25,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        },
+        2,
+      )
+      .setData(
+        sopr.map((value, i) => ({
+          value,
+          time: dates[i],
+        })),
+      );
+
+    const investedDollarsData = [];
+    const normalDCAData = [];
+    const customDCAData = [];
+    const bitcoinValueData = [];
+    const bitcoinData = [];
+    const resultData = [];
+    const dollarsLeftData = [];
+    const investmentData = [];
+    const bitcoinAddedData = [];
+    const averagePricePaidData = [];
+    const buyCountData = [];
+    const sellCountData = [];
+
+    const initialDollarAmount = 10_000;
+    const dca = 1000;
+    const baseRatio = 0.01;
+
+    let bitcoin = initialDollarAmount / 2 / ohlcs[0][3];
+    let dollars = initialDollarAmount / 2;
+    let investedAmount = initialDollarAmount;
+    let buyCount = 0;
+    let sellCount = 0;
+    let bitcoinNormalDca = initialDollarAmount / ohlcs[0][3];
+
+    dates.forEach((serDate, i) => {
+      const date = new Date(serDate);
+      const price = ohlcs[i][3];
+
+      if (date.getUTCDate() == 15) {
+        const addedBitcoin = dca / price;
+        investedAmount += dca;
+        bitcoin += addedBitcoin;
+        bitcoinNormalDca += addedBitcoin;
+      }
+
+      const valueInDollars = dollars + bitcoin * price;
+      const valueInBitcoin = dollars / price + bitcoin;
+
+      // const ratio = baseRatio * (shouldBuy ? buyRatio : sellRatio);
+      let ratio = sopr[i];
+      const shouldBuy = ratio <= 0.0;
+      ratio = Math.abs(ratio);
+      // console.log({ asopr, ratio });
+
+      if (shouldBuy) {
+        // const buyAmount = dollars * ratio;
+        const buyAmount = Math.min(dollars, valueInDollars * (ratio * 2));
+        dollars -= buyAmount;
+        bitcoin += buyAmount / price;
+      } else {
+        // const sellAmount = bitcoin * (ratio / 2);
+        const sellAmount = Math.min(bitcoin, valueInBitcoin * (ratio / 2));
+        bitcoin -= sellAmount;
+        dollars += sellAmount * price;
+      }
+
+      dollarsLeftData.push(dollars);
+      customDCAData.push(dollars + bitcoin * price);
+      normalDCAData.push(bitcoinNormalDca * price);
+      investedDollarsData.push(investedAmount);
+    });
+
+    chart
+      .addSeries(
+        lc.LineSeries,
+        {
+          color: "green",
+          lineWidth: 1.25,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        },
+        3,
+      )
+      .setData(
+        investedDollarsData.map((value, i) => ({
+          value,
+          time: dates[i],
+        })),
+      );
+
+    chart
+      .addSeries(
+        lc.LineSeries,
+        {
+          color: "gray",
+          lineWidth: 1.25,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        },
+        2,
+      )
+      .setData(
+        normalDCAData.map((value, i) => ({
+          value,
+          time: dates[i],
+        })),
+      );
+
+    chart
+      .addSeries(
+        lc.LineSeries,
+        {
+          color: "yellow",
+          lineWidth: 1.25,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        },
+        2,
+      )
+      .setData(
+        dollarsLeftData.map((value, i) => ({
+          value,
+          time: dates[i],
+        })),
+      );
+
+    chart
+      .addSeries(
+        lc.LineSeries,
+        {
+          color: "white",
+          lineWidth: 1.25,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        },
+        2,
+      )
+      .setData(
+        customDCAData.map((value, i) => ({
+          value,
+          time: dates[i],
+        })),
+      );
+
+    chart.timeScale().fitContent();
+  </script>
 </html>
