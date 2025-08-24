@@ -4,46 +4,35 @@
 
 All notable changes to the Bitcoin Research Kit (BRK) project will be documented in this file.
 
-## Unreleased
+## [v0.0.89](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.89) - 2025-08-24
 
 ### Documentation
-- **Enhanced**: Comprehensive rewrite of all crate README files for improved clarity and developer experience
-- **Updated**: Main project README with better structure and documentation
-- **Standardized**: README format across all workspace crates with consistent styling
-- **Improved**: Documentation structure and organization across the entire project
-- **Added**: More detailed descriptions for each crate's purpose and functionality
+- **Enhanced**: Comprehensive rewrite of all crate README files for improved clarity and developer experience across all workspace crates: [brk](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk/README.md), [brk_bundler](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_bundler/README.md), [brk_computer](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/README.md), [brk_cli](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_cli/README.md), [brk_error](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_error/README.md)
+- **Updated**: Main project [README](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/README.md) with better structure and comprehensive architecture documentation
+- **Standardized**: README format across all workspace crates with consistent styling and improved developer experience
+- **Added**: More detailed descriptions for each crate's purpose and functionality with examples
 
-### Computer Module
-- **Refactored**: Converted ComputedFrom pattern to LazyFrom pattern for improved performance
-- **Added**: New LazyVecBuilder implementation for on-demand computation
-- **Restructured**: Computer module stateful operations with improved organization
-- **Cleaned**: Removed hardcoded format specifications, now using defaults
-- **Optimized**: Vector storage operations with lazy computation patterns
-- **Refactored**: Address type handling in stateful computations
-- **Reorganized**: Stateful module structure for better maintainability
-- **Enhanced**: Builder patterns for grouped vector operations
-- **Improved**: Memory efficiency through lazy computation strategies
+### Computer Module - Major Refactoring
+- **Refactored**: Converted ComputedFrom pattern to [LazyFrom pattern](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/grouped/builder_lazy.rs) for improved performance and memory efficiency
+- **Added**: New [LazyVecBuilder implementation](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/grouped/builder_lazy.rs) for on-demand computation with support for first, average, sum, max, min, last, and cumulative operations
+- **Restructured**: Computer module [stateful operations](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/stateful/mod.rs) with improved organization and rollback functionality
+- **Enhanced**: [Address type organization](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/stateful/addresstype/) into dedicated module structure
+- **Improved**: Stateful rollback functionality for better error recovery and blockchain reorganization handling
 
-### Vector Storage
-- **Enhanced**: Vector storage engine development workflow
-- **Optimized**: Lazy vector computation patterns for better performance
-- **Improved**: Vector builder architecture with lazy evaluation
+### Data Structures  
+- **Added**: New [StoredI16](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_structs/src/structs/stored_i16.rs) data type for efficient 16-bit signed integer storage with compression support
+- **Enhanced**: StoredF32 with additional [utility methods](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_structs/src/structs/stored_f32.rs) for mathematical operations
 
-### Dependencies
-- **Updated**: Rayon from 1.10.0 to 1.11.0 for improved parallel processing
-- **Migrated**: vecdb from external version 0.1.0 to local development path for better development workflow
-- **Reorganized**: Workspace dependency structure for consistency
+### Website Frontend
+- **Updated**: Upgraded solid-signals from v0.3.2 to [solidjs-signals v0.4.1](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/websites/default/packages/solidjs-signals/) for improved reactivity and performance
+- **Enhanced**: Frontend package management and dependency organization
+- **Improved**: Chart rendering performance with updated signal library
 
 ### Build System
-- **Added**: Rust toolchain version specification (1.89) to workspace configuration
-- **Enhanced**: Development environment consistency with toolchain pinning
+- **Updated**: All crate versions from 0.0.88 to 0.0.89 across the workspace
+- **Enhanced**: [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/Cargo.toml) dependency management and version consistency
 
-### Server Module
-- **Improved**: API interface implementations
-- **Enhanced**: File serving functionality
-
-### Indexer Module
-- **Optimized**: Integration with updated computer module patterns
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.88...v0.0.89)
 
 ## [v0.0.88](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.88) - 2025-08-10
 
