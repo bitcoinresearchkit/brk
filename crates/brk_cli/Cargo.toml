@@ -20,7 +20,7 @@ brk_logger = { workspace = true }
 brk_parser = { workspace = true }
 brk_server = { workspace = true }
 vecdb = { workspace = true }
-clap = { version = "4.5.45", features = ["string"] }
+clap = { version = "4.5.46", features = ["string"] }
 clap_derive = "4.5.45"
 color-eyre = "0.6.5"
 log = { workspace = true }

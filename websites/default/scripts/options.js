@@ -3824,7 +3824,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
       tree: [
         {
           name: "Status",
-          url: () => "https://status.bitcoinresearchkit.org/",
+          url: () => "https://status.bitview.space/",
         },
         {
           name: "Self",

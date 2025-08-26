@@ -35,13 +35,13 @@
       chartOptions,
     );
 
+    const baseURL = "https://bitview.space/api";
+
     const minDate = "2022-11-09";
     // const minDate = "2023-11-09";
 
     let dates = await (
-      await fetch(
-        "https://next.bitray.xyz/api/vecs/dateindex-to-date?from=-10000",
-      )
+      await fetch(`${baseURL}/vecs/dateindex-to-date?from=-10000`)
     ).json();
     let i = 0;
     console.log(
@@ -54,9 +54,7 @@
     const from = dates.length;
 
     const ohlcs = await (
-      await fetch(
-        `https://next.bitray.xyz/api/vecs/dateindex-to-ohlc?from=-${from}`,
-      )
+      await fetch(`${baseURL}/vecs/dateindex-to-ohlc?from=-${from}`)
     ).json();
 
     chart.addSeries(lc.CandlestickSeries, {}, 0).setData(
@@ -74,7 +72,7 @@
     const sopr = (
       await (
         await fetch(
-          `https://next.bitray.xyz/api/vecs/dateindex-to-utxos-up-to-${cohort}-old-spent-output-profit-ratio?from=-${from}`,
+          `${baseURL}/vecs/dateindex-to-utxos-up-to-${cohort}-old-spent-output-profit-ratio?from=-${from}`,
         )
       ).json()
     ).map((v) => v - 1);
