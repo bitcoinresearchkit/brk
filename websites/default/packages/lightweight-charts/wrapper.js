@@ -50,6 +50,8 @@ import {
 
 const oklchToRGBA = createOklchToRGBA();
 
+const lineWidth = /** @type {any} */ (1.5);
+
 /**
  * @param {Object} args
  * @param {string} args.id
@@ -436,9 +438,9 @@ function createChartElement({
                         value: v,
                       };
                     } else {
-                      if (sameTime) {
-                        console.log(data[offsetedI]);
-                      }
+                      // if (sameTime) {
+                      //   console.log(data[offsetedI]);
+                      // }
                       let [open, high, low, close] = v;
                       data[offsetedI] = {
                         time,
@@ -690,7 +692,7 @@ function createChartElement({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           {
-            lineWidth: /** @type {any} */ (1.5),
+            lineWidth,
             visible: defaultActive !== false,
             priceLineVisible: false,
             color: color(),
@@ -744,7 +746,7 @@ function createChartElement({
         ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
           {
-            lineWidth: /** @type {any} */ (1.5),
+            lineWidth,
             visible: defaultActive !== false,
             baseValue: {
               price: options?.baseValue?.price ?? 0,

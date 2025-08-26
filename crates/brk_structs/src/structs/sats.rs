@@ -141,7 +141,7 @@ impl Mul<StoredF64> for Sats {
 impl Sum for Sats {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|sats| sats.0).sum();
-        Sats::from(sats)
+        Self::from(sats)
     }
 }
 

@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div},
+};
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
@@ -563,6 +566,12 @@ where
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs)
+    }
+}
+
+impl Sum for Close<Dollars> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(Dollars::from(iter.map(|v| f64::from(v.0)).sum::<f64>()))
     }
 }
 

@@ -500,6 +500,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     const rawIndexes = new Set(
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
+        .filter((blueprint) => !blueprint.key.startsWith("constant_"))
         .map((blueprint) => vecIdToIndexes[blueprint.key])
         .flat(),
     );

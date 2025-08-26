@@ -770,7 +770,7 @@ export function init({
             data: bitcoinPriceData,
           },
           {
-            title: "Average Price Paid",
+            title: "Average Cost Basis",
             type: "Line",
             color: colors.lime,
             data: averagePricePaidData,

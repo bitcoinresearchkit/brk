@@ -28,7 +28,7 @@
  *   "percentage" |
  *   "Ratio" |
  *   "Sats" |
- *   "Seconds" |
+ *   "secs" |
  *   "Timestamp" |
  *   "tx" |
  *   "Type" |
@@ -727,7 +727,7 @@ function createUtils() {
         id.endsWith("stack") ||
         (id.endsWith("value") && !id.includes("realized")) ||
         ((id.includes("coinbase") ||
-          id.includes("fee") ||
+          (id.includes("fee") && !id.includes("feerate")) ||
           id.includes("subsidy") ||
           id.includes("rewards")) &&
           !(
@@ -762,7 +762,7 @@ function createUtils() {
         ((id.includes("realized") || id.includes("true_market_mean")) &&
           !id.includes("ratio") &&
           !id.includes("relative_to")) ||
-        ((id.endsWith("sma") || id.includes("sma_x")) &&
+        ((id.endsWith("sma") || id.includes("sma_x") || id.endsWith("ema")) &&
           !id.includes("ratio")) ||
         id === "ath")
     ) {
@@ -777,7 +777,9 @@ function createUtils() {
       ((!unit || thoroughUnitCheck) &&
         (id.endsWith("ratio") ||
           (id.includes("ratio") &&
-            (id.endsWith("sma") || id.endsWith("zscore"))) ||
+            (id.endsWith("sma") ||
+              id.endsWith("ema") ||
+              id.endsWith("zscore"))) ||
           id.endsWith("_5sd") ||
           id.endsWith("1sd") ||
           id.endsWith("2sd") ||
@@ -806,10 +808,14 @@ function createUtils() {
       (id.endsWith("count") ||
         id.includes("_count_") ||
         id.startsWith("block_count") ||
-        id.includes("tx_v"))
+        (id.includes("tx_v") && !id.includes("vsize")))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Count";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("feerate")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "sat/vB";
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("is_")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -824,7 +830,7 @@ function createUtils() {
       (id === "interval" || id.startsWith("block_interval"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Seconds";
+      unit = "secs";
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("returns")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -864,10 +870,7 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.endsWith("vsize") ||
-        id.endsWith("vbytes") ||
-        id.endsWith("_vbytes_sum") ||
-        id.endsWith("_vbytes_cumulative"))
+      (id.includes("vsize") || id.includes("vbytes"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "vB";
@@ -2402,9 +2405,7 @@ function main() {
                 return treeElement;
               });
 
-              if (localhost) {
-                setTimeout(scrollToSelected, 10);
-              }
+              setTimeout(scrollToSelected, 10);
             });
           }
           initFolders();
