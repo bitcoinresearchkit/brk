@@ -38,7 +38,7 @@ impl Vecs {
                     db,
                     None,
                     format,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     indexes,
                     price,
                     None,
@@ -1644,7 +1644,13 @@ impl Vecs {
         let by_size_range = self.0.amount_range.as_vec();
 
         [
-            vec![(&mut self.0.all.1, self.0.epoch.vecs().to_vec())],
+            vec![(
+                &mut self.0.all.1,
+                by_date_range
+                    .into_iter()
+                    .map(|(_, v)| v)
+                    .collect::<Vec<_>>(),
+            )],
             self.0
                 .min_age
                 .as_mut_vec()

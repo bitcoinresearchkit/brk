@@ -52,6 +52,8 @@ impl Computer {
         indexer: &Indexer,
         fetcher: Option<Fetcher>,
     ) -> Result<Self> {
+        info!("Importing computer...");
+
         let computed_path = outputs_path.join("computed");
 
         let indexes =

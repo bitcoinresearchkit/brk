@@ -26,6 +26,8 @@ pub struct Vecs {
     pub constant_4: ComputedVecsFromHeight<StoredU16>,
     pub constant_50: ComputedVecsFromHeight<StoredU16>,
     pub constant_100: ComputedVecsFromHeight<StoredU16>,
+    pub constant_144: ComputedVecsFromHeight<StoredU16>,
+    pub constant_600: ComputedVecsFromHeight<StoredU16>,
     pub constant_minus_1: ComputedVecsFromHeight<StoredI16>,
     pub constant_minus_2: ComputedVecsFromHeight<StoredI16>,
     pub constant_minus_3: ComputedVecsFromHeight<StoredI16>,
@@ -93,6 +95,22 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+            constant_144: ComputedVecsFromHeight::forced_import(
+                &db,
+                "constant_144",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            constant_600: ComputedVecsFromHeight::forced_import(
+                &db,
+                "constant_600",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
             constant_minus_1: ComputedVecsFromHeight::forced_import(
                 &db,
                 "constant_minus_1",
@@ -149,192 +167,62 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.constant_0.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(0)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
+        [
+            (&mut self.constant_0, 0),
+            (&mut self.constant_1, 1),
+            (&mut self.constant_2, 2),
+            (&mut self.constant_3, 3),
+            (&mut self.constant_4, 4),
+            (&mut self.constant_50, 50),
+            (&mut self.constant_100, 100),
+            (&mut self.constant_144, 144),
+            (&mut self.constant_600, 600),
+        ]
+        .into_iter()
+        .try_for_each(|(vec, value)| {
+            vec.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |vec, _, indexes, starting_indexes, exit| {
+                    vec.compute_to(
+                        starting_indexes.height,
+                        indexes.height_to_date.len(),
+                        indexes.height_to_date.version(),
+                        |i| (i, StoredU16::new(value)),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )
+        })?;
 
-        self.constant_1.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(1)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_2.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(2)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_3.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(3)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_4.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(4)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_50.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(50)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_100.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredU16::new(100)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_minus_1.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredI16::new(-1)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_minus_2.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredI16::new(-2)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_minus_3.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredI16::new(-3)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.constant_minus_4.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
-                vec.compute_to(
-                    starting_indexes.height,
-                    indexes.height_to_date.len(),
-                    indexes.height_to_date.version(),
-                    |i| (i, StoredI16::new(-4)),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
+        [
+            (&mut self.constant_minus_1, -1),
+            (&mut self.constant_minus_2, -2),
+            (&mut self.constant_minus_3, 3),
+            (&mut self.constant_minus_4, 4),
+        ]
+        .into_iter()
+        .try_for_each(|(vec, value)| {
+            vec.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |vec, _, indexes, starting_indexes, exit| {
+                    vec.compute_to(
+                        starting_indexes.height,
+                        indexes.height_to_date.len(),
+                        indexes.height_to_date.version(),
+                        |i| (i, StoredI16::new(value)),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )
+        })?;
 
         Ok(())
     }
@@ -348,6 +236,8 @@ impl Vecs {
             self.constant_4.vecs(),
             self.constant_50.vecs(),
             self.constant_100.vecs(),
+            self.constant_144.vecs(),
+            self.constant_600.vecs(),
             self.constant_minus_1.vecs(),
             self.constant_minus_2.vecs(),
             self.constant_minus_3.vecs(),

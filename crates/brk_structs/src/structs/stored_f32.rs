@@ -2,6 +2,7 @@ use core::panic;
 use std::{
     cmp::Ordering,
     f32,
+    iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
@@ -176,5 +177,11 @@ impl Printable for StoredF32 {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["f32"]
+    }
+}
+
+impl Sum for StoredF32 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|v| v.0).sum::<f32>())
     }
 }

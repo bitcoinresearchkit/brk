@@ -320,13 +320,13 @@ impl ComputedRatioVecsFromDateIndex {
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        date_to_price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
-        let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
+        let closes = price.timeindexes_to_close.dateindex.as_ref().unwrap();
+
+        let price = price_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
-
-        let closes = price.timeindexes_to_close.dateindex.as_ref().unwrap();
 
         self.ratio.compute_all(
             indexer,
@@ -334,12 +334,11 @@ impl ComputedRatioVecsFromDateIndex {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut price = date_to_price.iter();
-                v.compute_transform(
+                v.compute_transform2(
                     starting_indexes.dateindex,
                     closes,
-                    |(i, close, ..)| {
-                        let price = price.unwrap_get_inner(i);
+                    price,
+                    |(i, close, price, ..)| {
                         if price == Dollars::ZERO {
                             (i, StoredF32::from(1.0))
                         } else {
@@ -553,7 +552,7 @@ impl ComputedRatioVecsFromDateIndex {
             None as Option<&EagerVec<_, _>>,
         )?;
 
-        let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
+        let date_to_price = price_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 

@@ -36,20 +36,20 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
+        info!("Importing indexer...");
+
         let db = Database::open(&outputs_dir.join("indexed/vecs"))?;
+        db.set_min_len(PAGE_SIZE * 50_000_000)?;
+        info!("Opened database");
 
         let vecs = Vecs::forced_import(&db, VERSION + Version::ZERO)?;
+        info!("Imported vecs");
 
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
+        let stores =
+            Stores::forced_import(&outputs_dir.join("indexed/stores"), VERSION + Version::ZERO)?;
+        info!("Imported stores");
 
-        Ok(Self {
-            vecs,
-            stores: Stores::forced_import(
-                &outputs_dir.join("indexed/stores"),
-                VERSION + Version::ZERO,
-            )?,
-            db,
-        })
+        Ok(Self { vecs, stores, db })
     }
 
     pub fn index(

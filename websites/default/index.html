@@ -215,7 +215,7 @@
         --light-gray: oklch(90% 0.01 44);
         --gray: oklch(60% 0.01 44);
         --dark-gray: oklch(30% 0.01 44);
-        --black: oklch(17.5% 0.005 44);
+        --black: oklch(15% 0.005 44);
         --red: oklch(0.607 0.241 26.328);
         --orange: oklch(67.64% 0.191 44.41);
         --amber: oklch(0.7175 0.1835 64.199);
@@ -284,6 +284,15 @@
         font-display: block;
         font-style: normal;
       }
+
+      /*@font-face {
+        font-family: "Lilex";
+        src: url("./assets/fonts/Lilex-Italic[wght]-2.601.woff2")
+          format("woff2");
+        font-weight: 100 900;
+        font-display: block;
+        font-style: normal;
+      }*/
 
       /*
        * ---
@@ -438,9 +447,9 @@
       h1,
       h2 {
         text-transform: uppercase;
-        font-size: var(--font-size-lg);
-        line-height: var(--line-height-lg);
-        font-weight: 375;
+        font-size: var(--font-size-xl);
+        line-height: var(--line-height-xl);
+        font-weight: 325;
       }
 
       h3 {
@@ -1117,7 +1126,7 @@
           white-space: nowrap;
           overflow-x: auto;
           padding-bottom: 1rem;
-          margin-bottom: -2rem;
+          margin-bottom: -1.5rem;
           padding-left: var(--main-padding);
           margin-left: var(--negative-main-padding);
           padding-right: var(--main-padding);

@@ -50,10 +50,14 @@ pub struct Vecs {
 
     pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
+    pub dateindex_to_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
+    pub dateindex_to_spent_output_profit_ratio_7d_ema: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_adjusted_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
+    pub dateindex_to_adjusted_spent_output_profit_ratio_7d_ema:
+        Option<EagerVec<DateIndex, StoredF32>>,
     pub indexes_to_realized_cap_30d_change: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub dateindex_to_sell_side_risk_ratio: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
+    pub dateindex_to_sell_side_risk_ratio_7d_ema: Option<EagerVec<DateIndex, StoredF32>>,
     pub indexes_to_adjusted_value_created: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_adjusted_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_negative_realized_loss: Option<ComputedVecsFromHeight<Dollars>>,
@@ -599,6 +603,15 @@ impl Vecs {
                 )
                 .unwrap()
             }),
+            dateindex_to_sell_side_risk_ratio_7d_ema: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    db,
+                    &suffix("sell_side_risk_ratio_7d_ema"),
+                    version + VERSION + Version::ONE,
+                    format,
+                )
+                .unwrap()
+            }),
             dateindex_to_spent_output_profit_ratio: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     db,
@@ -608,10 +621,28 @@ impl Vecs {
                 )
                 .unwrap()
             }),
+            dateindex_to_spent_output_profit_ratio_7d_ema: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    db,
+                    &suffix("spent_output_profit_ratio_7d_ema"),
+                    version + VERSION + Version::ZERO,
+                    format,
+                )
+                .unwrap()
+            }),
             dateindex_to_adjusted_spent_output_profit_ratio: (compute_dollars && compute_adjusted).then(|| {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_spent_output_profit_ratio"),
+                    version + VERSION + Version::ZERO,
+                    format,
+                )
+                .unwrap()
+            }),
+            dateindex_to_adjusted_spent_output_profit_ratio_7d_ema: (compute_dollars && compute_adjusted).then(|| {
+                EagerVec::forced_import(
+                    db,
+                    &suffix("adjusted_spent_output_profit_ratio_7d_ema"),
                     version + VERSION + Version::ZERO,
                     format,
                 )
@@ -2177,6 +2208,18 @@ impl Vecs {
                     exit,
                 )?;
 
+            self.dateindex_to_spent_output_profit_ratio_7d_ema
+                .as_mut()
+                .unwrap()
+                .compute_ema(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_spent_output_profit_ratio
+                        .as_ref()
+                        .unwrap(),
+                    7,
+                    exit,
+                )?;
+
             self.dateindex_to_sell_side_risk_ratio
                 .as_mut()
                 .unwrap()
@@ -2192,6 +2235,16 @@ impl Vecs {
                         .unwrap()
                         .dateindex
                         .unwrap_last(),
+                    exit,
+                )?;
+
+            self.dateindex_to_sell_side_risk_ratio_7d_ema
+                .as_mut()
+                .unwrap()
+                .compute_ema(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_sell_side_risk_ratio.as_ref().unwrap(),
+                    7,
                     exit,
                 )?;
 
@@ -2757,6 +2810,18 @@ impl Vecs {
                             .unwrap_sum(),
                         exit,
                     )?;
+
+                self.dateindex_to_adjusted_spent_output_profit_ratio_7d_ema
+                    .as_mut()
+                    .unwrap()
+                    .compute_ema(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_adjusted_spent_output_profit_ratio
+                            .as_ref()
+                            .unwrap(),
+                        7,
+                        exit,
+                    )?;
             }
         }
 
@@ -2823,7 +2888,13 @@ impl Vecs {
             self.dateindex_to_spent_output_profit_ratio
                 .as_ref()
                 .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.dateindex_to_spent_output_profit_ratio_7d_ema
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
             self.dateindex_to_adjusted_spent_output_profit_ratio
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.dateindex_to_adjusted_spent_output_profit_ratio_7d_ema
                 .as_ref()
                 .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
             self.indexes_to_value_destroyed
@@ -2842,6 +2913,9 @@ impl Vecs {
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
             self.dateindex_to_sell_side_risk_ratio
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.dateindex_to_sell_side_risk_ratio_7d_ema
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
             self.height_to_supply_in_profit

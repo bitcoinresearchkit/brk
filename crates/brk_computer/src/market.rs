@@ -48,6 +48,21 @@ pub struct Vecs {
     pub indexes_to_200w_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_4y_sma: ComputedRatioVecsFromDateIndex,
 
+    pub indexes_to_1w_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_8d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_13d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_21d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_1m_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_34d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_55d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_89d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_144d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_200d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_1y_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_2y_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_200w_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_4y_ema: ComputedRatioVecsFromDateIndex,
+
     pub indexes_to_200d_sma_x2_4: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex<Dollars>,
 
@@ -344,6 +359,119 @@ impl Vecs {
             indexes_to_4y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
                 "4y_sma",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+
+            indexes_to_1w_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "1w_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_8d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "8d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_13d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "13d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_21d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "21d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_1m_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "1m_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_34d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "34d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_55d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "55d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_89d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "89d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_144d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "144d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_200d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "200d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_1y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "1y_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_2y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "2y_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_200w_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "200w_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_4y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "4y_ema",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -1827,25 +1955,69 @@ impl Vecs {
 
         thread::scope(|s| -> Result<()> {
             [
-                (&mut self.indexes_to_1w_sma, 7),
-                (&mut self.indexes_to_8d_sma, 8),
-                (&mut self.indexes_to_13d_sma, 13),
-                (&mut self.indexes_to_21d_sma, 21),
-                (&mut self.indexes_to_1m_sma, 30),
-                (&mut self.indexes_to_34d_sma, 34),
-                (&mut self.indexes_to_55d_sma, 55),
-                (&mut self.indexes_to_89d_sma, 89),
-                (&mut self.indexes_to_144d_sma, 144),
-                (&mut self.indexes_to_200d_sma, 200),
-                (&mut self.indexes_to_1y_sma, 365),
-                (&mut self.indexes_to_2y_sma, 2 * 365),
-                (&mut self.indexes_to_200w_sma, 200 * 7),
-                (&mut self.indexes_to_4y_sma, 4 * 365),
+                (&mut self.indexes_to_1w_sma, &mut self.indexes_to_1w_ema, 7),
+                (&mut self.indexes_to_8d_sma, &mut self.indexes_to_8d_ema, 8),
+                (
+                    &mut self.indexes_to_13d_sma,
+                    &mut self.indexes_to_13d_ema,
+                    13,
+                ),
+                (
+                    &mut self.indexes_to_21d_sma,
+                    &mut self.indexes_to_21d_ema,
+                    21,
+                ),
+                (&mut self.indexes_to_1m_sma, &mut self.indexes_to_1m_ema, 30),
+                (
+                    &mut self.indexes_to_34d_sma,
+                    &mut self.indexes_to_34d_ema,
+                    34,
+                ),
+                (
+                    &mut self.indexes_to_55d_sma,
+                    &mut self.indexes_to_55d_ema,
+                    55,
+                ),
+                (
+                    &mut self.indexes_to_89d_sma,
+                    &mut self.indexes_to_89d_ema,
+                    89,
+                ),
+                (
+                    &mut self.indexes_to_144d_sma,
+                    &mut self.indexes_to_144d_ema,
+                    144,
+                ),
+                (
+                    &mut self.indexes_to_200d_sma,
+                    &mut self.indexes_to_200d_ema,
+                    200,
+                ),
+                (
+                    &mut self.indexes_to_1y_sma,
+                    &mut self.indexes_to_1y_ema,
+                    365,
+                ),
+                (
+                    &mut self.indexes_to_2y_sma,
+                    &mut self.indexes_to_2y_ema,
+                    2 * 365,
+                ),
+                (
+                    &mut self.indexes_to_200w_sma,
+                    &mut self.indexes_to_200w_ema,
+                    200 * 7,
+                ),
+                (
+                    &mut self.indexes_to_4y_sma,
+                    &mut self.indexes_to_4y_ema,
+                    4 * 365,
+                ),
             ]
             .into_iter()
-            .for_each(|(vecs, sma)| {
+            .for_each(|(sma, ema, days)| {
                 s.spawn(move || -> Result<()> {
-                    vecs.compute_all(
+                    sma.compute_all(
                         indexer,
                         indexes,
                         price,
@@ -1855,7 +2027,24 @@ impl Vecs {
                             v.compute_sma(
                                 starting_indexes.dateindex,
                                 price.timeindexes_to_close.dateindex.as_ref().unwrap(),
-                                sma,
+                                days,
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+
+                    ema.compute_all(
+                        indexer,
+                        indexes,
+                        price,
+                        starting_indexes,
+                        exit,
+                        |v, _, _, starting_indexes, exit| {
+                            v.compute_ema(
+                                starting_indexes.dateindex,
+                                price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                                days,
                                 exit,
                             )?;
                             Ok(())
@@ -1935,6 +2124,20 @@ impl Vecs {
             self.indexes_to_2y_sma.vecs(),
             self.indexes_to_200w_sma.vecs(),
             self.indexes_to_4y_sma.vecs(),
+            self.indexes_to_1w_ema.vecs(),
+            self.indexes_to_8d_ema.vecs(),
+            self.indexes_to_13d_ema.vecs(),
+            self.indexes_to_21d_ema.vecs(),
+            self.indexes_to_1m_ema.vecs(),
+            self.indexes_to_34d_ema.vecs(),
+            self.indexes_to_55d_ema.vecs(),
+            self.indexes_to_89d_ema.vecs(),
+            self.indexes_to_144d_ema.vecs(),
+            self.indexes_to_200d_ema.vecs(),
+            self.indexes_to_1y_ema.vecs(),
+            self.indexes_to_2y_ema.vecs(),
+            self.indexes_to_200w_ema.vecs(),
+            self.indexes_to_4y_ema.vecs(),
             self.indexes_to_200d_sma_x0_8.vecs(),
             self.indexes_to_200d_sma_x2_4.vecs(),
             self.price_1d_ago.vecs(),
