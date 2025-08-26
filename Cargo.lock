@@ -1735,9 +1735,9 @@ dependencies = [
 
 [[package]]
 name = "fancy-regex"
-version = "0.14.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e24cb5a94bcae1e5408b0effca5cd7172ea3c5755049c5f3af4cd283a165298"
+checksum = "bf04c5ec15464ace8355a7b440a33aece288993475556d461154d7a62ad9947c"
 dependencies = [
  "bit-set",
  "regex-automata",
@@ -3054,9 +3054,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.6.2"
+version = "11.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d84cdcd778d15db5b21cc61baf79ac55cee97e7feb725b2664453979ba3cd76"
+checksum = "0784392356fa78dd4c9047fce7c9046c141f8990736792d00310bf40935b1870"
 dependencies = [
  "cfg-if",
  "indexmap 2.11.0",
@@ -3407,9 +3407,9 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
 name = "pnp"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab3167cbab15e437e9c7db8a4cf613eb4a77583d4327a8964d50fedd6cf364bd"
+checksum = "e001eb06e9523653f2a88adb94e286ef5d7acfe64158b21bf57a6f6bc3ba65ca"
 dependencies = [
  "byteorder",
  "clean-path",
@@ -3602,9 +3602,12 @@ dependencies = [
 
 [[package]]
 name = "rapidhash"
-version = "3.1.0"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efee4b7317469c6c6e7fdeee3d094313af846a97678d6ed971d83a852d730083"
+checksum = "9d126f24bc587b080d7823a831d0fe832090a606fd3fd244ecbe23c561104ab8"
+dependencies = [
+ "rustversion",
+]
 
 [[package]]
 name = "rayon"
