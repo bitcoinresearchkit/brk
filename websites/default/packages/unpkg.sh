@@ -386,10 +386,10 @@ main() {
 
     # Check if the directory already exists and has content
     if [[ -d "$output_dir" ]] && [[ -n "$(ls -A "$output_dir" 2>/dev/null)" ]]; then
-        print_error "Directory already exists and is not empty: $output_dir"
-        print_error "Package $package_name@$resolved_version appears to already be downloaded."
-        print_error "Remove the directory or choose a different output location to proceed."
-        exit 1
+        print_warning "Directory already exists and is not empty: $output_dir"
+        print_warning "Package $package_name@$resolved_version appears to already be downloaded."
+        print_warning "Remove the directory or choose a different output location to proceed."
+        return
     fi
 
     # Create the base output directory
@@ -409,3 +409,4 @@ main "@solidjs/signals"
 main "@leeoniya/ufuzzy"
 main "lean-qr"
 main "lightweight-charts"
+main "modern-screenshot"

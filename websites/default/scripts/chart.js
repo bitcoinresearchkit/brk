@@ -21,6 +21,7 @@ const CANDLE = "candle";
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
  * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {Packages} args.packages
  */
 export function init({
   colors,
@@ -32,6 +33,7 @@ export function init({
   webSockets,
   vecsResources,
   vecIdToIndexes,
+  packages,
 }) {
   elements.charts.append(utils.dom.createShadow("left"));
   elements.charts.append(utils.dom.createShadow("right"));
@@ -94,6 +96,33 @@ export function init({
       }
     },
   });
+
+  const chartBottomRightCanvas = Array.from(
+    chart.inner.chartElement().getElementsByTagName("tr"),
+  ).at(-1)?.lastChild?.firstChild?.firstChild;
+  if (chartBottomRightCanvas) {
+    const charts = elements.charts;
+    const domain = window.document.createElement("p");
+    domain.innerText = `${window.location.host}`;
+    domain.id = "domain";
+    const screenshotButton = window.document.createElement("button");
+    screenshotButton.id = "screenshot";
+    const camera = "[ ◉¯]";
+    screenshotButton.innerHTML = camera;
+    screenshotButton.title = "Screenshot";
+    chartBottomRightCanvas.replaceWith(screenshotButton);
+    screenshotButton.addEventListener("click", () => {
+      packages.modernScreenshot().then(async ({ screenshot }) => {
+        elements.body.dataset.screenshot = "true";
+        charts.append(domain);
+        seriesTypeField.hidden = true;
+        await screenshot(charts);
+        charts.removeChild(domain);
+        seriesTypeField.hidden = false;
+        elements.body.dataset.screenshot = "false";
+      });
+    });
+  }
 
   chart.inner.timeScale().subscribeVisibleLogicalRangeChange(
     utils.debounce((t) => {
@@ -525,6 +554,12 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
   });
 
   const fieldset = window.document.createElement("fieldset");
+  fieldset.id = "interval";
+
+  const screenshotSpan = window.document.createElement("span");
+  screenshotSpan.innerText = "interval:";
+  fieldset.append(screenshotSpan);
+
   fieldset.append(field);
   fieldset.dataset.size = "sm";
 
