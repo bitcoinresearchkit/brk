@@ -1,7 +1,7 @@
 {
-  "name": "Bitcoin Research Kit",
-  "short_name": "₿RK",
-  "description": "A better, FOSS, Bitcoin-only, self-hostable Glassnode",
+  "name": "bitview",
+  "short_name": "bitview",
+  "description": "Bitcoin transparency, amplified",
   "categories": [
     "bitcoin",
     "on-chain",

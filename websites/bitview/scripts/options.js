@@ -1183,7 +1183,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    */
   function createSumSeries({ key, title = "", color }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
-      key,
+      key: key in vecIdToIndexes ? key : `${key}_sum`,
       title: `Sum ${title}`,
       color: color ?? colors.orange,
     });
@@ -1259,11 +1259,20 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
   /**
    * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
    */
+  function createSumCumulativeMinMaxPercentilesSeries(key) {
+    return [
+      ...createSumCumulativeSeries({ concat: key }),
+      ...createMinMaxPercentilesSeries({ concat: key }),
+    ];
+  }
+
+  /**
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   */
   function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
       createAverageSeries({ concat: key }),
-      ...createSumCumulativeSeries({ concat: key }),
-      ...createMinMaxPercentilesSeries({ concat: key }),
+      ...createSumCumulativeMinMaxPercentilesSeries(key),
     ];
   }
 
@@ -2279,6 +2288,22 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                             },
                           },
                         }),
+                        ...(asoprKey in vecIdToIndexes
+                          ? [
+                              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                                type: "Baseline",
+                                key: asoprKey,
+                                title: "adjusted",
+                                colors: [colors.yellow, colors.fuchsia],
+                                defaultActive: false,
+                                options: {
+                                  baseValue: {
+                                    price: 1,
+                                  },
+                                },
+                              }),
+                            ]
+                          : []),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
                           key: `${soprKey}_7d_ema`,
@@ -2295,9 +2320,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           ? [
                               /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                 type: "Baseline",
-                                key: asoprKey,
-                                title: "adjusted",
-                                colors: [colors.avocado, colors.pink],
+                                key: `${asoprKey}_7d_ema`,
+                                title: "adj. 7d ema",
+                                colors: [colors.amber, colors.purple],
                                 defaultActive: false,
                                 options: {
                                   baseValue: {
@@ -2305,11 +2330,27 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                                   },
                                 },
                               }),
+                            ]
+                          : []),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${soprKey}_30d_ema`,
+                          title: "30d ema",
+                          colors: [colors.avocado, colors.pink],
+                          defaultActive: false,
+                          options: {
+                            baseValue: {
+                              price: 1,
+                            },
+                          },
+                        }),
+                        ...(asoprKey in vecIdToIndexes
+                          ? [
                               /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                 type: "Baseline",
-                                key: `${asoprKey}_7d_ema`,
-                                title: "adj. 7d ema",
-                                colors: [colors.yellow, colors.fuchsia],
+                                key: `${asoprKey}_30d_ema`,
+                                title: "adj. 30d ema",
+                                colors: [colors.orange, colors.violet],
                                 defaultActive: false,
                                 options: {
                                   baseValue: {
@@ -2577,6 +2618,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       color: colors.red,
                       defaultActive: false,
                     }),
+                    createBaseSeries({
+                      key: `${fixKey(key)}sell_side_risk_ratio_30d_ema`,
+                      name: "30d ema",
+                      color: colors.rose,
+                      defaultActive: false,
+                    }),
                   ])
                 : list.flatMap(({ color, name, key }) => [
                     createBaseSeries({
@@ -2613,8 +2660,28 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         name: "Negative Loss",
                         color: colors.red,
                       }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}unrealized_profit_relative_to_market_cap`,
+                        name: "Profit",
+                        color: colors.green,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}unrealized_loss_relative_to_market_cap`,
+                        name: "Loss",
+                        color: colors.red,
+                        defaultActive: false,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}negative_unrealized_loss_relative_to_market_cap`,
+                        name: "Negative Loss",
+                        color: colors.red,
+                      }),
                       createPriceLine({
                         unit: "USD",
+                        defaultActive: false,
+                      }),
+                      createPriceLine({
+                        unit: "%mcap",
                         defaultActive: false,
                       }),
                     ],
@@ -3270,33 +3337,29 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               bottom: [
                 createBaseSeries({
                   key: "total_size",
-                  name: "Size",
-                }),
-                ...createSumCumulativeSeries({
-                  concat: "block_size",
-                }),
-              ],
-            },
-            {
-              name: "Bytes",
-              title: "Block Bytes",
-              bottom: [
-                createBaseSeries({
-                  key: "weight",
-                  name: "Weight",
-                }),
-                ...createSumCumulativeSeries({
-                  concat: "block_weight",
-                  common: "weight",
+                  name: "raw",
                 }),
                 createBaseSeries({
                   key: "vbytes",
-                  name: "Vbytes",
+                  name: "raw",
                 }),
-                ...createSumCumulativeSeries({
-                  concat: "block_vbytes",
-                  common: "Vbytes",
+                createBaseSeries({
+                  key: "weight",
+                  name: "raw",
                 }),
+                // createBaseSeries({
+                //   key: "weight",
+                //   name: "Weight",
+                // }),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                  "block_size",
+                ),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                  "block_weight",
+                ),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                  "block_vbytes",
+                ),
               ],
             },
           ],
@@ -3313,8 +3376,8 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               }),
             },
             {
-              name: "Bytes",
-              title: "Transaction Bytes",
+              name: "Size",
+              title: "Transaction Size",
               bottom: [
                 createAverageSeries({ concat: "tx_weight", title: "Weight" }),
                 ...createMinMaxPercentilesSeries({
