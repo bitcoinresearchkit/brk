@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, ValueEnum)]
 pub enum Website {
     None,
-    Default,
+    Bitview,
     Custom,
 }
 
@@ -20,7 +20,7 @@ impl Website {
     pub fn to_folder_name(self) -> &'static str {
         match self {
             Self::Custom => "custom",
-            Self::Default => "default",
+            Self::Bitview => "bitview",
             Self::None => unreachable!(),
         }
     }
