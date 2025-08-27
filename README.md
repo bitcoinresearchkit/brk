@@ -31,10 +31,9 @@ In other words it's an alternative to [Glassnode](https://glassnode.com), [mempo
 
 The toolkit can be used in various ways to accommodate as many needs as possible:
 
-- **[Website](https://bitcoinresearchkit.org)** \
+- **[Website](https://bitview.space)** \
   Everyone is welcome to visit the official instance and showcase of the suite's capabilities. \
-  It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account. \
-  Also available at: [brekit.org](https://brekit.org) // [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
+  It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account.
 - **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#brk-server)** \
   Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvec-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
   Just like the website, it's entirely free, with no authentication or rate-limiting.
@@ -62,7 +61,7 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 - Updates delivered at your convenience
 - Direct communication for feature requests and support
 - Bitcoin Core or Knots with desired version
-- Optional subdomains: `*.bitcoinresearchkit.org`, `*.brekit.org`, `*.kibo.money` and `*.satonomics.xyz`
+- Optional subdomains
 - Logo featured in the Readme if desired
 
 Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`

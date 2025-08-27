@@ -24,7 +24,6 @@
  *   "Gigabytes" |
  *   "Hash" |
  *   "Index" |
- *   "mb" |
  *   "percentage" |
  *   "Ratio" |
  *   "Sats" |
@@ -854,7 +853,11 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "txid" || (id.endsWith("bytes") && !id.endsWith("vbytes")))
+      (id === "txid" ||
+        (id.endsWith("bytes") && !id.endsWith("vbytes")) ||
+        id.endsWith("base_size") ||
+        id.endsWith("total_size") ||
+        id.includes("block_size"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Bytes";
@@ -862,15 +865,6 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id.endsWith("_sd")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "sd";
-    }
-    if (
-      (!unit || thoroughUnitCheck) &&
-      (id.endsWith("_size") ||
-        id.endsWith("_size_sum") ||
-        id.endsWith("_size_cumulative"))
-    ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "mb";
     }
     if (
       (!unit || thoroughUnitCheck) &&

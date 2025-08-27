@@ -113,13 +113,15 @@ export function init({
     chartBottomRightCanvas.replaceWith(screenshotButton);
     screenshotButton.addEventListener("click", () => {
       packages.modernScreenshot().then(async ({ screenshot }) => {
-        elements.body.dataset.screenshot = "true";
+        charts.dataset.screenshot = "true";
         charts.append(domain);
         seriesTypeField.hidden = true;
-        await screenshot(charts);
+        try {
+          await screenshot(charts);
+        } catch {}
         charts.removeChild(domain);
         seriesTypeField.hidden = false;
-        elements.body.dataset.screenshot = "false";
+        charts.dataset.screenshot = "false";
       });
     });
   }

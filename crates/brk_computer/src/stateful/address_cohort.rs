@@ -79,8 +79,8 @@ impl Vecs {
                 version,
                 indexes,
                 price,
-                compute_relative_to_all,
                 false,
+                compute_relative_to_all,
                 false,
             )?,
         })

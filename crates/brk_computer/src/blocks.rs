@@ -78,15 +78,25 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default()
+                    .add_sum()
+                    .add_minmax()
+                    .add_average()
+                    .add_percentiles()
+                    .add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
                 &db,
                 "block_size",
-                Source::None,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default()
+                    .add_sum()
+                    .add_minmax()
+                    .add_average()
+                    .add_percentiles()
+                    .add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import_compressed(
                 &db,
@@ -99,7 +109,12 @@ impl Vecs {
                 Source::None,
                 version + VERSION + Version::ZERO,
                 indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default()
+                    .add_sum()
+                    .add_minmax()
+                    .add_average()
+                    .add_percentiles()
+                    .add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import_compressed(
                 &db,
