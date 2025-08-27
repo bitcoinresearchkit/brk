@@ -284,7 +284,7 @@ Finally, you can run the program with '-h' for help."
     }
 
     pub fn website(&self) -> Website {
-        self.website.unwrap_or(Website::Default)
+        self.website.unwrap_or(Website::Bitview)
     }
 
     pub fn fetch(&self) -> bool {
