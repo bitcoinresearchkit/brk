@@ -38,6 +38,8 @@
  *   "Bool" |
  *   "Days" |
  *   "%mcap" |
+ *   "%cmcap" |
+ *   "%cp+l" |
  *   "%rcap" |
  *   "%self" |
  *   "%all" |
@@ -918,6 +920,20 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_market_cap")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%mcap";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      id.endsWith("relative_to_own_market_cap")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%cmcap";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      id.endsWith("relative_to_own_unrealized_profit_plus_loss")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%cp+l";
     }
     if (
       (!unit || thoroughUnitCheck) &&

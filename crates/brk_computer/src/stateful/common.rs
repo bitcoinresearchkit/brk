@@ -79,6 +79,8 @@ pub struct Vecs {
     pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_unrealized_profit: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub height_to_unrealized_profit_plus_loss: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_unrealized_profit_plus_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_max_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub height_to_halved_supply_value: ComputedHeightValueVecs,
@@ -100,6 +102,36 @@ pub struct Vecs {
     pub indexes_to_negative_unrealized_loss_relative_to_market_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub height_to_unrealized_profit_relative_to_own_market_cap: Option<EagerVec<Height, StoredF32>>,
+    pub height_to_unrealized_loss_relative_to_own_market_cap: Option<EagerVec<Height, StoredF32>>,
+    pub height_to_negative_unrealized_loss_relative_to_own_market_cap:
+        Option<EagerVec<Height, StoredF32>>,
+    pub height_to_net_unrealized_profit_and_loss_relative_to_own_market_cap:
+        Option<EagerVec<Height, StoredF32>>,
+    pub indexes_to_unrealized_profit_relative_to_own_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_unrealized_loss_relative_to_own_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_negative_unrealized_loss_relative_to_own_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_net_unrealized_profit_and_loss_relative_to_own_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub height_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss:
+        Option<EagerVec<Height, StoredF32>>,
+    pub height_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss:
+        Option<EagerVec<Height, StoredF32>>,
+    pub height_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss:
+        Option<EagerVec<Height, StoredF32>>,
+    pub height_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss:
+        Option<EagerVec<Height, StoredF32>>,
+    pub indexes_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_realized_profit_relative_to_realized_cap:
         Option<ComputedVecsFromHeight<StoredF32>>,
@@ -330,6 +362,25 @@ impl Vecs {
                     db,
                     &suffix("unrealized_loss"),
                     dateindex_to_unrealized_loss.as_ref().map(|v | v.boxed_clone()).into(),
+                    version + VERSION + Version::ZERO,
+                    indexes,
+                    VecBuilderOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_unrealized_profit_plus_loss: compute_dollars.then(|| {
+                EagerVec::forced_import_compressed(
+                    db,
+                    &suffix("unrealized_profit_plus_loss"),
+                    version + VERSION + Version::ZERO,
+                )
+                .unwrap()
+            }),
+            indexes_to_unrealized_profit_plus_loss: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &suffix("unrealized_profit_plus_loss"),
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
@@ -834,6 +885,198 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         db,
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
+                        Source::Compute,
+                        version + VERSION + Version::ONE,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_unrealized_profit_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("unrealized_profit_relative_to_own_market_cap"),
+                        version + VERSION + Version::ONE,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_unrealized_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("unrealized_loss_relative_to_own_market_cap"),
+                        version + VERSION + Version::ONE,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_negative_unrealized_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("negative_unrealized_loss_relative_to_own_market_cap"),
+                        version + VERSION + Version::ONE,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_net_unrealized_profit_and_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_own_market_cap"),
+                        version + VERSION + Version::TWO,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_unrealized_profit_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("unrealized_profit_relative_to_own_market_cap"),
+                        Source::Compute,
+                        version + VERSION + Version::TWO,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_unrealized_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("unrealized_loss_relative_to_own_market_cap"),
+                        Source::Compute,
+                        version + VERSION + Version::TWO,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_negative_unrealized_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("negative_unrealized_loss_relative_to_own_market_cap"),
+                        Source::Compute,
+                        version + VERSION + Version::TWO,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_net_unrealized_profit_and_loss_relative_to_own_market_cap: (compute_dollars && extended && compute_relative_to_all).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_own_market_cap"),
+                        Source::Compute,
+                        version + VERSION + Version::TWO,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("unrealized_profit_relative_to_own_unrealized_profit_plus_loss"),
+                        version + VERSION + Version::ZERO,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("unrealized_loss_relative_to_own_unrealized_profit_plus_loss"),
+                        version + VERSION + Version::ZERO,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss"),
+                        version + VERSION + Version::ZERO,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    EagerVec::forced_import(
+                        db,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss"),
+                        version + VERSION + Version::ONE,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("unrealized_profit_relative_to_own_unrealized_profit_plus_loss"),
+                        Source::Compute,
+                        version + VERSION + Version::ONE,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("unrealized_loss_relative_to_own_unrealized_profit_plus_loss"),
+                        Source::Compute,
+                        version + VERSION + Version::ONE,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss"),
+                        Source::Compute,
+                        version + VERSION + Version::ONE,
+                       indexes,
+                        VecBuilderOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss: (compute_dollars && extended).then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        db,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
                        indexes,
@@ -2429,6 +2672,33 @@ impl Vecs {
                     exit,
                     Some(self.dateindex_to_unrealized_loss.as_ref().unwrap()),
                 )?;
+            self.height_to_unrealized_profit_plus_loss
+                .as_mut()
+                .unwrap()
+                .compute_add(
+                    starting_indexes.height,
+                    self.height_to_unrealized_profit.as_ref().unwrap(),
+                    self.height_to_unrealized_loss.as_ref().unwrap(),
+                    exit,
+                )?;
+            self.indexes_to_unrealized_profit_plus_loss
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_add(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )?;
 
             self.indexes_to_min_price_paid
                 .as_mut()
@@ -2624,6 +2894,302 @@ impl Vecs {
                         Ok(())
                     },
                 )?;
+
+            if self
+                .height_to_unrealized_profit_relative_to_own_market_cap
+                .is_some()
+            {
+                self.height_to_unrealized_profit_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_unrealized_profit.as_ref().unwrap(),
+                        self.height_to_supply_value.dollars.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_unrealized_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_unrealized_loss.as_ref().unwrap(),
+                        self.height_to_supply_value.dollars.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_negative_unrealized_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_negative_unrealized_loss.as_ref().unwrap(),
+                        self.height_to_supply_value.dollars.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_net_unrealized_profit_and_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_net_unrealized_profit_and_loss
+                            .as_ref()
+                            .unwrap(),
+                        self.height_to_supply_value.dollars.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.indexes_to_unrealized_profit_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                                self.indexes_to_supply
+                                    .dollars
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_unrealized_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                                self.indexes_to_supply
+                                    .dollars
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_negative_unrealized_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.indexes_to_negative_unrealized_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                self.indexes_to_supply
+                                    .dollars
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_net_unrealized_profit_and_loss_relative_to_own_market_cap
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.indexes_to_net_unrealized_profit_and_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                self.indexes_to_supply
+                                    .dollars
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+            }
+
+            if self
+                .height_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss
+                .is_some()
+            {
+                self.height_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_unrealized_profit.as_ref().unwrap(),
+                        self.height_to_unrealized_profit_plus_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_unrealized_loss.as_ref().unwrap(),
+                        self.height_to_unrealized_profit_plus_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_negative_unrealized_loss.as_ref().unwrap(),
+                        self.height_to_unrealized_profit_plus_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.height_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_net_unrealized_profit_and_loss
+                            .as_ref()
+                            .unwrap(),
+                        self.height_to_unrealized_profit_plus_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                self.indexes_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                                self.indexes_to_unrealized_profit_plus_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                                self.indexes_to_unrealized_profit_plus_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.indexes_to_negative_unrealized_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                self.indexes_to_unrealized_profit_plus_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+                self.indexes_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |vec, _, _, starting_indexes, exit| {
+                            vec.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.indexes_to_net_unrealized_profit_and_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                self.indexes_to_unrealized_profit_plus_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
+                                exit,
+                            )?;
+                            Ok(())
+                        },
+                    )?;
+            }
 
             self.indexes_to_realized_profit_relative_to_realized_cap
                 .as_mut()
@@ -3211,6 +3777,12 @@ impl Vecs {
             self.indexes_to_unrealized_loss
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
+            self.height_to_unrealized_profit_plus_loss
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_unrealized_profit_plus_loss
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
             self.indexes_to_min_price_paid
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
@@ -3218,6 +3790,38 @@ impl Vecs {
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
             self.indexes_to_halved_supply.vecs(),
+            self.height_to_unrealized_profit_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_unrealized_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_negative_unrealized_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_net_unrealized_profit_and_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.indexes_to_unrealized_profit_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_unrealized_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_negative_unrealized_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_net_unrealized_profit_and_loss_relative_to_own_market_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.height_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.height_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| vec![v]),
+            self.indexes_to_unrealized_profit_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_unrealized_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss.as_ref()
+            .map_or(vec![], |v| v.vecs()),
             self.height_to_negative_unrealized_loss
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
