@@ -1068,17 +1068,26 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    * @param {number} [args.number]
    * @param {string} [args.name]
    * @param {boolean} [args.defaultActive]
+   * @param {number} [args.lineStyle]
+   * @param {Color} [args.color]
    * @param {Unit} args.unit
    */
-  function createPriceLine({ number = 0, unit, defaultActive, name }) {
+  function createPriceLine({
+    number = 0,
+    unit,
+    defaultActive,
+    color,
+    name,
+    lineStyle,
+  }) {
     return /** @satisfies {FetchedLineSeriesBlueprint} */ ({
       key: `constant_${number >= 0 ? number : `minus_${Math.abs(number)}`}`,
       title: name ?? `${number}`,
       unit,
       defaultActive,
-      color: colors.gray,
+      color: color ?? colors.gray,
       options: {
-        lineStyle: 4,
+        lineStyle: lineStyle ?? 4,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
       },
@@ -1832,6 +1841,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     key: `${key}supply_even_relative_to_own_supply`,
                     name: "Even",
                     color: colors.yellow,
+                  }),
+                  createPriceLine({
+                    unit: "%self",
+                    number: 100,
+                    lineStyle: 0,
+                    color: colors.default,
+                  }),
+                  createPriceLine({
+                    unit: "%self",
+                    number: 50,
                   }),
                 ]);
               }),
@@ -2645,6 +2664,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     title: `Unrealized Profit And Loss ${title}`,
                     bottom: [
                       createBaseSeries({
+                        key: `${fixKey(args.key)}unrealized_profit_plus_loss`,
+                        name: "profit+loss",
+                        color: colors.default,
+                      }),
+                      createBaseSeries({
                         key: `${fixKey(args.key)}unrealized_profit`,
                         name: "Profit",
                         color: colors.green,
@@ -2676,6 +2700,62 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         name: "Negative Loss",
                         color: colors.red,
                       }),
+                      ...(`${fixKey(args.key)}unrealized_profit_relative_to_own_market_cap` in
+                      vecIdToIndexes
+                        ? [
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}unrealized_profit_relative_to_own_market_cap`,
+                              name: "Profit",
+                              color: colors.green,
+                            }),
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}unrealized_loss_relative_to_own_market_cap`,
+                              name: "Loss",
+                              color: colors.red,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}negative_unrealized_loss_relative_to_own_market_cap`,
+                              name: "Negative Loss",
+                              color: colors.red,
+                            }),
+                            createPriceLine({
+                              unit: "%cmcap",
+                              number: 100,
+                            }),
+                            createPriceLine({
+                              unit: "%cmcap",
+                            }),
+                          ]
+                        : []),
+                      ...(`${fixKey(args.key)}unrealized_profit_relative_to_own_unrealized_profit_plus_loss` in
+                      vecIdToIndexes
+                        ? [
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}unrealized_profit_relative_to_own_unrealized_profit_plus_loss`,
+                              name: "Profit",
+                              color: colors.green,
+                            }),
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}unrealized_loss_relative_to_own_unrealized_profit_plus_loss`,
+                              name: "Loss",
+                              color: colors.red,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}negative_unrealized_loss_relative_to_own_unrealized_profit_plus_loss`,
+                              name: "Negative Loss",
+                              color: colors.red,
+                            }),
+                            createPriceLine({
+                              unit: "%cp+l",
+                              number: 100,
+                            }),
+                            createPriceLine({
+                              unit: "%cp+l",
+                            }),
+                          ]
+                        : []),
                       createPriceLine({
                         unit: "USD",
                         defaultActive: false,
@@ -2736,6 +2816,38 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     title: useGroupName ? name : "Net",
                     color: useGroupName ? color : undefined,
                   }),
+                  ...(`${fixKey(key)}net_unrealized_profit_and_loss_relative_to_own_market_cap` in
+                  vecIdToIndexes
+                    ? [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${fixKey(
+                            key,
+                          )}net_unrealized_profit_and_loss_relative_to_own_market_cap`,
+                          title: useGroupName ? name : "Net",
+                          color: useGroupName ? color : undefined,
+                        }),
+                        createPriceLine({
+                          unit: "%cmcap",
+                        }),
+                      ]
+                    : []),
+                  ...(`${fixKey(key)}net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss` in
+                  vecIdToIndexes
+                    ? [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${fixKey(
+                            key,
+                          )}net_unrealized_profit_and_loss_relative_to_own_unrealized_profit_plus_loss`,
+                          title: useGroupName ? name : "Net",
+                          color: useGroupName ? color : undefined,
+                        }),
+                        createPriceLine({
+                          unit: "%cp+l",
+                        }),
+                      ]
+                    : []),
                 ]),
                 createPriceLine({
                   unit: "USD",
