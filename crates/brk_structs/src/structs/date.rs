@@ -47,6 +47,10 @@ impl Date {
     pub fn into_jiff(self) -> Date_ {
         self.into()
     }
+
+    pub fn today() -> Self {
+        Self::from(Timestamp::now())
+    }
 }
 
 impl Default for Date {

@@ -145,7 +145,7 @@ curl "/api/vecs/month-to-supply"
 
 **CSV Format**:
 ```csv
-index,close,supply,feerate
+index,close,supply,fee_rate
 0,42.5,1500,0.05
 1,43.1,1520,0.052
 2,44.2,1480,0.048

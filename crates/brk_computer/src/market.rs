@@ -14,7 +14,7 @@ use crate::{
 use super::{
     Indexes,
     grouped::{ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, VecBuilderOptions},
-    indexes, transactions,
+    indexes,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -23,10 +23,8 @@ const VERSION: Version = Version::ZERO;
 pub struct Vecs {
     db: Database,
 
-    pub height_to_marketcap: EagerVec<Height, Dollars>,
     pub height_to_ath: EagerVec<Height, Dollars>,
     pub height_to_drawdown: EagerVec<Height, StoredF32>,
-    pub indexes_to_marketcap: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_ath: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_drawdown: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_days_since_ath: ComputedVecsFromDateIndex<StoredU16>,
@@ -188,11 +186,6 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
-            height_to_marketcap: EagerVec::forced_import_compressed(
-                &db,
-                "marketcap",
-                version + VERSION + Version::ZERO,
-            )?,
             height_to_ath: EagerVec::forced_import_compressed(
                 &db,
                 "ath",
@@ -202,14 +195,6 @@ impl Vecs {
                 &db,
                 "drawdown",
                 version + VERSION + Version::ZERO,
-            )?,
-            indexes_to_marketcap: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "marketcap",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_ath: ComputedVecsFromDateIndex::forced_import(
                 &db,
@@ -1381,18 +1366,10 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: &price::Vecs,
-        transactions: &mut transactions::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(
-            indexer,
-            indexes,
-            price,
-            transactions,
-            starting_indexes,
-            exit,
-        )?;
+        self.compute_(indexer, indexes, price, starting_indexes, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
@@ -1402,20 +1379,9 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: &price::Vecs,
-        transactions: &mut transactions::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_marketcap.compute_multiply(
-            starting_indexes.height,
-            &price.chainindexes_to_close.height,
-            transactions
-                .indexes_to_subsidy
-                .bitcoin
-                .height_extra
-                .unwrap_cumulative(),
-            exit,
-        )?;
         self.height_to_ath.compute_max(
             starting_indexes.height,
             &price.chainindexes_to_high.height,
@@ -1426,26 +1392,6 @@ impl Vecs {
             &price.chainindexes_to_close.height,
             &self.height_to_ath,
             exit,
-        )?;
-
-        self.indexes_to_marketcap.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
-                v.compute_multiply(
-                    starting_indexes.dateindex,
-                    price.timeindexes_to_close.dateindex.as_ref().unwrap(),
-                    transactions
-                        .indexes_to_subsidy
-                        .bitcoin
-                        .dateindex
-                        .unwrap_cumulative(),
-                    exit,
-                )?;
-                Ok(())
-            },
         )?;
 
         self.indexes_to_ath.compute_all(
@@ -2104,7 +2050,6 @@ impl Vecs {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.indexes_to_marketcap.vecs(),
             self.indexes_to_ath.vecs(),
             self.indexes_to_drawdown.vecs(),
             self.indexes_to_days_since_ath.vecs(),
@@ -2249,11 +2194,7 @@ impl Vecs {
             self.dca_class_2017_returns.vecs(),
             self.dca_class_2016_returns.vecs(),
             self.dca_class_2015_returns.vecs(),
-            vec![
-                &self.height_to_marketcap,
-                &self.height_to_ath,
-                &self.height_to_drawdown,
-            ],
+            vec![&self.height_to_ath, &self.height_to_drawdown],
         ]
         .into_iter()
         .flatten()

@@ -44,6 +44,7 @@
  *   "%self" |
  *   "%all" |
  *   "Years" |
+ *   "H/s" |
  *   "Locktime" |
  *   "sat/vB" |
  *   "%pnl" |
@@ -732,13 +733,15 @@ function createUtils() {
         id.endsWith("stack") ||
         (id.endsWith("value") && !id.includes("realized")) ||
         ((id.includes("coinbase") ||
-          (id.includes("fee") && !id.includes("feerate")) ||
+          id.includes("fee") ||
           id.includes("subsidy") ||
           id.includes("rewards")) &&
           !(
             id.startsWith("is_") ||
-            id.includes("in_btc") ||
-            id.includes("in_usd")
+            id.includes("_btc") ||
+            id.includes("_usd") ||
+            id.includes("fee_rate") ||
+            id.endsWith("dominance")
           )))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -755,8 +758,8 @@ function createUtils() {
         id === "low" ||
         id === "close" ||
         id === "open" ||
-        id === "marketcap" ||
-        id.includes("in_usd") ||
+        id === "market_cap" ||
+        id.includes("_usd") ||
         id.includes("cointime_value") ||
         id.startsWith("price") ||
         id.endsWith("price_paid") ||
@@ -768,7 +771,8 @@ function createUtils() {
           !id.includes("ratio") &&
           !id.includes("relative_to")) ||
         ((id.endsWith("sma") || id.includes("sma_x") || id.endsWith("ema")) &&
-          !id.includes("ratio")) ||
+          !id.includes("ratio") &&
+          !id.includes("hash_rate")) ||
         id === "ath")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -796,14 +800,17 @@ function createUtils() {
           id.endsWith("p98") ||
           id.endsWith("p99"))) ||
       id.includes("liveliness") ||
-      id.includes("vaultedness")
+      id.includes("vaultedness") ||
+      id == "puell_multiple"
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Ratio";
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "drawdown" || id.endsWith("oscillator"))
+      (id === "drawdown" ||
+        id.endsWith("oscillator") ||
+        id.endsWith("dominance"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "percentage";
@@ -818,7 +825,14 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Count";
     }
-    if ((!unit || thoroughUnitCheck) && id.includes("feerate")) {
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.startsWith("hash_rate") || id.endsWith("as_hash"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "H/s";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("fee_rate")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "sat/vB";
     }

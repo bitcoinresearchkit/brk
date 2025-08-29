@@ -157,24 +157,24 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    * @typedef {"_30d_change"} _30DChageSubString
    * @typedef {StartsWith<CumulativePrefix>} CumulativeVecId
    * @typedef {ExcludeSubstring<WithoutPrefix<CumulativeVecId, CumulativePrefix>, _30DChageSubString>} CumulativeVecIdBase
-   * @typedef {"_average"} AverageSuffix
+   * @typedef {"_avg"} AverageSuffix
    * @typedef {EndsWith<AverageSuffix>} VecIdAverage
    * @typedef {WithoutSuffix<VecIdAverage, AverageSuffix>} VecIdAverageBase
    * @typedef {"_median"} MedianSuffix
    * @typedef {EndsWith<MedianSuffix>} VecIdMedian
    * @typedef {WithoutSuffix<VecIdMedian, MedianSuffix>} VecIdMedianBase
-   * @typedef {"_90p"} _90pSuffix
-   * @typedef {EndsWith<_90pSuffix>} VecId90p
-   * @typedef {WithoutSuffix<VecId90p, _90pSuffix>} VecId90pBase
-   * @typedef {"_75p"} _75pSuffix
-   * @typedef {EndsWith<_75pSuffix>} VecId75p
-   * @typedef {WithoutSuffix<VecId75p, _75pSuffix>} VecId75pBase
-   * @typedef {"_25p"} _25pSuffix
-   * @typedef {EndsWith<_25pSuffix>} VecId25p
-   * @typedef {WithoutSuffix<VecId25p, _25pSuffix>} VecId25pBase
-   * @typedef {"_10p"} _10pSuffix
-   * @typedef {EndsWith<_10pSuffix>} VecId10p
-   * @typedef {WithoutSuffix<VecId10p, _10pSuffix>} VecId10pBase
+   * @typedef {"_p90"} _p90Suffix
+   * @typedef {EndsWith<_p90Suffix>} VecIdp90
+   * @typedef {WithoutSuffix<VecIdp90, _p90Suffix>} VecIdp90Base
+   * @typedef {"_p75"} _p75Suffix
+   * @typedef {EndsWith<_p75Suffix>} VecIdp75
+   * @typedef {WithoutSuffix<VecIdp75, _p75Suffix>} VecIdp75Base
+   * @typedef {"_p25"} _p25Suffix
+   * @typedef {EndsWith<_p25Suffix>} VecIdp25
+   * @typedef {WithoutSuffix<VecIdp25, _p25Suffix>} VecIdp25Base
+   * @typedef {"_p10"} _p10Suffix
+   * @typedef {EndsWith<_p10Suffix>} VecIdp10
+   * @typedef {WithoutSuffix<VecIdp10, _p10Suffix>} VecIdp10Base
    * @typedef {"_max"} MaxSuffix
    * @typedef {EndsWith<MaxSuffix>} VecIdMax
    * @typedef {WithoutSuffix<VecIdMax, MaxSuffix>} VecIdMaxBase
@@ -1152,7 +1152,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    */
   function createAverageSeries({ concat, title = "" }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
-      key: `${concat}_average`,
+      key: `${concat}_avg`,
       title: `Average ${title}`,
     });
   }
@@ -1191,10 +1191,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    * @param {Color} [args.color]
    */
   function createSumSeries({ key, title = "", color }) {
+    const sumKey = `${key}_sum`;
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
-      key: key in vecIdToIndexes ? key : `${key}_sum`,
+      key: `${key}_sum` in vecIdToIndexes ? sumKey : key,
       title: `Sum ${title}`,
-      color: color ?? colors.orange,
+      color: color ?? colors.red,
     });
   }
 
@@ -1206,16 +1207,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
    */
   function createCumulativeSeries({ concat, title = "", color }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
-      key: `${concat}_cumulative`,
+      key: `${concat}_cum`,
       title: `Cumulative ${title}`,
-      color: color ?? colors.red,
+      color: color ?? colors.cyan,
       defaultActive: false,
     });
   }
 
   /**
    * @param {Object} args
-   * @param {VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.concat
+   * @param {VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} args.concat
    * @param {string} [args.title]
    */
   function createMinMaxPercentilesSeries({ concat, title = "" }) {
@@ -1239,26 +1240,26 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
         defaultActive: false,
       },
       {
-        key: `${concat}_75p`,
-        title: `75p ${title}`,
+        key: `${concat}_p75`,
+        title: `p75 ${title}`,
         color: colors.red,
         defaultActive: false,
       },
       {
-        key: `${concat}_25p`,
-        title: `25p ${title}`,
+        key: `${concat}_p25`,
+        title: `p25 ${title}`,
         color: colors.yellow,
         defaultActive: false,
       },
       {
-        key: `${concat}_90p`,
-        title: `90p ${title}`,
+        key: `${concat}_p90`,
+        title: `p90 ${title}`,
         color: colors.rose,
         defaultActive: false,
       },
       {
-        key: `${concat}_10p`,
-        title: `10p ${title}`,
+        key: `${concat}_p10`,
+        title: `p10 ${title}`,
         color: colors.lime,
         defaultActive: false,
       },
@@ -1266,7 +1267,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} key
    */
   function createSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1276,7 +1277,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} key
    */
   function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1287,7 +1288,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
 
   /**
    * @param {Object} args
-   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
+   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} args.key
    * @param {string} args.name
    */
   function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
@@ -2177,7 +2178,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        key: `${fixKey(args.key)}realized_profit_cumulative`,
+                        key: `${fixKey(args.key)}realized_profit_cum`,
                         name: "Cumulative Profit",
                         color: colors.green,
                         defaultActive: false,
@@ -2189,7 +2190,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        key: `${fixKey(args.key)}realized_loss_cumulative`,
+                        key: `${fixKey(args.key)}realized_loss_cum`,
                         name: "Cumulative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -2200,9 +2201,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         color: colors.red,
                       }),
                       createBaseSeries({
-                        key: `${fixKey(
-                          args.key,
-                        )}negative_realized_loss_cumulative`,
+                        key: `${fixKey(args.key)}negative_realized_loss_cum`,
                         name: "Cumulative Negative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -2243,9 +2242,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `${fixKey(
-                          key,
-                        )}net_realized_profit_and_loss_cumulative`,
+                        key: `${fixKey(key)}net_realized_profit_and_loss_cum`,
                         title: "Cumulative",
                         defaultActive: false,
                       }),
@@ -2476,7 +2473,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `${key}realized_profit_cumulative`,
+                              key: `${key}realized_profit_cum`,
                               name,
                               color,
                             }),
@@ -2490,7 +2487,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `${key}realized_loss_cumulative`,
+                              key: `${key}realized_loss_cum`,
                               name,
                               color,
                             }),
@@ -2506,7 +2503,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                               type: "Baseline",
                               key: `${fixKey(
                                 key,
-                              )}net_realized_profit_and_loss_cumulative`,
+                              )}net_realized_profit_and_loss_cum`,
                               title: name,
                               color,
                               defaultActive: false,
@@ -2946,7 +2943,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 color,
               }),
               createBaseSeries({
-                key: `${key}coinblocks_destroyed_cumulative`,
+                key: `${key}coinblocks_destroyed_cum`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2957,7 +2954,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 color,
               }),
               createBaseSeries({
-                key: `${key}coindays_destroyed_cumulative`,
+                key: `${key}coindays_destroyed_cum`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2994,7 +2991,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               title: "Market Capitalization",
               bottom: [
                 createBaseSeries({
-                  key: "marketcap",
+                  key: "market_cap",
                   name: "Capitalization",
                 }),
               ],
@@ -3296,7 +3293,15 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               title: "Circulating Supply",
               bottom: [
                 createBaseSeries({
-                  key: "subsidy_in_btc_cumulative",
+                  key: "supply",
+                  name: "Mined",
+                }),
+                createBaseSeries({
+                  key: "supply_in_btc",
+                  name: "Mined",
+                }),
+                createBaseSeries({
+                  key: "supply_in_usd",
                   name: "Mined",
                 }),
               ],
@@ -3327,6 +3332,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   key: "subsidy",
                   name: "Subsidy",
                 }),
+                createBaseSeries({
+                  key: "subsidy_usd_1y_sma",
+                  name: "1y sma",
+                }),
                 ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "subsidy_in_btc",
                   name: "Subsidy",
@@ -3351,6 +3360,22 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               ],
             },
             {
+              name: "Dominance",
+              title: "Reward Dominance",
+              bottom: [
+                createBaseSeries({
+                  key: "fee_dominance",
+                  name: "Fee",
+                  color: colors.amber,
+                }),
+                createBaseSeries({
+                  key: "subsidy_dominance",
+                  name: "Subsidy",
+                  color: colors.red,
+                }),
+              ],
+            },
+            {
               name: "Unclaimed Rewards",
               title: "Unclaimed Rewards",
               bottom: [
@@ -3369,9 +3394,19 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               name: "Feerate",
               title: "Transaction Fee Rate",
               bottom: [
-                createAverageSeries({ concat: "feerate" }),
+                createAverageSeries({ concat: "fee_rate" }),
                 ...createMinMaxPercentilesSeries({
-                  concat: "feerate",
+                  concat: "fee_rate",
+                }),
+              ],
+            },
+            {
+              name: "Puell multiple",
+              title: "Puell multiple",
+              bottom: [
+                createBaseSeries({
+                  key: "puell_multiple",
+                  name: "Multiple",
                 }),
               ],
             },
@@ -3383,6 +3418,50 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   key: "difficulty",
                   name: "Value",
                 }),
+              ],
+            },
+            {
+              name: "hash",
+              tree: [
+                {
+                  name: "Rate",
+                  title: "Hash Rate",
+                  bottom: [
+                    createBaseSeries({
+                      key: "hash_rate",
+                      name: "Raw",
+                    }),
+                    createBaseSeries({
+                      key: "hash_rate_1w_sma",
+                      name: "1w sma",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "hash_rate_1m_sma",
+                      name: "1m sma",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "hash_rate_2m_sma",
+                      name: "2m sma",
+                      color: colors.purple,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "hash_rate_1y_sma",
+                      name: "1y sma",
+                      color: colors.indigo,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "difficulty_as_hash",
+                      name: "difficulty",
+                      color: colors.default,
+                    }),
+                  ],
+                },
               ],
             },
             {
@@ -3750,7 +3829,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       name: "sum",
                     }),
                     createBaseSeries({
-                      key: "opreturn_count_cumulative",
+                      key: "opreturn_count_cum",
                       name: "cumulative",
                       color: colors.red,
                     }),
@@ -3815,7 +3894,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   title: "Compare Cointime Capitalizations",
                   bottom: [
                     createBaseSeries({
-                      key: `marketcap`,
+                      key: `market_cap`,
                       name: "Market",
                       color: colors.default,
                     }),
@@ -3844,7 +3923,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         color,
                       }),
                       createBaseSeries({
-                        key: `marketcap`,
+                        key: `market_cap`,
                         name: "Market",
                         color: colors.default,
                       }),
@@ -3924,7 +4003,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.red,
                 }),
                 createBaseSeries({
-                  key: "coinblocks_destroyed_cumulative",
+                  key: "coinblocks_destroyed_cum",
                   name: "Cumulative Destroyed",
                   color: colors.red,
                   defaultActive: false,
@@ -3935,7 +4014,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.orange,
                 }),
                 createBaseSeries({
-                  key: "coinblocks_created_cumulative",
+                  key: "coinblocks_created_cum",
                   name: "Cumulative created",
                   color: colors.orange,
                   defaultActive: false,
@@ -3946,7 +4025,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.green,
                 }),
                 createBaseSeries({
-                  key: "coinblocks_stored_cumulative",
+                  key: "coinblocks_stored_cum",
                   name: "Cumulative stored",
                   color: colors.green,
                   defaultActive: false,

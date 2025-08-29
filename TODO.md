@@ -12,7 +12,7 @@
     - **add rollback of states (in stateful)**
     - add costs basis by percentile (percentile cost basis) back
     - add support for per index computation
-    - fix min feerate which is always ZERO due to coinbase transaction
+    - fix min fee_rate which is always ZERO due to coinbase transaction
     - before computing multiple sources check their length, panic if not equal
     - add oracle price dataset (https://utxo.live/oracle/UTXOracle.py)
     - add address counts relative to all datasets

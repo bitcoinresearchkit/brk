@@ -142,7 +142,7 @@ where
             }),
             average: options.average.then(|| {
                 Box::new(LazyVecFrom2::init(
-                    &maybe_suffix("average"),
+                    &maybe_suffix("avg"),
                     version + VERSION + Version::ZERO,
                     source_extra
                         .average
@@ -197,7 +197,7 @@ where
             }),
             cumulative: options.cumulative.then(|| {
                 Box::new(LazyVecFrom2::init(
-                    &suffix("cumulative"),
+                    &suffix("cum"),
                     version + VERSION + Version::ZERO,
                     source_extra.cumulative.as_ref().unwrap().boxed_clone(),
                     len_source.clone(),

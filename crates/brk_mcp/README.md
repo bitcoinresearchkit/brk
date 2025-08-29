@@ -4,6 +4,8 @@
 
 `brk_mcp` provides a Model Context Protocol server that enables Large Language Models (LLMs) to access Bitcoin blockchain data through BRK's interface layer. It implements the MCP specification to expose BRK's analytics capabilities as tools that LLMs can call.
 
+Try it out: [https://bitview.space/mcp](https://bitview.space/mcp)
+
 ## What it provides
 
 - **MCP Server Implementation**: Standards-compliant Model Context Protocol server

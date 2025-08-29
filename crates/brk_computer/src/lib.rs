@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::path::Path;
+use std::{path::Path, thread};
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
@@ -9,19 +9,17 @@ use brk_structs::Version;
 use log::info;
 use vecdb::{AnyCollectableVec, Exit, Format};
 
-mod blocks;
+mod chain;
 mod cointime;
 mod constants;
 mod fetched;
 mod grouped;
 mod indexes;
 mod market;
-mod mining;
 mod price;
 mod stateful;
 mod states;
 mod traits;
-mod transactions;
 mod utils;
 
 use indexes::Indexes;
@@ -33,11 +31,9 @@ use states::*;
 pub struct Computer {
     pub indexes: indexes::Vecs,
     pub constants: constants::Vecs,
-    pub blocks: blocks::Vecs,
-    pub mining: mining::Vecs,
     pub market: market::Vecs,
     pub price: Option<price::Vecs>,
-    pub transactions: transactions::Vecs,
+    pub chain: chain::Vecs,
     pub stateful: stateful::Vecs,
     pub fetched: Option<fetched::Vecs>,
     pub cointime: cointime::Vecs,
@@ -68,8 +64,6 @@ impl Computer {
         });
 
         Ok(Self {
-            blocks: blocks::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
-            mining: mining::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
             constants: constants::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
@@ -83,7 +77,7 @@ impl Computer {
                 &indexes,
                 price.as_ref(),
             )?,
-            transactions: transactions::Vecs::forced_import(
+            chain: chain::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
                 indexer,
@@ -115,14 +109,6 @@ impl Computer {
         self.constants
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
-        info!("Computing blocks...");
-        self.blocks
-            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
-
-        info!("Computing mining...");
-        self.mining
-            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
-
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
             fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
@@ -137,44 +123,49 @@ impl Computer {
             )?;
         }
 
-        info!("Computing transactions...");
-        self.transactions.compute(
-            indexer,
-            &self.indexes,
-            &starting_indexes,
-            self.price.as_ref(),
-            exit,
-        )?;
+        thread::scope(|scope| -> Result<()> {
+            let chain = scope.spawn(|| {
+                info!("Computing chain...");
+                self.chain.compute(
+                    indexer,
+                    &self.indexes,
+                    &starting_indexes,
+                    self.price.as_ref(),
+                    exit,
+                )
+            });
 
-        if let Some(price) = self.price.as_ref() {
-            info!("Computing market...");
-            self.market.compute(
-                indexer,
-                &self.indexes,
-                price,
-                &mut self.transactions,
-                &starting_indexes,
-                exit,
-            )?;
-        }
+            let market = scope.spawn(|| -> Result<()> {
+                if let Some(price) = self.price.as_ref() {
+                    info!("Computing market...");
+                    self.market
+                        .compute(indexer, &self.indexes, price, &starting_indexes, exit)?;
+                }
+                Ok(())
+            });
+
+            chain.join().unwrap()?;
+            market.join().unwrap()?;
+            Ok(())
+        })?;
 
         info!("Computing stateful...");
         self.stateful.compute(
             indexer,
             &self.indexes,
-            &self.transactions,
+            &self.chain,
             self.price.as_ref(),
-            &self.market,
             &mut starting_indexes,
             exit,
         )?;
 
+        info!("Computing cointime...");
         self.cointime.compute(
             indexer,
             &self.indexes,
             &starting_indexes,
             self.price.as_ref(),
-            &self.transactions,
+            &self.chain,
             &self.stateful,
             exit,
         )?;
@@ -186,10 +177,8 @@ impl Computer {
         [
             self.constants.vecs(),
             self.indexes.vecs(),
-            self.blocks.vecs(),
-            self.mining.vecs(),
             self.market.vecs(),
-            self.transactions.vecs(),
+            self.chain.vecs(),
             self.stateful.vecs(),
             self.cointime.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),

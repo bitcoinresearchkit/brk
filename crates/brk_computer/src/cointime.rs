@@ -6,12 +6,12 @@ use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
 use vecdb::{AnyCollectableVec, Database, Exit, PAGE_SIZE, VecIterator};
 
 use super::{
-    Indexes,
+    Indexes, chain,
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
         Source, VecBuilderOptions,
     },
-    indexes, price, stateful, transactions,
+    indexes, price, stateful,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -257,7 +257,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
-        transactions: &transactions::Vecs,
+        chain: &chain::Vecs,
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
@@ -266,7 +266,7 @@ impl Vecs {
             indexes,
             starting_indexes,
             price,
-            transactions,
+            chain,
             stateful,
             exit,
         )?;
@@ -281,7 +281,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
-        transactions: &transactions::Vecs,
+        chain: &chain::Vecs,
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
@@ -446,7 +446,7 @@ impl Vecs {
                 |vec, _, _, starting_indexes, exit| {
                     vec.compute_transform(
                         starting_indexes.height,
-                        transactions
+                        chain
                             .indexes_to_subsidy
                             .dollars
                             .as_ref()
