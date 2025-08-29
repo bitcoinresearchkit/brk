@@ -14,7 +14,7 @@ use crate::{
         ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex, ComputedValueVecsFromDateIndex,
         ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions,
     },
-    indexes, market, price,
+    indexes, price,
     states::CohortState,
 };
 
@@ -2353,9 +2353,10 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
-        market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
         dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
+        height_to_market_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -2382,6 +2383,9 @@ impl Vecs {
         }
 
         if let Some(indexes_to_realized_cap) = self.indexes_to_realized_cap.as_mut() {
+            let height_to_market_cap = height_to_market_cap.unwrap();
+            let dateindex_to_market_cap = dateindex_to_market_cap.unwrap();
+
             indexes_to_realized_cap.compute_rest(
                 indexes,
                 starting_indexes,
@@ -2780,7 +2784,7 @@ impl Vecs {
                 .compute_percentage(
                     starting_indexes.height,
                     self.height_to_unrealized_profit.as_ref().unwrap(),
-                    &market.height_to_marketcap,
+                    height_to_market_cap,
                     exit,
                 )?;
             self.height_to_unrealized_loss_relative_to_market_cap
@@ -2789,7 +2793,7 @@ impl Vecs {
                 .compute_percentage(
                     starting_indexes.height,
                     self.height_to_unrealized_loss.as_ref().unwrap(),
-                    &market.height_to_marketcap,
+                    height_to_market_cap,
                     exit,
                 )?;
             self.height_to_negative_unrealized_loss_relative_to_market_cap
@@ -2798,7 +2802,7 @@ impl Vecs {
                 .compute_percentage(
                     starting_indexes.height,
                     self.height_to_negative_unrealized_loss.as_ref().unwrap(),
-                    &market.height_to_marketcap,
+                    height_to_market_cap,
                     exit,
                 )?;
             self.height_to_net_unrealized_profit_and_loss_relative_to_market_cap
@@ -2809,7 +2813,7 @@ impl Vecs {
                     self.height_to_net_unrealized_profit_and_loss
                         .as_ref()
                         .unwrap(),
-                    &market.height_to_marketcap,
+                    height_to_market_cap,
                     exit,
                 )?;
             self.indexes_to_unrealized_profit_relative_to_market_cap
@@ -2824,7 +2828,7 @@ impl Vecs {
                         vec.compute_percentage(
                             starting_indexes.dateindex,
                             self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            dateindex_to_market_cap,
                             exit,
                         )?;
                         Ok(())
@@ -2842,7 +2846,7 @@ impl Vecs {
                         vec.compute_percentage(
                             starting_indexes.dateindex,
                             self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            dateindex_to_market_cap,
                             exit,
                         )?;
                         Ok(())
@@ -2865,7 +2869,7 @@ impl Vecs {
                                 .dateindex
                                 .as_ref()
                                 .unwrap(),
-                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            dateindex_to_market_cap,
                             exit,
                         )?;
                         Ok(())
@@ -2888,7 +2892,7 @@ impl Vecs {
                                 .dateindex
                                 .as_ref()
                                 .unwrap(),
-                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            dateindex_to_market_cap,
                             exit,
                         )?;
                         Ok(())
@@ -3442,7 +3446,7 @@ impl Vecs {
                         v.compute_percentage(
                             starting_indexes.dateindex,
                             self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
-                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            dateindex_to_market_cap,
                             exit,
                         )?;
                         Ok(())

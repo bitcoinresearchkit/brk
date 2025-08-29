@@ -997,13 +997,13 @@ function numberToShortUSFormat(value, digits) {
     return numberToUSFormat(value, Math.min(1, digits || 10));
   } else if (absoluteValue < 1_000_000) {
     return numberToUSFormat(value, 0);
-  } else if (absoluteValue >= 900_000_000_000_000_000) {
+  } else if (absoluteValue >= 900_000_000_000_000_000_000_000) {
     return "Inf.";
   }
 
   const log = Math.floor(Math.log10(absoluteValue) - 6);
 
-  const suffices = ["M", "B", "T", "P", "E"];
+  const suffices = ["M", "B", "T", "P", "E", "Z"];
   const letterIndex = Math.floor(log / 3);
   const letter = suffices[letterIndex];
 

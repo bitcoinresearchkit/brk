@@ -18,15 +18,18 @@ use brk_structs::{
 use log::info;
 use rayon::prelude::*;
 use vecdb::{
-    AnyCollectableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, Format,
-    GenericStoredVec, ImportOptions, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyStoredVec, AnyVec, CollectableVec, Database,
+    EagerVec, Exit, Format, GenericStoredVec, ImportOptions, LazyVecFrom1, PAGE_SIZE, RawVec,
+    Reader, Stamp, StoredIndex, VecIterator,
 };
 
 use crate::{
-    BlockState, Indexes, SupplyState, Transacted,
-    grouped::{ComputedValueVecsFromHeight, VecBuilderOptions},
-    grouped::{ComputedVecsFromHeight, Source},
-    indexes, market, price, transactions,
+    BlockState, Indexes, SupplyState, Transacted, chain,
+    grouped::{
+        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
+        VecBuilderOptions,
+    },
+    indexes, price,
 };
 
 mod address_cohort;
@@ -82,6 +85,8 @@ pub struct Vecs {
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredU64>,
+    pub height_to_market_cap: Option<LazyVecFrom1<Height, Dollars, Height, Dollars>>,
+    pub indexes_to_market_cap: Option<ComputedVecsFromDateIndex<Dollars>>,
 }
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
@@ -102,6 +107,9 @@ impl Vecs {
         db.set_min_regions(50_000)?;
 
         let compute_dollars = price.is_some();
+
+        let utxo_cohorts =
+            utxo_cohorts::Vecs::forced_import(&db, version, format, indexes, price, &states_path)?;
 
         Ok(Self {
             chain_state: RawVec::forced_import_with(
@@ -153,6 +161,37 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+            height_to_market_cap: compute_dollars.then(|| {
+                LazyVecFrom1::init(
+                    "market_cap",
+                    version + VERSION + Version::ONE,
+                    utxo_cohorts
+                        .all
+                        .1
+                        .height_to_supply_value
+                        .dollars
+                        .as_ref()
+                        .unwrap()
+                        .boxed_clone(),
+                    |height: Height, iter| {
+                        iter.next_at(height.unwrap_to_usize()).map(|(_, value)| {
+                            let d: Dollars = value.into_owned();
+                            d
+                        })
+                    },
+                )
+            }),
+            indexes_to_market_cap: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    "market_cap",
+                    Source::Compute,
+                    version + VERSION + Version::TWO,
+                    indexes,
+                    VecBuilderOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
             addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
                     p2pk65: EagerVec::forced_import_compressed(
@@ -377,14 +416,7 @@ impl Vecs {
                     )?,
                 },
             ),
-            utxo_cohorts: utxo_cohorts::Vecs::forced_import(
-                &db,
-                version,
-                format,
-                indexes,
-                price,
-                &states_path,
-            )?,
+            utxo_cohorts,
             address_cohorts: address_cohorts::Vecs::forced_import(
                 &db,
                 version,
@@ -445,22 +477,13 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        transactions: &transactions::Vecs,
+        chain: &chain::Vecs,
         price: Option<&price::Vecs>,
-        market: &market::Vecs,
         // Must take ownership as its indexes will be updated for this specific function
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(
-            indexer,
-            indexes,
-            transactions,
-            price,
-            market,
-            starting_indexes,
-            exit,
-        )?;
+        self.compute_(indexer, indexes, chain, price, starting_indexes, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
@@ -470,9 +493,8 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        transactions: &transactions::Vecs,
+        chain: &chain::Vecs,
         price: Option<&price::Vecs>,
-        market: &market::Vecs,
         // Must take ownership as its indexes will be updated for this specific function
         starting_indexes: &mut Indexes,
         exit: &Exit,
@@ -487,8 +509,8 @@ impl Vecs {
         let height_to_first_p2traddressindex = &indexer.vecs.height_to_first_p2traddressindex;
         let height_to_first_p2wpkhaddressindex = &indexer.vecs.height_to_first_p2wpkhaddressindex;
         let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
-        let height_to_output_count = transactions.indexes_to_output_count.height.unwrap_sum();
-        let height_to_input_count = transactions.indexes_to_input_count.height.unwrap_sum();
+        let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
+        let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
         let inputindex_to_outputindex = &indexer.vecs.inputindex_to_outputindex;
         let outputindex_to_value = &indexer.vecs.outputindex_to_value;
         let txindex_to_height = &indexes.txindex_to_height;
@@ -496,7 +518,7 @@ impl Vecs {
         let outputindex_to_txindex = &indexes.outputindex_to_txindex;
         let outputindex_to_outputtype = &indexer.vecs.outputindex_to_outputtype;
         let outputindex_to_typeindex = &indexer.vecs.outputindex_to_typeindex;
-        let height_to_unclaimed_rewards = transactions
+        let height_to_unclaimed_rewards = chain
             .indexes_to_unclaimed_rewards
             .sats
             .height
@@ -1331,6 +1353,33 @@ impl Vecs {
         self.address_cohorts
             .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)?;
 
+        if let Some(indexes_to_market_cap) = self.indexes_to_market_cap.as_mut() {
+            indexes_to_market_cap.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_transform(
+                        starting_indexes.dateindex,
+                        self.utxo_cohorts
+                            .all
+                            .1
+                            .indexes_to_supply
+                            .dollars
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        |(i, v, ..)| (i, v),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )?;
+        }
+
         info!("Computing rest part 2...");
 
         let height_to_supply = &self
@@ -1348,6 +1397,11 @@ impl Vecs {
             .bitcoin
             .dateindex
             .clone();
+        let height_to_market_cap = self.height_to_market_cap.clone();
+        let dateindex_to_market_cap = self
+            .indexes_to_market_cap
+            .as_ref()
+            .map(|v| v.dateindex.as_ref().unwrap().clone());
         let height_to_realized_cap = self.utxo_cohorts.all.1.height_to_realized_cap.clone();
         let dateindex_to_realized_cap = self
             .utxo_cohorts
@@ -1357,6 +1411,8 @@ impl Vecs {
             .as_ref()
             .map(|v| v.dateindex.unwrap_last().clone());
         let dateindex_to_supply_ref = dateindex_to_supply.as_ref().unwrap();
+        let height_to_market_cap_ref = height_to_market_cap.as_ref();
+        let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
         let height_to_realized_cap_ref = height_to_realized_cap.as_ref();
         let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
 
@@ -1365,9 +1421,10 @@ impl Vecs {
             indexes,
             price,
             starting_indexes,
-            market,
             height_to_supply,
             dateindex_to_supply_ref,
+            height_to_market_cap_ref,
+            dateindex_to_market_cap_ref,
             height_to_realized_cap_ref,
             dateindex_to_realized_cap_ref,
             exit,
@@ -1378,9 +1435,10 @@ impl Vecs {
             indexes,
             price,
             starting_indexes,
-            market,
             height_to_supply,
             dateindex_to_supply_ref,
+            height_to_market_cap_ref,
+            dateindex_to_market_cap_ref,
             height_to_realized_cap_ref,
             dateindex_to_realized_cap_ref,
             exit,
@@ -1790,6 +1848,9 @@ impl Vecs {
             self.indexes_to_address_count.vecs(),
             self.indexes_to_empty_address_count.vecs(),
             self.addresstype_to_indexes_to_address_count.vecs(),
+            self.indexes_to_market_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
             self.addresstype_to_indexes_to_empty_address_count.vecs(),
             self.addresstype_to_height_to_address_count
                 .as_typed_vec()
@@ -1801,6 +1862,9 @@ impl Vecs {
                 .into_iter()
                 .map(|(_, v)| v as &dyn AnyCollectableVec)
                 .collect::<Vec<_>>(),
+            self.height_to_market_cap
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
             vec![
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,

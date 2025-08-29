@@ -19,11 +19,11 @@ where
     pub average: Option<Box<EagerVec<I, T>>>,
     pub sum: Option<Box<EagerVec<I, T>>>,
     pub max: Option<Box<EagerVec<I, T>>>,
-    pub _90p: Option<Box<EagerVec<I, T>>>,
-    pub _75p: Option<Box<EagerVec<I, T>>>,
+    pub p90: Option<Box<EagerVec<I, T>>>,
+    pub p75: Option<Box<EagerVec<I, T>>>,
     pub median: Option<Box<EagerVec<I, T>>>,
-    pub _25p: Option<Box<EagerVec<I, T>>>,
-    pub _10p: Option<Box<EagerVec<I, T>>>,
+    pub p25: Option<Box<EagerVec<I, T>>>,
+    pub p10: Option<Box<EagerVec<I, T>>>,
     pub min: Option<Box<EagerVec<I, T>>>,
     pub last: Option<Box<EagerVec<I, T>>>,
     pub cumulative: Option<Box<EagerVec<I, T>>>,
@@ -118,7 +118,7 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &maybe_suffix("average"),
+                        &maybe_suffix("avg"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
@@ -144,51 +144,51 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &suffix("cumulative"),
+                        &suffix("cum"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap(),
                 )
             }),
-            _90p: options._90p.then(|| {
+            p90: options.p90.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &maybe_suffix("90p"),
+                        &maybe_suffix("p90"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap(),
                 )
             }),
-            _75p: options._75p.then(|| {
+            p75: options.p75.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &maybe_suffix("75p"),
+                        &maybe_suffix("p75"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap(),
                 )
             }),
-            _25p: options._25p.then(|| {
+            p25: options.p25.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &maybe_suffix("25p"),
+                        &maybe_suffix("p25"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap(),
                 )
             }),
-            _10p: options._10p.then(|| {
+            p10: options.p10.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &maybe_suffix("10p"),
+                        &maybe_suffix("p10"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
@@ -292,11 +292,11 @@ where
                 let needs_average_sum_or_cumulative =
                     needs_sum_or_cumulative || self.average.is_some();
                 let needs_sorted = self.max.is_some()
-                    || self._90p.is_some()
-                    || self._75p.is_some()
+                    || self.p90.is_some()
+                    || self.p75.is_some()
                     || self.median.is_some()
-                    || self._25p.is_some()
-                    || self._10p.is_some()
+                    || self.p25.is_some()
+                    || self.p10.is_some()
                     || self.min.is_some();
                 let needs_values = needs_sorted || needs_average_sum_or_cumulative;
 
@@ -333,24 +333,24 @@ where
                             )?;
                         }
 
-                        if let Some(_90p) = self._90p.as_mut() {
-                            _90p.forced_push_at(index, get_percentile(&values, 0.90), exit)?;
+                        if let Some(p90) = self.p90.as_mut() {
+                            p90.forced_push_at(index, get_percentile(&values, 0.90), exit)?;
                         }
 
-                        if let Some(_75p) = self._75p.as_mut() {
-                            _75p.forced_push_at(index, get_percentile(&values, 0.75), exit)?;
+                        if let Some(p75) = self.p75.as_mut() {
+                            p75.forced_push_at(index, get_percentile(&values, 0.75), exit)?;
                         }
 
                         if let Some(median) = self.median.as_mut() {
                             median.forced_push_at(index, get_percentile(&values, 0.50), exit)?;
                         }
 
-                        if let Some(_25p) = self._25p.as_mut() {
-                            _25p.forced_push_at(index, get_percentile(&values, 0.25), exit)?;
+                        if let Some(p25) = self.p25.as_mut() {
+                            p25.forced_push_at(index, get_percentile(&values, 0.25), exit)?;
                         }
 
-                        if let Some(_10p) = self._10p.as_mut() {
-                            _10p.forced_push_at(index, get_percentile(&values, 0.10), exit)?;
+                        if let Some(p10) = self.p10.as_mut() {
+                            p10.forced_push_at(index, get_percentile(&values, 0.10), exit)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
@@ -401,11 +401,11 @@ where
     where
         I2: StoredIndex + StoredRaw + CheckedSub<I2>,
     {
-        if self._90p.is_some()
-            || self._75p.is_some()
+        if self.p90.is_some()
+            || self.p75.is_some()
             || self.median.is_some()
-            || self._25p.is_some()
-            || self._10p.is_some()
+            || self.p25.is_some()
+            || self.p10.is_some()
         {
             panic!("unsupported");
         }
@@ -558,24 +558,24 @@ where
         self.max.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_90p(&self) -> &EagerVec<I, T> {
-        self._90p.as_ref().unwrap()
+    pub fn unwrap_p90(&self) -> &EagerVec<I, T> {
+        self.p90.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_75p(&self) -> &EagerVec<I, T> {
-        self._75p.as_ref().unwrap()
+    pub fn unwrap_p75(&self) -> &EagerVec<I, T> {
+        self.p75.as_ref().unwrap()
     }
     #[allow(unused)]
     pub fn unwrap_median(&self) -> &EagerVec<I, T> {
         self.median.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_25p(&self) -> &EagerVec<I, T> {
-        self._25p.as_ref().unwrap()
+    pub fn unwrap_p25(&self) -> &EagerVec<I, T> {
+        self.p25.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_10p(&self) -> &EagerVec<I, T> {
-        self._10p.as_ref().unwrap()
+    pub fn unwrap_p10(&self) -> &EagerVec<I, T> {
+        self.p10.as_ref().unwrap()
     }
     pub fn unwrap_min(&self) -> &EagerVec<I, T> {
         self.min.as_ref().unwrap()
@@ -615,17 +615,17 @@ where
         if let Some(cumulative) = self.cumulative.as_ref() {
             v.push(cumulative.as_ref());
         }
-        if let Some(_90p) = self._90p.as_ref() {
-            v.push(_90p.as_ref());
+        if let Some(p90) = self.p90.as_ref() {
+            v.push(p90.as_ref());
         }
-        if let Some(_75p) = self._75p.as_ref() {
-            v.push(_75p.as_ref());
+        if let Some(p75) = self.p75.as_ref() {
+            v.push(p75.as_ref());
         }
-        if let Some(_25p) = self._25p.as_ref() {
-            v.push(_25p.as_ref());
+        if let Some(p25) = self.p25.as_ref() {
+            v.push(p25.as_ref());
         }
-        if let Some(_10p) = self._10p.as_ref() {
-            v.push(_10p.as_ref());
+        if let Some(p10) = self.p10.as_ref() {
+            v.push(p10.as_ref());
         }
 
         v
@@ -656,17 +656,17 @@ where
         if let Some(cumulative) = self.cumulative.as_mut() {
             cumulative.safe_flush(exit)?;
         }
-        if let Some(_90p) = self._90p.as_mut() {
-            _90p.safe_flush(exit)?;
+        if let Some(p90) = self.p90.as_mut() {
+            p90.safe_flush(exit)?;
         }
-        if let Some(_75p) = self._75p.as_mut() {
-            _75p.safe_flush(exit)?;
+        if let Some(p75) = self.p75.as_mut() {
+            p75.safe_flush(exit)?;
         }
-        if let Some(_25p) = self._25p.as_mut() {
-            _25p.safe_flush(exit)?;
+        if let Some(p25) = self.p25.as_mut() {
+            p25.safe_flush(exit)?;
         }
-        if let Some(_10p) = self._10p.as_mut() {
-            _10p.safe_flush(exit)?;
+        if let Some(p10) = self.p10.as_mut() {
+            p10.safe_flush(exit)?;
         }
 
         Ok(())
@@ -697,17 +697,17 @@ where
         if let Some(cumulative) = self.cumulative.as_mut() {
             cumulative.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
-        if let Some(_90p) = self._90p.as_mut() {
-            _90p.validate_computed_version_or_reset(Version::ZERO + version)?;
+        if let Some(p90) = self.p90.as_mut() {
+            p90.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
-        if let Some(_75p) = self._75p.as_mut() {
-            _75p.validate_computed_version_or_reset(Version::ZERO + version)?;
+        if let Some(p75) = self.p75.as_mut() {
+            p75.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
-        if let Some(_25p) = self._25p.as_mut() {
-            _25p.validate_computed_version_or_reset(Version::ZERO + version)?;
+        if let Some(p25) = self.p25.as_mut() {
+            p25.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
-        if let Some(_10p) = self._10p.as_mut() {
-            _10p.validate_computed_version_or_reset(Version::ZERO + version)?;
+        if let Some(p10) = self.p10.as_mut() {
+            p10.validate_computed_version_or_reset(Version::ZERO + version)?;
         }
 
         Ok(())
@@ -719,11 +719,11 @@ pub struct VecBuilderOptions {
     average: bool,
     sum: bool,
     max: bool,
-    _90p: bool,
-    _75p: bool,
+    p90: bool,
+    p75: bool,
     median: bool,
-    _25p: bool,
-    _10p: bool,
+    p25: bool,
+    p10: bool,
     min: bool,
     first: bool,
     last: bool,
@@ -743,24 +743,24 @@ impl VecBuilderOptions {
         self.max
     }
 
-    pub fn _90p(&self) -> bool {
-        self._90p
+    pub fn p90(&self) -> bool {
+        self.p90
     }
 
-    pub fn _75p(&self) -> bool {
-        self._75p
+    pub fn p75(&self) -> bool {
+        self.p75
     }
 
     pub fn median(&self) -> bool {
         self.median
     }
 
-    pub fn _25p(&self) -> bool {
-        self._25p
+    pub fn p25(&self) -> bool {
+        self.p25
     }
 
-    pub fn _10p(&self) -> bool {
-        self._10p
+    pub fn p10(&self) -> bool {
+        self.p10
     }
 
     pub fn min(&self) -> bool {
@@ -816,26 +816,26 @@ impl VecBuilderOptions {
     }
 
     #[allow(unused)]
-    pub fn add_90p(mut self) -> Self {
-        self._90p = true;
+    pub fn add_p90(mut self) -> Self {
+        self.p90 = true;
         self
     }
 
     #[allow(unused)]
-    pub fn add_75p(mut self) -> Self {
-        self._75p = true;
+    pub fn add_p75(mut self) -> Self {
+        self.p75 = true;
         self
     }
 
     #[allow(unused)]
-    pub fn add_25p(mut self) -> Self {
-        self._25p = true;
+    pub fn add_p25(mut self) -> Self {
+        self.p25 = true;
         self
     }
 
     #[allow(unused)]
-    pub fn add_10p(mut self) -> Self {
-        self._10p = true;
+    pub fn add_p10(mut self) -> Self {
+        self.p10 = true;
         self
     }
 
@@ -875,26 +875,26 @@ impl VecBuilderOptions {
     }
 
     #[allow(unused)]
-    pub fn rm_90p(mut self) -> Self {
-        self._90p = false;
+    pub fn rm_p90(mut self) -> Self {
+        self.p90 = false;
         self
     }
 
     #[allow(unused)]
-    pub fn rm_75p(mut self) -> Self {
-        self._75p = false;
+    pub fn rm_p75(mut self) -> Self {
+        self.p75 = false;
         self
     }
 
     #[allow(unused)]
-    pub fn rm_25p(mut self) -> Self {
-        self._25p = false;
+    pub fn rm_p25(mut self) -> Self {
+        self.p25 = false;
         self
     }
 
     #[allow(unused)]
-    pub fn rm_10p(mut self) -> Self {
-        self._10p = false;
+    pub fn rm_p10(mut self) -> Self {
+        self.p10 = false;
         self
     }
 
@@ -911,20 +911,20 @@ impl VecBuilderOptions {
     }
 
     pub fn add_percentiles(mut self) -> Self {
-        self._90p = true;
-        self._75p = true;
+        self.p90 = true;
+        self.p75 = true;
         self.median = true;
-        self._25p = true;
-        self._10p = true;
+        self.p25 = true;
+        self.p10 = true;
         self
     }
 
     pub fn remove_percentiles(mut self) -> Self {
-        self._90p = false;
-        self._75p = false;
+        self.p90 = false;
+        self.p75 = false;
         self.median = false;
-        self._25p = false;
-        self._10p = false;
+        self.p25 = false;
+        self.p10 = false;
         self
     }
 
@@ -933,11 +933,11 @@ impl VecBuilderOptions {
             self.average,
             self.sum,
             self.max,
-            self._90p,
-            self._75p,
+            self.p90,
+            self.p75,
             self.median,
-            self._25p,
-            self._10p,
+            self.p25,
+            self.p10,
             self.min,
             self.first,
             self.last,

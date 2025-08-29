@@ -11,7 +11,7 @@ use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format, StoredIndex};
 
 use crate::{
-    Indexes, indexes, market, price,
+    Indexes, indexes, price,
     stateful::r#trait::DynCohortVecs,
     states::{BlockState, Transacted},
 };
@@ -1754,9 +1754,10 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
-        market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
         dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
+        height_to_market_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -1768,9 +1769,10 @@ impl Vecs {
                     indexes,
                     price,
                     starting_indexes,
-                    market,
                     height_to_supply,
                     dateindex_to_supply,
+                    height_to_market_cap,
+                    dateindex_to_market_cap,
                     height_to_realized_cap,
                     dateindex_to_realized_cap,
                     exit,

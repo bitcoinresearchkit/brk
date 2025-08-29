@@ -36,6 +36,12 @@ impl From<f64> for StoredF64 {
     }
 }
 
+impl From<f32> for StoredF64 {
+    fn from(value: f32) -> Self {
+        Self(value as f64)
+    }
+}
+
 impl From<usize> for StoredF64 {
     fn from(value: usize) -> Self {
         Self(value as f64)
@@ -85,6 +91,12 @@ impl AddAssign for StoredF64 {
 impl From<StoredF64> for f64 {
     fn from(value: StoredF64) -> Self {
         value.0
+    }
+}
+
+impl From<StoredF64> for f32 {
+    fn from(value: StoredF64) -> Self {
+        value.0 as f32
     }
 }
 

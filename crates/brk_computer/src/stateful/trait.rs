@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{AnyCollectableVec, AnyIterableVec, Exit};
 
-use crate::{Indexes, indexes, market, price};
+use crate::{Indexes, indexes, price};
 
 pub trait DynCohortVecs: Send + Sync {
     fn min_height_vecs_len(&self) -> usize;
@@ -54,9 +54,10 @@ pub trait CohortVecs: DynCohortVecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
-        market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
         dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
+        height_to_market_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
