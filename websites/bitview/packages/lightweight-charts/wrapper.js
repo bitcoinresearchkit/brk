@@ -208,7 +208,7 @@ function createChartElement({
 
   const activeResources = /** @type {Set<VecResource>} */ (new Set());
   ichart.subscribeCrosshairMove(
-    utils.debounce(() => {
+    utils.throttle(() => {
       activeResources.forEach((v) => {
         v.fetch();
       });

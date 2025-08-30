@@ -3016,7 +3016,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 }),
                 createBaseSeries({
                   key: "days_since_ath",
-                  name: "Days since",
+                  name: "since",
                 }),
                 createBaseSeries({
                   key: "max_days_between_aths",
@@ -3459,6 +3459,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       key: "difficulty_as_hash",
                       name: "difficulty",
                       color: colors.default,
+                      options: {
+                        lineStyle: 1,
+                      },
                     }),
                   ],
                 },
