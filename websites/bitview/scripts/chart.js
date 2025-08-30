@@ -127,11 +127,10 @@ export function init({
   }
 
   chart.inner.timeScale().subscribeVisibleLogicalRangeChange(
-    utils.debounce((t) => {
-      if (t) {
-        from.set(t.from);
-        to.set(t.to);
-      }
+    utils.throttle((t) => {
+      if (!t) return;
+      from.set(t.from);
+      to.set(t.to);
     }),
   );
 

@@ -1351,20 +1351,20 @@ function createUtils() {
    * @param {F} callback
    * @param {number} [wait=250]
    */
-  function debounce(callback, wait = 250) {
-    /** @type {number | undefined} */
-    let timeoutId;
+  function throttle(callback, wait = 250) {
+    /** @type {number | null} */
+    let timeoutId = null;
     /** @type {Parameters<F>} */
     let latestArgs;
 
-    return (/** @type {Parameters<F>} */ ...args) => {
+    return async (/** @type {Parameters<F>} */ ...args) => {
       latestArgs = args;
 
       if (!timeoutId) {
-        timeoutId = window.setTimeout(async () => {
-          await callback(...latestArgs);
-
-          timeoutId = undefined;
+        await callback(...latestArgs); // Execute immediately
+        timeoutId = setTimeout(async () => {
+          await callback(...latestArgs); // Execute with latest args
+          timeoutId = null;
         }, wait);
       }
     };
@@ -1569,7 +1569,7 @@ function createUtils() {
     serde,
     formatters,
     date,
-    debounce,
+    throttle,
     runWhenIdle,
     getNumberOfDaysBetweenTwoDates,
     stringToId,
@@ -2246,7 +2246,7 @@ function main() {
               let firstTimeLoadingExplorer = true;
 
               signals.createEffect(options.selected, (option) => {
-                console.log(utils.url.pathnameToSelectedId(), option.id);
+                // console.log(utils.url.pathnameToSelectedId(), option);
                 if (previousElement) {
                   previousElement.hidden = true;
                   utils.url.resetParams(option);
