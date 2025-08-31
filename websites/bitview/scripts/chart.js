@@ -19,6 +19,7 @@ const CANDLE = "candle";
  * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
+ * @param {Env} args.env
  * @param {VecsResources} args.vecsResources
  * @param {VecIdToIndexes} args.vecIdToIndexes
  * @param {Packages} args.packages
@@ -30,6 +31,7 @@ export function init({
   option,
   signals,
   utils,
+  env,
   webSockets,
   vecsResources,
   vecIdToIndexes,
@@ -97,33 +99,41 @@ export function init({
     },
   });
 
-  const chartBottomRightCanvas = Array.from(
-    chart.inner.chartElement().getElementsByTagName("tr"),
-  ).at(-1)?.lastChild?.firstChild?.firstChild;
-  if (chartBottomRightCanvas) {
-    const charts = elements.charts;
-    const domain = window.document.createElement("p");
-    domain.innerText = `${window.location.host}`;
-    domain.id = "domain";
-    const screenshotButton = window.document.createElement("button");
-    screenshotButton.id = "screenshot";
-    const camera = "[ ◉¯]";
-    screenshotButton.innerHTML = camera;
-    screenshotButton.title = "Screenshot";
-    chartBottomRightCanvas.replaceWith(screenshotButton);
-    screenshotButton.addEventListener("click", () => {
-      packages.modernScreenshot().then(async ({ screenshot }) => {
-        charts.dataset.screenshot = "true";
-        charts.append(domain);
-        seriesTypeField.hidden = true;
-        try {
-          await screenshot(charts);
-        } catch {}
-        charts.removeChild(domain);
-        seriesTypeField.hidden = false;
-        charts.dataset.screenshot = "false";
+  console.log(env.ios, "canShare" in navigator);
+  if (!(env.ios && !("canShare" in navigator))) {
+    const chartBottomRightCanvas = Array.from(
+      chart.inner.chartElement().getElementsByTagName("tr"),
+    ).at(-1)?.lastChild?.firstChild?.firstChild;
+    if (chartBottomRightCanvas) {
+      const charts = elements.charts;
+      const domain = window.document.createElement("p");
+      domain.innerText = `${window.location.host}`;
+      domain.id = "domain";
+      const screenshotButton = window.document.createElement("button");
+      screenshotButton.id = "screenshot";
+      const camera = "[ ◉¯]";
+      screenshotButton.innerHTML = camera;
+      screenshotButton.title = "Screenshot";
+      chartBottomRightCanvas.replaceWith(screenshotButton);
+      screenshotButton.addEventListener("click", () => {
+        packages.modernScreenshot().then(async ({ screenshot }) => {
+          charts.dataset.screenshot = "true";
+          charts.append(domain);
+          seriesTypeField.hidden = true;
+          try {
+            await screenshot({
+              element: charts,
+              env,
+              name: option().path.join("-"),
+              title: option().title,
+            });
+          } catch {}
+          charts.removeChild(domain);
+          seriesTypeField.hidden = false;
+          charts.dataset.screenshot = "false";
+        });
       });
-    });
+    }
   }
 
   chart.inner.timeScale().subscribeVisibleLogicalRangeChange(

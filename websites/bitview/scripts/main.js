@@ -2303,6 +2303,7 @@ function main() {
                               option: /** @type {Accessor<ChartOption>} */ (
                                 chartOption
                               ),
+                              env,
                               signals,
                               utils,
                               webSockets,
