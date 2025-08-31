@@ -2205,15 +2205,29 @@ function main() {
             vecIdToIndexes,
           });
 
-          // window.addEventListener("popstate", (_) => {
-          //   const urlSelected = utils.url.pathnameToSelectedId();
-          //   const option = options.list.find(
-          //     (option) => urlSelected === option.id,
-          //   );
-          //   if (option) {
-          //     options.selected.set(option);
-          //   }
-          // });
+          window.addEventListener("popstate", (event) => {
+            const path = window.document.location.pathname
+              .split("/")
+              .filter((v) => v);
+            let folder = options.tree;
+
+            while (path.length) {
+              const id = path.shift();
+              const res = folder.find((v) => id === utils.stringToId(v.name));
+              if (!res) throw "Option not found";
+              if (path.length >= 1) {
+                if (!("tree" in res)) {
+                  throw "Unreachable";
+                }
+                folder = res.tree;
+              } else {
+                if ("tree" in res) {
+                  throw "Unreachable";
+                }
+                options.selected.set(res);
+              }
+            }
+          });
 
           function initSelected() {
             let firstRun = true;
@@ -2239,14 +2253,6 @@ function main() {
               let firstTimeLoadingExplorer = true;
 
               signals.createEffect(options.selected, (option) => {
-                if (previousElement) {
-                  previousElement.hidden = true;
-                  utils.url.resetParams(option);
-                  utils.url.pushHistory(option.path);
-                } else {
-                  utils.url.replaceHistory({ pathname: option.path });
-                }
-
                 /** @type {HTMLElement} */
                 let element;
 
@@ -2364,7 +2370,15 @@ function main() {
                   }
                 }
 
-                element.hidden = false;
+                if (element !== previousElement) {
+                  if (previousElement) previousElement.hidden = true;
+                  element.hidden = false;
+                }
+
+                if (!previousElement) {
+                  utils.url.replaceHistory({ pathname: option.path });
+                }
+
                 previousElement = element;
               });
             }

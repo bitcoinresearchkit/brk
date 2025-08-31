@@ -104,6 +104,8 @@
  *
  * @typedef {ExplorerOption | ChartOption | TableOption | SimulationOption | UrlOption} Option
  *
+ * @typedef {(AnyPartialOption | PartialOptionsGroup)[]} PartialOptionsTree
+ *
  * @typedef {Object} PartialOptionsGroup
  * @property {string} name
  * @property {PartialOptionsTree} tree
@@ -111,8 +113,6 @@
  * @typedef {Object} OptionsGroup
  * @property {string} name
  * @property {OptionsTree} tree
- *
- * @typedef {(AnyPartialOption | PartialOptionsGroup)[]} PartialOptionsTree
  *
  * @typedef {(Option | OptionsGroup)[]} OptionsTree
  *
@@ -4154,9 +4154,14 @@ export function initOptions({
 }) {
   const LS_SELECTED_KEY = `selected_id`;
 
-  const urlPath_ = window.document.location.pathname.substring(1).split("/");
+  const urlPath_ = window.document.location.pathname
+    .split("/")
+    .filter((v) => v);
   const urlPath = urlPath_.length ? urlPath_ : undefined;
-  const savedPath = utils.storage.read(LS_SELECTED_KEY)?.split("/");
+  const savedPath = utils.storage
+    .read(LS_SELECTED_KEY)
+    ?.split("/")
+    .filter((v) => v);
 
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
@@ -4181,6 +4186,15 @@ export function initOptions({
       record[unit].push(blueprint);
       return record;
     }, /** @type {Record<Unit, AnyFetchedSeriesBlueprint[]>} */ ({}));
+  }
+
+  /**
+   * @param {Option} option
+   */
+  function selectOption(option) {
+    utils.url.pushHistory(option.path);
+    utils.url.resetParams(option);
+    selected.set(option);
   }
 
   /**
@@ -4217,7 +4231,7 @@ export function initOptions({
         title,
         text: name || option.name,
         onClick: () => {
-          selected.set(() => option);
+          selectOption(option);
         },
       });
     }
@@ -4343,52 +4357,66 @@ export function initOptions({
         }
         createRenderLiEffect();
       } else {
-        /** @type {Option} */
-        let option;
+        const option = /** @type {Option} */ (anyPartial);
 
-        const name = anyPartial.name;
-        const path = [...parentPath, utils.stringToId(anyPartial.name)];
+        const name = option.name;
+        const path = [...parentPath, utils.stringToId(option.name)];
 
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
-          option = /** @satisfies {ExplorerOption} */ ({
-            kind: anyPartial.kind,
-            name,
-            path,
-            title: anyPartial.title,
-          });
+          Object.assign(
+            option,
+            /** @satisfies {ExplorerOption} */ ({
+              kind: anyPartial.kind,
+              path,
+              name,
+              title: option.title,
+            }),
+          );
         } else if ("kind" in anyPartial && anyPartial.kind === "table") {
-          option = /** @satisfies {TableOption} */ ({
-            kind: anyPartial.kind,
-            name,
-            path,
-            title: anyPartial.title,
-          });
+          Object.assign(
+            option,
+            /** @satisfies {TableOption} */ ({
+              kind: anyPartial.kind,
+              path,
+              name,
+              title: option.title,
+            }),
+          );
         } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
-          option = /** @satisfies {SimulationOption} */ ({
-            kind: anyPartial.kind,
-            name,
-            path,
-            title: anyPartial.title,
-          });
+          Object.assign(
+            option,
+            /** @satisfies {SimulationOption} */ ({
+              kind: anyPartial.kind,
+              path,
+              name,
+              title: anyPartial.title,
+            }),
+          );
         } else if ("url" in anyPartial) {
-          option = /** @satisfies {UrlOption} */ ({
-            kind: "url",
-            name,
-            path,
-            title: name,
-            qrcode: !!anyPartial.qrcode,
-            url: anyPartial.url,
-          });
+          Object.assign(
+            option,
+            /** @satisfies {UrlOption} */ ({
+              kind: "url",
+              path,
+              name,
+              title: name,
+              qrcode: !!anyPartial.qrcode,
+              url: anyPartial.url,
+            }),
+          );
         } else {
-          const title = anyPartial.title || anyPartial.name;
-          option = /** @satisfies {ChartOption} */ ({
-            kind: "chart",
-            name,
-            title,
-            path,
-            top: arrayToRecord(anyPartial.top),
-            bottom: arrayToRecord(anyPartial.bottom),
-          });
+          const title = option.title || option.name;
+          Object.assign(
+            option,
+            /** @satisfies {ChartOption} */ ({
+              kind: "chart",
+              name,
+              title,
+              path,
+              top: arrayToRecord(anyPartial.top),
+              bottom: arrayToRecord(anyPartial.bottom),
+            }),
+          );
         }
 
         list.push(option);
@@ -4455,6 +4483,7 @@ export function initOptions({
     tree: /** @type {OptionsTree} */ (partialOptions),
     parent,
     createOptionElement,
+    selectOption,
   };
 }
 /** @typedef {ReturnType<typeof initOptions>} Options */
