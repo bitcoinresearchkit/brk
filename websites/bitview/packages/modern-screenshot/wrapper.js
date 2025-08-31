@@ -24,7 +24,7 @@ export async function screenshot({ element, name, title, env }) {
     try {
       await navigator.share({
         files: [file],
-        title: `Bitview screenshot: ${title}`,
+        title: `${title} on ${window.document.location.hostname}`,
       });
       return;
     } catch (err) {

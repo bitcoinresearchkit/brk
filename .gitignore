@@ -12,10 +12,6 @@ vecid-to-indexes.js
 # Ignored
 _*
 
-# Editors
-.vscode
-.zed
-
 # Logs
 .log
 
