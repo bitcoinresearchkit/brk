@@ -34,8 +34,11 @@
         -webkit-text-size-adjust: 100%;
         tab-size: 4;
         font-family:
-          "Geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           "Liberation Mono", "Courier New", monospace;
+        /* Lilex features */
+        /*font-feature-settings: "ss01";*/
+        /* Geist features */
         font-feature-settings: "ss03";
         -webkit-tap-highlight-color: transparent;
       }
@@ -278,21 +281,35 @@
       }
 
       @font-face {
-        font-family: "Geist mono";
-        src: url("./assets/fonts/geist_mono_var_v1_5_0.woff2") format("woff2");
+        font-family: "Geist Mono";
+        src: url("/assets/fonts/GeistMono[wght]-v1_5.woff2") format("woff2");
+        font-style: normal;
         font-weight: 100 900;
         font-display: block;
-        font-style: normal;
+      }
+      @font-face {
+        font-family: "Geist Mono";
+        src: url("/assets/fonts/GeistMono-Italic[wght]-v1_5.woff2")
+          format("woff2");
+        font-style: italic;
+        font-weight: 100 900;
+        font-display: block;
       }
 
-      /*@font-face {
-        font-family: "Lilex";
-        src: url("./assets/fonts/Lilex-Italic[wght]-2.601.woff2")
-          format("woff2");
+      @font-face {
+        font-family: Lilex;
+        src: url("/assets/fonts/Lilex[wght].woff2") format("woff2");
+        font-style: normal;
         font-weight: 100 900;
         font-display: block;
-        font-style: normal;
-      }*/
+      }
+      @font-face {
+        font-family: Lilex;
+        src: url("/assets/fonts/Lilex-Italic[wght].woff2") format("woff2");
+        font-style: italic;
+        font-weight: 100 900;
+        font-display: block;
+      }
 
       /*
        * ---
@@ -729,7 +746,7 @@
        * ---
        */
 
-      .tree {
+      nav {
         margin-top: -0.125rem;
         user-select: none;
         -webkit-user-select: none;
@@ -745,11 +762,12 @@
         }
 
         li[data-highlight] {
-          > details:not([open]) {
+          > details > summary,
+          > a {
             color: var(--color);
           }
 
-          > label > a::after,
+          > a::after,
           > details:not([open]) > summary::after {
             color: var(--orange) !important;
             content: "";
@@ -843,12 +861,13 @@
       }
 
       search {
+        text-transform: uppercase;
         gap: 1rem;
 
         ul {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
       }
 
@@ -1745,9 +1764,7 @@
       <div class="shadow-bottom"></div>
       <div id="resize-bar"></div>
 
-      <nav id="nav" hidden>
-        <!-- <h4>bitview</h4> -->
-      </nav>
+      <nav id="nav" hidden></nav>
 
       <search id="search" hidden>
         <header>
@@ -1763,7 +1780,7 @@
             </h3>
           </div>
         </header>
-        <ul id="search-results" style="text-transform: lowercase"></ul>
+        <ul id="search-results"></ul>
       </search>
 
       <footer>

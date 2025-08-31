@@ -49,9 +49,7 @@
  *   "sat/vB" |
  *   "%pnl" |
  *   "constant" |
- *   "cagr" |
  *   "vB" |
- *   "performance" |
  *   "sd" |
  *   "Epoch" |
  *   "Height" |
@@ -220,14 +218,16 @@ function createUtils() {
     /**
      * @param {Object} arg
      * @param {string} arg.href
+     * @param {string} arg.title
      * @param {string} [arg.text]
      * @param {boolean} [arg.blank]
      * @param {VoidFunction} [arg.onClick]
      * @param {boolean} [arg.preventDefault]
      */
-    createAnchorElement({ text, href, blank, onClick, preventDefault }) {
+    createAnchorElement({ text, href, blank, onClick, title, preventDefault }) {
       const anchor = window.document.createElement("a");
       anchor.href = href;
+      anchor.title = title.toUpperCase();
 
       if (text) {
         anchor.innerText = text;
@@ -260,7 +260,7 @@ function createUtils() {
 
       button.append(text);
 
-      button.title = title;
+      button.title = title.toUpperCase();
 
       button.addEventListener("click", onClick);
 
@@ -273,7 +273,7 @@ function createUtils() {
      * @param {string} args.inputId
      * @param {string} args.inputValue
      * @param {boolean} [args.inputChecked=false]
-     * @param {string} args.labelTitle
+     * @param {string} [args.title]
      * @param {'radio' | 'checkbox'} args.type
      * @param {(event: MouseEvent) => void} [args.onClick]
      */
@@ -282,7 +282,7 @@ function createUtils() {
       inputName,
       inputValue,
       inputChecked = false,
-      labelTitle,
+      title,
       onClick,
       type,
     }) {
@@ -303,7 +303,9 @@ function createUtils() {
       label.append(input);
 
       label.id = `${inputId}-label`;
-      label.title = labelTitle;
+      if (title) {
+        label.title = title;
+      }
       label.htmlFor = inputId;
 
       if (onClick) {
@@ -431,7 +433,7 @@ function createUtils() {
             inputName: id ?? key,
             inputValue,
             inputChecked: inputValue === selected(),
-            labelTitle: choice,
+            // title: choice,
             type: "radio",
           });
 
@@ -587,38 +589,40 @@ function createUtils() {
     },
   };
 
+  /**
+   * @param {string | string[]} [pathname]
+   */
+  function processPathname(pathname) {
+    pathname ||= window.location.pathname;
+    return Array.isArray(pathname) ? pathname.join("/") : pathname;
+  }
+
   const url = {
     chartParamsWhitelist: ["from", "to"],
     /**
-     * @param {string} pathname
+     * @param {string | string[]} pathname
      */
     pushHistory(pathname) {
       const urlParams = new URLSearchParams(window.location.search);
-      pathname ||= window.location.pathname;
-
+      pathname = processPathname(pathname);
       try {
-        window.history.pushState(
-          null,
-          "",
-          `${pathname}?${urlParams.toString()}`,
-        );
+        const url = `/${pathname}?${urlParams.toString()}`;
+        console.log(`push history: ${url}`);
+        window.history.pushState(null, "", url);
       } catch (_) {}
     },
     /**
      * @param {Object} args
      * @param {URLSearchParams} [args.urlParams]
-     * @param {string} [args.pathname]
+     * @param {string | string[]} [args.pathname]
      */
     replaceHistory({ urlParams, pathname }) {
       urlParams ||= new URLSearchParams(window.location.search);
-      pathname ||= window.location.pathname;
-
+      pathname = processPathname(pathname);
       try {
-        window.history.replaceState(
-          null,
-          "",
-          `${pathname}?${urlParams.toString()}`,
-        );
+        const url = `/${pathname}?${urlParams.toString()}`;
+        console.log(`replace history: ${url}`);
+        window.history.replaceState(null, "", url);
       } catch (_) {}
     },
     /**
@@ -626,7 +630,6 @@ function createUtils() {
      */
     resetParams(option) {
       const urlParams = new URLSearchParams();
-
       if (option.kind === "chart") {
         [...new URLSearchParams(window.location.search).entries()]
           .filter(([key, _]) => this.chartParamsWhitelist.includes(key))
@@ -634,8 +637,7 @@ function createUtils() {
             urlParams.set(key, value);
           });
       }
-
-      this.replaceHistory({ urlParams, pathname: option.id });
+      this.replaceHistory({ urlParams, pathname: option.path.join("/") });
     },
     /**
      * @param {string} key
@@ -694,9 +696,6 @@ function createUtils() {
     readParam(key) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(key);
-    },
-    pathnameToSelectedId() {
-      return window.document.location.pathname.substring(1);
     },
   };
 
@@ -810,7 +809,9 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id === "drawdown" ||
         id.endsWith("oscillator") ||
-        id.endsWith("dominance"))
+        id.endsWith("dominance") ||
+        id.endsWith("returns") ||
+        id.endsWith("cagr"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "percentage";
@@ -851,18 +852,11 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "secs";
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("returns")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "performance";
-    }
     if ((!unit || thoroughUnitCheck) && id.endsWith("locktime")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Locktime";
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("cagr")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "cagr";
-    }
+
     if ((!unit || thoroughUnitCheck) && id.endsWith("version")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Version";
@@ -1349,21 +1343,22 @@ function createUtils() {
    *
    * @template {(...args: any[]) => any} F
    * @param {F} callback
-   * @param {number} [wait=250]
+   * @param {number} [wait]
    */
-  function throttle(callback, wait = 250) {
+  function throttle(callback, wait = 1000) {
     /** @type {number | null} */
     let timeoutId = null;
     /** @type {Parameters<F>} */
     let latestArgs;
 
-    return async (/** @type {Parameters<F>} */ ...args) => {
+    return (/** @type {Parameters<F>} */ ...args) => {
       latestArgs = args;
 
       if (!timeoutId) {
-        await callback(...latestArgs); // Execute immediately
-        timeoutId = setTimeout(async () => {
-          await callback(...latestArgs); // Execute with latest args
+        // Otherwise it optimizes away timeoutId in Chrome and FF
+        timeoutId = timeoutId;
+        timeoutId = setTimeout(() => {
+          callback(...latestArgs); // Execute with latest args
           timeoutId = null;
         }, wait);
       }
@@ -2226,8 +2221,6 @@ function main() {
               if (!firstRun) throw Error("Unreachable");
               firstRun = false;
 
-              console.log("selected: init");
-
               const owner = signals.getOwner();
 
               const chartOption = signals.createSignal(
@@ -2246,13 +2239,12 @@ function main() {
               let firstTimeLoadingExplorer = true;
 
               signals.createEffect(options.selected, (option) => {
-                // console.log(utils.url.pathnameToSelectedId(), option);
                 if (previousElement) {
                   previousElement.hidden = true;
                   utils.url.resetParams(option);
-                  utils.url.pushHistory(option.id);
+                  utils.url.pushHistory(option.path);
                 } else {
-                  utils.url.replaceHistory({ pathname: option.id });
+                  utils.url.replaceHistory({ pathname: option.path });
                 }
 
                 /** @type {HTMLElement} */
@@ -2394,235 +2386,258 @@ function main() {
           }
           initSelected();
 
-          function initFolders() {
-            async function scrollToSelected() {
-              if (!options.selected()) throw "Selected should be set by now";
-              const selectedId = options.selected().id;
+          utils.dom.onFirstIntersection(elements.nav, async () => {
+            options.parent.set(elements.nav);
 
-              const path = options.selected().path;
+            const option = options.selected();
+            if (!option) throw "Selected should be set by now";
+            const path = [...option.path];
 
-              let i = 0;
-              while (i !== path.length) {
-                try {
-                  const id = path[i];
-                  const details = /** @type {HTMLDetailsElement} */ (
-                    utils.dom.getElementById(id)
-                  );
-                  details.open = true;
-                  i++;
-                } catch {
+            /** @type {HTMLUListElement | null} */
+            let ul = /** @type {any} */ (null);
+            async function getFirstChild() {
+              try {
+                ul = /** @type {HTMLUListElement} */ (
+                  elements.nav.firstElementChild
+                );
+                await utils.next();
+                if (!ul) {
+                  await getFirstChild();
+                }
+              } catch (_) {
+                await utils.next();
+                await getFirstChild();
+              }
+            }
+            await getFirstChild();
+            if (!ul) throw Error("Unreachable");
+
+            let i = 0;
+            while (path.length > 1) {
+              const name = path.shift();
+              if (!name) throw "Unreachable";
+              /** @type {HTMLDetailsElement[]} */
+              let detailsList = [];
+              while (!detailsList.length) {
+                detailsList = Array.from(
+                  ul.querySelectorAll(":scope > li > details"),
+                );
+                if (!detailsList.length) {
                   await utils.next();
                 }
               }
-
-              await utils.next();
-              await utils.next();
-
-              utils.dom
-                .getElementById(`${selectedId}-nav-selector`)
-                .scrollIntoView({
-                  behavior: "instant",
-                  block: "center",
-                });
+              const details = detailsList.find((s) => s.dataset.name == name);
+              if (!details) return;
+              details.open = true;
+              ul = null;
+              while (!ul) {
+                const uls = /** @type {HTMLUListElement[]} */ (
+                  Array.from(details.querySelectorAll(":scope > ul"))
+                );
+                if (!uls.length) {
+                  await utils.next();
+                } else if (uls.length > 1) {
+                  throw "Shouldn't be possible";
+                } else {
+                  ul = /** @type {HTMLUListElement} */ (uls.pop());
+                }
+              }
             }
-
-            utils.dom.onFirstIntersection(elements.nav, () => {
-              options.treeElement.set(() => {
-                const treeElement = window.document.createElement("div");
-                treeElement.classList.add("tree");
-                elements.nav.append(treeElement);
-                return treeElement;
+            /** @type {HTMLAnchorElement[]} */
+            let anchors = [];
+            while (!anchors.length) {
+              anchors = Array.from(ul.querySelectorAll(":scope > li > a"));
+              if (!anchors.length) {
+                await utils.next();
+              }
+            }
+            anchors
+              .find(
+                (a) =>
+                  a.getAttribute("href") == window.document.location.pathname,
+              )
+              ?.scrollIntoView({
+                behavior: "instant",
+                block: "center",
               });
+          });
 
-              setTimeout(scrollToSelected, 10);
-            });
-          }
-          initFolders();
+          utils.dom.onFirstIntersection(elements.search, () => {
+            console.log("search: init");
 
-          function initSearch() {
-            function initSearchFrame() {
-              console.log("search: init");
+            const haystack = options.list.map((option) => option.title);
 
-              const haystack = options.list.map((option) => option.title);
+            const RESULTS_PER_PAGE = 100;
 
-              const RESULTS_PER_PAGE = 100;
+            packages.ufuzzy().then((ufuzzy) => {
+              /**
+               * @param {uFuzzy.SearchResult} searchResult
+               * @param {number} pageIndex
+               */
+              function computeResultPage(searchResult, pageIndex) {
+                /** @type {{ option: Option, title: string }[]} */
+                let list = [];
 
-              packages.ufuzzy().then((ufuzzy) => {
-                /**
-                 * @param {uFuzzy.SearchResult} searchResult
-                 * @param {number} pageIndex
-                 */
-                function computeResultPage(searchResult, pageIndex) {
-                  /** @type {{ option: Option, title: string }[]} */
-                  let list = [];
+                let [indexes, info, order] = searchResult || [null, null, null];
 
-                  let [indexes, info, order] = searchResult || [
-                    null,
-                    null,
-                    null,
-                  ];
+                const minIndex = pageIndex * RESULTS_PER_PAGE;
 
-                  const minIndex = pageIndex * RESULTS_PER_PAGE;
+                if (indexes?.length) {
+                  const maxIndex = Math.min(
+                    (order || indexes).length - 1,
+                    minIndex + RESULTS_PER_PAGE - 1,
+                  );
 
-                  if (indexes?.length) {
-                    const maxIndex = Math.min(
-                      (order || indexes).length - 1,
-                      minIndex + RESULTS_PER_PAGE - 1,
-                    );
+                  list = Array(maxIndex - minIndex + 1);
 
-                    list = Array(maxIndex - minIndex + 1);
+                  for (let i = minIndex; i <= maxIndex; i++) {
+                    let index = indexes[i];
 
-                    for (let i = minIndex; i <= maxIndex; i++) {
-                      let index = indexes[i];
+                    const title = haystack[index];
 
-                      const title = haystack[index];
-
-                      list[i % 100] = {
-                        option: options.list[index],
-                        title,
-                      };
-                    }
+                    list[i % 100] = {
+                      option: options.list[index],
+                      title,
+                    };
                   }
-
-                  return list;
                 }
 
-                /** @type {uFuzzy.Options} */
-                const config = {
-                  intraIns: Infinity,
-                  intraChars: `[a-z\d' ]`,
-                };
+                return list;
+              }
 
-                const fuzzyMultiInsert = /** @type {uFuzzy} */ (
-                  ufuzzy({
-                    intraIns: 1,
-                  })
-                );
-                const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
-                  ufuzzy(config)
-                );
-                const fuzzySingleError = /** @type {uFuzzy} */ (
-                  ufuzzy({
-                    intraMode: 1,
-                    ...config,
-                  })
-                );
-                const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
-                  ufuzzy({
-                    intraMode: 1,
-                    ...config,
-                  })
-                );
+              /** @type {uFuzzy.Options} */
+              const config = {
+                intraIns: Infinity,
+                intraChars: `[a-z\d' ]`,
+              };
 
-                /** @type {VoidFunction | undefined} */
-                let dispose;
+              const fuzzyMultiInsert = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraIns: 1,
+                })
+              );
+              const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
+                ufuzzy(config)
+              );
+              const fuzzySingleError = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraMode: 1,
+                  ...config,
+                })
+              );
+              const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraMode: 1,
+                  ...config,
+                })
+              );
 
-                function inputEvent() {
-                  signals.createRoot((_dispose) => {
-                    const needle = /** @type {string} */ (
-                      elements.searchInput.value
+              /** @type {VoidFunction | undefined} */
+              let dispose;
+
+              function inputEvent() {
+                signals.createRoot((_dispose) => {
+                  const needle = /** @type {string} */ (
+                    elements.searchInput.value
+                  );
+
+                  dispose?.();
+
+                  dispose = _dispose;
+
+                  elements.searchResults.scrollTo({
+                    top: 0,
+                  });
+
+                  if (!needle) {
+                    elements.searchResults.innerHTML = "";
+                    return;
+                  }
+
+                  const outOfOrder = 5;
+                  const infoThresh = 5_000;
+
+                  let result = fuzzyMultiInsert?.search(
+                    haystack,
+                    needle,
+                    undefined,
+                    infoThresh,
+                  );
+
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsert?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
                     );
+                  }
 
-                    dispose?.();
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzySingleError?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
 
-                    dispose = _dispose;
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzySingleErrorFuzzier?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
 
-                    elements.searchResults.scrollTo({
-                      top: 0,
-                    });
-
-                    if (!needle) {
-                      elements.searchResults.innerHTML = "";
-                      return;
-                    }
-
-                    const outOfOrder = 5;
-                    const infoThresh = 5_000;
-
-                    let result = fuzzyMultiInsert?.search(
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsertFuzzier?.search(
                       haystack,
                       needle,
                       undefined,
                       infoThresh,
                     );
+                  }
 
-                    if (!result?.[0]?.length || !result?.[1]) {
-                      result = fuzzyMultiInsert?.search(
-                        haystack,
-                        needle,
-                        outOfOrder,
-                        infoThresh,
-                      );
-                    }
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsertFuzzier?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
 
-                    if (!result?.[0]?.length || !result?.[1]) {
-                      result = fuzzySingleError?.search(
-                        haystack,
-                        needle,
-                        outOfOrder,
-                        infoThresh,
-                      );
-                    }
+                  elements.searchResults.innerHTML = "";
 
-                    if (!result?.[0]?.length || !result?.[1]) {
-                      result = fuzzySingleErrorFuzzier?.search(
-                        haystack,
-                        needle,
-                        outOfOrder,
-                        infoThresh,
-                      );
-                    }
+                  const list = computeResultPage(result, 0);
 
-                    if (!result?.[0]?.length || !result?.[1]) {
-                      result = fuzzyMultiInsertFuzzier?.search(
-                        haystack,
-                        needle,
-                        undefined,
-                        infoThresh,
-                      );
-                    }
+                  list.forEach(({ option, title }) => {
+                    const li = window.document.createElement("li");
+                    elements.searchResults.appendChild(li);
 
-                    if (!result?.[0]?.length || !result?.[1]) {
-                      result = fuzzyMultiInsertFuzzier?.search(
-                        haystack,
-                        needle,
-                        outOfOrder,
-                        infoThresh,
-                      );
-                    }
-
-                    elements.searchResults.innerHTML = "";
-
-                    const list = computeResultPage(result, 0);
-
-                    list.forEach(({ option, title }) => {
-                      const li = window.document.createElement("li");
-                      elements.searchResults.appendChild(li);
-
-                      const element = options.createOptionElement({
-                        option,
-                        frame: "search",
-                        name: title,
-                        qrcode,
-                      });
-
-                      if (element) {
-                        li.append(element);
-                      }
+                    const element = options.createOptionElement({
+                      option,
+                      frame: "search",
+                      name: title,
+                      qrcode,
                     });
+
+                    if (element) {
+                      li.append(element);
+                    }
                   });
-                }
+                });
+              }
 
-                if (elements.searchInput.value) {
-                  inputEvent();
-                }
+              if (elements.searchInput.value) {
+                inputEvent();
+              }
 
-                elements.searchInput.addEventListener("input", inputEvent);
-              });
-            }
-            utils.dom.onFirstIntersection(elements.search, initSearchFrame);
-          }
-          initSearch();
+              elements.searchInput.addEventListener("input", inputEvent);
+            });
+          });
 
           function initShare() {
             const shareDiv = utils.dom.getElementById("share-div");

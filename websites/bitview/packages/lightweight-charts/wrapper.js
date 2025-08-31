@@ -404,9 +404,6 @@ function createChartElement({
                 ({ _indexes, values }) => {
                   if (!_indexes?.length || !values?.length) return;
 
-                  const consoleTimeLabel = `${vecId}-time`;
-                  console.time(consoleTimeLabel);
-
                   const indexes = /** @type {number[]} */ (_indexes);
 
                   let length = Math.min(indexes.length, values.length);
@@ -500,8 +497,6 @@ function createChartElement({
                     index,
                     unit,
                   });
-
-                  console.timeEnd(consoleTimeLabel);
                 },
               );
             } else {
@@ -873,7 +868,7 @@ function createLegend({ signals, utils }) {
         inputId: utils.stringToId(`legend-${series.id}`),
         inputName: utils.stringToId(`selected-${series.id}`),
         inputValue: "value",
-        labelTitle: "Click to toggle",
+        title: "Click to toggle",
         inputChecked: series.active(),
         onClick: () => {
           series.active.set(input.checked);
