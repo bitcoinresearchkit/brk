@@ -4,6 +4,8 @@
 
 `brk_server` provides a high-performance HTTP server that exposes BRK's indexed blockchain data and computed analytics through a comprehensive REST API. It offers multiple output formats, intelligent caching, compression, and optional web interface serving.
 
+URL: [`https://bitview.space/api`](https://bitview.space/api)
+
 ## What it provides
 
 - **REST API**: Vector-based data access with flexible querying and pagination
@@ -60,26 +62,26 @@ server.serve(true).await?;
 
 ```bash
 # Latest 100 price values
-curl "http://brekit.org/api/vecs/date-to-close?from=-100"
+curl "https://bitview.space/api/vecs/date-to-close?from=-100"
 
 # First 50 difficulty values as CSV
-curl "http://brekit.org/api/vecs/height-to-difficulty?count=50&format=csv"
+curl "https://bitview.space/api/vecs/height-to-difficulty?count=50&format=csv"
 
 # Range from block 800,000 to 800,100
-curl "https://brekit.org/api/vecs/height-to-timestamp?from=800000&to=800100"
+curl "https://bitview.space/api/vecs/height-to-timestamp?from=800000&to=800100"
 ```
 
 #### Multi-Vector Queries
 
 ```bash
 # Multiple price metrics for last 30 days
-curl "http://brekit.org/api/vecs/query?index=date&ids=open,high,low,close&from=-30&format=csv"
+curl "https://bitview.space/api/vecs/query?index=date&ids=open,high,low,close&from=-30&format=csv"
 
 # Block statistics for specific range
-curl "https://brekit.org/api/vecs/query?index=height&ids=size,weight,tx_count,fee_sum&from=800000&count=100"
+curl "https://bitview.space/api/vecs/query?index=height&ids=size,weight,tx_count,fee_sum&from=800000&count=100"
 
 # Weekly analytics as JSON matrix
-curl "https://brekit.org/api/vecs/query?index=week&ids=close,difficulty&from=-52"
+curl "https://bitview.space/api/vecs/query?index=week&ids=close,difficulty&from=-52"
 ```
 
 ## API Reference
