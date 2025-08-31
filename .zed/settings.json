@@ -1,0 +1,20 @@
+{
+  "file_scan_exclusions": [
+    // default
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    // custom
+    "**/lean-qr/*/index.mjs",
+    "uFuzzy.mjs",
+    "lightweight-charts.standalone.production.mjs",
+    "**/modern-screenshot/*/index.mjs",
+    "**/solidjs-signals/*/dist/prod.js"
+  ]
+}
