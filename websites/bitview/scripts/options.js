@@ -3205,7 +3205,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         }),
                         createBaseSeries({
                           key: `price_${key}_ago`,
-                          name: `lump sum price`,
+                          name: `lump sum`,
                           color: colors.cyan,
                         }),
                       ],
