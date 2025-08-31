@@ -50,7 +50,6 @@
  * @property {string} name
  *
  * @typedef {Object} ProcessedOptionAddons
- * @property {string} id
  * @property {string} title
  * @property {string[]} path
  *
@@ -110,7 +109,6 @@
  * @property {PartialOptionsTree} tree
  *
  * @typedef {Object} OptionsGroup
- * @property {string} id
  * @property {string} name
  * @property {OptionsTree} tree
  *
@@ -3094,7 +3092,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     type: "Baseline",
                   }),
                   createPriceLine({
-                    unit: "performance",
+                    unit: "percentage",
                   }),
                   ...(`${key}_cagr` in vecIdToIndexes
                     ? [
@@ -3104,7 +3102,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           type: "Baseline",
                         }),
                         createPriceLine({
-                          unit: "cagr",
+                          unit: "percentage",
                         }),
                       ]
                     : []),
@@ -3181,7 +3179,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           type: "Baseline",
                         }),
                         createPriceLine({
-                          unit: "performance",
+                          unit: "percentage",
                         }),
                       ],
                     }),
@@ -3218,24 +3216,27 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
                         }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}_dca_cagr`,
-                          title: "dca",
-                          type: "Baseline",
-                          colors: [colors.yellow, colors.pink],
-                        }),
+
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_returns`,
                           title: "lump sum",
                           type: "Baseline",
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}_cagr`,
-                          title: "lump sum",
+                          key: `${key}_dca_cagr`,
+                          title: "dca cagr",
                           type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                          defaultActive: false,
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}_cagr`,
+                          title: "lump sum cagr",
+                          type: "Baseline",
+                          defaultActive: false,
                         }),
                         createPriceLine({
-                          unit: "performance",
+                          unit: "percentage",
                         }),
                       ],
                     }),
@@ -3265,7 +3266,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       top: [
                         createBaseSeries({
                           key: `dca_class_${year}_avg_price`,
-                          name: `avg. price`,
+                          name: "cost basis",
                           color,
                         }),
                       ],
@@ -3276,7 +3277,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           type: "Baseline",
                         }),
                         createPriceLine({
-                          unit: "performance",
+                          unit: "percentage",
                         }),
                       ],
                     }),
@@ -3418,6 +3419,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   key: "difficulty",
                   name: "Value",
                 }),
+                createBaseSeries({
+                  key: "difficultyepoch",
+                  name: "Epoch",
+                }),
               ],
             },
             {
@@ -3465,16 +3470,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     }),
                   ],
                 },
-              ],
-            },
-            {
-              name: "Difficulty Epoch",
-              title: "Difficulty Epoch",
-              bottom: [
-                createBaseSeries({
-                  key: "difficultyepoch",
-                  name: "Epoch",
-                }),
               ],
             },
             {
@@ -4159,8 +4154,9 @@ export function initOptions({
 }) {
   const LS_SELECTED_KEY = `selected_id`;
 
-  const urlSelected = utils.url.pathnameToSelectedId();
-  const savedSelectedId = utils.storage.read(LS_SELECTED_KEY);
+  const urlPath_ = window.document.location.pathname.substring(1).split("/");
+  const urlPath = urlPath_.length ? urlPath_ : undefined;
+  const savedPath = utils.storage.read(LS_SELECTED_KEY)?.split("/");
 
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
@@ -4170,21 +4166,12 @@ export function initOptions({
   /** @type {Option[]} */
   const list = [];
 
-  /** @type {HTMLDetailsElement[]} */
-  const detailsList = [];
-
-  const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null),
-  );
-
-  /** @type {string[] | undefined} */
-  const optionsIds = env.localhost ? [] : undefined;
+  const parent = signals.createSignal(/** @type {HTMLElement | null} */ (null));
 
   /**
    * @param {AnyFetchedSeriesBlueprint[]} [arr]
-   * @param {string} id
    */
-  function arrayToRecord(id, arr = []) {
+  function arrayToRecord(arr = []) {
     return (arr || []).reduce((record, blueprint) => {
       if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
         throw Error(`${blueprint.key} not recognized`);
@@ -4202,16 +4189,16 @@ export function initOptions({
    * @param {string} args.frame
    * @param {Signal<string | null>} args.qrcode
    * @param {string} [args.name]
-   * @param {string} [args.id]
    */
-  function createOptionElement({ option, frame, name, id, qrcode }) {
+  function createOptionElement({ option, frame, name, qrcode }) {
+    const title = option.title;
     if (option.kind === "url") {
       const href = option.url();
 
       if (option.qrcode) {
         return utils.dom.createButtonElement({
           inside: option.name,
-          title: option.title,
+          title,
           onClick: () => {
             qrcode.set(option.url);
           },
@@ -4221,52 +4208,31 @@ export function initOptions({
           href,
           blank: true,
           text: option.name,
+          title,
         });
       }
     } else {
-      const { input, label } = utils.dom.createLabeledInput({
-        inputId: `${option.id}-${frame}${id || ""}-selector`,
-        inputValue: option.id,
-        inputName: `option_${frame}${id || ""}`,
-        labelTitle: option.title,
-        onClick: () => {
-          selected.set(option);
-        },
-        type: "radio",
-      });
-
-      const anchor = utils.dom.createAnchorElement({
-        href: `/${option.id}`,
+      return utils.dom.createAnchorElement({
+        href: `/${option.path.join("/")}`,
+        title,
         text: name || option.name,
-        onClick: () => {},
+        onClick: () => {
+          selected.set(() => option);
+        },
       });
-
-      label.append(anchor);
-
-      function createCheckEffect() {
-        signals.createEffect(selected, (selected) => {
-          if (selected?.id === option.id) {
-            input.checked = true;
-            utils.storage.write(LS_SELECTED_KEY, option.id);
-          } else if (input.checked) {
-            input.checked = false;
-          }
-        });
-      }
-
-      createCheckEffect();
-
-      return label;
     }
   }
 
+  /** @type {Option | undefined} */
+  let savedOption;
+
   /**
    * @param {PartialOptionsTree} partialTree
-   * @param {Accessor<HTMLDivElement | HTMLDetailsElement | null>} parent
-   * @param {string[] | undefined} path
+   * @param {Accessor<HTMLElement | null>} parent
+   * @param {string[] | undefined} parentPath
    * @returns {Accessor<number>}
    */
-  function recursiveProcessPartialTree(partialTree, parent, path = undefined) {
+  function recursiveProcessPartialTree(partialTree, parent, parentPath = []) {
     /** @type {Accessor<number>[]} */
     const listForSum = [];
 
@@ -4311,29 +4277,21 @@ export function initOptions({
       }, /** @type {HTMLLIElement | null} */ (null));
 
       if ("tree" in anyPartial) {
-        const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`,
-        );
-
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
-        const groupAddons = {
-          id: folderId,
-        };
+        const groupAddons = {};
 
         Object.assign(anyPartial, groupAddons);
-
-        optionsIds?.push(groupAddons.id);
-
-        const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
           /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
+        const serName = utils.stringToId(anyPartial.name);
+
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath],
+          [...parentPath, serName],
         );
 
         listForSum.push(childOptionsCount);
@@ -4345,7 +4303,7 @@ export function initOptions({
           }
 
           signals.createEffect(selected, (selected) => {
-            if (selected.path.includes(thisPath)) {
+            if (selected.path.includes(serName)) {
               li.dataset.highlight = "";
             } else {
               delete li.dataset.highlight;
@@ -4353,8 +4311,7 @@ export function initOptions({
           });
 
           const details = window.document.createElement("details");
-          details.id = folderId;
-          detailsList.push(details);
+          details.dataset.name = serName;
           li.appendChild(details);
 
           const summary = window.document.createElement("summary");
@@ -4389,62 +4346,68 @@ export function initOptions({
         /** @type {Option} */
         let option;
 
+        const name = anyPartial.name;
+        const path = [...parentPath, utils.stringToId(anyPartial.name)];
+
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
           option = /** @satisfies {ExplorerOption} */ ({
             kind: anyPartial.kind,
-            id: anyPartial.kind,
-            name: anyPartial.name,
-            path: path || [],
+            name,
+            path,
             title: anyPartial.title,
           });
         } else if ("kind" in anyPartial && anyPartial.kind === "table") {
           option = /** @satisfies {TableOption} */ ({
             kind: anyPartial.kind,
-            id: anyPartial.kind,
-            name: anyPartial.name,
-            path: path || [],
+            name,
+            path,
             title: anyPartial.title,
           });
         } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
           option = /** @satisfies {SimulationOption} */ ({
             kind: anyPartial.kind,
-            id: anyPartial.kind,
-            name: anyPartial.name,
-            path: path || [],
+            name,
+            path,
             title: anyPartial.title,
           });
         } else if ("url" in anyPartial) {
           option = /** @satisfies {UrlOption} */ ({
             kind: "url",
-            id: `${utils.stringToId(anyPartial.name)}-url`,
-            name: anyPartial.name,
-            path: path || [],
-            title: anyPartial.name,
+            name,
+            path,
+            title: name,
             qrcode: !!anyPartial.qrcode,
             url: anyPartial.url,
           });
         } else {
           const title = anyPartial.title || anyPartial.name;
-          const id = `chart-${utils.stringToId(title)}`;
           option = /** @satisfies {ChartOption} */ ({
             kind: "chart",
-            id,
-            name: anyPartial.name,
+            name,
             title,
-            path: path || [],
-            top: arrayToRecord(id, anyPartial.top),
-            bottom: arrayToRecord(id, anyPartial.bottom),
+            path,
+            top: arrayToRecord(anyPartial.top),
+            bottom: arrayToRecord(anyPartial.bottom),
           });
         }
 
-        if (urlSelected === option.id) {
-          selected.set(option);
-        } else if (!selected() && savedSelectedId === option.id) {
-          selected.set(option);
-        }
-
         list.push(option);
-        optionsIds?.push(option.id);
+
+        if (urlPath) {
+          const sameAsURLPath =
+            urlPath.length === path.length &&
+            urlPath.every((val, i) => val === path[i]);
+          if (sameAsURLPath) {
+            selected.set(option);
+          }
+        } else if (savedPath) {
+          const sameAsSavedPath =
+            savedPath.length === path.length &&
+            savedPath.every((val, i) => val === path[i]);
+          if (sameAsSavedPath) {
+            savedOption = option;
+          }
+        }
 
         signals.createEffect(li, (li) => {
           if (!li) {
@@ -4476,101 +4439,22 @@ export function initOptions({
       listForSum.reduce((acc, s) => acc + s(), 0),
     );
   }
-  recursiveProcessPartialTree(partialOptions, treeElement);
+  recursiveProcessPartialTree(partialOptions, parent);
 
-  function setDefaultSelectedIfNeeded() {
-    if (!selected()) {
-      const firstChartOption = list.find((option) => option.kind === "chart");
-      if (firstChartOption) {
-        selected.set(firstChartOption);
-      }
+  if (!selected()) {
+    const option =
+      savedOption || list.find((option) => option.kind === "chart");
+    if (option) {
+      selected.set(option);
     }
-  }
-  setDefaultSelectedIfNeeded();
-
-  if (env.localhost) {
-    function checkUniqueIds() {
-      if (!optionsIds) {
-        throw "Should be set";
-      } else if (optionsIds.length !== new Set(optionsIds).size) {
-        /** @type {Map<string, number>} */
-        const m = new Map();
-
-        optionsIds.forEach((id) => {
-          m.set(id, (m.get(id) || 0) + 1);
-        });
-
-        console.log(
-          [...m.entries()]
-            .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key),
-        );
-
-        throw Error("ID duplicate");
-      }
-    }
-    checkUniqueIds();
   }
 
   return {
     selected,
     list,
-    details: detailsList,
     tree: /** @type {OptionsTree} */ (partialOptions),
-    treeElement,
+    parent,
     createOptionElement,
   };
 }
 /** @typedef {ReturnType<typeof initOptions>} Options */
-
-//   const size = /** @type {const} */ ([
-//     {
-//       key: "plankton",
-//       name: "Plankton",
-//       size: "1 sat to 0.1 BTC",
-//     },
-//     {
-//       key: "shrimp",
-//       name: "Shrimp",
-//       size: "0.1 sat to 1 BTC",
-//     },
-//     { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
-//     { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
-//     { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
-//     { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
-//     {
-//       key: "humpback",
-//       name: "Humpback",
-//       size: "10 000 BTC to 100 000 BTC",
-//     },
-//     {
-//       key: "megalodon",
-//       name: "Megalodon",
-//       size: "More than 100 000 BTC",
-//     },
-//   ]);
-
-//   const type = /** @type {const} */ ([
-//     { key: "p2pk", name: "P2PK" },
-//     { key: "p2pkh", name: "P2PKH" },
-//     { key: "p2sh", name: "P2SH" },
-//     { key: "p2wpkh", name: "P2WPKH" },
-//     { key: "p2wsh", name: "P2WSH" },
-//     { key: "p2tr", name: "P2TR" },
-//   ]);
-
-//   const address = /** @type {const} */ ([...size, ...type]);
-
-//   const liquidities = /** @type {const} */ ([
-//     {
-//       key: "illiquid",
-//       id: "illiquid",
-//       name: "Illiquid",
-//     },
-//     { key: "liquid", id: "liquid", name: "Liquid" },
-//     {
-//       key: "highly_liquid",
-//       id: "highly_liquid",
-//       name: "Highly Liquid",
-//     },
-//   ]);
