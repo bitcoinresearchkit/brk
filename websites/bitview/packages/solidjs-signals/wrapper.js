@@ -97,9 +97,30 @@ const signals = {
           }-${paramKey}`,
       );
 
+      /** @type { ((this: Window, ev: PopStateEvent) => any) | undefined} */
+      let popstateCallback;
+
       let serialized = /** @type {string | null} */ (null);
       if (options.save.serializeParam !== false) {
         serialized = new URLSearchParams(window.location.search).get(paramKey);
+
+        // popstateCallback =
+        //   /** @type {(this: Window, ev: PopStateEvent) => any} */ (
+        //     (_) => {
+        //       serialized = new URLSearchParams(window.location.search).get(
+        //         paramKey,
+        //       );
+        //       set(() =>
+        //         serialized ? save.deserialize(serialized) : initialValue,
+        //       );
+        //     }
+        //   );
+        // if (!popstateCallback) throw "Unreachable";
+        // window.addEventListener("popstate", popstateCallback);
+        // signals.onCleanup(() => {
+        //   if (popstateCallback)
+        //     window.removeEventListener("popstate", popstateCallback);
+        // });
       }
       if (serialized === null) {
         try {
