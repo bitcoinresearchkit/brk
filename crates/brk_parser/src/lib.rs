@@ -35,14 +35,14 @@ const BOUND_CAP: usize = 50;
 
 pub struct Parser {
     blocks_dir: PathBuf,
-    outputs_dir: PathBuf,
+    outputs_dir: Option<PathBuf>,
     rpc: &'static bitcoincore_rpc::Client,
 }
 
 impl Parser {
     pub fn new(
         blocks_dir: PathBuf,
-        outputs_dir: PathBuf,
+        outputs_dir: Option<PathBuf>,
         rpc: &'static bitcoincore_rpc::Client,
     ) -> Self {
         Self {
@@ -79,8 +79,11 @@ impl Parser {
 
         let blk_index_to_blk_path = BlkIndexToBlkPath::scan(blocks_dir);
 
-        let (mut blk_index_to_blk_recap, blk_index) =
-            BlkIndexToBlkRecap::import(&self.outputs_dir, &blk_index_to_blk_path, start);
+        let (mut blk_index_to_blk_recap, blk_index) = BlkIndexToBlkRecap::import(
+            self.outputs_dir.as_ref().unwrap(),
+            &blk_index_to_blk_path,
+            start,
+        );
 
         let xor_bytes = XORBytes::from(blocks_dir);
 

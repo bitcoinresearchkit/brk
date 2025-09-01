@@ -21,7 +21,7 @@ fn main() {
     // let start = None;
     // let end = None;
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), brk_dir, rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), Some(brk_dir), rpc);
 
     // parser
     //     .parse(start, end)

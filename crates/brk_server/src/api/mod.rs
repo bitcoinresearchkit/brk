@@ -124,5 +124,9 @@ impl ApiRoutes for Router<AppState> {
                 )
             }),
         )
+        .route(
+            "/discord",
+            get(|| async { Redirect::temporary("https://discord.com/invite/HaR3wpH3nr") }),
+        )
     }
 }
