@@ -26,7 +26,7 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), brk_dir.to_path_buf(), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), Some(brk_dir.to_path_buf()), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 

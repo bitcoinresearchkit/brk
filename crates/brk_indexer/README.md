@@ -25,7 +25,7 @@
 
 **Key-Value Storage (lookups):**
 - Block hash prefixes → heights
-- Transaction ID prefixes → transaction indices  
+- Transaction ID prefixes → transaction indices
 - Address byte hashes → type indices
 - Fast point queries by hash or address
 
@@ -60,7 +60,7 @@ let rpc = Box::leak(Box::new(Client::new(
 // Create parser for Bitcoin Core block files
 let parser = Parser::new(
     Path::new("~/.bitcoin/blocks").to_path_buf(),
-    Path::new("./brk_data").to_path_buf(),
+    Some(Path::new("./brk_data").to_path_buf()),
     rpc
 );
 
@@ -85,19 +85,19 @@ use std::thread::sleep;
 // Continuous indexing loop for real-time updates
 loop {
     let start_time = Instant::now();
-    
+
     // Index new blocks
     let indexes = indexer.index(&parser, rpc, &exit, true)?;
-    
-    println!("Indexed to height {} in {:?}", 
+
+    println!("Indexed to height {} in {:?}",
              indexes.height, start_time.elapsed());
-    
+
     // Check for exit signal
     if exit.is_signaled() {
         println!("Graceful shutdown requested");
         break;
     }
-    
+
     // Wait before next update cycle
     sleep(Duration::from_secs(5 * 60));
 }

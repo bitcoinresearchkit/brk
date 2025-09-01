@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(blocks_dir, outputs_dir.to_path_buf(), rpc);
+    let parser = Parser::new(blocks_dir, Some(outputs_dir.to_path_buf()), rpc);
 
     fs::create_dir_all(outputs_dir)?;
 

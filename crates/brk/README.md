@@ -64,7 +64,7 @@ brk = { version = "0.0.88", features = ["parser", "indexer", "computer"] }
 use brk::{parser, indexer, computer};
 
 // Core data pipeline only
-let parser = parser::Parser::new(blocks_dir, output_dir, rpc);
+let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
 let mut indexer = indexer::Indexer::forced_import(output_dir)?;
 let mut computer = computer::Computer::forced_import(output_dir, &indexer, None)?;
 ```
@@ -81,7 +81,7 @@ use brk::{structs, parser};
 
 // Just parsing and types
 let height = structs::Height::new(800_000);
-let parser = parser::Parser::new(blocks_dir, output_dir, rpc);
+let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
 ```
 
 ## Feature Flags
@@ -113,7 +113,7 @@ use brk::*;
 // Full data pipeline setup
 let config = cli::Config::load()?;
 let rpc = /* Bitcoin Core RPC client */;
-let parser = parser::Parser::new(config.blocks_dir, config.output_dir, rpc);
+let parser = parser::Parser::new(config.blocks_dir, Some(config.output_dir), rpc);
 let mut indexer = indexer::Indexer::forced_import(&config.output_dir)?;
 let mut computer = computer::Computer::forced_import(&config.output_dir, &indexer, None)?;
 let interface = interface::Interface::build(&indexer, &computer);
@@ -152,15 +152,15 @@ use brk::{structs, parser, error};
 
 // Custom application with BRK components
 fn analyze_blocks() -> error::Result<()> {
-    let parser = parser::Parser::new(blocks_dir, output_dir, rpc);
-    
+    let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
+
     parser.parse(None, None)
         .iter()
         .take(1000)  // First 1000 blocks
         .for_each(|(height, block, hash)| {
             println!("Block {}: {} transactions", height, block.txdata.len());
         });
-    
+
     Ok(())
 }
 ```

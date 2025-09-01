@@ -8,7 +8,7 @@
 
 - **Sequential block access**: Blocks delivered in height order (0, 1, 2, ...) regardless of physical file storage
 - **Fork filtering**: Automatically excludes orphaned blocks using Bitcoin Core RPC verification
-- **XOR encryption support**: Transparently handles XOR-encrypted block files 
+- **XOR encryption support**: Transparently handles XOR-encrypted block files
 - **High performance**: Multi-threaded parsing with ~500MB peak memory usage
 - **State persistence**: Caches parsing state for fast restarts
 
@@ -47,7 +47,7 @@ let rpc = Box::leak(Box::new(Client::new(
 // Create parser
 let parser = Parser::new(
     Path::new("~/.bitcoin/blocks").to_path_buf(),
-    Path::new("./output").to_path_buf(),
+    Some(Path::new("./output").to_path_buf()),
     rpc,
 );
 
@@ -90,7 +90,7 @@ use bitcoin::Block;
 fn analyze_blockchain(parser: &Parser) {
     let mut total_transactions = 0;
     let mut total_outputs = 0;
-    
+
     parser.parse(None, None)
         .iter()
         .for_each(|(height, block, _hash)| {
@@ -98,12 +98,12 @@ fn analyze_blockchain(parser: &Parser) {
             total_outputs += block.txdata.iter()
                 .map(|tx| tx.output.len())
                 .sum::<usize>();
-                
+
             if height.0 % 10000 == 0 {
                 println!("Processed {} blocks", height);
             }
         });
-        
+
     println!("Total transactions: {}", total_transactions);
     println!("Total outputs: {}", total_outputs);
 }
