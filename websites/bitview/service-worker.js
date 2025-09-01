@@ -50,7 +50,15 @@ sw.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
 
   // 1) Bypass API calls & non-GETs
-  if (req.method !== "GET" || url.pathname.startsWith("/api")) {
+  if (
+    req.method !== "GET" ||
+    url.pathname.startsWith("/api") ||
+    url.pathname === "/discord" ||
+    url.pathname === "/github" ||
+    url.pathname === "/mcp" ||
+    url.pathname === "/nostr" ||
+    url.pathname === "/status"
+  ) {
     return; // let the browser handle it
   }
 
