@@ -11,6 +11,7 @@ use axum::{
     body::{Body, Bytes},
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
+    response::Redirect,
     routing::get,
     serve,
 };
@@ -47,7 +48,7 @@ impl Server {
         Self(AppState {
             interface: Box::leak(Box::new(interface)),
             path: files_path,
-            cache: Arc::new(Cache::new(10_000)),
+            cache: Arc::new(Cache::new(5_000)),
         })
     }
 
@@ -98,6 +99,33 @@ impl Server {
             .add_files_routes(state.path.as_ref())
             .add_mcp_routes(state.interface, mcp)
             .route("/version", get(Json(VERSION)))
+            .route(
+                "/health",
+                get(Json(serde_json::json!({
+                    "status": "healthy",
+                    "service": "brk-server",
+                    "timestamp": jiff::Timestamp::now().to_string()
+                }))),
+            )
+            .route(
+                "/discord",
+                get(Redirect::temporary("https://discord.gg/WACpShCB7M")),
+            )
+            .route("/crates", get(Redirect::temporary("https://crates.io/crates/brk")))
+            .route(
+                "/status",
+                get(Redirect::temporary("https://status.bitview.space")),
+            )
+            .route("/github", get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk")))
+            .route(
+                "/cli",
+                get(Redirect::temporary("https://crates.io/crates/brk_cli")),
+            )
+            .route(
+                "/hosting",
+                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service")),
+            )
+            .route("/nostr", get(Redirect::temporary("https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44")))
             .with_state(state)
             .layer(compression_layer)
             .layer(response_uri_layer)

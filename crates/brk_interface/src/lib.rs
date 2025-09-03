@@ -3,9 +3,13 @@
 use std::collections::BTreeMap;
 
 use brk_computer::Computer;
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_structs::Height;
+use nucleo_matcher::{
+    Config, Matcher,
+    pattern::{Atom, AtomKind, CaseMatching, Normalization, Pattern},
+};
 use tabled::settings::Style;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
@@ -53,38 +57,65 @@ impl<'a> Interface<'a> {
         Height::from(self.indexer.vecs.height_to_blockhash.stamp())
     }
 
-    pub fn search(&self, params: &Params) -> Vec<(String, &&dyn AnyCollectableVec)> {
-        let tuples = params
-            .ids
-            .iter()
-            .flat_map(|s| {
-                s.to_lowercase()
-                    .replace("-", "_")
-                    .split_whitespace()
-                    .flat_map(|s| {
-                        s.split(',')
-                            .flat_map(|s| s.split('+').map(|s| s.to_string()))
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .map(|mut id| {
-                let mut res = self.vecs.id_to_index_to_vec.get(id.as_str());
-                if res.is_none()
-                    && let Ok(index) = Index::try_from(id.as_str())
-                {
-                    id = index.possible_values().last().unwrap().to_string();
-                    res = self.vecs.id_to_index_to_vec.get(id.as_str())
-                }
-                (id, res)
-            })
-            .filter(|(_, opt)| opt.is_some())
-            .map(|(id, vec)| (id, vec.unwrap()))
-            .collect::<Vec<_>>();
+    pub fn search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
+        let ids_to_vec = self
+            .vecs
+            .index_to_id_to_vec
+            .get(&params.index)
+            .ok_or(Error::String(format!(
+                "Index \"{}\" isn't a valid index",
+                params.index
+            )))?;
 
-        tuples
-            .iter()
-            .flat_map(|(str, i_to_v)| i_to_v.get(&params.index).map(|vec| (str.to_owned(), vec)))
-            .collect::<Vec<_>>()
+        let maybe_ids = params.ids.iter().flat_map(|s| {
+            s.to_lowercase()
+                .replace("-", "_")
+                .split_whitespace()
+                .flat_map(|s| {
+                    s.split(',')
+                        .flat_map(|s| s.split('+').map(|s| s.to_string()))
+                })
+                .collect::<Vec<_>>()
+        });
+
+        maybe_ids
+            .map(|id| {
+                let vec = ids_to_vec.get(id.as_str()).ok_or_else(|| {
+                    let mut message = format!(
+                        "No vec named \"{}\" indexed by \"{}\" found.\n",
+                        // tell if id found in another index
+                        id,
+                        params.index
+                    );
+
+                    let mut matcher = Matcher::new(Config::DEFAULT);
+
+                    let matches = Pattern::new(
+                        id.as_str(),
+                        CaseMatching::Ignore,
+                        Normalization::Smart,
+                        AtomKind::Fuzzy,
+                    )
+                    .match_list(ids_to_vec.keys(), &mut matcher)
+                    .into_iter()
+                    .take(10)
+                    .map(|(s, _)| s)
+                    .collect::<Vec<_>>();
+
+                    if !matches.is_empty() {
+                        message +=
+                            &format!("\nMaybe you meant one of the following: {matches:#?} ?\n");
+                    }
+
+                    if let Some(index_to_vec) = self.id_to_index_to_vec().get(id.as_str()) {
+                        message += &format!("\nBut there is a vec named {id} which supports the following indexes: {:#?}\n", index_to_vec.keys());
+                    }
+
+                    Error::String(message)
+                });
+                vec.map(|vec| (id, vec))
+            })
+            .collect::<Result<Vec<_>>>()
     }
 
     pub fn format(
@@ -183,7 +214,7 @@ impl<'a> Interface<'a> {
     }
 
     pub fn search_and_format(&self, params: Params) -> Result<Output> {
-        self.format(self.search(&params), &params.rest)
+        self.format(self.search(&params)?, &params.rest)
     }
 
     pub fn id_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {

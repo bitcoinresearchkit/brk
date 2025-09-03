@@ -2,11 +2,11 @@ use std::fmt::{self, Debug};
 
 use brk_error::Error;
 use brk_structs::{
-    DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, InputIndex,
-    MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
-    P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, Printable, QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex,
-    WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
+    Height, InputIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, OutputIndex,
+    P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
+    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Printable,
+    QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -63,10 +63,14 @@ pub enum Index {
     WeekIndex,
     #[schemars(description = "Year index")]
     YearIndex,
+    #[schemars(description = "Loaded Address Index")]
+    LoadedAddressIndex,
+    #[schemars(description = "Empty Address Index")]
+    EmptyAddressIndex,
 }
 
 impl Index {
-    pub fn all() -> [Self; 25] {
+    pub fn all() -> [Self; 27] {
         [
             Self::DateIndex,
             Self::DecadeIndex,
@@ -93,6 +97,8 @@ impl Index {
             Self::UnknownOutputIndex,
             Self::WeekIndex,
             Self::YearIndex,
+            Self::LoadedAddressIndex,
+            Self::EmptyAddressIndex,
         ]
     }
 
@@ -123,6 +129,8 @@ impl Index {
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
             Self::WeekIndex => WeekIndex::to_possible_strings(),
             Self::YearIndex => YearIndex::to_possible_strings(),
+            Self::LoadedAddressIndex => LoadedAddressIndex::to_possible_strings(),
+            Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
         }
     }
 
@@ -185,6 +193,12 @@ impl TryFrom<&str> for Index {
             v if (Self::YearIndex).possible_values().contains(&v) => Self::YearIndex,
             v if (Self::UnknownOutputIndex).possible_values().contains(&v) => {
                 Self::UnknownOutputIndex
+            }
+            v if (Self::LoadedAddressIndex).possible_values().contains(&v) => {
+                Self::LoadedAddressIndex
+            }
+            v if (Self::EmptyAddressIndex).possible_values().contains(&v) => {
+                Self::EmptyAddressIndex
             }
             _ => return Err(Error::Str("Bad index")),
         })

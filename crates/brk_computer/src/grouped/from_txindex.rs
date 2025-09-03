@@ -447,7 +447,7 @@ impl ComputedVecsFromTxindex<Dollars> {
 
         let starting_index = self.height.starting_index(starting_indexes.height);
 
-        let mut close_iter = price.chainindexes_to_close.height.into_iter();
+        let mut close_iter = price.chainindexes_to_price_close.height.into_iter();
 
         (starting_index.unwrap_to_usize()..indexer.vecs.height_to_weight.len())
             .map(Height::from)

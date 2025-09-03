@@ -141,7 +141,7 @@ export function init({
       if (!t) return;
       from.set(t.from);
       to.set(t.to);
-    }),
+    }, 250),
   );
 
   elements.charts.append(fieldset);
@@ -241,7 +241,7 @@ export function init({
         break;
       }
       case /** @satisfies {DateIndex} */ (0): {
-        iseries.update(latest);
+        iseries.update(last);
         break;
       }
       default: {
@@ -277,7 +277,7 @@ export function init({
           iseries.update(last);
         } else {
           latest.time = time;
-          iseries.update(latest);
+          iseries.update(last);
         }
       }
     }
@@ -329,29 +329,32 @@ export function init({
           /** @type {Series | undefined} */
           let series;
 
+          console.log({ topUnit, topSeriesType });
+
           switch (topUnit) {
             case "USD": {
               switch (topSeriesType) {
+                case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    vecId: "ohlc",
+                    vecId: "price_ohlc",
                     name: "Price",
                     unit: topUnit,
                     setDataCallback: printLatest,
                     order: 0,
                   });
-
                   break;
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    vecId: "close",
+                    vecId: "price_close",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
                     setDataCallback: printLatest,
                     options: {
                       priceLineVisible: true,
+                      lastValueVisible: true,
                     },
                     order: 0,
                   });
@@ -361,6 +364,7 @@ export function init({
             }
             case "Sats": {
               switch (topSeriesType) {
+                case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
                     vecId: "ohlc_in_sats",
@@ -381,6 +385,7 @@ export function init({
                     setDataCallback: printLatest,
                     options: {
                       priceLineVisible: true,
+                      lastValueVisible: true,
                     },
                     order: 0,
                   });
@@ -395,7 +400,6 @@ export function init({
           seriesListTop[0]?.remove();
           seriesListTop[0] = series;
 
-          // setDataCallback insimport("./options").tead of hasData
           signals.createEffect(
             () => ({
               latest: webSockets.kraken1dCandle.latest(),

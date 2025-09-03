@@ -5,6 +5,7 @@
 target
 websites/dist
 vecid-to-indexes.js
+/ids.txt
 
 # Copies
 *\ copy*

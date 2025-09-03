@@ -23,46 +23,46 @@ const VERSION: Version = Version::ZERO;
 pub struct Vecs {
     db: Database,
 
-    pub height_to_ath: EagerVec<Height, Dollars>,
-    pub height_to_drawdown: EagerVec<Height, StoredF32>,
-    pub indexes_to_ath: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_drawdown: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_days_since_ath: ComputedVecsFromDateIndex<StoredU16>,
-    pub indexes_to_max_days_between_aths: ComputedVecsFromDateIndex<StoredU16>,
-    pub indexes_to_max_years_between_aths: ComputedVecsFromDateIndex<StoredF32>,
+    pub height_to_price_ath: EagerVec<Height, Dollars>,
+    pub height_to_price_drawdown: EagerVec<Height, StoredF32>,
+    pub indexes_to_price_ath: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_drawdown: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_days_since_price_ath: ComputedVecsFromDateIndex<StoredU16>,
+    pub indexes_to_max_days_between_price_aths: ComputedVecsFromDateIndex<StoredU16>,
+    pub indexes_to_max_years_between_price_aths: ComputedVecsFromDateIndex<StoredF32>,
 
-    pub indexes_to_1w_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_8d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_13d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_21d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_1m_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_34d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_55d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_89d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_144d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_200d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_1y_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_2y_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_200w_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_4y_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1w_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_8d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_13d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_21d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1m_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_34d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_55d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_89d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_144d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_200d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1y_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_2y_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_200w_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_4y_sma: ComputedRatioVecsFromDateIndex,
 
-    pub indexes_to_1w_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_8d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_13d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_21d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_1m_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_34d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_55d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_89d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_144d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_200d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_1y_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_2y_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_200w_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_4y_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1w_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_8d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_13d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_21d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1m_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_34d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_55d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_89d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_144d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_200d_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_1y_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_2y_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_200w_ema: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_price_4y_ema: ComputedRatioVecsFromDateIndex,
 
-    pub indexes_to_200d_sma_x2_4: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_200d_sma_x2_4: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_200d_sma_x0_8: ComputedVecsFromDateIndex<Dollars>,
 
     pub price_1d_ago: ComputedVecsFromDateIndex<Dollars>,
     pub price_1w_ago: ComputedVecsFromDateIndex<Dollars>,
@@ -78,19 +78,19 @@ pub struct Vecs {
     pub price_8y_ago: ComputedVecsFromDateIndex<Dollars>,
     pub price_10y_ago: ComputedVecsFromDateIndex<Dollars>,
 
-    pub _1d_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _1w_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _1m_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _3m_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _6m_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _1y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _2y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _3y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _4y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _5y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _6y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _8y_returns: ComputedVecsFromDateIndex<StoredF32>,
-    pub _10y_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _1d_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _1w_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _1m_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _3m_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _6m_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _1y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _2y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _3y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _4y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _5y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _6y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _8y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub _10y_price_returns: ComputedVecsFromDateIndex<StoredF32>,
     pub _2y_cagr: ComputedVecsFromDateIndex<StoredF32>,
     pub _3y_cagr: ComputedVecsFromDateIndex<StoredF32>,
     pub _4y_cagr: ComputedVecsFromDateIndex<StoredF32>,
@@ -185,383 +185,383 @@ impl Vecs {
         let db = Database::open(&parent.join("market"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
-        Ok(Self {
-            height_to_ath: EagerVec::forced_import_compressed(
+        let this = Self {
+            height_to_price_ath: EagerVec::forced_import_compressed(
                 &db,
-                "ath",
+                "price_ath",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_drawdown: EagerVec::forced_import_compressed(
+            height_to_price_drawdown: EagerVec::forced_import_compressed(
                 &db,
-                "drawdown",
+                "price_drawdown",
                 version + VERSION + Version::ZERO,
             )?,
-            indexes_to_ath: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_price_ath: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "ath",
+                "price_ath",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_drawdown: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_price_drawdown: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "drawdown",
+                "price_drawdown",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_days_since_ath: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_days_since_price_ath: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "days_since_ath",
+                "days_since_price_ath",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_max_days_between_aths: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_max_days_between_price_aths: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "max_days_between_aths",
+                "max_days_between_price_aths",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_max_years_between_aths: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_max_years_between_price_aths: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "max_years_between_aths",
+                "max_years_between_price_aths",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
-            indexes_to_1w_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_1w_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "1w_sma",
+                "price_1w_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_8d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_8d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "8d_sma",
+                "price_8d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_13d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_13d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "13d_sma",
+                "price_13d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_21d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_21d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "21d_sma",
+                "price_21d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_1m_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_1m_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "1m_sma",
+                "price_1m_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_34d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_34d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "34d_sma",
+                "price_34d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_55d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_55d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "55d_sma",
+                "price_55d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_89d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_89d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "89d_sma",
+                "price_89d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_144d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_144d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "144d_sma",
+                "price_144d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_200d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_200d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "200d_sma",
+                "price_200d_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_1y_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_1y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "1y_sma",
+                "price_1y_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_2y_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_2y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "2y_sma",
+                "price_2y_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_200w_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_200w_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "200w_sma",
+                "price_200w_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
-            indexes_to_4y_sma: ComputedRatioVecsFromDateIndex::forced_import(
+            indexes_to_price_4y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "4y_sma",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-
-            indexes_to_1w_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "1w_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_8d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "8d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_13d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "13d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_21d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "21d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_1m_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "1m_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_34d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "34d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_55d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "55d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_89d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "89d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_144d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "144d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_200d_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "200d_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_1y_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "1y_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_2y_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "2y_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_200w_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "200w_ema",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_4y_ema: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "4y_ema",
+                "price_4y_sma",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 true,
             )?,
 
-            _1d_returns: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_price_1w_ema: ComputedRatioVecsFromDateIndex::forced_import(
                 &db,
-                "1d_returns",
+                "price_1w_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_8d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_8d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_13d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_13d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_21d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_21d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_1m_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_1m_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_34d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_34d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_55d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_55d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_89d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_89d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_144d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_144d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_200d_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_200d_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_1y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_1y_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_2y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_2y_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_200w_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_200w_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+            indexes_to_price_4y_ema: ComputedRatioVecsFromDateIndex::forced_import(
+                &db,
+                "price_4y_ema",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                true,
+            )?,
+
+            _1d_price_returns: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "1d_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _1w_returns: ComputedVecsFromDateIndex::forced_import(
+            _1w_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "1w_returns",
+                "1w_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _1m_returns: ComputedVecsFromDateIndex::forced_import(
+            _1m_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "1m_returns",
+                "1m_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _3m_returns: ComputedVecsFromDateIndex::forced_import(
+            _3m_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "3m_returns",
+                "3m_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _6m_returns: ComputedVecsFromDateIndex::forced_import(
+            _6m_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "6m_returns",
+                "6m_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _1y_returns: ComputedVecsFromDateIndex::forced_import(
+            _1y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "1y_returns",
+                "1y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _2y_returns: ComputedVecsFromDateIndex::forced_import(
+            _2y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "2y_returns",
+                "2y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _3y_returns: ComputedVecsFromDateIndex::forced_import(
+            _3y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "3y_returns",
+                "3y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _4y_returns: ComputedVecsFromDateIndex::forced_import(
+            _4y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "4y_returns",
+                "4y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _5y_returns: ComputedVecsFromDateIndex::forced_import(
+            _5y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "5y_returns",
+                "5y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _6y_returns: ComputedVecsFromDateIndex::forced_import(
+            _6y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "6y_returns",
+                "6y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _8y_returns: ComputedVecsFromDateIndex::forced_import(
+            _8y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "8y_returns",
+                "8y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            _10y_returns: ComputedVecsFromDateIndex::forced_import(
+            _10y_price_returns: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "10y_returns",
+                "10y_price_returns",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -1340,17 +1340,17 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
 
-            indexes_to_200d_sma_x2_4: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_price_200d_sma_x2_4: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "200d_sma_x2_4",
+                "price_200d_sma_x2_4",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_price_200d_sma_x0_8: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "200d_sma_x0_8",
+                "price_200d_sma_x0_8",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -1358,7 +1358,16 @@ impl Vecs {
             )?,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     pub fn compute(
@@ -1382,19 +1391,19 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_ath.compute_max(
+        self.height_to_price_ath.compute_max(
             starting_indexes.height,
-            &price.chainindexes_to_high.height,
+            &price.chainindexes_to_price_high.height,
             exit,
         )?;
-        self.height_to_drawdown.compute_drawdown(
+        self.height_to_price_drawdown.compute_drawdown(
             starting_indexes.height,
-            &price.chainindexes_to_close.height,
-            &self.height_to_ath,
+            &price.chainindexes_to_price_close.height,
+            &self.height_to_price_ath,
             exit,
         )?;
 
-        self.indexes_to_ath.compute_all(
+        self.indexes_to_price_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1402,14 +1411,14 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_max(
                     starting_indexes.dateindex,
-                    price.timeindexes_to_high.dateindex.as_ref().unwrap(),
+                    price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
                     exit,
                 )?;
                 Ok(())
             },
         )?;
 
-        self.indexes_to_drawdown.compute_all(
+        self.indexes_to_price_drawdown.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1417,22 +1426,22 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_drawdown(
                     starting_indexes.dateindex,
-                    price.timeindexes_to_close.dateindex.as_ref().unwrap(),
-                    self.indexes_to_ath.dateindex.as_ref().unwrap(),
+                    price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    self.indexes_to_price_ath.dateindex.as_ref().unwrap(),
                     exit,
                 )?;
                 Ok(())
             },
         )?;
 
-        self.indexes_to_days_since_ath.compute_all(
+        self.indexes_to_days_since_price_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
                 let mut high_iter = price
-                    .timeindexes_to_high
+                    .timeindexes_to_price_high
                     .dateindex
                     .as_ref()
                     .unwrap()
@@ -1440,7 +1449,7 @@ impl Vecs {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_ath.dateindex.as_ref().unwrap(),
+                    self.indexes_to_price_ath.dateindex.as_ref().unwrap(),
                     |(i, ath, slf)| {
                         if prev.is_none() {
                             let i = i.unwrap_to_usize();
@@ -1464,7 +1473,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_max_days_between_aths.compute_all(
+        self.indexes_to_max_days_between_price_aths.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1473,7 +1482,10 @@ impl Vecs {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_days_since_ath.dateindex.as_ref().unwrap(),
+                    self.indexes_to_days_since_price_ath
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
                     |(i, days, slf)| {
                         if prev.is_none() {
                             let i = i.unwrap_to_usize();
@@ -1493,7 +1505,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_max_years_between_aths.compute_all(
+        self.indexes_to_max_years_between_price_aths.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1501,7 +1513,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_max_days_between_aths
+                    self.indexes_to_max_days_between_price_aths
                         .dateindex
                         .as_ref()
                         .unwrap(),
@@ -1513,52 +1525,72 @@ impl Vecs {
         )?;
 
         [
-            (1, &mut self.price_1d_ago, &mut self._1d_returns, None),
-            (7, &mut self.price_1w_ago, &mut self._1w_returns, None),
-            (30, &mut self.price_1m_ago, &mut self._1m_returns, None),
-            (3 * 30, &mut self.price_3m_ago, &mut self._3m_returns, None),
-            (6 * 30, &mut self.price_6m_ago, &mut self._6m_returns, None),
-            (365, &mut self.price_1y_ago, &mut self._1y_returns, None),
+            (1, &mut self.price_1d_ago, &mut self._1d_price_returns, None),
+            (7, &mut self.price_1w_ago, &mut self._1w_price_returns, None),
+            (
+                30,
+                &mut self.price_1m_ago,
+                &mut self._1m_price_returns,
+                None,
+            ),
+            (
+                3 * 30,
+                &mut self.price_3m_ago,
+                &mut self._3m_price_returns,
+                None,
+            ),
+            (
+                6 * 30,
+                &mut self.price_6m_ago,
+                &mut self._6m_price_returns,
+                None,
+            ),
+            (
+                365,
+                &mut self.price_1y_ago,
+                &mut self._1y_price_returns,
+                None,
+            ),
             (
                 2 * 365,
                 &mut self.price_2y_ago,
-                &mut self._2y_returns,
+                &mut self._2y_price_returns,
                 Some(&mut self._2y_cagr),
             ),
             (
                 3 * 365,
                 &mut self.price_3y_ago,
-                &mut self._3y_returns,
+                &mut self._3y_price_returns,
                 Some(&mut self._3y_cagr),
             ),
             (
                 4 * 365,
                 &mut self.price_4y_ago,
-                &mut self._4y_returns,
+                &mut self._4y_price_returns,
                 Some(&mut self._4y_cagr),
             ),
             (
                 5 * 365,
                 &mut self.price_5y_ago,
-                &mut self._5y_returns,
+                &mut self._5y_price_returns,
                 Some(&mut self._5y_cagr),
             ),
             (
                 6 * 365,
                 &mut self.price_6y_ago,
-                &mut self._6y_returns,
+                &mut self._6y_price_returns,
                 Some(&mut self._6y_cagr),
             ),
             (
                 8 * 365,
                 &mut self.price_8y_ago,
-                &mut self._8y_returns,
+                &mut self._8y_price_returns,
                 Some(&mut self._8y_cagr),
             ),
             (
                 10 * 365,
                 &mut self.price_10y_ago,
-                &mut self._10y_returns,
+                &mut self._10y_price_returns,
                 Some(&mut self._10y_cagr),
             ),
         ]
@@ -1572,7 +1604,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_previous_value(
                         starting_indexes.dateindex,
-                        price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                         days,
                         exit,
                     )?;
@@ -1588,7 +1620,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_percentage_change(
                         starting_indexes.dateindex,
-                        price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                         days,
                         exit,
                     )?;
@@ -1714,7 +1746,7 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_dca_stack_via_len(
                             starting_indexes.dateindex,
-                            price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                             days,
                             exit,
                         )?;
@@ -1746,7 +1778,7 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage_difference(
                             starting_indexes.dateindex,
-                            price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                             dca_avg_price.dateindex.as_ref().unwrap(),
                             exit,
                         )?;
@@ -1856,7 +1888,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_dca_stack_via_from(
                         starting_indexes.dateindex,
-                        price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                         dateindex,
                         exit,
                     )?;
@@ -1888,7 +1920,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_percentage_difference(
                         starting_indexes.dateindex,
-                        price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                         avg_price.dateindex.as_ref().unwrap(),
                         exit,
                     )?;
@@ -1901,62 +1933,74 @@ impl Vecs {
 
         thread::scope(|s| -> Result<()> {
             [
-                (&mut self.indexes_to_1w_sma, &mut self.indexes_to_1w_ema, 7),
-                (&mut self.indexes_to_8d_sma, &mut self.indexes_to_8d_ema, 8),
                 (
-                    &mut self.indexes_to_13d_sma,
-                    &mut self.indexes_to_13d_ema,
+                    &mut self.indexes_to_price_1w_sma,
+                    &mut self.indexes_to_price_1w_ema,
+                    7,
+                ),
+                (
+                    &mut self.indexes_to_price_8d_sma,
+                    &mut self.indexes_to_price_8d_ema,
+                    8,
+                ),
+                (
+                    &mut self.indexes_to_price_13d_sma,
+                    &mut self.indexes_to_price_13d_ema,
                     13,
                 ),
                 (
-                    &mut self.indexes_to_21d_sma,
-                    &mut self.indexes_to_21d_ema,
+                    &mut self.indexes_to_price_21d_sma,
+                    &mut self.indexes_to_price_21d_ema,
                     21,
                 ),
-                (&mut self.indexes_to_1m_sma, &mut self.indexes_to_1m_ema, 30),
                 (
-                    &mut self.indexes_to_34d_sma,
-                    &mut self.indexes_to_34d_ema,
+                    &mut self.indexes_to_price_1m_sma,
+                    &mut self.indexes_to_price_1m_ema,
+                    30,
+                ),
+                (
+                    &mut self.indexes_to_price_34d_sma,
+                    &mut self.indexes_to_price_34d_ema,
                     34,
                 ),
                 (
-                    &mut self.indexes_to_55d_sma,
-                    &mut self.indexes_to_55d_ema,
+                    &mut self.indexes_to_price_55d_sma,
+                    &mut self.indexes_to_price_55d_ema,
                     55,
                 ),
                 (
-                    &mut self.indexes_to_89d_sma,
-                    &mut self.indexes_to_89d_ema,
+                    &mut self.indexes_to_price_89d_sma,
+                    &mut self.indexes_to_price_89d_ema,
                     89,
                 ),
                 (
-                    &mut self.indexes_to_144d_sma,
-                    &mut self.indexes_to_144d_ema,
+                    &mut self.indexes_to_price_144d_sma,
+                    &mut self.indexes_to_price_144d_ema,
                     144,
                 ),
                 (
-                    &mut self.indexes_to_200d_sma,
-                    &mut self.indexes_to_200d_ema,
+                    &mut self.indexes_to_price_200d_sma,
+                    &mut self.indexes_to_price_200d_ema,
                     200,
                 ),
                 (
-                    &mut self.indexes_to_1y_sma,
-                    &mut self.indexes_to_1y_ema,
+                    &mut self.indexes_to_price_1y_sma,
+                    &mut self.indexes_to_price_1y_ema,
                     365,
                 ),
                 (
-                    &mut self.indexes_to_2y_sma,
-                    &mut self.indexes_to_2y_ema,
+                    &mut self.indexes_to_price_2y_sma,
+                    &mut self.indexes_to_price_2y_ema,
                     2 * 365,
                 ),
                 (
-                    &mut self.indexes_to_200w_sma,
-                    &mut self.indexes_to_200w_ema,
+                    &mut self.indexes_to_price_200w_sma,
+                    &mut self.indexes_to_price_200w_ema,
                     200 * 7,
                 ),
                 (
-                    &mut self.indexes_to_4y_sma,
-                    &mut self.indexes_to_4y_ema,
+                    &mut self.indexes_to_price_4y_sma,
+                    &mut self.indexes_to_price_4y_ema,
                     4 * 365,
                 ),
             ]
@@ -1972,7 +2016,7 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_sma(
                                 starting_indexes.dateindex,
-                                price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                                price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                                 days,
                                 exit,
                             )?;
@@ -1989,7 +2033,7 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_ema(
                                 starting_indexes.dateindex,
-                                price.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                                price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
                                 days,
                                 exit,
                             )?;
@@ -2001,7 +2045,7 @@ impl Vecs {
             Ok(())
         })?;
 
-        self.indexes_to_200d_sma_x0_8.compute_all(
+        self.indexes_to_price_200d_sma_x0_8.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -2009,7 +2053,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_200d_sma
+                    self.indexes_to_price_200d_sma
                         .price
                         .as_ref()
                         .unwrap()
@@ -2023,7 +2067,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_200d_sma_x2_4.compute_all(
+        self.indexes_to_price_200d_sma_x2_4.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -2031,7 +2075,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_200d_sma
+                    self.indexes_to_price_200d_sma
                         .price
                         .as_ref()
                         .unwrap()
@@ -2050,41 +2094,41 @@ impl Vecs {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.indexes_to_ath.vecs(),
-            self.indexes_to_drawdown.vecs(),
-            self.indexes_to_days_since_ath.vecs(),
-            self.indexes_to_max_days_between_aths.vecs(),
-            self.indexes_to_max_years_between_aths.vecs(),
-            self.indexes_to_1w_sma.vecs(),
-            self.indexes_to_8d_sma.vecs(),
-            self.indexes_to_13d_sma.vecs(),
-            self.indexes_to_21d_sma.vecs(),
-            self.indexes_to_1m_sma.vecs(),
-            self.indexes_to_34d_sma.vecs(),
-            self.indexes_to_55d_sma.vecs(),
-            self.indexes_to_89d_sma.vecs(),
-            self.indexes_to_144d_sma.vecs(),
-            self.indexes_to_200d_sma.vecs(),
-            self.indexes_to_1y_sma.vecs(),
-            self.indexes_to_2y_sma.vecs(),
-            self.indexes_to_200w_sma.vecs(),
-            self.indexes_to_4y_sma.vecs(),
-            self.indexes_to_1w_ema.vecs(),
-            self.indexes_to_8d_ema.vecs(),
-            self.indexes_to_13d_ema.vecs(),
-            self.indexes_to_21d_ema.vecs(),
-            self.indexes_to_1m_ema.vecs(),
-            self.indexes_to_34d_ema.vecs(),
-            self.indexes_to_55d_ema.vecs(),
-            self.indexes_to_89d_ema.vecs(),
-            self.indexes_to_144d_ema.vecs(),
-            self.indexes_to_200d_ema.vecs(),
-            self.indexes_to_1y_ema.vecs(),
-            self.indexes_to_2y_ema.vecs(),
-            self.indexes_to_200w_ema.vecs(),
-            self.indexes_to_4y_ema.vecs(),
-            self.indexes_to_200d_sma_x0_8.vecs(),
-            self.indexes_to_200d_sma_x2_4.vecs(),
+            self.indexes_to_price_ath.vecs(),
+            self.indexes_to_price_drawdown.vecs(),
+            self.indexes_to_days_since_price_ath.vecs(),
+            self.indexes_to_max_days_between_price_aths.vecs(),
+            self.indexes_to_max_years_between_price_aths.vecs(),
+            self.indexes_to_price_1w_sma.vecs(),
+            self.indexes_to_price_8d_sma.vecs(),
+            self.indexes_to_price_13d_sma.vecs(),
+            self.indexes_to_price_21d_sma.vecs(),
+            self.indexes_to_price_1m_sma.vecs(),
+            self.indexes_to_price_34d_sma.vecs(),
+            self.indexes_to_price_55d_sma.vecs(),
+            self.indexes_to_price_89d_sma.vecs(),
+            self.indexes_to_price_144d_sma.vecs(),
+            self.indexes_to_price_200d_sma.vecs(),
+            self.indexes_to_price_1y_sma.vecs(),
+            self.indexes_to_price_2y_sma.vecs(),
+            self.indexes_to_price_200w_sma.vecs(),
+            self.indexes_to_price_4y_sma.vecs(),
+            self.indexes_to_price_1w_ema.vecs(),
+            self.indexes_to_price_8d_ema.vecs(),
+            self.indexes_to_price_13d_ema.vecs(),
+            self.indexes_to_price_21d_ema.vecs(),
+            self.indexes_to_price_1m_ema.vecs(),
+            self.indexes_to_price_34d_ema.vecs(),
+            self.indexes_to_price_55d_ema.vecs(),
+            self.indexes_to_price_89d_ema.vecs(),
+            self.indexes_to_price_144d_ema.vecs(),
+            self.indexes_to_price_200d_ema.vecs(),
+            self.indexes_to_price_1y_ema.vecs(),
+            self.indexes_to_price_2y_ema.vecs(),
+            self.indexes_to_price_200w_ema.vecs(),
+            self.indexes_to_price_4y_ema.vecs(),
+            self.indexes_to_price_200d_sma_x0_8.vecs(),
+            self.indexes_to_price_200d_sma_x2_4.vecs(),
             self.price_1d_ago.vecs(),
             self.price_1w_ago.vecs(),
             self.price_1m_ago.vecs(),
@@ -2098,19 +2142,19 @@ impl Vecs {
             self.price_6y_ago.vecs(),
             self.price_8y_ago.vecs(),
             self.price_10y_ago.vecs(),
-            self._1d_returns.vecs(),
-            self._1w_returns.vecs(),
-            self._1m_returns.vecs(),
-            self._3m_returns.vecs(),
-            self._6m_returns.vecs(),
-            self._1y_returns.vecs(),
-            self._2y_returns.vecs(),
-            self._3y_returns.vecs(),
-            self._4y_returns.vecs(),
-            self._5y_returns.vecs(),
-            self._6y_returns.vecs(),
-            self._8y_returns.vecs(),
-            self._10y_returns.vecs(),
+            self._1d_price_returns.vecs(),
+            self._1w_price_returns.vecs(),
+            self._1m_price_returns.vecs(),
+            self._3m_price_returns.vecs(),
+            self._6m_price_returns.vecs(),
+            self._1y_price_returns.vecs(),
+            self._2y_price_returns.vecs(),
+            self._3y_price_returns.vecs(),
+            self._4y_price_returns.vecs(),
+            self._5y_price_returns.vecs(),
+            self._6y_price_returns.vecs(),
+            self._8y_price_returns.vecs(),
+            self._10y_price_returns.vecs(),
             self._2y_cagr.vecs(),
             self._3y_cagr.vecs(),
             self._4y_cagr.vecs(),
@@ -2194,7 +2238,7 @@ impl Vecs {
             self.dca_class_2017_returns.vecs(),
             self.dca_class_2016_returns.vecs(),
             self.dca_class_2015_returns.vecs(),
-            vec![&self.height_to_ath, &self.height_to_drawdown],
+            vec![&self.height_to_price_ath, &self.height_to_price_drawdown],
         ]
         .into_iter()
         .flatten()

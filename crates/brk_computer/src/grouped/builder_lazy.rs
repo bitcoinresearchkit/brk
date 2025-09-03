@@ -197,7 +197,7 @@ where
             }),
             cumulative: options.cumulative.then(|| {
                 Box::new(LazyVecFrom2::init(
-                    &suffix("cum"),
+                    &suffix("cumulative"),
                     version + VERSION + Version::ZERO,
                     source_extra.cumulative.as_ref().unwrap().boxed_clone(),
                     len_source.clone(),

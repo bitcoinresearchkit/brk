@@ -73,20 +73,24 @@ pub struct Vecs {
 
     pub height_to_unspendable_supply: EagerVec<Height, Sats>,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
-    pub addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount,
-    pub addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount,
+    pub addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount,
+    pub addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount,
 
     // ---
     // Computed
     // ---
-    pub addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount,
-    pub addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount,
+    pub addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount,
+    pub addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
-    pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_empty_addr_count: ComputedVecsFromHeight<StoredU64>,
     pub height_to_market_cap: Option<LazyVecFrom1<Height, Dollars, Height, Dollars>>,
     pub indexes_to_market_cap: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub loadedaddressindex_to_loadedaddressindex:
+        LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
+    pub emptyaddressindex_to_emptyaddressindex:
+        LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 }
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
@@ -111,7 +115,28 @@ impl Vecs {
         let utxo_cohorts =
             utxo_cohorts::Vecs::forced_import(&db, version, format, indexes, price, &states_path)?;
 
-        Ok(Self {
+        let loadedaddressindex_to_loadedaddressdata = RawVec::forced_import_with(
+            ImportOptions::new(&db, "loadedaddressdata", version + VERSION + Version::ZERO)
+                .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+        )?;
+        let emptyaddressindex_to_emptyaddressdata = RawVec::forced_import_with(
+            ImportOptions::new(&db, "emptyaddressdata", version + VERSION + Version::ZERO)
+                .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+        )?;
+        let loadedaddressindex_to_loadedaddressindex = LazyVecFrom1::init(
+            "loadedaddressindex",
+            version + VERSION + Version::ZERO,
+            loadedaddressindex_to_loadedaddressdata.boxed_clone(),
+            |index, _| Some(index),
+        );
+        let emptyaddressindex_to_emptyaddressindex = LazyVecFrom1::init(
+            "emptyaddressindex",
+            version + VERSION + Version::ZERO,
+            emptyaddressindex_to_emptyaddressdata.boxed_clone(),
+            |index, _| Some(index),
+        );
+
+        let this = Self {
             chain_state: RawVec::forced_import_with(
                 ImportOptions::new(&db, "chain", version + VERSION + Version::ZERO)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
@@ -145,17 +170,17 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            indexes_to_address_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 &db,
-                "address_count",
+                "addr_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_empty_address_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_empty_addr_count: ComputedVecsFromHeight::forced_import(
                 &db,
-                "empty_address_count",
+                "empty_addr_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -192,99 +217,99 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
+            addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
                     p2pk65: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pk65_address_count",
+                        "p2pk65_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2pk33: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pk33_address_count",
+                        "p2pk33_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2pkh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pkh_address_count",
+                        "p2pkh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2sh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2sh_address_count",
+                        "p2sh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2wpkh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2wpkh_address_count",
+                        "p2wpkh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2wsh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2wsh_address_count",
+                        "p2wsh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2tr: EagerVec::forced_import_compressed(
                         &db,
-                        "p2tr_address_count",
+                        "p2tr_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2a: EagerVec::forced_import_compressed(
                         &db,
-                        "p2a_address_count",
+                        "p2a_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                 },
             ),
-            addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount::from(
+            addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
                     p2pk65: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pk65_empty_address_count",
+                        "p2pk65_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2pk33: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pk33_empty_address_count",
+                        "p2pk33_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2pkh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2pkh_empty_address_count",
+                        "p2pkh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2sh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2sh_empty_address_count",
+                        "p2sh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2wpkh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2wpkh_empty_address_count",
+                        "p2wpkh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2wsh: EagerVec::forced_import_compressed(
                         &db,
-                        "p2wsh_empty_address_count",
+                        "p2wsh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2tr: EagerVec::forced_import_compressed(
                         &db,
-                        "p2tr_empty_address_count",
+                        "p2tr_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                     p2a: EagerVec::forced_import_compressed(
                         &db,
-                        "p2a_empty_address_count",
+                        "p2a_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
                 },
             ),
-            addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount::from(
+            addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount::from(
                 ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pk65_address_count",
+                        "p2pk65_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -292,7 +317,7 @@ impl Vecs {
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pk33_address_count",
+                        "p2pk33_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -300,7 +325,7 @@ impl Vecs {
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pkh_address_count",
+                        "p2pkh_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -308,7 +333,7 @@ impl Vecs {
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2sh_address_count",
+                        "p2sh_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -316,7 +341,7 @@ impl Vecs {
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2wpkh_address_count",
+                        "p2wpkh_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -324,7 +349,7 @@ impl Vecs {
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2wsh_address_count",
+                        "p2wsh_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -332,7 +357,7 @@ impl Vecs {
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2tr_address_count",
+                        "p2tr_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -340,7 +365,7 @@ impl Vecs {
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2a_address_count",
+                        "p2a_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -348,11 +373,11 @@ impl Vecs {
                     )?,
                 },
             ),
-            addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount::from(
+            addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount::from(
                 ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pk65_empty_address_count",
+                        "p2pk65_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -360,7 +385,7 @@ impl Vecs {
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pk33_empty_address_count",
+                        "p2pk33_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -368,7 +393,7 @@ impl Vecs {
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2pkh_empty_address_count",
+                        "p2pkh_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -376,7 +401,7 @@ impl Vecs {
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2sh_empty_address_count",
+                        "p2sh_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -384,7 +409,7 @@ impl Vecs {
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2wpkh_empty_address_count",
+                        "p2wpkh_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -392,7 +417,7 @@ impl Vecs {
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2wsh_empty_address_count",
+                        "p2wsh_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -400,7 +425,7 @@ impl Vecs {
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2tr_empty_address_count",
+                        "p2tr_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -408,7 +433,7 @@ impl Vecs {
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
                         &db,
-                        "p2a_empty_address_count",
+                        "p2a_empty_addr_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -459,17 +484,22 @@ impl Vecs {
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            loadedaddressindex_to_loadedaddressdata: RawVec::forced_import_with(
-                ImportOptions::new(&db, "loadedaddressdata", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            emptyaddressindex_to_emptyaddressdata: RawVec::forced_import_with(
-                ImportOptions::new(&db, "emptyaddressdata", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
+            loadedaddressindex_to_loadedaddressdata,
+            emptyaddressindex_to_emptyaddressdata,
+            loadedaddressindex_to_loadedaddressindex,
+            emptyaddressindex_to_emptyaddressindex,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -524,17 +554,17 @@ impl Vecs {
             .height
             .as_ref()
             .unwrap();
-        let height_to_close = price
+        let height_to_price_close = price
             .as_ref()
-            .map(|price| &price.chainindexes_to_close.height);
-        let dateindex_to_close = price
+            .map(|price| &price.chainindexes_to_price_close.height);
+        let dateindex_to_price_close = price
             .as_ref()
-            .map(|price| price.timeindexes_to_close.dateindex.as_ref().unwrap());
+            .map(|price| price.timeindexes_to_price_close.dateindex.as_ref().unwrap());
         let height_to_date_fixed = &indexes.height_to_date_fixed;
         let dateindex_to_first_height = &indexes.dateindex_to_first_height;
         let dateindex_to_height_count = &indexes.dateindex_to_height_count;
 
-        let mut height_to_close_iter = height_to_close.as_ref().map(|v| v.into_iter());
+        let mut height_to_price_close_iter = height_to_price_close.as_ref().map(|v| v.into_iter());
         let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
 
         let base_version = Version::ZERO
@@ -558,10 +588,10 @@ impl Vecs {
             + outputindex_to_outputtype.version()
             + outputindex_to_typeindex.version()
             + height_to_unclaimed_rewards.version()
-            + height_to_close
+            + height_to_price_close
                 .as_ref()
                 .map_or(Version::ZERO, |v| v.version())
-            + dateindex_to_close
+            + dateindex_to_price_close
                 .as_ref()
                 .map_or(Version::ZERO, |v| v.version())
             + height_to_date_fixed.version()
@@ -657,12 +687,14 @@ impl Vecs {
                         .rollback_before(starting_height.into())?,
                 ]
                 .into_iter()
-                .enumerate()
-                .map(|(i, s)| {
-                    let h = Height::from(s).incremented();
-                    dbg!((i, s, h));
-                    h
-                })
+                // .enumerate()
+                // .map(|(i, s)| {
+                //     let h = Height::from(s).incremented();
+                //     // dbg!((i, s, h));
+                //     h
+                // })
+                .map(Height::from)
+                .map(Height::incremented)
                 .collect::<BTreeSet<Height>>();
 
                 if set.len() == 1 {
@@ -709,7 +741,7 @@ impl Vecs {
                     .map(|(height, supply)| {
                         let height = Height::from(height);
                         let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
-                        let price = height_to_close_iter
+                        let price = height_to_price_close_iter
                             .as_mut()
                             .map(|i| *i.unwrap_get_inner(height));
                         BlockState {
@@ -780,13 +812,14 @@ impl Vecs {
             let mut height_to_output_count_iter = height_to_output_count.into_iter();
             let mut height_to_input_count_iter = height_to_input_count.into_iter();
             let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
-            let mut dateindex_to_close_iter = dateindex_to_close.as_ref().map(|v| v.into_iter());
+            let mut dateindex_to_price_close_iter =
+                dateindex_to_price_close.as_ref().map(|v| v.into_iter());
             let mut height_to_date_fixed_iter = height_to_date_fixed.into_iter();
             let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
             let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
 
-            let height_to_close_vec =
-                height_to_close.map(|height_to_close| height_to_close.collect().unwrap());
+            let height_to_price_close_vec = height_to_price_close
+                .map(|height_to_price_close| height_to_price_close.collect().unwrap());
 
             let height_to_timestamp_fixed_vec = height_to_timestamp_fixed.collect().unwrap();
             let outputindex_range_to_height = RangeMap::from(height_to_first_outputindex);
@@ -805,12 +838,12 @@ impl Vecs {
             } else {
                 Sats::ZERO
             };
-            let mut addresstype_to_address_count = AddressTypeToAddressCount::from((
-                &self.addresstype_to_height_to_address_count,
+            let mut addresstype_to_addr_count = AddressTypeToAddressCount::from((
+                &self.addresstype_to_height_to_addr_count,
                 starting_height,
             ));
-            let mut addresstype_to_empty_address_count = AddressTypeToAddressCount::from((
-                &self.addresstype_to_height_to_empty_address_count,
+            let mut addresstype_to_empty_addr_count = AddressTypeToAddressCount::from((
+                &self.addresstype_to_height_to_empty_addr_count,
                 starting_height,
             ));
 
@@ -855,7 +888,7 @@ impl Vecs {
                         .for_each(|(_, v)| v.state.as_mut().unwrap().reset_single_iteration_values());
 
                     let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
-                    let price = height_to_close_iter
+                    let price = height_to_price_close_iter
                         .as_mut()
                         .map(|i| *i.unwrap_get_inner(height));
                     let first_outputindex = height_to_first_outputindex_iter
@@ -1123,8 +1156,8 @@ impl Vecs {
                                 &mut addresstype_to_typeindex_to_loadedaddressdata,
                                 &mut addresstype_to_typeindex_to_emptyaddressdata,
                                 price,
-                                &mut addresstype_to_address_count,
-                                &mut addresstype_to_empty_address_count,
+                                &mut addresstype_to_addr_count,
+                                &mut addresstype_to_empty_addr_count,
                                 &mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
                             );
 
@@ -1134,9 +1167,9 @@ impl Vecs {
                                     &mut addresstype_to_typeindex_to_loadedaddressdata,
                                     &mut addresstype_to_typeindex_to_emptyaddressdata,
                                     price,
-                                    &mut addresstype_to_address_count,
-                                    &mut addresstype_to_empty_address_count,
-                                    height_to_close_vec.as_ref(),
+                                    &mut addresstype_to_addr_count,
+                                    &mut addresstype_to_empty_addr_count,
+                                    height_to_price_close_vec.as_ref(),
                                     &height_to_timestamp_fixed_vec,
                                     height,
                                     timestamp,
@@ -1195,14 +1228,14 @@ impl Vecs {
                     self.height_to_opreturn_supply
                         .forced_push_at(height, opreturn_supply, exit)?;
 
-                    self.addresstype_to_height_to_address_count.forced_push_at(
+                    self.addresstype_to_height_to_addr_count.forced_push_at(
                         height,
-                        &addresstype_to_address_count,
+                        &addresstype_to_addr_count,
                         exit,
                     )?;
 
-                    self.addresstype_to_height_to_empty_address_count
-                        .forced_push_at(height, &addresstype_to_empty_address_count, exit)?;
+                    self.addresstype_to_height_to_empty_addr_count
+                        .forced_push_at(height, &addresstype_to_empty_addr_count, exit)?;
 
                     let date = height_to_date_fixed_iter.unwrap_get_inner(height);
                     let dateindex = DateIndex::try_from(date).unwrap();
@@ -1213,7 +1246,7 @@ impl Vecs {
                     let is_date_last_height = date_first_height
                         + Height::from(date_height_count).decremented().unwrap()
                         == height;
-                    let date_price = dateindex_to_close_iter
+                    let date_price = dateindex_to_price_close_iter
                         .as_mut()
                         .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
 
@@ -1276,7 +1309,7 @@ impl Vecs {
 
         info!("Computing rest part 1...");
 
-        self.indexes_to_address_count.compute_all(
+        self.indexes_to_addr_count.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1285,7 +1318,7 @@ impl Vecs {
                 v.compute_sum_of_others(
                     starting_indexes.height,
                     &self
-                        .addresstype_to_height_to_address_count
+                        .addresstype_to_height_to_addr_count
                         .as_typed_vec()
                         .into_iter()
                         .map(|(_, v)| v)
@@ -1296,7 +1329,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_empty_address_count.compute_all(
+        self.indexes_to_empty_addr_count.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1305,7 +1338,7 @@ impl Vecs {
                 v.compute_sum_of_others(
                     starting_indexes.height,
                     &self
-                        .addresstype_to_height_to_empty_address_count
+                        .addresstype_to_height_to_empty_addr_count
                         .as_typed_vec()
                         .into_iter()
                         .map(|(_, v)| v)
@@ -1333,18 +1366,18 @@ impl Vecs {
             Some(&self.height_to_opreturn_supply),
         )?;
 
-        self.addresstype_to_indexes_to_address_count.compute(
+        self.addresstype_to_indexes_to_addr_count.compute(
             indexes,
             starting_indexes,
             exit,
-            &self.addresstype_to_height_to_address_count,
+            &self.addresstype_to_height_to_addr_count,
         )?;
 
-        self.addresstype_to_indexes_to_empty_address_count.compute(
+        self.addresstype_to_indexes_to_empty_addr_count.compute(
             indexes,
             starting_indexes,
             exit,
-            &self.addresstype_to_height_to_empty_address_count,
+            &self.addresstype_to_height_to_empty_addr_count,
         )?;
 
         self.utxo_cohorts
@@ -1643,11 +1676,11 @@ impl Vecs {
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
-        self.addresstype_to_height_to_address_count
+        self.addresstype_to_height_to_addr_count
             .as_mut_vec()
             .into_iter()
             .try_for_each(|v| v.safe_flush(exit))?;
-        self.addresstype_to_height_to_empty_address_count
+        self.addresstype_to_height_to_empty_addr_count
             .as_mut_vec()
             .into_iter()
             .try_for_each(|v| v.safe_flush(exit))?;
@@ -1845,19 +1878,19 @@ impl Vecs {
                 .collect::<Vec<_>>(),
             self.indexes_to_unspendable_supply.vecs(),
             self.indexes_to_opreturn_supply.vecs(),
-            self.indexes_to_address_count.vecs(),
-            self.indexes_to_empty_address_count.vecs(),
-            self.addresstype_to_indexes_to_address_count.vecs(),
+            self.indexes_to_addr_count.vecs(),
+            self.indexes_to_empty_addr_count.vecs(),
+            self.addresstype_to_indexes_to_addr_count.vecs(),
             self.indexes_to_market_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.addresstype_to_indexes_to_empty_address_count.vecs(),
-            self.addresstype_to_height_to_address_count
+            self.addresstype_to_indexes_to_empty_addr_count.vecs(),
+            self.addresstype_to_height_to_addr_count
                 .as_typed_vec()
                 .into_iter()
                 .map(|(_, v)| v as &dyn AnyCollectableVec)
                 .collect::<Vec<_>>(),
-            self.addresstype_to_height_to_empty_address_count
+            self.addresstype_to_height_to_empty_addr_count
                 .as_typed_vec()
                 .into_iter()
                 .map(|(_, v)| v as &dyn AnyCollectableVec)
@@ -1868,6 +1901,19 @@ impl Vecs {
             vec![
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,
+                &self.chain_state,
+                &self.p2pk33addressindex_to_anyaddressindex,
+                &self.p2pk65addressindex_to_anyaddressindex,
+                &self.p2pkhaddressindex_to_anyaddressindex,
+                &self.p2shaddressindex_to_anyaddressindex,
+                &self.p2traddressindex_to_anyaddressindex,
+                &self.p2wpkhaddressindex_to_anyaddressindex,
+                &self.p2wshaddressindex_to_anyaddressindex,
+                &self.p2aaddressindex_to_anyaddressindex,
+                &self.loadedaddressindex_to_loadedaddressdata,
+                &self.emptyaddressindex_to_emptyaddressdata,
+                &self.loadedaddressindex_to_loadedaddressindex,
+                &self.emptyaddressindex_to_emptyaddressindex,
             ],
         ]
         .into_iter()
@@ -1888,8 +1934,8 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut ByAddressType<u64>,
-        addresstype_to_empty_address_count: &mut ByAddressType<u64>,
+        addresstype_to_addr_count: &mut ByAddressType<u64>,
+        addresstype_to_empty_addr_count: &mut ByAddressType<u64>,
         stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexTree<
             WithAddressDataSource<LoadedAddressData>,
         >,
@@ -1926,9 +1972,9 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                     });
 
                 if is_new || from_any_empty {
-                    (*addresstype_to_address_count.get_mut(_type).unwrap()) += 1;
+                    (*addresstype_to_addr_count.get_mut(_type).unwrap()) += 1;
                     if from_any_empty {
-                        (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) -= 1;
+                        (*addresstype_to_empty_addr_count.get_mut(_type).unwrap()) -= 1;
                     }
                 }
 
@@ -1988,9 +2034,9 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut ByAddressType<u64>,
-        addresstype_to_empty_address_count: &mut ByAddressType<u64>,
-        height_to_close_vec: Option<&Vec<brk_structs::Close<Dollars>>>,
+        addresstype_to_addr_count: &mut ByAddressType<u64>,
+        addresstype_to_empty_addr_count: &mut ByAddressType<u64>,
+        height_to_price_close_vec: Option<&Vec<brk_structs::Close<Dollars>>>,
         height_to_timestamp_fixed_vec: &[Timestamp],
         height: Height,
         timestamp: Timestamp,
@@ -1999,7 +2045,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
         >,
     ) -> Result<()> {
         self.0.into_iter().try_for_each(|(prev_height, mut v)| {
-            let prev_price = height_to_close_vec
+            let prev_price = height_to_price_close_vec
                 .as_ref()
                 .map(|v| **v.get(prev_height.unwrap_to_usize()).unwrap());
 
@@ -2039,7 +2085,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
                     let amount = prev_amount.checked_sub(value).unwrap();
 
-                    let will_be_empty = addressdata.outputs_len - 1 == 0;
+                    let will_be_empty = addressdata.utxos - 1 == 0;
 
                     if will_be_empty
                         || vecs.amount_range.get_mut(amount).0.clone()
@@ -2060,8 +2106,8 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                                 unreachable!()
                             }
 
-                            (*addresstype_to_address_count.get_mut(_type).unwrap()) -= 1;
-                            (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) += 1;
+                            (*addresstype_to_addr_count.get_mut(_type).unwrap()) -= 1;
+                            (*addresstype_to_empty_addr_count.get_mut(_type).unwrap()) += 1;
 
                             let addressdata =
                                 typeindex_to_loadedaddressdata.remove(&type_index).unwrap();

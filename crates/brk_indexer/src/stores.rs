@@ -4,11 +4,12 @@ use brk_error::Result;
 use brk_store::{AnyStore, Store};
 use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
-    OutputType, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
+    OutputType, StoredString, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit,
+    Version,
 };
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
-use vecdb::VecIterator;
+use vecdb::{AnyVec, StoredIndex, VecIterator};
 
 use crate::Indexes;
 
@@ -20,6 +21,7 @@ pub struct Stores {
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
+    pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
     pub addresstype_to_typeindex_with_outputindex:
         ByAddressType<Store<TypeIndexWithOutputindex, Unit>>,
@@ -28,14 +30,16 @@ pub struct Stores {
 const VERSION: Version = Version::ZERO;
 
 impl Stores {
-    pub fn forced_import(path: &Path, version: Version) -> Result<Self> {
-        fs::create_dir_all(path)?;
+    pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
+        let path = parent.join("stores");
 
-        let keyspace = match brk_store::open_keyspace(path) {
+        fs::create_dir_all(&path)?;
+
+        let keyspace = match brk_store::open_keyspace(&path) {
             Ok(keyspace) => keyspace,
             Err(_) => {
-                fs::remove_dir_all(path)?;
-                return Self::forced_import(path, version);
+                fs::remove_dir_all(&path)?;
+                return Self::forced_import(&path, version);
             }
         };
 
@@ -43,7 +47,7 @@ impl Stores {
             let addressbyteshash_to_typeindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "addressbyteshash_to_typeindex",
                     version + VERSION + Version::ZERO,
                     None,
@@ -52,7 +56,7 @@ impl Stores {
             let blockhashprefix_to_height = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "blockhashprefix_to_height",
                     version + VERSION + Version::ZERO,
                     None,
@@ -61,7 +65,7 @@ impl Stores {
             let txidprefix_to_txindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "txidprefix_to_txindex",
                     version + VERSION + Version::ZERO,
                     None,
@@ -70,7 +74,7 @@ impl Stores {
             let p2aaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2aaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -79,7 +83,7 @@ impl Stores {
             let p2pk33addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2pk33addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -88,7 +92,7 @@ impl Stores {
             let p2pk65addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2pk65addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -97,7 +101,7 @@ impl Stores {
             let p2pkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2pkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -106,7 +110,7 @@ impl Stores {
             let p2shaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2shaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -115,7 +119,7 @@ impl Stores {
             let p2traddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2traddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -124,7 +128,7 @@ impl Stores {
             let p2wpkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2wpkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
@@ -133,16 +137,25 @@ impl Stores {
             let p2wshaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
-                    path,
+                    &path,
                     "p2wshaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
                     Some(false),
                 )
             });
 
+            let height_to_coinbase_tag = Store::import(
+                &keyspace,
+                &path,
+                "height_to_coinbase_tag",
+                version + VERSION + Version::ZERO,
+                None,
+            )?;
+
             Ok(Self {
                 keyspace: keyspace.clone(),
 
+                height_to_coinbase_tag,
                 addressbyteshash_to_typeindex: addressbyteshash_to_typeindex.join().unwrap()?,
                 blockhashprefix_to_height: blockhashprefix_to_height.join().unwrap()?,
                 txidprefix_to_txindex: txidprefix_to_txindex.join().unwrap()?,
@@ -182,11 +195,9 @@ impl Stores {
             .map_err(|e| e.into())
     }
 
-    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 11] {
+    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 12] {
         [
             &self.addressbyteshash_to_typeindex,
-            &self.blockhashprefix_to_height,
-            &self.txidprefix_to_txindex,
             &self.addresstype_to_typeindex_with_outputindex.p2a,
             &self.addresstype_to_typeindex_with_outputindex.p2pk33,
             &self.addresstype_to_typeindex_with_outputindex.p2pk65,
@@ -195,14 +206,15 @@ impl Stores {
             &self.addresstype_to_typeindex_with_outputindex.p2tr,
             &self.addresstype_to_typeindex_with_outputindex.p2wpkh,
             &self.addresstype_to_typeindex_with_outputindex.p2wsh,
+            &self.blockhashprefix_to_height,
+            &self.height_to_coinbase_tag,
+            &self.txidprefix_to_txindex,
         ]
     }
 
-    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 11] {
+    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 12] {
         [
             &mut self.addressbyteshash_to_typeindex,
-            &mut self.blockhashprefix_to_height,
-            &mut self.txidprefix_to_txindex,
             &mut self.addresstype_to_typeindex_with_outputindex.p2a,
             &mut self.addresstype_to_typeindex_with_outputindex.p2pk33,
             &mut self.addresstype_to_typeindex_with_outputindex.p2pk65,
@@ -211,6 +223,9 @@ impl Stores {
             &mut self.addresstype_to_typeindex_with_outputindex.p2tr,
             &mut self.addresstype_to_typeindex_with_outputindex.p2wpkh,
             &mut self.addresstype_to_typeindex_with_outputindex.p2wsh,
+            &mut self.blockhashprefix_to_height,
+            &mut self.height_to_coinbase_tag,
+            &mut self.txidprefix_to_txindex,
         ]
     }
 
@@ -222,6 +237,7 @@ impl Stores {
         if self.addressbyteshash_to_typeindex.is_empty()?
             && self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
+            && self.height_to_coinbase_tag.is_empty()?
             && self
                 .addresstype_to_typeindex_with_outputindex
                 .p2a
@@ -264,6 +280,12 @@ impl Stores {
                 .for_each(|(_, v)| {
                     let blockhashprefix = BlockHashPrefix::from(v.into_owned());
                     self.blockhashprefix_to_height.remove(blockhashprefix);
+                });
+
+            (starting_indexes.height.unwrap_to_usize()..vecs.height_to_blockhash.len())
+                .map(Height::from)
+                .for_each(|h| {
+                    self.height_to_coinbase_tag.remove(h);
                 });
 
             if let Some(mut index) = vecs

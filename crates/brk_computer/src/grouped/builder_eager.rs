@@ -144,7 +144,7 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         db,
-                        &suffix("cum"),
+                        &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,
                     )

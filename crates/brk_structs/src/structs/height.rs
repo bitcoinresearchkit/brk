@@ -227,13 +227,19 @@ impl TryFrom<&std::path::Path> for Height {
 }
 
 impl From<ByteView> for Height {
-    fn from(value: byteview::ByteView) -> Self {
+    fn from(value: ByteView) -> Self {
         Self(u32::from_be_bytes(copy_first_4bytes(&value).unwrap()))
     }
 }
 
 impl From<Height> for ByteView {
     fn from(value: Height) -> Self {
+        Self::from(&value)
+    }
+}
+
+impl From<&Height> for ByteView {
+    fn from(value: &Height) -> Self {
         Self::new(&value.0.to_be_bytes())
     }
 }

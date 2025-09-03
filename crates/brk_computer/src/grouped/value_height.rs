@@ -102,13 +102,13 @@ impl ComputedHeightValueVecs {
         }
 
         let height_to_bitcoin = &self.bitcoin;
-        let height_to_close = &price.as_ref().unwrap().chainindexes_to_close.height;
+        let height_to_price_close = &price.as_ref().unwrap().chainindexes_to_price_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_from_bitcoin(
                 starting_indexes.height,
                 height_to_bitcoin,
-                height_to_close,
+                height_to_price_close,
                 exit,
             )?;
         }

@@ -33,7 +33,7 @@ impl Vecs {
         price: Option<&price::Vecs>,
         states_path: Option<&Path>,
         extended: bool,
-        compute_relative_to_all: bool,
+        compute_rel_to_all: bool,
         compute_adjusted: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
@@ -57,7 +57,7 @@ impl Vecs {
                 indexes,
                 price,
                 extended,
-                compute_relative_to_all,
+                compute_rel_to_all,
                 compute_adjusted,
             )?,
         })

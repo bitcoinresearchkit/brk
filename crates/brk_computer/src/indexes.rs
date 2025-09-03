@@ -236,7 +236,7 @@ impl Vecs {
             |index, _| Some(index),
         );
 
-        Ok(Self {
+        let this = Self {
             emptyoutputindex_to_emptyoutputindex,
             inputindex_to_inputindex,
             opreturnindex_to_opreturnindex,
@@ -472,7 +472,16 @@ impl Vecs {
             )?,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     pub fn compute(

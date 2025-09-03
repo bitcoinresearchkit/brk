@@ -29,8 +29,8 @@ pub struct Vecs {
 
     pub inner: common::Vecs,
 
-    pub height_to_address_count: EagerVec<Height, StoredU64>,
-    pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
+    pub height_to_addr_count: EagerVec<Height, StoredU64>,
+    pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
 }
 
 impl Vecs {
@@ -43,7 +43,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: Option<&Path>,
-        compute_relative_to_all: bool,
+        compute_rel_to_all: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
@@ -58,15 +58,15 @@ impl Vecs {
                     compute_dollars,
                 )
             }),
-            height_to_address_count: EagerVec::forced_import(
+            height_to_addr_count: EagerVec::forced_import(
                 db,
-                &suffix("address_count"),
+                &suffix("addr_count"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
-            indexes_to_address_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 db,
-                &suffix("address_count"),
+                &suffix("addr_count"),
                 Source::None,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -80,7 +80,7 @@ impl Vecs {
                 indexes,
                 price,
                 false,
-                compute_relative_to_all,
+                compute_rel_to_all,
                 false,
             )?,
         })
@@ -90,7 +90,7 @@ impl Vecs {
 impl DynCohortVecs for Vecs {
     fn min_height_vecs_len(&self) -> usize {
         [
-            self.height_to_address_count.len(),
+            self.height_to_addr_count.len(),
             self.inner.min_height_vecs_len(),
         ]
         .into_iter()
@@ -110,8 +110,8 @@ impl DynCohortVecs for Vecs {
         self.starting_height = Some(starting_height);
 
         if let Some(prev_height) = starting_height.decremented() {
-            self.state.as_mut().unwrap().address_count = *self
-                .height_to_address_count
+            self.state.as_mut().unwrap().addr_count = *self
+                .height_to_addr_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
         }
@@ -120,9 +120,9 @@ impl DynCohortVecs for Vecs {
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.height_to_address_count
+        self.height_to_addr_count
             .validate_computed_version_or_reset(
-                base_version + self.height_to_address_count.inner_version(),
+                base_version + self.height_to_addr_count.inner_version(),
             )?;
 
         self.inner.validate_computed_versions(base_version)
@@ -133,9 +133,9 @@ impl DynCohortVecs for Vecs {
             return Ok(());
         }
 
-        self.height_to_address_count.forced_push_at(
+        self.height_to_addr_count.forced_push_at(
             height,
-            self.state.as_ref().unwrap().address_count.into(),
+            self.state.as_ref().unwrap().addr_count.into(),
             exit,
         )?;
 
@@ -162,7 +162,7 @@ impl DynCohortVecs for Vecs {
     }
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.height_to_address_count.safe_flush(exit)?;
+        self.height_to_addr_count.safe_flush(exit)?;
 
         self.inner
             .safe_flush_stateful_vecs(height, exit, &mut self.state.as_mut().unwrap().inner)
@@ -177,11 +177,11 @@ impl DynCohortVecs for Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_address_count.compute_rest(
+        self.indexes_to_addr_count.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(&self.height_to_address_count),
+            Some(&self.height_to_addr_count),
         )?;
 
         self.inner
@@ -191,8 +191,8 @@ impl DynCohortVecs for Vecs {
     fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             self.inner.vecs(),
-            self.indexes_to_address_count.vecs(),
-            vec![&self.height_to_address_count],
+            self.indexes_to_addr_count.vecs(),
+            vec![&self.height_to_addr_count],
         ]
         .concat()
     }
@@ -205,11 +205,11 @@ impl CohortVecs for Vecs {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_address_count.compute_sum_of_others(
+        self.height_to_addr_count.compute_sum_of_others(
             starting_indexes.height,
             others
                 .iter()
-                .map(|v| &v.height_to_address_count)
+                .map(|v| &v.height_to_addr_count)
                 .collect::<Vec<_>>()
                 .as_slice(),
             exit,

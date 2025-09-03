@@ -16,7 +16,7 @@ use crate::{HeaderMapExtended, ResponseExtended};
 
 use super::AppState;
 
-const MAX_WEIGHT: usize = 320_000;
+const MAX_WEIGHT: usize = 65 * 10_000;
 
 pub async fn handler(
     uri: Uri,
@@ -43,7 +43,7 @@ fn req_to_response_res(
         interface, cache, ..
     }: AppState,
 ) -> Result<Response> {
-    let vecs = interface.search(&params);
+    let vecs = interface.search(&params)?;
 
     if vecs.is_empty() {
         return Ok(Json(vec![] as Vec<usize>).into_response());
@@ -61,9 +61,9 @@ fn req_to_response_res(
         .sum::<usize>();
 
     if weight > MAX_WEIGHT {
-        return Err(Error::Str(
-            "Request is too heavy, max weight is {MAX_WEIGHT} bytes",
-        ));
+        return Err(Error::String(format!(
+            "Request is too heavy, max weight is {MAX_WEIGHT} bytes"
+        )));
     }
 
     // TODO: height should be from vec, but good enough for now
