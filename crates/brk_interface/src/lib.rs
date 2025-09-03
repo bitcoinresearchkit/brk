@@ -8,7 +8,7 @@ use brk_indexer::Indexer;
 use brk_structs::Height;
 use nucleo_matcher::{
     Config, Matcher,
-    pattern::{Atom, AtomKind, CaseMatching, Normalization, Pattern},
+    pattern::{AtomKind, CaseMatching, Normalization, Pattern},
 };
 use tabled::settings::Style;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
