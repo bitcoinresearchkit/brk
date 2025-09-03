@@ -11,7 +11,8 @@ pub struct LoadedAddressData {
     pub sent: Sats,
     pub received: Sats,
     pub realized_cap: Dollars,
-    pub outputs_len: u32,
+    pub utxos: u32,
+    #[serde(skip)]
     padding: u32,
 }
 
@@ -41,12 +42,12 @@ impl LoadedAddressData {
 
     #[inline]
     pub fn has_0_utxos(&self) -> bool {
-        self.outputs_len == 0
+        self.utxos == 0
     }
 
     pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
         self.received += amount;
-        self.outputs_len += 1;
+        self.utxos += 1;
         if let Some(price) = price {
             let added = price * amount;
             self.realized_cap += added;
@@ -62,7 +63,7 @@ impl LoadedAddressData {
             return Err(Error::Str("Previous_amount smaller than sent amount"));
         }
         self.sent += amount;
-        self.outputs_len -= 1;
+        self.utxos -= 1;
         if let Some(previous_price) = previous_price {
             let subtracted = previous_price * amount;
             let realized_cap = self.realized_cap.checked_sub(subtracted).unwrap();
@@ -94,7 +95,7 @@ impl From<&EmptyAddressData> for LoadedAddressData {
             sent: value.transfered,
             received: value.transfered,
             realized_cap: Dollars::ZERO,
-            outputs_len: 0,
+            utxos: 0,
             padding: 0,
         }
     }

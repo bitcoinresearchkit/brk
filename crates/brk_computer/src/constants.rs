@@ -38,7 +38,7 @@ impl Vecs {
     pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let db = Database::open(&parent.join("constants"))?;
 
-        Ok(Self {
+        let this = Self {
             constant_0: ComputedVecsFromHeight::forced_import(
                 &db,
                 "constant_0",
@@ -145,7 +145,16 @@ impl Vecs {
             )?,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     pub fn compute(

@@ -78,23 +78,25 @@ impl ComputedValueVecsFromTxindex {
                 version + VERSION,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
-                price.chainindexes_to_close.height.boxed_clone(),
+                price.chainindexes_to_price_close.height.boxed_clone(),
                 |txindex: TxIndex,
-                 txindex_to_btc_iter,
+                 txindex_to_in_btc_iter,
                  txindex_to_height_iter,
-                 height_to_close_iter| {
+                 height_to_price_close_iter| {
                     let txindex = txindex.unwrap_to_usize();
-                    txindex_to_btc_iter.next_at(txindex).and_then(|(_, value)| {
-                        let btc = value.into_owned();
-                        txindex_to_height_iter
-                            .next_at(txindex)
-                            .and_then(|(_, value)| {
-                                let height = value.into_owned();
-                                height_to_close_iter
-                                    .next_at(height.unwrap_to_usize())
-                                    .map(|(_, close)| *close.into_owned() * btc)
-                            })
-                    })
+                    txindex_to_in_btc_iter
+                        .next_at(txindex)
+                        .and_then(|(_, value)| {
+                            let btc = value.into_owned();
+                            txindex_to_height_iter
+                                .next_at(txindex)
+                                .and_then(|(_, value)| {
+                                    let height = value.into_owned();
+                                    height_to_price_close_iter
+                                        .next_at(height.unwrap_to_usize())
+                                        .map(|(_, close)| *close.into_owned() * btc)
+                                })
+                        })
                 },
             )
         });

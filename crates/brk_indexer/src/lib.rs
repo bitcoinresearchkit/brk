@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
 
-use brk_parser::Parser;
+use brk_parser::{BlockExtended, Parser};
 use brk_store::AnyStore;
 use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
@@ -14,7 +14,7 @@ use brk_structs::{
 };
 use log::{error, info};
 use rayon::prelude::*;
-use vecdb::{AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, Reader, VecIterator};
+use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIterator};
 mod indexes;
 mod stores;
 mod vecs;
@@ -29,7 +29,6 @@ const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
-    pub db: Database,
     pub vecs: Vecs,
     pub stores: Stores,
 }
@@ -38,18 +37,15 @@ impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
         info!("Importing indexer...");
 
-        let db = Database::open(&outputs_dir.join("indexed/vecs"))?;
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
-        info!("Opened database");
+        let path = outputs_dir.join("indexed");
 
-        let vecs = Vecs::forced_import(&db, VERSION + Version::ZERO)?;
+        let vecs = Vecs::forced_import(&path, VERSION + Version::ZERO)?;
         info!("Imported vecs");
 
-        let stores =
-            Stores::forced_import(&outputs_dir.join("indexed/stores"), VERSION + Version::ZERO)?;
+        let stores = Stores::forced_import(&path, VERSION + Version::ZERO)?;
         info!("Imported stores");
 
-        Ok(Self { vecs, stores, db })
+        Ok(Self { vecs, stores })
     }
 
     pub fn index(
@@ -59,15 +55,8 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
-        let db = self.db.clone();
-
-        // dbg!(self.db.regions().id_to_index());
-        // dbg!(self.db.layout());
-
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
             .unwrap_or_else(|_report| Indexes::default());
-
-        // dbg!(&starting_indexes);
 
         let lock = exit.lock();
         self.stores
@@ -108,7 +97,6 @@ impl Indexer {
                 vecs.flush(height)?;
                 info!("Flushed vecs in {}s", i.elapsed().as_secs());
                 let i = Instant::now();
-                db.flush()?;
                 info!("Flushed db in {}s", i.elapsed().as_secs());
                 Ok(())
             };
@@ -209,6 +197,10 @@ impl Indexer {
                 stores
                     .blockhashprefix_to_height
                     .insert_if_needed(blockhash_prefix, height, height);
+
+                stores
+                    .height_to_coinbase_tag
+                    .insert_if_needed( height, block.coinbase_tag().into(), height);
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
                 vecs.height_to_difficulty
@@ -797,7 +789,7 @@ impl Indexer {
         }
 
         let i = Instant::now();
-        db.punch_holes()?;
+        self.vecs.punch_holes()?;
         info!("Punched holes in db in {}s", i.elapsed().as_secs());
 
         Ok(starting_indexes)

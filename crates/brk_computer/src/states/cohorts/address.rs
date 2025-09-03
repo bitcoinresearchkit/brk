@@ -9,14 +9,14 @@ use super::CohortState;
 
 #[derive(Clone)]
 pub struct AddressCohortState {
-    pub address_count: u64,
+    pub addr_count: u64,
     pub inner: CohortState,
 }
 
 impl AddressCohortState {
     pub fn new(path: &Path, name: &str, compute_dollars: bool) -> Self {
         Self {
-            address_count: 0,
+            addr_count: 0,
             inner: CohortState::new(path, name, compute_dollars),
         }
     }
@@ -44,14 +44,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| addressdata.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: addressdata.outputs_len as u64,
+            utxos: addressdata.utxos as u64,
             value: addressdata.amount(),
         };
 
         addressdata.send(value, prev_price)?;
 
         let supply_state = SupplyState {
-            utxos: addressdata.outputs_len as u64,
+            utxos: addressdata.utxos as u64,
             value: addressdata.amount(),
         };
 
@@ -79,14 +79,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: address_data.outputs_len as u64,
+            utxos: address_data.utxos as u64,
             value: address_data.amount(),
         };
 
         address_data.receive(value, price);
 
         let supply_state = SupplyState {
-            utxos: address_data.outputs_len as u64,
+            utxos: address_data.utxos as u64,
             value: address_data.amount(),
         };
 
@@ -99,7 +99,7 @@ impl AddressCohortState {
     }
 
     pub fn add(&mut self, addressdata: &LoadedAddressData) {
-        self.address_count += 1;
+        self.addr_count += 1;
         self.inner.increment_(
             &addressdata.into(),
             addressdata.realized_cap,
@@ -108,7 +108,7 @@ impl AddressCohortState {
     }
 
     pub fn subtract(&mut self, addressdata: &LoadedAddressData) {
-        self.address_count = self.address_count.checked_sub(1).unwrap();
+        self.addr_count = self.addr_count.checked_sub(1).unwrap();
         self.inner.decrement_(
             &addressdata.into(),
             addressdata.realized_cap,

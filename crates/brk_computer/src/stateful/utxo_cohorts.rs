@@ -49,7 +49,7 @@ impl Vecs {
                 term: ByTerm {
                     short: utxo_cohort::Vecs::forced_import(
                         db,
-                        Some("short_term_holders"),
+                        Some("sth"),
                         format,
                         version + VERSION + Version::ZERO,
                         indexes,
@@ -61,7 +61,7 @@ impl Vecs {
                     )?,
                     long: utxo_cohort::Vecs::forced_import(
                         db,
-                        Some("long_term_holders"),
+                        Some("lth"),
                         format,
                         version + VERSION + Version::ZERO,
                         indexes,

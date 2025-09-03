@@ -138,10 +138,10 @@ impl ComputedValueVecsFromDateIndex {
         }
 
         let dateindex_to_bitcoin = self.bitcoin.dateindex.as_ref().unwrap();
-        let dateindex_to_close = price
+        let dateindex_to_price_close = price
             .as_ref()
             .unwrap()
-            .timeindexes_to_close
+            .timeindexes_to_price_close
             .dateindex
             .as_ref()
             .unwrap();
@@ -156,7 +156,7 @@ impl ComputedValueVecsFromDateIndex {
                     v.compute_from_bitcoin(
                         starting_indexes.dateindex,
                         dateindex_to_bitcoin,
-                        dateindex_to_close,
+                        dateindex_to_price_close,
                         exit,
                     )
                 },

@@ -43,7 +43,7 @@ pub struct Vecs {
     pub indexes_to_cointime_price: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_cointime_cap: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex,
-    // pub indexes_to_thermo_cap_relative_to_investor_cap: ComputedValueVecsFromHeight,
+    // pub indexes_to_thermo_cap_rel_to_investor_cap: ComputedValueVecsFromHeight,
 }
 
 impl Vecs {
@@ -58,7 +58,7 @@ impl Vecs {
 
         let compute_dollars = price.is_some();
 
-        Ok(Self {
+        let this = Self {
             indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(
                 &db,
                 "coinblocks_created",
@@ -247,7 +247,16 @@ impl Vecs {
             )?,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -597,7 +606,7 @@ impl Vecs {
                     // The price taken won't be correct for time based indexes
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &price.chainindexes_to_close.height,
+                        &price.chainindexes_to_price_close.height,
                         indexes_to_coinblocks_destroyed.height.as_ref().unwrap(),
                         exit,
                     )?;
@@ -613,7 +622,7 @@ impl Vecs {
                 |vec, _, _, starting_indexes, exit| {
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &price.chainindexes_to_close.height,
+                        &price.chainindexes_to_price_close.height,
                         self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
                         exit,
                     )?;
@@ -629,7 +638,7 @@ impl Vecs {
                 |vec, _, _, starting_indexes, exit| {
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &price.chainindexes_to_close.height,
+                        &price.chainindexes_to_price_close.height,
                         self.indexes_to_coinblocks_stored.height.as_ref().unwrap(),
                         exit,
                     )?;

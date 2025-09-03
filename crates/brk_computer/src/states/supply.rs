@@ -43,7 +43,7 @@ impl SubAssign<&SupplyState> for SupplyState {
 impl From<&LoadedAddressData> for SupplyState {
     fn from(value: &LoadedAddressData) -> Self {
         Self {
-            utxos: value.outputs_len as u64,
+            utxos: value.utxos as u64,
             value: value.amount(),
         }
     }

@@ -283,7 +283,7 @@ impl CohortState {
                         }
                     }
                     Ordering::Equal => {
-                        state.supply_even += sats;
+                        state.supply_breakeven += sats;
                     }
                 }
             };

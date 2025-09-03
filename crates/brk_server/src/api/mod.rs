@@ -107,26 +107,12 @@ impl ApiRoutes for Router<AppState> {
             ),
         )
         .route(
-            "/health",
-            get(|| async {
-                Json(serde_json::json!({
-                    "status": "healthy",
-                    "service": "brk-server",
-                    "timestamp": jiff::Timestamp::now().to_string()
-                }))
-            }),
-        )
-        .route(
             "/api",
             get(|| async {
                 Redirect::temporary(
                     "https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#api",
                 )
             }),
-        )
-        .route(
-            "/discord",
-            get(|| async { Redirect::temporary("https://discord.com/invite/HaR3wpH3nr") }),
         )
     }
 }

@@ -6,7 +6,7 @@
  * @import * as _ from "../packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  * @import { SerializedChartableIndex } from "./chart";
  * @import { Signal, Signals, Accessor } from "../packages/solidjs-signals/wrapper";
- * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
+ * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex, EmptyAddressIndex, LoadedAddressIndex } from "./vecid-to-indexes"
  */
 
 /**
@@ -50,6 +50,8 @@
  *   "%pnl" |
  *   "constant" |
  *   "vB" |
+ *   "block" |
+ *   "address data" |
  *   "sd" |
  *   "Epoch" |
  *   "Height" |
@@ -721,12 +723,25 @@ function createUtils() {
     /** @type {Unit | undefined} */
     let unit;
 
+    /**
+
+     * @param {Unit} u
+     */
+    function setUnit(u) {
+      if (unit)
+        throw Error(
+          `Can't assign "${u}" to unit, "${unit}" is already assigned to "${id}"`,
+        );
+      unit = u;
+    }
+
     if (
       (!unit || thoroughUnitCheck) &&
       (id.includes("in_sats") ||
         (id.endsWith("supply") &&
           !(id.endsWith("circulating_supply") || id.endsWith("_own_supply"))) ||
-        id.endsWith("supply_even") ||
+        id.endsWith("supply_half") ||
+        id.endsWith("supply_breakeven") ||
         id.endsWith("supply_in_profit") ||
         id.endsWith("supply_in_loss") ||
         id.endsWith("stack") ||
@@ -743,43 +758,50 @@ function createUtils() {
             id.endsWith("dominance")
           )))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Sats";
+      setUnit("Sats");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("in_btc")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "BTC";
+      setUnit("BTC");
+    }
+    if ((!unit || thoroughUnitCheck) && id === "chain") {
+      setUnit("block");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "high" ||
-        id === "ohlc" ||
-        id === "low" ||
-        id === "close" ||
-        id === "open" ||
+      (id === "emptyaddressdata" || id === "loadedaddressdata")
+    ) {
+      setUnit("address data");
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "price_high" ||
+        id === "price_ohlc" ||
+        id === "price_low" ||
+        id === "price_close" ||
+        id === "price_open" ||
+        id === "price_ath" ||
         id === "market_cap" ||
         id.includes("_usd") ||
         id.includes("cointime_value") ||
-        id.startsWith("price") ||
+        id.endsWith("_ago") ||
         id.endsWith("price_paid") ||
-        id.endsWith("price") ||
-        (id.endsWith("_cap") && !id.includes("relative_to")) ||
+        id.endsWith("_price") ||
+        (id.endsWith("_cap") && !id.includes("rel_to")) ||
         id.endsWith("value_created") ||
         id.endsWith("value_destroyed") ||
         ((id.includes("realized") || id.includes("true_market_mean")) &&
           !id.includes("ratio") &&
-          !id.includes("relative_to")) ||
+          !id.includes("rel_to")) ||
         ((id.endsWith("sma") || id.includes("sma_x") || id.endsWith("ema")) &&
           !id.includes("ratio") &&
+          !id.includes("sopr") &&
           !id.includes("hash_rate")) ||
         id === "ath")
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "USD";
+      setUnit("USD");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("cents")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Cents";
+      setUnit("Cents");
     }
     if (
       ((!unit || thoroughUnitCheck) &&
@@ -788,33 +810,32 @@ function createUtils() {
             (id.endsWith("sma") ||
               id.endsWith("ema") ||
               id.endsWith("zscore"))) ||
+          id.includes("sopr") ||
           id.endsWith("_5sd") ||
           id.endsWith("1sd") ||
           id.endsWith("2sd") ||
           id.endsWith("3sd") ||
-          id.endsWith("p1") ||
-          id.endsWith("p2") ||
-          id.endsWith("p5") ||
-          id.endsWith("p95") ||
-          id.endsWith("p98") ||
-          id.endsWith("p99"))) ||
+          id.endsWith("pct1") ||
+          id.endsWith("pct2") ||
+          id.endsWith("pct5") ||
+          id.endsWith("pct95") ||
+          id.endsWith("pct98") ||
+          id.endsWith("pct99"))) ||
       id.includes("liveliness") ||
       id.includes("vaultedness") ||
       id == "puell_multiple"
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Ratio";
+      setUnit("Ratio");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "drawdown" ||
+      (id === "price_drawdown" ||
         id.endsWith("oscillator") ||
         id.endsWith("dominance") ||
         id.endsWith("returns") ||
         id.endsWith("cagr"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "percentage";
+      setUnit("percentage");
     }
     if (
       (!unit || thoroughUnitCheck) &&
@@ -823,43 +844,35 @@ function createUtils() {
         id.startsWith("block_count") ||
         (id.includes("tx_v") && !id.includes("vsize")))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Count";
+      setUnit("Count");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id.startsWith("hash_rate") || id.endsWith("as_hash"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "H/s";
+      setUnit("H/s");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("fee_rate")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "sat/vB";
+      setUnit("sat/vB");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("is_")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Bool";
+      setUnit("Bool");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("type")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Type";
+      setUnit("Type");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "interval" || id.startsWith("block_interval"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "secs";
+      setUnit("secs");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("locktime")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Locktime";
+      setUnit("Locktime");
     }
 
     if ((!unit || thoroughUnitCheck) && id.endsWith("version")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Version";
+      setUnit("Version");
     }
     if (
       (!unit || thoroughUnitCheck) &&
@@ -869,132 +882,101 @@ function createUtils() {
         id.endsWith("total_size") ||
         id.includes("block_size"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Bytes";
+      setUnit("Bytes");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("_sd")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "sd";
+      setUnit("sd");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id.includes("vsize") || id.includes("vbytes"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "vB";
+      setUnit("vB");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("weight")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "WU";
+      setUnit("WU");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("index")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Index";
+      setUnit("Index");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "date" || id === "date_fixed")
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Date";
+      setUnit("Date");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "timestamp" || id === "timestamp_fixed")
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Timestamp";
+      setUnit("Timestamp");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("coinblocks")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "coinblocks";
+      setUnit("coinblocks");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("coindays")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "coindays";
+      setUnit("coindays");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("satblocks")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "satblocks";
+      setUnit("satblocks");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("satdays")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "satdays";
+      setUnit("satdays");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("height")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Height";
+      setUnit("Height");
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_market_cap")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%mcap";
+    if ((!unit || thoroughUnitCheck) && id.endsWith("rel_to_market_cap")) {
+      setUnit("%mcap");
     }
-    if (
-      (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative_to_own_market_cap")
-    ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%cmcap";
+    if ((!unit || thoroughUnitCheck) && id.endsWith("rel_to_own_market_cap")) {
+      setUnit("%cmcap");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative_to_own_unrealized_profit_plus_loss")
+      id.endsWith("rel_to_own_unrealized_total_pnl")
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%cp+l";
+      setUnit("%cp+l");
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("rel_to_realized_cap")) {
+      setUnit("%rcap");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative_to_realized_cap")
+      id.endsWith("rel_to_circulating_supply")
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%rcap";
+      setUnit("%all");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative_to_circulating_supply")
+      (id.includes("rel_to_realized_profit") ||
+        id.includes("rel_to_realized_loss"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%all";
+      setUnit("%pnl");
     }
-    if (
-      (!unit || thoroughUnitCheck) &&
-      (id.includes("relative_to_realized_profit") ||
-        id.includes("relative_to_realized_loss"))
-    ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%pnl";
-    }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_own_supply")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "%self";
+    if ((!unit || thoroughUnitCheck) && id.endsWith("rel_to_own_supply")) {
+      setUnit("%self");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("epoch")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Epoch";
+      setUnit("Epoch");
     }
     if ((!unit || thoroughUnitCheck) && id === "difficulty") {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Difficulty";
+      setUnit("Difficulty");
     }
     if ((!unit || thoroughUnitCheck) && id === "blockhash") {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Hash";
+      setUnit("Hash");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id.includes("days_between") || id.includes("days_since"))
     ) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Days";
+      setUnit("Days");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("years_between")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "Years";
+      setUnit("Years");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("constant")) {
-      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
-      unit = "constant";
+      setUnit("constant");
     }
 
     if (!unit) {
@@ -1205,6 +1187,10 @@ function createUtils() {
             return "weekindex";
           case /** @satisfies {YearIndex} */ (24):
             return "yearindex";
+          case /** @satisfies {LoadedAddressIndex} */ (25):
+            return "loadedaddressindex";
+          case /** @satisfies {EmptyAddressIndex} */ (26):
+            return "emptyaddressindex";
         }
       },
     },

@@ -1,6 +1,5 @@
 use std::path::Path;
 
-use bitcoin::{Block, consensus::serde::hex, script::Instruction};
 use bitcoincore_rpc::{Auth, Client, Result};
 use brk_parser::Parser;
 use brk_structs::Height;
@@ -28,13 +27,8 @@ fn main() -> Result<()> {
         .parse(start, end)
         .iter()
         .for_each(|(height, _block, hash)| {
-            println!("{height}: {}", _block.get_coinbase_message());
+            println!("{height}: {}", hash);
         });
-
-    println!(
-        "391487: {}",
-        parser.get(Height::new(391487)).get_coinbase_message()
-    );
 
     let block_0 = parser.get(Height::new(0));
 
@@ -50,8 +44,6 @@ fn main() -> Result<()> {
             .script_pubkey
     );
 
-    println!("{}", block_0.get_coinbase_message());
-
     let block_158251 = parser.get(Height::new(158251));
     println!(
         "{}",
@@ -64,7 +56,6 @@ fn main() -> Result<()> {
             .unwrap()
             .script_pubkey
     );
-    println!("{}", block_158251.get_coinbase_message());
 
     let block_840_000 = parser.get(Height::new(840_004));
 
@@ -80,27 +71,7 @@ fn main() -> Result<()> {
             .value
     );
 
-    println!("{}", block_840_000.get_coinbase_message());
-
     dbg!(i.elapsed());
 
     Ok(())
-}
-
-pub trait BlockExtended {
-    fn get_coinbase_message(&self) -> String;
-}
-
-impl BlockExtended for Block {
-    fn get_coinbase_message(&self) -> String {
-        let Some(input) = self.txdata.first().and_then(|tx| tx.input.first()) else {
-            return String::new();
-        };
-        let bytes = input.script_sig.as_bytes();
-        String::from_utf8_lossy(bytes)
-            .chars()
-            .filter(|&c| c != '\u{FFFD}' && (c >= ' ' || c == '\n' || c == '\r' || c == '\t'))
-            .take(1_024)
-            .collect()
-    }
 }

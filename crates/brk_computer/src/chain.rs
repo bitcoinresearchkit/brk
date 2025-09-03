@@ -288,7 +288,7 @@ impl Vecs {
         let txindex_to_fee_rate =
             EagerVec::forced_import_compressed(&db, "fee_rate", version + VERSION + Version::ZERO)?;
 
-        Ok(Self {
+        let this = Self {
             height_to_interval: EagerVec::forced_import_compressed(
                 &db,
                 "interval",
@@ -804,7 +804,16 @@ impl Vecs {
             txindex_to_weight,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.vecs()
+                .into_iter()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+
+        Ok(this)
     }
 
     pub fn compute(

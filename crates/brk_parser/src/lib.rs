@@ -14,6 +14,7 @@ mod blk_index_to_blk_path;
 mod blk_index_to_blk_recap;
 mod blk_metadata;
 mod blk_recap;
+mod block;
 mod block_state;
 mod error;
 mod utils;
@@ -22,6 +23,7 @@ mod xor_index;
 
 use blk_index_to_blk_recap::*;
 use blk_metadata::*;
+pub use block::*;
 use block_state::*;
 pub use error::*;
 use utils::*;

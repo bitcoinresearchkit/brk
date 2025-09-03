@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable};
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -22,6 +22,7 @@ use crate::TypeIndex;
     IntoBytes,
     KnownLayout,
     Serialize,
+    StoredCompressed,
 )]
 pub struct LoadedAddressIndex(TypeIndex);
 

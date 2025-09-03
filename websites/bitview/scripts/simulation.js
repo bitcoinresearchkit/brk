@@ -836,7 +836,7 @@ export function init({
   });
 
   vecsResources
-    .getOrCreate(/** @satisfies {DateIndex} */ (0), "close")
+    .getOrCreate(/** @satisfies {DateIndex} */ (0), "price_close")
     .fetch()
     .then((_closes) => {
       if (!_closes) return;

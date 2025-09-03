@@ -17,7 +17,7 @@
   <a href="https://deps.rs/crate/brk">
     <img src="https://deps.rs/crate/brk/latest/status.svg" alt="Dependency status">
   </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
+  <a href="https://discord.gg/WACpShCB7M">
     <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
   </a>
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
@@ -92,7 +92,3 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 ## Donate
 
 [`bc1q09 8zsm89 m7kgyz e338vf ejhpdt 92ua9p 3peuve`](bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve)
-
-[`lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4`](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
-
-[Geyser Fund](https://geyser.fund/project/brk)

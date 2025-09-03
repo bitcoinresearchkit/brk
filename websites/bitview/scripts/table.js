@@ -422,6 +422,8 @@ function createSerializedIndexes() {
     /** @satisfies {VecId} */ ("unknownoutputindex"),
     /** @satisfies {VecId} */ ("weekindex"),
     /** @satisfies {VecId} */ ("yearindex"),
+    /** @satisfies {VecId} */ ("loadedaddressindex"),
+    /** @satisfies {VecId} */ ("emptyaddressindex"),
   ]);
 }
 /** @typedef {ReturnType<typeof createSerializedIndexes>} SerializedIndexes */
@@ -483,6 +485,10 @@ function serializedIndexToIndex(serializedIndex) {
       return /** @satisfies {EmptyOutputIndex} */ (3);
     case "unknownoutputindex":
       return /** @satisfies {UnknownOutputIndex} */ (22);
+    case "emptyaddressindex":
+      return /** @satisfies {EmptyAddressIndex} */ (26);
+    case "loadedaddressindex":
+      return /** @satisfies {LoadedAddressIndex} */ (25);
   }
 }
 
@@ -514,7 +520,7 @@ function createIndexToVecIds(vecIdToIndexes) {
  */
 function serializeValue({ value, unit }) {
   if (typeof value !== "number") {
-    return String(value);
+    return JSON.stringify(value);
   } else if (value !== 18446744073709552000) {
     if (unit === "USD" || unit === "Difficulty" || unit === "sat/vB") {
       return value.toLocaleString("en-us", {
