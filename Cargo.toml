@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.97"
+package.version = "0.0.98"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
@@ -26,19 +26,19 @@ inherits = "release"
 axum = "0.8.4"
 bitcoin = { version = "0.32.7", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
-brk_bundler = { version = "0.0.97", path = "crates/brk_bundler" }
-brk_cli = { version = "0.0.97", path = "crates/brk_cli" }
-brk_computer = { version = "0.0.97", path = "crates/brk_computer" }
-brk_error = { version = "0.0.97", path = "crates/brk_error" }
-brk_fetcher = { version = "0.0.97", path = "crates/brk_fetcher" }
-brk_indexer = { version = "0.0.97", path = "crates/brk_indexer" }
-brk_interface = { version = "0.0.97", path = "crates/brk_interface" }
-brk_logger = { version = "0.0.97", path = "crates/brk_logger" }
-brk_mcp = { version = "0.0.97", path = "crates/brk_mcp" }
-brk_parser = { version = "0.0.97", path = "crates/brk_parser" }
-brk_server = { version = "0.0.97", path = "crates/brk_server" }
-brk_store = { version = "0.0.97", path = "crates/brk_store" }
-brk_structs = { version = "0.0.97", path = "crates/brk_structs" }
+brk_bundler = { version = "0.0.98", path = "crates/brk_bundler" }
+brk_cli = { version = "0.0.98", path = "crates/brk_cli" }
+brk_computer = { version = "0.0.98", path = "crates/brk_computer" }
+brk_error = { version = "0.0.98", path = "crates/brk_error" }
+brk_fetcher = { version = "0.0.98", path = "crates/brk_fetcher" }
+brk_indexer = { version = "0.0.98", path = "crates/brk_indexer" }
+brk_interface = { version = "0.0.98", path = "crates/brk_interface" }
+brk_logger = { version = "0.0.98", path = "crates/brk_logger" }
+brk_mcp = { version = "0.0.98", path = "crates/brk_mcp" }
+brk_parser = { version = "0.0.98", path = "crates/brk_parser" }
+brk_server = { version = "0.0.98", path = "crates/brk_server" }
+brk_store = { version = "0.0.98", path = "crates/brk_store" }
+brk_structs = { version = "0.0.98", path = "crates/brk_structs" }
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
