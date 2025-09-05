@@ -6,7 +6,7 @@ use serde::Deserialize;
 use crate::{
     Format, Index,
     deser::{de_unquote_i64, de_unquote_usize},
-    maybe_ids::MaybeIds,
+    ids::MaybeIds,
 };
 
 #[derive(Debug, Deserialize, JsonSchema)]
