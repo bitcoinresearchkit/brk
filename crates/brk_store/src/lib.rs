@@ -126,12 +126,12 @@ where
     //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
     // }
 
-    // pub fn tx_iter(&self) -> impl Iterator<Item = (K, V)> {
-    //     self.rtx
-    //         .iter(&self.partition.load())
-    //         .map(|res| res.unwrap())
-    //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
-    // }
+    pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
+        self.rtx
+            .iter(self.partition.as_ref().unwrap())
+            .map(|res| res.unwrap())
+            .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
+    }
 
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {

@@ -26,7 +26,6 @@ pub struct Vecs {
     pub constant_4: ComputedVecsFromHeight<StoredU16>,
     pub constant_50: ComputedVecsFromHeight<StoredU16>,
     pub constant_100: ComputedVecsFromHeight<StoredU16>,
-    pub constant_144: ComputedVecsFromHeight<StoredU16>,
     pub constant_600: ComputedVecsFromHeight<StoredU16>,
     pub constant_minus_1: ComputedVecsFromHeight<StoredI16>,
     pub constant_minus_2: ComputedVecsFromHeight<StoredI16>,
@@ -90,14 +89,6 @@ impl Vecs {
             constant_100: ComputedVecsFromHeight::forced_import(
                 &db,
                 "constant_100",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            constant_144: ComputedVecsFromHeight::forced_import(
-                &db,
-                "constant_144",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -184,7 +175,6 @@ impl Vecs {
             (&mut self.constant_4, 4),
             (&mut self.constant_50, 50),
             (&mut self.constant_100, 100),
-            (&mut self.constant_144, 144),
             (&mut self.constant_600, 600),
         ]
         .into_iter()
@@ -245,7 +235,6 @@ impl Vecs {
             self.constant_4.vecs(),
             self.constant_50.vecs(),
             self.constant_100.vecs(),
-            self.constant_144.vecs(),
             self.constant_600.vecs(),
             self.constant_minus_1.vecs(),
             self.constant_minus_2.vecs(),

@@ -3,9 +3,10 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
-    CheckedSub, Date, DateIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch, Height,
-    InputIndex, OutputIndex, Sats, StoredBool, StoredF32, StoredF64, StoredU32, StoredU64,
-    Timestamp, TxIndex, TxVersion, Version, Weight,
+    CheckedSub, Date, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
+    Height, InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool,
+    StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex,
+    Weight, YearIndex,
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
@@ -20,12 +21,30 @@ use crate::grouped::{
 use super::{Indexes, indexes, price};
 
 const VERSION: Version = Version::ZERO;
-const TARGET_BLOCKS_PER_DAY: f64 = 144.0;
+const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;
+const TARGET_BLOCKS_PER_DAY: u64 = 144;
+const TARGET_BLOCKS_PER_WEEK: u64 = 7 * TARGET_BLOCKS_PER_DAY;
+const TARGET_BLOCKS_PER_MONTH: u64 = 30 * TARGET_BLOCKS_PER_DAY;
+const TARGET_BLOCKS_PER_QUARTER: u64 = 3 * TARGET_BLOCKS_PER_MONTH;
+const TARGET_BLOCKS_PER_SEMESTER: u64 = 2 * TARGET_BLOCKS_PER_QUARTER;
+const TARGET_BLOCKS_PER_YEAR: u64 = 2 * TARGET_BLOCKS_PER_SEMESTER;
+const TARGET_BLOCKS_PER_DECADE: u64 = 10 * TARGET_BLOCKS_PER_YEAR;
 
 #[derive(Clone)]
 pub struct Vecs {
     db: Database,
 
+    pub dateindex_to_block_count_target: LazyVecFrom1<DateIndex, StoredU64, DateIndex, DateIndex>,
+    pub weekindex_to_block_count_target: LazyVecFrom1<WeekIndex, StoredU64, WeekIndex, WeekIndex>,
+    pub monthindex_to_block_count_target:
+        LazyVecFrom1<MonthIndex, StoredU64, MonthIndex, MonthIndex>,
+    pub quarterindex_to_block_count_target:
+        LazyVecFrom1<QuarterIndex, StoredU64, QuarterIndex, QuarterIndex>,
+    pub semesterindex_to_block_count_target:
+        LazyVecFrom1<SemesterIndex, StoredU64, SemesterIndex, SemesterIndex>,
+    pub yearindex_to_block_count_target: LazyVecFrom1<YearIndex, StoredU64, YearIndex, YearIndex>,
+    pub decadeindex_to_block_count_target:
+        LazyVecFrom1<DecadeIndex, StoredU64, DecadeIndex, DecadeIndex>,
     pub height_to_interval: EagerVec<Height, Timestamp>,
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
     pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
@@ -39,7 +58,6 @@ pub struct Vecs {
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_difficultyepoch: ComputedVecsFromDateIndex<DifficultyEpoch>,
     pub indexes_to_halvingepoch: ComputedVecsFromDateIndex<HalvingEpoch>,
-
     pub indexes_to_coinbase: ComputedValueVecsFromHeight,
     pub indexes_to_emptyoutput_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_fee: ComputedValueVecsFromTxindex,
@@ -288,7 +306,57 @@ impl Vecs {
         let txindex_to_fee_rate =
             EagerVec::forced_import_compressed(&db, "fee_rate", version + VERSION + Version::ZERO)?;
 
+        let dateindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.dateindex_to_dateindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DAY)),
+        );
+        let weekindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.weekindex_to_weekindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_WEEK)),
+        );
+        let monthindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.monthindex_to_monthindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_MONTH)),
+        );
+        let quarterindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.quarterindex_to_quarterindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_QUARTER)),
+        );
+        let semesterindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.semesterindex_to_semesterindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_SEMESTER)),
+        );
+        let yearindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.yearindex_to_yearindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_YEAR)),
+        );
+        let decadeindex_to_block_count_target = LazyVecFrom1::init(
+            "block_count_target",
+            version + VERSION + Version::ZERO,
+            indexes.decadeindex_to_decadeindex.boxed_clone(),
+            |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
+        );
+
         let this = Self {
+            dateindex_to_block_count_target,
+            weekindex_to_block_count_target,
+            monthindex_to_block_count_target,
+            quarterindex_to_block_count_target,
+            semesterindex_to_block_count_target,
+            yearindex_to_block_count_target,
+            decadeindex_to_block_count_target,
             height_to_interval: EagerVec::forced_import_compressed(
                 &db,
                 "interval",
@@ -1538,7 +1606,7 @@ impl Vecs {
                             i,
                             StoredF64::from(
                                 (f64::from(block_count_sum)
-                                    / (target_multiplier * TARGET_BLOCKS_PER_DAY))
+                                    / (target_multiplier * TARGET_BLOCKS_PER_DAY_F64))
                                     * f64::from(difficulty_as_hash),
                             ),
                         )
@@ -1686,6 +1754,13 @@ impl Vecs {
                 &self.txindex_to_weight,
                 &self.dateindex_to_fee_dominance,
                 &self.dateindex_to_subsidy_dominance,
+                &self.dateindex_to_block_count_target,
+                &self.weekindex_to_block_count_target,
+                &self.monthindex_to_block_count_target,
+                &self.quarterindex_to_block_count_target,
+                &self.semesterindex_to_block_count_target,
+                &self.yearindex_to_block_count_target,
+                &self.decadeindex_to_block_count_target,
             ],
             self.indexes_to_hash_rate.vecs(),
             self.indexes_to_hash_rate_1w_sma.vecs(),

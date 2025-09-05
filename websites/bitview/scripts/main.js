@@ -934,7 +934,7 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("rel_to_own_unrealized_total_pnl")
+      id.endsWith("rel_to_own_total_unrealized_pnl")
     ) {
       setUnit("%cp+l");
     }
