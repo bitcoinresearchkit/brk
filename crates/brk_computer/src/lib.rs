@@ -16,6 +16,7 @@ mod fetched;
 mod grouped;
 mod indexes;
 mod market;
+mod pools;
 mod price;
 mod stateful;
 mod states;
@@ -24,6 +25,7 @@ mod utils;
 
 use indexes::Indexes;
 
+pub use pools::*;
 pub use states::PriceToAmount;
 use states::*;
 

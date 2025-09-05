@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::OnceLock};
 
 use brk_computer::Computer;
 use brk_error::{Error, Result};
@@ -10,13 +10,14 @@ use nucleo_matcher::{
     Config, Matcher,
     pattern::{AtomKind, CaseMatching, Normalization, Pattern},
 };
+use quick_cache::sync::Cache;
 use tabled::settings::Style;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod deser;
 mod format;
+mod ids;
 mod index;
-mod maybe_ids;
 mod output;
 mod pagination;
 mod params;
@@ -32,6 +33,11 @@ pub use table::Tabled;
 use vecs::Vecs;
 
 use crate::vecs::{IdToVec, IndexToVec};
+
+pub fn cached_errors() -> &'static Cache<String, String> {
+    static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
+    CACHE.get_or_init(|| Cache::new(1000))
+}
 
 #[allow(dead_code)]
 pub struct Interface<'a> {
@@ -58,34 +64,31 @@ impl<'a> Interface<'a> {
     }
 
     pub fn search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
+        let ids = &params.ids;
+        let index = params.index;
+
         let ids_to_vec = self
             .vecs
             .index_to_id_to_vec
-            .get(&params.index)
+            .get(&index)
             .ok_or(Error::String(format!(
                 "Index \"{}\" isn't a valid index",
-                params.index
+                index
             )))?;
 
-        let maybe_ids = params.ids.iter().flat_map(|s| {
-            s.to_lowercase()
-                .replace("-", "_")
-                .split_whitespace()
-                .flat_map(|s| {
-                    s.split(',')
-                        .flat_map(|s| s.split('+').map(|s| s.to_string()))
-                })
-                .collect::<Vec<_>>()
-        });
-
-        maybe_ids
+        ids.iter()
             .map(|id| {
                 let vec = ids_to_vec.get(id.as_str()).ok_or_else(|| {
+                    let cached_errors = cached_errors();
+
+                    if let Some(message) = cached_errors.get(id) {
+                        return Error::String(message)
+                    }
+
                     let mut message = format!(
                         "No vec named \"{}\" indexed by \"{}\" found.\n",
-                        // tell if id found in another index
                         id,
-                        params.index
+                        index
                     );
 
                     let mut matcher = Matcher::new(Config::DEFAULT);
@@ -111,9 +114,11 @@ impl<'a> Interface<'a> {
                         message += &format!("\nBut there is a vec named {id} which supports the following indexes: {:#?}\n", index_to_vec.keys());
                     }
 
+                    cached_errors.insert(id.clone(), message.clone());
+
                     Error::String(message)
                 });
-                vec.map(|vec| (id, vec))
+                vec.map(|vec| (id.clone(), vec))
             })
             .collect::<Result<Vec<_>>>()
     }

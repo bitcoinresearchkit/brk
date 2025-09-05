@@ -14,7 +14,7 @@ pub struct BRK {
     dateindex_to_ohlc: BTreeMap<DateIndex, Vec<OHLCCents>>,
 }
 
-const API_URL: &str = "https://bitcoinresearchkit.org/api/vecs";
+const API_URL: &str = "https://bitview.space/api/vecs";
 const CHUNK_SIZE: usize = 10_000;
 
 impl BRK {
@@ -46,7 +46,7 @@ impl BRK {
 
         default_retry(|_| {
             let url = format!(
-                "{API_URL}/height-to-ohlc?from={}&to={}",
+                "{API_URL}/height-to-price-ohlc?from={}&to={}",
                 height,
                 height + CHUNK_SIZE
             );
@@ -91,7 +91,7 @@ impl BRK {
 
         default_retry(|_| {
             let url = format!(
-                "{API_URL}/dateindex-to-ohlc?from={}&to={}",
+                "{API_URL}/dateindex-to-price-ohlc?from={}&to={}",
                 dateindex,
                 dateindex + CHUNK_SIZE
             );
