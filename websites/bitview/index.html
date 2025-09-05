@@ -572,6 +572,7 @@
 
         &:has(input:checked) {
           color: var(--color);
+          font-style: normal;
         }
 
         [data-screenshot="true"] &:has(input:not(:checked)) {
@@ -950,6 +951,7 @@
           display: flex;
           align-items: center;
           gap: 1rem;
+          /*font-style: italic;*/
 
           > legend,
           > div {
@@ -1051,6 +1053,7 @@
 
               &:has(input:not(:checked)) {
                 color: var(--off-color);
+                /*font-style: italic;*/
 
                 > span.main > span.name {
                   text-decoration-thickness: 1.5px;

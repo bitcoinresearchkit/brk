@@ -77,8 +77,10 @@ pub struct Vecs {
     pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_unrealized_profit: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub height_to_unrealized_total_pnl: Option<EagerVec<Height, Dollars>>,
-    pub indexes_to_unrealized_total_pnl: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub height_to_total_unrealized_pnl: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_total_unrealized_pnl: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub height_to_total_realized_pnl: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_total_realized_pnl: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_max_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub height_to_supply_half_value: ComputedHeightValueVecs,
@@ -110,21 +112,21 @@ pub struct Vecs {
         Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_net_unrealized_pnl_rel_to_own_market_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub height_to_unrealized_profit_rel_to_own_unrealized_total_pnl:
+    pub height_to_unrealized_profit_rel_to_own_total_unrealized_pnl:
         Option<EagerVec<Height, StoredF32>>,
-    pub height_to_unrealized_loss_rel_to_own_unrealized_total_pnl:
+    pub height_to_unrealized_loss_rel_to_own_total_unrealized_pnl:
         Option<EagerVec<Height, StoredF32>>,
-    pub height_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl:
+    pub height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl:
         Option<EagerVec<Height, StoredF32>>,
-    pub height_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl:
+    pub height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
         Option<EagerVec<Height, StoredF32>>,
-    pub indexes_to_unrealized_profit_rel_to_own_unrealized_total_pnl:
+    pub indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub indexes_to_unrealized_loss_rel_to_own_unrealized_total_pnl:
+    pub indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub indexes_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl:
+    pub indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub indexes_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl:
+    pub indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_realized_cap_rel_to_own_market_cap: Option<ComputedVecsFromHeight<StoredF32>>,
     pub indexes_to_realized_profit_rel_to_realized_cap: Option<ComputedVecsFromHeight<StoredF32>>,
@@ -370,22 +372,41 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            height_to_unrealized_total_pnl: compute_dollars.then(|| {
+            height_to_total_unrealized_pnl: compute_dollars.then(|| {
                 EagerVec::forced_import_compressed(
                     db,
-                    &suffix("unrealized_total_pnl"),
+                    &suffix("total_unrealized_pnl"),
                     version + VERSION + Version::ZERO,
                 )
                 .unwrap()
             }),
-            indexes_to_unrealized_total_pnl: compute_dollars.then(|| {
+            indexes_to_total_unrealized_pnl: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &suffix("unrealized_total_pnl"),
+                    &suffix("total_unrealized_pnl"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_total_realized_pnl: compute_dollars.then(|| {
+                EagerVec::forced_import_compressed(
+                    db,
+                    &suffix("total_realized_pnl"),
+                    version + VERSION + Version::ZERO,
+                )
+                .unwrap()
+            }),
+            indexes_to_total_realized_pnl: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &suffix("total_realized_pnl"),
+                    Source::Compute,
+                    version + VERSION + Version::ONE,
+                    indexes,
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -990,56 +1011,56 @@ impl Vecs {
                     )
                     .unwrap()
                 }),
-            height_to_unrealized_profit_rel_to_own_unrealized_total_pnl: (compute_dollars
+            height_to_unrealized_profit_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     EagerVec::forced_import(
                         db,
-                        &suffix("unrealized_profit_rel_to_own_unrealized_total_pnl"),
+                        &suffix("unrealized_profit_rel_to_own_total_unrealized_pnl"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
                 }),
-            height_to_unrealized_loss_rel_to_own_unrealized_total_pnl: (compute_dollars
+            height_to_unrealized_loss_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     EagerVec::forced_import(
                         db,
-                        &suffix("unrealized_loss_rel_to_own_unrealized_total_pnl"),
+                        &suffix("unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
                 }),
-            height_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl: (compute_dollars
+            height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     EagerVec::forced_import(
                         db,
-                        &suffix("neg_unrealized_loss_rel_to_own_unrealized_total_pnl"),
+                        &suffix("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
                 }),
-            height_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl: (compute_dollars
+            height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     EagerVec::forced_import(
                         db,
-                        &suffix("net_unrealized_pnl_rel_to_own_unrealized_total_pnl"),
+                        &suffix("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
                         version + VERSION + Version::ONE,
                         format,
                     )
                     .unwrap()
                 }),
-            indexes_to_unrealized_profit_rel_to_own_unrealized_total_pnl: (compute_dollars
+            indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     ComputedVecsFromDateIndex::forced_import(
                         db,
-                        &suffix("unrealized_profit_rel_to_own_unrealized_total_pnl"),
+                        &suffix("unrealized_profit_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
                         indexes,
@@ -1047,12 +1068,12 @@ impl Vecs {
                     )
                     .unwrap()
                 }),
-            indexes_to_unrealized_loss_rel_to_own_unrealized_total_pnl: (compute_dollars
+            indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     ComputedVecsFromDateIndex::forced_import(
                         db,
-                        &suffix("unrealized_loss_rel_to_own_unrealized_total_pnl"),
+                        &suffix("unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
                         indexes,
@@ -1060,12 +1081,12 @@ impl Vecs {
                     )
                     .unwrap()
                 }),
-            indexes_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl: (compute_dollars
+            indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     ComputedVecsFromDateIndex::forced_import(
                         db,
-                        &suffix("neg_unrealized_loss_rel_to_own_unrealized_total_pnl"),
+                        &suffix("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
                         indexes,
@@ -1073,12 +1094,12 @@ impl Vecs {
                     )
                     .unwrap()
                 }),
-            indexes_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl: (compute_dollars
+            indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl: (compute_dollars
                 && extended)
                 .then(|| {
                     ComputedVecsFromDateIndex::forced_import(
                         db,
-                        &suffix("net_unrealized_pnl_rel_to_own_unrealized_total_pnl"),
+                        &suffix("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
                         version + VERSION + Version::ONE,
                         indexes,
@@ -2673,7 +2694,7 @@ impl Vecs {
                     exit,
                     Some(self.dateindex_to_unrealized_loss.as_ref().unwrap()),
                 )?;
-            self.height_to_unrealized_total_pnl
+            self.height_to_total_unrealized_pnl
                 .as_mut()
                 .unwrap()
                 .compute_add(
@@ -2682,7 +2703,7 @@ impl Vecs {
                     self.height_to_unrealized_loss.as_ref().unwrap(),
                     exit,
                 )?;
-            self.indexes_to_unrealized_total_pnl
+            self.indexes_to_total_unrealized_pnl
                 .as_mut()
                 .unwrap()
                 .compute_all(
@@ -2695,6 +2716,41 @@ impl Vecs {
                             starting_indexes.dateindex,
                             self.dateindex_to_unrealized_profit.as_ref().unwrap(),
                             self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )?;
+            self.height_to_total_realized_pnl
+                .as_mut()
+                .unwrap()
+                .compute_add(
+                    starting_indexes.height,
+                    self.height_to_realized_profit.as_ref().unwrap(),
+                    self.height_to_realized_loss.as_ref().unwrap(),
+                    exit,
+                )?;
+            self.indexes_to_total_realized_pnl
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_add(
+                            starting_indexes.dateindex,
+                            self.indexes_to_realized_profit
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .unwrap_sum(),
+                            self.indexes_to_realized_loss
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .unwrap_sum(),
                             exit,
                         )?;
                         Ok(())
@@ -3043,46 +3099,46 @@ impl Vecs {
             }
 
             if self
-                .height_to_unrealized_profit_rel_to_own_unrealized_total_pnl
+                .height_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                 .is_some()
             {
-                self.height_to_unrealized_profit_rel_to_own_unrealized_total_pnl
+                self.height_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
                         self.height_to_unrealized_profit.as_ref().unwrap(),
-                        self.height_to_unrealized_total_pnl.as_ref().unwrap(),
+                        self.height_to_total_unrealized_pnl.as_ref().unwrap(),
                         exit,
                     )?;
-                self.height_to_unrealized_loss_rel_to_own_unrealized_total_pnl
+                self.height_to_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
                         self.height_to_unrealized_loss.as_ref().unwrap(),
-                        self.height_to_unrealized_total_pnl.as_ref().unwrap(),
+                        self.height_to_total_unrealized_pnl.as_ref().unwrap(),
                         exit,
                     )?;
-                self.height_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl
+                self.height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
                         self.height_to_neg_unrealized_loss.as_ref().unwrap(),
-                        self.height_to_unrealized_total_pnl.as_ref().unwrap(),
+                        self.height_to_total_unrealized_pnl.as_ref().unwrap(),
                         exit,
                     )?;
-                self.height_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl
+                self.height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
                         self.height_to_net_unrealized_pnl.as_ref().unwrap(),
-                        self.height_to_unrealized_total_pnl.as_ref().unwrap(),
+                        self.height_to_total_unrealized_pnl.as_ref().unwrap(),
                         exit,
                     )?;
-                self.indexes_to_unrealized_profit_rel_to_own_unrealized_total_pnl
+                self.indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_all(
@@ -3094,7 +3150,7 @@ impl Vecs {
                             vec.compute_percentage(
                                 starting_indexes.dateindex,
                                 self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                                self.indexes_to_unrealized_total_pnl
+                                self.indexes_to_total_unrealized_pnl
                                     .as_ref()
                                     .unwrap()
                                     .dateindex
@@ -3105,7 +3161,7 @@ impl Vecs {
                             Ok(())
                         },
                     )?;
-                self.indexes_to_unrealized_loss_rel_to_own_unrealized_total_pnl
+                self.indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_all(
@@ -3117,7 +3173,7 @@ impl Vecs {
                             vec.compute_percentage(
                                 starting_indexes.dateindex,
                                 self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                                self.indexes_to_unrealized_total_pnl
+                                self.indexes_to_total_unrealized_pnl
                                     .as_ref()
                                     .unwrap()
                                     .dateindex
@@ -3128,7 +3184,7 @@ impl Vecs {
                             Ok(())
                         },
                     )?;
-                self.indexes_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl
+                self.indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_all(
@@ -3145,7 +3201,7 @@ impl Vecs {
                                     .dateindex
                                     .as_ref()
                                     .unwrap(),
-                                self.indexes_to_unrealized_total_pnl
+                                self.indexes_to_total_unrealized_pnl
                                     .as_ref()
                                     .unwrap()
                                     .dateindex
@@ -3156,7 +3212,7 @@ impl Vecs {
                             Ok(())
                         },
                     )?;
-                self.indexes_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl
+                self.indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
                     .compute_all(
@@ -3173,7 +3229,7 @@ impl Vecs {
                                     .dateindex
                                     .as_ref()
                                     .unwrap(),
-                                self.indexes_to_unrealized_total_pnl
+                                self.indexes_to_total_unrealized_pnl
                                     .as_ref()
                                     .unwrap()
                                     .dateindex
@@ -3806,10 +3862,16 @@ impl Vecs {
             self.indexes_to_unrealized_loss
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.height_to_unrealized_total_pnl
+            self.height_to_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
-            self.indexes_to_unrealized_total_pnl
+            self.indexes_to_total_unrealized_pnl
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_total_realized_pnl
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_total_realized_pnl
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
             self.indexes_to_min_price_paid
@@ -3843,28 +3905,28 @@ impl Vecs {
             self.indexes_to_net_unrealized_pnl_rel_to_own_market_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.height_to_unrealized_profit_rel_to_own_unrealized_total_pnl
+            self.height_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
-            self.height_to_unrealized_loss_rel_to_own_unrealized_total_pnl
+            self.height_to_unrealized_loss_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
-            self.height_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl
+            self.height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
-            self.height_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl
+            self.height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
-            self.indexes_to_unrealized_profit_rel_to_own_unrealized_total_pnl
+            self.indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.indexes_to_unrealized_loss_rel_to_own_unrealized_total_pnl
+            self.indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.indexes_to_neg_unrealized_loss_rel_to_own_unrealized_total_pnl
+            self.indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.indexes_to_net_unrealized_pnl_rel_to_own_unrealized_total_pnl
+            self.indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
             self.height_to_neg_unrealized_loss
