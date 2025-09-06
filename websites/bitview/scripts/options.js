@@ -4194,7 +4194,7 @@ export function initOptions({
   qrcode,
   vecIdToIndexes,
 }) {
-  const LS_SELECTED_KEY = `selected_id`;
+  const LS_SELECTED_KEY = `selected_path`;
 
   const urlPath_ = window.document.location.pathname
     .split("/")
