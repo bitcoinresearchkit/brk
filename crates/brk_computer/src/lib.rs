@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::Path, thread};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
@@ -34,6 +34,7 @@ pub struct Computer {
     pub indexes: indexes::Vecs,
     pub constants: constants::Vecs,
     pub market: market::Vecs,
+    pub pools: pools::Vecs,
     pub price: Option<price::Vecs>,
     pub chain: chain::Vecs,
     pub stateful: stateful::Vecs,
@@ -41,7 +42,7 @@ pub struct Computer {
     pub cointime: cointime::Vecs,
 }
 
-const VERSION: Version = Version::TWO;
+const VERSION: Version = Version::new(4);
 
 impl Computer {
     /// Do NOT import multiple times or things will break !!!
@@ -86,6 +87,12 @@ impl Computer {
                 &indexes,
                 price.as_ref(),
             )?,
+            pools: pools::Vecs::forced_import(
+                &computed_path,
+                VERSION + Version::ZERO,
+                &indexes,
+                price.as_ref(),
+            )?,
             cointime: cointime::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
@@ -125,8 +132,8 @@ impl Computer {
             )?;
         }
 
-        thread::scope(|scope| -> Result<()> {
-            let chain = scope.spawn(|| {
+        std::thread::scope(|scope| -> Result<()> {
+            let chain = scope.spawn(|| -> Result<()> {
                 info!("Computing chain...");
                 self.chain.compute(
                     indexer,
@@ -134,22 +141,32 @@ impl Computer {
                     &starting_indexes,
                     self.price.as_ref(),
                     exit,
-                )
-            });
-
-            let market = scope.spawn(|| -> Result<()> {
-                if let Some(price) = self.price.as_ref() {
-                    info!("Computing market...");
-                    self.market
-                        .compute(indexer, &self.indexes, price, &starting_indexes, exit)?;
-                }
+                )?;
                 Ok(())
             });
 
+            if let Some(price) = self.price.as_ref() {
+                info!("Computing market...");
+                self.market
+                    .compute(indexer, &self.indexes, price, &starting_indexes, exit)?;
+            }
+
+            // let _ = generate_allocation_files(&self.pools);
+
             chain.join().unwrap()?;
-            market.join().unwrap()?;
             Ok(())
         })?;
+
+        self.pools.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes,
+            &self.chain,
+            self.price.as_ref(),
+            exit,
+        )?;
+
+        return Ok(());
 
         info!("Computing stateful...");
         self.stateful.compute(
@@ -183,6 +200,7 @@ impl Computer {
             self.chain.vecs(),
             self.stateful.vecs(),
             self.cointime.vecs(),
+            self.pools.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
             self.price.as_ref().map_or(vec![], |v| v.vecs()),
         ]
@@ -195,3 +213,36 @@ impl Computer {
         Box::leak(Box::new(self.clone()))
     }
 }
+
+// pub fn generate_allocation_files(monitored: &pools::Vecs) -> Result<()> {
+//     info!("Generating Allocative files...");
+
+//     let mut flamegraph = allocative::FlameGraphBuilder::default();
+//     flamegraph.visit_root(monitored);
+//     let output = flamegraph.finish();
+
+//     let folder = format!(
+//         "at-{}",
+//         jiff::Timestamp::now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+//     );
+
+//     let path = std::path::PathBuf::from(&format!("./target/flamegraph/{folder}"));
+//     std::fs::create_dir_all(&path)?;
+
+//     // fs::write(path.join("flamegraph.src"), &output.flamegraph())?;
+
+//     let mut fg_svg = Vec::new();
+//     inferno::flamegraph::from_reader(
+//         &mut inferno::flamegraph::Options::default(),
+//         output.flamegraph().write().as_bytes(),
+//         &mut fg_svg,
+//     )?;
+
+//     std::fs::write(path.join("flamegraph.svg"), &fg_svg)?;
+
+//     std::fs::write(path.join("warnings.txt"), output.warnings())?;
+
+//     info!("Successfully generated Allocative files");
+
+//     Ok(())
+// }

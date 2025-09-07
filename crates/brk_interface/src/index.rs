@@ -12,6 +12,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum Index {
     #[schemars(description = "Date/day index")]
     DateIndex,

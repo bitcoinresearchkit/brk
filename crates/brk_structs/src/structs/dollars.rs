@@ -4,6 +4,7 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, StoredCompressed};
@@ -24,6 +25,7 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
     Serialize,
     Deserialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Dollars(f64);
 

@@ -515,12 +515,15 @@ function createIndexToVecIds(vecIdToIndexes) {
 
 /**
  * @param {Object} args
- * @param {number | OHLCTuple} args.value
+ * @param {number | string | Object | Array<any>} args.value
  * @param {Unit} args.unit
  */
 function serializeValue({ value, unit }) {
-  if (typeof value !== "number") {
-    return JSON.stringify(value);
+  const t = typeof value;
+  if (typeof value === "string") {
+    return value;
+  } else if (t !== "number") {
+    return JSON.stringify(value).replaceAll('"', "").slice(1, -1);
   } else if (value !== 18446744073709552000) {
     if (unit === "USD" || unit === "Difficulty" || unit === "sat/vB") {
       return value.toLocaleString("en-us", {

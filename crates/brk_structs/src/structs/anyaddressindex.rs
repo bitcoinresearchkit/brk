@@ -44,6 +44,7 @@ impl Serialize for AnyAddressIndex {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AnyAddressDataIndexEnum {
     Loaded(LoadedAddressIndex),
     Empty(EmptyAddressIndex),

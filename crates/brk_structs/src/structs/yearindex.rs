@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use allocative::Allocative;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -25,6 +26,7 @@ use super::{Date, DateIndex, MonthIndex};
     IntoBytes,
     KnownLayout,
     StoredCompressed,
+    Allocative,
 )]
 pub struct YearIndex(u16);
 

@@ -1,29 +1,54 @@
-use std::sync::OnceLock;
+use std::{slice::Iter, sync::OnceLock};
+
+use allocative::Allocative;
+
+use crate::{JSONPool, PoolId};
 
 use super::super::Pool;
 
-pub struct Pools([Pool; 166]);
+const POOL_COUNT: usize = 158;
+
+#[derive(Debug, Allocative)]
+pub struct Pools([Pool; POOL_COUNT]);
 
 impl Pools {
     pub fn find_from_coinbase_tag(&self, coinbase_tag: &str) -> Option<&Pool> {
+        let coinbase_tag = coinbase_tag.to_lowercase();
         self.0.iter().find(|pool| {
-            pool.tags
+            pool.tags_lowercase
                 .iter()
                 .any(|pool_tag| coinbase_tag.contains(pool_tag))
         })
     }
 
+    pub fn find_from_address(&self, address: &str) -> Option<&Pool> {
+        self.0.iter().find(|pool| pool.addresses.contains(&address))
+    }
+
     pub fn get_unknown(&self) -> &Pool {
         &self.0[0]
+    }
+
+    pub fn get(&self, id: PoolId) -> &Pool {
+        let i: u8 = id.into();
+        &self.0[i as usize]
+    }
+
+    pub fn iter(&self) -> Iter<'_, Pool> {
+        self.0.iter()
+    }
+
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
 pub fn pools() -> &'static Pools {
     static POOLS: OnceLock<Pools> = OnceLock::new();
     POOLS.get_or_init(|| {
-        Pools([
-            Pool {
-                id: 0.into(),
+        Pools::from([
+            JSONPool {
                 name: "Unknown",
                 addresses: Box::new([]),
                 tags: Box::new([]),
@@ -31,15 +56,13 @@ pub fn pools() -> &'static Pools {
             },
             // Source:
             // https://github.com/mempool/mining-pools/blob/master/pools-v2.json
-            Pool {
-                id: 1.into(),
+            JSONPool {
                 name: "BlockFills",
                 addresses: Box::new(["1PzVut5X6Nx7Mv4JHHKPtVM9Jr9LJ4Rbry"]),
                 tags: Box::new(["/BlockfillsPool/"]),
                 link: "https://www.blockfills.com/mining",
             },
-            Pool {
-                id: 2.into(),
+            JSONPool {
                 name: "ULTIMUSPOOL",
                 addresses: Box::new([
                     "1EMVSMe1VJUuqv7D7SFzctnVXk4KdjXATi",
@@ -48,8 +71,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/ultimus/"]),
                 link: "https://www.ultimuspool.com",
             },
-            Pool {
-                id: 3.into(),
+            JSONPool {
                 name: "Terra Pool",
                 addresses: Box::new([
                     "32P5KVSbZYAkVmSHxDd2oBXaSk372rbV7L",
@@ -59,8 +81,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["terrapool.io", "Validated with Clean Energy"]),
                 link: "https://terrapool.io",
             },
-            Pool {
-                id: 4.into(),
+            JSONPool {
                 name: "Luxor",
                 addresses: Box::new([
                     "1MkCDCzHpBsYQivp8MxjY5AkTGG1f2baoe",
@@ -70,8 +91,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/LUXOR/", "Luxor Tech"]),
                 link: "https://mining.luxor.tech",
             },
-            Pool {
-                id: 5.into(),
+            JSONPool {
                 name: "1THash",
                 addresses: Box::new([
                     "147SwRQdpCfj5p8PnfsXV2SsVVpVcz3aPq",
@@ -80,8 +100,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/1THash&58COIN/", "/1THash/"]),
                 link: "https://www.1thash.top",
             },
-            Pool {
-                id: 6.into(),
+            JSONPool {
                 name: "BTC.com",
                 addresses: Box::new([
                     "1Bf9sZvBHPFGVPX71WX2njhd1NXKv5y7v5",
@@ -93,15 +112,13 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/BTC.COM/", "/BTC.com/", "btccom"]),
                 link: "https://pool.btc.com",
             },
-            Pool {
-                id: 7.into(),
+            JSONPool {
                 name: "Bitfarms",
                 addresses: Box::new(["3GvEGtnvgeBJ3p3EpdZhvUkxY4pDARkbjd"]),
                 tags: Box::new(["BITFARMS"]),
                 link: "https://www.bitfarms.io",
             },
-            Pool {
-                id: 8.into(),
+            JSONPool {
                 name: "Huobi.pool",
                 addresses: Box::new([
                     "18Zcyxqna6h7Z7bRjhKvGpr8HSfieQWXqj",
@@ -112,71 +129,61 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/HuoBi/", "/Huobi/"]),
                 link: "https://www.hpt.com",
             },
-            Pool {
-                id: 9.into(),
+            JSONPool {
                 name: "WAYI.CN",
                 addresses: Box::new([]),
                 tags: Box::new(["/E2M & BTC.TOP/"]),
                 link: "https://www.easy2mine.com",
             },
-            Pool {
-                id: 10.into(),
+            JSONPool {
                 name: "CanoePool",
                 addresses: Box::new(["1GP8eWArgpwRum76saJS4cZKCHWJHs9PQo"]),
                 tags: Box::new(["/CANOE/", "/canoepool/"]),
                 link: "https://btc.canoepool.com",
             },
-            Pool {
-                id: 11.into(),
+            JSONPool {
                 name: "BTC.TOP",
                 addresses: Box::new(["1Hz96kJKF2HLPGY15JWLB5m9qGNxvt8tHJ"]),
                 tags: Box::new(["/BTC.TOP/"]),
                 link: "https://btc.top",
             },
-            Pool {
-                id: 12.into(),
+            JSONPool {
                 name: "Bitcoin.com",
                 addresses: Box::new([]),
                 tags: Box::new(["pool.bitcoin.com"]),
                 link: "https://www.bitcoin.com",
             },
-            Pool {
-                id: 13.into(),
+            JSONPool {
                 name: "175btc",
                 addresses: Box::new([]),
                 tags: Box::new(["Mined By 175btc.com"]),
                 link: "https://www.175btc.com",
             },
-            Pool {
-                id: 14.into(),
+            JSONPool {
                 name: "GBMiners",
                 addresses: Box::new([]),
                 tags: Box::new(["/mined by gbminers/"]),
                 link: "https://gbminers.com",
             },
-            Pool {
-                id: 15.into(),
+            JSONPool {
                 name: "A-XBT",
                 addresses: Box::new(["1MFsp2txCPwMMBJjNNeKaduGGs8Wi1Ce7X"]),
                 tags: Box::new(["/A-XBT/"]),
                 link: "https://www.a-xbt.com",
             },
-            Pool {
-                id: 16.into(),
+            JSONPool {
                 name: "ASICMiner",
                 addresses: Box::new([]),
                 tags: Box::new(["ASICMiner"]),
                 link: "https://www.asicminer.co",
             },
-            Pool {
-                id: 17.into(),
+            JSONPool {
                 name: "BitMinter",
                 addresses: Box::new(["19PkHafEN18mquJ9ChwZt5YEFoCdPP5vYB"]),
                 tags: Box::new(["BitMinter"]),
                 link: "https://bitminter.com",
             },
-            Pool {
-                id: 18.into(),
+            JSONPool {
                 name: "BitcoinRussia",
                 addresses: Box::new([
                     "14R2r9FkyDmyxGB9xUVwVLdgsX9YfdVamk",
@@ -185,43 +192,37 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/Bitcoin-Russia.ru/"]),
                 link: "https://bitcoin-russia.ru",
             },
-            Pool {
-                id: 19.into(),
+            JSONPool {
                 name: "BTCServ",
                 addresses: Box::new([]),
                 tags: Box::new(["btcserv"]),
                 link: "https://btcserv.net",
             },
-            Pool {
-                id: 20.into(),
+            JSONPool {
                 name: "simplecoin.us",
                 addresses: Box::new([]),
                 tags: Box::new(["simplecoin"]),
                 link: "https://simplecoin.us",
             },
-            Pool {
-                id: 21.into(),
+            JSONPool {
                 name: "BTC Guild",
                 addresses: Box::new([]),
                 tags: Box::new(["BTC Guild"]),
                 link: "https://www.btcguild.com",
             },
-            Pool {
-                id: 22.into(),
+            JSONPool {
                 name: "Eligius",
                 addresses: Box::new([]),
                 tags: Box::new(["Eligius"]),
                 link: "https://eligius.st",
             },
-            Pool {
-                id: 23.into(),
+            JSONPool {
                 name: "OzCoin",
                 addresses: Box::new([]),
                 tags: Box::new(["ozco.in", "ozcoin"]),
                 link: "https://ozcoin.net",
             },
-            Pool {
-                id: 24.into(),
+            JSONPool {
                 name: "EclipseMC",
                 addresses: Box::new([
                     "15xiShqUqerfjFdyfgBH1K7Gwp6cbYmsTW",
@@ -230,64 +231,55 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["EMC ", "EMC:"]),
                 link: "https://eclipsemc.com",
             },
-            Pool {
-                id: 25.into(),
+            JSONPool {
                 name: "MaxBTC",
                 addresses: Box::new([]),
                 tags: Box::new(["MaxBTC"]),
                 link: "https://maxbtc.com",
             },
-            Pool {
-                id: 26.into(),
+            JSONPool {
                 name: "TripleMining",
                 addresses: Box::new([]),
                 tags: Box::new(["Triplemining.com", "triplemining"]),
                 link: "https://www.triplemining.com",
             },
-            Pool {
-                id: 27.into(),
+            JSONPool {
                 name: "CoinLab",
                 addresses: Box::new([]),
                 tags: Box::new(["CoinLab"]),
                 link: "https://coinlab.com",
             },
-            Pool {
-                id: 28.into(),
+            JSONPool {
                 name: "50BTC",
                 addresses: Box::new([]),
                 tags: Box::new(["50BTC"]),
                 link: "https://www.50btc.com",
             },
-            Pool {
-                id: 29.into(),
+            JSONPool {
                 name: "GHash.IO",
                 addresses: Box::new(["1CjPR7Z5ZSyWk6WtXvSFgkptmpoi4UM9BC"]),
                 tags: Box::new(["ghash.io"]),
                 link: "https://ghash.io",
             },
-            Pool {
-                id: 30.into(),
+            JSONPool {
                 name: "ST Mining Corp",
                 addresses: Box::new([]),
                 tags: Box::new(["st mining corp"]),
                 link: "https://bitcointalk.org/index.php?topic=77000.msg3207708#msg3207708",
             },
-            Pool {
-                id: 31.into(),
+            JSONPool {
                 name: "Bitparking",
                 addresses: Box::new([]),
                 tags: Box::new(["bitparking"]),
                 link: "https://mmpool.bitparking.com",
             },
-            Pool {
-                id: 32.into(),
+            JSONPool {
                 name: "mmpool",
                 addresses: Box::new([]),
                 tags: Box::new(["mmpool"]),
                 link: "https://mmpool.org/pool",
             },
-            Pool {
-                id: 33.into(),
+            JSONPool {
                 name: "Polmine",
                 addresses: Box::new([
                     "13vWXwzNF5Ef9SUXNTdr7de7MqiV4G1gnL",
@@ -300,22 +292,19 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["by polmine.pl", "bypmneU"]),
                 link: "https://polmine.pl",
             },
-            Pool {
-                id: 34.into(),
+            JSONPool {
                 name: "KnCMiner",
                 addresses: Box::new([]),
                 tags: Box::new(["KnCMiner"]),
                 link: "https://portal.kncminer.com/pool",
             },
-            Pool {
-                id: 35.into(),
+            JSONPool {
                 name: "Bitalo",
                 addresses: Box::new(["1HTejfsPZQGi3afCMEZTn2xdmoNzp13n3F"]),
                 tags: Box::new(["Bitalo"]),
                 link: "https://bitalo.com/mining",
             },
-            Pool {
-                id: 36.into(),
+            JSONPool {
                 name: "F2Pool",
                 addresses: Box::new([
                     "1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY",
@@ -324,50 +313,43 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["七彩神仙鱼", "F2Pool", "🐟"]),
                 link: "https://www.f2pool.com",
             },
-            Pool {
-                id: 37.into(),
+            JSONPool {
                 name: "HHTT",
                 addresses: Box::new([]),
                 tags: Box::new(["HHTT"]),
                 link: "https://hhtt.1209k.com",
             },
-            Pool {
-                id: 38.into(),
+            JSONPool {
                 name: "MegaBigPower",
                 addresses: Box::new(["1K7znxRfkS8R1hcmyMvHDum1hAQreS4VQ4"]),
                 tags: Box::new(["megabigpower.com"]),
                 link: "https://megabigpower.com",
             },
-            Pool {
-                id: 39.into(),
+            JSONPool {
                 name: "Mt Red",
                 addresses: Box::new([]),
                 tags: Box::new(["/mtred/"]),
                 link: "https://mtred.com",
             },
-            Pool {
-                id: 40.into(),
+            JSONPool {
                 name: "NMCbit",
                 addresses: Box::new([]),
                 tags: Box::new(["nmcbit.com"]),
                 link: "https://nmcbit.com",
             },
-            Pool {
-                id: 41.into(),
+            JSONPool {
                 name: "Yourbtc.net",
                 addresses: Box::new([]),
                 tags: Box::new(["yourbtc.net"]),
                 link: "https://yourbtc.net",
             },
-            Pool {
-                id: 42.into(),
+            JSONPool {
                 name: "Give Me Coins",
                 addresses: Box::new([]),
                 tags: Box::new(["Give-Me-Coins"]),
                 link: "https://give-me-coins.com",
             },
-            Pool {
-                id: 43.into(),
+            JSONPool {
                 name: "Braiins Pool",
                 addresses: Box::new([
                     "1AqTMY7kmHZxBuLUR5wJjPFUvqGs23sesr",
@@ -376,8 +358,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/slush/"]),
                 link: "https://braiins.com/pool",
             },
-            Pool {
-                id: 44.into(),
+            JSONPool {
                 name: "AntPool",
                 addresses: Box::new([
                     "12dRugNcdxK39288NjcDV4GX7rMsKCGn6B",
@@ -421,99 +402,85 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/AntPool/", "Mined By AntPool", "Mined by AntPool"]),
                 link: "https://www.antpool.com",
             },
-            Pool {
-                id: 45.into(),
+            JSONPool {
                 name: "MultiCoin.co",
                 addresses: Box::new([]),
                 tags: Box::new(["Mined by MultiCoin.co"]),
                 link: "https://multicoin.co",
             },
-            Pool {
-                id: 46.into(),
+            JSONPool {
                 name: "bcpool.io",
                 addresses: Box::new([]),
                 tags: Box::new(["bcpool.io"]),
                 link: "https://bcpool.io",
             },
-            Pool {
-                id: 47.into(),
+            JSONPool {
                 name: "Cointerra",
                 addresses: Box::new(["1BX5YoLwvqzvVwSrdD4dC32vbouHQn2tuF"]),
                 tags: Box::new(["cointerra"]),
                 link: "https://cointerra.com",
             },
-            Pool {
-                id: 48.into(),
+            JSONPool {
                 name: "KanoPool",
                 addresses: Box::new([]),
                 tags: Box::new(["Kano"]),
                 link: "https://kano.is",
             },
-            Pool {
-                id: 49.into(),
+            JSONPool {
                 name: "Solo CK",
                 addresses: Box::new([]),
                 tags: Box::new(["/solo.ckpool.org/"]),
                 link: "https://solo.ckpool.org",
             },
-            Pool {
-                id: 50.into(),
+            JSONPool {
                 name: "CKPool",
                 addresses: Box::new([]),
                 tags: Box::new(["/ckpool.org/"]),
                 link: "https://ckpool.org",
             },
-            Pool {
-                id: 51.into(),
+            JSONPool {
                 name: "NiceHash",
                 addresses: Box::new([]),
                 tags: Box::new(["/NiceHashSolo", "/NiceHash/"]),
                 link: "https://www.nicehash.com",
             },
-            Pool {
-                id: 52.into(),
+            JSONPool {
                 name: "BitClub",
                 addresses: Box::new(["155fzsEBHy9Ri2bMQ8uuuR3tv1YzcDywd4"]),
                 tags: Box::new(["/BitClub Network/"]),
                 link: "https://bitclubpool.com",
             },
-            Pool {
-                id: 53.into(),
+            JSONPool {
                 name: "Bitcoin Affiliate Network",
                 addresses: Box::new([]),
                 tags: Box::new(["bitcoinaffiliatenetwork.com"]),
                 link: "https://mining.bitcoinaffiliatenetwork.com",
             },
-            Pool {
-                id: 54.into(),
+            JSONPool {
                 name: "BTCC",
                 addresses: Box::new(["152f1muMCNa7goXYhYAQC61hxEgGacmncB"]),
                 tags: Box::new(["/BTCC/", "BTCChina Pool", "BTCChina.com", "btcchina.com"]),
                 link: "https://pool.btcc.com",
             },
-            Pool {
-                id: 55.into(),
+            JSONPool {
                 name: "BWPool",
                 addresses: Box::new(["1JLRXD8rjRgQtTS9MvfQALfHgGWau9L9ky"]),
                 tags: Box::new(["BW Pool", "BWPool"]),
                 link: "https://bwpool.net",
             },
-            Pool {
-                id: 56.into(),
+            JSONPool {
                 name: "EXX&BW",
                 addresses: Box::new([]),
                 tags: Box::new(["xbtc.exx.com&bw.com"]),
                 link: "https://xbtc.exx.com",
             },
-            Pool {
-                id: 57.into(),
+            JSONPool {
                 name: "Bitsolo",
                 addresses: Box::new(["18zRehBcA2YkYvsC7dfQiFJNyjmWvXsvon"]),
                 tags: Box::new(["Bitsolo Pool"]),
                 link: "https://bitsolo.net",
             },
-            Pool {
-                id: 58.into(),
+            JSONPool {
                 name: "BitFury",
                 addresses: Box::new([
                     "14yfxkcpHnju97pecpM7fjuTkVdtbkcfE6",
@@ -522,8 +489,7 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/BitFury/", "/Bitfury/"]),
                 link: "https://bitfury.com",
             },
-            Pool {
-                id: 59.into(),
+            JSONPool {
                 name: "21 Inc.",
                 addresses: Box::new([
                     "15rQXUSBQRubShPpiJfDLxmwS8ze2RUm4z",
@@ -533,85 +499,73 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/pool34/"]),
                 link: "https://21.co",
             },
-            Pool {
-                id: 60.into(),
+            JSONPool {
                 name: "digitalBTC",
                 addresses: Box::new(["1MimPd6LrPKGftPRHWdfk8S3KYBfN4ELnD"]),
                 tags: Box::new(["/agentD/"]),
                 link: "https://digitalbtc.com",
             },
-            Pool {
-                id: 61.into(),
+            JSONPool {
                 name: "8baochi",
                 addresses: Box::new(["1Hk9gD8xMo2XBUhE73y5zXEM8xqgffTB5f"]),
                 tags: Box::new(["/八宝池 8baochi.com/"]),
                 link: "https://8baochi.com",
             },
-            Pool {
-                id: 62.into(),
+            JSONPool {
                 name: "myBTCcoin Pool",
                 addresses: Box::new(["151T7r1MhizzJV6dskzzUkUdr7V8JxV2Dx"]),
                 tags: Box::new(["myBTCcoin Pool"]),
                 link: "https://mybtccoin.com",
             },
-            Pool {
-                id: 63.into(),
+            JSONPool {
                 name: "TBDice",
                 addresses: Box::new(["1BUiW44WuJ2jiJgXiyxJVFMN8bc1GLdXRk"]),
                 tags: Box::new(["TBDice"]),
                 link: "https://tbdice.org",
             },
-            Pool {
-                id: 64.into(),
+            JSONPool {
                 name: "HASHPOOL",
                 addresses: Box::new([]),
                 tags: Box::new(["HASHPOOL"]),
                 link: "https://hashpool.com",
             },
-            Pool {
-                id: 65.into(),
+            JSONPool {
                 name: "Nexious",
                 addresses: Box::new(["1GBo1f2tzVx5jScV9kJXPUP9RjvYXuNzV7"]),
                 tags: Box::new(["/Nexious/"]),
                 link: "https://nexious.com",
             },
-            Pool {
-                id: 66.into(),
+            JSONPool {
                 name: "Bravo Mining",
                 addresses: Box::new([]),
                 tags: Box::new(["/bravo-mining/"]),
                 link: "https://www.bravo-mining.com",
             },
-            Pool {
-                id: 67.into(),
+            JSONPool {
                 name: "HotPool",
                 addresses: Box::new(["17judvK4AC2M6KhaBbAEGw8CTKc9Pg8wup"]),
                 tags: Box::new(["/HotPool/"]),
                 link: "https://hotpool.co",
             },
-            Pool {
-                id: 68.into(),
+            JSONPool {
                 name: "OKExPool",
                 addresses: Box::new([]),
                 tags: Box::new(["/www.okex.com/"]),
                 link: "https://www.okex.com",
             },
-            Pool {
-                id: 69.into(),
+            JSONPool {
                 name: "BCMonster",
                 addresses: Box::new(["1E18BNyobcoiejcDYAz5SjbrzifNDEpM88"]),
                 tags: Box::new(["/BCMonster/"]),
                 link: "https://www.bcmonster.com",
             },
-            Pool {
-                id: 70.into(),
+            JSONPool {
                 name: "1Hash",
                 addresses: Box::new(["1F1xcRt8H8Wa623KqmkEontwAAVqDSAWCV"]),
                 tags: Box::new(["Mined by 1hash.com"]),
                 link: "https://www.1hash.com",
             },
-            Pool {
-                id: 71.into(),
+            JSONPool {
                 name: "Bixin",
                 addresses: Box::new([
                     "13hQVEstgo4iPQZv9C7VELnLWF7UWtF4Q3",
@@ -620,78 +574,67 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/Bixin/", "/HaoBTC/", "HAOBTC"]),
                 link: "https://haopool.com",
             },
-            Pool {
-                id: 72.into(),
+            JSONPool {
                 name: "TATMAS Pool",
                 addresses: Box::new([]),
                 tags: Box::new(["/ViaBTC/TATMAS Pool/"]),
                 link: "https://tmsminer.com",
             },
-            Pool {
-                id: 73.into(),
+            JSONPool {
                 name: "ViaBTC",
                 addresses: Box::new([]),
                 tags: Box::new(["/ViaBTC/", "viabtc.com deploy"]),
                 link: "https://viabtc.com",
             },
-            Pool {
-                id: 74.into(),
+            JSONPool {
                 name: "ConnectBTC",
                 addresses: Box::new(["1KPQkehgYAqwiC6UCcbojM3mbGjURrQJF2"]),
                 tags: Box::new(["/ConnectBTC - Home for Miners/"]),
                 link: "https://www.connectbtc.com",
             },
-            Pool {
-                id: 75.into(),
+            JSONPool {
                 name: "BATPOOL",
                 addresses: Box::new(["167ApWWxUSFQmz2jdz9xop3oAKdLejvMML"]),
                 tags: Box::new(["/BATPOOL/"]),
                 link: "https://www.batpool.com",
             },
-            Pool {
-                id: 76.into(),
+            JSONPool {
                 name: "Waterhole",
                 addresses: Box::new(["1FLH1SoLv4U68yUERhDiWzrJn5TggMqkaZ"]),
                 tags: Box::new(["/WATERHOLE.IO/"]),
                 link: "https://btc.waterhole.io",
             },
-            Pool {
-                id: 77.into(),
+            JSONPool {
                 name: "DCExploration",
                 addresses: Box::new([]),
                 tags: Box::new(["/DCExploration/"]),
                 link: "https://dcexploration.cn",
             },
-            Pool {
-                id: 78.into(),
+            JSONPool {
                 name: "DCEX",
                 addresses: Box::new([]),
                 tags: Box::new(["/DCEX/"]),
                 link: "https://dcexploration.cn",
             },
-            Pool {
-                id: 79.into(),
+            JSONPool {
                 name: "BTPOOL",
                 addresses: Box::new([]),
                 tags: Box::new(["/BTPOOL/"]),
                 link: "",
             },
-            Pool {
-                id: 80.into(),
+            JSONPool {
                 name: "58COIN",
                 addresses: Box::new(["199EDJoCpqV672qESEkfFgEqNT1iR2gj3t"]),
                 tags: Box::new(["/58coin.com/"]),
                 link: "https://www.58coin.com",
             },
-            Pool {
-                id: 81.into(),
+            JSONPool {
                 name: "Bitcoin India",
-                addresses: Box::new([]),
+                addresses: Box::new(["1AZ6BkCo4zgTuuLpRStJH8iNsehXTMp456"]),
                 tags: Box::new(["/Bitcoin-India/"]),
                 link: "https://bitcoin-india.org",
             },
-            Pool {
-                id: 82.into(),
+            JSONPool {
                 name: "shawnp0wers",
                 addresses: Box::new([
                     "12znnESiJ3bgCLftwwrg9wzQKN8fJtoBDa",
@@ -700,36 +643,31 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["--Nug--"]),
                 link: "https://www.brainofshawn.com",
             },
-            Pool {
-                id: 83.into(),
+            JSONPool {
                 name: "PHash.IO",
                 addresses: Box::new([]),
                 tags: Box::new(["/phash.cn/", "/phash.io/"]),
                 link: "https://phash.io",
             },
-            Pool {
-                id: 84.into(),
+            JSONPool {
                 name: "RigPool",
                 addresses: Box::new(["1JpKmtspBJQVXK67DJP64eBJcAPhDvJ9Er"]),
                 tags: Box::new(["/RigPool.com/"]),
                 link: "https://www.rigpool.com",
             },
-            Pool {
-                id: 85.into(),
+            JSONPool {
                 name: "HAOZHUZHU",
                 addresses: Box::new(["19qa95rTbDziNCS9EexUbh2hVY4viUU9tt"]),
                 tags: Box::new(["/haozhuzhu/"]),
                 link: "https://haozhuzhu.com",
             },
-            Pool {
-                id: 86.into(),
+            JSONPool {
                 name: "7pool",
                 addresses: Box::new(["1JLc3JxvpdL1g5zoX8sKLP4BkJQiwnJftU"]),
                 tags: Box::new(["/$Mined by 7pool.com/"]),
                 link: "https://7pool.com",
             },
-            Pool {
-                id: 87.into(),
+            JSONPool {
                 name: "MiningKings",
                 addresses: Box::new([
                     "1ApE99VM5RJzMRRtwd2JMgmkGabtJqoMEz",
@@ -739,22 +677,19 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/mined by poopbut/"]),
                 link: "https://miningkings.com",
             },
-            Pool {
-                id: 88.into(),
+            JSONPool {
                 name: "HashBX",
                 addresses: Box::new([]),
                 tags: Box::new(["/Mined by HashBX.io/"]),
                 link: "https://hashbx.io",
             },
-            Pool {
-                id: 89.into(),
+            JSONPool {
                 name: "DPOOL",
                 addresses: Box::new(["1ACAgPuFFidYzPMXbiKptSrwT74Dg8hq2v"]),
                 tags: Box::new(["/DPOOL.TOP/"]),
                 link: "https://www.dpool.top",
             },
-            Pool {
-                id: 90.into(),
+            JSONPool {
                 name: "Rawpool",
                 addresses: Box::new([
                     "1FbBbv5oYqFKwiPm4CAqvAy8345n8AQ74b",
@@ -769,29 +704,25 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/Rawpool.com/"]),
                 link: "https://www.rawpool.com",
             },
-            Pool {
-                id: 91.into(),
+            JSONPool {
                 name: "haominer",
                 addresses: Box::new([]),
                 tags: Box::new(["/haominer/"]),
                 link: "https://haominer.com",
             },
-            Pool {
-                id: 92.into(),
+            JSONPool {
                 name: "Helix",
                 addresses: Box::new([]),
                 tags: Box::new(["/Helix/"]),
                 link: "",
             },
-            Pool {
-                id: 93.into(),
+            JSONPool {
                 name: "Bitcoin-Ukraine",
                 addresses: Box::new([]),
                 tags: Box::new(["/Bitcoin-Ukraine.com.ua/"]),
                 link: "https://bitcoin-ukraine.com.ua",
             },
-            Pool {
-                id: 94.into(),
+            JSONPool {
                 name: "Poolin",
                 addresses: Box::new([
                     "14sA8jqYQgMRQV9zUtGFvpeMEw7YDn77SK",
@@ -805,57 +736,49 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/poolin.com", "/poolin/"]),
                 link: "https://www.poolin.com",
             },
-            Pool {
-                id: 95.into(),
+            JSONPool {
                 name: "SecretSuperstar",
                 addresses: Box::new([]),
                 tags: Box::new(["/SecretSuperstar/"]),
                 link: "",
             },
-            Pool {
-                id: 96.into(),
+            JSONPool {
                 name: "tigerpool.net",
                 addresses: Box::new([]),
                 tags: Box::new(["/tigerpool.net"]),
                 link: "",
             },
-            Pool {
-                id: 97.into(),
+            JSONPool {
                 name: "Sigmapool.com",
                 addresses: Box::new(["12cKiMNhCtBhZRUBCnYXo8A4WQzMUtYjmR"]),
                 tags: Box::new(["/Sigmapool.com/"]),
                 link: "https://sigmapool.com",
             },
-            Pool {
-                id: 98.into(),
+            JSONPool {
                 name: "okpool.top",
                 addresses: Box::new([]),
                 tags: Box::new(["/www.okpool.top/"]),
                 link: "https://www.okpool.top",
             },
-            Pool {
-                id: 99.into(),
+            JSONPool {
                 name: "Hummerpool",
                 addresses: Box::new([]),
                 tags: Box::new(["HummerPool", "Hummerpool"]),
                 link: "https://www.hummerpool.com",
             },
-            Pool {
-                id: 100.into(),
+            JSONPool {
                 name: "Tangpool",
                 addresses: Box::new(["12Taz8FFXQ3E2AGn3ZW1SZM5bLnYGX4xR6"]),
                 tags: Box::new(["/Tangpool/"]),
                 link: "https://www.tangpool.com",
             },
-            Pool {
-                id: 101.into(),
+            JSONPool {
                 name: "BytePool",
                 addresses: Box::new(["39m5Wvn9ZqyhYmCYpsyHuGMt5YYw4Vmh1Z"]),
                 tags: Box::new(["/bytepool.com/"]),
                 link: "https://www.bytepool.com",
             },
-            Pool {
-                id: 102.into(),
+            JSONPool {
                 name: "SpiderPool",
                 addresses: Box::new([
                     "125m2H43pwKpSZjLhMQHneuTwTJN5qRyYu",
@@ -865,22 +788,19 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["SpiderPool"]),
                 link: "https://www.spiderpool.com",
             },
-            Pool {
-                id: 103.into(),
+            JSONPool {
                 name: "NovaBlock",
                 addresses: Box::new(["3Bmb9Jig8A5kHdDSxvDZ6eryj3AXd3swuJ"]),
                 tags: Box::new(["/NovaBlock/"]),
                 link: "https://novablock.com",
             },
-            Pool {
-                id: 104.into(),
+            JSONPool {
                 name: "MiningCity",
                 addresses: Box::new(["11wC5KcbgrWRBb43cwADdVrxgyF8mndVC"]),
                 tags: Box::new(["MiningCity"]),
                 link: "https://www.miningcity.com",
             },
-            Pool {
-                id: 105.into(),
+            JSONPool {
                 name: "Binance Pool",
                 addresses: Box::new([
                     "122pN8zvqTxJaA8fRY1PDBu4QYodqE5m2X",
@@ -894,43 +814,37 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/Binance/", "binance"]),
                 link: "https://pool.binance.com",
             },
-            Pool {
-                id: 106.into(),
+            JSONPool {
                 name: "Minerium",
                 addresses: Box::new([]),
                 tags: Box::new(["/Mined in the USA by: /Minerium.com/", "/Minerium.com/"]),
                 link: "https://www.minerium.com",
             },
-            Pool {
-                id: 107.into(),
+            JSONPool {
                 name: "Lubian.com",
                 addresses: Box::new(["34Jpa4Eu3ApoPVUKNTN2WeuXVVq1jzxgPi"]),
                 tags: Box::new(["/Buffett/", "/lubian.com/"]),
                 link: "https://www.lubian.com",
             },
-            Pool {
-                id: 108.into(),
+            JSONPool {
                 name: "OKKONG",
                 addresses: Box::new(["16JHXJ7M2MubWNX9grnqbjUqJ5PHwcCWw2"]),
                 tags: Box::new(["/hash.okkong.com/"]),
                 link: "https://hash.okkong.com",
             },
-            Pool {
-                id: 109.into(),
+            JSONPool {
                 name: "AAO Pool",
                 addresses: Box::new(["12QVFmJH2b4455YUHkMpEnWLeRY3eJ4Jb5"]),
                 tags: Box::new(["/AAOPOOL/"]),
                 link: "https://btc.tmspool.top",
             },
-            Pool {
-                id: 110.into(),
+            JSONPool {
                 name: "EMCDPool",
                 addresses: Box::new(["1BDbsWi3Mrcjp1wdop3PWFNCNZtu4R7Hjy"]),
                 tags: Box::new(["/EMCD/", "/one_more_mcd/", "get___emcd", "emcd"]),
                 link: "https://pool.emcd.io",
             },
-            Pool {
-                id: 111.into(),
+            JSONPool {
                 name: "Foundry USA",
                 addresses: Box::new([
                     "12KKDt4Mj7N5UAkQMN7LtPZMayenXHa8KL",
@@ -941,29 +855,25 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/2cDw/", "Foundry USA Pool"]),
                 link: "https://foundrydigital.com",
             },
-            Pool {
-                id: 112.into(),
+            JSONPool {
                 name: "SBI Crypto",
                 addresses: Box::new([]),
                 tags: Box::new(["/SBICrypto.com Pool/", "SBI Crypto", "SBICrypto"]),
                 link: "https://sbicrypto.com",
             },
-            Pool {
-                id: 113.into(),
+            JSONPool {
                 name: "ArkPool",
                 addresses: Box::new(["1QEiAhdHdMhBgVbDM7zUXWGkNhgEEJ6uLd"]),
                 tags: Box::new(["/ArkPool/"]),
                 link: "https://www.arkpool.com",
             },
-            Pool {
-                id: 114.into(),
+            JSONPool {
                 name: "PureBTC.COM",
                 addresses: Box::new([]),
                 tags: Box::new(["/PureBTC.COM/"]),
                 link: "https://purebtc.com",
             },
-            Pool {
-                id: 115.into(),
+            JSONPool {
                 name: "MARA Pool",
                 addresses: Box::new([
                     "15MdAHnkxt9TMC2Rj595hsg8Hnv693pPBB",
@@ -972,64 +882,55 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["MARA Pool", "MARA Made in USA"]),
                 link: "https://marapool.com",
             },
-            Pool {
-                id: 116.into(),
+            JSONPool {
                 name: "KuCoinPool",
                 addresses: Box::new(["1ArTPjj6pV3aNRhLPjJVPYoxB98VLBzUmb"]),
                 tags: Box::new(["KuCoinPool"]),
                 link: "https://www.kucoin.com/mining-pool",
             },
-            Pool {
-                id: 117.into(),
+            JSONPool {
                 name: "Entrust Charity Pool",
                 addresses: Box::new([]),
                 tags: Box::new(["Entrustus"]),
                 link: "pool.entustus.org",
             },
-            Pool {
-                id: 118.into(),
+            JSONPool {
                 name: "OKMINER",
                 addresses: Box::new(["15xcAZ2HfaSwYbCV6GGbasBSAekBRRC5Q2"]),
                 tags: Box::new(["okminer.com/euz"]),
                 link: "https://okminer.com",
             },
-            Pool {
-                id: 119.into(),
+            JSONPool {
                 name: "Titan",
                 addresses: Box::new(["14hLEtxozmmih6Gg5xrGZLfx51bEMj21NW"]),
                 tags: Box::new(["Titan.io"]),
                 link: "https://titan.io",
             },
-            Pool {
-                id: 120.into(),
+            JSONPool {
                 name: "PEGA Pool",
                 addresses: Box::new(["1BGFwRzjCfRR7EvRHnzfHyFjGR8XiBDFKa"]),
                 tags: Box::new(["/pegapool/"]),
                 link: "https://www.pega-pool.com",
             },
-            Pool {
-                id: 121.into(),
+            JSONPool {
                 name: "BTC Nuggets",
                 addresses: Box::new(["1BwZeHJo7b7M2op7VDfYnsmcpXsUYEcVHm"]),
                 tags: Box::new([]),
                 link: "https://104.197.8.250",
             },
-            Pool {
-                id: 122.into(),
+            JSONPool {
                 name: "CloudHashing",
                 addresses: Box::new(["1ALA5v7h49QT7WYLcRsxcXqXUqEqaWmkvw"]),
                 tags: Box::new([]),
                 link: "https://cloudhashing.com",
             },
-            Pool {
-                id: 123.into(),
+            JSONPool {
                 name: "digitalX Mintsy",
                 addresses: Box::new(["1NY15MK947MLzmPUa2gL7UgyR8prLh2xfu"]),
                 tags: Box::new([]),
                 link: "https://www.mintsy.co",
             },
-            Pool {
-                id: 124.into(),
+            JSONPool {
                 name: "Telco 214",
                 addresses: Box::new([
                     "13Sd8Y7nUao3z4bJFkZvCRXpFqHvLy49YY",
@@ -1048,50 +949,43 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new([]),
                 link: "https://www.telco214.com",
             },
-            Pool {
-                id: 125.into(),
+            JSONPool {
                 name: "BTC Pool Party",
                 addresses: Box::new(["1PmRrdp1YSkp1LxPyCfcmBHDEipG5X4eJB"]),
                 tags: Box::new([]),
                 link: "https://btcpoolparty.com",
             },
-            Pool {
-                id: 126.into(),
+            JSONPool {
                 name: "Multipool",
                 addresses: Box::new(["1MeffGLauEj2CZ18hRQqUauTXb9JAuLbGw"]),
                 tags: Box::new([]),
                 link: "https://www.multipool.us",
             },
-            Pool {
-                id: 127.into(),
+            JSONPool {
                 name: "transactioncoinmining",
                 addresses: Box::new(["1qtKetXKgqa7j1KrB19HbvfRiNUncmakk"]),
                 tags: Box::new([]),
                 link: "https://sha256.transactioncoinmining.com",
             },
-            Pool {
-                id: 128.into(),
+            JSONPool {
                 name: "BTCDig",
                 addresses: Box::new(["15MxzsutVroEE9XiDckLxUHTCDAEZgPZJi"]),
                 tags: Box::new([]),
                 link: "https://btcdig.com",
             },
-            Pool {
-                id: 129.into(),
+            JSONPool {
                 name: "Tricky's BTC Pool",
                 addresses: Box::new(["1AePMyovoijxvHuKhTqWvpaAkRCF4QswC6"]),
                 tags: Box::new([]),
                 link: "https://pool.wemine.uk",
             },
-            Pool {
-                id: 130.into(),
+            JSONPool {
                 name: "BTCMP",
                 addresses: Box::new(["1jKSjMLnDNup6NPgCjveeP9tUn4YpT94Y"]),
                 tags: Box::new([]),
                 link: "https://www.btcmp.com",
             },
-            Pool {
-                id: 131.into(),
+            JSONPool {
                 name: "Eobot",
                 addresses: Box::new([
                     "16GsNC3q6KgVXkUX7j7aPxSUdHrt1sN2yN",
@@ -1100,15 +994,13 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new([]),
                 link: "https://eobot.com",
             },
-            Pool {
-                id: 132.into(),
+            JSONPool {
                 name: "UNOMP",
                 addresses: Box::new(["1BRY8AD7vSNUEE75NjzfgiG18mWjGQSRuJ"]),
                 tags: Box::new([]),
                 link: "https://199.115.116.7:8925",
             },
-            Pool {
-                id: 133.into(),
+            JSONPool {
                 name: "Patels",
                 addresses: Box::new([
                     "197miJmttpCt2ubVs6DDtGBYFDroxHmvVB",
@@ -1117,127 +1009,73 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new([]),
                 link: "https://patelsminingpool.com",
             },
-            Pool {
-                id: 134.into(),
+            JSONPool {
                 name: "GoGreenLight",
                 addresses: Box::new(["18EPLvrs2UE11kWBB3ABS7Crwj5tTBYPoa"]),
                 tags: Box::new([]),
                 link: "https://www.gogreenlight.se",
             },
-            Pool {
-                id: 135.into(),
-                name: "BitcoinIndia",
-                addresses: Box::new(["1AZ6BkCo4zgTuuLpRStJH8iNsehXTMp456"]),
-                tags: Box::new([]),
-                link: "https://pool.bitcoin-india.org",
-            },
-            Pool {
-                id: 136.into(),
+            JSONPool {
                 name: "EkanemBTC",
                 addresses: Box::new(["1Cs5RT9SRk1hxsdzivAfkjesNmVVJqfqkw"]),
                 tags: Box::new([]),
                 link: "https://ekanembtc.com",
             },
-            Pool {
-                id: 137.into(),
+            JSONPool {
                 name: "CANOE",
                 addresses: Box::new(["1Afcpc2FpPnREU6i52K3cicmHdvYRAH9Wo"]),
                 tags: Box::new([]),
                 link: "https://www.canoepool.com",
             },
-            Pool {
-                id: 138.into(),
+            JSONPool {
                 name: "tiger",
                 addresses: Box::new(["1LsFmhnne74EmU4q4aobfxfrWY4wfMVd8w"]),
                 tags: Box::new([]),
                 link: "",
             },
-            Pool {
-                id: 139.into(),
+            JSONPool {
                 name: "1M1X",
                 addresses: Box::new(["1M1Xw2rczxkF3p3wiNHaTmxvbpZZ7M6vaa"]),
                 tags: Box::new([]),
                 link: "",
             },
-            Pool {
-                id: 140.into(),
+            JSONPool {
                 name: "Zulupool",
                 addresses: Box::new(["1ZULUPooLEQfkrTgynLV4uHyMgQYx71ip"]),
                 tags: Box::new(["ZULUPooL", "ZU_test"]),
                 link: "https://beta.zulupool.com/",
             },
-            Pool {
-                id: 141.into(),
+            JSONPool {
                 name: "SECPOOL",
                 addresses: Box::new(["3Awm3FNpmwrbvAFVThRUFqgpbVuqWisni9"]),
                 tags: Box::new(["SecPool"]),
                 link: "https://www.secpool.com",
             },
-            Pool {
-                id: 142.into(),
+            JSONPool {
                 name: "OCEAN",
                 addresses: Box::new(["37dvwZZoT3D7RXpTCpN2yKzMmNs2i2Fd1n"]),
                 tags: Box::new(["OCEAN.XYZ"]),
                 link: "https://ocean.xyz/",
             },
-            Pool {
-                id: 143.into(),
+            JSONPool {
                 name: "WhitePool",
                 addresses: Box::new(["14VkxDwSAUWrzYTxV49HnYhKLWTJ3pCoUS"]),
                 tags: Box::new(["WhitePool"]),
                 link: "https://whitebit.com/mining-pool",
             },
-            Pool {
-                id: 144.into(),
-                name: "wiz",
-                addresses: Box::new(["tb1q548z58kqvwyjqwy8vc2ntmg33d7s2wyfv7ukq4"]),
-                tags: Box::new(["/@wiz/"]),
-                link: "https://wiz.biz/",
-            },
-            Pool {
-                id: 145.into(),
-                name: "mononaut",
-                addresses: Box::new(["mjP97q5BWtdpdsJLkEJvQWgLe9zw4MMVU6"]),
-                tags: Box::new(["🐵🚀"]),
-                link: "https://twitter.com/mononautical",
-            },
-            Pool {
-                id: 146.into(),
-                name: "rijndael",
-                addresses: Box::new(["tb1qg8zlznrvns9u46muxamxjh7sa8wry3vutzaujm"]),
-                tags: Box::new(["rijndael's toaster"]),
-                link: "https://twitter.com/rot13maxi",
-            },
-            Pool {
-                id: 147.into(),
+            JSONPool {
                 name: "wk057",
                 addresses: Box::new(["1WizkidqARMLvjGUpfDQFRcEbnHpL55kK"]),
                 tags: Box::new(["wizkid057's block"]),
                 link: "",
             },
-            Pool {
-                id: 148.into(),
+            JSONPool {
                 name: "FutureBit Apollo Solo",
                 addresses: Box::new([]),
                 tags: Box::new(["Apollo", "/mined by a Solo FutureBit Apollo/"]),
                 link: "https://www.futurebit.io",
             },
-            Pool {
-                id: 149.into(),
-                name: "emzy",
-                addresses: Box::new(["tb1qmf7xdqc5nvzhturuzc46qtq5kywdf3p76cpq53"]),
-                tags: Box::new(["Emzy was here."]),
-                link: "https://twitter.com/emzy",
-            },
-            Pool {
-                id: 150.into(),
-                name: "knorrium",
-                addresses: Box::new(["tb1qtfqp4g7n7wc3sr6c2cuzsq62px4pfsxgsv2krx"]),
-                tags: Box::new(["knorrium"]),
-                link: "https://twitter.com/knorrium",
-            },
-            Pool {
-                id: 151.into(),
+            JSONPool {
                 name: "Carbon Negative",
                 addresses: Box::new([
                     "33SAB6pzbhEGPbfY6NVgRDV7jVfspZ3A3Z",
@@ -1246,15 +1084,13 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new([]),
                 link: "https://github.com/bitcoin-data/mining-pools/issues/48",
             },
-            Pool {
-                id: 152.into(),
+            JSONPool {
                 name: "Portland.HODL",
                 addresses: Box::new([]),
                 tags: Box::new(["Portland.HODL"]),
                 link: "",
             },
-            Pool {
-                id: 153.into(),
+            JSONPool {
                 name: "Phoenix",
                 addresses: Box::new([
                     "37cGvBD4qufoZQHopGS7XstxRUzx5cNuy1",
@@ -1264,57 +1100,43 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["/Phoenix/"]),
                 link: "https://phoenixpool.com",
             },
-            Pool {
-                id: 154.into(),
+            JSONPool {
                 name: "Neopool",
                 addresses: Box::new(["1HCAb2h89bUinm6QZrAPpfbk4ySBrT2V4w"]),
                 tags: Box::new(["/Neopool/"]),
                 link: "https://neopool.com/",
             },
-            Pool {
-                id: 155.into(),
+            JSONPool {
                 name: "MaxiPool",
                 addresses: Box::new(["36r3YqAXWpyqNcczjCBdHrYZ3m8X56WDzx"]),
                 tags: Box::new(["/MaxiPool/"]),
                 link: "https://maxipool.org/",
             },
-            Pool {
-                id: 156.into(),
-                name: "DrDetroit",
-                addresses: Box::new(["tb1qtcruplnz89xw5f86kw8sj7x9r23d5yffrysx2p"]),
-                tags: Box::new(["DrDetroit"]),
-                link: "https://x.com/bankhatin",
-            },
-            Pool {
-                id: 157.into(),
+            JSONPool {
                 name: "BitFuFuPool",
                 addresses: Box::new(["3JP3zF7LoeoAotqkNGdvX5szUyNPwd937d"]),
                 tags: Box::new(["/BitFuFu/"]),
                 link: "https://www.bitfufu.com/pool",
             },
-            Pool {
-                id: 158.into(),
+            JSONPool {
                 name: "luckyPool",
                 addresses: Box::new(["1DnPPFQPrfyNTiHPXhDFyqNnW9T62GEhB1"]),
                 tags: Box::new(["Lucky pool"]),
                 link: "",
             },
-            Pool {
-                id: 159.into(),
+            JSONPool {
                 name: "Mining-Dutch",
                 addresses: Box::new(["1AfPSq5ZbqBaxU5QAayLQJMcXV8HZt92eq"]),
                 tags: Box::new(["/Mining-Dutch/"]),
                 link: "https://www.mining-dutch.nl/",
             },
-            Pool {
-                id: 160.into(),
+            JSONPool {
                 name: "Public Pool",
                 addresses: Box::new([]),
                 tags: Box::new(["Public-Pool", "Public Pool on Umbrel"]),
                 link: "https://web.public-pool.io/",
             },
-            Pool {
-                id: 161.into(),
+            JSONPool {
                 name: "Mining Squared",
                 addresses: Box::new([
                     "3GdjWJdkJhtkxRZ3Ns1LstaoHNMBW8XsvU",
@@ -1323,29 +1145,19 @@ pub fn pools() -> &'static Pools {
                 tags: Box::new(["MiningSquared", "BSquared Network", "/bsquared/"]),
                 link: "https://pool.bsquared.network/",
             },
-            Pool {
-                id: 162.into(),
+            JSONPool {
                 name: "Innopolis Tech",
                 addresses: Box::new(["bc1q75t4wewkmf3l9qg097zvtlh05v5pdz6699kv8k"]),
                 tags: Box::new(["Innopolis", "Innopolis.tech"]),
                 link: "https://innopolis.tech/",
             },
-            Pool {
-                id: 163.into(),
-                name: "nymkappa",
-                addresses: Box::new(["tb1qdyy39724wqnqqqduv6zxsf56s2ec9lgypxs59h"]),
-                tags: Box::new(["/@nymkappa/"]),
-                link: "https://github.com/nymkappa",
-            },
-            Pool {
-                id: 164.into(),
+            JSONPool {
                 name: "BTCLab",
                 addresses: Box::new([]),
                 tags: Box::new(["BTCLab", "BTCLab.dev"]),
                 link: "https://btclab.dev/",
             },
-            Pool {
-                id: 165.into(),
+            JSONPool {
                 name: "Parasite",
                 addresses: Box::new([]),
                 tags: Box::new(["parasite"]),
@@ -1353,4 +1165,18 @@ pub fn pools() -> &'static Pools {
             },
         ])
     })
+}
+
+impl From<[JSONPool; POOL_COUNT]> for Pools {
+    fn from(value: [JSONPool; POOL_COUNT]) -> Self {
+        Pools(
+            value
+                .into_iter()
+                .enumerate()
+                .map(|tuple| tuple.into())
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+        )
+    }
 }

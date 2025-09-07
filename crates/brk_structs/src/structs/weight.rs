@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::StoredCompressed;
@@ -20,6 +21,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
     FromBytes,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Weight(u64);
 

@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Rem},
 };
 
+use allocative::Allocative;
 use bitcoincore_rpc::{Client, RpcApi};
 use byteview::ByteView;
 use derive_deref::Deref;
@@ -32,6 +33,7 @@ use super::StoredU64;
     IntoBytes,
     KnownLayout,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Height(u32);
 

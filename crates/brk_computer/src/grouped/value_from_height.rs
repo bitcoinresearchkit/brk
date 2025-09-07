@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
@@ -12,7 +13,7 @@ use crate::{
 
 use super::{ComputedVecsFromHeight, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, Allocative)]
 pub struct ComputedValueVecsFromHeight {
     pub sats: ComputedVecsFromHeight<Sats>,
     pub bitcoin: ComputedVecsFromHeight<Bitcoin>,

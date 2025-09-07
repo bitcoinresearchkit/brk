@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Printable, StoredCompressed};
@@ -28,6 +29,7 @@ use super::{
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct StoredU64(u64);
 

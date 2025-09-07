@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use byteview::ByteView;
 use derive_deref::Deref;
 use serde::Serialize;
@@ -23,6 +25,12 @@ impl StoredString {
 impl From<String> for StoredString {
     fn from(value: String) -> Self {
         Self(value)
+    }
+}
+
+impl From<Cow<'_, str>> for StoredString {
+    fn from(value: Cow<'_, str>) -> Self {
+        Self(value.to_string())
     }
 }
 

@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use brk_structs::Version;
 use vecdb::{
     AnyBoxedIterableVec, AnyCloneableIterableVec, AnyCollectableVec, FromCoarserIndex,
@@ -9,7 +10,7 @@ use crate::grouped::{EagerVecBuilder, VecBuilderOptions};
 use super::ComputedType;
 
 #[allow(clippy::type_complexity)]
-#[derive(Clone)]
+#[derive(Clone, Allocative)]
 pub struct LazyVecBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,

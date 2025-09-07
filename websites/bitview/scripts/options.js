@@ -124,9 +124,10 @@
  * @param {Env} args.env
  * @param {Colors} args.colors
  * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {Pools} args.pools
  * @returns {PartialOptionsTree}
  */
-function createPartialOptions({ env, colors, vecIdToIndexes }) {
+function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   /**
    * @template {string} S
    * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
@@ -3343,6 +3344,24 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         lineStyle: 4,
                       },
                     }),
+                    createBaseSeries({
+                      key: "1w_block_count",
+                      name: "1w sum",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "1m_block_count",
+                      name: "1m sum",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "1y_block_count",
+                      name: "1y sum",
+                      color: colors.purple,
+                      defaultActive: false,
+                    }),
                   ],
                 },
                 {
@@ -3521,87 +3540,116 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   ],
                 },
                 {
-                  name: "Coinbase",
-                  title: "Coinbase",
-                  bottom: [
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "coinbase",
+                  name: "Rewards",
+                  tree: [
+                    {
                       name: "Coinbase",
-                    }),
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "coinbase_in_btc",
-                      name: "Coinbase",
-                    }),
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "coinbase_in_usd",
-                      name: "Coinbase",
-                    }),
-                  ],
-                },
-                {
-                  name: "Subsidy",
-                  title: "Subsidy",
-                  bottom: [
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "subsidy",
+                      title: "Coinbase",
+                      bottom: [
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "coinbase",
+                            name: "Coinbase",
+                          },
+                        ),
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "coinbase_in_btc",
+                            name: "Coinbase",
+                          },
+                        ),
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "coinbase_in_usd",
+                            name: "Coinbase",
+                          },
+                        ),
+                      ],
+                    },
+                    {
                       name: "Subsidy",
-                    }),
-                    createBaseSeries({
-                      key: "subsidy_usd_1y_sma",
-                      name: "1y sma",
-                    }),
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "subsidy_in_btc",
-                      name: "Subsidy",
-                    }),
-                    ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
-                      key: "subsidy_in_usd",
-                      name: "Subsidy",
-                    }),
-                  ],
-                },
-                {
-                  name: "Fee",
-                  title: "Transaction Fee",
-                  bottom: [
-                    ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
-                    ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                      "fee_in_btc",
-                    ),
-                    ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                      "fee_in_usd",
-                    ),
-                  ],
-                },
-                {
-                  name: "Dominance",
-                  title: "Reward Dominance",
-                  bottom: [
-                    createBaseSeries({
-                      key: "fee_dominance",
+                      title: "Subsidy",
+                      bottom: [
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "subsidy",
+                            name: "Subsidy",
+                          },
+                        ),
+                        createBaseSeries({
+                          key: "subsidy_usd_1y_sma",
+                          name: "1y sma",
+                        }),
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "subsidy_in_btc",
+                            name: "Subsidy",
+                          },
+                        ),
+                        ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
+                          {
+                            key: "subsidy_in_usd",
+                            name: "Subsidy",
+                          },
+                        ),
+                      ],
+                    },
+                    {
                       name: "Fee",
-                      color: colors.amber,
-                    }),
-                    createBaseSeries({
-                      key: "subsidy_dominance",
-                      name: "Subsidy",
-                      color: colors.red,
-                    }),
-                  ],
-                },
-                {
-                  name: "Unclaimed Rewards",
-                  title: "Unclaimed Rewards",
-                  bottom: [
-                    ...createSumCumulativeSeries({
-                      concat: "unclaimed_rewards",
-                    }),
-                    ...createSumCumulativeSeries({
-                      concat: "unclaimed_rewards_in_btc",
-                    }),
-                    ...createSumCumulativeSeries({
-                      concat: "unclaimed_rewards_in_usd",
-                    }),
+                      title: "Transaction Fee",
+                      bottom: [
+                        ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                          "fee",
+                        ),
+                        ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                          "fee_in_btc",
+                        ),
+                        ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                          "fee_in_usd",
+                        ),
+                      ],
+                    },
+                    {
+                      name: "Dominance",
+                      title: "Reward Dominance",
+                      bottom: [
+                        createBaseSeries({
+                          key: "fee_dominance",
+                          name: "Fee",
+                          color: colors.amber,
+                        }),
+                        createBaseSeries({
+                          key: "subsidy_dominance",
+                          name: "Subsidy",
+                          color: colors.red,
+                        }),
+                      ],
+                    },
+                    {
+                      name: "Unclaimed",
+                      title: "Unclaimed Rewards",
+                      bottom: [
+                        ...createSumCumulativeSeries({
+                          concat: "unclaimed_rewards",
+                        }),
+                        ...createSumCumulativeSeries({
+                          concat: "unclaimed_rewards_in_btc",
+                        }),
+                        ...createSumCumulativeSeries({
+                          concat: "unclaimed_rewards_in_usd",
+                        }),
+                      ],
+                    },
+                    {
+                      name: "Puell multiple",
+                      title: "Puell multiple",
+                      bottom: [
+                        createBaseSeries({
+                          key: "puell_multiple",
+                          name: "Multiple",
+                        }),
+                      ],
+                    },
                   ],
                 },
                 {
@@ -3611,16 +3659,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     createAverageSeries({ concat: "fee_rate" }),
                     ...createMinMaxPercentilesSeries({
                       concat: "fee_rate",
-                    }),
-                  ],
-                },
-                {
-                  name: "Puell multiple",
-                  title: "Puell multiple",
-                  bottom: [
-                    createBaseSeries({
-                      key: "puell_multiple",
-                      name: "Multiple",
                     }),
                   ],
                 },
@@ -3694,6 +3732,165 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       name: "Epoch",
                     }),
                   ],
+                },
+                {
+                  name: "Pools",
+                  tree: Object.entries(pools).map(([_key, name]) => {
+                    const key = /** @type {Pool} */ (_key);
+                    return {
+                      name,
+                      tree: [
+                        // indexes_to_dominance: ComputedVecsFromDateIndex<StoredF32>,
+                        // indexes_to_1d_dominance: ComputedVecsFromDateIndex<StoredF32>,
+                        // indexes_to_1w_dominance: ComputedVecsFromDateIndex<StoredF32>,
+                        // indexes_to_1m_dominance: ComputedVecsFromDateIndex<StoredF32>,
+                        // indexes_to_1y_dominance: ComputedVecsFromDateIndex<StoredF32>,
+                        // indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
+                        {
+                          name: "Dominance",
+                          title: `Dominance of ${name}`,
+                          bottom: [
+                            createBaseSeries({
+                              key: `${key}_1d_dominance`,
+                              name: "1d",
+                              color: colors.rose,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1w_dominance`,
+                              name: "1w",
+                              color: colors.red,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1m_dominance`,
+                              name: "1m",
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1y_dominance`,
+                              name: "1y",
+                              color: colors.lime,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_dominance`,
+                              name: "all time",
+                              color: colors.teal,
+                              defaultActive: false,
+                            }),
+                          ],
+                        },
+                        {
+                          name: "Blocks mined",
+                          title: `Blocks mined by ${name}`,
+                          bottom: [
+                            createBaseSeries({
+                              key: `${key}_blocks_mined`,
+                              name: "Sum",
+                            }),
+                            createBaseSeries({
+                              key: `${key}_blocks_mined_cumulative`,
+                              name: "Cumulative",
+                              color: colors.blue,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1w_blocks_mined`,
+                              name: "1w Sum",
+                              color: colors.red,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1m_blocks_mined`,
+                              name: "1m Sum",
+                              color: colors.pink,
+                              defaultActive: false,
+                            }),
+                            createBaseSeries({
+                              key: `${key}_1y_blocks_mined`,
+                              name: "1y Sum",
+                              color: colors.purple,
+                              defaultActive: false,
+                            }),
+                          ],
+                        },
+                        {
+                          name: "Rewards",
+                          tree: [
+                            {
+                              name: "coinbase",
+                              title: `coinbase collected by ${name}`,
+                              bottom: [
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_coinbase`,
+                                  common: "coinbase",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_coinbase_in_btc`,
+                                  common: "coinbase",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_coinbase_in_usd`,
+                                  common: "coinbase",
+                                }),
+                              ],
+                            },
+                            {
+                              name: "subsidy",
+                              title: `subsidy collected by ${name}`,
+                              bottom: [
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_subsidy`,
+                                  common: "subsidy",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_subsidy_in_btc`,
+                                  common: "subsidy",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_subsidy_in_usd`,
+                                  common: "subsidy",
+                                }),
+                              ],
+                            },
+                            {
+                              name: "fees",
+                              title: `fees collected by ${name}`,
+                              bottom: [
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_fee`,
+                                  common: "fee",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_fee_in_btc`,
+                                  common: "fee",
+                                  // cumulativeColor: colors.
+                                }),
+                                ...createSumCumulativeSeries({
+                                  concat: `${key}_fee_in_usd`,
+                                  common: "fee",
+                                }),
+                              ],
+                            },
+                          ],
+                        },
+                        {
+                          name: "Days since block",
+                          title: `Days since ${name} mined a block`,
+                          bottom: [
+                            createBaseSeries({
+                              key: `${key}_days_since_block`,
+                              name: "Raw",
+                            }),
+                          ],
+                        },
+                      ],
+                    };
+                  }),
                 },
               ],
             },
@@ -4184,6 +4381,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
  * @param {Env} args.env
  * @param {Utilities} args.utils
  * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {Pools} args.pools
  * @param {Signal<string | null>} args.qrcode
  */
 export function initOptions({
@@ -4193,6 +4391,7 @@ export function initOptions({
   utils,
   qrcode,
   vecIdToIndexes,
+  pools,
 }) {
   const LS_SELECTED_KEY = `selected_path`;
 
@@ -4208,7 +4407,12 @@ export function initOptions({
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
-  const partialOptions = createPartialOptions({ env, colors, vecIdToIndexes });
+  const partialOptions = createPartialOptions({
+    env,
+    colors,
+    vecIdToIndexes,
+    pools,
+  });
 
   /** @type {Option[]} */
   const list = [];

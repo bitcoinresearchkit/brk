@@ -35,7 +35,9 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         ..Default::default()
     });
 
-    bundler.write().await.unwrap();
+    if let Err(error) = bundler.write().await {
+        error!("{error:?}");
+    }
 
     let absolute_source_index_path = source_path.join("index.html").absolutize();
     let absolute_source_index_path_clone = absolute_source_index_path.clone();

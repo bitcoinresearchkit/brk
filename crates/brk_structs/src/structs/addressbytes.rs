@@ -25,6 +25,25 @@ pub enum AddressBytes {
     P2A(P2ABytes),
 }
 
+impl fmt::Display for AddressBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                AddressBytes::P2PK65(bytes) => bytes.to_string(),
+                AddressBytes::P2PK33(bytes) => bytes.to_string(),
+                AddressBytes::P2PKH(bytes) => bytes.to_string(),
+                AddressBytes::P2SH(bytes) => bytes.to_string(),
+                AddressBytes::P2WPKH(bytes) => bytes.to_string(),
+                AddressBytes::P2WSH(bytes) => bytes.to_string(),
+                AddressBytes::P2TR(bytes) => bytes.to_string(),
+                AddressBytes::P2A(bytes) => bytes.to_string(),
+            }
+        )
+    }
+}
+
 impl AddressBytes {
     pub fn as_slice(&self) -> &[u8] {
         match self {
