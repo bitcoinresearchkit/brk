@@ -166,7 +166,7 @@ impl Computer {
             exit,
         )?;
 
-        return Ok(());
+        // return Ok(());
 
         info!("Computing stateful...");
         self.stateful.compute(
