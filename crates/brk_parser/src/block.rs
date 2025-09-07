@@ -1,19 +1,20 @@
+use std::borrow::Cow;
+
 use bitcoin::Block;
 
 pub trait BlockExtended {
-    fn coinbase_tag(&self) -> String;
+    fn coinbase_tag(&self) -> Cow<'_, str>;
 }
 
 impl BlockExtended for Block {
-    fn coinbase_tag(&self) -> String {
-        let Some(input) = self.txdata.first().and_then(|tx| tx.input.first()) else {
-            return String::new();
-        };
-        let bytes = input.script_sig.as_bytes();
-        String::from_utf8_lossy(bytes)
-            .chars()
-            .filter(|&c| c != '\u{FFFD}' && (c >= ' ' || c == '\n' || c == '\r' || c == '\t'))
-            .take(1_024)
-            .collect()
+    fn coinbase_tag(&self) -> Cow<'_, str> {
+        String::from_utf8_lossy(
+            self.txdata
+                .first()
+                .and_then(|tx| tx.input.first())
+                .unwrap()
+                .script_sig
+                .as_bytes(),
+        )
     }
 }

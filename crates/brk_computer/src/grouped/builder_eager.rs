@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use brk_error::{Error, Result};
 use brk_structs::{CheckedSub, StoredU64, Version};
 use vecdb::{
@@ -9,7 +10,7 @@ use crate::utils::get_percentile;
 
 use super::ComputedType;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Allocative)]
 pub struct EagerVecBuilder<I, T>
 where
     I: StoredIndex,

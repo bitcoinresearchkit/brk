@@ -107,7 +107,7 @@ pub fn run() -> color_eyre::Result<()> {
                     downloaded_websites_path
                 };
 
-                interface.generate_bridge_file(website, websites_path.as_path())?;
+                interface.generate_bridge_files(website, websites_path.as_path())?;
 
                 Some(bundle(&websites_path, website.to_folder_name(), true).await?)
             } else {
@@ -134,6 +134,8 @@ pub fn run() -> color_eyre::Result<()> {
 
                 let starting_indexes =
                     indexer.index(&parser, rpc, &exit, config.check_collisions()).unwrap();
+
+                // dbg!(&starting_indexes);
 
                 computer.compute(&indexer, starting_indexes, &exit).unwrap();
 

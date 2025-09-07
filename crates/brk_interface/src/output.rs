@@ -6,7 +6,7 @@ use tabled::Tabled as TabledTabled;
 use crate::Format;
 
 #[derive(Debug, Serialize)]
-#[serde(untagged)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum Output {
     Json(Value),
     CSV(String),

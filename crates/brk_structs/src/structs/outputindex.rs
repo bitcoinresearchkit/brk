@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign};
 
+use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use vecdb::{CheckedSub, Printable, StoredCompressed};
@@ -26,6 +27,7 @@ use super::Vout;
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct OutputIndex(u64);
 

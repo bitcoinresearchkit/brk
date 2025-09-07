@@ -2,6 +2,7 @@ use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
 pub enum Website {
     None,
     Bitview,

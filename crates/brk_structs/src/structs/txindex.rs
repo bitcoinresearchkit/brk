@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign};
 
+use allocative::Allocative;
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
@@ -27,6 +28,7 @@ use super::StoredU32;
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct TxIndex(u32);
 

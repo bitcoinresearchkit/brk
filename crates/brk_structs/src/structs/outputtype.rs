@@ -16,6 +16,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     Serialize,
 )]
+#[serde(rename_all = "lowercase")]
 #[repr(u8)]
 pub enum OutputType {
     P2PK65,

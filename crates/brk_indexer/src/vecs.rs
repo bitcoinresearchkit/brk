@@ -17,8 +17,6 @@ use vecdb::{
 
 use crate::Indexes;
 
-const VERSION: Version = Version::ZERO;
-
 #[derive(Clone)]
 pub struct Vecs {
     db: Database,
@@ -78,222 +76,118 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let this = Self {
-            emptyoutputindex_to_txindex: CompressedVec::forced_import(
-                &db,
-                "txindex",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_blockhash: RawVec::forced_import(
-                &db,
-                "blockhash",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_difficulty: CompressedVec::forced_import(
-                &db,
-                "difficulty",
-                version + VERSION + Version::ZERO,
-            )?,
+            emptyoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
+            height_to_blockhash: RawVec::forced_import(&db, "blockhash", version)?,
+            height_to_difficulty: CompressedVec::forced_import(&db, "difficulty", version)?,
             height_to_first_emptyoutputindex: CompressedVec::forced_import(
                 &db,
                 "first_emptyoutputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_inputindex: CompressedVec::forced_import(
                 &db,
                 "first_inputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_opreturnindex: CompressedVec::forced_import(
                 &db,
                 "first_opreturnindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_outputindex: CompressedVec::forced_import(
                 &db,
                 "first_outputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2aaddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2aaddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2msoutputindex: CompressedVec::forced_import(
                 &db,
                 "first_p2msoutputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2pk33addressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2pk33addressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2pk65addressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2pk65addressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2pkhaddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2pkhaddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2shaddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2shaddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2traddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2traddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2wpkhaddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2wpkhaddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             height_to_first_p2wshaddressindex: CompressedVec::forced_import(
                 &db,
                 "first_p2wshaddressindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
-            height_to_first_txindex: CompressedVec::forced_import(
-                &db,
-                "first_txindex",
-                version + VERSION + Version::ZERO,
-            )?,
+            height_to_first_txindex: CompressedVec::forced_import(&db, "first_txindex", version)?,
             height_to_first_unknownoutputindex: CompressedVec::forced_import(
                 &db,
                 "first_unknownoutputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
-            height_to_timestamp: CompressedVec::forced_import(
-                &db,
-                "timestamp",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_total_size: CompressedVec::forced_import(
-                &db,
-                "total_size",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_weight: CompressedVec::forced_import(
-                &db,
-                "weight",
-                version + VERSION + Version::ZERO,
-            )?,
-            inputindex_to_outputindex: RawVec::forced_import(
-                &db,
-                "outputindex",
-                version + VERSION + Version::ZERO,
-            )?,
-            opreturnindex_to_txindex: CompressedVec::forced_import(
-                &db,
-                "txindex",
-                version + VERSION + Version::ZERO,
-            )?,
-            outputindex_to_outputtype: RawVec::forced_import(
-                &db,
-                "outputtype",
-                version + VERSION + Version::ZERO,
-            )?,
-            outputindex_to_typeindex: RawVec::forced_import(
-                &db,
-                "typeindex",
-                version + VERSION + Version::ZERO,
-            )?,
-            outputindex_to_value: RawVec::forced_import(
-                &db,
-                "value",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2aaddressindex_to_p2abytes: RawVec::forced_import(
-                &db,
-                "p2abytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2msoutputindex_to_txindex: CompressedVec::forced_import(
-                &db,
-                "txindex",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2pk33addressindex_to_p2pk33bytes: RawVec::forced_import(
-                &db,
-                "p2pk33bytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2pk65addressindex_to_p2pk65bytes: RawVec::forced_import(
-                &db,
-                "p2pk65bytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2pkhaddressindex_to_p2pkhbytes: RawVec::forced_import(
-                &db,
-                "p2pkhbytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2shaddressindex_to_p2shbytes: RawVec::forced_import(
-                &db,
-                "p2shbytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2traddressindex_to_p2trbytes: RawVec::forced_import(
-                &db,
-                "p2trbytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2wpkhaddressindex_to_p2wpkhbytes: RawVec::forced_import(
-                &db,
-                "p2wpkhbytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            p2wshaddressindex_to_p2wshbytes: RawVec::forced_import(
-                &db,
-                "p2wshbytes",
-                version + VERSION + Version::ZERO,
-            )?,
-            txindex_to_base_size: CompressedVec::forced_import(
-                &db,
-                "base_size",
-                version + VERSION + Version::ZERO,
-            )?,
+            height_to_timestamp: CompressedVec::forced_import(&db, "timestamp", version)?,
+            height_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
+            height_to_weight: CompressedVec::forced_import(&db, "weight", version)?,
+            inputindex_to_outputindex: RawVec::forced_import(&db, "outputindex", version)?,
+            opreturnindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
+            outputindex_to_outputtype: RawVec::forced_import(&db, "outputtype", version)?,
+            outputindex_to_typeindex: RawVec::forced_import(&db, "typeindex", version)?,
+            outputindex_to_value: RawVec::forced_import(&db, "value", version)?,
+            p2aaddressindex_to_p2abytes: RawVec::forced_import(&db, "p2abytes", version)?,
+            p2msoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
+            p2pk33addressindex_to_p2pk33bytes: RawVec::forced_import(&db, "p2pk33bytes", version)?,
+            p2pk65addressindex_to_p2pk65bytes: RawVec::forced_import(&db, "p2pk65bytes", version)?,
+            p2pkhaddressindex_to_p2pkhbytes: RawVec::forced_import(&db, "p2pkhbytes", version)?,
+            p2shaddressindex_to_p2shbytes: RawVec::forced_import(&db, "p2shbytes", version)?,
+            p2traddressindex_to_p2trbytes: RawVec::forced_import(&db, "p2trbytes", version)?,
+            p2wpkhaddressindex_to_p2wpkhbytes: RawVec::forced_import(&db, "p2wpkhbytes", version)?,
+            p2wshaddressindex_to_p2wshbytes: RawVec::forced_import(&db, "p2wshbytes", version)?,
+            txindex_to_base_size: CompressedVec::forced_import(&db, "base_size", version)?,
             txindex_to_first_inputindex: CompressedVec::forced_import(
                 &db,
                 "first_inputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             txindex_to_first_outputindex: CompressedVec::forced_import(
                 &db,
                 "first_outputindex",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
             txindex_to_is_explicitly_rbf: CompressedVec::forced_import(
                 &db,
                 "is_explicitly_rbf",
-                version + VERSION + Version::ZERO,
+                version,
             )?,
-            txindex_to_rawlocktime: CompressedVec::forced_import(
-                &db,
-                "rawlocktime",
-                version + VERSION + Version::ZERO,
-            )?,
-            txindex_to_total_size: CompressedVec::forced_import(
-                &db,
-                "total_size",
-                version + VERSION + Version::ZERO,
-            )?,
-            txindex_to_txid: RawVec::forced_import(&db, "txid", version + VERSION + Version::ZERO)?,
-            txindex_to_txversion: CompressedVec::forced_import(
-                &db,
-                "txversion",
-                version + VERSION + Version::ZERO,
-            )?,
-            unknownoutputindex_to_txindex: CompressedVec::forced_import(
-                &db,
-                "txindex",
-                version + VERSION + Version::ZERO,
-            )?,
+            txindex_to_rawlocktime: CompressedVec::forced_import(&db, "rawlocktime", version)?,
+            txindex_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
+            txindex_to_txid: RawVec::forced_import(&db, "txid", version)?,
+            txindex_to_txversion: CompressedVec::forced_import(&db, "txversion", version)?,
+            unknownoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
 
             db,
         };

@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum Format {
     #[serde(alias = "json")]
     JSON,

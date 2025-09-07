@@ -1,5 +1,6 @@
-use std::ops::{Add, AddAssign, Div};
+use std::ops::{Add, AddAssign, Div, Mul};
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Printable, StoredCompressed};
@@ -27,20 +28,32 @@ use super::{
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct StoredU32(u32);
 
 impl StoredU32 {
     pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
 
     pub fn new(counter: u32) -> Self {
         Self(counter)
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.0 == 0
     }
 }
 
 impl From<u32> for StoredU32 {
     fn from(value: u32) -> Self {
         Self(value)
+    }
+}
+
+impl From<StoredU32> for f32 {
+    fn from(value: StoredU32) -> Self {
+        value.0 as f32
     }
 }
 
@@ -56,6 +69,15 @@ impl From<usize> for StoredU32 {
 impl CheckedSub<StoredU32> for StoredU32 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl CheckedSub<usize> for StoredU32 {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        if rhs > u32::MAX as usize {
+            panic!()
+        }
+        self.0.checked_sub(rhs as u32).map(Self)
     }
 }
 
@@ -76,6 +98,17 @@ impl Add for StoredU32 {
 impl AddAssign for StoredU32 {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Mul<usize> for StoredU32 {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        let res = self.0 as usize * rhs;
+        if res > u32::MAX as usize {
+            panic!()
+        }
+        Self::from(res)
     }
 }
 

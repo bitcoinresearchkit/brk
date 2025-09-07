@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
@@ -30,7 +31,7 @@ const TARGET_BLOCKS_PER_SEMESTER: u64 = 2 * TARGET_BLOCKS_PER_QUARTER;
 const TARGET_BLOCKS_PER_YEAR: u64 = 2 * TARGET_BLOCKS_PER_SEMESTER;
 const TARGET_BLOCKS_PER_DECADE: u64 = 10 * TARGET_BLOCKS_PER_YEAR;
 
-#[derive(Clone)]
+#[derive(Clone, Allocative)]
 pub struct Vecs {
     db: Database,
 
@@ -51,6 +52,9 @@ pub struct Vecs {
     pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
     pub timeindexes_to_timestamp: ComputedVecsFromDateIndex<Timestamp>,
     pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_1w_block_count: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_1m_block_count: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_1y_block_count: ComputedVecsFromDateIndex<StoredU32>,
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
@@ -388,6 +392,30 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
+            )?,
+            indexes_to_1w_block_count: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "1w_block_count",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_1m_block_count: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "1m_block_count",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_1y_block_count: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "1y_block_count",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
                 &db,
@@ -931,6 +959,54 @@ impl Vecs {
                     starting_indexes.height,
                     &indexer.vecs.height_to_weight,
                     |h| (h, StoredU32::from(1_u32)),
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_1w_block_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    self.indexes_to_block_count.dateindex.unwrap_sum(),
+                    7,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_1m_block_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    self.indexes_to_block_count.dateindex.unwrap_sum(),
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_1y_block_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    self.indexes_to_block_count.dateindex.unwrap_sum(),
+                    365,
                     exit,
                 )?;
                 Ok(())
@@ -1769,6 +1845,9 @@ impl Vecs {
             self.indexes_to_hash_rate_1y_sma.vecs(),
             self.timeindexes_to_timestamp.vecs(),
             self.indexes_to_block_count.vecs(),
+            self.indexes_to_1w_block_count.vecs(),
+            self.indexes_to_1m_block_count.vecs(),
+            self.indexes_to_1y_block_count.vecs(),
             self.indexes_to_block_interval.vecs(),
             self.indexes_to_block_size.vecs(),
             self.indexes_to_block_vbytes.vecs(),

@@ -27,8 +27,6 @@ pub struct Stores {
         ByAddressType<Store<TypeIndexWithOutputindex, Unit>>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl Stores {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
         let path = parent.join("stores");
@@ -49,34 +47,21 @@ impl Stores {
                     &keyspace,
                     &path,
                     "addressbyteshash_to_typeindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     None,
                 )
             });
             let blockhashprefix_to_height = scope.spawn(|| {
-                Store::import(
-                    &keyspace,
-                    &path,
-                    "blockhashprefix_to_height",
-                    version + VERSION + Version::ZERO,
-                    None,
-                )
+                Store::import(&keyspace, &path, "blockhashprefix_to_height", version, None)
             });
-            let txidprefix_to_txindex = scope.spawn(|| {
-                Store::import(
-                    &keyspace,
-                    &path,
-                    "txidprefix_to_txindex",
-                    version + VERSION + Version::ZERO,
-                    None,
-                )
-            });
+            let txidprefix_to_txindex = scope
+                .spawn(|| Store::import(&keyspace, &path, "txidprefix_to_txindex", version, None));
             let p2aaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     &keyspace,
                     &path,
                     "p2aaddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -85,7 +70,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2pk33addressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -94,7 +79,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2pk65addressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -103,7 +88,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2pkhaddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -112,7 +97,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2shaddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -121,7 +106,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2traddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -130,7 +115,7 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2wpkhaddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
@@ -139,18 +124,13 @@ impl Stores {
                     &keyspace,
                     &path,
                     "p2wshaddressindex_with_outputindex",
-                    version + VERSION + Version::ZERO,
+                    version,
                     Some(false),
                 )
             });
 
-            let height_to_coinbase_tag = Store::import(
-                &keyspace,
-                &path,
-                "height_to_coinbase_tag",
-                version + VERSION + Version::ZERO,
-                None,
-            )?;
+            let height_to_coinbase_tag =
+                Store::import(&keyspace, &path, "height_to_coinbase_tag", version, None)?;
 
             Ok(Self {
                 keyspace: keyspace.clone(),

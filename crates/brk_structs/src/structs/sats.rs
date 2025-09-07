@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, SubAssign},
 };
 
+use allocative::Allocative;
 use bitcoin::Amount;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
@@ -30,6 +31,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Serialize,
     Deserialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Sats(u64);
 

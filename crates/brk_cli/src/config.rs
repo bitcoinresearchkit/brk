@@ -6,7 +6,6 @@ use std::{
 use bitcoincore_rpc::{self, Auth, Client};
 use brk_fetcher::Fetcher;
 use clap::Parser;
-use clap_derive::Parser;
 use color_eyre::eyre::eyre;
 use serde::{Deserialize, Deserializer, Serialize};
 

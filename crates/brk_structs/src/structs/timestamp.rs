@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use serde::Serialize;
@@ -23,6 +24,7 @@ use super::Date;
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Timestamp(u32);
 

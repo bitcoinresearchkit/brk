@@ -23,9 +23,12 @@ pub use indexes::*;
 pub use stores::*;
 pub use vecs::*;
 
+// One version for all data sources
+// Increment on change OR addition
+const VERSION: Version = Version::new(21);
+
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 const COLLISIONS_CHECKED_UP_TO: Height = Height::new(909_150);
-const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -39,10 +42,10 @@ impl Indexer {
 
         let path = outputs_dir.join("indexed");
 
-        let vecs = Vecs::forced_import(&path, VERSION + Version::ZERO)?;
+        let vecs = Vecs::forced_import(&path, VERSION)?;
         info!("Imported vecs");
 
-        let stores = Stores::forced_import(&path, VERSION + Version::ZERO)?;
+        let stores = Stores::forced_import(&path, VERSION)?;
         info!("Imported stores");
 
         Ok(Self { vecs, stores })

@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
@@ -17,7 +18,7 @@ use crate::{
 
 use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, Allocative)]
 pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedType + PartialOrd,

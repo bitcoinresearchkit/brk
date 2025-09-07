@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
 use vecdb::StoredCompressed;
@@ -473,6 +474,7 @@ where
     DerefMut,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 #[repr(transparent)]
 pub struct Close<T>(T);

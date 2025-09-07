@@ -6,10 +6,13 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
@@ -25,6 +28,7 @@ use super::{Dollars, StoredF64};
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct StoredF32(f32);
 
@@ -65,9 +69,21 @@ impl From<usize> for StoredF32 {
     }
 }
 
+impl From<StoredU32> for StoredF32 {
+    fn from(value: StoredU32) -> Self {
+        Self(f32::from(value))
+    }
+}
+
 impl CheckedSub<StoredF32> for StoredF32 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         Some(Self(self.0 - rhs.0))
+    }
+}
+
+impl CheckedSub<usize> for StoredF32 {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        Some(Self(self.0 - rhs as f32))
     }
 }
 
@@ -75,6 +91,13 @@ impl Div<usize> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs as f32)
+    }
+}
+
+impl Div<StoredU32> for StoredF32 {
+    type Output = Self;
+    fn div(self, rhs: StoredU32) -> Self::Output {
+        Self(self.0 / f32::from(rhs))
     }
 }
 
@@ -100,6 +123,12 @@ impl From<StoredF32> for f32 {
 impl From<Dollars> for StoredF32 {
     fn from(value: Dollars) -> Self {
         StoredF32::from(f64::from(value))
+    }
+}
+
+impl From<Close<Dollars>> for StoredF32 {
+    fn from(value: Close<Dollars>) -> Self {
+        Self::from(*value)
     }
 }
 

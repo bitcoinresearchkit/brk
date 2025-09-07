@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use allocative::Allocative;
 use serde::Serialize;
 use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -20,6 +21,7 @@ use super::{Sats, StoredF64};
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct Bitcoin(f64);
 

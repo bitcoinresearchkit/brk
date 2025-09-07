@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Printable, StoredCompressed};
@@ -27,11 +28,13 @@ use super::{
     KnownLayout,
     Serialize,
     StoredCompressed,
+    Allocative,
 )]
 pub struct StoredU16(u16);
 
 impl StoredU16 {
     pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
 
     pub fn new(v: u16) -> Self {
         Self(v)

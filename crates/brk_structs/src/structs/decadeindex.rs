@@ -3,8 +3,9 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use allocative::Allocative;
 use serde::{Deserialize, Serialize};
+use vecdb::{CheckedSub, Printable, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex, YearIndex};
@@ -25,6 +26,7 @@ use super::{Date, DateIndex, YearIndex};
     IntoBytes,
     KnownLayout,
     StoredCompressed,
+    Allocative,
 )]
 pub struct DecadeIndex(u16);
 

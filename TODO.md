@@ -64,11 +64,9 @@
       - miners
       - maybe xpubs
     - charts
-      - improve some names and colors
-      - remove `sum` series when it's a duplicate of the `base` (in subsidy for example)
+      - improve names and colors
       - selected unit sometimes changes when going back end forth
       - add support for custom charts
-      - separate z-score charts from "realized price" (with their own prices), have 4y, 2y and 1y
       - price scale format depends on unit, hide digits for sats for example (if/when possible)
     - table
       - pagination

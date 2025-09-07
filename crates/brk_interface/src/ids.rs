@@ -29,20 +29,22 @@ impl<'de> Deserialize<'de> for MaybeIds {
     {
         match serde_json::Value::deserialize(deserializer)? {
             serde_json::Value::String(str) => {
-                if str.len() > MAX_STRING_SIZE {
+                if str.len() <= MAX_STRING_SIZE {
                     Ok(MaybeIds(sanitize_ids(
                         str.split(",").map(|s| s.to_string()),
                     )))
                 } else {
+                    dbg!(str.len(), MAX_STRING_SIZE);
                     Err(serde::de::Error::custom("Given parameter is too long"))
                 }
             }
             serde_json::Value::Array(vec) => {
-                if vec.len() > MAX_VECS {
+                if vec.len() <= MAX_VECS {
                     Ok(MaybeIds(sanitize_ids(
                         vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
                     )))
                 } else {
+                    dbg!(vec.len(), MAX_VECS);
                     Err(serde::de::Error::custom("Given parameter is too long"))
                 }
             }
