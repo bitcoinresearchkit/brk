@@ -7,8 +7,8 @@ use serde::Deserialize;
 #[derive(Debug, Deref, JsonSchema)]
 pub struct MaybeIds(Vec<String>);
 
-const MAX_STRING_SIZE: usize = 10_000;
-const MAX_VECS: usize = 64;
+const MAX_VECS: usize = 32;
+const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
 impl From<String> for MaybeIds {
     fn from(value: String) -> Self {
@@ -34,7 +34,6 @@ impl<'de> Deserialize<'de> for MaybeIds {
                         str.split(",").map(|s| s.to_string()),
                     )))
                 } else {
-                    dbg!(str.len(), MAX_STRING_SIZE);
                     Err(serde::de::Error::custom("Given parameter is too long"))
                 }
             }
@@ -44,7 +43,6 @@ impl<'de> Deserialize<'de> for MaybeIds {
                         vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
                     )))
                 } else {
-                    dbg!(vec.len(), MAX_VECS);
                     Err(serde::de::Error::custom("Given parameter is too long"))
                 }
             }
