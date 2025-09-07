@@ -50,12 +50,12 @@ pub struct Vecs {
 
     pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
-    pub dateindex_to_sopr: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_sopr_7d_ema: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_sopr_30d_ema: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_adjusted_sopr: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_adjusted_sopr_7d_ema: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_adjusted_sopr_30d_ema: Option<EagerVec<DateIndex, StoredF32>>,
+    pub dateindex_to_sopr: Option<EagerVec<DateIndex, StoredF64>>,
+    pub dateindex_to_sopr_7d_ema: Option<EagerVec<DateIndex, StoredF64>>,
+    pub dateindex_to_sopr_30d_ema: Option<EagerVec<DateIndex, StoredF64>>,
+    pub dateindex_to_adjusted_sopr: Option<EagerVec<DateIndex, StoredF64>>,
+    pub dateindex_to_adjusted_sopr_7d_ema: Option<EagerVec<DateIndex, StoredF64>>,
+    pub dateindex_to_adjusted_sopr_30d_ema: Option<EagerVec<DateIndex, StoredF64>>,
     pub indexes_to_realized_cap_30d_delta: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub dateindex_to_sell_side_risk_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_sell_side_risk_ratio_7d_ema: Option<EagerVec<DateIndex, StoredF32>>,
@@ -720,7 +720,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sopr"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -729,7 +729,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sopr_7d_ema"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -738,7 +738,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sopr_30d_ema"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -747,7 +747,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -756,7 +756,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr_7d_ema"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -765,7 +765,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr_30d_ema"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()

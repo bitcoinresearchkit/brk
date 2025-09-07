@@ -3740,15 +3740,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     return {
                       name,
                       tree: [
-                        // indexes_to_dominance: ComputedVecsFromDateIndex<StoredF32>,
-                        // indexes_to_1d_dominance: ComputedVecsFromDateIndex<StoredF32>,
-                        // indexes_to_1w_dominance: ComputedVecsFromDateIndex<StoredF32>,
-                        // indexes_to_1m_dominance: ComputedVecsFromDateIndex<StoredF32>,
-                        // indexes_to_1y_dominance: ComputedVecsFromDateIndex<StoredF32>,
-                        // indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
                         {
                           name: "Dominance",
-                          title: `Dominance of ${name}`,
+                          title: `Mining Dominance of ${name}`,
                           bottom: [
                             createBaseSeries({
                               key: `${key}_1d_dominance`,
@@ -3815,68 +3809,45 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         },
                         {
                           name: "Rewards",
-                          tree: [
+                          title: `Rewards collected by ${name}`,
+                          bottom: [
                             {
-                              name: "coinbase",
-                              title: `coinbase collected by ${name}`,
-                              bottom: [
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_coinbase`,
-                                  common: "coinbase",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_coinbase_in_btc`,
-                                  common: "coinbase",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_coinbase_in_usd`,
-                                  common: "coinbase",
-                                }),
-                              ],
+                              keyAddon: "coinbase",
+                              cumulativeColor: colors.red,
+                              sumColor: colors.orange,
                             },
                             {
-                              name: "subsidy",
-                              title: `subsidy collected by ${name}`,
-                              bottom: [
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_subsidy`,
-                                  common: "subsidy",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_subsidy_in_btc`,
-                                  common: "subsidy",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_subsidy_in_usd`,
-                                  common: "subsidy",
-                                }),
-                              ],
+                              keyAddon: "subsidy",
+                              cumulativeColor: colors.emerald,
+                              sumColor: colors.lime,
                             },
                             {
-                              name: "fees",
-                              title: `fees collected by ${name}`,
-                              bottom: [
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_fee`,
-                                  common: "fee",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_fee_in_btc`,
-                                  common: "fee",
-                                  // cumulativeColor: colors.
-                                }),
-                                ...createSumCumulativeSeries({
-                                  concat: `${key}_fee_in_usd`,
-                                  common: "fee",
-                                }),
-                              ],
+                              keyAddon: "fee",
+                              cumulativeColor: colors.indigo,
+                              sumColor: colors.cyan,
                             },
-                          ],
+                          ].flatMap(
+                            ({ keyAddon, sumColor, cumulativeColor }) => [
+                              ...createSumCumulativeSeries({
+                                concat: `${key}_${keyAddon}`,
+                                common: keyAddon,
+                                sumColor,
+                                cumulativeColor,
+                              }),
+                              ...createSumCumulativeSeries({
+                                concat: `${key}_${keyAddon}_in_btc`,
+                                common: keyAddon,
+                                sumColor,
+                                cumulativeColor,
+                              }),
+                              ...createSumCumulativeSeries({
+                                concat: `${key}_${keyAddon}_in_usd`,
+                                common: keyAddon,
+                                sumColor,
+                                cumulativeColor,
+                              }),
+                            ],
+                          ),
                         },
                         {
                           name: "Days since block",
@@ -3884,7 +3855,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           bottom: [
                             createBaseSeries({
                               key: `${key}_days_since_block`,
-                              name: "Raw",
+                              name: "Since block",
                             }),
                           ],
                         },

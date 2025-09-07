@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     f64,
+    iter::Sum,
     ops::{Add, AddAssign, Div, Mul},
 };
 
@@ -74,6 +75,13 @@ impl Div<StoredF64> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0 / rhs.0)
+    }
+}
+
+impl Div<Dollars> for StoredF64 {
+    type Output = Self;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        Self::from(self.0 / *rhs)
     }
 }
 
@@ -159,5 +167,11 @@ impl Printable for StoredF64 {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["f64"]
+    }
+}
+
+impl Sum for StoredF64 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|v| v.0).sum::<f64>())
     }
 }

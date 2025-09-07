@@ -151,8 +151,6 @@ impl Computer {
                     .compute(indexer, &self.indexes, price, &starting_indexes, exit)?;
             }
 
-            // let _ = generate_allocation_files(&self.pools);
-
             chain.join().unwrap()?;
             Ok(())
         })?;
