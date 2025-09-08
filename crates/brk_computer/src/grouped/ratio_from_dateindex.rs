@@ -8,7 +8,9 @@ use vecdb::{
 
 use crate::{
     Indexes,
-    grouped::{ComputedStandardDeviationVecsFromDateIndex, source::Source},
+    grouped::{
+        ComputedStandardDeviationVecsFromDateIndex, StandardDeviationVecsOptions, source::Source,
+    },
     indexes, price,
     utils::get_percentile,
 };
@@ -105,6 +107,7 @@ impl ComputedRatioVecsFromDateIndex {
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
+                    StandardDeviationVecsOptions::default().add_all(),
                 )
                 .unwrap()
             }),
@@ -116,6 +119,7 @@ impl ComputedRatioVecsFromDateIndex {
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
+                    StandardDeviationVecsOptions::default().add_all(),
                 )
                 .unwrap()
             }),
@@ -127,6 +131,7 @@ impl ComputedRatioVecsFromDateIndex {
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
+                    StandardDeviationVecsOptions::default().add_all(),
                 )
                 .unwrap()
             }),
@@ -138,6 +143,7 @@ impl ComputedRatioVecsFromDateIndex {
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
+                    StandardDeviationVecsOptions::default().add_all(),
                 )
                 .unwrap()
             }),

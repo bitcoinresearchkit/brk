@@ -15,36 +15,82 @@ pub struct ComputedStandardDeviationVecsFromDateIndex {
     days: usize,
 
     pub sma: Option<ComputedVecsFromDateIndex<StoredF32>>,
+
     pub sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub _0sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p0_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p1sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p1_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p2sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p2_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p3sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m0_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m1sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m1_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m2sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m2_5sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub m3sd: ComputedVecsFromDateIndex<StoredF32>,
-    pub p0_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p1sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p1_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p2sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p2_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub p3sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m0_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m1sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m1_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m2sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m2_5sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub m3sd_in_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub zscore: ComputedVecsFromDateIndex<StoredF32>,
+
+    pub zscore: Option<ComputedVecsFromDateIndex<StoredF32>>,
+
+    pub p0_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p1sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p1_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p2sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m0_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m1sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m1_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m2sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub m3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+
+    pub _0sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p0_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p1sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p1_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p2sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p2_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub p3sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m0_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m1sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m1_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m2sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m2_5sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub m3sd_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
 }
 
-const VERSION: Version = Version::ONE;
+#[derive(Debug, Default)]
+pub struct StandardDeviationVecsOptions {
+    zscore: bool,
+    bands: bool,
+    price_bands: bool,
+}
+
+impl StandardDeviationVecsOptions {
+    pub fn add_all(mut self) -> Self {
+        self.zscore = true;
+        self.bands = true;
+        self.price_bands = true;
+        self
+    }
+
+    pub fn add_zscore(mut self) -> Self {
+        self.zscore = true;
+        self
+    }
+
+    pub fn add_bands(mut self) -> Self {
+        self.bands = true;
+        self
+    }
+
+    pub fn add_price_bands(mut self) -> Self {
+        self.bands = true;
+        self.price_bands = true;
+        self
+    }
+
+    pub fn zscore(&self) -> bool {
+        self.zscore
+    }
+
+    pub fn bands(&self) -> bool {
+        self.bands
+    }
+
+    pub fn price_bands(&self) -> bool {
+        self.price_bands
+    }
+}
 
 impl ComputedStandardDeviationVecsFromDateIndex {
     #[allow(clippy::too_many_arguments)]
@@ -52,22 +98,25 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         db: &Database,
         name: &str,
         days: usize,
-        source: Source<DateIndex, StoredF32>,
-        version: Version,
+        sma: Source<DateIndex, StoredF32>,
+        parent_version: Version,
         indexes: &indexes::Vecs,
+        options: StandardDeviationVecsOptions,
     ) -> Result<Self> {
-        let options = VecBuilderOptions::default().add_last();
+        let builder_options = VecBuilderOptions::default().add_last();
+
+        let version = parent_version + Version::ONE;
 
         Ok(Self {
             days,
-            sma: source.is_compute().then(|| {
+            sma: sma.is_compute().then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
                     &format!("{name}_sma"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
-                    options,
+                    builder_options,
                 )
                 .unwrap()
             }),
@@ -75,218 +124,296 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 db,
                 &format!("{name}_sd"),
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
-                options,
+                builder_options,
             )?,
-            p0_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p0_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p1sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p1sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p1_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p1_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p2sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p2sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p2_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p2_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p3sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p3sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m0_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m0_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m1sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m1sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m1_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m1_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m2sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m2sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m2_5sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m2_5sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m3sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m3sd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            _0sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_0sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p0_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p0_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p1sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p1sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p1_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p1_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p2sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p2sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p2_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p2_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            p3sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_p3sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m0_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m0_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m1sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m1sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m1_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m1_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m2sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m2sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m2_5sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m2_5sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            m3sd_in_usd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_m3sd_in_usd"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
-            zscore: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_zscore"),
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                options,
-            )?,
+            p0_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p0_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p1sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p1sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p1_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p1_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p2sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p2sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p2_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p2_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p3sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p3sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m0_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m0_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m1sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m1sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m1_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m1_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m2sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m2sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m2_5sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m2_5sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m3sd: options.bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m3sd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            _0sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_0sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p0_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p0_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p1sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p1sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p1_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p1_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p2sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p2sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p2_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p2_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            p3sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_p3sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m0_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m0_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m1sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m1sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m1_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m1_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m2sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m2sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m2_5sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m2_5sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            m3sd_in_usd: options.price_bands().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_m3sd_in_usd"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
+            zscore: options.zscore().then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    db,
+                    &format!("{name}_zscore"),
+                    Source::Compute,
+                    version + Version::ZERO,
+                    indexes,
+                    builder_options,
+                )
+                .unwrap()
+            }),
         })
     }
 
@@ -297,7 +424,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        source_in_usd: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
@@ -326,7 +453,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             exit,
             sma_opt,
             source,
-            source_in_usd,
+            price_opt,
         )
     }
 
@@ -339,7 +466,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         exit: &Exit,
         sma_opt: Option<&impl AnyIterableVec<DateIndex, StoredF32>>,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        source_in_usd: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let sma = sma_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.sma.as_ref().unwrap().dateindex)
@@ -349,16 +476,16 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         let source_version = source.version();
 
-        self.mut_vecs().iter_mut().try_for_each(|v| -> Result<()> {
-            v.validate_computed_version_or_reset(
-                Version::ZERO + v.inner_version() + source_version,
-            )?;
-            Ok(())
-        })?;
+        self.mut_stateful_date_vecs()
+            .try_for_each(|v| -> Result<()> {
+                v.validate_computed_version_or_reset(
+                    Version::ZERO + v.inner_version() + source_version,
+                )?;
+                Ok(())
+            })?;
 
         let starting_dateindex = self
-            .mut_vecs()
-            .iter()
+            .mut_stateful_date_vecs()
             .map(|v| DateIndex::from(v.len()))
             .min()
             .unwrap()
@@ -373,6 +500,19 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         let mut sma_iter = sma.iter();
 
+        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p1sd = self.p1sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p2sd = self.p2sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p3sd = self.p3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m1sd = self.m1sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m2sd = self.m2sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+
         source
             .iter_at(starting_dateindex)
             .try_for_each(|(index, ratio)| -> Result<()> {
@@ -383,66 +523,42 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                         exit,
                     )?;
 
-                    self.p0_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.p1sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.p1_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.p2sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.p2_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.p3sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m0_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m1sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m1_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m2sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m2_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
-                    self.m3sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
+                    if let Some(v) = p0_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = p1sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = p1_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = p2sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = p2_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = p3sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m0_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m1sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m1_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m2sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m2_5sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
+                    if let Some(v) = m3sd.as_mut() {
+                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                    }
                 } else {
                     let ratio = ratio.into_owned();
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
@@ -463,66 +579,42 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                         .as_mut()
                         .unwrap()
                         .forced_push_at(index, sd, exit)?;
-                    self.p0_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg + StoredF32::from(0.5 * *sd),
-                        exit,
-                    )?;
-                    self.p1sd
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .forced_push_at(index, avg + sd, exit)?;
-                    self.p1_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg + StoredF32::from(1.5 * *sd),
-                        exit,
-                    )?;
-                    self.p2sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg + 2 * sd,
-                        exit,
-                    )?;
-                    self.p2_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg + StoredF32::from(2.5 * *sd),
-                        exit,
-                    )?;
-                    self.p3sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg + 3 * sd,
-                        exit,
-                    )?;
-                    self.m0_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg - StoredF32::from(0.5 * *sd),
-                        exit,
-                    )?;
-                    self.m1sd
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .forced_push_at(index, avg - sd, exit)?;
-                    self.m1_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg - StoredF32::from(1.5 * *sd),
-                        exit,
-                    )?;
-                    self.m2sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg - 2 * sd,
-                        exit,
-                    )?;
-                    self.m2_5sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg - StoredF32::from(2.5 * *sd),
-                        exit,
-                    )?;
-                    self.m3sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        avg - 3 * sd,
-                        exit,
-                    )?;
+                    if let Some(v) = p0_5sd.as_mut() {
+                        v.forced_push_at(index, avg + StoredF32::from(0.5 * *sd), exit)?
+                    }
+                    if let Some(v) = p1sd.as_mut() {
+                        v.forced_push_at(index, avg + sd, exit)?
+                    }
+                    if let Some(v) = p1_5sd.as_mut() {
+                        v.forced_push_at(index, avg + StoredF32::from(1.5 * *sd), exit)?
+                    }
+                    if let Some(v) = p2sd.as_mut() {
+                        v.forced_push_at(index, avg + 2 * sd, exit)?
+                    }
+                    if let Some(v) = p2_5sd.as_mut() {
+                        v.forced_push_at(index, avg + StoredF32::from(2.5 * *sd), exit)?
+                    }
+                    if let Some(v) = p3sd.as_mut() {
+                        v.forced_push_at(index, avg + 3 * sd, exit)?
+                    }
+                    if let Some(v) = m0_5sd.as_mut() {
+                        v.forced_push_at(index, avg - StoredF32::from(0.5 * *sd), exit)?
+                    }
+                    if let Some(v) = m1sd.as_mut() {
+                        v.forced_push_at(index, avg - sd, exit)?
+                    }
+                    if let Some(v) = m1_5sd.as_mut() {
+                        v.forced_push_at(index, avg - StoredF32::from(1.5 * *sd), exit)?
+                    }
+                    if let Some(v) = m2sd.as_mut() {
+                        v.forced_push_at(index, avg - 2 * sd, exit)?
+                    }
+                    if let Some(v) = m2_5sd.as_mut() {
+                        v.forced_push_at(index, avg - StoredF32::from(2.5 * *sd), exit)?
+                    }
+                    if let Some(v) = m3sd.as_mut() {
+                        v.forced_push_at(index, avg - 3 * sd, exit)?
+                    }
                 }
 
                 Ok(())
@@ -530,48 +622,33 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         drop(sma_iter);
 
-        self.mut_vecs()
-            .into_iter()
+        self.mut_stateful_date_vecs()
             .try_for_each(|v| v.safe_flush(exit))?;
 
-        [
-            &mut self.sd,
-            &mut self.p0_5sd,
-            &mut self.p1sd,
-            &mut self.p1_5sd,
-            &mut self.p2sd,
-            &mut self.p2_5sd,
-            &mut self.p3sd,
-            &mut self.m0_5sd,
-            &mut self.m1sd,
-            &mut self.m1_5sd,
-            &mut self.m2sd,
-            &mut self.m2_5sd,
-            &mut self.m3sd,
-        ]
-        .into_iter()
-        .try_for_each(|v| {
+        self.mut_stateful_computed().try_for_each(|v| {
             v.compute_rest(starting_indexes, exit, None as Option<&EagerVec<_, _>>)
         })?;
 
-        self.zscore.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
-                vec.compute_zscore(
-                    starting_indexes.dateindex,
-                    source,
-                    sma,
-                    self.sd.dateindex.as_ref().unwrap(),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
+        if let Some(zscore) = self.zscore.as_mut() {
+            zscore.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |vec, _, _, starting_indexes, exit| {
+                    vec.compute_zscore(
+                        starting_indexes.dateindex,
+                        source,
+                        sma,
+                        self.sd.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )?;
+        }
 
-        let Some(price) = source_in_usd else {
+        let Some(price) = price_opt else {
             return Ok(());
         };
 
@@ -598,107 +675,194 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 )
             };
 
-        compute_in_usd(&mut self._0sd_in_usd, sma.iter())?;
+        if self._0sd_in_usd.is_none() {
+            return Ok(());
+        }
+
+        compute_in_usd(self._0sd_in_usd.as_mut().unwrap(), sma.iter())?;
         compute_in_usd(
-            &mut self.p0_5sd_in_usd,
-            self.p0_5sd.dateindex.as_ref().unwrap().iter(),
+            self.p0_5sd_in_usd.as_mut().unwrap(),
+            self.p0_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.p1sd_in_usd,
-            self.p1sd.dateindex.as_ref().unwrap().iter(),
+            self.p1sd_in_usd.as_mut().unwrap(),
+            self.p1sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.p1_5sd_in_usd,
-            self.p1_5sd.dateindex.as_ref().unwrap().iter(),
+            self.p1_5sd_in_usd.as_mut().unwrap(),
+            self.p1_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.p2sd_in_usd,
-            self.p2sd.dateindex.as_ref().unwrap().iter(),
+            self.p2sd_in_usd.as_mut().unwrap(),
+            self.p2sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.p2_5sd_in_usd,
-            self.p2_5sd.dateindex.as_ref().unwrap().iter(),
+            self.p2_5sd_in_usd.as_mut().unwrap(),
+            self.p2_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.p3sd_in_usd,
-            self.p3sd.dateindex.as_ref().unwrap().iter(),
+            self.p3sd_in_usd.as_mut().unwrap(),
+            self.p3sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m0_5sd_in_usd,
-            self.m0_5sd.dateindex.as_ref().unwrap().iter(),
+            self.m0_5sd_in_usd.as_mut().unwrap(),
+            self.m0_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m1sd_in_usd,
-            self.m1sd.dateindex.as_ref().unwrap().iter(),
+            self.m1sd_in_usd.as_mut().unwrap(),
+            self.m1sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m1_5sd_in_usd,
-            self.m1_5sd.dateindex.as_ref().unwrap().iter(),
+            self.m1_5sd_in_usd.as_mut().unwrap(),
+            self.m1_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m2sd_in_usd,
-            self.m2sd.dateindex.as_ref().unwrap().iter(),
+            self.m2sd_in_usd.as_mut().unwrap(),
+            self.m2sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m2_5sd_in_usd,
-            self.m2_5sd.dateindex.as_ref().unwrap().iter(),
+            self.m2_5sd_in_usd.as_mut().unwrap(),
+            self.m2_5sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
         compute_in_usd(
-            &mut self.m3sd_in_usd,
-            self.m3sd.dateindex.as_ref().unwrap().iter(),
+            self.m3sd_in_usd.as_mut().unwrap(),
+            self.m3sd
+                .as_ref()
+                .unwrap()
+                .dateindex
+                .as_ref()
+                .unwrap()
+                .iter(),
         )?;
 
         Ok(())
     }
 
-    fn mut_vecs(&mut self) -> [&mut EagerVec<DateIndex, StoredF32>; 13] {
+    fn mut_stateful_computed(
+        &mut self,
+    ) -> impl Iterator<Item = &mut ComputedVecsFromDateIndex<StoredF32>> {
         [
-            self.sd.dateindex.as_mut().unwrap(),
-            self.p0_5sd.dateindex.as_mut().unwrap(),
-            self.p1sd.dateindex.as_mut().unwrap(),
-            self.p1_5sd.dateindex.as_mut().unwrap(),
-            self.p2sd.dateindex.as_mut().unwrap(),
-            self.p2_5sd.dateindex.as_mut().unwrap(),
-            self.p3sd.dateindex.as_mut().unwrap(),
-            self.m0_5sd.dateindex.as_mut().unwrap(),
-            self.m1sd.dateindex.as_mut().unwrap(),
-            self.m1_5sd.dateindex.as_mut().unwrap(),
-            self.m2sd.dateindex.as_mut().unwrap(),
-            self.m2_5sd.dateindex.as_mut().unwrap(),
-            self.m3sd.dateindex.as_mut().unwrap(),
+            Some(&mut self.sd),
+            self.p0_5sd.as_mut(),
+            self.p1sd.as_mut(),
+            self.p1_5sd.as_mut(),
+            self.p2sd.as_mut(),
+            self.p2_5sd.as_mut(),
+            self.p3sd.as_mut(),
+            self.m0_5sd.as_mut(),
+            self.m1sd.as_mut(),
+            self.m1_5sd.as_mut(),
+            self.m2sd.as_mut(),
+            self.m2_5sd.as_mut(),
+            self.m3sd.as_mut(),
         ]
+        .into_iter()
+        .flatten()
+    }
+
+    fn mut_stateful_date_vecs(
+        &mut self,
+    ) -> impl Iterator<Item = &mut EagerVec<DateIndex, StoredF32>> {
+        self.mut_stateful_computed()
+            .map(|c| c.dateindex.as_mut().unwrap())
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             self.sma.as_ref().map_or(vec![], |v| v.vecs()),
             self.sd.vecs(),
-            self.p0_5sd.vecs(),
-            self.p1sd.vecs(),
-            self.p1_5sd.vecs(),
-            self.p2sd.vecs(),
-            self.p2_5sd.vecs(),
-            self.p3sd.vecs(),
-            self.m0_5sd.vecs(),
-            self.m1sd.vecs(),
-            self.m1_5sd.vecs(),
-            self.m2sd.vecs(),
-            self.m2_5sd.vecs(),
-            self.m3sd.vecs(),
-            self._0sd_in_usd.vecs(),
-            self.p0_5sd_in_usd.vecs(),
-            self.p1sd_in_usd.vecs(),
-            self.p1_5sd_in_usd.vecs(),
-            self.p2sd_in_usd.vecs(),
-            self.p2_5sd_in_usd.vecs(),
-            self.p3sd_in_usd.vecs(),
-            self.m0_5sd_in_usd.vecs(),
-            self.m1sd_in_usd.vecs(),
-            self.m1_5sd_in_usd.vecs(),
-            self.m2sd_in_usd.vecs(),
-            self.m2_5sd_in_usd.vecs(),
-            self.m3sd_in_usd.vecs(),
-            self.zscore.vecs(),
+            self.p0_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p1sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p1_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p2sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p2_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p3sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m0_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m1sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m1_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m2sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m2_5sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m3sd.as_ref().map_or(vec![], |v| v.vecs()),
+            self._0sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p0_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p1sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p1_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p2sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p2_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.p3sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m0_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m1sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m1_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m2sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m2_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.m3sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
+            self.zscore.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
         .flatten()

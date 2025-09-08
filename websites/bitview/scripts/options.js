@@ -3150,6 +3150,27 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
               name: "Indicators",
               tree: [
                 {
+                  name: "Volatility",
+                  title: "Bitcoin Price Volatility Index",
+                  bottom: [
+                    createBaseSeries({
+                      key: "price_1w_volatility",
+                      name: "1w",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: "price_1m_volatility",
+                      name: "1m",
+                      color: colors.orange,
+                    }),
+                    createBaseSeries({
+                      key: "price_1y_volatility",
+                      name: "1y",
+                      color: colors.lime,
+                    }),
+                  ],
+                },
+                {
                   name: "Mayer multiple",
                   title: "Mayer multiple",
                   top: [

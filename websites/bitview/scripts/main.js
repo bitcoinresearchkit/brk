@@ -835,6 +835,7 @@ function createUtils() {
         id.endsWith("oscillator") ||
         id.endsWith("dominance") ||
         id.endsWith("returns") ||
+        id.endsWith("volatility") ||
         id.endsWith("cagr"))
     ) {
       setUnit("percentage");
