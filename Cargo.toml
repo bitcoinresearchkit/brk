@@ -65,3 +65,11 @@ shared-version = true
 tag-name = "v{{version}}"
 pre-release-commit-message = "release: v{{version}}"
 tag-message = "release: v{{version}}"
+
+[workspace.metadata.dist]
+cargo-dist-version = "0.30.0"
+ci = "github"
+allow-dirty = ["ci"]
+installers = []
+targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]
+rust-toolchain-version = "1.89"
