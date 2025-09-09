@@ -1,5 +1,4 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
 use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
 
@@ -65,40 +64,24 @@ impl ComputedValueVecsFromDateIndex {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<DateIndex, Sats>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<DateIndex, Sats>) -> Result<()>,
     {
-        compute(
-            self.sats.dateindex.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+        compute(self.sats.dateindex.as_mut().unwrap())?;
 
         let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
-        self.compute_rest(indexer, indexes, price, starting_indexes, exit, dateindex)?;
+        self.compute_rest(price, starting_indexes, exit, dateindex)?;
 
         Ok(())
     }
 
     pub fn compute_rest(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -108,33 +91,21 @@ impl ComputedValueVecsFromDateIndex {
             self.sats
                 .compute_rest(starting_indexes, exit, Some(dateindex))?;
 
-            self.bitcoin.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_from_sats(starting_indexes.dateindex, dateindex, exit)
-                },
-            )?;
+            self.bitcoin.compute_all(starting_indexes, exit, |v| {
+                v.compute_from_sats(starting_indexes.dateindex, dateindex, exit)
+            })?;
         } else {
             let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
 
             self.sats.compute_rest(starting_indexes, exit, dateindex)?;
 
-            self.bitcoin.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_from_sats(
-                        starting_indexes.dateindex,
-                        self.sats.dateindex.as_ref().unwrap(),
-                        exit,
-                    )
-                },
-            )?;
+            self.bitcoin.compute_all(starting_indexes, exit, |v| {
+                v.compute_from_sats(
+                    starting_indexes.dateindex,
+                    self.sats.dateindex.as_ref().unwrap(),
+                    exit,
+                )
+            })?;
         }
 
         let dateindex_to_bitcoin = self.bitcoin.dateindex.as_ref().unwrap();
@@ -147,20 +118,14 @@ impl ComputedValueVecsFromDateIndex {
             .unwrap();
 
         if let Some(dollars) = self.dollars.as_mut() {
-            dollars.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_from_bitcoin(
-                        starting_indexes.dateindex,
-                        dateindex_to_bitcoin,
-                        dateindex_to_price_close,
-                        exit,
-                    )
-                },
-            )?;
+            dollars.compute_all(starting_indexes, exit, |v| {
+                v.compute_from_bitcoin(
+                    starting_indexes.dateindex,
+                    dateindex_to_bitcoin,
+                    dateindex_to_price_close,
+                    exit,
+                )
+            })?;
         }
 
         Ok(())

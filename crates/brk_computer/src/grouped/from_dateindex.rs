@@ -1,7 +1,6 @@
 use allocative::Allocative;
 use brk_error::Result;
 
-use brk_indexer::Indexer;
 use brk_structs::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
@@ -112,28 +111,14 @@ where
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<DateIndex, T>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<DateIndex, T>) -> Result<()>,
     {
-        compute(
-            self.dateindex.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+        compute(self.dateindex.as_mut().unwrap())?;
 
         let dateindex: Option<&EagerVec<DateIndex, T>> = None;
         self.compute_rest(starting_indexes, exit, dateindex)

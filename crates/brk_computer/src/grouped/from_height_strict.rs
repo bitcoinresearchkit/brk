@@ -1,6 +1,5 @@
 use brk_error::Result;
 
-use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, Height, Version};
 use vecdb::{AnyCollectableVec, Database, EagerVec, Exit};
 
@@ -59,16 +58,15 @@ where
 
     pub fn compute<F>(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, T>) -> Result<()>,
     {
-        compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
+        compute(&mut self.height)?;
 
         self.height_extra
             .extend(starting_indexes.height, &self.height, exit)?;

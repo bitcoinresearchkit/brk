@@ -106,7 +106,6 @@ impl Vecs {
 
         self.vecs.par_iter_mut().try_for_each(|(_, vecs)| {
             vecs.compute(
-                indexer,
                 indexes,
                 starting_indexes,
                 &self.height_to_pool,

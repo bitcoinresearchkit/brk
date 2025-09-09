@@ -1,6 +1,5 @@
 use allocative::Allocative;
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Height, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{AnyCollectableVec, AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
 
@@ -163,7 +162,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         height_to_pool: &impl AnyIterableVec<Height, PoolId>,
@@ -171,12 +169,8 @@ impl Vecs {
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_blocks_mined.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_blocks_mined
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     height_to_pool,
@@ -193,15 +187,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1w_blocks_mined.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1w_blocks_mined
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
@@ -209,15 +198,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1m_blocks_mined.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1m_blocks_mined
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
@@ -225,15 +209,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1y_blocks_mined.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1y_blocks_mined
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
@@ -241,18 +220,12 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let height_to_blocks_mined = self.indexes_to_blocks_mined.height.as_ref().unwrap();
 
-        self.indexes_to_subsidy.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_subsidy
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     height_to_blocks_mined,
@@ -270,16 +243,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_fee.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_fee
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     height_to_blocks_mined,
@@ -297,16 +264,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_coinbase.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_coinbase
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     height_to_blocks_mined,
@@ -324,15 +285,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_dominance.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_dominance
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_blocks_mined.dateindex.unwrap_cumulative(),
@@ -340,15 +296,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1d_dominance.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_1d_dominance
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
@@ -356,15 +307,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1w_dominance.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_1w_dominance
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_1w_blocks_mined.dateindex.as_ref().unwrap(),
@@ -372,15 +318,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1m_dominance.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_1m_dominance
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_1m_blocks_mined.dateindex.as_ref().unwrap(),
@@ -388,15 +329,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1y_dominance.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_1y_dominance
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_1y_blocks_mined.dateindex.as_ref().unwrap(),
@@ -404,15 +340,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_days_since_block.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_days_since_block
+            .compute_all(starting_indexes, exit, |v| {
                 let mut prev = None;
                 v.compute_transform2(
                     starting_indexes.dateindex,
@@ -438,8 +369,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

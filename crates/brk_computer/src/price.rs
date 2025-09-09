@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
@@ -338,20 +337,18 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         fetched: &fetched::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, fetched, exit)?;
+        self.compute_(indexes, starting_indexes, fetched, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
 
     fn compute_(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         fetched: &fetched::Vecs,
@@ -445,12 +442,8 @@ impl Vecs {
             })?;
         self.dateindex_to_price_ohlc.safe_flush(exit)?;
 
-        self.timeindexes_to_price_close.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_close
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     &self.dateindex_to_price_ohlc,
@@ -458,15 +451,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_high.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_high
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     &self.dateindex_to_price_ohlc,
@@ -474,15 +462,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_low.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_low
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     &self.dateindex_to_price_ohlc,
@@ -490,15 +473,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_open.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_open
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     &self.dateindex_to_price_ohlc,
@@ -506,15 +484,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_close.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_close
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -522,15 +495,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_high.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_high
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -538,15 +506,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_low.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_low
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -554,15 +517,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_open.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_open
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -570,8 +528,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let mut weekindex_first_iter = self
             .timeindexes_to_price_open
@@ -843,12 +800,8 @@ impl Vecs {
             })?;
         self.decadeindex_to_price_ohlc.safe_flush(exit)?;
 
-        self.chainindexes_to_price_open_in_sats.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_open_in_sats
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_open.height,
@@ -856,15 +809,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_high_in_sats.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_high_in_sats
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_low.height,
@@ -872,15 +820,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_low_in_sats.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_low_in_sats
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_high.height,
@@ -888,15 +831,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.chainindexes_to_price_close_in_sats.compute(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.chainindexes_to_price_close_in_sats
+            .compute(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_close.height,
@@ -904,15 +842,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_open_in_sats.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_open_in_sats
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_price_open.dateindex.as_ref().unwrap(),
@@ -920,15 +853,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_high_in_sats.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_high_in_sats
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
@@ -936,15 +864,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_low_in_sats.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_low_in_sats
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
@@ -952,15 +875,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.timeindexes_to_price_close_in_sats.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.timeindexes_to_price_close_in_sats
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
@@ -968,8 +886,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let mut height_first_iter = self.chainindexes_to_price_open_in_sats.height.iter();
         let mut height_max_iter = self.chainindexes_to_price_high_in_sats.height.iter();

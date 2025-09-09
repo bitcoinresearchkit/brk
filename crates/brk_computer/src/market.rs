@@ -1,7 +1,6 @@
 use std::{path::Path, thread};
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
 use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, PAGE_SIZE, StoredIndex, VecIterator};
 
@@ -1528,21 +1527,17 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, price, starting_indexes, exit)?;
+        self.compute_(price, starting_indexes, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
 
     fn compute_(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -1559,27 +1554,18 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_price_ath.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_ath
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_all_time_high(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_drawdown.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_drawdown
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_drawdown(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
@@ -1587,15 +1573,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_days_since_price_ath.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_days_since_price_ath
+            .compute_all(starting_indexes, exit, |v| {
                 let mut high_iter = price
                     .timeindexes_to_price_high
                     .dateindex
@@ -1626,15 +1607,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_max_days_between_price_aths.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_max_days_between_price_aths
+            .compute_all(starting_indexes, exit, |v| {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
@@ -1658,15 +1634,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_max_years_between_price_aths.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_max_years_between_price_aths
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_max_days_between_price_aths
@@ -1677,8 +1648,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         [
             (1, &mut self.price_1d_ago, &mut self._1d_price_returns, None),
@@ -1752,54 +1722,36 @@ impl Vecs {
         ]
         .into_iter()
         .try_for_each(|(days, ago, returns, cagr)| -> Result<()> {
-            ago.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_previous_value(
-                        starting_indexes.dateindex,
-                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                        days,
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            ago.compute_all(starting_indexes, exit, |v| {
+                v.compute_previous_value(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    days,
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
-            returns.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_percentage_change(
-                        starting_indexes.dateindex,
-                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                        days,
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            returns.compute_all(starting_indexes, exit, |v| {
+                v.compute_percentage_change(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    days,
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
             if let Some(cagr) = cagr {
-                cagr.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_cagr(
-                            starting_indexes.dateindex,
-                            returns.dateindex.as_ref().unwrap(),
-                            days,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                cagr.compute_all(starting_indexes, exit, |v| {
+                    v.compute_cagr(
+                        starting_indexes.dateindex,
+                        returns.dateindex.as_ref().unwrap(),
+                        days,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             }
 
             Ok(())
@@ -1894,70 +1846,46 @@ impl Vecs {
         .into_iter()
         .try_for_each(
             |(days, dca_stack, dca_avg_price, dca_returns, dca_cagr)| -> Result<()> {
-                dca_stack.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_dca_stack_via_len(
-                            starting_indexes.dateindex,
-                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                            days,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                dca_stack.compute_all(starting_indexes, exit, |v| {
+                    v.compute_dca_stack_via_len(
+                        starting_indexes.dateindex,
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                        days,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
-                dca_avg_price.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_dca_avg_price_via_len(
-                            starting_indexes.dateindex,
-                            dca_stack.dateindex.as_ref().unwrap(),
-                            days,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                dca_avg_price.compute_all(starting_indexes, exit, |v| {
+                    v.compute_dca_avg_price_via_len(
+                        starting_indexes.dateindex,
+                        dca_stack.dateindex.as_ref().unwrap(),
+                        days,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
-                dca_returns.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage_difference(
-                            starting_indexes.dateindex,
-                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                            dca_avg_price.dateindex.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                dca_returns.compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage_difference(
+                        starting_indexes.dateindex,
+                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                        dca_avg_price.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
                 if let Some(dca_cagr) = dca_cagr {
-                    dca_cagr.compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_cagr(
-                                starting_indexes.dateindex,
-                                dca_returns.dateindex.as_ref().unwrap(),
-                                days,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    dca_cagr.compute_all(starting_indexes, exit, |v| {
+                        v.compute_cagr(
+                            starting_indexes.dateindex,
+                            dca_returns.dateindex.as_ref().unwrap(),
+                            days,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 }
 
                 Ok(())
@@ -2036,53 +1964,35 @@ impl Vecs {
         .try_for_each(|(year, avg_price, returns, stack)| -> Result<()> {
             let dateindex = DateIndex::try_from(Date::new(year, 1, 1)).unwrap();
 
-            stack.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_dca_stack_via_from(
-                        starting_indexes.dateindex,
-                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                        dateindex,
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            stack.compute_all(starting_indexes, exit, |v| {
+                v.compute_dca_stack_via_from(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    dateindex,
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
-            avg_price.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_dca_avg_price_via_from(
-                        starting_indexes.dateindex,
-                        stack.dateindex.as_ref().unwrap(),
-                        dateindex,
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            avg_price.compute_all(starting_indexes, exit, |v| {
+                v.compute_dca_avg_price_via_from(
+                    starting_indexes.dateindex,
+                    stack.dateindex.as_ref().unwrap(),
+                    dateindex,
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
-            returns.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_percentage_difference(
-                        starting_indexes.dateindex,
-                        price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                        avg_price.dateindex.as_ref().unwrap(),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            returns.compute_all(starting_indexes, exit, |v| {
+                v.compute_percentage_difference(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    avg_price.dateindex.as_ref().unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
             Ok(())
         })?;
@@ -2163,50 +2073,32 @@ impl Vecs {
             .into_iter()
             .for_each(|(sma, ema, days)| {
                 s.spawn(move || -> Result<()> {
-                    sma.compute_all(
-                        indexer,
-                        indexes,
-                        price,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_sma(
-                                starting_indexes.dateindex,
-                                price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                                days,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    sma.compute_all(price, starting_indexes, exit, |v| {
+                        v.compute_sma(
+                            starting_indexes.dateindex,
+                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                            days,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
 
-                    ema.compute_all(
-                        indexer,
-                        indexes,
-                        price,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_ema(
-                                starting_indexes.dateindex,
-                                price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
-                                days,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )
+                    ema.compute_all(price, starting_indexes, exit, |v| {
+                        v.compute_ema(
+                            starting_indexes.dateindex,
+                            price.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                            days,
+                            exit,
+                        )?;
+                        Ok(())
+                    })
                 });
             });
             Ok(())
         })?;
 
-        self.indexes_to_price_200d_sma_x0_8.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_200d_sma_x0_8
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_price_200d_sma
@@ -2220,15 +2112,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_200d_sma_x2_4.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_200d_sma_x2_4
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_price_200d_sma
@@ -2242,40 +2129,29 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_1d_returns_1w_sd.compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
             None as Option<&EagerVec<DateIndex, Dollars>>,
         )?;
         self.indexes_to_1d_returns_1m_sd.compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
             None as Option<&EagerVec<DateIndex, Dollars>>,
         )?;
         self.indexes_to_1d_returns_1y_sd.compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
             None as Option<&EagerVec<DateIndex, Dollars>>,
         )?;
 
-        self.indexes_to_price_1w_volatility.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1w_volatility
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_1d_returns_1w_sd
@@ -2287,14 +2163,9 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
-        self.indexes_to_price_1m_volatility.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+            })?;
+        self.indexes_to_price_1m_volatility
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_1d_returns_1m_sd
@@ -2306,14 +2177,9 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
-        self.indexes_to_price_1y_volatility.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+            })?;
+        self.indexes_to_price_1y_volatility
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_1d_returns_1y_sd
@@ -2325,8 +2191,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.dateindex_to_price_true_range.compute_transform3(
             starting_indexes.dateindex,
@@ -2349,12 +2214,8 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_price_1w_max.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1w_max
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_max(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
@@ -2362,15 +2223,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_1w_min.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1w_min
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_min(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
@@ -2378,15 +2234,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_2w_max.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_2w_max
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_max(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
@@ -2394,15 +2245,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_2w_min.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_2w_min
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_min(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
@@ -2410,15 +2256,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_1m_max.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1m_max
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_max(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
@@ -2426,15 +2267,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_1m_min.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1m_min
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_min(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
@@ -2442,15 +2278,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_1y_max.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1y_max
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_max(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
@@ -2458,15 +2289,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_1y_min.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_1y_min
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_min(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
@@ -2474,15 +2300,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_price_2w_choppiness_index.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_price_2w_choppiness_index
+            .compute_all(starting_indexes, exit, |v| {
                 let n = 14;
                 let log10n = (n as f32).log10();
                 v.compute_transform3(
@@ -2501,8 +2322,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

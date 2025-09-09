@@ -1309,12 +1309,8 @@ impl Vecs {
 
         info!("Computing rest part 1...");
 
-        self.indexes_to_addr_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_addr_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_sum_of_others(
                     starting_indexes.height,
                     &self
@@ -1326,15 +1322,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_empty_addr_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_empty_addr_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_sum_of_others(
                     starting_indexes.height,
                     &self
@@ -1346,11 +1337,9 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_unspendable_supply.compute_rest(
-            indexer,
             indexes,
             price,
             starting_indexes,
@@ -1358,7 +1347,6 @@ impl Vecs {
             Some(&self.height_to_unspendable_supply),
         )?;
         self.indexes_to_opreturn_supply.compute_rest(
-            indexer,
             indexes,
             price,
             starting_indexes,
@@ -1381,36 +1369,30 @@ impl Vecs {
         )?;
 
         self.utxo_cohorts
-            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)?;
+            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
 
         self.address_cohorts
-            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)?;
+            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
 
         if let Some(indexes_to_market_cap) = self.indexes_to_market_cap.as_mut() {
-            indexes_to_market_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_transform(
-                        starting_indexes.dateindex,
-                        self.utxo_cohorts
-                            .all
-                            .1
-                            .indexes_to_supply
-                            .dollars
-                            .as_ref()
-                            .unwrap()
-                            .dateindex
-                            .as_ref()
-                            .unwrap(),
-                        |(i, v, ..)| (i, v),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            indexes_to_market_cap.compute_all(starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.utxo_cohorts
+                        .all
+                        .1
+                        .indexes_to_supply
+                        .dollars
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    |(i, v, ..)| (i, v),
+                    exit,
+                )?;
+                Ok(())
+            })?;
         }
 
         info!("Computing rest part 2...");
@@ -1450,7 +1432,6 @@ impl Vecs {
         let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
 
         self.utxo_cohorts.compute_rest_part2(
-            indexer,
             indexes,
             price,
             starting_indexes,
@@ -1464,7 +1445,6 @@ impl Vecs {
         )?;
 
         self.address_cohorts.compute_rest_part2(
-            indexer,
             indexes,
             price,
             starting_indexes,

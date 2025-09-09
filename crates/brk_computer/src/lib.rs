@@ -116,7 +116,7 @@ impl Computer {
 
         info!("Computing constants...");
         self.constants
-            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
+            .compute(&self.indexes, &starting_indexes, exit)?;
 
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
@@ -124,7 +124,6 @@ impl Computer {
 
             info!("Computing prices...");
             self.price.as_mut().unwrap().compute(
-                indexer,
                 &self.indexes,
                 &starting_indexes,
                 fetched,
@@ -147,8 +146,7 @@ impl Computer {
 
             if let Some(price) = self.price.as_ref() {
                 info!("Computing market...");
-                self.market
-                    .compute(indexer, &self.indexes, price, &starting_indexes, exit)?;
+                self.market.compute(price, &starting_indexes, exit)?;
             }
 
             chain.join().unwrap()?;
@@ -178,7 +176,6 @@ impl Computer {
 
         info!("Computing cointime...");
         self.cointime.compute(
-            indexer,
             &self.indexes,
             &starting_indexes,
             self.price.as_ref(),
