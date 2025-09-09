@@ -783,11 +783,14 @@ function createUtils() {
         id === "price_open" ||
         id === "price_ath" ||
         id === "market_cap" ||
+        id.startsWith("price_true_range") ||
         id.includes("_usd") ||
         id.includes("cointime_value") ||
         id.endsWith("_ago") ||
         id.endsWith("price_paid") ||
         id.endsWith("_price") ||
+        (id.startsWith("price") &&
+          (id.endsWith("min") || id.endsWith("max"))) ||
         (id.endsWith("_cap") && !id.includes("rel_to")) ||
         id.endsWith("value_created") ||
         id.endsWith("value_destroyed") ||

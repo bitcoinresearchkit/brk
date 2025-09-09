@@ -35,9 +35,20 @@ pub struct Vecs {
     pub indexes_to_price_1w_volatility: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_price_1m_volatility: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_price_1y_volatility: ComputedVecsFromDateIndex<StoredF32>,
-    // pub indexes_to_price_true_range: ComputedVecsFromDateIndex<StoredF32>,
-    // pub indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex<StoredF32>,
-    //
+
+    pub indexes_to_price_1w_min: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_1w_max: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_2w_min: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_2w_max: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_1m_min: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_1m_max: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_1y_min: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_1y_max: ComputedVecsFromDateIndex<Dollars>,
+
+    pub dateindex_to_price_true_range: EagerVec<DateIndex, StoredF32>,
+    pub dateindex_to_price_true_range_2w_sum: EagerVec<DateIndex, StoredF32>,
+    pub indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex<StoredF32>,
+
     pub indexes_to_price_1w_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_price_8d_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_price_13d_sma: ComputedRatioVecsFromDateIndex,
@@ -1420,22 +1431,88 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            // indexes_to_price_true_range: ComputedVecsFromDateIndex::forced_import(
-            //     &db,
-            //     "price_true_range",
-            //     Source::Compute,
-            //     version + Version::ZERO,
-            //     indexes,
-            //     VecBuilderOptions::default().add_last(),
-            // )?,
-            // indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex::forced_import(
-            //     &db,
-            //     "price_2w_choppiness_index",
-            //     Source::Compute,
-            //     version + Version::ZERO,
-            //     indexes,
-            //     VecBuilderOptions::default().add_last(),
-            // )?,
+            dateindex_to_price_true_range: EagerVec::forced_import_compressed(
+                &db,
+                "price_true_range",
+                version + Version::ZERO,
+            )?,
+            dateindex_to_price_true_range_2w_sum: EagerVec::forced_import_compressed(
+                &db,
+                "price_true_range_2w_sum",
+                version + Version::ZERO,
+            )?,
+            indexes_to_price_1w_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1w_min",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_1w_max: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1w_max",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_2w_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_2w_min",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_2w_max: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_2w_max",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_1m_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1m_min",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_1m_max: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1m_max",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_1y_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1y_min",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_1y_max: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_1y_max",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "price_2w_choppiness_index",
+                Source::Compute,
+                version + Version::ONE,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
             db,
         };
 
@@ -1470,7 +1547,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_price_ath.compute_max(
+        self.height_to_price_ath.compute_all_time_high(
             starting_indexes.height,
             &price.chainindexes_to_price_high.height,
             exit,
@@ -1488,7 +1565,7 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                v.compute_max(
+                v.compute_all_time_high(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
                     exit,
@@ -2251,6 +2328,182 @@ impl Vecs {
             },
         )?;
 
+        self.dateindex_to_price_true_range.compute_transform3(
+            starting_indexes.dateindex,
+            price.timeindexes_to_price_open.dateindex.as_ref().unwrap(),
+            price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+            price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+            |(i, open, high, low, ..)| {
+                let high_min_low = **high - **low;
+                let high_min_open = (**high - **open).abs();
+                let low_min_open = (**low - **open).abs();
+                (i, high_min_low.max(high_min_open).max(low_min_open).into())
+            },
+            exit,
+        )?;
+
+        self.dateindex_to_price_true_range_2w_sum.compute_sum(
+            starting_indexes.dateindex,
+            &self.dateindex_to_price_true_range,
+            14,
+            exit,
+        )?;
+
+        self.indexes_to_price_1w_max.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_max(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+                    7,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_1w_min.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_min(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+                    7,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_2w_max.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_max(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+                    14,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_2w_min.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_min(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+                    14,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_1m_max.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_max(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_1m_min.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_min(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_1y_max.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_max(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+                    365,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_1y_min.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_min(
+                    starting_indexes.dateindex,
+                    price.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+                    365,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_price_2w_choppiness_index.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                let n = 14;
+                let log10n = (n as f32).log10();
+                v.compute_transform3(
+                    starting_indexes.dateindex,
+                    &self.dateindex_to_price_true_range_2w_sum,
+                    self.indexes_to_price_2w_max.dateindex.as_ref().unwrap(),
+                    self.indexes_to_price_2w_min.dateindex.as_ref().unwrap(),
+                    |(i, tr_sum, max, min, ..)| {
+                        (
+                            i,
+                            StoredF32::from(
+                                100.0 * (*tr_sum / (*max - *min) as f32).log10() / log10n,
+                            ),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
         Ok(())
     }
 
@@ -2406,7 +2659,21 @@ impl Vecs {
             self.indexes_to_price_1w_volatility.vecs(),
             self.indexes_to_price_1m_volatility.vecs(),
             self.indexes_to_price_1y_volatility.vecs(),
-            vec![&self.height_to_price_ath, &self.height_to_price_drawdown],
+            self.indexes_to_price_2w_choppiness_index.vecs(),
+            self.indexes_to_price_1w_min.vecs(),
+            self.indexes_to_price_1w_max.vecs(),
+            self.indexes_to_price_2w_min.vecs(),
+            self.indexes_to_price_2w_max.vecs(),
+            self.indexes_to_price_1m_min.vecs(),
+            self.indexes_to_price_1m_max.vecs(),
+            self.indexes_to_price_1y_min.vecs(),
+            self.indexes_to_price_1y_max.vecs(),
+            vec![
+                &self.height_to_price_ath,
+                &self.height_to_price_drawdown,
+                &self.dateindex_to_price_true_range,
+                &self.dateindex_to_price_true_range_2w_sum,
+            ],
         ]
         .into_iter()
         .flatten()

@@ -320,24 +320,24 @@ impl ComputedVecsFromTxindex<Bitcoin> {
                         exit,
                     )?;
                 }
-                if let Some(_90p) = self.height.p90.as_mut() {
-                    _90p.forced_push_at(
+                if let Some(pct90) = self.height.pct90.as_mut() {
+                    pct90.forced_push_at(
                         height,
                         Bitcoin::from(
                             sats.height
-                                .unwrap_p90()
+                                .unwrap_pct90()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         ),
                         exit,
                     )?;
                 }
-                if let Some(_75p) = self.height.p75.as_mut() {
-                    _75p.forced_push_at(
+                if let Some(pct75) = self.height.pct75.as_mut() {
+                    pct75.forced_push_at(
                         height,
                         Bitcoin::from(
                             sats.height
-                                .unwrap_p75()
+                                .unwrap_pct75()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         ),
@@ -356,24 +356,24 @@ impl ComputedVecsFromTxindex<Bitcoin> {
                         exit,
                     )?;
                 }
-                if let Some(_25p) = self.height.p25.as_mut() {
-                    _25p.forced_push_at(
+                if let Some(pct25) = self.height.pct25.as_mut() {
+                    pct25.forced_push_at(
                         height,
                         Bitcoin::from(
                             sats.height
-                                .unwrap_p25()
+                                .unwrap_pct25()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         ),
                         exit,
                     )?;
                 }
-                if let Some(_10p) = self.height.p10.as_mut() {
-                    _10p.forced_push_at(
+                if let Some(pct10) = self.height.pct10.as_mut() {
+                    pct10.forced_push_at(
                         height,
                         Bitcoin::from(
                             sats.height
-                                .unwrap_p10()
+                                .unwrap_pct10()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         ),
@@ -503,25 +503,25 @@ impl ComputedVecsFromTxindex<Dollars> {
                         exit,
                     )?;
                 }
-                if let Some(_90p) = self.height.p90.as_mut() {
-                    _90p.forced_push_at(
+                if let Some(pct90) = self.height.pct90.as_mut() {
+                    pct90.forced_push_at(
                         height,
                         price
                             * bitcoin
                                 .height
-                                .unwrap_p90()
+                                .unwrap_pct90()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         exit,
                     )?;
                 }
-                if let Some(_75p) = self.height.p75.as_mut() {
-                    _75p.forced_push_at(
+                if let Some(pct75) = self.height.pct75.as_mut() {
+                    pct75.forced_push_at(
                         height,
                         price
                             * bitcoin
                                 .height
-                                .unwrap_p75()
+                                .unwrap_pct75()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         exit,
@@ -539,25 +539,25 @@ impl ComputedVecsFromTxindex<Dollars> {
                         exit,
                     )?;
                 }
-                if let Some(_25p) = self.height.p25.as_mut() {
-                    _25p.forced_push_at(
+                if let Some(pct25) = self.height.pct25.as_mut() {
+                    pct25.forced_push_at(
                         height,
                         price
                             * bitcoin
                                 .height
-                                .unwrap_p25()
+                                .unwrap_pct25()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         exit,
                     )?;
                 }
-                if let Some(_10p) = self.height.p10.as_mut() {
-                    _10p.forced_push_at(
+                if let Some(pct10) = self.height.pct10.as_mut() {
+                    pct10.forced_push_at(
                         height,
                         price
                             * bitcoin
                                 .height
-                                .unwrap_p10()
+                                .unwrap_pct10()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         exit,
