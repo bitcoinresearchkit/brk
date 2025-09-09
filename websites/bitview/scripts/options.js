@@ -163,18 +163,18 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
    * @typedef {"_median"} MedianSuffix
    * @typedef {EndsWith<MedianSuffix>} VecIdMedian
    * @typedef {WithoutSuffix<VecIdMedian, MedianSuffix>} VecIdMedianBase
-   * @typedef {"_p90"} _p90Suffix
-   * @typedef {EndsWith<_p90Suffix>} VecIdp90
-   * @typedef {WithoutSuffix<VecIdp90, _p90Suffix>} VecIdp90Base
-   * @typedef {"_p75"} _p75Suffix
-   * @typedef {EndsWith<_p75Suffix>} VecIdp75
-   * @typedef {WithoutSuffix<VecIdp75, _p75Suffix>} VecIdp75Base
-   * @typedef {"_p25"} _p25Suffix
-   * @typedef {EndsWith<_p25Suffix>} VecIdp25
-   * @typedef {WithoutSuffix<VecIdp25, _p25Suffix>} VecIdp25Base
-   * @typedef {"_p10"} _p10Suffix
-   * @typedef {EndsWith<_p10Suffix>} VecIdp10
-   * @typedef {WithoutSuffix<VecIdp10, _p10Suffix>} VecIdp10Base
+   * @typedef {"_pct90"} _pct90Suffix
+   * @typedef {EndsWith<_pct90Suffix>} VecIdpct90
+   * @typedef {WithoutSuffix<VecIdpct90, _pct90Suffix>} VecIdpct90Base
+   * @typedef {"_pct75"} _pct75Suffix
+   * @typedef {EndsWith<_pct75Suffix>} VecIdpct75
+   * @typedef {WithoutSuffix<VecIdpct75, _pct75Suffix>} VecIdpct75Base
+   * @typedef {"_pct25"} _pct25Suffix
+   * @typedef {EndsWith<_pct25Suffix>} VecIdpct25
+   * @typedef {WithoutSuffix<VecIdpct25, _pct25Suffix>} VecIdpct25Base
+   * @typedef {"_pct10"} _pct10Suffix
+   * @typedef {EndsWith<_pct10Suffix>} VecIdpct10
+   * @typedef {WithoutSuffix<VecIdpct10, _pct10Suffix>} VecIdpct10Base
    * @typedef {"_max"} MaxSuffix
    * @typedef {EndsWith<MaxSuffix>} VecIdMax
    * @typedef {WithoutSuffix<VecIdMax, MaxSuffix>} VecIdMaxBase
@@ -1094,7 +1094,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
     lineStyle,
   }) {
     return /** @satisfies {FetchedLineSeriesBlueprint} */ ({
-      key: `constant_${number >= 0 ? number : `minus_${Math.abs(number)}`}`,
+      key: `constant_${number >= 0 ? number : `minus_${Math.abs(number)}`}`.replace(
+        ".",
+        "_",
+      ),
       title: name ?? `${number}`,
       unit,
       defaultActive,
@@ -1229,7 +1232,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} args.concat
+   * @param {VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} args.concat
    * @param {string} [args.title]
    */
   function createMinMaxPercentilesSeries({ concat, title = "" }) {
@@ -1253,26 +1256,26 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         defaultActive: false,
       },
       {
-        key: `${concat}_p75`,
-        title: `p75 ${title}`,
+        key: `${concat}_pct75`,
+        title: `pct75 ${title}`,
         color: colors.red,
         defaultActive: false,
       },
       {
-        key: `${concat}_p25`,
-        title: `p25 ${title}`,
+        key: `${concat}_pct25`,
+        title: `pct25 ${title}`,
         color: colors.yellow,
         defaultActive: false,
       },
       {
-        key: `${concat}_p90`,
-        title: `p90 ${title}`,
+        key: `${concat}_pct90`,
+        title: `pct90 ${title}`,
         color: colors.rose,
         defaultActive: false,
       },
       {
-        key: `${concat}_p10`,
-        title: `p10 ${title}`,
+        key: `${concat}_pct10`,
+        title: `pct10 ${title}`,
         color: colors.lime,
         defaultActive: false,
       },
@@ -1280,7 +1283,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} key
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} key
    */
   function createSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1290,7 +1293,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} key
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} key
    */
   function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1301,7 +1304,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdp90Base & VecIdp75Base & VecIdMedianBase & VecIdp25Base & VecIdp10Base} args.key
+   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} args.key
    * @param {string} args.name
    */
   function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
@@ -3167,6 +3170,72 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       key: "price_1y_volatility",
                       name: "1y",
                       color: colors.lime,
+                    }),
+                  ],
+                },
+                {
+                  name: "MinMax",
+                  tree: [
+                    {
+                      key: "1w",
+                      title: "1 Week",
+                    },
+                    {
+                      key: "2w",
+                      title: "2 Week",
+                    },
+                    {
+                      key: "1m",
+                      title: "1 Month",
+                    },
+                    {
+                      key: "1y",
+                      title: "1 Year",
+                    },
+                  ].map(({ key, title }) => ({
+                    name: key,
+                    title: `Bitcoin Price ${title} MinMax Bands`,
+                    top: [
+                      createBaseSeries({
+                        key: `price_${key}_min`,
+                        name: "min",
+                        color: colors.red,
+                      }),
+                      createBaseSeries({
+                        key: `price_${key}_max`,
+                        name: "max",
+                        color: colors.green,
+                      }),
+                    ],
+                  })),
+                },
+                {
+                  name: "True range",
+                  title: "Bitcoin Price True Range",
+                  bottom: [
+                    createBaseSeries({
+                      key: "price_true_range",
+                      name: "value",
+                      color: colors.yellow,
+                    }),
+                  ],
+                },
+                {
+                  name: "Choppiness",
+                  title: "Bitcoin Price Choppiness Index",
+                  bottom: [
+                    createBaseSeries({
+                      key: "price_2w_choppiness_index",
+                      name: "2w",
+                      color: colors.red,
+                    }),
+                    createPriceLine({
+                      unit: "Index",
+                      number: 61.8,
+                    }),
+                    createPriceLine({
+                      unit: "Index",
+                      number: 38.2,
                     }),
                   ],
                 },

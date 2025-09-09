@@ -367,7 +367,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    vecId: "ohlc_in_sats",
+                    vecId: "price_ohlc_in_sats",
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
@@ -378,7 +378,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    vecId: "close_in_sats",
+                    vecId: "price_close_in_sats",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,

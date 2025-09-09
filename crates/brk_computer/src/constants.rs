@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_structs::{StoredI16, StoredU16, Version};
+use brk_structs::{StoredF32, StoredI16, StoredU16, Version};
 use vecdb::{AnyCollectableVec, AnyVec, Database, Exit};
 
 use crate::grouped::Source;
@@ -24,7 +24,9 @@ pub struct Vecs {
     pub constant_2: ComputedVecsFromHeight<StoredU16>,
     pub constant_3: ComputedVecsFromHeight<StoredU16>,
     pub constant_4: ComputedVecsFromHeight<StoredU16>,
+    pub constant_38_2: ComputedVecsFromHeight<StoredF32>,
     pub constant_50: ComputedVecsFromHeight<StoredU16>,
+    pub constant_61_8: ComputedVecsFromHeight<StoredF32>,
     pub constant_100: ComputedVecsFromHeight<StoredU16>,
     pub constant_600: ComputedVecsFromHeight<StoredU16>,
     pub constant_minus_1: ComputedVecsFromHeight<StoredI16>,
@@ -78,9 +80,25 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+            constant_38_2: ComputedVecsFromHeight::forced_import(
+                &db,
+                "constant_38_2",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
             constant_50: ComputedVecsFromHeight::forced_import(
                 &db,
                 "constant_50",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            constant_61_8: ComputedVecsFromHeight::forced_import(
+                &db,
+                "constant_61_8",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -223,6 +241,30 @@ impl Vecs {
             )
         })?;
 
+        [
+            (&mut self.constant_38_2, 38.2),
+            (&mut self.constant_61_8, 61.8),
+        ]
+        .into_iter()
+        .try_for_each(|(vec, value)| {
+            vec.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |vec, _, indexes, starting_indexes, exit| {
+                    vec.compute_to(
+                        starting_indexes.height,
+                        indexes.height_to_date.len(),
+                        indexes.height_to_date.version(),
+                        |i| (i, StoredF32::from(value)),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )
+        })?;
+
         Ok(())
     }
 
@@ -233,7 +275,9 @@ impl Vecs {
             self.constant_2.vecs(),
             self.constant_3.vecs(),
             self.constant_4.vecs(),
+            self.constant_38_2.vecs(),
             self.constant_50.vecs(),
+            self.constant_61_8.vecs(),
             self.constant_100.vecs(),
             self.constant_600.vecs(),
             self.constant_minus_1.vecs(),

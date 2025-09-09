@@ -520,7 +520,9 @@ function createIndexToVecIds(vecIdToIndexes) {
  */
 function serializeValue({ value, unit }) {
   const t = typeof value;
-  if (typeof value === "string") {
+  if (value === null) {
+    return "null";
+  } else if (typeof value === "string") {
     return value;
   } else if (t !== "number") {
     return JSON.stringify(value).replaceAll('"', "").slice(1, -1);
