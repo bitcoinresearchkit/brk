@@ -1,7 +1,6 @@
 use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
@@ -171,7 +170,6 @@ impl DynCohortVecs for Vecs {
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part1(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -185,7 +183,7 @@ impl DynCohortVecs for Vecs {
         )?;
 
         self.inner
-            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)
+            .compute_rest_part1(indexes, price, starting_indexes, exit)
     }
 
     fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
@@ -224,7 +222,6 @@ impl CohortVecs for Vecs {
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part2(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -237,7 +234,6 @@ impl CohortVecs for Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.inner.compute_rest_part2(
-            indexer,
             indexes,
             price,
             starting_indexes,

@@ -1,5 +1,4 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec,
@@ -284,45 +283,25 @@ impl ComputedRatioVecsFromDateIndex {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         compute: F,
     ) -> Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<DateIndex, Dollars>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<DateIndex, Dollars>) -> Result<()>,
     {
-        self.price.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            compute,
-        )?;
+        self.price
+            .as_mut()
+            .unwrap()
+            .compute_all(starting_indexes, exit, compute)?;
 
         let date_to_price_opt: Option<&EagerVec<DateIndex, Dollars>> = None;
-        self.compute_rest(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            date_to_price_opt,
-        )
+        self.compute_rest(price, starting_indexes, exit, date_to_price_opt)
     }
 
     pub fn compute_rest(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -334,28 +313,22 @@ impl ComputedRatioVecsFromDateIndex {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        self.ratio.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
-                v.compute_transform2(
-                    starting_indexes.dateindex,
-                    closes,
-                    price,
-                    |(i, close, price, ..)| {
-                        if price == Dollars::ZERO {
-                            (i, StoredF32::from(1.0))
-                        } else {
-                            (i, StoredF32::from(*close / price))
-                        }
-                    },
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
+        self.ratio.compute_all(starting_indexes, exit, |v| {
+            v.compute_transform2(
+                starting_indexes.dateindex,
+                closes,
+                price,
+                |(i, close, price, ..)| {
+                    if price == Dollars::ZERO {
+                        (i, StoredF32::from(1.0))
+                    } else {
+                        (i, StoredF32::from(*close / price))
+                    }
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         if self.ratio_1w_sma.is_none() {
             return Ok(());
@@ -363,12 +336,10 @@ impl ComputedRatioVecsFromDateIndex {
 
         let min_ratio_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
-        self.ratio_1w_sma.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.ratio_1w_sma
+            .as_mut()
+            .unwrap()
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
                     self.ratio.dateindex.as_ref().unwrap(),
@@ -377,15 +348,12 @@ impl ComputedRatioVecsFromDateIndex {
                     Some(min_ratio_date),
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.ratio_1m_sma.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.ratio_1m_sma
+            .as_mut()
+            .unwrap()
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
                     self.ratio.dateindex.as_ref().unwrap(),
@@ -394,8 +362,7 @@ impl ComputedRatioVecsFromDateIndex {
                     Some(min_ratio_date),
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let ratio_version = self.ratio.dateindex.as_ref().unwrap().version();
         self.mut_ratio_vecs()
@@ -562,12 +529,10 @@ impl ComputedRatioVecsFromDateIndex {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        self.ratio_pct99_in_usd.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.ratio_pct99_in_usd
+            .as_mut()
+            .unwrap()
+            .compute_all(starting_indexes, exit, |vec| {
                 let mut iter = self
                     .ratio_pct99
                     .as_ref()
@@ -586,31 +551,24 @@ impl ComputedRatioVecsFromDateIndex {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let compute_in_usd =
             |in_usd: Option<&mut ComputedVecsFromDateIndex<Dollars>>,
              source: Option<&ComputedVecsFromDateIndex<StoredF32>>| {
-                in_usd.unwrap().compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        let mut iter = source.unwrap().dateindex.as_ref().unwrap().into_iter();
-                        vec.compute_transform(
-                            starting_indexes.dateindex,
-                            date_to_price,
-                            |(i, price, ..)| {
-                                let multiplier = iter.unwrap_get_inner(i);
-                                (i, price * multiplier)
-                            },
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )
+                in_usd.unwrap().compute_all(starting_indexes, exit, |vec| {
+                    let mut iter = source.unwrap().dateindex.as_ref().unwrap().into_iter();
+                    vec.compute_transform(
+                        starting_indexes.dateindex,
+                        date_to_price,
+                        |(i, price, ..)| {
+                            let multiplier = iter.unwrap_get_inner(i);
+                            (i, price * multiplier)
+                        },
+                        exit,
+                    )?;
+                    Ok(())
+                })
             };
 
         compute_in_usd(self.ratio_pct1_in_usd.as_mut(), self.ratio_pct1.as_ref())?;
@@ -621,32 +579,24 @@ impl ComputedRatioVecsFromDateIndex {
         compute_in_usd(self.ratio_pct99_in_usd.as_mut(), self.ratio_pct99.as_ref())?;
 
         self.ratio_sd.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self.ratio.dateindex.as_ref().unwrap(),
             Some(date_to_price),
         )?;
         self.ratio_4y_sd.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self.ratio.dateindex.as_ref().unwrap(),
             Some(date_to_price),
         )?;
         self.ratio_2y_sd.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self.ratio.dateindex.as_ref().unwrap(),
             Some(date_to_price),
         )?;
         self.ratio_1y_sd.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
             starting_indexes,
             exit,
             self.ratio.dateindex.as_ref().unwrap(),

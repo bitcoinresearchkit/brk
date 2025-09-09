@@ -933,12 +933,8 @@ impl Vecs {
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
-        self.timeindexes_to_timestamp.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
+        self.timeindexes_to_timestamp
+            .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     &indexes.dateindex_to_date,
@@ -946,15 +942,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_block_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_block_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_range(
                     starting_indexes.height,
                     &indexer.vecs.height_to_weight,
@@ -962,15 +953,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1w_block_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1w_block_count
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_block_count.dateindex.unwrap_sum(),
@@ -978,15 +964,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1m_block_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1m_block_count
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_block_count.dateindex.unwrap_sum(),
@@ -994,15 +975,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_1y_block_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_1y_block_count
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
                     self.indexes_to_block_count.dateindex.unwrap_sum(),
@@ -1010,8 +986,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter();
         self.height_to_interval.compute_transform(
@@ -1086,12 +1061,8 @@ impl Vecs {
         )?;
 
         let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.into_iter();
-        self.indexes_to_difficultyepoch.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
+        self.indexes_to_difficultyepoch
+            .compute_all(starting_indexes, exit, |vec| {
                 let mut height_count_iter = indexes.dateindex_to_height_count.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
@@ -1107,16 +1078,11 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let mut height_to_halvingepoch_iter = indexes.height_to_halvingepoch.into_iter();
-        self.indexes_to_halvingepoch.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, indexes, starting_indexes, exit| {
+        self.indexes_to_halvingepoch
+            .compute_all(starting_indexes, exit, |vec| {
                 let mut height_count_iter = indexes.dateindex_to_height_count.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
@@ -1132,8 +1098,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_difficulty.compute_rest(
             indexes,
@@ -1142,12 +1107,8 @@ impl Vecs {
             Some(&indexer.vecs.height_to_difficulty),
         )?;
 
-        self.indexes_to_tx_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_tx_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_txindex,
@@ -1155,8 +1116,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_input_count.compute_rest(
             indexer,
@@ -1177,25 +1137,19 @@ impl Vecs {
         let compute_indexes_to_tx_vany =
             |indexes_to_tx_vany: &mut ComputedVecsFromHeight<StoredU64>, txversion| {
                 let mut txindex_to_txversion_iter = indexer.vecs.txindex_to_txversion.iter();
-                indexes_to_tx_vany.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, indexer, _, starting_indexes, exit| {
-                        vec.compute_filtered_count_from_indexes(
-                            starting_indexes.height,
-                            &indexer.vecs.height_to_first_txindex,
-                            &indexer.vecs.txindex_to_txid,
-                            |txindex| {
-                                let v = txindex_to_txversion_iter.unwrap_get_inner(txindex);
-                                v == txversion
-                            },
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )
+                indexes_to_tx_vany.compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_filtered_count_from_indexes(
+                        starting_indexes.height,
+                        &indexer.vecs.height_to_first_txindex,
+                        &indexer.vecs.txindex_to_txid,
+                        |txindex| {
+                            let v = txindex_to_txversion_iter.unwrap_get_inner(txindex);
+                            v == txversion
+                        },
+                        exit,
+                    )?;
+                    Ok(())
+                })
             };
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v1, TxVersion::ONE)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
@@ -1206,7 +1160,7 @@ impl Vecs {
         //     indexes,
         //     starting_indexes,
         //     exit,
-        //     |vec, indexer, _, starting_indexes, exit| {
+        //     |vec| {
         //         vec.compute_sum_from_indexes(
         //             starting_indexes.txindex,
         //             &indexer.vecs.txindex_to_first_outputindex,
@@ -1222,7 +1176,7 @@ impl Vecs {
         //     indexes,
         //     starting_indexes,
         //     exit,
-        //     |vec, indexer, _, starting_indexes, exit| {
+        //     |vec| {
         //         vec.compute_sum_from_indexes(
         //             starting_indexes.txindex,
         //             &indexer.vecs.txindex_to_first_inputindex,
@@ -1292,13 +1246,8 @@ impl Vecs {
             Some(&self.txindex_to_vsize),
         )?;
 
-        self.indexes_to_coinbase.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec, indexer, _, starting_indexes, exit| {
+        self.indexes_to_coinbase
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 let mut txindex_to_first_outputindex_iter =
                     indexer.vecs.txindex_to_first_outputindex.iter();
                 let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
@@ -1322,16 +1271,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_subsidy.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_subsidy
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 let mut indexes_to_fee_sum_iter =
                     self.indexes_to_fee.sats.height.unwrap_sum().iter();
                 vec.compute_transform(
@@ -1344,16 +1287,14 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_unclaimed_rewards.compute_all(
-            indexer,
             indexes,
             price,
             starting_indexes,
             exit,
-            |vec, _, _, starting_indexes, exit| {
+            |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     self.indexes_to_subsidy.sats.height.as_ref().unwrap(),
@@ -1369,12 +1310,8 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_p2a_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2a_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2aaddressindex,
@@ -1382,15 +1319,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2ms_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2ms_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2msoutputindex,
@@ -1398,15 +1330,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2pk33_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2pk33_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2pk33addressindex,
@@ -1414,15 +1341,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2pk65_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2pk65_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2pk65addressindex,
@@ -1430,15 +1352,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2pkh_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2pkh_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2pkhaddressindex,
@@ -1446,15 +1363,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2sh_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2sh_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2shaddressindex,
@@ -1462,15 +1374,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2tr_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2tr_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2traddressindex,
@@ -1478,15 +1385,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2wpkh_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2wpkh_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2wpkhaddressindex,
@@ -1494,15 +1396,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_p2wsh_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_p2wsh_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_p2wshaddressindex,
@@ -1510,15 +1407,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_opreturn_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_opreturn_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_opreturnindex,
@@ -1526,15 +1418,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_unknownoutput_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_unknownoutput_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_unknownoutputindex,
@@ -1542,15 +1429,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_emptyoutput_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
+        self.indexes_to_emptyoutput_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_emptyoutputindex,
@@ -1558,15 +1440,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_exact_utxo_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_exact_utxo_count
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 let mut input_count_iter = self
                     .indexes_to_input_count
                     .height
@@ -1611,8 +1488,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.dateindex_to_fee_dominance.compute_transform2(
             starting_indexes.dateindex,
@@ -1639,12 +1515,8 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_difficulty_as_hash.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_difficulty_as_hash
+            .compute_all(starting_indexes, exit, |v| {
                 let multiplier = 2.0_f64.powi(32) / 600.0;
                 v.compute_transform(
                     starting_indexes.dateindex,
@@ -1653,17 +1525,12 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let now = Timestamp::now();
         let today = Date::from(now);
-        self.indexes_to_hash_rate.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_hash_rate
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform3(
                     starting_indexes.dateindex,
                     self.indexes_to_block_count.dateindex.unwrap_sum(),
@@ -1690,15 +1557,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_hash_rate_1w_sma.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_hash_rate_1w_sma
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
                     self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
@@ -1706,15 +1568,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_hash_rate_1m_sma.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_hash_rate_1m_sma
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
                     self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
@@ -1722,15 +1579,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_hash_rate_2m_sma.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_hash_rate_2m_sma
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
                     self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
@@ -1738,15 +1590,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_hash_rate_1y_sma.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_hash_rate_1y_sma
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
                     self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
@@ -1754,8 +1601,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         if self.indexes_to_subsidy_usd_1y_sma.is_some() {
             let date_to_coinbase_usd_sum = self
@@ -1769,45 +1615,33 @@ impl Vecs {
             self.indexes_to_subsidy_usd_1y_sma
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_sma(
-                            starting_indexes.dateindex,
-                            date_to_coinbase_usd_sum,
-                            365,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_sma(
+                        starting_indexes.dateindex,
+                        date_to_coinbase_usd_sum,
+                        365,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_puell_multiple
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_divide(
-                            starting_indexes.dateindex,
-                            date_to_coinbase_usd_sum,
-                            self.indexes_to_subsidy_usd_1y_sma
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_divide(
+                        starting_indexes.dateindex,
+                        date_to_coinbase_usd_sum,
+                        self.indexes_to_subsidy_usd_1y_sma
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
         }
 
         Ok(())

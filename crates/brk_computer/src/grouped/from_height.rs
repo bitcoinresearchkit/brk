@@ -1,7 +1,6 @@
 use allocative::Allocative;
 use brk_error::Result;
 
-use brk_indexer::Indexer;
 use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
@@ -134,22 +133,15 @@ where
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, T>) -> Result<()>,
     {
-        compute(
-            self.height.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+        compute(self.height.as_mut().unwrap())?;
 
         let height: Option<&EagerVec<Height, T>> = None;
         self.compute_rest(indexes, starting_indexes, exit, height)

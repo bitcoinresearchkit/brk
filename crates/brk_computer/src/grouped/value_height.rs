@@ -1,12 +1,11 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
 use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
 
 use crate::{
     Indexes,
     grouped::Source,
-    indexes, price,
+    price,
     traits::{ComputeFromBitcoin, ComputeFromSats},
 };
 
@@ -53,29 +52,15 @@ impl ComputedHeightValueVecs {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<Height, Sats>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, Sats>) -> Result<()>,
     {
-        compute(
-            self.sats.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+        compute(self.sats.as_mut().unwrap())?;
 
         let height: Option<&StoredVec<Height, Sats>> = None;
         self.compute_rest(price, starting_indexes, exit, height)?;

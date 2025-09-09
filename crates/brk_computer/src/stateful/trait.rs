@@ -1,5 +1,4 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{AnyCollectableVec, AnyIterableVec, Exit};
 
@@ -29,7 +28,6 @@ pub trait DynCohortVecs: Send + Sync {
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part1(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -50,7 +48,6 @@ pub trait CohortVecs: DynCohortVecs {
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part2(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,

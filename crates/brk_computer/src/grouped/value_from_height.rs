@@ -1,6 +1,5 @@
 use allocative::Allocative;
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
 use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
 
@@ -66,7 +65,6 @@ impl ComputedValueVecsFromHeight {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -74,31 +72,18 @@ impl ComputedValueVecsFromHeight {
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<Height, Sats>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, Sats>) -> Result<()>,
     {
-        compute(
-            self.sats.height.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+        compute(self.sats.height.as_mut().unwrap())?;
 
         let height: Option<&StoredVec<Height, Sats>> = None;
-        self.compute_rest(indexer, indexes, price, starting_indexes, exit, height)?;
+        self.compute_rest(indexes, price, starting_indexes, exit, height)?;
 
         Ok(())
     }
 
     pub fn compute_rest(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -109,54 +94,38 @@ impl ComputedValueVecsFromHeight {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(height))?;
 
-            self.bitcoin.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
+            self.bitcoin
+                .compute_all(indexes, starting_indexes, exit, |v| {
                     v.compute_from_sats(starting_indexes.height, height, exit)
-                },
-            )?;
+                })?;
         } else {
             let height: Option<&StoredVec<Height, Sats>> = None;
 
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, height)?;
 
-            self.bitcoin.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
+            self.bitcoin
+                .compute_all(indexes, starting_indexes, exit, |v| {
                     v.compute_from_sats(
                         starting_indexes.height,
                         self.sats.height.as_ref().unwrap(),
                         exit,
                     )
-                },
-            )?;
+                })?;
         }
 
         let height_to_bitcoin = self.bitcoin.height.as_ref().unwrap();
         let height_to_price_close = &price.as_ref().unwrap().chainindexes_to_price_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
-            dollars.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_from_bitcoin(
-                        starting_indexes.height,
-                        height_to_bitcoin,
-                        height_to_price_close,
-                        exit,
-                    )
-                },
-            )?;
+            dollars.compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_from_bitcoin(
+                    starting_indexes.height,
+                    height_to_bitcoin,
+                    height_to_price_close,
+                    exit,
+                )
+            })?;
         }
 
         Ok(())

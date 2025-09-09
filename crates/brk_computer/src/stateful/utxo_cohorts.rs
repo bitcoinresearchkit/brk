@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge,
     ByMinAge, BySpendableType, ByTerm, CheckedSub, DateIndex, Dollars, GroupFilter, HalvingEpoch,
@@ -1736,21 +1735,19 @@ impl Vecs {
 
     pub fn compute_rest_part1(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.as_mut_vecs().into_iter().try_for_each(|(_, v)| {
-            v.compute_rest_part1(indexer, indexes, price, starting_indexes, exit)
-        })
+        self.as_mut_vecs()
+            .into_iter()
+            .try_for_each(|(_, v)| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
 
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_part2(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -1765,7 +1762,6 @@ impl Vecs {
         self.0.as_boxed_mut_vecs().into_iter().try_for_each(|v| {
             v.into_iter().try_for_each(|(_, v)| {
                 v.compute_rest_part2(
-                    indexer,
                     indexes,
                     price,
                     starting_indexes,

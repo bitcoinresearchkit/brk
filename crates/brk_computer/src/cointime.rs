@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
 use vecdb::{AnyCollectableVec, Database, Exit, PAGE_SIZE, VecIterator};
 
@@ -262,7 +261,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
@@ -270,15 +268,7 @@ impl Vecs {
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(
-            indexer,
-            indexes,
-            starting_indexes,
-            price,
-            chain,
-            stateful,
-            exit,
-        )?;
+        self.compute_(indexes, starting_indexes, price, chain, stateful, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
@@ -286,7 +276,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     fn compute_(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
@@ -296,12 +285,8 @@ impl Vecs {
     ) -> Result<()> {
         let circulating_supply = &stateful.utxo_cohorts.all.1.height_to_supply;
 
-        self.indexes_to_coinblocks_created.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_coinblocks_created
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     circulating_supply,
@@ -309,18 +294,13 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let indexes_to_coinblocks_destroyed =
             &stateful.utxo_cohorts.all.1.indexes_to_coinblocks_destroyed;
 
-        self.indexes_to_coinblocks_stored.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_coinblocks_stored
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 let mut coinblocks_destroyed_iter = indexes_to_coinblocks_destroyed
                     .height
                     .as_ref()
@@ -336,15 +316,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_liveliness.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_liveliness
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
                     indexes_to_coinblocks_destroyed
@@ -356,16 +331,11 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
         let liveliness = &self.indexes_to_liveliness;
 
-        self.indexes_to_vaultedness.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, _, _, starting_indexes, exit| {
+        self.indexes_to_vaultedness
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     liveliness.height.as_ref().unwrap(),
@@ -373,16 +343,14 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
         let vaultedness = &self.indexes_to_vaultedness;
 
         self.indexes_to_activity_to_vaultedness_ratio.compute_all(
-            indexer,
             indexes,
             starting_indexes,
             exit,
-            |vec, _, _, starting_indexes, exit| {
+            |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
                     liveliness.height.as_ref().unwrap(),
@@ -394,12 +362,11 @@ impl Vecs {
         )?;
 
         self.indexes_to_vaulted_supply.compute_all(
-            indexer,
             indexes,
             price,
             starting_indexes,
             exit,
-            |vec, _, _, starting_indexes, exit| {
+            |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
@@ -411,12 +378,11 @@ impl Vecs {
         )?;
 
         self.indexes_to_active_supply.compute_all(
-            indexer,
             indexes,
             price,
             starting_indexes,
             exit,
-            |vec, _, _, starting_indexes, exit| {
+            |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
@@ -447,12 +413,8 @@ impl Vecs {
                 .as_ref()
                 .unwrap();
 
-            self.indexes_to_thermo_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_thermo_cap
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_transform(
                         starting_indexes.height,
                         chain
@@ -466,15 +428,10 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_investor_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_investor_cap
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_subtract(
                         starting_indexes.height,
                         realized_cap,
@@ -482,15 +439,10 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_vaulted_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_vaulted_cap
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_divide(
                         starting_indexes.height,
                         realized_cap,
@@ -498,15 +450,10 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_active_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_active_cap
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
                         realized_cap,
@@ -514,15 +461,10 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_vaulted_price.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_vaulted_price
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_divide(
                         starting_indexes.height,
                         realized_price,
@@ -530,24 +472,17 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
             self.indexes_to_vaulted_price_ratio.compute_rest(
-                indexer,
-                indexes,
                 price,
                 starting_indexes,
                 exit,
                 Some(self.indexes_to_vaulted_price.dateindex.unwrap_last()),
             )?;
 
-            self.indexes_to_active_price.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_active_price
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
                         realized_price,
@@ -555,12 +490,9 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
             self.indexes_to_active_price_ratio.compute_rest(
-                indexer,
-                indexes,
                 price,
                 starting_indexes,
                 exit,
@@ -568,11 +500,10 @@ impl Vecs {
             )?;
 
             self.indexes_to_true_market_mean.compute_all(
-                indexer,
                 indexes,
                 starting_indexes,
                 exit,
-                |vec, _, _, starting_indexes, exit| {
+                |vec| {
                     vec.compute_divide(
                         starting_indexes.height,
                         self.indexes_to_investor_cap.height.as_ref().unwrap(),
@@ -588,8 +519,6 @@ impl Vecs {
             )?;
 
             self.indexes_to_true_market_mean_ratio.compute_rest(
-                indexer,
-                indexes,
                 price,
                 starting_indexes,
                 exit,
@@ -597,11 +526,10 @@ impl Vecs {
             )?;
 
             self.indexes_to_cointime_value_destroyed.compute_all(
-                indexer,
                 indexes,
                 starting_indexes,
                 exit,
-                |vec, _, _, starting_indexes, exit| {
+                |vec| {
                     // TODO: Another example when the callback should be applied to each index, instead of to base then merging from more granular to less
                     // The price taken won't be correct for time based indexes
                     vec.compute_multiply(
@@ -615,11 +543,10 @@ impl Vecs {
             )?;
 
             self.indexes_to_cointime_value_created.compute_all(
-                indexer,
                 indexes,
                 starting_indexes,
                 exit,
-                |vec, _, _, starting_indexes, exit| {
+                |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
                         &price.chainindexes_to_price_close.height,
@@ -631,11 +558,10 @@ impl Vecs {
             )?;
 
             self.indexes_to_cointime_value_stored.compute_all(
-                indexer,
                 indexes,
                 starting_indexes,
                 exit,
-                |vec, _, _, starting_indexes, exit| {
+                |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
                         &price.chainindexes_to_price_close.height,
@@ -646,12 +572,8 @@ impl Vecs {
                 },
             )?;
 
-            self.indexes_to_cointime_price.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_cointime_price
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_divide(
                         starting_indexes.height,
                         self.indexes_to_cointime_value_destroyed
@@ -663,15 +585,10 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_cointime_cap.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
+            self.indexes_to_cointime_cap
+                .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
                         self.indexes_to_cointime_price.height.as_ref().unwrap(),
@@ -679,12 +596,9 @@ impl Vecs {
                         exit,
                     )?;
                     Ok(())
-                },
-            )?;
+                })?;
 
             self.indexes_to_cointime_price_ratio.compute_rest(
-                indexer,
-                indexes,
                 price,
                 starting_indexes,
                 exit,

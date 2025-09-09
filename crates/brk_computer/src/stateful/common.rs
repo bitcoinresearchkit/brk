@@ -1,5 +1,4 @@
 use brk_error::{Error, Result};
-use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
@@ -2255,7 +2254,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_part1(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -2268,13 +2266,8 @@ impl Vecs {
             Some(&self.height_to_supply),
         )?;
 
-        self.indexes_to_supply.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |v, _, indexes, starting_indexes, exit| {
+        self.indexes_to_supply
+            .compute_all(price, starting_indexes, exit, |v| {
                 let mut dateindex_to_height_count_iter =
                     indexes.dateindex_to_height_count.into_iter();
                 let mut height_to_supply_iter = self.height_to_supply.into_iter();
@@ -2292,8 +2285,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.indexes_to_utxo_count.compute_rest(
             indexes,
@@ -2302,13 +2294,8 @@ impl Vecs {
             Some(&self.height_to_utxo_count),
         )?;
 
-        self.height_to_supply_half_value.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.height_to_supply_half_value
+            .compute_all(price, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_supply,
@@ -2316,16 +2303,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_supply_half.compute_all(
-            indexer,
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_supply_half
+            .compute_all(price, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
@@ -2333,15 +2314,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_coinblocks_destroyed.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_coinblocks_destroyed
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_satblocks_destroyed,
@@ -2349,15 +2325,10 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_coindays_destroyed.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.indexes_to_coindays_destroyed
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_satdays_destroyed,
@@ -2365,8 +2336,7 @@ impl Vecs {
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }
@@ -2374,7 +2344,6 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_part2(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
@@ -2387,21 +2356,15 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         if let Some(v) = self.indexes_to_supply_rel_to_circulating_supply.as_mut() {
-            v.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |v, _, _, starting_indexes, exit| {
-                    v.compute_percentage(
-                        starting_indexes.height,
-                        &self.height_to_supply_value.bitcoin,
-                        height_to_supply,
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            v.compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &self.height_to_supply_value.bitcoin,
+                    height_to_supply,
+                    exit,
+                )?;
+                Ok(())
+            })?;
         }
 
         if let Some(indexes_to_realized_cap) = self.indexes_to_realized_cap.as_mut() {
@@ -2418,28 +2381,20 @@ impl Vecs {
             self.indexes_to_realized_price
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_divide(
-                            starting_indexes.height,
-                            self.height_to_realized_cap.as_ref().unwrap(),
-                            &self.height_to_supply_value.bitcoin,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_divide(
+                        starting_indexes.height,
+                        self.height_to_realized_cap.as_ref().unwrap(),
+                        &self.height_to_supply_value.bitcoin,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_realized_price_extra
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexer,
-                    indexes,
                     price.as_ref().unwrap(),
                     starting_indexes,
                     exit,
@@ -2475,21 +2430,15 @@ impl Vecs {
             self.indexes_to_neg_realized_loss
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_transform(
-                            starting_indexes.height,
-                            self.height_to_realized_loss.as_ref().unwrap(),
-                            |(i, v, ..)| (i, v * -1_i64),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_transform(
+                        starting_indexes.height,
+                        self.height_to_realized_loss.as_ref().unwrap(),
+                        |(i, v, ..)| (i, v * -1_i64),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_value_created
                 .as_mut()
@@ -2514,63 +2463,45 @@ impl Vecs {
             self.indexes_to_realized_cap_30d_delta
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_change(
-                            starting_indexes.dateindex,
-                            self.indexes_to_realized_cap
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .unwrap_last(),
-                            30,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_change(
+                        starting_indexes.dateindex,
+                        self.indexes_to_realized_cap
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_last(),
+                        30,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_net_realized_pnl
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_subtract(
-                            starting_indexes.height,
-                            self.height_to_realized_profit.as_ref().unwrap(),
-                            self.height_to_realized_loss.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_subtract(
+                        starting_indexes.height,
+                        self.height_to_realized_profit.as_ref().unwrap(),
+                        self.height_to_realized_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_realized_value
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_add(
-                            starting_indexes.height,
-                            self.height_to_realized_profit.as_ref().unwrap(),
-                            self.height_to_realized_loss.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_add(
+                        starting_indexes.height,
+                        self.height_to_realized_profit.as_ref().unwrap(),
+                        self.height_to_realized_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.dateindex_to_sopr.as_mut().unwrap().compute_divide(
                 starting_indexes.dateindex,
@@ -2649,8 +2580,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexer,
-                    indexes,
                     price,
                     starting_indexes,
                     exit,
@@ -2660,8 +2589,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexer,
-                    indexes,
                     price,
                     starting_indexes,
                     exit,
@@ -2671,8 +2598,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    indexer,
-                    indexes,
                     price,
                     starting_indexes,
                     exit,
@@ -2706,21 +2631,15 @@ impl Vecs {
             self.indexes_to_total_unrealized_pnl
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_add(
-                            starting_indexes.dateindex,
-                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_add(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                        self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.height_to_total_realized_pnl
                 .as_mut()
                 .unwrap()
@@ -2733,29 +2652,23 @@ impl Vecs {
             self.indexes_to_total_realized_pnl
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_add(
-                            starting_indexes.dateindex,
-                            self.indexes_to_realized_profit
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .unwrap_sum(),
-                            self.indexes_to_realized_loss
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .unwrap_sum(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_add(
+                        starting_indexes.dateindex,
+                        self.indexes_to_realized_profit
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_sum(),
+                        self.indexes_to_realized_loss
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_sum(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_min_price_paid
                 .as_mut()
@@ -2788,21 +2701,15 @@ impl Vecs {
             self.indexes_to_neg_unrealized_loss
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_transform(
-                            starting_indexes.dateindex,
-                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                            |(h, v, ..)| (h, v * -1_i64),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_transform(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                        |(h, v, ..)| (h, v * -1_i64),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.height_to_net_unrealized_pnl
                 .as_mut()
                 .unwrap()
@@ -2816,21 +2723,15 @@ impl Vecs {
             self.indexes_to_net_unrealized_pnl
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_subtract(
-                            starting_indexes.dateindex,
-                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_subtract(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                        self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.height_to_unrealized_profit_rel_to_market_cap
                 .as_mut()
                 .unwrap()
@@ -2870,85 +2771,61 @@ impl Vecs {
             self.indexes_to_unrealized_profit_rel_to_market_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                            dateindex_to_market_cap,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.indexes_to_unrealized_loss_rel_to_market_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                            dateindex_to_market_cap,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.indexes_to_neg_unrealized_loss_rel_to_market_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_neg_unrealized_loss
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            dateindex_to_market_cap,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_neg_unrealized_loss
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.indexes_to_net_unrealized_pnl_rel_to_market_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_net_unrealized_pnl
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            dateindex_to_market_cap,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_net_unrealized_pnl
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             if self
                 .height_to_unrealized_profit_rel_to_own_market_cap
@@ -2993,109 +2870,85 @@ impl Vecs {
                 self.indexes_to_unrealized_profit_rel_to_own_market_cap
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                                self.indexes_to_supply
-                                    .dollars
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                            self.indexes_to_supply
+                                .dollars
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_unrealized_loss_rel_to_own_market_cap
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                                self.indexes_to_supply
-                                    .dollars
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            self.indexes_to_supply
+                                .dollars
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_neg_unrealized_loss_rel_to_own_market_cap
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_neg_unrealized_loss
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                self.indexes_to_supply
-                                    .dollars
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_neg_unrealized_loss
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_supply
+                                .dollars
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_net_unrealized_pnl_rel_to_own_market_cap
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_net_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                self.indexes_to_supply
-                                    .dollars
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_net_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_supply
+                                .dollars
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
             }
 
             if self
@@ -3141,168 +2994,126 @@ impl Vecs {
                 self.indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.dateindex_to_unrealized_profit.as_ref().unwrap(),
-                                self.indexes_to_total_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                            self.indexes_to_total_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.dateindex_to_unrealized_loss.as_ref().unwrap(),
-                                self.indexes_to_total_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            self.indexes_to_total_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_neg_unrealized_loss
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                self.indexes_to_total_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_neg_unrealized_loss
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_total_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |vec, _, _, starting_indexes, exit| {
-                            vec.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_net_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                self.indexes_to_total_unrealized_pnl
-                                    .as_ref()
-                                    .unwrap()
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |vec| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_net_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_total_unrealized_pnl
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
             }
 
             self.indexes_to_realized_profit_rel_to_realized_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.height,
-                            self.height_to_realized_profit.as_ref().unwrap(),
-                            *height_to_realized_cap.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_realized_profit.as_ref().unwrap(),
+                        *height_to_realized_cap.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_realized_loss_rel_to_realized_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.height,
-                            self.height_to_realized_loss.as_ref().unwrap(),
-                            *height_to_realized_cap.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_realized_loss.as_ref().unwrap(),
+                        *height_to_realized_cap.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_net_realized_pnl_rel_to_realized_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_percentage(
-                            starting_indexes.height,
-                            self.indexes_to_net_realized_pnl
-                                .as_ref()
-                                .unwrap()
-                                .height
-                                .as_ref()
-                                .unwrap(),
-                            *height_to_realized_cap.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(indexes, starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.height,
+                        self.indexes_to_net_realized_pnl
+                            .as_ref()
+                            .unwrap()
+                            .height
+                            .as_ref()
+                            .unwrap(),
+                        *height_to_realized_cap.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.height_to_supply_breakeven_value
                 .as_mut()
@@ -3373,146 +3184,110 @@ impl Vecs {
             self.indexes_to_supply_breakeven_rel_to_own_supply
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_supply_breakeven
-                                .as_ref()
-                                .unwrap()
-                                .bitcoin
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_supply_breakeven
+                            .as_ref()
+                            .unwrap()
+                            .bitcoin
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.indexes_to_supply_in_loss_rel_to_own_supply
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_supply_in_loss
-                                .as_ref()
-                                .unwrap()
-                                .bitcoin
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_supply_in_loss
+                            .as_ref()
+                            .unwrap()
+                            .bitcoin
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
             self.indexes_to_supply_in_profit_rel_to_own_supply
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_supply_in_profit
-                                .as_ref()
-                                .unwrap()
-                                .bitcoin
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_supply_in_profit
+                            .as_ref()
+                            .unwrap()
+                            .bitcoin
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_net_realized_pnl_cumulative_30d_delta
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_change(
-                            starting_indexes.dateindex,
-                            self.indexes_to_net_realized_pnl
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .unwrap_cumulative(),
-                            30,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_change(
+                        starting_indexes.dateindex,
+                        self.indexes_to_net_realized_pnl
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_cumulative(),
+                        30,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_net_realized_pnl_cumulative_30d_delta
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            *dateindex_to_realized_cap.as_ref().unwrap(),
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_net_realized_pnl_cumulative_30d_delta
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        *dateindex_to_realized_cap.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             self.indexes_to_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap
                 .as_mut()
                 .unwrap()
-                .compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |v, _, _, starting_indexes, exit| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_net_realized_pnl_cumulative_30d_delta
-                                .as_ref()
-                                .unwrap()
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            dateindex_to_market_cap,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )?;
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_net_realized_pnl_cumulative_30d_delta
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
 
             if let Some(height_to_supply_breakeven_rel_to_circulating_supply) = self
                 .height_to_supply_breakeven_rel_to_circulating_supply
@@ -3557,75 +3332,57 @@ impl Vecs {
                 self.indexes_to_supply_breakeven_rel_to_circulating_supply
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_supply_breakeven
-                                    .as_ref()
-                                    .unwrap()
-                                    .bitcoin
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                dateindex_to_supply,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_supply_breakeven
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            dateindex_to_supply,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_supply_in_loss_rel_to_circulating_supply
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_supply_in_loss
-                                    .as_ref()
-                                    .unwrap()
-                                    .bitcoin
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                dateindex_to_supply,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_supply_in_loss
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            dateindex_to_supply,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
                 self.indexes_to_supply_in_profit_rel_to_circulating_supply
                     .as_mut()
                     .unwrap()
-                    .compute_all(
-                        indexer,
-                        indexes,
-                        starting_indexes,
-                        exit,
-                        |v, _, _, starting_indexes, exit| {
-                            v.compute_percentage(
-                                starting_indexes.dateindex,
-                                self.indexes_to_supply_in_profit
-                                    .as_ref()
-                                    .unwrap()
-                                    .bitcoin
-                                    .dateindex
-                                    .as_ref()
-                                    .unwrap(),
-                                dateindex_to_supply,
-                                exit,
-                            )?;
-                            Ok(())
-                        },
-                    )?;
+                    .compute_all(starting_indexes, exit, |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_supply_in_profit
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            dateindex_to_supply,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
             }
 
             if self.indexes_to_adjusted_value_created.is_some() {
@@ -3692,11 +3449,10 @@ impl Vecs {
                 self.indexes_to_realized_cap_rel_to_own_market_cap.as_mut()
             {
                 indexes_to_realized_cap_rel_to_own_market_cap.compute_all(
-                    indexer,
                     indexes,
                     starting_indexes,
                     exit,
-                    |v, _, _, starting_indexes, exit| {
+                    |v| {
                         v.compute_percentage(
                             starting_indexes.height,
                             self.height_to_realized_cap.as_ref().unwrap(),

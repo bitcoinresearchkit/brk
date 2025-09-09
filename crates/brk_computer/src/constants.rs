@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{StoredF32, StoredI16, StoredU16, Version};
 use vecdb::{AnyCollectableVec, AnyVec, Database, Exit};
 
@@ -168,19 +167,17 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.compute_(indexes, starting_indexes, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
 
     fn compute_(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -197,22 +194,16 @@ impl Vecs {
         ]
         .into_iter()
         .try_for_each(|(vec, value)| {
-            vec.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, indexes, starting_indexes, exit| {
-                    vec.compute_to(
-                        starting_indexes.height,
-                        indexes.height_to_date.len(),
-                        indexes.height_to_date.version(),
-                        |i| (i, StoredU16::new(value)),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )
+            vec.compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_to(
+                    starting_indexes.height,
+                    indexes.height_to_date.len(),
+                    indexes.height_to_date.version(),
+                    |i| (i, StoredU16::new(value)),
+                    exit,
+                )?;
+                Ok(())
+            })
         })?;
 
         [
@@ -223,22 +214,16 @@ impl Vecs {
         ]
         .into_iter()
         .try_for_each(|(vec, value)| {
-            vec.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, indexes, starting_indexes, exit| {
-                    vec.compute_to(
-                        starting_indexes.height,
-                        indexes.height_to_date.len(),
-                        indexes.height_to_date.version(),
-                        |i| (i, StoredI16::new(value)),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )
+            vec.compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_to(
+                    starting_indexes.height,
+                    indexes.height_to_date.len(),
+                    indexes.height_to_date.version(),
+                    |i| (i, StoredI16::new(value)),
+                    exit,
+                )?;
+                Ok(())
+            })
         })?;
 
         [
@@ -247,22 +232,16 @@ impl Vecs {
         ]
         .into_iter()
         .try_for_each(|(vec, value)| {
-            vec.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, indexes, starting_indexes, exit| {
-                    vec.compute_to(
-                        starting_indexes.height,
-                        indexes.height_to_date.len(),
-                        indexes.height_to_date.version(),
-                        |i| (i, StoredF32::from(value)),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )
+            vec.compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_to(
+                    starting_indexes.height,
+                    indexes.height_to_date.len(),
+                    indexes.height_to_date.version(),
+                    |i| (i, StoredF32::from(value)),
+                    exit,
+                )?;
+                Ok(())
+            })
         })?;
 
         Ok(())

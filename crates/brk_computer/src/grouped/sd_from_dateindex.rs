@@ -1,5 +1,4 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_structs::{CheckedSub, Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec,
@@ -419,8 +418,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
     pub fn compute_all(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl CollectableVec<DateIndex, StoredF32>,
@@ -428,12 +425,10 @@ impl ComputedStandardDeviationVecsFromDateIndex {
     ) -> Result<()> {
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
-        self.sma.as_mut().unwrap().compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
+        self.sma
+            .as_mut()
+            .unwrap()
+            .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
                     source,
@@ -442,26 +437,15 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     Some(min_date),
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         let sma_opt: Option<&EagerVec<DateIndex, StoredF32>> = None;
-        self.compute_rest(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            sma_opt,
-            source,
-            price_opt,
-        )
+        self.compute_rest(starting_indexes, exit, sma_opt, source, price_opt)
     }
 
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest(
         &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         sma_opt: Option<&impl AnyIterableVec<DateIndex, StoredF32>>,
@@ -630,22 +614,16 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         })?;
 
         if let Some(zscore) = self.zscore.as_mut() {
-            zscore.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
-                    vec.compute_zscore(
-                        starting_indexes.dateindex,
-                        source,
-                        sma,
-                        self.sd.dateindex.as_ref().unwrap(),
-                        exit,
-                    )?;
-                    Ok(())
-                },
-            )?;
+            zscore.compute_all(starting_indexes, exit, |vec| {
+                vec.compute_zscore(
+                    starting_indexes.dateindex,
+                    source,
+                    sma,
+                    self.sd.dateindex.as_ref().unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
         }
 
         let Some(price) = price_opt else {
@@ -655,24 +633,18 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let compute_in_usd =
             |in_usd: &mut ComputedVecsFromDateIndex<Dollars>,
              mut iter: BoxedVecIterator<DateIndex, StoredF32>| {
-                in_usd.compute_all(
-                    indexer,
-                    indexes,
-                    starting_indexes,
-                    exit,
-                    |vec, _, _, starting_indexes, exit| {
-                        vec.compute_transform(
-                            starting_indexes.dateindex,
-                            price,
-                            |(i, price, ..)| {
-                                let multiplier = iter.unwrap_get_inner(i);
-                                (i, price * multiplier)
-                            },
-                            exit,
-                        )?;
-                        Ok(())
-                    },
-                )
+                in_usd.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_transform(
+                        starting_indexes.dateindex,
+                        price,
+                        |(i, price, ..)| {
+                            let multiplier = iter.unwrap_get_inner(i);
+                            (i, price * multiplier)
+                        },
+                        exit,
+                    )?;
+                    Ok(())
+                })
             };
 
         if self._0sd_in_usd.is_none() {
