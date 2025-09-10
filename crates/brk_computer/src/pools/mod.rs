@@ -70,8 +70,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -224,16 +223,13 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.vecs
-                .iter()
-                .flat_map(|(_, vecs)| vecs.vecs())
-                .collect::<Vec<_>>(),
-            vec![&self.height_to_pool],
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [&self.height_to_pool as &dyn AnyCollectableVec]
+            .into_iter()
+            .chain(
+                self.vecs
+                    .iter()
+                    .flat_map(|(_, vecs)| vecs.iter_any_collectable()),
+            )
     }
 }

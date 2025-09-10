@@ -37,7 +37,7 @@ impl<T> BySpendableType<T> {
         }
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 11] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self.p2pk65,
             &mut self.p2pk33,
@@ -51,9 +51,10 @@ impl<T> BySpendableType<T> {
             &mut self.unknown,
             &mut self.empty,
         ]
+        .into_iter()
     }
 
-    pub fn as_typed_vec(&self) -> [(OutputType, &T); 11] {
+    pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
         [
             (OutputType::P2PK65, &self.p2pk65),
             (OutputType::P2PK33, &self.p2pk33),
@@ -67,11 +68,12 @@ impl<T> BySpendableType<T> {
             (OutputType::Unknown, &self.unknown),
             (OutputType::Empty, &self.empty),
         ]
+        .into_iter()
     }
 }
 
 impl<T> BySpendableType<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 11] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65.1,
             &self.p2pk33.1,
@@ -85,6 +87,7 @@ impl<T> BySpendableType<(GroupFilter, T)> {
             &self.unknown.1,
             &self.empty.1,
         ]
+        .into_iter()
     }
 }
 

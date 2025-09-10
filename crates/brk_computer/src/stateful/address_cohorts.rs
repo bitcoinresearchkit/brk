@@ -458,18 +458,17 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let by_size_range = self.0.amount_range.as_vec();
+        let by_size_range = &self.0.amount_range;
 
         [
             self.0
                 .ge_amount
-                .as_mut_vec()
-                .into_iter()
+                .iter_mut()
                 .map(|(filter, vecs)| {
                     (
                         vecs,
                         by_size_range
-                            .into_iter()
+                            .iter()
                             .filter(|(other, _)| filter.includes(other))
                             .map(|(_, v)| v)
                             .collect::<Vec<_>>(),
@@ -478,13 +477,12 @@ impl Vecs {
                 .collect::<Vec<_>>(),
             self.0
                 .lt_amount
-                .as_mut_vec()
-                .into_iter()
+                .iter_mut()
                 .map(|(filter, vecs)| {
                     (
                         vecs,
                         by_size_range
-                            .into_iter()
+                            .iter()
                             .filter(|(other, _)| filter.includes(other))
                             .map(|(_, v)| v)
                             .collect::<Vec<_>>(),
@@ -506,7 +504,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.as_mut_vecs()
+        self.iter_mut()
             .into_iter()
             .try_for_each(|(_, v)| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
@@ -525,26 +523,24 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.0.as_boxed_mut_vecs().into_iter().try_for_each(|v| {
-            v.into_iter().try_for_each(|(_, v)| {
-                v.compute_rest_part2(
-                    indexes,
-                    price,
-                    starting_indexes,
-                    height_to_supply,
-                    dateindex_to_supply,
-                    height_to_market_cap,
-                    dateindex_to_market_cap,
-                    height_to_realized_cap,
-                    dateindex_to_realized_cap,
-                    exit,
-                )
-            })
+        self.0.iter_mut().try_for_each(|(_, v)| {
+            v.compute_rest_part2(
+                indexes,
+                price,
+                starting_indexes,
+                height_to_supply,
+                dateindex_to_supply,
+                height_to_market_cap,
+                dateindex_to_market_cap,
+                height_to_realized_cap,
+                dateindex_to_realized_cap,
+                exit,
+            )
         })
     }
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.as_mut_separate_vecs()
+        self.iter_separate_mut()
             .into_iter()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
     }

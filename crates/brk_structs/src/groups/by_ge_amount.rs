@@ -20,7 +20,7 @@ pub struct ByGreatEqualAmount<T> {
 }
 
 impl<T> ByGreatEqualAmount<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 13] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._1sat,
             &mut self._10sats,
@@ -36,11 +36,12 @@ impl<T> ByGreatEqualAmount<T> {
             &mut self._1k_btc,
             &mut self._10k_btc,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByGreatEqualAmount<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 13] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._1sat.1,
             &self._10sats.1,
@@ -56,6 +57,7 @@ impl<T> ByGreatEqualAmount<(GroupFilter, T)> {
             &self._1k_btc.1,
             &self._10k_btc.1,
         ]
+        .into_iter()
     }
 }
 

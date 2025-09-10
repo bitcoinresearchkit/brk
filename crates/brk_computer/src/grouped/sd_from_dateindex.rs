@@ -805,39 +805,116 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             .map(|c| c.dateindex.as_mut().unwrap())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.sma.as_ref().map_or(vec![], |v| v.vecs()),
-            self.sd.vecs(),
-            self.p0_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p1sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p1_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p2sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p2_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p3sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m0_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m1sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m1_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m2sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m2_5sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m3sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self._0sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p0_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p1sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p1_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p2sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p2_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.p3sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m0_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m1sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m1_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m2sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m2_5sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.m3sd_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.zscore.as_ref().map_or(vec![], |v| v.vecs()),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.sma.iter().flat_map(|v| v.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.sd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p0_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.p1sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.p1_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.p2sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.p2_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.p3sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m0_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m1sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m1_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m2sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m2_5sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.m3sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(
+            iter.chain(
+                self._0sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p0_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p1sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p1_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p2sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p2_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.p3sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m0_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m1sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m1_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m2sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m2_5sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.m3sd_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(iter.chain(self.zscore.iter().flat_map(|v| v.iter_any_collectable())));
+
+        iter
     }
 }

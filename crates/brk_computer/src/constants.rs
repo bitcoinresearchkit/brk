@@ -156,8 +156,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -247,25 +246,25 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.constant_0.vecs(),
-            self.constant_1.vecs(),
-            self.constant_2.vecs(),
-            self.constant_3.vecs(),
-            self.constant_4.vecs(),
-            self.constant_38_2.vecs(),
-            self.constant_50.vecs(),
-            self.constant_61_8.vecs(),
-            self.constant_100.vecs(),
-            self.constant_600.vecs(),
-            self.constant_minus_1.vecs(),
-            self.constant_minus_2.vecs(),
-            self.constant_minus_3.vecs(),
-            self.constant_minus_4.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(std::iter::empty());
+
+        iter = Box::new(iter.chain(self.constant_0.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_1.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_2.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_3.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_4.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_38_2.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_50.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_61_8.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_100.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_600.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_minus_1.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_minus_2.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_minus_3.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constant_minus_4.iter_any_collectable()));
+
+        iter
     }
 }

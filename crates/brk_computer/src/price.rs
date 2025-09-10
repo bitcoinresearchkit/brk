@@ -326,8 +326,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -1228,9 +1227,9 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        vec![
-            vec![
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
+            [
                 &self.dateindex_to_price_close_in_cents as &dyn AnyCollectableVec,
                 &self.dateindex_to_price_high_in_cents,
                 &self.dateindex_to_price_low_in_cents,
@@ -1247,7 +1246,6 @@ impl Vecs {
                 &self.quarterindex_to_price_ohlc,
                 &self.semesterindex_to_price_ohlc,
                 &self.yearindex_to_price_ohlc,
-                // &self.halvingepoch_to_price_ohlc,
                 &self.decadeindex_to_price_ohlc,
                 &self.height_to_price_ohlc_in_sats,
                 &self.dateindex_to_price_ohlc_in_sats,
@@ -1257,28 +1255,63 @@ impl Vecs {
                 &self.quarterindex_to_price_ohlc_in_sats,
                 &self.semesterindex_to_price_ohlc_in_sats,
                 &self.yearindex_to_price_ohlc_in_sats,
-                // &self.halvingepoch_to_price_ohlc_in_sats,
                 &self.decadeindex_to_price_ohlc_in_sats,
-            ],
-            self.timeindexes_to_price_close.vecs(),
-            self.timeindexes_to_price_high.vecs(),
-            self.timeindexes_to_price_low.vecs(),
-            self.timeindexes_to_price_open.vecs(),
-            self.chainindexes_to_price_close.vecs(),
-            self.chainindexes_to_price_high.vecs(),
-            self.chainindexes_to_price_low.vecs(),
-            self.chainindexes_to_price_open.vecs(),
-            self.timeindexes_to_price_close_in_sats.vecs(),
-            self.timeindexes_to_price_high_in_sats.vecs(),
-            self.timeindexes_to_price_low_in_sats.vecs(),
-            self.timeindexes_to_price_open_in_sats.vecs(),
-            self.chainindexes_to_price_close_in_sats.vecs(),
-            self.chainindexes_to_price_high_in_sats.vecs(),
-            self.chainindexes_to_price_low_in_sats.vecs(),
-            self.chainindexes_to_price_open_in_sats.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+            ]
+            .into_iter(),
+        );
+
+        iter = Box::new(iter.chain(self.timeindexes_to_price_close.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.timeindexes_to_price_high.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.timeindexes_to_price_low.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.timeindexes_to_price_open.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chainindexes_to_price_close.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chainindexes_to_price_high.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chainindexes_to_price_low.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chainindexes_to_price_open.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.timeindexes_to_price_close_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.timeindexes_to_price_high_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(iter.chain(self.timeindexes_to_price_low_in_sats.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.timeindexes_to_price_open_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.chainindexes_to_price_close_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.chainindexes_to_price_high_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.chainindexes_to_price_low_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.chainindexes_to_price_open_in_sats
+                    .iter_any_collectable(),
+            ),
+        );
+
+        iter
     }
 }

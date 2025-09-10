@@ -204,18 +204,16 @@ impl ComputedValueVecsFromTxindex {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.sats.vecs(),
-            vec![&self.bitcoin_txindex as &dyn AnyCollectableVec],
-            self.bitcoin.vecs(),
-            self.dollars_txindex
-                .as_ref()
-                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
-            self.dollars.as_ref().map_or(vec![], |v| v.vecs()),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [&self.bitcoin_txindex as &dyn AnyCollectableVec]
+            .into_iter()
+            .chain(self.sats.iter_any_collectable())
+            .chain(self.bitcoin.iter_any_collectable())
+            .chain(
+                self.dollars_txindex
+                    .iter()
+                    .map(|v| v as &dyn AnyCollectableVec),
+            )
+            .chain(self.dollars.iter().flat_map(|v| v.iter_any_collectable()))
     }
 }

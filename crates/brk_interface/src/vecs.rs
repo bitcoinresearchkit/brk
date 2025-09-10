@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use vecdb::AnyCollectableVec;
 use derive_deref::{Deref, DerefMut};
+use vecdb::AnyCollectableVec;
 
 use crate::pagination::{PaginatedIndexParam, PaginationParam};
 
@@ -33,7 +33,9 @@ impl<'a> Vecs<'a> {
             .into_iter()
             .for_each(|vec| this.insert(vec));
 
-        computer.vecs().into_iter().for_each(|vec| this.insert(vec));
+        computer
+            .iter_any_collectable()
+            .for_each(|vec| this.insert(vec));
 
         let mut ids = this.id_to_index_to_vec.keys().cloned().collect::<Vec<_>>();
 

@@ -632,37 +632,132 @@ impl ComputedRatioVecsFromDateIndex {
         .collect::<Vec<_>>()
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.price.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio.vecs(),
-            self.ratio_1w_sma.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_1m_sma.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_1y_sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_2y_sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_4y_sd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct1.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct2.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct5.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct95.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct98.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct99.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct1_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct2_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct5_in_usd.as_ref().map_or(vec![], |v| v.vecs()),
-            self.ratio_pct95_in_usd
-                .as_ref()
-                .map_or(vec![], |v| v.vecs()),
-            self.ratio_pct98_in_usd
-                .as_ref()
-                .map_or(vec![], |v| v.vecs()),
-            self.ratio_pct99_in_usd
-                .as_ref()
-                .map_or(vec![], |v| v.vecs()),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.price.iter().flat_map(|v| v.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.ratio.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.ratio_1w_sma
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_1m_sma
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(iter.chain(self.ratio_sd.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(
+            iter.chain(
+                self.ratio_1y_sd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_2y_sd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_4y_sd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct1
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct2
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct5
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct95
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct98
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct99
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct1_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct2_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct5_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct95_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct98_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.ratio_pct99_in_usd
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+
+        iter
     }
 }

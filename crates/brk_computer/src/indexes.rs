@@ -475,8 +475,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -934,9 +933,9 @@ impl Vecs {
         })
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        vec![
-            &self.dateindex_to_date,
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [
+            &self.dateindex_to_date as &dyn AnyCollectableVec,
             &self.dateindex_to_dateindex,
             &self.dateindex_to_first_height,
             &self.dateindex_to_height_count,
@@ -997,6 +996,7 @@ impl Vecs {
             &self.yearindex_to_yearindex,
             &self.outputindex_to_txindex,
         ]
+        .into_iter()
     }
 }
 

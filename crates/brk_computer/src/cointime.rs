@@ -249,8 +249,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -609,34 +608,59 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.indexes_to_coinblocks_created.vecs(),
-            self.indexes_to_coinblocks_stored.vecs(),
-            self.indexes_to_liveliness.vecs(),
-            self.indexes_to_vaultedness.vecs(),
-            self.indexes_to_activity_to_vaultedness_ratio.vecs(),
-            self.indexes_to_vaulted_supply.vecs(),
-            self.indexes_to_active_supply.vecs(),
-            self.indexes_to_thermo_cap.vecs(),
-            self.indexes_to_investor_cap.vecs(),
-            self.indexes_to_vaulted_cap.vecs(),
-            self.indexes_to_active_cap.vecs(),
-            self.indexes_to_vaulted_price.vecs(),
-            self.indexes_to_vaulted_price_ratio.vecs(),
-            self.indexes_to_active_price.vecs(),
-            self.indexes_to_active_price_ratio.vecs(),
-            self.indexes_to_true_market_mean.vecs(),
-            self.indexes_to_true_market_mean_ratio.vecs(),
-            self.indexes_to_cointime_price.vecs(),
-            self.indexes_to_cointime_cap.vecs(),
-            self.indexes_to_cointime_price_ratio.vecs(),
-            self.indexes_to_cointime_value_destroyed.vecs(),
-            self.indexes_to_cointime_value_created.vecs(),
-            self.indexes_to_cointime_value_stored.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(std::iter::empty());
+
+        iter = Box::new(iter.chain(self.indexes_to_coinblocks_created.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_coinblocks_stored.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_liveliness.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_vaultedness.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_activity_to_vaultedness_ratio
+                    .iter_any_collectable(),
+            ),
+        );
+
+        iter = Box::new(iter.chain(self.indexes_to_vaulted_supply.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_active_supply.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.indexes_to_thermo_cap.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_investor_cap.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_vaulted_cap.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_active_cap.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.indexes_to_vaulted_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_vaulted_price_ratio.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_active_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_active_price_ratio.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.indexes_to_true_market_mean.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_true_market_mean_ratio
+                    .iter_any_collectable(),
+            ),
+        );
+
+        iter = Box::new(iter.chain(self.indexes_to_cointime_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_cointime_cap.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_cointime_price_ratio.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_cointime_value_destroyed
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_cointime_value_created
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(iter.chain(self.indexes_to_cointime_value_stored.iter_any_collectable()));
+
+        iter
     }
 }

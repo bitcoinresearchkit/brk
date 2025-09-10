@@ -374,24 +374,24 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.indexes_to_blocks_mined.vecs(),
-            self.indexes_to_1w_blocks_mined.vecs(),
-            self.indexes_to_1m_blocks_mined.vecs(),
-            self.indexes_to_1y_blocks_mined.vecs(),
-            self.indexes_to_subsidy.vecs(),
-            self.indexes_to_fee.vecs(),
-            self.indexes_to_coinbase.vecs(),
-            self.indexes_to_dominance.vecs(),
-            self.indexes_to_1d_dominance.vecs(),
-            self.indexes_to_1w_dominance.vecs(),
-            self.indexes_to_1m_dominance.vecs(),
-            self.indexes_to_1y_dominance.vecs(),
-            self.indexes_to_days_since_block.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(std::iter::empty());
+
+        iter = Box::new(iter.chain(self.indexes_to_blocks_mined.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1w_blocks_mined.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1m_blocks_mined.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1y_blocks_mined.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_subsidy.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_dominance.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1d_dominance.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1w_dominance.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1m_dominance.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1y_dominance.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_days_since_block.iter_any_collectable()));
+
+        iter
     }
 }

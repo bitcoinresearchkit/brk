@@ -10,10 +10,19 @@ package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
 package.rust-version = "1.89"
 
+[profile.dev]
+lto = "thin"
+debug = true
+codegen-units = 2
+opt-level = 3
+overflow-checks = true
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
 panic = "abort"
+strip = true
+overflow-checks = false
 
 [profile.profiling]
 inherits = "release"
@@ -21,6 +30,17 @@ debug = true
 
 [profile.dist]
 inherits = "release"
+
+[profile.clippy]
+inherits = "dev"
+lto = "off"
+codegen-units = 256
+opt-level = 0
+incremental = true
+debug = false
+overflow-checks = false
+panic = "abort"
+debug-assertions = false
 
 [workspace.dependencies]
 allocative = { version = "0.3.4", features = ["parking_lot"] }
@@ -55,8 +75,8 @@ serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.143", features = ["float_roundtrip"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
-# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
-vecdb = { version = "0.2.12", features = ["derive"]}
+vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+# vecdb = { version = "0.2.12", features = ["derive"]}
 zerocopy = "0.8.27"
 zerocopy-derive = "0.8.27"
 

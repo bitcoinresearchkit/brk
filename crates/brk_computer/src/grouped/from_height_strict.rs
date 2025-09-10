@@ -82,15 +82,10 @@ where
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            vec![&self.height as &dyn AnyCollectableVec],
-            self.height_extra.vecs(),
-            self.difficultyepoch.vecs(),
-            // self.halvingepoch.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [&self.height as &dyn AnyCollectableVec]
+            .into_iter()
+            .chain(self.height_extra.iter_any_collectable())
+            .chain(self.difficultyepoch.iter_any_collectable())
     }
 }
