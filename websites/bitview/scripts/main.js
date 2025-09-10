@@ -32,7 +32,10 @@
  *   "Timestamp" |
  *   "tx" |
  *   "Type" |
- *   "USD / (PetaHash / Second)" |
+ *   "USD/(TH/s)/day" |
+ *   "USD/(PH/s)/day" |
+ *   "Sats/(TH/s)/day" |
+ *   "Sats/(PH/s)/day" |
  *   "USD" |
  *   "Version" |
  *   "WU" |
@@ -839,11 +842,12 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id === "price_drawdown" ||
         id === "difficulty_adjustment" ||
-        id.endsWith("oscillator") ||
-        id.endsWith("dominance") ||
-        id.endsWith("returns") ||
-        id.endsWith("volatility") ||
-        id.endsWith("cagr"))
+        id.endsWith("_oscillator") ||
+        id.endsWith("_dominance") ||
+        id.endsWith("_returns") ||
+        id.endsWith("_rebound") ||
+        id.endsWith("_volatility") ||
+        id.endsWith("_cagr"))
     ) {
       setUnit("percentage");
     }
@@ -980,6 +984,19 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id === "blockhash") {
       setUnit("Hash");
     }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("hash_price_phs")) {
+      setUnit("USD/(PH/s)/day");
+    }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("hash_price_ths")) {
+      setUnit("USD/(TH/s)/day");
+    }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("hash_value_phs")) {
+      setUnit("Sats/(PH/s)/day");
+    }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("hash_value_ths")) {
+      setUnit("Sats/(TH/s)/day");
+    }
+
     if (
       (!unit || thoroughUnitCheck) &&
       (id.includes("days_between") ||

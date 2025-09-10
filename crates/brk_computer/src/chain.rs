@@ -31,6 +31,7 @@ const TARGET_BLOCKS_PER_QUARTER: u64 = 3 * TARGET_BLOCKS_PER_MONTH;
 const TARGET_BLOCKS_PER_SEMESTER: u64 = 2 * TARGET_BLOCKS_PER_QUARTER;
 const TARGET_BLOCKS_PER_YEAR: u64 = 2 * TARGET_BLOCKS_PER_SEMESTER;
 const TARGET_BLOCKS_PER_DECADE: u64 = 10 * TARGET_BLOCKS_PER_YEAR;
+const ONE_TERA_HASH: f64 = 1_000_000_000_000.0;
 
 #[derive(Clone, Allocative)]
 pub struct Vecs {
@@ -112,10 +113,22 @@ pub struct Vecs {
     pub indexes_to_hash_rate_1m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_hash_rate_2m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_hash_rate_1y_sma: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_ths: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_ths_min: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_phs: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_phs_min: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_rebound: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_value_ths: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_value_ths_min: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_value_phs: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_value_phs_min: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_value_rebound: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_difficulty_as_hash: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_blocks_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_days_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_blocks_before_next_halving: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_days_before_next_halving: ComputedVecsFromHeight<StoredF32>,
 }
 
 impl Vecs {
@@ -917,6 +930,102 @@ impl Vecs {
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )?,
+            indexes_to_blocks_before_next_halving: ComputedVecsFromHeight::forced_import(
+                &db,
+                "blocks_before_next_halving",
+                Source::Compute,
+                version + VERSION + Version::TWO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_days_before_next_halving: ComputedVecsFromHeight::forced_import(
+                &db,
+                "days_before_next_halving",
+                Source::Compute,
+                version + VERSION + Version::TWO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_price_ths: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_price_ths",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_price_phs: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_price_phs",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_value_ths: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_value_ths",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_value_phs: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_value_phs",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_price_ths_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_price_ths_min",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_price_phs_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_price_phs_min",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_price_rebound: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_price_rebound",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_value_ths_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_value_ths_min",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_value_phs_min: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_value_phs_min",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_hash_value_rebound: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "hash_value_rebound",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
 
             txindex_to_is_coinbase,
             inputindex_to_value,
@@ -1713,6 +1822,169 @@ impl Vecs {
                 Ok(())
             })?;
 
+        self.indexes_to_blocks_before_next_halving.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &indexes.height_to_height,
+                    |(h, ..)| (h, StoredU32::from(h.left_before_next_halving())),
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_days_before_next_halving.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_blocks_before_next_halving
+                        .height
+                        .as_ref()
+                        .unwrap(),
+                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_hash_price_ths
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_coinbase
+                        .dollars
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .unwrap_sum(),
+                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    |(i, coinbase_sum, hashrate, ..)| {
+                        (i, (*coinbase_sum / (*hashrate / ONE_TERA_HASH)).into())
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_price_phs
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_price_ths.dateindex.as_ref().unwrap(),
+                    |(i, price, ..)| (i, (*price * 1000.0).into()),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_value_ths
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_coinbase.sats.dateindex.unwrap_sum(),
+                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    |(i, coinbase_sum, hashrate, ..)| {
+                        (
+                            i,
+                            (*coinbase_sum as f64 / (*hashrate / ONE_TERA_HASH)).into(),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_value_phs
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_value_ths.dateindex.as_ref().unwrap(),
+                    |(i, value, ..)| (i, (*value * 1000.0).into()),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_price_ths_min
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_all_time_low_(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_price_ths.dateindex.as_ref().unwrap(),
+                    exit,
+                    true,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_price_phs_min
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_all_time_low_(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_price_phs.dateindex.as_ref().unwrap(),
+                    exit,
+                    true,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_value_ths_min
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_all_time_low_(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_value_ths.dateindex.as_ref().unwrap(),
+                    exit,
+                    true,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_value_phs_min
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_all_time_low_(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_value_phs.dateindex.as_ref().unwrap(),
+                    exit,
+                    true,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_price_rebound
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_percentage_difference(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_price_phs.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_price_phs_min
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_hash_value_rebound
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_percentage_difference(
+                    starting_indexes.dateindex,
+                    self.indexes_to_hash_value_phs.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_value_phs_min
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
         Ok(())
     }
 
@@ -1777,6 +2049,28 @@ impl Vecs {
                     .iter_any_collectable(),
             ),
         );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_blocks_before_next_halving
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_days_before_next_halving
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(iter.chain(self.indexes_to_hash_price_ths.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_price_phs.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_value_ths.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_value_phs.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_price_ths_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_price_phs_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_value_ths_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_value_phs_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_price_rebound.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_hash_value_rebound.iter_any_collectable()));
 
         iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));
