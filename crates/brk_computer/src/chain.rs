@@ -23,6 +23,7 @@ use super::{Indexes, indexes, price};
 
 const VERSION: Version = Version::ZERO;
 const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;
+const TARGET_BLOCKS_PER_DAY_F32: f32 = 144.0;
 const TARGET_BLOCKS_PER_DAY: u64 = 144;
 const TARGET_BLOCKS_PER_WEEK: u64 = 7 * TARGET_BLOCKS_PER_DAY;
 const TARGET_BLOCKS_PER_MONTH: u64 = 30 * TARGET_BLOCKS_PER_DAY;
@@ -112,6 +113,9 @@ pub struct Vecs {
     pub indexes_to_hash_rate_2m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_hash_rate_1y_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_difficulty_as_hash: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_blocks_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_days_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
 }
 
 impl Vecs {
@@ -887,6 +891,32 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+            indexes_to_difficulty_adjustment: ComputedVecsFromHeight::forced_import(
+                &db,
+                "difficulty_adjustment",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_sum(),
+            )?,
+            indexes_to_blocks_before_next_difficulty_adjustment:
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    "blocks_before_next_difficulty_adjustment",
+                    Source::Compute,
+                    version + VERSION + Version::TWO,
+                    indexes,
+                    VecBuilderOptions::default().add_last(),
+                )?,
+            indexes_to_days_before_next_difficulty_adjustment:
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    "days_before_next_difficulty_adjustment",
+                    Source::Compute,
+                    version + VERSION + Version::TWO,
+                    indexes,
+                    VecBuilderOptions::default().add_last(),
+                )?,
 
             txindex_to_is_coinbase,
             inputindex_to_value,
@@ -1643,6 +1673,46 @@ impl Vecs {
                 })?;
         }
 
+        self.indexes_to_difficulty_adjustment.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |v| {
+                v.compute_percentage_change(
+                    starting_indexes.height,
+                    &indexer.vecs.height_to_difficulty,
+                    1,
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_blocks_before_next_difficulty_adjustment
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &indexes.height_to_height,
+                    |(h, ..)| (h, StoredU32::from(h.left_before_next_diff_adj())),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_days_before_next_difficulty_adjustment
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_blocks_before_next_difficulty_adjustment
+                        .height
+                        .as_ref()
+                        .unwrap(),
+                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
         Ok(())
     }
 
@@ -1691,9 +1761,22 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_block_weight.iter_any_collectable()));
 
         iter = Box::new(iter.chain(self.indexes_to_difficulty.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_difficulty_adjustment.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_difficultyepoch.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_halvingepoch.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_difficulty_as_hash.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_blocks_before_next_difficulty_adjustment
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_days_before_next_difficulty_adjustment
+                    .iter_any_collectable(),
+            ),
+        );
 
         iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));

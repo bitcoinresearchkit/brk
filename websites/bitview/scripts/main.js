@@ -39,6 +39,7 @@
  *   "Bool" |
  *   "Days" |
  *   "%mcap" |
+ *   "blocks" |
  *   "%cmcap" |
  *   "%cp+l" |
  *   "%rcap" |
@@ -57,7 +58,6 @@
  *   "sd" |
  *   "Epoch" |
  *   "Height" |
- *   "Type" |
  *   "Bytes"
  * } Unit
  */
@@ -768,6 +768,9 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id === "chain") {
       setUnit("block");
     }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("blocks_before")) {
+      setUnit("blocks");
+    }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "emptyaddressdata" || id === "loadedaddressdata")
@@ -835,6 +838,7 @@ function createUtils() {
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "price_drawdown" ||
+        id === "difficulty_adjustment" ||
         id.endsWith("oscillator") ||
         id.endsWith("dominance") ||
         id.endsWith("returns") ||
@@ -978,7 +982,9 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.includes("days_between") || id.includes("days_since"))
+      (id.includes("days_between") ||
+        id.includes("days_since") ||
+        id.startsWith("days_before"))
     ) {
       setUnit("Days");
     }
