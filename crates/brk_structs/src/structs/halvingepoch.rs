@@ -10,6 +10,8 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
 
+pub const BLOCKS_PER_HALVING: u32 = 210_000;
+
 #[derive(
     Debug,
     Clone,
@@ -78,7 +80,7 @@ impl Add<usize> for HalvingEpoch {
 
 impl From<Height> for HalvingEpoch {
     fn from(value: Height) -> Self {
-        Self((u32::from(value) / 210_000) as u16)
+        Self((u32::from(value) / BLOCKS_PER_HALVING) as u16)
     }
 }
 

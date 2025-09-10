@@ -3753,6 +3753,24 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   ],
                 },
                 {
+                  name: "Halving",
+                  title: "Halving Epoch",
+                  bottom: [
+                    createBaseSeries({
+                      key: "halvingepoch",
+                      name: "Halving",
+                    }),
+                    createBaseSeries({
+                      key: "blocks_before_next_halving",
+                      name: "Before next",
+                    }),
+                    createBaseSeries({
+                      key: "days_before_next_halving",
+                      name: "Before next",
+                    }),
+                  ],
+                },
+                {
                   name: "Difficulty",
                   title: "Difficulty",
                   bottom: [
@@ -3762,13 +3780,8 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     }),
                     createBaseSeries({
                       key: "difficultyepoch",
-                      name: "Epoch",
+                      name: "Difficulty",
                     }),
-                    {
-                      key: "difficulty_adjustment",
-                      title: "Adjustment",
-                      type: "Baseline",
-                    },
                     createBaseSeries({
                       key: "blocks_before_next_difficulty_adjustment",
                       name: "Before next",
@@ -3777,6 +3790,17 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       key: "days_before_next_difficulty_adjustment",
                       name: "Before next",
                     }),
+                  ],
+                },
+                {
+                  name: "adjustment",
+                  title: "Difficulty adjustment",
+                  bottom: [
+                    {
+                      key: "difficulty_adjustment",
+                      title: "difficulty change",
+                      type: "Baseline",
+                    },
                   ],
                 },
                 {
@@ -3824,16 +3848,80 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         }),
                       ],
                     },
-                  ],
-                },
-                {
-                  name: "Halving Epoch",
-                  title: "Halving Epoch",
-                  bottom: [
-                    createBaseSeries({
-                      key: "halvingepoch",
-                      name: "Epoch",
-                    }),
+                    {
+                      name: "Price",
+                      title: "Hash Price",
+                      bottom: [
+                        createBaseSeries({
+                          key: "hash_price_ths",
+                          name: "Dollars",
+                          color: colors.emerald,
+                        }),
+                        createBaseSeries({
+                          key: "hash_price_phs",
+                          name: "Dollars",
+                          color: colors.emerald,
+                        }),
+                        createBaseSeries({
+                          key: "hash_price_rebound",
+                          name: "Rebound",
+                          color: colors.yellow,
+                        }),
+                        createBaseSeries({
+                          key: "hash_price_ths_min",
+                          name: "Min",
+                          color: colors.red,
+                          options: {
+                            lineStyle: 1,
+                          },
+                        }),
+                        createBaseSeries({
+                          key: "hash_price_phs_min",
+                          name: "Min",
+                          color: colors.red,
+                          options: {
+                            lineStyle: 1,
+                          },
+                        }),
+                      ],
+                    },
+                    {
+                      name: "Value",
+                      title: "Hash Value",
+                      bottom: [
+                        createBaseSeries({
+                          key: "hash_value_ths",
+                          name: "Sats",
+                          color: colors.orange,
+                        }),
+                        createBaseSeries({
+                          key: "hash_value_phs",
+                          name: "Sats",
+                          color: colors.orange,
+                        }),
+                        createBaseSeries({
+                          key: "hash_value_rebound",
+                          name: "Rebound",
+                          color: colors.yellow,
+                        }),
+                        createBaseSeries({
+                          key: "hash_value_ths_min",
+                          name: "Min",
+                          color: colors.red,
+                          options: {
+                            lineStyle: 1,
+                          },
+                        }),
+                        createBaseSeries({
+                          key: "hash_value_phs_min",
+                          name: "Min",
+                          color: colors.red,
+                          options: {
+                            lineStyle: 1,
+                          },
+                        }),
+                      ],
+                    },
                   ],
                 },
                 {
