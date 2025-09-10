@@ -12,7 +12,7 @@ use vecdb::{CheckedSub, Printable, Stamp, StoredCompressed};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::copy_first_4bytes;
+use crate::{BLOCKS_PER_DIFF_EPOCHS, copy_first_4bytes};
 
 use super::StoredU64;
 
@@ -71,6 +71,10 @@ impl Height {
 
     pub fn is_not_zero(self) -> bool {
         self != Self::ZERO
+    }
+
+    pub fn left_before_next_diff_adj(self) -> u32 {
+        BLOCKS_PER_DIFF_EPOCHS - (*self % 2016)
     }
 }
 

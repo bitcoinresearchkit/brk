@@ -10,6 +10,8 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
 
+pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
+
 #[derive(
     Debug,
     Clone,
@@ -79,7 +81,7 @@ impl Div<usize> for DifficultyEpoch {
 
 impl From<Height> for DifficultyEpoch {
     fn from(value: Height) -> Self {
-        Self((u32::from(value) / 2016) as u16)
+        Self((u32::from(value) / BLOCKS_PER_DIFF_EPOCHS) as u16)
     }
 }
 

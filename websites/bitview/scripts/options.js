@@ -3764,6 +3764,19 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       key: "difficultyepoch",
                       name: "Epoch",
                     }),
+                    {
+                      key: "difficulty_adjustment",
+                      title: "Adjustment",
+                      type: "Baseline",
+                    },
+                    createBaseSeries({
+                      key: "blocks_before_next_difficulty_adjustment",
+                      name: "Before next",
+                    }),
+                    createBaseSeries({
+                      key: "days_before_next_difficulty_adjustment",
+                      name: "Before next",
+                    }),
                   ],
                 },
                 {
