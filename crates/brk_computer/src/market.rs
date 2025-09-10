@@ -1516,8 +1516,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -2327,176 +2326,202 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.indexes_to_price_ath.vecs(),
-            self.indexes_to_price_drawdown.vecs(),
-            self.indexes_to_days_since_price_ath.vecs(),
-            self.indexes_to_max_days_between_price_aths.vecs(),
-            self.indexes_to_max_years_between_price_aths.vecs(),
-            self.indexes_to_price_1w_sma.vecs(),
-            self.indexes_to_price_8d_sma.vecs(),
-            self.indexes_to_price_13d_sma.vecs(),
-            self.indexes_to_price_21d_sma.vecs(),
-            self.indexes_to_price_1m_sma.vecs(),
-            self.indexes_to_price_34d_sma.vecs(),
-            self.indexes_to_price_55d_sma.vecs(),
-            self.indexes_to_price_89d_sma.vecs(),
-            self.indexes_to_price_144d_sma.vecs(),
-            self.indexes_to_price_200d_sma.vecs(),
-            self.indexes_to_price_1y_sma.vecs(),
-            self.indexes_to_price_2y_sma.vecs(),
-            self.indexes_to_price_200w_sma.vecs(),
-            self.indexes_to_price_4y_sma.vecs(),
-            self.indexes_to_price_1w_ema.vecs(),
-            self.indexes_to_price_8d_ema.vecs(),
-            self.indexes_to_price_13d_ema.vecs(),
-            self.indexes_to_price_21d_ema.vecs(),
-            self.indexes_to_price_1m_ema.vecs(),
-            self.indexes_to_price_34d_ema.vecs(),
-            self.indexes_to_price_55d_ema.vecs(),
-            self.indexes_to_price_89d_ema.vecs(),
-            self.indexes_to_price_144d_ema.vecs(),
-            self.indexes_to_price_200d_ema.vecs(),
-            self.indexes_to_price_1y_ema.vecs(),
-            self.indexes_to_price_2y_ema.vecs(),
-            self.indexes_to_price_200w_ema.vecs(),
-            self.indexes_to_price_4y_ema.vecs(),
-            self.indexes_to_price_200d_sma_x0_8.vecs(),
-            self.indexes_to_price_200d_sma_x2_4.vecs(),
-            self.price_1d_ago.vecs(),
-            self.price_1w_ago.vecs(),
-            self.price_1m_ago.vecs(),
-            self.price_3m_ago.vecs(),
-            self.price_6m_ago.vecs(),
-            self.price_1y_ago.vecs(),
-            self.price_2y_ago.vecs(),
-            self.price_3y_ago.vecs(),
-            self.price_4y_ago.vecs(),
-            self.price_5y_ago.vecs(),
-            self.price_6y_ago.vecs(),
-            self.price_8y_ago.vecs(),
-            self.price_10y_ago.vecs(),
-            self._1d_price_returns.vecs(),
-            self._1w_price_returns.vecs(),
-            self._1m_price_returns.vecs(),
-            self._3m_price_returns.vecs(),
-            self._6m_price_returns.vecs(),
-            self._1y_price_returns.vecs(),
-            self._2y_price_returns.vecs(),
-            self._3y_price_returns.vecs(),
-            self._4y_price_returns.vecs(),
-            self._5y_price_returns.vecs(),
-            self._6y_price_returns.vecs(),
-            self._8y_price_returns.vecs(),
-            self._10y_price_returns.vecs(),
-            self._2y_cagr.vecs(),
-            self._3y_cagr.vecs(),
-            self._4y_cagr.vecs(),
-            self._5y_cagr.vecs(),
-            self._6y_cagr.vecs(),
-            self._8y_cagr.vecs(),
-            self._10y_cagr.vecs(),
-            self._1w_dca_returns.vecs(),
-            self._1m_dca_returns.vecs(),
-            self._3m_dca_returns.vecs(),
-            self._6m_dca_returns.vecs(),
-            self._1y_dca_returns.vecs(),
-            self._2y_dca_returns.vecs(),
-            self._3y_dca_returns.vecs(),
-            self._4y_dca_returns.vecs(),
-            self._5y_dca_returns.vecs(),
-            self._6y_dca_returns.vecs(),
-            self._8y_dca_returns.vecs(),
-            self._10y_dca_returns.vecs(),
-            self._2y_dca_cagr.vecs(),
-            self._3y_dca_cagr.vecs(),
-            self._4y_dca_cagr.vecs(),
-            self._5y_dca_cagr.vecs(),
-            self._6y_dca_cagr.vecs(),
-            self._8y_dca_cagr.vecs(),
-            self._10y_dca_cagr.vecs(),
-            self._1w_dca_avg_price.vecs(),
-            self._1m_dca_avg_price.vecs(),
-            self._3m_dca_avg_price.vecs(),
-            self._6m_dca_avg_price.vecs(),
-            self._1y_dca_avg_price.vecs(),
-            self._2y_dca_avg_price.vecs(),
-            self._3y_dca_avg_price.vecs(),
-            self._4y_dca_avg_price.vecs(),
-            self._5y_dca_avg_price.vecs(),
-            self._6y_dca_avg_price.vecs(),
-            self._8y_dca_avg_price.vecs(),
-            self._10y_dca_avg_price.vecs(),
-            self._1w_dca_stack.vecs(),
-            self._1m_dca_stack.vecs(),
-            self._3m_dca_stack.vecs(),
-            self._6m_dca_stack.vecs(),
-            self._1y_dca_stack.vecs(),
-            self._2y_dca_stack.vecs(),
-            self._3y_dca_stack.vecs(),
-            self._4y_dca_stack.vecs(),
-            self._5y_dca_stack.vecs(),
-            self._6y_dca_stack.vecs(),
-            self._8y_dca_stack.vecs(),
-            self._10y_dca_stack.vecs(),
-            self.dca_class_2025_stack.vecs(),
-            self.dca_class_2024_stack.vecs(),
-            self.dca_class_2023_stack.vecs(),
-            self.dca_class_2022_stack.vecs(),
-            self.dca_class_2021_stack.vecs(),
-            self.dca_class_2020_stack.vecs(),
-            self.dca_class_2019_stack.vecs(),
-            self.dca_class_2018_stack.vecs(),
-            self.dca_class_2017_stack.vecs(),
-            self.dca_class_2016_stack.vecs(),
-            self.dca_class_2015_stack.vecs(),
-            self.dca_class_2025_avg_price.vecs(),
-            self.dca_class_2024_avg_price.vecs(),
-            self.dca_class_2023_avg_price.vecs(),
-            self.dca_class_2022_avg_price.vecs(),
-            self.dca_class_2021_avg_price.vecs(),
-            self.dca_class_2020_avg_price.vecs(),
-            self.dca_class_2019_avg_price.vecs(),
-            self.dca_class_2018_avg_price.vecs(),
-            self.dca_class_2017_avg_price.vecs(),
-            self.dca_class_2016_avg_price.vecs(),
-            self.dca_class_2015_avg_price.vecs(),
-            self.dca_class_2025_returns.vecs(),
-            self.dca_class_2024_returns.vecs(),
-            self.dca_class_2023_returns.vecs(),
-            self.dca_class_2022_returns.vecs(),
-            self.dca_class_2021_returns.vecs(),
-            self.dca_class_2020_returns.vecs(),
-            self.dca_class_2019_returns.vecs(),
-            self.dca_class_2018_returns.vecs(),
-            self.dca_class_2017_returns.vecs(),
-            self.dca_class_2016_returns.vecs(),
-            self.dca_class_2015_returns.vecs(),
-            self.indexes_to_1d_returns_1w_sd.vecs(),
-            self.indexes_to_1d_returns_1m_sd.vecs(),
-            self.indexes_to_1d_returns_1y_sd.vecs(),
-            self.indexes_to_price_1w_volatility.vecs(),
-            self.indexes_to_price_1m_volatility.vecs(),
-            self.indexes_to_price_1y_volatility.vecs(),
-            self.indexes_to_price_2w_choppiness_index.vecs(),
-            self.indexes_to_price_1w_min.vecs(),
-            self.indexes_to_price_1w_max.vecs(),
-            self.indexes_to_price_2w_min.vecs(),
-            self.indexes_to_price_2w_max.vecs(),
-            self.indexes_to_price_1m_min.vecs(),
-            self.indexes_to_price_1m_max.vecs(),
-            self.indexes_to_price_1y_min.vecs(),
-            self.indexes_to_price_1y_max.vecs(),
-            vec![
-                &self.height_to_price_ath,
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
+            [
+                &self.height_to_price_ath as &dyn AnyCollectableVec,
                 &self.height_to_price_drawdown,
                 &self.dateindex_to_price_true_range,
                 &self.dateindex_to_price_true_range_2w_sum,
-            ],
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+            ]
+            .into_iter(),
+        );
+
+        iter = Box::new(iter.chain(self.indexes_to_price_ath.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_drawdown.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_days_since_price_ath.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_max_days_between_price_aths
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_max_years_between_price_aths
+                    .iter_any_collectable(),
+            ),
+        );
+
+        iter = Box::new(iter.chain(self.indexes_to_price_1w_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_8d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_13d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_21d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1m_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_34d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_55d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_89d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_144d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200d_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1y_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_2y_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200w_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_4y_sma.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200d_sma_x0_8.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200d_sma_x2_4.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.indexes_to_price_1w_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_8d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_13d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_21d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1m_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_34d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_55d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_89d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_144d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200d_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1y_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_2y_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_200w_ema.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_4y_ema.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.price_1d_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_1w_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_1m_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_3m_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_6m_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_1y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_2y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_3y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_4y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_5y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_6y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_8y_ago.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price_10y_ago.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._1d_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1w_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1m_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3m_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6m_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._2y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_price_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_price_returns.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._2y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_cagr.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._1w_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1m_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3m_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6m_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._2y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_dca_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2025_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2024_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2023_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2022_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2021_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2020_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2019_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2018_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2017_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2016_returns.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2015_returns.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._2y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_dca_cagr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_dca_cagr.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._1w_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1m_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3m_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6m_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._2y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_dca_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2025_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2024_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2023_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2022_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2021_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2020_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2019_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2018_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2017_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2016_avg_price.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2015_avg_price.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self._1w_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1m_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3m_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6m_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._1y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._2y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._3y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._4y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._5y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._6y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._8y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self._10y_dca_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2025_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2024_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2023_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2022_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2021_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2020_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2019_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2018_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2017_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2016_stack.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dca_class_2015_stack.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.indexes_to_1d_returns_1w_sd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1d_returns_1m_sd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_1d_returns_1y_sd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1w_volatility.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1m_volatility.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1y_volatility.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_price_2w_choppiness_index
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(iter.chain(self.indexes_to_price_1w_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1w_max.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_2w_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_2w_max.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1m_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1m_max.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1y_min.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_price_1y_max.iter_any_collectable()));
+
+        iter
     }
 }

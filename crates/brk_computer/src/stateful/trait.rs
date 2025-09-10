@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{AnyCollectableVec, AnyIterableVec, Exit};
+use vecdb::{AnyIterableVec, Exit};
 
 use crate::{Indexes, indexes, price};
 
@@ -33,8 +33,6 @@ pub trait DynCohortVecs: Send + Sync {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()>;
-
-    fn vecs(&self) -> Vec<&dyn AnyCollectableVec>;
 }
 
 pub trait CohortVecs: DynCohortVecs {

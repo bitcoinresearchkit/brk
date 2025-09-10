@@ -23,7 +23,7 @@ pub struct ByMaxAge<T> {
 }
 
 impl<T> ByMaxAge<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 18] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._1w,
             &mut self._1m,
@@ -44,11 +44,12 @@ impl<T> ByMaxAge<T> {
             &mut self._12y,
             &mut self._15y,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByMaxAge<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 18] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._1w.1,
             &self._1m.1,
@@ -69,6 +70,7 @@ impl<T> ByMaxAge<(GroupFilter, T)> {
             &self._12y.1,
             &self._15y.1,
         ]
+        .into_iter()
     }
 }
 

@@ -38,6 +38,10 @@ impl<T> AddressTypeToVec<T> {
             mem::swap(own, other);
         }
     }
+
+    pub fn unwrap(self) -> ByAddressType<Vec<T>> {
+        self.0
+    }
 }
 
 impl<T> Default for AddressTypeToVec<T> {

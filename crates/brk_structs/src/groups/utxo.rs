@@ -18,72 +18,52 @@ pub struct UTXOGroups<T> {
 }
 
 impl<T> UTXOGroups<T> {
-    pub fn as_boxed_mut_vecs(&mut self) -> Vec<Box<[&mut T]>> {
-        vec![
-            Box::new([&mut self.all]),
-            Box::new(self.term.as_mut_vec()),
-            Box::new(self.max_age.as_mut_vec()),
-            Box::new(self.min_age.as_mut_vec()),
-            Box::new(self.ge_amount.as_mut_vec()),
-            Box::new(self.age_range.as_mut_vec()),
-            Box::new(self.epoch.as_mut_vec()),
-            Box::new(self.amount_range.as_mut_vec()),
-            Box::new(self.lt_amount.as_mut_vec()),
-            Box::new(self._type.as_mut_vec()),
-        ]
-    }
-
-    pub fn as_mut_vecs(&mut self) -> Vec<&mut T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [&mut self.all]
             .into_iter()
-            .chain(self.term.as_mut_vec())
-            .chain(self.max_age.as_mut_vec())
-            .chain(self.min_age.as_mut_vec())
-            .chain(self.ge_amount.as_mut_vec())
-            .chain(self.age_range.as_mut_vec())
-            .chain(self.epoch.as_mut_vec())
-            .chain(self.amount_range.as_mut_vec())
-            .chain(self.lt_amount.as_mut_vec())
-            .chain(self._type.as_mut_vec())
-            .collect::<Vec<_>>()
+            .chain(self.term.iter_mut())
+            .chain(self.max_age.iter_mut())
+            .chain(self.min_age.iter_mut())
+            .chain(self.ge_amount.iter_mut())
+            .chain(self.age_range.iter_mut())
+            .chain(self.epoch.iter_mut())
+            .chain(self.amount_range.iter_mut())
+            .chain(self.lt_amount.iter_mut())
+            .chain(self._type.iter_mut())
     }
 
-    pub fn as_mut_separate_vecs(&mut self) -> Vec<&mut T> {
+    pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.age_range
-            .as_mut_vec()
-            .into_iter()
-            .chain(self.epoch.as_mut_vec())
-            .chain(self.amount_range.as_mut_vec())
-            .chain(self._type.as_mut_vec())
-            .collect::<Vec<_>>()
+            .iter_mut()
+            .chain(self.epoch.iter_mut())
+            .chain(self.amount_range.iter_mut())
+            .chain(self._type.iter_mut())
     }
 
-    pub fn as_mut_overlapping_vecs(&mut self) -> Vec<&mut T> {
+    pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [&mut self.all]
             .into_iter()
-            .chain(self.term.as_mut_vec())
-            .chain(self.max_age.as_mut_vec())
-            .chain(self.min_age.as_mut_vec())
-            .chain(self.lt_amount.as_mut_vec())
-            .chain(self.ge_amount.as_mut_vec())
-            .collect::<Vec<_>>()
+            .chain(self.term.iter_mut())
+            .chain(self.max_age.iter_mut())
+            .chain(self.min_age.iter_mut())
+            .chain(self.lt_amount.iter_mut())
+            .chain(self.ge_amount.iter_mut())
     }
 }
 
 impl<T> UTXOGroups<(GroupFilter, T)> {
-    pub fn vecs(&self) -> Vec<&T> {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [&self.all.1]
             .into_iter()
-            .chain(self.term.vecs())
-            .chain(self.max_age.vecs())
-            .chain(self.min_age.vecs())
-            .chain(self.age_range.vecs())
-            .chain(self.epoch.vecs())
-            .chain(self.amount_range.vecs())
-            .chain(self._type.vecs())
-            .chain(self.lt_amount.vecs())
-            .chain(self.ge_amount.vecs())
-            .collect::<Vec<_>>()
+            .chain(self.term.iter_right())
+            .chain(self.max_age.iter_right())
+            .chain(self.min_age.iter_right())
+            .chain(self.age_range.iter_right())
+            .chain(self.epoch.iter_right())
+            .chain(self.amount_range.iter_right())
+            .chain(self._type.iter_right())
+            .chain(self.lt_amount.iter_right())
+            .chain(self.ge_amount.iter_right())
     }
 }
 

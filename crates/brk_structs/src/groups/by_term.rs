@@ -7,14 +7,14 @@ pub struct ByTerm<T> {
 }
 
 impl<T> ByTerm<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 2] {
-        [&mut self.short, &mut self.long]
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [&mut self.short, &mut self.long].into_iter()
     }
 }
 
 impl<T> ByTerm<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 2] {
-        [&self.short.1, &self.long.1]
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
+        [&self.short.1, &self.long.1].into_iter()
     }
 }
 

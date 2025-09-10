@@ -1,7 +1,4 @@
-use std::{
-    mem,
-    ops::{Add, AddAssign},
-};
+use std::ops::{Add, AddAssign};
 
 use super::GroupFilter;
 use crate::OutputType;
@@ -51,7 +48,21 @@ impl<T> ByAddressType<T> {
         }
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 8] {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [
+            &self.p2pk65,
+            &self.p2pk33,
+            &self.p2pkh,
+            &self.p2sh,
+            &self.p2wpkh,
+            &self.p2wsh,
+            &self.p2tr,
+            &self.p2a,
+        ]
+        .into_iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self.p2pk65,
             &mut self.p2pk33,
@@ -62,9 +73,10 @@ impl<T> ByAddressType<T> {
             &mut self.p2tr,
             &mut self.p2a,
         ]
+        .into_iter()
     }
 
-    pub fn as_typed_vec(&self) -> [(OutputType, &T); 8] {
+    pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
         [
             (OutputType::P2PK65, &self.p2pk65),
             (OutputType::P2PK33, &self.p2pk33),
@@ -75,9 +87,24 @@ impl<T> ByAddressType<T> {
             (OutputType::P2TR, &self.p2tr),
             (OutputType::P2A, &self.p2a),
         ]
+        .into_iter()
     }
 
-    pub fn as_mut_typed_vec(&mut self) -> [(OutputType, &mut T); 8] {
+    pub fn into_iter_typed(self) -> impl Iterator<Item = (OutputType, T)> {
+        [
+            (OutputType::P2PK65, self.p2pk65),
+            (OutputType::P2PK33, self.p2pk33),
+            (OutputType::P2PKH, self.p2pkh),
+            (OutputType::P2SH, self.p2sh),
+            (OutputType::P2WPKH, self.p2wpkh),
+            (OutputType::P2WSH, self.p2wsh),
+            (OutputType::P2TR, self.p2tr),
+            (OutputType::P2A, self.p2a),
+        ]
+        .into_iter()
+    }
+
+    pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
         [
             (OutputType::P2PK65, &mut self.p2pk65),
             (OutputType::P2PK33, &mut self.p2pk33),
@@ -88,27 +115,12 @@ impl<T> ByAddressType<T> {
             (OutputType::P2TR, &mut self.p2tr),
             (OutputType::P2A, &mut self.p2a),
         ]
-    }
-
-    pub fn into_typed_vec(&mut self) -> [(OutputType, T); 8]
-    where
-        T: Default,
-    {
-        [
-            (OutputType::P2PK65, mem::take(&mut self.p2pk65)),
-            (OutputType::P2PK33, mem::take(&mut self.p2pk33)),
-            (OutputType::P2PKH, mem::take(&mut self.p2pkh)),
-            (OutputType::P2SH, mem::take(&mut self.p2sh)),
-            (OutputType::P2WPKH, mem::take(&mut self.p2wpkh)),
-            (OutputType::P2WSH, mem::take(&mut self.p2wsh)),
-            (OutputType::P2TR, mem::take(&mut self.p2tr)),
-            (OutputType::P2A, mem::take(&mut self.p2a)),
-        ]
+        .into_iter()
     }
 }
 
 impl<T> ByAddressType<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 8] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65.1,
             &self.p2pk33.1,
@@ -119,6 +131,7 @@ impl<T> ByAddressType<(GroupFilter, T)> {
             &self.p2tr.1,
             &self.p2a.1,
         ]
+        .into_iter()
     }
 }
 
@@ -174,7 +187,7 @@ where
 
 impl<T> ByAddressType<Option<T>> {
     pub fn take(&mut self) {
-        self.as_mut_vec().into_iter().for_each(|opt| {
+        self.iter_mut().for_each(|opt| {
             opt.take();
         });
     }

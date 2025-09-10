@@ -541,7 +541,7 @@ where
 
     pub fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
-            self.vecs().into_iter().map(|v| v.len()).min().unwrap(),
+            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
         ))
     }
 
@@ -589,47 +589,96 @@ where
         self.cumulative.as_ref().unwrap()
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        let mut v: Vec<&dyn AnyCollectableVec> = vec![];
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(std::iter::empty());
 
-        if let Some(first) = self.first.as_ref() {
-            v.push(first.as_ref());
-        }
-        if let Some(last) = self.last.as_ref() {
-            v.push(last.as_ref());
-        }
-        if let Some(min) = self.min.as_ref() {
-            v.push(min.as_ref());
-        }
-        if let Some(max) = self.max.as_ref() {
-            v.push(max.as_ref());
-        }
-        if let Some(median) = self.median.as_ref() {
-            v.push(median.as_ref());
-        }
-        if let Some(average) = self.average.as_ref() {
-            v.push(average.as_ref());
-        }
-        if let Some(sum) = self.sum.as_ref() {
-            v.push(sum.as_ref());
-        }
-        if let Some(cumulative) = self.cumulative.as_ref() {
-            v.push(cumulative.as_ref());
-        }
-        if let Some(pct90) = self.pct90.as_ref() {
-            v.push(pct90.as_ref());
-        }
-        if let Some(pct75) = self.pct75.as_ref() {
-            v.push(pct75.as_ref());
-        }
-        if let Some(pct25) = self.pct25.as_ref() {
-            v.push(pct25.as_ref());
-        }
-        if let Some(pct10) = self.pct10.as_ref() {
-            v.push(pct10.as_ref());
-        }
+        iter = Box::new(
+            iter.chain(
+                self.first
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.last
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.min
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.max
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.median
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.average
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.sum
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.cumulative
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.pct90
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.pct75
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.pct25
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.pct10
+                    .as_ref()
+                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
+            ),
+        );
 
-        v
+        iter
     }
 
     pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {

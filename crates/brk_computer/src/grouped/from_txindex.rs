@@ -226,25 +226,25 @@ where
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
             self.txindex
                 .as_ref()
-                .map_or(vec![], |v| vec![v.as_ref() as &dyn AnyCollectableVec]),
-            self.height.vecs(),
-            self.dateindex.vecs(),
-            self.weekindex.vecs(),
-            self.difficultyepoch.vecs(),
-            self.monthindex.vecs(),
-            self.quarterindex.vecs(),
-            self.semesterindex.vecs(),
-            self.yearindex.vecs(),
-            // self.halvingepoch.vecs(),
-            self.decadeindex.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+                .map(|x| x.as_ref() as &dyn AnyCollectableVec)
+                .into_iter(),
+        );
+
+        iter = Box::new(iter.chain(self.height.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.dateindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.weekindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.difficultyepoch.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.monthindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.quarterindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.semesterindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.yearindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.decadeindex.iter_any_collectable()));
+
+        iter
     }
 }
 

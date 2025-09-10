@@ -24,7 +24,7 @@ impl<T> From<ByEpoch<T>> for ByEpoch<(GroupFilter, T)> {
 }
 
 impl<T> ByEpoch<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 5] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._0,
             &mut self._1,
@@ -32,6 +32,7 @@ impl<T> ByEpoch<T> {
             &mut self._3,
             &mut self._4,
         ]
+        .into_iter()
     }
 
     pub fn mut_vec_from_height(&mut self, height: Height) -> &mut T {
@@ -53,7 +54,7 @@ impl<T> ByEpoch<T> {
 }
 
 impl<T> ByEpoch<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 5] {
-        [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1]
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
+        [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1].into_iter()
     }
 }

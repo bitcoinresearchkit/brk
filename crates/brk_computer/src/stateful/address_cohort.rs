@@ -1,4 +1,4 @@
-use std::{ops::Deref, path::Path};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
@@ -84,17 +84,21 @@ impl Vecs {
             )?,
         })
     }
+
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        self.inner
+            .iter_any_collectable()
+            .chain([&self.height_to_addr_count as &dyn AnyCollectableVec])
+            .chain(self.indexes_to_addr_count.iter_any_collectable())
+    }
 }
 
 impl DynCohortVecs for Vecs {
     fn min_height_vecs_len(&self) -> usize {
-        [
+        std::cmp::min(
             self.height_to_addr_count.len(),
             self.inner.min_height_vecs_len(),
-        ]
-        .into_iter()
-        .min()
-        .unwrap()
+        )
     }
 
     fn reset_state_starting_height(&mut self) {
@@ -185,15 +189,6 @@ impl DynCohortVecs for Vecs {
         self.inner
             .compute_rest_part1(indexes, price, starting_indexes, exit)
     }
-
-    fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.inner.vecs(),
-            self.indexes_to_addr_count.vecs(),
-            vec![&self.height_to_addr_count],
-        ]
-        .concat()
-    }
 }
 
 impl CohortVecs for Vecs {
@@ -245,12 +240,5 @@ impl CohortVecs for Vecs {
             dateindex_to_realized_cap,
             exit,
         )
-    }
-}
-
-impl Deref for Vecs {
-    type Target = common::Vecs;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
     }
 }

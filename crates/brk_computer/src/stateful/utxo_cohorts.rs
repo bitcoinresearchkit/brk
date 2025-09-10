@@ -1457,8 +1457,7 @@ impl Vecs {
 
         let mut vecs = self
             .age_range
-            .as_mut_vec()
-            .into_iter()
+            .iter_mut()
             .map(|(filter, v)| (filter, &mut v.state))
             .collect::<Vec<_>>();
 
@@ -1502,9 +1501,8 @@ impl Vecs {
         let mut time_based_vecs = self
             .0
             .age_range
-            .as_mut_vec()
-            .into_iter()
-            .chain(self.0.epoch.as_mut_vec())
+            .iter_mut()
+            .chain(self.0.epoch.iter_mut())
             .collect::<Vec<_>>();
 
         let last_timestamp = chain_state.last().unwrap().timestamp;
@@ -1550,8 +1548,10 @@ impl Vecs {
                     );
                 });
 
-            sent.by_type.spendable.as_typed_vec().into_iter().for_each(
-                |(output_type, supply_state)| {
+            sent.by_type
+                .spendable
+                .iter_typed()
+                .for_each(|(output_type, supply_state)| {
                     self.0
                         ._type
                         .get_mut(output_type)
@@ -1567,12 +1567,10 @@ impl Vecs {
                             days_old_float,
                             older_than_hour,
                         )
-                },
-            );
+                });
 
             sent.by_size_group
-                .as_typed_vec()
-                .into_iter()
+                .iter_typed()
                 .for_each(|(group, supply_state)| {
                     self.0
                         .amount_range
@@ -1605,24 +1603,20 @@ impl Vecs {
             v.state.as_mut().unwrap().receive(&supply_state, price);
         });
 
-        self._type
-            .as_mut_vec()
-            .into_iter()
-            .for_each(|(filter, vecs)| {
-                let output_type = match filter {
-                    GroupFilter::Type(output_type) => *output_type,
-                    _ => unreachable!(),
-                };
-                vecs.state
-                    .as_mut()
-                    .unwrap()
-                    .receive(received.by_type.get(output_type), price)
-            });
+        self._type.iter_mut().for_each(|(filter, vecs)| {
+            let output_type = match filter {
+                GroupFilter::Type(output_type) => *output_type,
+                _ => unreachable!(),
+            };
+            vecs.state
+                .as_mut()
+                .unwrap()
+                .receive(received.by_type.get(output_type), price)
+        });
 
         received
             .by_size_group
-            .as_typed_vec()
-            .into_iter()
+            .iter_typed()
             .for_each(|(group, supply_state)| {
                 self.amount_range
                     .get_mut(group)
@@ -1639,95 +1633,64 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let by_date_range = self.0.age_range.as_vec();
-        let by_size_range = self.0.amount_range.as_vec();
+        let by_date_range = &self.0.age_range;
+        let by_size_range = &self.0.amount_range;
 
-        [
-            vec![(
-                &mut self.0.all.1,
+        [(
+            &mut self.0.all.1,
+            by_date_range.iter().map(|(_, v)| v).collect::<Vec<_>>(),
+        )]
+        .into_iter()
+        .chain(self.0.min_age.iter_mut().map(|(filter, vecs)| {
+            (
+                vecs,
                 by_date_range
-                    .into_iter()
+                    .iter()
+                    .filter(|(other, _)| filter.includes(other))
                     .map(|(_, v)| v)
                     .collect::<Vec<_>>(),
-            )],
-            self.0
-                .min_age
-                .as_mut_vec()
-                .into_iter()
-                .map(|(filter, vecs)| {
-                    (
-                        vecs,
-                        by_date_range
-                            .into_iter()
-                            .filter(|(other, _)| filter.includes(other))
-                            .map(|(_, v)| v)
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-            self.0
-                .max_age
-                .as_mut_vec()
-                .into_iter()
-                .map(|(filter, vecs)| {
-                    (
-                        vecs,
-                        by_date_range
-                            .into_iter()
-                            .filter(|(other, _)| filter.includes(other))
-                            .map(|(_, v)| v)
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-            self.0
-                .term
-                .as_mut_vec()
-                .into_iter()
-                .map(|(filter, vecs)| {
-                    (
-                        vecs,
-                        by_date_range
-                            .into_iter()
-                            .filter(|(other, _)| filter.includes(other))
-                            .map(|(_, v)| v)
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-            self.0
-                .ge_amount
-                .as_mut_vec()
-                .into_iter()
-                .map(|(filter, vecs)| {
-                    (
-                        vecs,
-                        by_size_range
-                            .into_iter()
-                            .filter(|(other, _)| filter.includes(other))
-                            .map(|(_, v)| v)
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-            self.0
-                .lt_amount
-                .as_mut_vec()
-                .into_iter()
-                .map(|(filter, vecs)| {
-                    (
-                        vecs,
-                        by_size_range
-                            .into_iter()
-                            .filter(|(other, _)| filter.includes(other))
-                            .map(|(_, v)| v)
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-        ]
-        .into_iter()
-        .flatten()
+            )
+        }))
+        .chain(self.0.max_age.iter_mut().map(|(filter, vecs)| {
+            (
+                vecs,
+                by_date_range
+                    .iter()
+                    .filter(|(other, _)| filter.includes(other))
+                    .map(|(_, v)| v)
+                    .collect::<Vec<_>>(),
+            )
+        }))
+        .chain(self.0.term.iter_mut().map(|(filter, vecs)| {
+            (
+                vecs,
+                by_date_range
+                    .iter()
+                    .filter(|(other, _)| filter.includes(other))
+                    .map(|(_, v)| v)
+                    .collect::<Vec<_>>(),
+            )
+        }))
+        .chain(self.0.ge_amount.iter_mut().map(|(filter, vecs)| {
+            (
+                vecs,
+                by_size_range
+                    .iter()
+                    .filter(|(other, _)| filter.includes(other))
+                    .map(|(_, v)| v)
+                    .collect::<Vec<_>>(),
+            )
+        }))
+        .chain(self.0.lt_amount.iter_mut().map(|(filter, vecs)| {
+            (
+                vecs,
+                by_size_range
+                    .iter()
+                    .filter(|(other, _)| filter.includes(other))
+                    .map(|(_, v)| v)
+                    .collect::<Vec<_>>(),
+            )
+        }))
         .try_for_each(|(vecs, stateful)| {
             vecs.compute_from_stateful(starting_indexes, &stateful, exit)
         })
@@ -1740,7 +1703,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.as_mut_vecs()
+        self.iter_mut()
             .into_iter()
             .try_for_each(|(_, v)| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
@@ -1759,27 +1722,24 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.0.as_boxed_mut_vecs().into_iter().try_for_each(|v| {
-            v.into_iter().try_for_each(|(_, v)| {
-                v.compute_rest_part2(
-                    indexes,
-                    price,
-                    starting_indexes,
-                    height_to_supply,
-                    dateindex_to_supply,
-                    height_to_market_cap,
-                    dateindex_to_market_cap,
-                    height_to_realized_cap,
-                    dateindex_to_realized_cap,
-                    exit,
-                )
-            })
+        self.iter_mut().into_iter().try_for_each(|(_, v)| {
+            v.compute_rest_part2(
+                indexes,
+                price,
+                starting_indexes,
+                height_to_supply,
+                dateindex_to_supply,
+                height_to_market_cap,
+                dateindex_to_market_cap,
+                height_to_realized_cap,
+                dateindex_to_realized_cap,
+                exit,
+            )
         })
     }
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.as_mut_separate_vecs()
-            .into_iter()
+        self.iter_separate_mut()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
     }
 }

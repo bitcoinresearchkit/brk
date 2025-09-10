@@ -23,7 +23,7 @@ pub struct ByMinAge<T> {
 }
 
 impl<T> ByMinAge<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 18] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._1d,
             &mut self._1w,
@@ -44,11 +44,12 @@ impl<T> ByMinAge<T> {
             &mut self._10y,
             &mut self._12y,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByMinAge<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 18] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._1d.1,
             &self._1w.1,
@@ -69,6 +70,7 @@ impl<T> ByMinAge<(GroupFilter, T)> {
             &self._10y.1,
             &self._12y.1,
         ]
+        .into_iter()
     }
 }
 

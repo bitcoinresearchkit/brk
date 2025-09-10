@@ -2,7 +2,7 @@ use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{AnyCollectableVec, AnyIterableVec, Database, Exit, Format};
+use vecdb::{AnyIterableVec, Database, Exit, Format};
 
 use crate::{
     Indexes, UTXOCohortState, indexes, price,
@@ -128,10 +128,6 @@ impl DynCohortVecs for Vecs {
     ) -> Result<()> {
         self.inner
             .compute_rest_part1(indexes, price, starting_indexes, exit)
-    }
-
-    fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        self.inner.vecs()
     }
 }
 

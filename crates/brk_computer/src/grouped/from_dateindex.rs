@@ -143,21 +143,22 @@ where
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
             self.dateindex
                 .as_ref()
-                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
-            self.dateindex_extra.vecs(),
-            self.weekindex.vecs(),
-            self.monthindex.vecs(),
-            self.quarterindex.vecs(),
-            self.semesterindex.vecs(),
-            self.yearindex.vecs(),
-            self.decadeindex.vecs(),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+                .map(|x| x as &dyn AnyCollectableVec)
+                .into_iter(),
+        );
+
+        iter = Box::new(iter.chain(self.dateindex_extra.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.weekindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.monthindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.quarterindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.semesterindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.yearindex.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.decadeindex.iter_any_collectable()));
+
+        iter
     }
 }

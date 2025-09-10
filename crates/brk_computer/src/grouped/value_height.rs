@@ -101,14 +101,10 @@ impl ComputedHeightValueVecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            vec![&self.bitcoin as &dyn AnyCollectableVec],
-            self.sats.as_ref().map_or(vec![], |v| vec![v]),
-            self.dollars.as_ref().map_or(vec![], |v| vec![v]),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [&self.bitcoin as &dyn AnyCollectableVec]
+            .into_iter()
+            .chain(self.sats.iter().map(|v| v as &dyn AnyCollectableVec))
+            .chain(self.dollars.iter().map(|v| v as &dyn AnyCollectableVec))
     }
 }

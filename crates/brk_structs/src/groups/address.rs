@@ -8,47 +8,28 @@ pub struct AddressGroups<T> {
 }
 
 impl<T> AddressGroups<T> {
-    pub fn as_boxed_mut_vecs(&mut self) -> Vec<Box<[&mut T]>> {
-        vec![
-            Box::new(self.ge_amount.as_mut_vec()),
-            Box::new(self.amount_range.as_mut_vec()),
-            Box::new(self.lt_amount.as_mut_vec()),
-        ]
-    }
-
-    pub fn as_mut_vecs(&mut self) -> Vec<&mut T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.ge_amount
-            .as_mut_vec()
-            .into_iter()
-            .chain(self.amount_range.as_mut_vec())
-            .chain(self.lt_amount.as_mut_vec())
-            .collect::<Vec<_>>()
+            .iter_mut()
+            .chain(self.amount_range.iter_mut())
+            .chain(self.lt_amount.iter_mut())
     }
 
-    pub fn as_mut_separate_vecs(&mut self) -> Vec<&mut T> {
-        self.amount_range
-            .as_mut_vec()
-            .into_iter()
-            .collect::<Vec<_>>()
+    pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.amount_range.iter_mut()
     }
 
-    pub fn as_mut_overlapping_vecs(&mut self) -> Vec<&mut T> {
-        self.lt_amount
-            .as_mut_vec()
-            .into_iter()
-            .chain(self.ge_amount.as_mut_vec())
-            .collect::<Vec<_>>()
+    pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.lt_amount.iter_mut().chain(self.ge_amount.iter_mut())
     }
 }
 
 impl<T> AddressGroups<(GroupFilter, T)> {
-    pub fn vecs(&self) -> Vec<&T> {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         self.amount_range
-            .vecs()
-            .into_iter()
-            .chain(self.lt_amount.vecs())
-            .chain(self.ge_amount.vecs())
-            .collect::<Vec<_>>()
+            .iter_right()
+            .chain(self.lt_amount.iter_right())
+            .chain(self.ge_amount.iter_right())
     }
 }
 

@@ -493,8 +493,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.vecs()
-                .into_iter()
+            this.iter_any_collectable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -598,8 +597,9 @@ impl Vecs {
             + dateindex_to_first_height.version()
             + dateindex_to_height_count.version();
 
-        let mut separate_utxo_vecs = self.utxo_cohorts.as_mut_separate_vecs();
-        let mut separate_address_vecs = self.address_cohorts.as_mut_separate_vecs();
+        let mut separate_utxo_vecs = self.utxo_cohorts.iter_separate_mut().collect::<Vec<_>>();
+        let mut separate_address_vecs =
+            self.address_cohorts.iter_separate_mut().collect::<Vec<_>>();
 
         separate_utxo_vecs
             .par_iter_mut()
@@ -878,13 +878,11 @@ impl Vecs {
                     info!("Processing chain at {height}...");
 
                     self.utxo_cohorts
-                        .as_mut_separate_vecs()
-                        .iter_mut()
+                        .iter_separate_mut()
                         .for_each(|(_, v)| v.state.as_mut().unwrap().reset_single_iteration_values());
 
                     self.address_cohorts
-                        .as_mut_separate_vecs()
-                        .iter_mut()
+                        .iter_separate_mut()
                         .for_each(|(_, v)| v.state.as_mut().unwrap().reset_single_iteration_values());
 
                     let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
@@ -1252,12 +1250,11 @@ impl Vecs {
 
                     let dateindex = is_date_last_height.then_some(dateindex);
 
-                    self.utxo_cohorts.as_mut_separate_vecs()
-                        .into_par_iter()
+                    self.utxo_cohorts.iter_separate_mut().par_bridge()
                         .map(|(_, v)| v as &mut dyn DynCohortVecs)
                         .chain(
-                            self.address_cohorts.as_mut_separate_vecs()
-                                .into_par_iter()
+                            self.address_cohorts.iter_separate_mut()
+                                .par_bridge()
                                 .map(|(_, v)| v as &mut dyn DynCohortVecs),
                         )
                         .try_for_each(|v| {
@@ -1315,8 +1312,7 @@ impl Vecs {
                     starting_indexes.height,
                     &self
                         .addresstype_to_height_to_addr_count
-                        .as_typed_vec()
-                        .into_iter()
+                        .iter_typed()
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
@@ -1330,8 +1326,7 @@ impl Vecs {
                     starting_indexes.height,
                     &self
                         .addresstype_to_height_to_empty_addr_count
-                        .as_typed_vec()
-                        .into_iter()
+                        .iter_typed()
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
@@ -1635,10 +1630,10 @@ impl Vecs {
         &mut self,
         height: Height,
         chain_state: &[BlockState],
-        mut addresstype_to_typeindex_to_loadedaddressdata: AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_loadedaddressdata: AddressTypeToTypeIndexTree<
             WithAddressDataSource<LoadedAddressData>,
         >,
-        mut addresstype_to_typeindex_to_emptyaddressdata: AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_emptyaddressdata: AddressTypeToTypeIndexTree<
             WithAddressDataSource<EmptyAddressData>,
         >,
         with_changes: bool,
@@ -1647,30 +1642,28 @@ impl Vecs {
         info!("Flushing...");
 
         self.utxo_cohorts
-            .as_mut_separate_vecs()
-            .par_iter_mut()
+            .iter_separate_mut()
+            .par_bridge()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.address_cohorts
-            .as_mut_separate_vecs()
-            .par_iter_mut()
+            .iter_separate_mut()
+            .par_bridge()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
         self.addresstype_to_height_to_addr_count
-            .as_mut_vec()
-            .into_iter()
+            .iter_mut()
             .try_for_each(|v| v.safe_flush(exit))?;
         self.addresstype_to_height_to_empty_addr_count
-            .as_mut_vec()
-            .into_iter()
+            .iter_mut()
             .try_for_each(|v| v.safe_flush(exit))?;
 
         let mut addresstype_to_typeindex_to_new_or_updated_anyaddressindex =
             AddressTypeToTypeIndexTree::default();
 
         addresstype_to_typeindex_to_emptyaddressdata
-            .into_typed_vec()
-            .into_iter()
+            .unwrap()
+            .into_iter_typed()
             .try_for_each(|(_type, tree)| -> Result<()> {
                 tree.into_iter().try_for_each(
                     |(typeindex, emptyaddressdata_with_source)| -> Result<()> {
@@ -1722,8 +1715,8 @@ impl Vecs {
             })?;
 
         addresstype_to_typeindex_to_loadedaddressdata
-            .into_typed_vec()
-            .into_iter()
+            .unwrap()
+            .into_iter_typed()
             .try_for_each(|(_type, tree)| -> Result<()> {
                 tree.into_iter().try_for_each(
                     |(typeindex, loadedaddressdata_with_source)| -> Result<()> {
@@ -1775,8 +1768,8 @@ impl Vecs {
             })?;
 
         addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-            .into_typed_vec()
-            .into_iter()
+            .unwrap()
+            .into_iter_typed()
             .try_for_each(|(_type, tree)| -> Result<()> {
                 tree.into_iter()
                     .try_for_each(|(typeindex, anyaddressindex)| -> Result<()> {
@@ -1844,42 +1837,10 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.utxo_cohorts
-                .vecs()
-                .into_iter()
-                .flat_map(|v| v.vecs())
-                .collect::<Vec<_>>(),
-            self.address_cohorts
-                .vecs()
-                .into_iter()
-                .flat_map(|v| v.vecs())
-                .collect::<Vec<_>>(),
-            self.indexes_to_unspendable_supply.vecs(),
-            self.indexes_to_opreturn_supply.vecs(),
-            self.indexes_to_addr_count.vecs(),
-            self.indexes_to_empty_addr_count.vecs(),
-            self.addresstype_to_indexes_to_addr_count.vecs(),
-            self.indexes_to_market_cap
-                .as_ref()
-                .map_or(vec![], |v| v.vecs()),
-            self.addresstype_to_indexes_to_empty_addr_count.vecs(),
-            self.addresstype_to_height_to_addr_count
-                .as_typed_vec()
-                .into_iter()
-                .map(|(_, v)| v as &dyn AnyCollectableVec)
-                .collect::<Vec<_>>(),
-            self.addresstype_to_height_to_empty_addr_count
-                .as_typed_vec()
-                .into_iter()
-                .map(|(_, v)| v as &dyn AnyCollectableVec)
-                .collect::<Vec<_>>(),
-            self.height_to_market_cap
-                .as_ref()
-                .map_or(vec![], |v| vec![v]),
-            vec![
-                &self.height_to_unspendable_supply,
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
+            [
+                &self.height_to_unspendable_supply as &dyn AnyCollectableVec,
                 &self.height_to_opreturn_supply,
                 &self.chain_state,
                 &self.p2pk33addressindex_to_anyaddressindex,
@@ -1894,18 +1855,77 @@ impl Vecs {
                 &self.emptyaddressindex_to_emptyaddressdata,
                 &self.loadedaddressindex_to_loadedaddressindex,
                 &self.emptyaddressindex_to_emptyaddressindex,
-            ],
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+            ]
+            .into_iter(),
+        );
+
+        iter = Box::new(
+            iter.chain(
+                self.utxo_cohorts
+                    .iter_right()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.address_cohorts
+                    .iter_right()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(iter.chain(self.indexes_to_unspendable_supply.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_opreturn_supply.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_addr_count.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_empty_addr_count.iter_any_collectable()));
+        iter = Box::new(
+            iter.chain(
+                self.addresstype_to_indexes_to_addr_count
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_market_cap
+                    .iter()
+                    .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.addresstype_to_indexes_to_empty_addr_count
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.addresstype_to_height_to_addr_count
+                    .iter()
+                    .map(|v| v as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.addresstype_to_height_to_empty_addr_count
+                    .iter()
+                    .map(|v| v as &dyn AnyCollectableVec),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.height_to_market_cap
+                    .iter()
+                    .map(|v| v as &dyn AnyCollectableVec),
+            ),
+        );
+
+        iter
     }
 }
 
 impl AddressTypeToVec<(TypeIndex, Sats)> {
     #[allow(clippy::too_many_arguments)]
     fn process_received(
-        mut self,
+        self,
         vecs: &mut address_cohorts::Vecs,
         addresstype_to_typeindex_to_loadedaddressdata: &mut AddressTypeToTypeIndexTree<
             WithAddressDataSource<LoadedAddressData>,
@@ -1920,7 +1940,7 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<LoadedAddressData>,
         >,
     ) {
-        self.into_typed_vec().into_iter().for_each(|(_type, vec)| {
+        self.unwrap().into_iter_typed().for_each(|(_type, vec)| {
             vec.into_iter().for_each(|(type_index, value)| {
                 let mut is_new = false;
                 let mut from_any_empty = false;
@@ -2024,7 +2044,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<LoadedAddressData>,
         >,
     ) -> Result<()> {
-        self.0.into_iter().try_for_each(|(prev_height, mut v)| {
+        self.0.into_iter().try_for_each(|(prev_height, v)| {
             let prev_price = height_to_price_close_vec
                 .as_ref()
                 .map(|v| **v.get(prev_height.unwrap_to_usize()).unwrap());
@@ -2042,7 +2062,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                 .unwrap()
                 .is_more_than_hour();
 
-            v.into_typed_vec().into_iter().try_for_each(|(_type, vec)| {
+            v.unwrap().into_iter_typed().try_for_each(|(_type, vec)| {
                 vec.into_iter().try_for_each(|(type_index, value)| {
                     let typeindex_to_loadedaddressdata =
                         addresstype_to_typeindex_to_loadedaddressdata

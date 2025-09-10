@@ -187,21 +187,20 @@ impl Computer {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [
-            self.constants.vecs(),
-            self.indexes.vecs(),
-            self.market.vecs(),
-            self.chain.vecs(),
-            self.stateful.vecs(),
-            self.cointime.vecs(),
-            self.pools.vecs(),
-            self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
-            self.price.as_ref().map_or(vec![], |v| v.vecs()),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.fetched.iter().flat_map(|v| v.iter_any_collectable()));
+
+        iter = Box::new(iter.chain(self.price.iter().flat_map(|v| v.iter_any_collectable())));
+        iter = Box::new(iter.chain(self.pools.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.constants.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.market.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chain.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.stateful.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.cointime.iter_any_collectable()));
+
+        iter
     }
 
     pub fn static_clone(&self) -> &'static Self {

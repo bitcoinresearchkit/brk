@@ -124,7 +124,7 @@ impl<T> ByAmountRange<T> {
         }
     }
 
-    pub fn as_vec(&self) -> [&T; 15] {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
             &self._0sats,
             &self._1sat_to_10sats,
@@ -142,9 +142,10 @@ impl<T> ByAmountRange<T> {
             &self._10k_btc_to_100k_btc,
             &self._100k_btc_or_more,
         ]
+        .into_iter()
     }
 
-    pub fn as_typed_vec(&self) -> [(Sats, &T); 15] {
+    pub fn iter_typed(&self) -> impl Iterator<Item = (Sats, &T)> {
         [
             (Sats::ZERO, &self._0sats),
             (Sats::_1, &self._1sat_to_10sats),
@@ -162,9 +163,10 @@ impl<T> ByAmountRange<T> {
             (Sats::_10K_BTC, &self._10k_btc_to_100k_btc),
             (Sats::_100K_BTC, &self._100k_btc_or_more),
         ]
+        .into_iter()
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 15] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._0sats,
             &mut self._1sat_to_10sats,
@@ -182,11 +184,12 @@ impl<T> ByAmountRange<T> {
             &mut self._10k_btc_to_100k_btc,
             &mut self._100k_btc_or_more,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByAmountRange<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 15] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._0sats.1,
             &self._1sat_to_10sats.1,
@@ -204,6 +207,7 @@ impl<T> ByAmountRange<(GroupFilter, T)> {
             &self._10k_btc_to_100k_btc.1,
             &self._100k_btc_or_more.1,
         ]
+        .into_iter()
     }
 }
 

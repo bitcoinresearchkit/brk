@@ -75,11 +75,9 @@ impl AddressTypeToIndexesToAddressCount {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
+    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
         self.0
-            .as_typed_vec()
-            .into_iter()
-            .flat_map(|(_, v)| v.vecs())
-            .collect::<Vec<_>>()
+            .iter_typed()
+            .flat_map(|(_, v)| v.iter_any_collectable())
     }
 }

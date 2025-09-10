@@ -52,7 +52,7 @@ impl<T> From<ByAgeRange<T>> for ByAgeRange<(GroupFilter, T)> {
 }
 
 impl<T> ByAgeRange<T> {
-    pub fn as_vec(&mut self) -> [&T; 20] {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
             &self.up_to_1d,
             &self._1d_to_1w,
@@ -75,9 +75,10 @@ impl<T> ByAgeRange<T> {
             &self._12y_to_15y,
             &self.from_15y,
         ]
+        .into_iter()
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 20] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self.up_to_1d,
             &mut self._1d_to_1w,
@@ -100,11 +101,12 @@ impl<T> ByAgeRange<T> {
             &mut self._12y_to_15y,
             &mut self.from_15y,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByAgeRange<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 20] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self.up_to_1d.1,
             &self._1d_to_1w.1,
@@ -127,5 +129,6 @@ impl<T> ByAgeRange<(GroupFilter, T)> {
             &self._12y_to_15y.1,
             &self.from_15y.1,
         ]
+        .into_iter()
     }
 }

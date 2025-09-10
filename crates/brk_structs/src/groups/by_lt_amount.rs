@@ -20,7 +20,7 @@ pub struct ByLowerThanAmount<T> {
 }
 
 impl<T> ByLowerThanAmount<T> {
-    pub fn as_mut_vec(&mut self) -> [&mut T; 13] {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._10sats,
             &mut self._100sats,
@@ -36,11 +36,12 @@ impl<T> ByLowerThanAmount<T> {
             &mut self._10k_btc,
             &mut self._100k_btc,
         ]
+        .into_iter()
     }
 }
 
 impl<T> ByLowerThanAmount<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 13] {
+    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._10sats.1,
             &self._100sats.1,
@@ -56,6 +57,7 @@ impl<T> ByLowerThanAmount<(GroupFilter, T)> {
             &self._10k_btc.1,
             &self._100k_btc.1,
         ]
+        .into_iter()
     }
 }
 
