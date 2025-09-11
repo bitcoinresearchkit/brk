@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     f64,
+    iter::Sum,
     ops::{Add, AddAssign, Div, Mul},
 };
 
@@ -376,5 +377,12 @@ impl Ord for Dollars {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
+    }
+}
+
+impl Sum for Dollars {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let dollars: f64 = iter.map(|dollars| dollars.0).sum();
+        Self::from(dollars)
     }
 }
