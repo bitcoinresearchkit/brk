@@ -85,25 +85,25 @@ impl From<Dollars> for f64 {
 
 impl From<Open<Dollars>> for Dollars {
     fn from(value: Open<Dollars>) -> Self {
-        Self(value.0)
+        *value
     }
 }
 
 impl From<High<Dollars>> for Dollars {
     fn from(value: High<Dollars>) -> Self {
-        Self(value.0)
+        *value
     }
 }
 
 impl From<Low<Dollars>> for Dollars {
     fn from(value: Low<Dollars>) -> Self {
-        Self(value.0)
+        *value
     }
 }
 
 impl From<Close<Dollars>> for Dollars {
     fn from(value: Close<Dollars>) -> Self {
-        Self(value.0)
+        *value
     }
 }
 
