@@ -3525,16 +3525,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   bottom: [
                     createAverageSeries({
                       concat: "tx_weight",
-                      title: "Weight",
                     }),
                     ...createMinMaxPercentilesSeries({
                       concat: "tx_weight",
-                      title: "Weight",
                     }),
-                    createAverageSeries({ concat: "tx_vsize", title: "VSize" }),
+                    createAverageSeries({ concat: "tx_vsize" }),
                     ...createMinMaxPercentilesSeries({
                       concat: "tx_vsize",
-                      title: "VSize",
                     }),
                   ],
                 },
@@ -3727,6 +3724,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         }),
                         ...createSumCumulativeSeries({
                           concat: "unclaimed_rewards_in_usd",
+                        }),
+                      ],
+                    },
+                    {
+                      name: "Inflation",
+                      title: "Inflation Rate",
+                      bottom: [
+                        createBaseSeries({
+                          key: "inflation_rate",
+                          name: "Inflation",
                         }),
                       ],
                     },

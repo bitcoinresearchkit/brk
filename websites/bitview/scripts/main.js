@@ -842,6 +842,7 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id === "price_drawdown" ||
         id === "difficulty_adjustment" ||
+        id.startsWith("inflation_rate") ||
         id.endsWith("_oscillator") ||
         id.endsWith("_dominance") ||
         id.endsWith("_returns") ||

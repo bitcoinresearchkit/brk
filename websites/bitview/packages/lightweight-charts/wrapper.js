@@ -143,9 +143,9 @@ function createChartElement({
     }),
   );
 
-  ichart.priceScale("right").applyOptions({
-    minimumWidth: 80,
-  });
+  // ichart.priceScale("right").applyOptions({
+  //   minimumWidth: 80,
+  // });
 
   ichart.panes().at(0)?.setStretchFactor(1);
 
@@ -693,7 +693,7 @@ function createChartElement({
             color: color(),
             // lineVisible: false,
             // pointMarkersVisible: true,
-            // pointMarkersRadius: 1.375,
+            // pointMarkersRadius: 1,
             ...options,
           },
           paneIndex,

@@ -4,10 +4,10 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
-    CheckedSub, Date, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
-    Height, InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool,
-    StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex,
-    Weight, YearIndex,
+    CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch, Height,
+    InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool, StoredF32,
+    StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex, Weight,
+    YearIndex,
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
@@ -49,6 +49,9 @@ pub struct Vecs {
     pub decadeindex_to_block_count_target:
         LazyVecFrom1<DecadeIndex, StoredU64, DecadeIndex, DecadeIndex>,
     pub height_to_interval: EagerVec<Height, Timestamp>,
+    pub height_to_24h_block_count: EagerVec<Height, StoredU32>,
+    pub height_to_24h_coinbase_sum: EagerVec<Height, Sats>,
+    pub height_to_24h_coinbase_in_usd_sum: EagerVec<Height, Dollars>,
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
     pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
     pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
@@ -108,27 +111,28 @@ pub struct Vecs {
     pub dateindex_to_subsidy_dominance: EagerVec<DateIndex, StoredF32>,
     pub indexes_to_subsidy_usd_1y_sma: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_puell_multiple: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub indexes_to_hash_rate: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_hash_rate: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_hash_rate_1w_sma: ComputedVecsFromDateIndex<StoredF64>,
     pub indexes_to_hash_rate_1m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_hash_rate_2m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_hash_rate_1y_sma: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_price_ths: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_price_ths_min: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_price_phs: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_price_phs_min: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_price_rebound: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_value_ths: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_value_ths_min: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_value_phs: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_value_phs_min: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_hash_value_rebound: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_difficulty_as_hash: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_hash_price_ths: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_price_ths_min: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_price_phs: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_price_phs_min: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_price_rebound: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_value_ths: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_value_ths_min: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_value_phs: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_value_phs_min: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_hash_value_rebound: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_difficulty_as_hash: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_blocks_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_days_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_blocks_before_next_halving: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_days_before_next_halving: ComputedVecsFromHeight<StoredF32>,
+    pub indexes_to_inflation_rate: ComputedVecsFromDateIndex<StoredF32>,
 }
 
 impl Vecs {
@@ -463,6 +467,21 @@ impl Vecs {
             height_to_vbytes: EagerVec::forced_import_compressed(
                 &db,
                 "vbytes",
+                version + VERSION + Version::ZERO,
+            )?,
+            height_to_24h_block_count: EagerVec::forced_import_compressed(
+                &db,
+                "24h_block_count",
+                version + VERSION + Version::ZERO,
+            )?,
+            height_to_24h_coinbase_sum: EagerVec::forced_import_compressed(
+                &db,
+                "24h_coinbase_sum",
+                version + VERSION + Version::ZERO,
+            )?,
+            height_to_24h_coinbase_in_usd_sum: EagerVec::forced_import_compressed(
+                &db,
+                "24h_coinbase_in_usd_sum",
                 version + VERSION + Version::ZERO,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
@@ -856,11 +875,11 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            indexes_to_hash_rate: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_rate: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_rate",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + VERSION + Version::new(5),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -896,7 +915,7 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_difficulty_as_hash: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_difficulty_as_hash: ComputedVecsFromHeight::forced_import(
                 &db,
                 "difficulty_as_hash",
                 Source::Compute,
@@ -946,81 +965,89 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_price_ths: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_price_ths: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_price_ths",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_price_phs: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_price_phs: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_price_phs",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_value_ths: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_value_ths: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_value_ths",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_value_phs: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_value_phs: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_value_phs",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_price_ths_min: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_price_ths_min: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_price_ths_min",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_price_phs_min: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_price_phs_min: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_price_phs_min",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_price_rebound: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_price_rebound: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_price_rebound",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_value_ths_min: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_value_ths_min: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_value_ths_min",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_value_phs_min: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_value_phs_min: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_value_phs_min",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_hash_value_rebound: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_value_rebound: ComputedVecsFromHeight::forced_import(
                 &db,
                 "hash_value_rebound",
+                Source::Compute,
+                version + VERSION + Version::new(4),
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_inflation_rate: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "inflation_rate",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
                 indexes,
@@ -1081,6 +1108,26 @@ impl Vecs {
                 )?;
                 Ok(())
             })?;
+
+        let mut height_to_timestamp_fixed_iter = indexes.height_to_timestamp_fixed.into_iter();
+        let mut prev = Height::ZERO;
+        self.height_to_24h_block_count.compute_transform(
+            starting_indexes.height,
+            &indexes.height_to_timestamp_fixed,
+            |(h, t, ..)| {
+                while t.difference_in_days_between(
+                    height_to_timestamp_fixed_iter.unwrap_get_inner(prev),
+                ) > 0
+                {
+                    prev.increment();
+                    if prev > h {
+                        unreachable!()
+                    }
+                }
+                (h, StoredU32::from(*h + 1 - *prev))
+            },
+            exit,
+        )?;
 
         self.indexes_to_block_count
             .compute_all(indexes, starting_indexes, exit, |v| {
@@ -1411,6 +1458,49 @@ impl Vecs {
                 Ok(())
             })?;
 
+        let mut height_to_coinbase_iter = self
+            .indexes_to_coinbase
+            .sats
+            .height
+            .as_ref()
+            .unwrap()
+            .into_iter();
+        self.height_to_24h_coinbase_sum.compute_transform(
+            starting_indexes.height,
+            &self.height_to_24h_block_count,
+            |(h, count, ..)| {
+                let range = *h - (*count - 1)..=*h;
+                let sum = range
+                    .map(Height::from)
+                    .map(|h| height_to_coinbase_iter.unwrap_get_inner(h))
+                    .sum::<Sats>();
+                (h, sum)
+            },
+            exit,
+        )?;
+        if let Some(mut height_to_coinbase_iter) = self
+            .indexes_to_coinbase
+            .dollars
+            .as_ref()
+            .map(|c| c.height.as_ref().unwrap().into_iter())
+        {
+            self.height_to_24h_coinbase_in_usd_sum.compute_transform(
+                starting_indexes.height,
+                &self.height_to_24h_block_count,
+                |(h, count, ..)| {
+                    let range = *h - (*count - 1)..=*h;
+                    let sum = range
+                        .map(Height::from)
+                        .map(|h| height_to_coinbase_iter.unwrap_get_inner(h))
+                        .sum::<Dollars>();
+                    (h, sum)
+                },
+                exit,
+            )?;
+        }
+
+        drop(height_to_coinbase_iter);
+
         self.indexes_to_subsidy
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 let mut indexes_to_fee_sum_iter =
@@ -1447,6 +1537,24 @@ impl Vecs {
                 Ok(())
             },
         )?;
+
+        self.indexes_to_inflation_rate
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_subsidy.sats.dateindex.unwrap_sum(),
+                    self.indexes_to_subsidy.sats.dateindex.unwrap_cumulative(),
+                    |(i, subsidy_1d_sum, subsidy_cumulative, ..)| {
+                        (
+                            i,
+                            (365.0 * *subsidy_1d_sum as f64 / *subsidy_cumulative as f64 * 100.0)
+                                .into(),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         self.indexes_to_p2a_count
             .compute_all(indexes, starting_indexes, exit, |v| {
@@ -1654,40 +1762,28 @@ impl Vecs {
         )?;
 
         self.indexes_to_difficulty_as_hash
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 let multiplier = 2.0_f64.powi(32) / 600.0;
                 v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_difficulty.dateindex.unwrap_last(),
+                    starting_indexes.height,
+                    &indexer.vecs.height_to_difficulty,
                     |(i, v, ..)| (i, StoredF32::from(*v * multiplier)),
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        let now = Timestamp::now();
-        let today = Date::from(now);
         self.indexes_to_hash_rate
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform3(
-                    starting_indexes.dateindex,
-                    self.indexes_to_block_count.dateindex.unwrap_sum(),
-                    self.indexes_to_difficulty_as_hash
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    &indexes.dateindex_to_date,
-                    |(i, block_count_sum, difficulty_as_hash, date, ..)| {
-                        let target_multiplier = if date == today {
-                            now.day_completion()
-                        } else {
-                            1.0
-                        };
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.height,
+                    &self.height_to_24h_block_count,
+                    self.indexes_to_difficulty_as_hash.height.as_ref().unwrap(),
+                    |(i, block_count_sum, difficulty_as_hash, ..)| {
                         (
                             i,
                             StoredF64::from(
-                                (f64::from(block_count_sum)
-                                    / (target_multiplier * TARGET_BLOCKS_PER_DAY_F64))
+                                (f64::from(block_count_sum) / TARGET_BLOCKS_PER_DAY_F64)
                                     * f64::from(difficulty_as_hash),
                             ),
                         )
@@ -1701,7 +1797,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
                     7,
                     exit,
                 )?;
@@ -1712,7 +1808,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
                     30,
                     exit,
                 )?;
@@ -1723,7 +1819,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
                     2 * 30,
                     exit,
                 )?;
@@ -1734,7 +1830,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
                     365,
                     exit,
                 )?;
@@ -1856,16 +1952,11 @@ impl Vecs {
         )?;
 
         self.indexes_to_hash_price_ths
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform2(
-                    starting_indexes.dateindex,
-                    self.indexes_to_coinbase
-                        .dollars
-                        .as_ref()
-                        .unwrap()
-                        .dateindex
-                        .unwrap_sum(),
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    &self.height_to_24h_coinbase_in_usd_sum,
+                    self.indexes_to_hash_rate.height.as_ref().unwrap(),
                     |(i, coinbase_sum, hashrate, ..)| {
                         (i, (*coinbase_sum / (*hashrate / ONE_TERA_HASH)).into())
                     },
@@ -1875,10 +1966,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_price_phs
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_price_ths.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_price_ths.height.as_ref().unwrap(),
                     |(i, price, ..)| (i, (*price * 1000.0).into()),
                     exit,
                 )?;
@@ -1886,11 +1977,11 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_value_ths
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform2(
-                    starting_indexes.dateindex,
-                    self.indexes_to_coinbase.sats.dateindex.unwrap_sum(),
-                    self.indexes_to_hash_rate.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    &self.height_to_24h_coinbase_sum,
+                    self.indexes_to_hash_rate.height.as_ref().unwrap(),
                     |(i, coinbase_sum, hashrate, ..)| {
                         (
                             i,
@@ -1903,10 +1994,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_value_phs
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_value_ths.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_value_ths.height.as_ref().unwrap(),
                     |(i, value, ..)| (i, (*value * 1000.0).into()),
                     exit,
                 )?;
@@ -1914,10 +2005,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_price_ths_min
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_price_ths.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_price_ths.height.as_ref().unwrap(),
                     exit,
                     true,
                 )?;
@@ -1925,10 +2016,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_price_phs_min
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_price_phs.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_price_phs.height.as_ref().unwrap(),
                     exit,
                     true,
                 )?;
@@ -1936,10 +2027,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_value_ths_min
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_value_ths.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_value_ths.height.as_ref().unwrap(),
                     exit,
                     true,
                 )?;
@@ -1947,10 +2038,10 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_value_phs_min
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_value_phs.dateindex.as_ref().unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_value_phs.height.as_ref().unwrap(),
                     exit,
                     true,
                 )?;
@@ -1958,28 +2049,22 @@ impl Vecs {
             })?;
 
         self.indexes_to_hash_price_rebound
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_price_phs.dateindex.as_ref().unwrap(),
-                    self.indexes_to_hash_price_phs_min
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_price_phs.height.as_ref().unwrap(),
+                    self.indexes_to_hash_price_phs_min.height.as_ref().unwrap(),
                     exit,
                 )?;
                 Ok(())
             })?;
 
         self.indexes_to_hash_value_rebound
-            .compute_all(starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
-                    starting_indexes.dateindex,
-                    self.indexes_to_hash_value_phs.dateindex.as_ref().unwrap(),
-                    self.indexes_to_hash_value_phs_min
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
+                    starting_indexes.height,
+                    self.indexes_to_hash_value_phs.height.as_ref().unwrap(),
+                    self.indexes_to_hash_value_phs_min.height.as_ref().unwrap(),
                     exit,
                 )?;
                 Ok(())
@@ -2012,16 +2097,17 @@ impl Vecs {
                 &self.semesterindex_to_block_count_target,
                 &self.yearindex_to_block_count_target,
                 &self.decadeindex_to_block_count_target,
+                &self.height_to_24h_block_count,
+                &self.height_to_24h_coinbase_sum,
+                &self.height_to_24h_coinbase_in_usd_sum,
             ]
             .into_iter(),
         );
-
         iter = Box::new(iter.chain(self.indexes_to_hash_rate.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_rate_1w_sma.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_rate_1m_sma.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_rate_2m_sma.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_rate_1y_sma.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.timeindexes_to_timestamp.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_block_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_1w_block_count.iter_any_collectable()));
@@ -2031,7 +2117,7 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_block_size.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_block_vbytes.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_block_weight.iter_any_collectable()));
-
+        iter = Box::new(iter.chain(self.indexes_to_inflation_rate.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_difficulty.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_difficulty_adjustment.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_difficultyepoch.iter_any_collectable()));
@@ -2071,7 +2157,6 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_hash_value_phs_min.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_price_rebound.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_value_rebound.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_fee_rate.iter_any_collectable()));
@@ -2081,7 +2166,6 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_tx_v3.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_tx_vsize.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_tx_weight.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_emptyoutput_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_input_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_opreturn_count.iter_any_collectable()));
@@ -2096,11 +2180,9 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_p2wpkh_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_p2wsh_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_unknownoutput_count.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_subsidy.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_exact_utxo_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_unclaimed_rewards.iter_any_collectable()));
-
         iter = Box::new(
             iter.chain(
                 self.indexes_to_subsidy_usd_1y_sma
