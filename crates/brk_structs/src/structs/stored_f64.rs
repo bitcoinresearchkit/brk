@@ -175,3 +175,10 @@ impl Sum for StoredF64 {
         Self(iter.map(|v| v.0).sum::<f64>())
     }
 }
+
+impl Div<Bitcoin> for StoredF64 {
+    type Output = Self;
+    fn div(self, rhs: Bitcoin) -> Self::Output {
+        Self(self.0 / f64::from(rhs))
+    }
+}

@@ -746,6 +746,7 @@ function createUtils() {
         (id.endsWith("supply") &&
           !(id.endsWith("circulating_supply") || id.endsWith("_own_supply"))) ||
         id === "sent" ||
+        id === "annualized_volume" ||
         id.endsWith("supply_half") ||
         id.endsWith("supply_breakeven") ||
         id.endsWith("supply_in_profit") ||
@@ -766,7 +767,13 @@ function createUtils() {
     ) {
       setUnit("Sats");
     }
-    if ((!unit || thoroughUnitCheck) && id.includes("in_btc")) {
+    if (
+      (!unit || thoroughUnitCheck) &&
+      !id.startsWith("velocity") &&
+      ((id.includes("_btc") &&
+        !(id.includes("0k_btc") || id.includes("1k_btc"))) ||
+        id.endsWith("_btc"))
+    ) {
       setUnit("BTC");
     }
     if ((!unit || thoroughUnitCheck) && id === "chain") {
@@ -791,7 +798,7 @@ function createUtils() {
         id === "price_ath" ||
         id === "market_cap" ||
         id.startsWith("price_true_range") ||
-        id.includes("_usd") ||
+        (id.includes("_usd") && !id.startsWith("velocity")) ||
         id.includes("cointime_value") ||
         id.endsWith("_ago") ||
         id.endsWith("price_paid") ||
@@ -835,7 +842,8 @@ function createUtils() {
           id.endsWith("pct99"))) ||
       id.includes("liveliness") ||
       id.includes("vaultedness") ||
-      id == "puell_multiple"
+      id == "puell_multiple" ||
+      id.startsWith("velocity")
     ) {
       setUnit("Ratio");
     }

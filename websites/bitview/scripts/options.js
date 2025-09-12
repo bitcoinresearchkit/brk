@@ -1417,10 +1417,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
             name: legend,
             color,
           }),
-          ...(`${key}_ratio_p1sd_in_usd` in vecIdToIndexes
+          ...(`${key}_ratio_p1sd_usd` in vecIdToIndexes
             ? percentiles.map(({ name, color }) =>
                 createBaseSeries({
-                  key: `${key}_ratio_${name}_in_usd`,
+                  key: `${key}_ratio_${name}_usd`,
                   name,
                   color,
                   defaultActive: false,
@@ -1487,25 +1487,25 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       color,
                     }),
                     createBaseSeries({
-                      key: `${key}_ratio_1y_0sd_in_usd`,
+                      key: `${key}_ratio_1y_0sd_usd`,
                       name: "1y 0sd",
                       color: colors.fuchsia,
                       defaultActive: false,
                     }),
                     createBaseSeries({
-                      key: `${key}_ratio_2y_0sd_in_usd`,
+                      key: `${key}_ratio_2y_0sd_usd`,
                       name: "2y 0sd",
                       color: colors.purple,
                       defaultActive: false,
                     }),
                     createBaseSeries({
-                      key: `${key}_ratio_4y_0sd_in_usd`,
+                      key: `${key}_ratio_4y_0sd_usd`,
                       name: "4y 0sd",
                       color: colors.violet,
                       defaultActive: false,
                     }),
                     createBaseSeries({
-                      key: `${key}_ratio_0sd_in_usd`,
+                      key: `${key}_ratio_0sd_usd`,
                       name: "0sd",
                       color: colors.indigo,
                       defaultActive: false,
@@ -1635,7 +1635,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       },
                     ].map(({ sdKey, name, color }) =>
                       createBaseSeries({
-                        key: `${key}_ratio_${keyAddon}${sdKey}_in_usd`,
+                        key: `${key}_ratio_${keyAddon}${sdKey}_usd`,
                         name,
                         color,
                         defaultActive: false,
@@ -1721,12 +1721,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     color: colors.default,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_btc`,
+                    key: `${key}supply_btc`,
                     name: "Supply",
                     color: colors.default,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_usd`,
+                    key: `${key}supply_usd`,
                     name: "Supply",
                     color: colors.default,
                   }),
@@ -1745,12 +1745,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_profit_in_btc`,
+                    key: `${key}supply_in_profit_btc`,
                     name: "In Profit",
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_profit_in_usd`,
+                    key: `${key}supply_in_profit_usd`,
                     name: "In Profit",
                     color: colors.green,
                   }),
@@ -1760,12 +1760,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     color: colors.red,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_loss_in_btc`,
+                    key: `${key}supply_in_loss_btc`,
                     name: "In Loss",
                     color: colors.red,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_in_loss_in_usd`,
+                    key: `${key}supply_in_loss_usd`,
                     name: "In Loss",
                     color: colors.red,
                   }),
@@ -1775,12 +1775,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     color: colors.yellow,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_breakeven_in_btc`,
+                    key: `${key}supply_breakeven_btc`,
                     name: useGroupName ? name : "breakeven",
                     color: colors.yellow,
                   }),
                   createBaseSeries({
-                    key: `${key}supply_breakeven_in_usd`,
+                    key: `${key}supply_breakeven_usd`,
                     name: useGroupName ? name : "breakeven",
                     color: colors.yellow,
                   }),
@@ -1793,7 +1793,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     },
                   }),
                   createBaseSeries({
-                    key: `${key}supply_half_in_btc`,
+                    key: `${key}supply_half_btc`,
                     name: useGroupName ? name : "half",
                     color: "list" in args ? color : colors.gray,
                     options: {
@@ -1801,7 +1801,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     },
                   }),
                   createBaseSeries({
-                    key: `${key}supply_half_in_usd`,
+                    key: `${key}supply_half_usd`,
                     name: useGroupName ? name : "half",
                     color: "list" in args ? color : colors.gray,
                     options: {
@@ -1870,12 +1870,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_btc`,
+                        key: `${key}supply_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_usd`,
+                        key: `${key}supply_usd`,
                         name,
                         color,
                       }),
@@ -1906,12 +1906,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_profit_in_btc`,
+                        key: `${key}supply_in_profit_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_profit_in_usd`,
+                        key: `${key}supply_in_profit_usd`,
                         name,
                         color,
                       }),
@@ -1939,12 +1939,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_loss_in_btc`,
+                        key: `${key}supply_in_loss_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_in_loss_in_usd`,
+                        key: `${key}supply_in_loss_usd`,
                         name,
                         color,
                       }),
@@ -1972,12 +1972,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_breakeven_in_btc`,
+                        key: `${key}supply_breakeven_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        key: `${key}supply_breakeven_in_usd`,
+                        key: `${key}supply_breakeven_usd`,
                         name,
                         color,
                       }),
@@ -3528,12 +3528,30 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       name: "Sent",
                     }),
                     createBaseSeries({
-                      key: "sent_in_btc",
+                      key: "sent_btc",
                       name: "Sent",
                     }),
                     createBaseSeries({
-                      key: "sent_in_usd",
+                      key: "sent_usd",
                       name: "Sent",
+                    }),
+                    createBaseSeries({
+                      key: "annualized_volume",
+                      name: "annualized",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "annualized_volume_btc",
+                      name: "annualized",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: "annualized_volume_usd",
+                      name: "annualized",
+                      color: colors.lime,
+                      defaultActive: false,
                     }),
                   ],
                 },
@@ -3568,6 +3586,21 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       cumulativeColor,
                     }),
                   ),
+                },
+                {
+                  name: "Velocity",
+                  title: "Transaction Velocity",
+                  bottom: [
+                    createBaseSeries({
+                      key: "velocity_btc",
+                      name: "bitcoin",
+                    }),
+                    createBaseSeries({
+                      key: "velocity_usd",
+                      name: "dollars",
+                      color: colors.emerald,
+                    }),
+                  ],
                 },
               ],
             },
@@ -3635,11 +3668,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       name: "Mined",
                     }),
                     createBaseSeries({
-                      key: "supply_in_btc",
+                      key: "supply_btc",
                       name: "Mined",
                     }),
                     createBaseSeries({
-                      key: "supply_in_usd",
+                      key: "supply_usd",
                       name: "Mined",
                     }),
                   ],
@@ -3659,13 +3692,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
-                            key: "coinbase_in_btc",
+                            key: "coinbase_btc",
                             name: "Coinbase",
                           },
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
-                            key: "coinbase_in_usd",
+                            key: "coinbase_usd",
                             name: "Coinbase",
                           },
                         ),
@@ -3687,13 +3720,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         }),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
-                            key: "subsidy_in_btc",
+                            key: "subsidy_btc",
                             name: "Subsidy",
                           },
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
-                            key: "subsidy_in_usd",
+                            key: "subsidy_usd",
                             name: "Subsidy",
                           },
                         ),
@@ -3707,10 +3740,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           "fee",
                         ),
                         ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                          "fee_in_btc",
+                          "fee_btc",
                         ),
                         ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                          "fee_in_usd",
+                          "fee_usd",
                         ),
                       ],
                     },
@@ -3738,10 +3771,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           concat: "unclaimed_rewards",
                         }),
                         ...createSumCumulativeSeries({
-                          concat: "unclaimed_rewards_in_btc",
+                          concat: "unclaimed_rewards_btc",
                         }),
                         ...createSumCumulativeSeries({
-                          concat: "unclaimed_rewards_in_usd",
+                          concat: "unclaimed_rewards_usd",
                         }),
                       ],
                     },
@@ -4051,13 +4084,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                 cumulativeColor,
                               }),
                               ...createSumCumulativeSeries({
-                                concat: `${key}_${keyAddon}_in_btc`,
+                                concat: `${key}_${keyAddon}_btc`,
                                 common: keyAddon,
                                 sumColor,
                                 cumulativeColor,
                               }),
                               ...createSumCumulativeSeries({
-                                concat: `${key}_${keyAddon}_in_usd`,
+                                concat: `${key}_${keyAddon}_usd`,
                                 common: keyAddon,
                                 sumColor,
                                 cumulativeColor,
@@ -4093,11 +4126,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       name: "Supply",
                     }),
                     createBaseSeries({
-                      key: "unspendable_supply_in_btc",
+                      key: "unspendable_supply_btc",
                       name: "Supply",
                     }),
                     createBaseSeries({
-                      key: "unspendable_supply_in_usd",
+                      key: "unspendable_supply_usd",
                       name: "Supply",
                     }),
                   ],
@@ -4133,11 +4166,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           name: "Supply",
                         }),
                         createBaseSeries({
-                          key: "opreturn_supply_in_btc",
+                          key: "opreturn_supply_btc",
                           name: "Supply",
                         }),
                         createBaseSeries({
-                          key: "opreturn_supply_in_usd",
+                          key: "opreturn_supply_usd",
                           name: "Supply",
                         }),
                       ],
@@ -4392,14 +4425,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     createBaseSeries({
                       key: `${
                         name !== "all" ? /** @type {const} */ (`${name}_`) : ""
-                      }supply_in_btc`,
+                      }supply_btc`,
                       name,
                       color,
                     }),
                     createBaseSeries({
                       key: `${
                         name !== "all" ? /** @type {const} */ (`${name}_`) : ""
-                      }supply_in_usd`,
+                      }supply_usd`,
                       name,
                       color,
                     }),

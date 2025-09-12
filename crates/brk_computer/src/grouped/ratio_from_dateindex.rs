@@ -29,12 +29,12 @@ pub struct ComputedRatioVecsFromDateIndex {
     pub ratio_pct5: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub ratio_pct2: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub ratio_pct1: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub ratio_pct99_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct98_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct95_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct5_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct2_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct1_in_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct99_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct98_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct95_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct5_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct2_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct1_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
 
     pub ratio_sd: Option<ComputedStandardDeviationVecsFromDateIndex>,
     pub ratio_4y_sd: Option<ComputedStandardDeviationVecsFromDateIndex>,
@@ -212,10 +212,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct99_in_usd: extended.then(|| {
+            ratio_pct99_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct99_in_usd"),
+                    &format!("{name}_ratio_pct99_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -223,10 +223,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct98_in_usd: extended.then(|| {
+            ratio_pct98_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct98_in_usd"),
+                    &format!("{name}_ratio_pct98_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -234,10 +234,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct95_in_usd: extended.then(|| {
+            ratio_pct95_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct95_in_usd"),
+                    &format!("{name}_ratio_pct95_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -245,10 +245,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct5_in_usd: extended.then(|| {
+            ratio_pct5_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct5_in_usd"),
+                    &format!("{name}_ratio_pct5_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -256,10 +256,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct2_in_usd: extended.then(|| {
+            ratio_pct2_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct2_in_usd"),
+                    &format!("{name}_ratio_pct2_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -267,10 +267,10 @@ impl ComputedRatioVecsFromDateIndex {
                 )
                 .unwrap()
             }),
-            ratio_pct1_in_usd: extended.then(|| {
+            ratio_pct1_usd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_ratio_pct1_in_usd"),
+                    &format!("{name}_ratio_pct1_usd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
                     indexes,
@@ -529,7 +529,7 @@ impl ComputedRatioVecsFromDateIndex {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        self.ratio_pct99_in_usd
+        self.ratio_pct99_usd
             .as_mut()
             .unwrap()
             .compute_all(starting_indexes, exit, |vec| {
@@ -553,10 +553,10 @@ impl ComputedRatioVecsFromDateIndex {
                 Ok(())
             })?;
 
-        let compute_in_usd =
-            |in_usd: Option<&mut ComputedVecsFromDateIndex<Dollars>>,
+        let compute_usd =
+            |usd: Option<&mut ComputedVecsFromDateIndex<Dollars>>,
              source: Option<&ComputedVecsFromDateIndex<StoredF32>>| {
-                in_usd.unwrap().compute_all(starting_indexes, exit, |vec| {
+                usd.unwrap().compute_all(starting_indexes, exit, |vec| {
                     let mut iter = source.unwrap().dateindex.as_ref().unwrap().into_iter();
                     vec.compute_transform(
                         starting_indexes.dateindex,
@@ -571,12 +571,12 @@ impl ComputedRatioVecsFromDateIndex {
                 })
             };
 
-        compute_in_usd(self.ratio_pct1_in_usd.as_mut(), self.ratio_pct1.as_ref())?;
-        compute_in_usd(self.ratio_pct2_in_usd.as_mut(), self.ratio_pct2.as_ref())?;
-        compute_in_usd(self.ratio_pct5_in_usd.as_mut(), self.ratio_pct5.as_ref())?;
-        compute_in_usd(self.ratio_pct95_in_usd.as_mut(), self.ratio_pct95.as_ref())?;
-        compute_in_usd(self.ratio_pct98_in_usd.as_mut(), self.ratio_pct98.as_ref())?;
-        compute_in_usd(self.ratio_pct99_in_usd.as_mut(), self.ratio_pct99.as_ref())?;
+        compute_usd(self.ratio_pct1_usd.as_mut(), self.ratio_pct1.as_ref())?;
+        compute_usd(self.ratio_pct2_usd.as_mut(), self.ratio_pct2.as_ref())?;
+        compute_usd(self.ratio_pct5_usd.as_mut(), self.ratio_pct5.as_ref())?;
+        compute_usd(self.ratio_pct95_usd.as_mut(), self.ratio_pct95.as_ref())?;
+        compute_usd(self.ratio_pct98_usd.as_mut(), self.ratio_pct98.as_ref())?;
+        compute_usd(self.ratio_pct99_usd.as_mut(), self.ratio_pct99.as_ref())?;
 
         self.ratio_sd.as_mut().unwrap().compute_all(
             starting_indexes,
@@ -717,42 +717,42 @@ impl ComputedRatioVecsFromDateIndex {
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct1_in_usd
+                self.ratio_pct1_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct2_in_usd
+                self.ratio_pct2_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct5_in_usd
+                self.ratio_pct5_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct95_in_usd
+                self.ratio_pct95_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct98_in_usd
+                self.ratio_pct98_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(
             iter.chain(
-                self.ratio_pct99_in_usd
+                self.ratio_pct99_usd
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
             ),

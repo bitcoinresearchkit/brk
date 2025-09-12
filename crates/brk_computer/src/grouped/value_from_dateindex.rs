@@ -42,7 +42,7 @@ impl ComputedValueVecsFromDateIndex {
             )?,
             bitcoin: ComputedVecsFromDateIndex::forced_import(
                 db,
-                &format!("{name}_in_btc"),
+                &format!("{name}_btc"),
                 Source::Compute,
                 version + VERSION,
                 indexes,
@@ -51,7 +51,7 @@ impl ComputedValueVecsFromDateIndex {
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
-                    &format!("{name}_in_usd"),
+                    &format!("{name}_usd"),
                     Source::Compute,
                     version + VERSION,
                     indexes,

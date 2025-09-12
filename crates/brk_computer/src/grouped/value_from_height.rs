@@ -43,7 +43,7 @@ impl ComputedValueVecsFromHeight {
             )?,
             bitcoin: ComputedVecsFromHeight::forced_import(
                 db,
-                &format!("{name}_in_btc"),
+                &format!("{name}_btc"),
                 Source::Compute,
                 version + VERSION,
                 indexes,
@@ -52,7 +52,7 @@ impl ComputedValueVecsFromHeight {
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     db,
-                    &format!("{name}_in_usd"),
+                    &format!("{name}_usd"),
                     Source::Compute,
                     version + VERSION,
                     indexes,

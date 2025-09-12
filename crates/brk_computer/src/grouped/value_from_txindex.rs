@@ -38,8 +38,8 @@ impl ComputedValueVecsFromTxindex {
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
-        let name_in_btc = format!("{name}_in_btc");
-        let name_in_usd = format!("{name}_in_usd");
+        let name_btc = format!("{name}_btc");
+        let name_usd = format!("{name}_usd");
 
         let sats = ComputedVecsFromTxindex::forced_import(
             db,
@@ -53,7 +53,7 @@ impl ComputedValueVecsFromTxindex {
         let source_vec = source.vec();
 
         let bitcoin_txindex = LazyVecFrom1::init(
-            &name_in_btc,
+            &name_btc,
             version + VERSION,
             source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
@@ -66,7 +66,7 @@ impl ComputedValueVecsFromTxindex {
 
         let bitcoin = ComputedVecsFromTxindex::forced_import(
             db,
-            &name_in_btc,
+            &name_btc,
             Source::None,
             version + VERSION,
             indexes,
@@ -75,29 +75,27 @@ impl ComputedValueVecsFromTxindex {
 
         let dollars_txindex = price.map(|price| {
             LazyVecFrom3::init(
-                &name_in_usd,
+                &name_usd,
                 version + VERSION,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
                 price.chainindexes_to_price_close.height.boxed_clone(),
                 |txindex: TxIndex,
-                 txindex_to_in_btc_iter,
+                 txindex_to_btc_iter,
                  txindex_to_height_iter,
                  height_to_price_close_iter| {
                     let txindex = txindex.unwrap_to_usize();
-                    txindex_to_in_btc_iter
-                        .next_at(txindex)
-                        .and_then(|(_, value)| {
-                            let btc = value.into_owned();
-                            txindex_to_height_iter
-                                .next_at(txindex)
-                                .and_then(|(_, value)| {
-                                    let height = value.into_owned();
-                                    height_to_price_close_iter
-                                        .next_at(height.unwrap_to_usize())
-                                        .map(|(_, close)| *close.into_owned() * btc)
-                                })
-                        })
+                    txindex_to_btc_iter.next_at(txindex).and_then(|(_, value)| {
+                        let btc = value.into_owned();
+                        txindex_to_height_iter
+                            .next_at(txindex)
+                            .and_then(|(_, value)| {
+                                let height = value.into_owned();
+                                height_to_price_close_iter
+                                    .next_at(height.unwrap_to_usize())
+                                    .map(|(_, close)| *close.into_owned() * btc)
+                            })
+                    })
                 },
             )
         });
@@ -110,7 +108,7 @@ impl ComputedValueVecsFromTxindex {
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromTxindex::forced_import(
                     db,
-                    &name_in_usd,
+                    &name_usd,
                     Source::None,
                     version + VERSION,
                     indexes,
