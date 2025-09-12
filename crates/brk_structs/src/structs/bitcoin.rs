@@ -134,3 +134,8 @@ impl CheckedSub<usize> for Bitcoin {
         Some(Self(self.0 - rhs as f64))
     }
 }
+impl CheckedSub<Bitcoin> for Bitcoin {
+    fn checked_sub(self, rhs: Bitcoin) -> Option<Self> {
+        Some(Self(self.0 - rhs.0))
+    }
+}

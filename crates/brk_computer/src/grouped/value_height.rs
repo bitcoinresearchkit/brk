@@ -34,14 +34,14 @@ impl ComputedHeightValueVecs {
             }),
             bitcoin: EagerVec::forced_import(
                 db,
-                &format!("{name}_in_btc"),
+                &format!("{name}_btc"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dollars: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     db,
-                    &format!("{name}_in_usd"),
+                    &format!("{name}_usd"),
                     version + VERSION + Version::ZERO,
                     format,
                 )

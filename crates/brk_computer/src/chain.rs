@@ -4,13 +4,13 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
-    CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch, Height,
-    InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool, StoredF32,
-    StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex, Weight,
-    YearIndex,
+    Bitcoin, CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
+    Height, InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool,
+    StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex,
+    Weight, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, AnyVec, Database, EagerVec, Exit,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
     LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
@@ -21,7 +21,6 @@ use crate::grouped::{
 
 use super::{Indexes, indexes, price};
 
-const VERSION: Version = Version::ZERO;
 const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;
 const TARGET_BLOCKS_PER_DAY_F32: f32 = 144.0;
 const TARGET_BLOCKS_PER_DAY: u64 = 144;
@@ -51,7 +50,7 @@ pub struct Vecs {
     pub height_to_interval: EagerVec<Height, Timestamp>,
     pub height_to_24h_block_count: EagerVec<Height, StoredU32>,
     pub height_to_24h_coinbase_sum: EagerVec<Height, Sats>,
-    pub height_to_24h_coinbase_in_usd_sum: EagerVec<Height, Dollars>,
+    pub height_to_24h_coinbase_usd_sum: EagerVec<Height, Dollars>,
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
     pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
     pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
@@ -134,24 +133,31 @@ pub struct Vecs {
     pub indexes_to_blocks_before_next_halving: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_days_before_next_halving: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_inflation_rate: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_annualized_volume: ComputedVecsFromDateIndex<Sats>,
+    pub indexes_to_annualized_volume_btc: ComputedVecsFromDateIndex<Bitcoin>,
+    pub indexes_to_annualized_volume_usd: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_velocity_btc: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_velocity_usd: ComputedVecsFromDateIndex<StoredF64>,
 }
 
 impl Vecs {
     pub fn forced_import(
-        parent: &Path,
-        version: Version,
+        parent_path: &Path,
+        parent_version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db = Database::open(&parent.join("chain"))?;
+        let db = Database::open(&parent_path.join("chain"))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
+
+        let version = parent_version + Version::ZERO;
 
         let compute_dollars = price.is_some();
 
         let inputindex_to_value = LazyVecFrom2::init(
             "value",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             indexer.vecs.outputindex_to_value.boxed_clone(),
             |index: InputIndex, inputindex_to_outputindex_iter, outputindex_to_value_iter| {
@@ -175,7 +181,7 @@ impl Vecs {
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexer.vecs.txindex_to_base_size.boxed_clone(),
             indexer.vecs.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
@@ -200,7 +206,7 @@ impl Vecs {
 
         let txindex_to_vsize = LazyVecFrom1::init(
             "vsize",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             txindex_to_weight.boxed_clone(),
             |index: TxIndex, iter| {
                 let index = index.unwrap_to_usize();
@@ -214,7 +220,7 @@ impl Vecs {
 
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.txindex_to_height.boxed_clone(),
             indexer.vecs.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
@@ -234,7 +240,7 @@ impl Vecs {
 
         let txindex_to_input_value = LazyVecFrom3::init(
             "input_value",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexer.vecs.txindex_to_first_inputindex.boxed_clone(),
             indexes.txindex_to_input_count.boxed_clone(),
             inputindex_to_value.boxed_clone(),
@@ -270,7 +276,7 @@ impl Vecs {
         //         db,
         //         "input_value",
         //         true,
-        //         version + VERSION + Version::ZERO,
+        //         version + Version::ZERO,
         //         format,
         // computation,
         // StorableVecGeneatorOptions::default()
@@ -281,7 +287,7 @@ impl Vecs {
 
         let txindex_to_output_value = LazyVecFrom3::init(
             "output_value",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexer.vecs.txindex_to_first_outputindex.boxed_clone(),
             indexes.txindex_to_output_count.boxed_clone(),
             indexer.vecs.outputindex_to_value.boxed_clone(),
@@ -317,7 +323,7 @@ impl Vecs {
         //         db,
         //         "output_value",
         //         true,
-        //         version + VERSION + Version::ZERO,
+        //         version + Version::ZERO,
         //         format,
         // computation,
         // StorableVecGeneatorOptions::default()
@@ -327,50 +333,50 @@ impl Vecs {
         //     )?;
 
         let txindex_to_fee =
-            EagerVec::forced_import_compressed(&db, "fee", version + VERSION + Version::ZERO)?;
+            EagerVec::forced_import_compressed(&db, "fee", version + Version::ZERO)?;
 
         let txindex_to_fee_rate =
-            EagerVec::forced_import_compressed(&db, "fee_rate", version + VERSION + Version::ZERO)?;
+            EagerVec::forced_import_compressed(&db, "fee_rate", version + Version::ZERO)?;
 
         let dateindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.dateindex_to_dateindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DAY)),
         );
         let weekindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.weekindex_to_weekindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_WEEK)),
         );
         let monthindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.monthindex_to_monthindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_MONTH)),
         );
         let quarterindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.quarterindex_to_quarterindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_QUARTER)),
         );
         let semesterindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.semesterindex_to_semesterindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_SEMESTER)),
         );
         let yearindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.yearindex_to_yearindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_YEAR)),
         );
         let decadeindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
-            version + VERSION + Version::ZERO,
+            version + Version::ZERO,
             indexes.decadeindex_to_decadeindex.boxed_clone(),
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
         );
@@ -386,13 +392,13 @@ impl Vecs {
             height_to_interval: EagerVec::forced_import_compressed(
                 &db,
                 "interval",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 &db,
                 "timestamp",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_first(),
             )?,
@@ -400,7 +406,7 @@ impl Vecs {
                 &db,
                 "block_interval",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -411,7 +417,7 @@ impl Vecs {
                 &db,
                 "block_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -419,7 +425,7 @@ impl Vecs {
                 &db,
                 "1w_block_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -427,7 +433,7 @@ impl Vecs {
                 &db,
                 "1m_block_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -435,7 +441,7 @@ impl Vecs {
                 &db,
                 "1y_block_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -443,7 +449,7 @@ impl Vecs {
                 &db,
                 "block_weight",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -456,7 +462,7 @@ impl Vecs {
                 &db,
                 "block_size",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -468,28 +474,28 @@ impl Vecs {
             height_to_vbytes: EagerVec::forced_import_compressed(
                 &db,
                 "vbytes",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             height_to_24h_block_count: EagerVec::forced_import_compressed(
                 &db,
                 "24h_block_count",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             height_to_24h_coinbase_sum: EagerVec::forced_import_compressed(
                 &db,
                 "24h_coinbase_sum",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
-            height_to_24h_coinbase_in_usd_sum: EagerVec::forced_import_compressed(
+            height_to_24h_coinbase_usd_sum: EagerVec::forced_import_compressed(
                 &db,
-                "24h_coinbase_in_usd_sum",
-                version + VERSION + Version::ZERO,
+                "24h_coinbase_usd_sum",
+                version + Version::ZERO,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 &db,
                 "block_vbytes",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -501,29 +507,29 @@ impl Vecs {
             difficultyepoch_to_timestamp: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
 
             dateindex_to_fee_dominance: EagerVec::forced_import_compressed(
                 &db,
                 "fee_dominance",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             dateindex_to_subsidy_dominance: EagerVec::forced_import_compressed(
                 &db,
                 "subsidy_dominance",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
             )?,
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
                 &db,
                 "difficulty",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -531,7 +537,7 @@ impl Vecs {
                 &db,
                 "difficultyepoch",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -539,7 +545,7 @@ impl Vecs {
                 &db,
                 "halvingepoch",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -547,7 +553,7 @@ impl Vecs {
                 &db,
                 "tx_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -560,7 +566,7 @@ impl Vecs {
                 &db,
                 "input_count",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -573,7 +579,7 @@ impl Vecs {
                 &db,
                 "output_count",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -586,7 +592,7 @@ impl Vecs {
                 &db,
                 "tx_v1",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -594,7 +600,7 @@ impl Vecs {
                 &db,
                 "tx_v2",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -602,7 +608,7 @@ impl Vecs {
                 &db,
                 "tx_v3",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -610,7 +616,7 @@ impl Vecs {
                 &db,
                 "sent",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 VecBuilderOptions::default().add_sum(),
                 compute_dollars,
                 indexes,
@@ -620,7 +626,7 @@ impl Vecs {
                 "fee",
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 price,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -633,7 +639,7 @@ impl Vecs {
                 &db,
                 "fee_rate",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -644,7 +650,7 @@ impl Vecs {
                 &db,
                 "tx_vsize",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -655,7 +661,7 @@ impl Vecs {
                 &db,
                 "tx_weight",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
@@ -666,7 +672,7 @@ impl Vecs {
                 &db,
                 "subsidy",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_sum()
@@ -680,7 +686,7 @@ impl Vecs {
                 &db,
                 "coinbase",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 VecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
@@ -694,7 +700,7 @@ impl Vecs {
                 &db,
                 "unclaimed_rewards",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
                 compute_dollars,
                 indexes,
@@ -703,7 +709,7 @@ impl Vecs {
                 &db,
                 "p2a_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -716,7 +722,7 @@ impl Vecs {
                 &db,
                 "p2ms_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -729,7 +735,7 @@ impl Vecs {
                 &db,
                 "p2pk33_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -742,7 +748,7 @@ impl Vecs {
                 &db,
                 "p2pk65_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -755,7 +761,7 @@ impl Vecs {
                 &db,
                 "p2pkh_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -768,7 +774,7 @@ impl Vecs {
                 &db,
                 "p2sh_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -781,7 +787,7 @@ impl Vecs {
                 &db,
                 "p2tr_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -794,7 +800,7 @@ impl Vecs {
                 &db,
                 "p2wpkh_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -807,7 +813,7 @@ impl Vecs {
                 &db,
                 "p2wsh_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -820,7 +826,7 @@ impl Vecs {
                 &db,
                 "opreturn_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -833,7 +839,7 @@ impl Vecs {
                 &db,
                 "unknownoutput_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -846,7 +852,7 @@ impl Vecs {
                 &db,
                 "emptyoutput_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()
                     .add_average()
@@ -859,7 +865,7 @@ impl Vecs {
                 &db,
                 "exact_utxo_count",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -868,7 +874,7 @@ impl Vecs {
                     &db,
                     "subsidy_usd_1y_sma",
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -879,7 +885,7 @@ impl Vecs {
                     &db,
                     "puell_multiple",
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -889,7 +895,7 @@ impl Vecs {
                 &db,
                 "hash_rate",
                 Source::Compute,
-                version + VERSION + Version::new(5),
+                version + Version::new(5),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -897,7 +903,7 @@ impl Vecs {
                 &db,
                 "hash_rate_1w_sma",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -905,7 +911,7 @@ impl Vecs {
                 &db,
                 "hash_rate_1m_sma",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -913,7 +919,7 @@ impl Vecs {
                 &db,
                 "hash_rate_2m_sma",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -921,7 +927,7 @@ impl Vecs {
                 &db,
                 "hash_rate_1y_sma",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -929,7 +935,7 @@ impl Vecs {
                 &db,
                 "difficulty_as_hash",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -937,7 +943,7 @@ impl Vecs {
                 &db,
                 "difficulty_adjustment",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum(),
             )?,
@@ -946,7 +952,7 @@ impl Vecs {
                     &db,
                     "blocks_before_next_difficulty_adjustment",
                     Source::Compute,
-                    version + VERSION + Version::TWO,
+                    version + Version::TWO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )?,
@@ -955,7 +961,7 @@ impl Vecs {
                     &db,
                     "days_before_next_difficulty_adjustment",
                     Source::Compute,
-                    version + VERSION + Version::TWO,
+                    version + Version::TWO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )?,
@@ -963,7 +969,7 @@ impl Vecs {
                 &db,
                 "blocks_before_next_halving",
                 Source::Compute,
-                version + VERSION + Version::TWO,
+                version + Version::TWO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -971,7 +977,7 @@ impl Vecs {
                 &db,
                 "days_before_next_halving",
                 Source::Compute,
-                version + VERSION + Version::TWO,
+                version + Version::TWO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -979,7 +985,7 @@ impl Vecs {
                 &db,
                 "hash_price_ths",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -987,7 +993,7 @@ impl Vecs {
                 &db,
                 "hash_price_phs",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -995,7 +1001,7 @@ impl Vecs {
                 &db,
                 "hash_value_ths",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1003,7 +1009,7 @@ impl Vecs {
                 &db,
                 "hash_value_phs",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1011,7 +1017,7 @@ impl Vecs {
                 &db,
                 "hash_price_ths_min",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1019,7 +1025,7 @@ impl Vecs {
                 &db,
                 "hash_price_phs_min",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1027,7 +1033,7 @@ impl Vecs {
                 &db,
                 "hash_price_rebound",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1035,7 +1041,7 @@ impl Vecs {
                 &db,
                 "hash_value_ths_min",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1043,7 +1049,7 @@ impl Vecs {
                 &db,
                 "hash_value_phs_min",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1051,7 +1057,7 @@ impl Vecs {
                 &db,
                 "hash_value_rebound",
                 Source::Compute,
-                version + VERSION + Version::new(4),
+                version + Version::new(4),
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1059,7 +1065,47 @@ impl Vecs {
                 &db,
                 "inflation_rate",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_annualized_volume: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "annualized_volume",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_annualized_volume_btc: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "annualized_volume_btc",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_annualized_volume_usd: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "annualized_volume_usd",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_velocity_btc: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "velocity_btc",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_velocity_usd: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "velocity_usd",
+                Source::Compute,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -1506,7 +1552,7 @@ impl Vecs {
             .as_ref()
             .map(|c| c.height.as_ref().unwrap().into_iter())
         {
-            self.height_to_24h_coinbase_in_usd_sum.compute_transform(
+            self.height_to_24h_coinbase_usd_sum.compute_transform(
                 starting_indexes.height,
                 &self.height_to_24h_block_count,
                 |(h, count, ..)| {
@@ -1977,7 +2023,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform2(
                     starting_indexes.height,
-                    &self.height_to_24h_coinbase_in_usd_sum,
+                    &self.height_to_24h_coinbase_usd_sum,
                     self.indexes_to_hash_rate.height.as_ref().unwrap(),
                     |(i, coinbase_sum, hashrate, ..)| {
                         (i, (*coinbase_sum / (*hashrate / ONE_TERA_HASH)).into())
@@ -2092,6 +2138,77 @@ impl Vecs {
                 Ok(())
             })?;
 
+        self.indexes_to_annualized_volume
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    self.indexes_to_sent.sats.dateindex.unwrap_sum(),
+                    365,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_annualized_volume_btc
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    self.indexes_to_sent.bitcoin.dateindex.unwrap_sum(),
+                    365,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_velocity_btc
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_divide(
+                    starting_indexes.dateindex,
+                    self.indexes_to_annualized_volume_btc
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    self.indexes_to_subsidy
+                        .bitcoin
+                        .dateindex
+                        .unwrap_cumulative(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        if let Some(indexes_to_sent) = self.indexes_to_sent.dollars.as_ref() {
+            self.indexes_to_annualized_volume_usd
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_sum(
+                        starting_indexes.dateindex,
+                        indexes_to_sent.dateindex.unwrap_sum(),
+                        365,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+
+            self.indexes_to_velocity_usd
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_divide(
+                        starting_indexes.dateindex,
+                        self.indexes_to_annualized_volume_usd
+                            .dateindex
+                            .as_ref()
+                            .unwrap(),
+                        self.indexes_to_subsidy
+                            .dollars
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_cumulative(),
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+        }
+
         Ok(())
     }
 
@@ -2121,7 +2238,7 @@ impl Vecs {
                 &self.decadeindex_to_block_count_target,
                 &self.height_to_24h_block_count,
                 &self.height_to_24h_coinbase_sum,
-                &self.height_to_24h_coinbase_in_usd_sum,
+                &self.height_to_24h_coinbase_usd_sum,
             ]
             .into_iter(),
         );
@@ -2206,6 +2323,11 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_subsidy.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_exact_utxo_count.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_unclaimed_rewards.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_annualized_volume.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_annualized_volume_btc.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_annualized_volume_usd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_velocity_btc.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_velocity_usd.iter_any_collectable()));
         iter = Box::new(
             iter.chain(
                 self.indexes_to_subsidy_usd_1y_sma
