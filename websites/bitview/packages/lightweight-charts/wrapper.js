@@ -143,9 +143,10 @@ function createChartElement({
     }),
   );
 
-  // ichart.priceScale("right").applyOptions({
-  //   minimumWidth: 80,
-  // });
+  // Takes a bit more space sometimes but it's better UX than having the scale being resized on option change
+  ichart.priceScale("right").applyOptions({
+    minimumWidth: 80,
+  });
 
   ichart.panes().at(0)?.setStretchFactor(1);
 

@@ -3520,6 +3520,24 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   ),
                 },
                 {
+                  name: "Volume",
+                  title: "Transaction Volume",
+                  bottom: [
+                    createBaseSeries({
+                      key: "sent",
+                      name: "Sent",
+                    }),
+                    createBaseSeries({
+                      key: "sent_in_btc",
+                      name: "Sent",
+                    }),
+                    createBaseSeries({
+                      key: "sent_in_usd",
+                      name: "Sent",
+                    }),
+                  ],
+                },
+                {
                   name: "Size",
                   title: "Transaction Size",
                   bottom: [

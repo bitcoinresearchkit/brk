@@ -10,7 +10,7 @@ use brk_structs::{
     YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, AnyVec, Database, EagerVec, Exit,
     LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
@@ -74,6 +74,7 @@ pub struct Vecs {
     /// Value == 0 when Coinbase
     pub txindex_to_input_value:
         LazyVecFrom3<TxIndex, Sats, TxIndex, InputIndex, TxIndex, StoredU64, InputIndex, Sats>,
+    pub indexes_to_sent: ComputedValueVecsFromHeight,
     // pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU64>,
     pub txindex_to_output_value:
@@ -604,6 +605,15 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
+            )?,
+            indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
+                &db,
+                "sent",
+                Source::Compute,
+                version + VERSION + Version::ZERO,
+                VecBuilderOptions::default().add_sum(),
+                compute_dollars,
+                indexes,
             )?,
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
                 &db,
@@ -1398,6 +1408,20 @@ impl Vecs {
             exit,
         )?;
 
+        self.indexes_to_sent
+            .compute_all(indexes, price, starting_indexes, exit, |v| {
+                dbg!(v.len());
+                v.compute_sum_from_indexes(
+                    starting_indexes.height,
+                    &indexer.vecs.height_to_first_txindex,
+                    &indexes.height_to_txindex_count,
+                    &self.txindex_to_input_value,
+                    exit,
+                )?;
+                dbg!(v.len());
+                Ok(())
+            })?;
+
         self.indexes_to_fee.compute_rest(
             indexer,
             indexes,
@@ -2147,6 +2171,7 @@ impl Vecs {
                     .iter_any_collectable(),
             ),
         );
+        iter = Box::new(iter.chain(self.indexes_to_sent.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_price_ths.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_price_phs.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_hash_value_ths.iter_any_collectable()));

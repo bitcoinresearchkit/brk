@@ -745,6 +745,7 @@ function createUtils() {
       (id.includes("in_sats") ||
         (id.endsWith("supply") &&
           !(id.endsWith("circulating_supply") || id.endsWith("_own_supply"))) ||
+        id === "sent" ||
         id.endsWith("supply_half") ||
         id.endsWith("supply_breakeven") ||
         id.endsWith("supply_in_profit") ||
