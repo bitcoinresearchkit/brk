@@ -1410,7 +1410,6 @@ impl Vecs {
 
         self.indexes_to_sent
             .compute_all(indexes, price, starting_indexes, exit, |v| {
-                dbg!(v.len());
                 v.compute_sum_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_txindex,
@@ -1418,7 +1417,6 @@ impl Vecs {
                     &self.txindex_to_input_value,
                     exit,
                 )?;
-                dbg!(v.len());
                 Ok(())
             })?;
 
