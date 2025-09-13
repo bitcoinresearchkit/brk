@@ -153,6 +153,13 @@ impl Mul<usize> for StoredF32 {
     }
 }
 
+impl Mul<StoredF32> for StoredF32 {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(self.0 * rhs.0)
+    }
+}
+
 impl Mul<StoredF32> for usize {
     type Output = StoredF32;
     fn mul(self, rhs: StoredF32) -> Self::Output {

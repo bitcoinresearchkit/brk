@@ -4143,9 +4143,9 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 
 [[package]]
 name = "seqdb"
-version = "0.2.13"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84f414b042f74d09ee406a7178d4e1ac2f6dfce797b7e305c8d78d8bd92d060b"
+checksum = "0068ee8855b29d0251d0277ffb2c2d8872afe0a7124fc9f33a29102af1096f90"
 dependencies = [
  "allocative",
  "allocative_derive",
@@ -5001,9 +5001,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.2.13"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5fe0477b8e5824c50d8370775795d288b2f853f5a00e758f105020db0f713f1"
+checksum = "9e834cf5275445308e2ab867847d059ac7603de71c35dbe6c197726d1db7c74b"
 dependencies = [
  "allocative",
  "allocative_derive",
@@ -5023,9 +5023,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.2.13"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c44db4c3f8d08f575daea88915f19f597909fca73c415baa1edccb6cab9a252"
+checksum = "2c9acc9a0b85d010ddcd2a4825d2a804520d9c52759bb9b0bc5ef7c4a1e7fce1"
 dependencies = [
  "quote",
  "syn 2.0.106",
