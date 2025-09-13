@@ -64,6 +64,20 @@ impl Mul<usize> for StoredF64 {
     }
 }
 
+impl Mul<StoredF64> for StoredF64 {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(self.0 * rhs.0)
+    }
+}
+
+impl Mul<Dollars> for StoredF64 {
+    type Output = Self;
+    fn mul(self, rhs: Dollars) -> Self::Output {
+        Self(self.0 * *rhs)
+    }
+}
+
 impl Div<usize> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {

@@ -9,6 +9,8 @@ use serde::{Serialize, Serializer, ser::SerializeTuple};
 use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::StoredF64;
+
 use super::{Cents, Dollars, Sats};
 
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
@@ -217,6 +219,15 @@ where
     }
 }
 
+impl<T> From<Open<T>> for StoredF64
+where
+    StoredF64: From<T>,
+{
+    fn from(value: Open<T>) -> Self {
+        Self::from(value.0)
+    }
+}
+
 impl<T> From<Close<T>> for Open<T>
 where
     T: Copy,
@@ -315,6 +326,15 @@ where
     }
 }
 
+impl<T> From<High<T>> for StoredF64
+where
+    StoredF64: From<T>,
+{
+    fn from(value: High<T>) -> Self {
+        Self::from(value.0)
+    }
+}
+
 impl<T> From<Close<T>> for High<T>
 where
     T: Copy,
@@ -407,6 +427,15 @@ where
 impl<T> From<Low<T>> for f64
 where
     f64: From<T>,
+{
+    fn from(value: Low<T>) -> Self {
+        Self::from(value.0)
+    }
+}
+
+impl<T> From<Low<T>> for StoredF64
+where
+    StoredF64: From<T>,
 {
     fn from(value: Low<T>) -> Self {
         Self::from(value.0)
@@ -524,6 +553,15 @@ where
 impl<T> From<Close<T>> for f64
 where
     f64: From<T>,
+{
+    fn from(value: Close<T>) -> Self {
+        Self::from(value.0)
+    }
+}
+
+impl<T> From<Close<T>> for StoredF64
+where
+    StoredF64: From<T>,
 {
     fn from(value: Close<T>) -> Self {
         Self::from(value.0)

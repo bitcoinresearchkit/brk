@@ -28,9 +28,9 @@ use super::Date;
 )]
 pub struct Timestamp(u32);
 
-const ONE_HOUR_IN_SEC: u32 = 60 * 60;
-const ONE_DAY_IN_SEC: u32 = 24 * 60 * 60;
-const ONE_DAY_IN_SEC_F64: f64 = ONE_DAY_IN_SEC as f64;
+pub const ONE_HOUR_IN_SEC: u32 = 60 * 60;
+pub const ONE_DAY_IN_SEC: u32 = 24 * 60 * 60;
+pub const ONE_DAY_IN_SEC_F64: f64 = ONE_DAY_IN_SEC as f64;
 
 impl Timestamp {
     pub const ZERO: Self = Self(0);
@@ -74,14 +74,6 @@ impl Timestamp {
 
     pub fn now() -> Self {
         Self::from(jiff::Timestamp::now())
-    }
-
-    pub fn day_completion(&self) -> f64 {
-        let rounded = jiff::Timestamp::from(Self::from(Date::from(*self)));
-        ONE_DAY_IN_SEC_F64
-            / jiff::Timestamp::from(*self)
-                .duration_since(rounded)
-                .as_secs_f64()
     }
 }
 

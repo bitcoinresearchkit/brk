@@ -1,7 +1,9 @@
-use jiff::{Span, civil::Date as Date_, tz::TimeZone};
+use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
 use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::ONE_DAY_IN_SEC_F64;
 
 use super::{DateIndex, Timestamp};
 
@@ -51,6 +53,21 @@ impl Date {
     pub fn today() -> Self {
         Self::from(Timestamp::now())
     }
+
+    pub fn completion(&self) -> f64 {
+        let date = Date_::from(*self);
+        let now = Zoned::now().with_time_zone(TimeZone::UTC);
+        let today = now.date();
+
+        if date < today {
+            1.0
+        } else if date == today {
+            let rounded = jiff::Timestamp::from(*self);
+            now.timestamp().duration_since(rounded).as_secs_f64() / ONE_DAY_IN_SEC_F64
+        } else {
+            0.0
+        }
+    }
 }
 
 impl Default for Date {
@@ -68,6 +85,12 @@ impl From<Date_> for Date {
 impl From<Date> for Date_ {
     fn from(value: Date) -> Self {
         Self::new(value.year() as i16, value.month() as i8, value.day() as i8).unwrap()
+    }
+}
+
+impl From<Date> for jiff::Timestamp {
+    fn from(value: Date) -> Self {
+        Self::from(Timestamp::from(value))
     }
 }
 

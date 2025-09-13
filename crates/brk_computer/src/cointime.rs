@@ -1,8 +1,10 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
+use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF32, StoredF64, Version};
 use vecdb::{AnyCollectableVec, Database, Exit, PAGE_SIZE, VecIterator};
+
+use crate::grouped::ComputedVecsFromDateIndex;
 
 use super::{
     Indexes, chain,
@@ -12,8 +14,6 @@ use super::{
     },
     indexes, price, stateful,
 };
-
-const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -42,27 +42,32 @@ pub struct Vecs {
     pub indexes_to_cointime_price: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_cointime_cap: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_cointime_adj_inflation_rate: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_cointime_adj_tx_btc_velocity: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_cointime_adj_tx_usd_velocity: ComputedVecsFromDateIndex<StoredF64>,
     // pub indexes_to_thermo_cap_rel_to_investor_cap: ComputedValueVecsFromHeight,
 }
 
 impl Vecs {
     pub fn forced_import(
-        parent: &Path,
-        version: Version,
+        parent_path: &Path,
+        parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db = Database::open(&parent.join("cointime"))?;
+        let db = Database::open(&parent_path.join("cointime"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
+
+        let version = parent_version + Version::ZERO;
 
         let this = Self {
             indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(
                 &db,
                 "coinblocks_created",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -70,7 +75,7 @@ impl Vecs {
                 &db,
                 "coinblocks_stored",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -78,7 +83,7 @@ impl Vecs {
                 &db,
                 "liveliness",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -86,7 +91,7 @@ impl Vecs {
                 &db,
                 "vaultedness",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -94,7 +99,7 @@ impl Vecs {
                 &db,
                 "activity_to_vaultedness_ratio",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -102,7 +107,7 @@ impl Vecs {
                 &db,
                 "vaulted_supply",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                 indexes,
@@ -111,7 +116,7 @@ impl Vecs {
                 &db,
                 "active_supply",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                 indexes,
@@ -120,7 +125,7 @@ impl Vecs {
                 &db,
                 "thermo_cap",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -128,7 +133,7 @@ impl Vecs {
                 &db,
                 "investor_cap",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -136,7 +141,7 @@ impl Vecs {
                 &db,
                 "vaulted_cap",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -144,7 +149,7 @@ impl Vecs {
                 &db,
                 "active_cap",
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -152,7 +157,7 @@ impl Vecs {
                 &db,
                 "vaulted_price",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -160,7 +165,7 @@ impl Vecs {
                 &db,
                 "vaulted_price",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 true,
             )?,
@@ -168,7 +173,7 @@ impl Vecs {
                 &db,
                 "active_price",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -176,7 +181,7 @@ impl Vecs {
                 &db,
                 "active_price",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 true,
             )?,
@@ -184,7 +189,7 @@ impl Vecs {
                 &db,
                 "true_market_mean",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -192,7 +197,7 @@ impl Vecs {
                 &db,
                 "true_market_mean",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 true,
             )?,
@@ -200,7 +205,7 @@ impl Vecs {
                 &db,
                 "cointime_value_destroyed",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -208,7 +213,7 @@ impl Vecs {
                 &db,
                 "cointime_value_created",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -216,7 +221,7 @@ impl Vecs {
                 &db,
                 "cointime_value_stored",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -224,7 +229,7 @@ impl Vecs {
                 &db,
                 "cointime_price",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -232,7 +237,7 @@ impl Vecs {
                 &db,
                 "cointime_cap",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -240,9 +245,33 @@ impl Vecs {
                 &db,
                 "cointime_price",
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 true,
+            )?,
+            indexes_to_cointime_adj_inflation_rate: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "cointime_adj_inflation_rate",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_cointime_adj_tx_btc_velocity: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "cointime_adj_tx_btc_velocity",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_cointime_adj_tx_usd_velocity: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "cointime_adj_tx_usd_velocity",
+                Source::Compute,
+                version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
 
             db,
@@ -391,6 +420,32 @@ impl Vecs {
                 Ok(())
             },
         )?;
+
+        self.indexes_to_cointime_adj_inflation_rate
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_multiply(
+                    starting_indexes.dateindex,
+                    self.indexes_to_activity_to_vaultedness_ratio
+                        .dateindex
+                        .unwrap_last(),
+                    chain.indexes_to_inflation_rate.dateindex.as_ref().unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_cointime_adj_tx_btc_velocity
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_multiply(
+                    starting_indexes.dateindex,
+                    self.indexes_to_activity_to_vaultedness_ratio
+                        .dateindex
+                        .unwrap_last(),
+                    chain.indexes_to_tx_btc_velocity.dateindex.as_ref().unwrap(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         if let Some(price) = price {
             let realized_cap = stateful
@@ -603,6 +658,22 @@ impl Vecs {
                 exit,
                 Some(self.indexes_to_cointime_price.dateindex.unwrap_last()),
             )?;
+
+            self.indexes_to_cointime_adj_tx_usd_velocity.compute_all(
+                starting_indexes,
+                exit,
+                |v| {
+                    v.compute_multiply(
+                        starting_indexes.dateindex,
+                        self.indexes_to_activity_to_vaultedness_ratio
+                            .dateindex
+                            .unwrap_last(),
+                        chain.indexes_to_tx_usd_velocity.dateindex.as_ref().unwrap(),
+                        exit,
+                    )?;
+                    Ok(())
+                },
+            )?;
         }
 
         Ok(())
@@ -612,6 +683,24 @@ impl Vecs {
         let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(std::iter::empty());
 
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_cointime_adj_inflation_rate
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_cointime_adj_tx_btc_velocity
+                    .iter_any_collectable(),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.indexes_to_cointime_adj_tx_usd_velocity
+                    .iter_any_collectable(),
+            ),
+        );
         iter = Box::new(iter.chain(self.indexes_to_coinblocks_created.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_coinblocks_stored.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_liveliness.iter_any_collectable()));
@@ -622,20 +711,16 @@ impl Vecs {
                     .iter_any_collectable(),
             ),
         );
-
         iter = Box::new(iter.chain(self.indexes_to_vaulted_supply.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_active_supply.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_thermo_cap.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_investor_cap.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_vaulted_cap.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_active_cap.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_vaulted_price.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_vaulted_price_ratio.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_active_price.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_active_price_ratio.iter_any_collectable()));
-
         iter = Box::new(iter.chain(self.indexes_to_true_market_mean.iter_any_collectable()));
         iter = Box::new(
             iter.chain(
@@ -643,7 +728,6 @@ impl Vecs {
                     .iter_any_collectable(),
             ),
         );
-
         iter = Box::new(iter.chain(self.indexes_to_cointime_price.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_cointime_cap.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_cointime_price_ratio.iter_any_collectable()));
@@ -660,7 +744,6 @@ impl Vecs {
             ),
         );
         iter = Box::new(iter.chain(self.indexes_to_cointime_value_stored.iter_any_collectable()));
-
         iter
     }
 }

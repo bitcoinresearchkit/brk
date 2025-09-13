@@ -17,8 +17,6 @@ use crate::{
     states::CohortState,
 };
 
-const VERSION: Version = Version::ZERO;
-
 #[derive(Clone)]
 pub struct Vecs {
     // Cumulative
@@ -159,6 +157,7 @@ pub struct Vecs {
         Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub dateindex_to_realized_profit_to_loss_ratio: Option<EagerVec<DateIndex, StoredF64>>,
 }
 
 impl Vecs {
@@ -167,7 +166,7 @@ impl Vecs {
         db: &Database,
         cohort_name: Option<&str>,
         format: Format,
-        version: Version,
+        parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         extended: bool,
@@ -175,6 +174,8 @@ impl Vecs {
         compute_adjusted: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
+
+        let version = parent_version + Version::ZERO;
 
         // let prefix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{s}_{name}"));
 
@@ -184,7 +185,7 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("supply_in_profit"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )
             .unwrap()
@@ -194,7 +195,7 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("supply_breakeven"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )
             .unwrap()
@@ -204,7 +205,7 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("supply_in_loss"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )
             .unwrap()
@@ -214,7 +215,7 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("unrealized_profit"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )
             .unwrap()
@@ -224,7 +225,7 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("unrealized_loss"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )
             .unwrap()
@@ -235,7 +236,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_in_profit"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -248,7 +249,7 @@ impl Vecs {
                         .as_ref()
                         .map(|v| v.boxed_clone())
                         .into(),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -260,7 +261,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_breakeven"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -273,7 +274,7 @@ impl Vecs {
                         .as_ref()
                         .map(|v| v.boxed_clone())
                         .into(),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -285,7 +286,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_in_loss"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -298,7 +299,7 @@ impl Vecs {
                         .as_ref()
                         .map(|v| v.boxed_clone())
                         .into(),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
                     indexes,
@@ -310,7 +311,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("unrealized_profit"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -323,7 +324,7 @@ impl Vecs {
                         .as_ref()
                         .map(|v| v.boxed_clone())
                         .into(),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -334,7 +335,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("unrealized_loss"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -343,7 +344,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("min_price_paid"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -352,7 +353,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("max_price_paid"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -365,7 +366,7 @@ impl Vecs {
                         .as_ref()
                         .map(|v| v.boxed_clone())
                         .into(),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -375,7 +376,7 @@ impl Vecs {
                 EagerVec::forced_import_compressed(
                     db,
                     &suffix("total_unrealized_pnl"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                 )
                 .unwrap()
             }),
@@ -384,7 +385,7 @@ impl Vecs {
                     db,
                     &suffix("total_unrealized_pnl"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -394,7 +395,7 @@ impl Vecs {
                 EagerVec::forced_import_compressed(
                     db,
                     &suffix("total_realized_pnl"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                 )
                 .unwrap()
             }),
@@ -403,7 +404,7 @@ impl Vecs {
                     db,
                     &suffix("total_realized_pnl"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -414,7 +415,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("realized_cap"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -424,7 +425,7 @@ impl Vecs {
                     db,
                     &suffix("realized_cap"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -435,7 +436,7 @@ impl Vecs {
                     db,
                     &suffix("min_price_paid"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -446,7 +447,7 @@ impl Vecs {
                     db,
                     &suffix("max_price_paid"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -455,14 +456,14 @@ impl Vecs {
             height_to_supply: EagerVec::forced_import(
                 db,
                 &suffix("supply"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             height_to_supply_value: ComputedHeightValueVecs::forced_import(
                 db,
                 &suffix("supply"),
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
                 compute_dollars,
             )?,
@@ -470,7 +471,7 @@ impl Vecs {
                 db,
                 &suffix("supply"),
                 Source::Compute,
-                version + VERSION + Version::ONE,
+                version + Version::ONE,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                 indexes,
@@ -478,14 +479,14 @@ impl Vecs {
             height_to_utxo_count: EagerVec::forced_import(
                 db,
                 &suffix("utxo_count"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 db,
                 &suffix("utxo_count"),
                 Source::None,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -494,7 +495,7 @@ impl Vecs {
                     db,
                     &suffix("realized_price"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -505,7 +506,7 @@ impl Vecs {
                     db,
                     &suffix("realized_price"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     extended,
                 )
@@ -517,7 +518,7 @@ impl Vecs {
                         db,
                         &suffix("realized_cap_rel_to_own_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::ZERO,
+                        version + Version::ZERO,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -528,7 +529,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("realized_profit"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -538,7 +539,7 @@ impl Vecs {
                     db,
                     &suffix("realized_profit"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
@@ -548,7 +549,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("realized_loss"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -558,7 +559,7 @@ impl Vecs {
                     db,
                     &suffix("realized_loss"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
@@ -569,7 +570,7 @@ impl Vecs {
                     db,
                     &suffix("neg_realized_loss"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
@@ -579,7 +580,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("value_created"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -589,7 +590,7 @@ impl Vecs {
                     db,
                     &suffix("value_created"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -600,7 +601,7 @@ impl Vecs {
                     db,
                     &suffix("realized_value"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -610,7 +611,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_value_created"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -620,7 +621,7 @@ impl Vecs {
                     db,
                     &suffix("adjusted_value_created"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -630,7 +631,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("value_destroyed"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -640,7 +641,7 @@ impl Vecs {
                     db,
                     &suffix("value_destroyed"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -650,7 +651,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_value_destroyed"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -660,7 +661,7 @@ impl Vecs {
                     db,
                     &suffix("adjusted_value_destroyed"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -671,7 +672,7 @@ impl Vecs {
                     db,
                     &suffix("realized_cap_30d_delta"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -682,7 +683,7 @@ impl Vecs {
                     db,
                     &suffix("net_realized_pnl"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
@@ -692,7 +693,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sell_side_risk_ratio"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -701,7 +702,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sell_side_risk_ratio_7d_ema"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -710,43 +711,28 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("sell_side_risk_ratio_30d_ema"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
             }),
             dateindex_to_sopr: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &suffix("sopr"),
-                    version + VERSION + Version::ONE,
-                    format,
-                )
-                .unwrap()
+                EagerVec::forced_import(db, &suffix("sopr"), version + Version::ONE, format)
+                    .unwrap()
             }),
             dateindex_to_sopr_7d_ema: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &suffix("sopr_7d_ema"),
-                    version + VERSION + Version::ONE,
-                    format,
-                )
-                .unwrap()
+                EagerVec::forced_import(db, &suffix("sopr_7d_ema"), version + Version::ONE, format)
+                    .unwrap()
             }),
             dateindex_to_sopr_30d_ema: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &suffix("sopr_30d_ema"),
-                    version + VERSION + Version::ONE,
-                    format,
-                )
-                .unwrap()
+                EagerVec::forced_import(db, &suffix("sopr_30d_ema"), version + Version::ONE, format)
+                    .unwrap()
             }),
             dateindex_to_adjusted_sopr: (compute_dollars && compute_adjusted).then(|| {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -755,7 +741,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr_7d_ema"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -764,7 +750,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("adjusted_sopr_30d_ema"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -773,7 +759,7 @@ impl Vecs {
                 db,
                 &suffix("supply_half"),
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
                 compute_dollars,
             )?,
@@ -781,7 +767,7 @@ impl Vecs {
                 db,
                 &suffix("supply_half"),
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
                 indexes,
@@ -790,7 +776,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("neg_unrealized_loss"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -800,7 +786,7 @@ impl Vecs {
                     db,
                     &suffix("neg_unrealized_loss"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -810,7 +796,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("net_unrealized_pnl"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -820,7 +806,7 @@ impl Vecs {
                     db,
                     &suffix("net_unrealized_pnl"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -830,7 +816,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("unrealized_profit_rel_to_market_cap"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -839,7 +825,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("unrealized_loss_rel_to_market_cap"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -848,7 +834,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("neg_unrealized_loss_rel_to_market_cap"),
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -857,7 +843,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("net_unrealized_pnl_rel_to_market_cap"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -867,7 +853,7 @@ impl Vecs {
                     db,
                     &suffix("unrealized_profit_rel_to_market_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -878,7 +864,7 @@ impl Vecs {
                     db,
                     &suffix("unrealized_loss_rel_to_market_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -889,7 +875,7 @@ impl Vecs {
                     db,
                     &suffix("neg_unrealized_loss_rel_to_market_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -900,7 +886,7 @@ impl Vecs {
                     db,
                     &suffix("net_unrealized_pnl_rel_to_market_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -913,7 +899,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("unrealized_profit_rel_to_own_market_cap"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -925,7 +911,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("unrealized_loss_rel_to_own_market_cap"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -937,7 +923,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("neg_unrealized_loss_rel_to_own_market_cap"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -949,7 +935,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("net_unrealized_pnl_rel_to_own_market_cap"),
-                        version + VERSION + Version::TWO,
+                        version + Version::TWO,
                         format,
                     )
                     .unwrap()
@@ -962,7 +948,7 @@ impl Vecs {
                         db,
                         &suffix("unrealized_profit_rel_to_own_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::TWO,
+                        version + Version::TWO,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -976,7 +962,7 @@ impl Vecs {
                         db,
                         &suffix("unrealized_loss_rel_to_own_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::TWO,
+                        version + Version::TWO,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -990,7 +976,7 @@ impl Vecs {
                         db,
                         &suffix("neg_unrealized_loss_rel_to_own_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::TWO,
+                        version + Version::TWO,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1004,7 +990,7 @@ impl Vecs {
                         db,
                         &suffix("net_unrealized_pnl_rel_to_own_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::TWO,
+                        version + Version::TWO,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1016,7 +1002,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("unrealized_profit_rel_to_own_total_unrealized_pnl"),
-                        version + VERSION + Version::ZERO,
+                        version + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -1027,7 +1013,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                        version + VERSION + Version::ZERO,
+                        version + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -1038,7 +1024,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                        version + VERSION + Version::ZERO,
+                        version + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -1049,7 +1035,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -1061,7 +1047,7 @@ impl Vecs {
                         db,
                         &suffix("unrealized_profit_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1074,7 +1060,7 @@ impl Vecs {
                         db,
                         &suffix("unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1087,7 +1073,7 @@ impl Vecs {
                         db,
                         &suffix("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1100,7 +1086,7 @@ impl Vecs {
                         db,
                         &suffix("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1111,7 +1097,7 @@ impl Vecs {
                     db,
                     &suffix("realized_profit_rel_to_realized_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -1122,7 +1108,7 @@ impl Vecs {
                     db,
                     &suffix("realized_loss_rel_to_realized_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -1133,7 +1119,7 @@ impl Vecs {
                     db,
                     &suffix("net_realized_pnl_rel_to_realized_cap"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
@@ -1144,7 +1130,7 @@ impl Vecs {
                     db,
                     &suffix("supply_breakeven"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -1155,7 +1141,7 @@ impl Vecs {
                     db,
                     &suffix("supply_in_loss"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -1166,7 +1152,7 @@ impl Vecs {
                     db,
                     &suffix("supply_in_profit"),
                     Source::None,
-                    version + VERSION + Version::ZERO,
+                    version + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -1176,7 +1162,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_breakeven_rel_to_own_supply"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -1185,7 +1171,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_in_loss_rel_to_own_supply"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -1194,7 +1180,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     db,
                     &suffix("supply_in_profit_rel_to_own_supply"),
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -1204,7 +1190,7 @@ impl Vecs {
                     db,
                     &suffix("supply_breakeven_rel_to_own_supply"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -1215,7 +1201,7 @@ impl Vecs {
                     db,
                     &suffix("supply_in_loss_rel_to_own_supply"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -1226,7 +1212,7 @@ impl Vecs {
                     db,
                     &suffix("supply_in_profit_rel_to_own_supply"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -1237,7 +1223,7 @@ impl Vecs {
                     db,
                     &suffix("supply_rel_to_circulating_supply"),
                     Source::Compute,
-                    version + VERSION + Version::ONE,
+                    version + Version::ONE,
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -1249,7 +1235,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("supply_breakeven_rel_to_circulating_supply"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -1260,7 +1246,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("supply_in_loss_rel_to_circulating_supply"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -1271,7 +1257,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         db,
                         &suffix("supply_in_profit_rel_to_circulating_supply"),
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -1283,7 +1269,7 @@ impl Vecs {
                         db,
                         &suffix("supply_breakeven_rel_to_circulating_supply"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1296,7 +1282,7 @@ impl Vecs {
                         db,
                         &suffix("supply_in_loss_rel_to_circulating_supply"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1309,7 +1295,7 @@ impl Vecs {
                         db,
                         &suffix("supply_in_profit_rel_to_circulating_supply"),
                         Source::Compute,
-                        version + VERSION + Version::ONE,
+                        version + Version::ONE,
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1318,20 +1304,20 @@ impl Vecs {
             height_to_satblocks_destroyed: EagerVec::forced_import(
                 db,
                 &suffix("satblocks_destroyed"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             height_to_satdays_destroyed: EagerVec::forced_import(
                 db,
                 &suffix("satdays_destroyed"),
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
                 db,
                 &suffix("coinblocks_destroyed"),
                 Source::Compute,
-                version + VERSION + Version::TWO,
+                version + Version::TWO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -1339,7 +1325,7 @@ impl Vecs {
                 db,
                 &suffix("coindays_destroyed"),
                 Source::Compute,
-                version + VERSION + Version::TWO,
+                version + Version::TWO,
                 indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
@@ -1348,7 +1334,7 @@ impl Vecs {
                     db,
                     &suffix("net_realized_pnl_cumulative_30d_delta"),
                     Source::Compute,
-                    version + VERSION + Version::new(3),
+                    version + Version::new(3),
                     indexes,
                     VecBuilderOptions::default().add_last(),
                 )
@@ -1360,7 +1346,7 @@ impl Vecs {
                         db,
                         &suffix("net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
                         Source::Compute,
-                        version + VERSION + Version::new(3),
+                        version + Version::new(3),
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
@@ -1372,12 +1358,20 @@ impl Vecs {
                         db,
                         &suffix("net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
                         Source::Compute,
-                        version + VERSION + Version::new(3),
+                        version + Version::new(3),
                         indexes,
                         VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
+            dateindex_to_realized_profit_to_loss_ratio: (compute_dollars && extended).then(|| {
+                EagerVec::forced_import_compressed(
+                    db,
+                    &suffix("realized_profit_to_loss_ratio"),
+                    version + Version::ONE,
+                )
+                .unwrap()
+            }),
         })
     }
 
@@ -3465,6 +3459,25 @@ impl Vecs {
             }
         }
 
+        if let Some(dateindex_to_realized_profit_to_loss_ratio) =
+            self.dateindex_to_realized_profit_to_loss_ratio.as_mut()
+        {
+            dateindex_to_realized_profit_to_loss_ratio.compute_divide(
+                starting_indexes.dateindex,
+                self.indexes_to_realized_profit
+                    .as_ref()
+                    .unwrap()
+                    .dateindex
+                    .unwrap_sum(),
+                self.indexes_to_realized_loss
+                    .as_ref()
+                    .unwrap()
+                    .dateindex
+                    .unwrap_sum(),
+                exit,
+            )?;
+        }
+
         Ok(())
     }
 
@@ -4205,6 +4218,13 @@ impl Vecs {
                 self.indexes_to_value_destroyed
                     .iter()
                     .flat_map(|v| v.iter_any_collectable()),
+            ),
+        );
+        iter = Box::new(
+            iter.chain(
+                self.dateindex_to_realized_profit_to_loss_ratio
+                    .iter()
+                    .map(|v| v as &dyn AnyCollectableVec),
             ),
         );
 

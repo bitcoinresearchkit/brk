@@ -5,9 +5,9 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
-    Height, InputIndex, MonthIndex, OutputIndex, QuarterIndex, Sats, SemesterIndex, StoredBool,
-    StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion, Version, WeekIndex,
-    Weight, YearIndex,
+    Height, InputIndex, MonthIndex, ONE_DAY_IN_SEC_F64, OutputIndex, QuarterIndex, Sats,
+    SemesterIndex, StoredBool, StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex,
+    TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
@@ -136,8 +136,11 @@ pub struct Vecs {
     pub indexes_to_annualized_volume: ComputedVecsFromDateIndex<Sats>,
     pub indexes_to_annualized_volume_btc: ComputedVecsFromDateIndex<Bitcoin>,
     pub indexes_to_annualized_volume_usd: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_velocity_btc: ComputedVecsFromDateIndex<StoredF64>,
-    pub indexes_to_velocity_usd: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_tx_btc_velocity: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_tx_usd_velocity: ComputedVecsFromDateIndex<StoredF64>,
+    pub indexes_to_tx_per_sec: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_outputs_per_sec: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_inputs_per_sec: ComputedVecsFromDateIndex<StoredF32>,
 }
 
 impl Vecs {
@@ -1093,19 +1096,43 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_velocity_btc: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_tx_btc_velocity: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "velocity_btc",
+                "tx_btc_velocity",
                 Source::Compute,
                 version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_velocity_usd: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_tx_usd_velocity: ComputedVecsFromDateIndex::forced_import(
                 &db,
-                "velocity_usd",
+                "tx_usd_velocity",
                 Source::Compute,
                 version + Version::ZERO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_tx_per_sec: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "tx_per_sec",
+                Source::Compute,
+                version + Version::TWO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_outputs_per_sec: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "outputs_per_sec",
+                Source::Compute,
+                version + Version::TWO,
+                indexes,
+                VecBuilderOptions::default().add_last(),
+            )?,
+            indexes_to_inputs_per_sec: ComputedVecsFromDateIndex::forced_import(
+                &db,
+                "inputs_per_sec",
+                Source::Compute,
+                version + Version::TWO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -2160,7 +2187,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_velocity_btc
+        self.indexes_to_tx_btc_velocity
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_divide(
                     starting_indexes.dateindex,
@@ -2189,7 +2216,7 @@ impl Vecs {
                     Ok(())
                 })?;
 
-            self.indexes_to_velocity_usd
+            self.indexes_to_tx_usd_velocity
                 .compute_all(starting_indexes, exit, |v| {
                     v.compute_divide(
                         starting_indexes.dateindex,
@@ -2208,6 +2235,57 @@ impl Vecs {
                     Ok(())
                 })?;
         }
+
+        self.indexes_to_tx_per_sec
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_tx_count.dateindex.unwrap_sum(),
+                    &indexes.dateindex_to_date,
+                    |(i, tx_count, date, ..)| {
+                        (
+                            i,
+                            (*tx_count as f64 / (date.completion() * ONE_DAY_IN_SEC_F64)).into(),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_inputs_per_sec
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_input_count.dateindex.unwrap_sum(),
+                    &indexes.dateindex_to_date,
+                    |(i, tx_count, date, ..)| {
+                        (
+                            i,
+                            (*tx_count as f64 / (date.completion() * ONE_DAY_IN_SEC_F64)).into(),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_outputs_per_sec
+            .compute_all(starting_indexes, exit, |v| {
+                v.compute_transform2(
+                    starting_indexes.dateindex,
+                    self.indexes_to_output_count.dateindex.unwrap_sum(),
+                    &indexes.dateindex_to_date,
+                    |(i, tx_count, date, ..)| {
+                        (
+                            i,
+                            (*tx_count as f64 / (date.completion() * ONE_DAY_IN_SEC_F64)).into(),
+                        )
+                    },
+                    exit,
+                )?;
+                Ok(())
+            })?;
 
         Ok(())
     }
@@ -2326,8 +2404,11 @@ impl Vecs {
         iter = Box::new(iter.chain(self.indexes_to_annualized_volume.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_annualized_volume_btc.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes_to_annualized_volume_usd.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_velocity_btc.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_velocity_usd.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_tx_btc_velocity.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_tx_usd_velocity.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_tx_per_sec.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_outputs_per_sec.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.indexes_to_inputs_per_sec.iter_any_collectable()));
         iter = Box::new(
             iter.chain(
                 self.indexes_to_subsidy_usd_1y_sma

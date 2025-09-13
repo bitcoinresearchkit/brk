@@ -289,7 +289,7 @@ function createChartElement({
           choices: /** @type {const} */ (["lin", "log"]),
           id: utils.stringToId(`${id} ${paneIndex} ${unit}`),
           defaultValue:
-            unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
+            unit === "usd" && seriesType !== "Baseline" ? "log" : "lin",
           key: `${id}-price-scale-${paneIndex}`,
           signals,
         });
@@ -681,7 +681,7 @@ function createChartElement({
       data,
       options,
     }) {
-      color ||= unit === "USD" ? colors.green : colors.orange;
+      color ||= unit === "usd" ? colors.green : colors.orange;
 
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (

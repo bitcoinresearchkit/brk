@@ -12,57 +12,57 @@
 
 /**
  * @typedef {"" |
- *   "BTC" |
- *   "Cents" |
- *   "coinblocks" |
- *   "coindays" |
- *   "satblocks" |
- *   "satdays" |
- *   "Count" |
- *   "Date" |
- *   "Difficulty" |
- *   "ExaHash / Second" |
- *   "Gigabytes" |
- *   "Hash" |
- *   "Index" |
- *   "percentage" |
- *   "Ratio" |
- *   "Sats" |
- *   "secs" |
- *   "Timestamp" |
- *   "tx" |
- *   "Type" |
- *   "USD/(TH/s)/day" |
- *   "USD/(PH/s)/day" |
- *   "Sats/(TH/s)/day" |
- *   "Sats/(PH/s)/day" |
- *   "USD" |
- *   "Version" |
- *   "WU" |
- *   "Bool" |
- *   "Days" |
- *   "%mcap" |
- *   "blocks" |
+ *   "%all" |
  *   "%cmcap" |
  *   "%cp+l" |
+ *   "%mcap" |
+ *   "%pnl" |
  *   "%rcap" |
  *   "%self" |
- *   "%all" |
- *   "Years" |
- *   "H/s" |
- *   "Locktime" |
- *   "sat/vB" |
- *   "%pnl" |
- *   "constant" |
- *   "vB" |
- *   "block" |
- *   "id" |
+ *   "/sec" |
  *   "address data" |
+ *   "block" |
+ *   "blocks" |
+ *   "bool" |
+ *   "btc" |
+ *   "bytes" |
+ *   "cents" |
+ *   "coinblocks" |
+ *   "coindays" |
+ *   "constant" |
+ *   "count" |
+ *   "date" |
+ *   "days" |
+ *   "difficulty" |
+ *   "epoch" |
+ *   "gigabytes" |
+ *   "h/s" |
+ *   "hash" |
+ *   "height" |
+ *   "id" |
+ *   "index" |
+ *   "locktime" |
+ *   "percentage" |
+ *   "ratio" |
+ *   "sat/vb" |
+ *   "satblocks" |
+ *   "satdays" |
+ *   "sats" |
+ *   "sats/(ph/s)/day" |
+ *   "sats/(th/s)/day" |
  *   "sd" |
- *   "Epoch" |
- *   "Height" |
- *   "Bytes"
- * } Unit
+ *   "secs" |
+ *   "timestamp" |
+ *   "tx" |
+ *   "type" |
+ *   "usd" |
+ *   "usd/(ph/s)/day" |
+ *   "usd/(th/s)/day" |
+ *   "vb" |
+ *   "version" |
+ *   "wu" |
+ *   "years" |
+ * "" } Unit
  */
 
 const localhost = window.location.hostname === "localhost";
@@ -765,16 +765,16 @@ function createUtils() {
             id.endsWith("dominance")
           )))
     ) {
-      setUnit("Sats");
+      setUnit("sats");
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      !id.startsWith("velocity") &&
+      !id.endsWith("velocity") &&
       ((id.includes("_btc") &&
         !(id.includes("0k_btc") || id.includes("1k_btc"))) ||
         id.endsWith("_btc"))
     ) {
-      setUnit("BTC");
+      setUnit("btc");
     }
     if ((!unit || thoroughUnitCheck) && id === "chain") {
       setUnit("block");
@@ -798,7 +798,7 @@ function createUtils() {
         id === "price_ath" ||
         id === "market_cap" ||
         id.startsWith("price_true_range") ||
-        (id.includes("_usd") && !id.startsWith("velocity")) ||
+        (id.includes("_usd") && !id.endsWith("velocity")) ||
         id.includes("cointime_value") ||
         id.endsWith("_ago") ||
         id.endsWith("price_paid") ||
@@ -817,10 +817,10 @@ function createUtils() {
           !id.includes("hash_rate")) ||
         id === "ath")
     ) {
-      setUnit("USD");
+      setUnit("usd");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("cents")) {
-      setUnit("Cents");
+      setUnit("cents");
     }
     if (
       ((!unit || thoroughUnitCheck) &&
@@ -843,15 +843,15 @@ function createUtils() {
       id.includes("liveliness") ||
       id.includes("vaultedness") ||
       id == "puell_multiple" ||
-      id.startsWith("velocity")
+      id.endsWith("velocity")
     ) {
-      setUnit("Ratio");
+      setUnit("ratio");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "price_drawdown" ||
         id === "difficulty_adjustment" ||
-        id.startsWith("inflation_rate") ||
+        id.endsWith("inflation_rate") ||
         id.endsWith("_oscillator") ||
         id.endsWith("_dominance") ||
         id.endsWith("_returns") ||
@@ -869,25 +869,25 @@ function createUtils() {
         id.includes("blocks_mined") ||
         (id.includes("tx_v") && !id.includes("vsize")))
     ) {
-      setUnit("Count");
+      setUnit("count");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id.startsWith("hash_rate") || id.endsWith("as_hash"))
     ) {
-      setUnit("H/s");
+      setUnit("h/s");
     }
     if ((!unit || thoroughUnitCheck) && id === "pool") {
       setUnit("id");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("fee_rate")) {
-      setUnit("sat/vB");
+      setUnit("sat/vb");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("is_")) {
-      setUnit("Bool");
+      setUnit("bool");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("type")) {
-      setUnit("Type");
+      setUnit("type");
     }
     if (
       (!unit || thoroughUnitCheck) &&
@@ -895,12 +895,15 @@ function createUtils() {
     ) {
       setUnit("secs");
     }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("_per_sec")) {
+      setUnit("/sec");
+    }
     if ((!unit || thoroughUnitCheck) && id.endsWith("locktime")) {
-      setUnit("Locktime");
+      setUnit("locktime");
     }
 
     if ((!unit || thoroughUnitCheck) && id.endsWith("version")) {
-      setUnit("Version");
+      setUnit("version");
     }
     if (
       (!unit || thoroughUnitCheck) &&
@@ -910,7 +913,7 @@ function createUtils() {
         id.endsWith("total_size") ||
         id.includes("block_size"))
     ) {
-      setUnit("Bytes");
+      setUnit("bytes");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("_sd")) {
       setUnit("sd");
@@ -919,25 +922,25 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id.includes("vsize") || id.includes("vbytes"))
     ) {
-      setUnit("vB");
+      setUnit("vb");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("weight")) {
-      setUnit("WU");
+      setUnit("wu");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("index")) {
-      setUnit("Index");
+      setUnit("index");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "date" || id === "date_fixed")
     ) {
-      setUnit("Date");
+      setUnit("date");
     }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "timestamp" || id === "timestamp_fixed")
     ) {
-      setUnit("Timestamp");
+      setUnit("timestamp");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("coinblocks")) {
       setUnit("coinblocks");
@@ -952,7 +955,7 @@ function createUtils() {
       setUnit("satdays");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("height")) {
-      setUnit("Height");
+      setUnit("height");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("rel_to_market_cap")) {
       setUnit("%mcap");
@@ -986,25 +989,25 @@ function createUtils() {
       setUnit("%self");
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("epoch")) {
-      setUnit("Epoch");
+      setUnit("epoch");
     }
     if ((!unit || thoroughUnitCheck) && id === "difficulty") {
-      setUnit("Difficulty");
+      setUnit("difficulty");
     }
     if ((!unit || thoroughUnitCheck) && id === "blockhash") {
-      setUnit("Hash");
+      setUnit("hash");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("hash_price_phs")) {
-      setUnit("USD/(PH/s)/day");
+      setUnit("usd/(ph/s)/day");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("hash_price_ths")) {
-      setUnit("USD/(TH/s)/day");
+      setUnit("usd/(th/s)/day");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("hash_value_phs")) {
-      setUnit("Sats/(PH/s)/day");
+      setUnit("sats/(ph/s)/day");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("hash_value_ths")) {
-      setUnit("Sats/(TH/s)/day");
+      setUnit("sats/(th/s)/day");
     }
 
     if (
@@ -1013,10 +1016,10 @@ function createUtils() {
         id.includes("days_since") ||
         id.startsWith("days_before"))
     ) {
-      setUnit("Days");
+      setUnit("days");
     }
     if ((!unit || thoroughUnitCheck) && id.includes("years_between")) {
-      setUnit("Years");
+      setUnit("years");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("constant")) {
       setUnit("constant");

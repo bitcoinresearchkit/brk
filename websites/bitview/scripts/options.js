@@ -1468,7 +1468,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
             : []),
           createPriceLine({
             number: 1,
-            unit: "Ratio",
+            unit: "ratio",
           }),
         ],
       },
@@ -1537,7 +1537,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     }),
                     ...createPriceLines({
                       numbers: [0, 1, 2, 3, 4, -1, -2, -3, -4],
-                      unit: "Ratio",
+                      unit: "ratio",
                     }),
                   ],
                 },
@@ -1653,7 +1653,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     }),
                     ...createPriceLines({
                       numbers: [0, 1, 2, 3, 4, -1, -2, -3, -4],
-                      unit: "Ratio",
+                      unit: "ratio",
                     }),
                   ],
                 })),
@@ -2133,7 +2133,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         }),
                       ),
                       createPriceLine({
-                        unit: "Ratio",
+                        unit: "ratio",
                         number: 1,
                       }),
                     ],
@@ -2166,7 +2166,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           defaultActive: false,
                         }),
                         createPriceLine({
-                          unit: "USD",
+                          unit: "usd",
                           defaultActive: false,
                         }),
                       ]
@@ -2191,6 +2191,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color: colors.red,
                         defaultActive: false,
                       }),
+                      ...(`${fixKey(args.key)}realized_profit_to_loss_ratio` in
+                      vecIdToIndexes
+                        ? [
+                            createBaseSeries({
+                              key: `${fixKey(args.key)}realized_profit_to_loss_ratio`,
+                              name: "proft / loss",
+                              color: colors.yellow,
+                            }),
+                          ]
+                        : []),
                       createBaseSeries({
                         key: `${fixKey(args.key)}total_realized_pnl`,
                         name: "Total",
@@ -2240,7 +2250,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         unit: "%rcap",
                       }),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                         defaultActive: false,
                       }),
                     ],
@@ -2297,7 +2307,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         unit: "%rcap",
                       }),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                       }),
                     ]),
                   },
@@ -2392,7 +2402,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           : []),
                         createPriceLine({
                           number: 1,
-                          unit: "Ratio",
+                          unit: "ratio",
                         }),
                       ];
                     }),
@@ -2420,7 +2430,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         ]);
                       }),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                       }),
                     ],
                   },
@@ -2445,7 +2455,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         ]);
                       }),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                       }),
                     ],
                   },
@@ -2461,6 +2471,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             name,
                             color,
                           }),
+                          ...(`${key}realized_profit_to_loss_ratio` in
+                          vecIdToIndexes
+                            ? [
+                                createBaseSeries({
+                                  key: `${key}realized_profit_to_loss_ratio`,
+                                  name,
+                                  color,
+                                }),
+                              ]
+                            : []),
                         ]);
                       }),
                     ],
@@ -2486,7 +2506,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         }),
                       ]),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                       }),
                       createPriceLine({
                         unit: "%rcap",
@@ -2538,7 +2558,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             }),
                           ]),
                           createPriceLine({
-                            unit: "USD",
+                            unit: "usd",
                           }),
                         ],
                       },
@@ -2573,7 +2593,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             }),
                           ]),
                           createPriceLine({
-                            unit: "USD",
+                            unit: "usd",
                           }),
                           createPriceLine({
                             unit: "%mcap",
@@ -2602,7 +2622,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           ]),
                           createPriceLine({
                             number: 1,
-                            unit: "Ratio",
+                            unit: "ratio",
                           }),
                         ],
                       },
@@ -2633,7 +2653,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                   ),
                                   createPriceLine({
                                     number: 1,
-                                    unit: "Ratio",
+                                    unit: "ratio",
                                   }),
                                 ],
                               },
@@ -2643,7 +2663,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     ],
                   },
                 ]),
-
             {
               name: "Sell Side Risk",
               title: `Sell Side Risk Ratio ${title}`,
@@ -2674,6 +2693,146 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       color: color,
                     }),
                   ]),
+            },
+            {
+              name: "value",
+              tree: [
+                ...(!("list" in args)
+                  ? [
+                      {
+                        name: "created",
+                        title: `value created ${title}`,
+                        bottom: list.flatMap(({ color, name, key }) => {
+                          const normalKey = `${fixKey(key)}value_created`;
+                          const adjKey = `${fixKey(key)}adjusted_value_created`;
+                          return [
+                            createBaseSeries({
+                              key: normalKey,
+                              name: "normal",
+                              color: colors.emerald,
+                            }),
+                            ...(adjKey in vecIdToIndexes
+                              ? [
+                                  createBaseSeries({
+                                    key: adjKey,
+                                    name: "adjusted",
+                                    color: colors.lime,
+                                  }),
+                                ]
+                              : []),
+                          ];
+                        }),
+                      },
+                      {
+                        name: "destroyed",
+                        title: `value destroyed ${title}`,
+                        bottom: list.flatMap(({ color, name, key }) => {
+                          const normalKey = `${fixKey(key)}value_destroyed`;
+                          const adjKey = `${fixKey(key)}adjusted_value_destroyed`;
+                          return [
+                            createBaseSeries({
+                              key: normalKey,
+                              name: "normal",
+                              color: colors.red,
+                            }),
+                            ...(adjKey in vecIdToIndexes
+                              ? [
+                                  createBaseSeries({
+                                    key: adjKey,
+                                    name: "adjusted",
+                                    color: colors.pink,
+                                  }),
+                                ]
+                              : []),
+                          ];
+                        }),
+                      },
+                    ]
+                  : [
+                      {
+                        name: "created",
+                        tree: [
+                          {
+                            name: "Normal",
+                            title: `Value Created ${title}`,
+                            bottom: list.flatMap(({ color, name, key }) => [
+                              createBaseSeries({
+                                key: `${fixKey(key)}value_created`,
+                                name,
+                                color,
+                              }),
+                            ]),
+                          },
+                          ...(() => {
+                            const reducedList = list
+                              .map(({ color, name, key }) => ({
+                                color,
+                                name,
+                                key: `${fixKey(key)}adjusted_value_created`,
+                              }))
+                              .filter(({ key }) => key in vecIdToIndexes);
+                            return reducedList.length
+                              ? [
+                                  {
+                                    name: "Adjusted",
+                                    title: `Adjusted value created ${title}`,
+                                    bottom: reducedList.map(
+                                      ({ color, name, key }) =>
+                                        createBaseSeries({
+                                          key,
+                                          name,
+                                          color,
+                                        }),
+                                    ),
+                                  },
+                                ]
+                              : [];
+                          })(),
+                        ],
+                      },
+                      {
+                        name: "destroyed",
+                        tree: [
+                          {
+                            name: "Normal",
+                            title: `Value destroyed ${title}`,
+                            bottom: list.flatMap(({ color, name, key }) => [
+                              createBaseSeries({
+                                key: `${fixKey(key)}value_destroyed`,
+                                name,
+                                color,
+                              }),
+                            ]),
+                          },
+                          ...(() => {
+                            const reducedList = list
+                              .map(({ color, name, key }) => ({
+                                color,
+                                name,
+                                key: `${fixKey(key)}adjusted_value_destroyed`,
+                              }))
+                              .filter(({ key }) => key in vecIdToIndexes);
+                            return reducedList.length
+                              ? [
+                                  {
+                                    name: "Adjusted",
+                                    title: `Adjusted value destroyed ${title}`,
+                                    bottom: reducedList.map(
+                                      ({ color, name, key }) =>
+                                        createBaseSeries({
+                                          key,
+                                          name,
+                                          color,
+                                        }),
+                                    ),
+                                  },
+                                ]
+                              : [];
+                          })(),
+                        ],
+                      },
+                    ]),
+              ],
             },
           ],
         },
@@ -2780,7 +2939,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           ]
                         : []),
                       createPriceLine({
-                        unit: "USD",
+                        unit: "usd",
                         defaultActive: false,
                       }),
                       createPriceLine({
@@ -2885,7 +3044,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     : []),
                 ]),
                 createPriceLine({
-                  unit: "USD",
+                  unit: "usd",
                 }),
                 createPriceLine({
                   unit: "%mcap",
@@ -3230,11 +3389,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       color: colors.red,
                     }),
                     createPriceLine({
-                      unit: "Index",
+                      unit: "index",
                       number: 61.8,
                     }),
                     createPriceLine({
-                      unit: "Index",
+                      unit: "index",
                       number: 38.2,
                     }),
                   ],
@@ -3589,16 +3748,26 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                 },
                 {
                   name: "Velocity",
-                  title: "Transaction Velocity",
+                  title: "Transactions Velocity",
                   bottom: [
                     createBaseSeries({
-                      key: "velocity_btc",
+                      key: "tx_btc_velocity",
                       name: "bitcoin",
                     }),
                     createBaseSeries({
-                      key: "velocity_usd",
+                      key: "tx_usd_velocity",
                       name: "dollars",
                       color: colors.emerald,
+                    }),
+                  ],
+                },
+                {
+                  name: "Speed",
+                  title: "Transactions Per Second",
+                  bottom: [
+                    createBaseSeries({
+                      key: "tx_per_sec",
+                      name: "Transactions",
                     }),
                   ],
                 },
@@ -3617,6 +3786,16 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     }),
                     ...createMinMaxPercentilesSeries({
                       concat: "input_count",
+                    }),
+                  ],
+                },
+                {
+                  name: "Speed",
+                  title: "Inputs Per Second",
+                  bottom: [
+                    createBaseSeries({
+                      key: "inputs_per_sec",
+                      name: "Inputs",
                     }),
                   ],
                 },
@@ -3639,10 +3818,20 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   bottom: [
                     createAverageSeries({ concat: "output_count" }),
                     createCumulativeSeries({
-                      concat: "input_count",
+                      concat: "output_count",
                     }),
                     ...createMinMaxPercentilesSeries({
                       concat: "output_count",
+                    }),
+                  ],
+                },
+                {
+                  name: "Speed",
+                  title: "Outputs Per Second",
+                  bottom: [
+                    createBaseSeries({
+                      key: "outputs_per_sec",
+                      name: "Outputs",
                     }),
                   ],
                 },
@@ -4453,6 +4642,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   name: "Vaultedness",
                   color: colors.lime,
                 }),
+                createBaseSeries({
+                  key: "activity_to_vaultedness_ratio",
+                  name: "Liveliness / Vaultedness",
+                  color: colors.purple,
+                }),
               ],
             },
             {
@@ -4492,6 +4686,53 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   color: colors.green,
                   defaultActive: false,
                 }),
+              ],
+            },
+            {
+              name: "Adjusted",
+              tree: [
+                {
+                  name: "inflation",
+                  title: "Cointime-Adjusted inflation rate",
+                  bottom: [
+                    createBaseSeries({
+                      key: "inflation_rate",
+                      name: "base",
+                      color: colors.orange,
+                    }),
+                    createBaseSeries({
+                      key: "cointime_adj_inflation_rate",
+                      name: "base",
+                      color: colors.purple,
+                    }),
+                  ],
+                },
+                {
+                  name: "Velocity",
+                  title: "Cointime-Adjusted transactions velocity",
+                  bottom: [
+                    createBaseSeries({
+                      key: "tx_btc_velocity",
+                      name: "btc",
+                      color: colors.orange,
+                    }),
+                    createBaseSeries({
+                      key: "cointime_adj_tx_btc_velocity",
+                      name: "adj. btc",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: "tx_usd_velocity",
+                      name: "usd",
+                      color: colors.emerald,
+                    }),
+                    createBaseSeries({
+                      key: "cointime_adj_tx_usd_velocity",
+                      name: "adj. usd",
+                      color: colors.lime,
+                    }),
+                  ],
+                },
               ],
             },
           ],
