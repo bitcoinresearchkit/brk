@@ -19,7 +19,7 @@ vecdb = {workspace = true}
 byteview = { workspace = true }
 derive_deref = { workspace = true }
 jiff = { workspace = true }
-rapidhash = "4.0.0"
+rapidhash = "4.1.0"
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 zerocopy = { workspace = true }
