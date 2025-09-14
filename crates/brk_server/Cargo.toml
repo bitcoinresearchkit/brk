@@ -11,6 +11,7 @@ build = "build.rs"
 
 [dependencies]
 axum = { workspace = true }
+bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true }
@@ -20,6 +21,7 @@ brk_interface = { workspace = true }
 brk_logger = { workspace = true }
 brk_mcp = { workspace = true }
 brk_parser = { workspace = true }
+brk_structs = { workspace = true }
 vecdb = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }

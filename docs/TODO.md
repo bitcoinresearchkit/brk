@@ -52,13 +52,12 @@
   - _LOGGER_
     - remove colors from file
   - _PARSER_
-    - save `vec` file instead of `json`
-    - support lock file, process in read only if already opened in write mode
+    - Stateless
     - if less than X (10 maybe ?) get block using rpc instead of parsing the block files
-    - support `None` output_dir
   - _SERVER_
     - api
       - copy mempool's rest api
+        - https://mempool.space/docs/api/rest
       - add extensions support (.json .csv …) instead of only format
       - if format instead of extension then don't download file
       - ddos protection
@@ -89,6 +88,8 @@
   - _PACKAGES_
     - move packages from `bitview` to `/packages` or `/websites/packages` or else
     - move the fetching logic from `bitview` website to an independent `brk` package which could be published to npm
+      - https://www.npmjs.com/package/@mempool/mempool.js
+      - auto publish with github actions
   - _BITVIEW_
     - explorer
       - blocks (interval as length between)
@@ -126,7 +127,10 @@
     - global
       - improve behavior when local storage is unavailable
         - by having a global state
+      - font:
+        - https://fonts.google.com/specimen/Space+Mono
+
     - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
 - __GLOBAL__
   - check `TODO`s in codebase
-  - rename `output` to `txout`, `input` to `txin`
+  - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`

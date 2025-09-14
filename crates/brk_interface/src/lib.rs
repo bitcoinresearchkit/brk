@@ -261,4 +261,12 @@ impl<'a> Interface<'a> {
     pub fn get_vecid_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
         self.vecs.id_to_indexes(id)
     }
+
+    pub fn indexer(&self) -> &Indexer {
+        self.indexer
+    }
+
+    pub fn computer(&self) -> &Computer {
+        self.computer
+    }
 }

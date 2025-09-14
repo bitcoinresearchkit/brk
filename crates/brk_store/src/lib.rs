@@ -6,6 +6,7 @@ use std::{
     fmt::Debug,
     fs, mem,
     path::Path,
+    sync::Arc,
 };
 
 use brk_error::Result;
@@ -22,13 +23,13 @@ mod meta;
 pub use any::*;
 use log::info;
 use meta::*;
+use parking_lot::RwLock;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
     keyspace: TransactionalKeyspace,
-    // Arc it
-    partition: Option<TransactionalPartitionHandle>,
+    partition: Arc<RwLock<Option<TransactionalPartitionHandle>>>,
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
@@ -77,7 +78,7 @@ where
             meta,
             name: Box::leak(Box::new(name.to_string())),
             keyspace: keyspace.clone(),
-            partition: Some(partition),
+            partition: Arc::new(RwLock::new(Some(partition))),
             rtx,
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
@@ -90,7 +91,7 @@ where
             Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self
             .rtx
-            .get(self.partition.as_ref().unwrap(), ByteView::from(key))?
+            .get(self.partition.read().as_ref().unwrap(), ByteView::from(key))?
         {
             Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
         } else {
@@ -100,7 +101,7 @@ where
 
     pub fn is_empty(&self) -> Result<bool> {
         self.rtx
-            .is_empty(self.partition.as_ref().unwrap())
+            .is_empty(self.partition.read().as_ref().unwrap())
             .map_err(|e| e.into())
     }
 
@@ -128,7 +129,7 @@ where
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
         self.rtx
-            .iter(self.partition.as_ref().unwrap())
+            .iter(self.partition.read().as_ref().unwrap())
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
     }
@@ -203,7 +204,9 @@ where
 
         let mut wtx = self.keyspace.write_tx();
 
-        let partition = self.partition.as_ref().unwrap();
+        let partition = self.partition.read();
+
+        let partition = partition.as_ref().unwrap();
 
         remove.for_each(|key| wtx.remove(partition, ByteView::from(key)));
 
@@ -262,7 +265,9 @@ where
     fn reset(&mut self) -> Result<()> {
         info!("Resetting {}...", self.name);
 
-        let partition: TransactionalPartitionHandle = self.partition.take().unwrap();
+        let mut opt = self.partition.write();
+
+        let partition = opt.take().unwrap();
 
         self.keyspace.delete_partition(partition)?;
 
@@ -270,7 +275,7 @@ where
 
         let partition = Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filters)?;
 
-        self.partition.replace(partition);
+        opt.replace(partition);
 
         Ok(())
     }
@@ -301,7 +306,7 @@ where
             meta: self.meta.clone(),
             name: self.name,
             keyspace: self.keyspace.clone(),
-            partition: None,
+            partition: self.partition.clone(),
             rtx: self.keyspace.read_tx(),
             puts: self.puts.clone(),
             dels: self.dels.clone(),
