@@ -12,10 +12,9 @@ package.rust-version = "1.89"
 
 [profile.dev]
 lto = "thin"
-debug = true
-codegen-units = 1
-opt-level = 3
-overflow-checks = true
+codegen-units = 16
+opt-level = 2
+split-debuginfo = "unpacked"
 
 [profile.release]
 lto = "fat"
@@ -36,7 +35,6 @@ inherits = "dev"
 lto = "off"
 codegen-units = 256
 opt-level = 0
-incremental = true
 debug = false
 overflow-checks = false
 panic = "abort"
