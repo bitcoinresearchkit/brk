@@ -1495,35 +1495,35 @@ impl Vecs {
             return None;
         }
 
-        let mmap = addresstypeindex_to_anyaddressindex_reader_opt
+        let reader = addresstypeindex_to_anyaddressindex_reader_opt
             .get_unwrap(address_type)
             .as_ref()
             .unwrap();
 
         let anyaddressindex = match address_type {
             OutputType::P2PK33 => {
-                p2pk33addressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2pk33addressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2PK65 => {
-                p2pk65addressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2pk65addressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2PKH => {
-                p2pkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2pkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2SH => {
-                p2shaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2shaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2TR => {
-                p2traddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2traddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2WPKH => {
-                p2wpkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2wpkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2WSH => {
-                p2wshaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2wshaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             OutputType::P2A => {
-                p2aaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), mmap)
+                p2aaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
             }
             _ => unreachable!(),
         }

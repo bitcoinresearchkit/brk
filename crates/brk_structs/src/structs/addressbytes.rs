@@ -59,6 +59,12 @@ impl AddressBytes {
     }
 }
 
+impl From<&Address> for AddressBytes {
+    fn from(value: &Address) -> Self {
+        Self::try_from((&value.script_pubkey(), OutputType::from(value))).unwrap()
+    }
+}
+
 impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
     type Error = Error;
     fn try_from(tuple: (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {

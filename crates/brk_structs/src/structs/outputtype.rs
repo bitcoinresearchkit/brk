@@ -1,4 +1,5 @@
-use bitcoin::{ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
+use bitcoin::{Address, AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
+use brk_error::Error;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -378,5 +379,40 @@ impl From<&ScriptBuf> for OutputType {
         } else {
             Self::Unknown
         }
+    }
+}
+
+impl From<&Address> for OutputType {
+    fn from(value: &Address) -> Self {
+        Self::from(&value.script_pubkey())
+    }
+}
+
+impl From<AddressType> for OutputType {
+    fn from(value: AddressType) -> Self {
+        match value {
+            AddressType::P2a => Self::P2A,
+            AddressType::P2pkh => Self::P2PKH,
+            AddressType::P2sh => Self::P2SH,
+            AddressType::P2tr => Self::P2TR,
+            AddressType::P2wpkh => Self::P2WPKH,
+            AddressType::P2wsh => Self::P2WSH,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl TryFrom<OutputType> for AddressType {
+    type Error = Error;
+    fn try_from(value: OutputType) -> Result<Self, Self::Error> {
+        Ok(match value {
+            OutputType::P2A => Self::P2a,
+            OutputType::P2PKH => Self::P2pkh,
+            OutputType::P2SH => Self::P2sh,
+            OutputType::P2TR => Self::P2tr,
+            OutputType::P2WPKH => Self::P2wpkh,
+            OutputType::P2WSH => Self::P2wsh,
+            _ => return Err(Error::Str("Bad output format")),
+        })
     }
 }
