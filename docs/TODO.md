@@ -1,38 +1,47 @@
 # TODO
 
-- __crates__
-  - _cli_
-    - check disk space on first launch
+- __CRATES__
+  - _CLI_
+    - launch
+      - if first, test read/write speed, add warning if too low (<2gb/s)
+      - check available disk space
+      - pull latest version and notify if out of date
     - add custom path support for config.toml
     - maybe add bitcoind download and launch support
       - via: https://github.com/rust-bitcoin/corepc/blob/master/node
-    - test read/write speed, add warning if too low (<2gb/s)
-    - pull latest version and notify is out of date
-  - _computer_
+  - _COMPUTER_
     - **add rollback of states (in stateful)**
-    - add costs basis by percentile (percentile cost basis) back
     - add support for per index computation
     - fix min fee_rate which is always ZERO due to coinbase transaction
     - before computing multiple sources check their length, panic if not equal
-    - add oracle price dataset (https://utxo.live/oracle/UTXOracle.py)
-    - add address counts relative to all datasets
-    - add revived/sent supply datasets
-    - add `in-sats` version of all price datasets (average and co)
-    - add `p2pk` group (sum of `p2pk33` and `p2pk65`)
-    - add chopiness datasets
-    - add utxo count, address count, supply data for  by reused addresses in groups by address type
-    - add more date ranges (3-6 months and more)
-    - add pi cycle dataset
-    - add all possible charts from:
+    - create usd versions of vecs structs instead of having options everywhere
+    - datasets
+      - `sats` version of all price datasets (average and co)
+      - pools
+        - highest dominance
+        - consecutive blocks
+        - max consecutive blocks
+      - price
+        - oracle (https://utxo.live/oracle/UTXOracle.py)
+      - cohorts
+        - costs basis by percentile
+        - address counts relative to all datasets
+        - revived/sent supply datasets
+        - add `p2pk` group (sum of `p2pk33` and `p2pk65`)
+        - add utxo count, address count, supply data for  by reused addresses in groups by address type
+        - add more date ranges (3-6 months, 5-7 years and more)
+        - % of volume
+      - indicators
+        - pi cycle
       - https://mainnet.observer
       - https://glassnode.com
       - https://checkonchain.com
       - https://researchbitcoin.net/exciting-update-coming-to-the-bitcoin-lab/
       - https://mempool.space/research
-  - _indexer_
-    - parse only the needed block number
+  - _INDEXER_
+    - parse only the needed block number instead the last 100 blocks
       - maybe using https://developer.bitcoin.org/reference/rpc/getblockhash.html
-  - _interface_
+  - _INTERFACE_
     - create pagination enum
       - from to
       - from option<count>
@@ -40,47 +49,84 @@
       - page + option<per page> default 1000 max 1000
     - from/to/count params don’t cap all combinations
       - example: from -10,000 count 10, won’t work if underlying vec isn’t 10k or more long
-  - _parser_
+  - _LOGGER_
+    - remove colors from file
+  - _PARSER_
     - save `vec` file instead of `json`
     - support lock file, process in read only if already opened in write mode
     - if less than X (10 maybe ?) get block using rpc instead of parsing the block files
-  - _server_
+    - support `None` output_dir
+  - _SERVER_
     - api
-      - add extensions support (.json .csv …)
+      - copy mempool's rest api
+      - add extensions support (.json .csv …) instead of only format
       - if format instead of extension then don't download file
+      - ddos protection
+        - against API params varying in range
+        - search
+        - fuzzy on typo
+          - https://github.com/rapidfuzz/strsim-rs or stick with current impl
+          - create map of all single words
+          - do some kind of score with that ?
+      - discoverability
+        - catalog (tree/groups)
+        - search
+      - failover to `/api`
+      - no HTML / redirects ?
+      - change `/api/vecs/{index}-to-{metric}` to `/api/{metric}/index`
+      - change `/api/vecs/query` to `/api/bulk`
+      - support keyed version when fetching dataset: {date: value} / {date: [value]}
     - add support for https (rustls)
-- __docs__
+  - _STORE_
+    - save height and version in one file
+- __DOCS__
   - _README_
     - add a comparison table with alternatives
     - add contribution section where help is needed
       - documentation/mcp/datasets/different front ends
     - add faq
-- __websites__
-  - _default_
+- __WEBSITES__
+  - _PACKAGES_
+    - move packages from `bitview` to `/packages` or `/websites/packages` or else
+    - move the fetching logic from `bitview` website to an independent `brk` package which could be published to npm
+  - _BITVIEW_
     - explorer
-      - blocks
+      - blocks (interval as length between)
       - transactions
       - addresses
       - miners
       - maybe xpubs
     - charts
-      - improve names and colors
       - selected unit sometimes changes when going back end forth
       - add support for custom charts
       - price scale format depends on unit, hide digits for sats for example (if/when possible)
+      - shows certain series as [scatter plots](https://github.com/tradingview/lightweight-charts/issues/1662) with a solid sma/ema
+        - mainly datasets with a big variance like raw `hash_rate`
+      - hide pane if no series on it
+      - fix (and reset) pane size (50/50) when changing charts
+      - units: add short name / long name / title
+      - verify that "compare" folders aren't missing charts/datasets
+      - legend
+        - add link to explanation for each name (to glassnode ?)
     - table
       - pagination
       - exports (.json, .csv,…)
+      - improve dataset selection
+      - display 1k values (instead of 10k) but to avoid caching multiple times the same values apply everywhere
     - search
+      - improve
       - datasets add legend, and keywords ?
-      - height/address/txid
+      - support height/address/txid
     - api
       - add api page with interactivity
-    - global
-      - **fix navigation/history**
+    - glossary ?
+    - nav
       - move share button to footer ?
-      - Use `ichart.createPane()` in wrapper
+      - when clicking on already selected option, pushes to history, bad !
+    - global
       - improve behavior when local storage is unavailable
         - by having a global state
-- __global__
+    - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
+- __GLOBAL__
   - check `TODO`s in codebase
+  - rename `output` to `txout`, `input` to `txin`

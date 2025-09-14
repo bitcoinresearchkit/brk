@@ -33,7 +33,7 @@ pub fn main() -> color_eyre::Result<()> {
     brk_logger::init(Some(&dot_brk_log_path()))?;
 
     thread::Builder::new()
-        .stack_size(256 * 1024 * 1024)
+        .stack_size(512 * 1024 * 1024)
         .spawn(run)?
         .join()
         .unwrap()
