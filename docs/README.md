@@ -23,6 +23,9 @@
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
     <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
   </a>
+  <a href="https://opensats.org">
+    <img src="https://img.shields.io/badge/%3E__-opensats-rgb(249,115,22)" alt="opensats" />
+  </a>
 </p>
 
 The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin node, enabling users to gain deeper insights into the Bitcoin network.
