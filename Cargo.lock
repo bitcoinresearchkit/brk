@@ -584,6 +584,7 @@ dependencies = [
 name = "brk_error"
 version = "0.0.107"
 dependencies = [
+ "bitcoin",
  "bitcoincore-rpc",
  "fjall",
  "jiff",

@@ -17,6 +17,7 @@ pub enum Error {
     SeqDB(vecdb::SeqDBError),
     Minreq(minreq::Error),
     SystemTimeError(time::SystemTimeError),
+    BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
     SerdeJson(serde_json::Error),
     ZeroCopyError,
     Vecs(vecdb::Error),
@@ -27,6 +28,12 @@ pub enum Error {
     QuickCacheError,
     Str(&'static str),
     String(String),
+}
+
+impl From<bitcoin::consensus::encode::Error> for Error {
+    fn from(value: bitcoin::consensus::encode::Error) -> Self {
+        Self::BitcoinConsensusEncode(value)
+    }
 }
 
 impl From<time::SystemTimeError> for Error {
@@ -98,16 +105,17 @@ impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::IO(error) => Display::fmt(&error, f),
-            Error::Minreq(error) => Display::fmt(&error, f),
-            Error::SerdeJson(error) => Display::fmt(&error, f),
-            Error::VecDB(error) => Display::fmt(&error, f),
-            Error::SeqDB(error) => Display::fmt(&error, f),
-            Error::Vecs(error) => Display::fmt(&error, f),
+            Error::BitcoinConsensusEncode(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
-            Error::SystemTimeError(error) => Display::fmt(&error, f),
-            Error::Jiff(error) => Display::fmt(&error, f),
             Error::Fjall(error) => Display::fmt(&error, f),
+            Error::IO(error) => Display::fmt(&error, f),
+            Error::Jiff(error) => Display::fmt(&error, f),
+            Error::Minreq(error) => Display::fmt(&error, f),
+            Error::SeqDB(error) => Display::fmt(&error, f),
+            Error::SerdeJson(error) => Display::fmt(&error, f),
+            Error::SystemTimeError(error) => Display::fmt(&error, f),
+            Error::VecDB(error) => Display::fmt(&error, f),
+            Error::Vecs(error) => Display::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
 
             Error::WrongLength => write!(f, "Wrong length"),
