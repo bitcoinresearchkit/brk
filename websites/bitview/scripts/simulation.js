@@ -691,7 +691,7 @@ export function init({
     elements,
     config: [
       {
-        unit: "USD",
+        unit: "usd",
         blueprints: [
           {
             title: "Bitcoin Value",
@@ -736,7 +736,7 @@ export function init({
     utils,
     config: [
       {
-        unit: "BTC",
+        unit: "btc",
         blueprints: [
           {
             title: "Bitcoin Stack",
@@ -761,7 +761,7 @@ export function init({
     elements,
     config: [
       {
-        unit: "USD",
+        unit: "usd",
         blueprints: [
           {
             title: "Bitcoin Price",
@@ -792,7 +792,7 @@ export function init({
     elements,
     config: [
       {
-        unit: "USD",
+        unit: "usd",
         blueprints: [
           {
             title: "Return Of Investment",

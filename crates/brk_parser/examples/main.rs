@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use bitcoincore_rpc::{Auth, Client, Result};
-use brk_parser::{BlockExtended, Parser};
+use brk_parser::Parser;
 use brk_structs::Height;
 
 #[allow(clippy::needless_doctest_main)]
