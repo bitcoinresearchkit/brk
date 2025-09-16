@@ -1,39 +1,36 @@
 # brk_fetcher
 
-**Bitcoin price data fetcher with multi-source fallback and retry logic**
+Multi-source Bitcoin price data aggregator with automatic fallback between exchanges.
 
-`brk_fetcher` provides reliable Bitcoin price data retrieval from multiple sources including Binance, Kraken, and BRK instances. It offers both date-based and block height-based price queries with automatic fallback and retry mechanisms for robust data collection.
+[![Crates.io](https://img.shields.io/crates/v/brk_fetcher.svg)](https://crates.io/crates/brk_fetcher)
+[![Documentation](https://docs.rs/brk_fetcher/badge.svg)](https://docs.rs/brk_fetcher)
 
-## What it provides
+## Overview
 
-- **Multi-source fallback**: Automatic fallback between Kraken → Binance → BRK
-- **Flexible querying**: Fetch prices by date or block height with timestamps
-- **Retry logic**: Built-in retry mechanism with exponential backoff
-- **Multiple timeframes**: 1-minute and 1-day interval support
-- **HAR file import**: Import historical Binance chart data from browser
+This crate provides a unified interface for fetching Bitcoin price data from multiple sources including Binance, Kraken, and a custom BRK API. It implements automatic failover between data sources, retry mechanisms, and supports both real-time and historical price queries using blockchain height or date-based lookups.
 
-## Key Features
+**Key Features:**
 
-### Data Sources
-- **Kraken API**: Primary source for OHLC data (1-day and 1-minute intervals)
-- **Binance API**: Secondary source with additional historical data
-- **BRK instance**: Fallback source for previously cached price data
-- **HAR import**: Manual historical data import from browser sessions
+- Multi-source price aggregation (Binance, Kraken, BRK API)
+- Automatic fallback hierarchy with intelligent retry logic
+- Historical price queries by blockchain height or date
+- Support for both 1-minute and daily OHLC data
+- HAR file import for extended historical data coverage
+- Built-in caching with BTreeMap storage for performance
 
-### Query Methods
-- **Date-based queries**: Get OHLC data for specific calendar dates
-- **Height-based queries**: Get OHLC data for specific block heights with timestamps
-- **Automatic aggregation**: Combines minute-level data for block intervals
+**Target Use Cases:**
 
-### Reliability Features
-- **Automatic fallback**: Tries sources in order until successful
-- **Retry mechanism**: Up to 12 hours of retries with 60-second intervals
-- **Cache clearing**: Automatic cache refresh on failures
-- **Error handling**: Graceful degradation with detailed error messages
+- Bitcoin blockchain analyzers requiring accurate historical pricing
+- Applications needing resilient price data with multiple fallbacks
+- Tools processing large datasets requiring efficient price lookups
 
-## Usage
+## Installation
 
-### Basic Setup
+```toml
+cargo add brk_fetcher
+```
+
+## Quick Start
 
 ```rust
 use brk_fetcher::Fetcher;
@@ -42,145 +39,132 @@ use brk_structs::{Date, Height, Timestamp};
 // Initialize fetcher with exchange APIs enabled
 let mut fetcher = Fetcher::import(true, None)?;
 
-// Initialize without exchange APIs (BRK-only mode)
-let mut fetcher = Fetcher::import(false, None)?;
+// Fetch price by date
+let date = Date::from_ymd(2023, 6, 15)?;
+let daily_price = fetcher.get_date(date)?;
 
-// Initialize with HAR file for historical Binance data
-let har_path = Path::new("./binance.har");
-let mut fetcher = Fetcher::import(true, Some(har_path))?;
+// Fetch price by blockchain height
+let height = Height::new(800000);
+let timestamp = Timestamp::from(1684771200u32);
+let block_price = fetcher.get_height(height, timestamp, None)?;
+
+println!("Daily OHLC: {:?}", daily_price);
+println!("Block OHLC: {:?}", block_price);
 ```
 
-### Date-based Price Queries
+## API Overview
+
+### Core Types
+
+- **`Fetcher`**: Main aggregator managing multiple price data sources
+- **`Binance`**: Binance exchange API client with HAR file support
+- **`Kraken`**: Kraken exchange API client for OHLC data
+- **`BRK`**: Custom API client for blockchain-indexed price data
+
+### Key Methods
+
+**`Fetcher::import(exchanges: bool, hars_path: Option<&Path>) -> Result<Self>`**
+Creates a new fetcher instance with configurable data sources.
+
+**`get_date(&mut self, date: Date) -> Result<OHLCCents>`**
+Retrieves daily OHLC data for the specified date with automatic source fallback.
+
+**`get_height(&mut self, height: Height, timestamp: Timestamp, previous_timestamp: Option<Timestamp>) -> Result<OHLCCents>`**
+Fetches price data for a specific blockchain height using minute-level precision.
+
+### Data Source Hierarchy
+
+1. **Kraken API** - Primary source for both 1-minute and daily data
+2. **Binance API** - Secondary source with extended HAR file support
+3. **BRK API** - Fallback source using blockchain-indexed pricing data
+
+### Error Handling
+
+The fetcher implements aggressive retry logic with exponential backoff, attempting each source up to 12 hours (720 retries) before failing. Failed requests trigger cache clearing and source rotation.
+
+## Examples
+
+### Basic Price Fetching
 
 ```rust
+use brk_fetcher::Fetcher;
 use brk_structs::Date;
 
-// Fetch OHLC data for a specific date
-let date = Date::new(2024, 12, 25);
-let ohlc = fetcher.get_date(date)?;
+let mut fetcher = Fetcher::import(true, None)?;
 
-println!("Bitcoin price on {}: ${:.2}", date, ohlc.close.dollars());
-println!("Daily high: ${:.2}", ohlc.high.dollars());
-println!("Daily low: ${:.2}", ohlc.low.dollars());
-```
-
-### Block Height-based Price Queries
-
-```rust
-use brk_structs::{Height, Timestamp};
-
-// Fetch price at specific block height
-let height = Height::new(900_000);
-let timestamp = Timestamp::from_block_height(height);
-let previous_timestamp = Some(Timestamp::from_block_height(Height::new(899_999)));
-
-let ohlc = fetcher.get_height(height, timestamp, previous_timestamp)?;
-println!("Bitcoin price at block {}: ${:.2}", height, ohlc.close.dollars());
-```
-
-### Working with OHLC Data
-
-```rust
-use brk_structs::OHLCCents;
-
-// OHLC data is returned in cents for precision
-let ohlc: OHLCCents = fetcher.get_date(date)?;
-
-// Convert to dollars for display
-println!("Open: ${:.2}", ohlc.open.dollars());
-println!("High: ${:.2}", ohlc.high.dollars());
-println!("Low: ${:.2}", ohlc.low.dollars());
-println!("Close: ${:.2}", ohlc.close.dollars());
-
-// Access raw cent values
-println!("Close in cents: {}", ohlc.close.0);
-```
-
-### Using Individual Sources
-
-```rust
-use brk_fetcher::{Binance, Kraken, BRK};
-
-// Use specific exchanges directly
-let binance = Binance::init(None);
-let kraken = Kraken::default();
-let brk = BRK::default();
-
-// Fetch from specific source
-let binance_data = binance.get_from_1d(&date)?;
-let kraken_data = kraken.get_from_1mn(timestamp, previous_timestamp)?;
-let brk_data = brk.get_from_height(height)?;
-```
-
-### Error Handling and Retries
-
-```rust
-// The fetcher automatically retries on failures
+// Fetch Bitcoin price for a specific date
+let date = Date::from_ymd(2021, 1, 1)?;
 match fetcher.get_date(date) {
-    Ok(ohlc) => println!("Successfully fetched: ${:.2}", ohlc.close.dollars()),
-    Err(e) => {
-        // After all retries and sources exhausted
-        eprintln!("Failed to fetch price data: {}", e);
+    Ok(ohlc) => println!("BTC price on {}: ${}", date, ohlc.close.to_dollars()),
+    Err(e) => eprintln!("Failed to fetch price: {}", e),
+}
+```
+
+### Historical Data with HAR Files
+
+```rust
+use brk_fetcher::Fetcher;
+use std::path::Path;
+
+// Initialize with HAR file path for extended historical coverage
+let har_path = Path::new("./import_data");
+let mut fetcher = Fetcher::import(true, Some(har_path))?;
+
+// Fetch minute-level data using HAR file fallback
+let height = Height::new(650000);
+let timestamp = Timestamp::from(1598918400u32); // August 2020
+let price_data = fetcher.get_height(height, timestamp, None)?;
+```
+
+### Batch Processing with Caching
+
+```rust
+use brk_fetcher::Fetcher;
+
+let mut fetcher = Fetcher::import(true, None)?;
+
+// Process multiple heights - caching improves performance
+for height in 800000..800100 {
+    let timestamp = Timestamp::from(1684771200u32 + (height - 800000) * 600);
+
+    match fetcher.get_height(Height::new(height), timestamp, None) {
+        Ok(ohlc) => println!("Height {}: ${:.2}", height, ohlc.close.to_dollars()),
+        Err(e) => eprintln!("Error at height {}: {}", height, e),
     }
 }
 
-// Clear cache to force fresh data
+// Clear caches when done
 fetcher.clear();
 ```
 
-## Data Sources and Limitations
+## Architecture
 
-### Kraken API
-- **1-day data**: Historical daily OHLC data
-- **1-minute data**: Limited to last ~10 hours
-- **Rate limits**: Subject to Kraken API restrictions
+### Retry Mechanism
 
-### Binance API  
-- **1-day data**: Historical daily OHLC data
-- **1-minute data**: Limited to last ~16 hours
-- **HAR import**: Can extend historical coverage via browser data
+The crate implements a sophisticated retry system with:
 
-### BRK Instance
-- **Cached data**: Previously fetched price data
-- **Offline capability**: Works without internet when data is cached
-- **Height-based**: Optimized for block height queries
+- **Default retry count**: 6 attempts with 5-second delays
+- **Extended retry**: Up to 720 attempts (12 hours) for critical operations
+- **Cache invalidation**: Automatic cache clearing between retry attempts
+- **Exponential backoff**: 60-second delays for extended retries
 
-## HAR File Import
+### Data Aggregation
 
-For historical data beyond API limits:
+Price data is aggregated using OHLC (Open, High, Low, Close) calculations spanning timestamp ranges. The `find_height_ohlc` function computes accurate OHLC values by scanning time series data between block timestamps.
 
-1. Visit [Binance BTC/USDT chart](https://www.binance.com/en/trade/BTC_USDT?type=spot)
-2. Set chart to 1-minute interval
-3. Open browser dev tools, go to Network tab
-4. Filter by 'uiKlines'
-5. Scroll chart to desired historical period
-6. Export network requests as HAR file
-7. Initialize fetcher with HAR path
+### HAR File Processing
 
-## Fallback Strategy
+Binance integration supports HTTP Archive (HAR) files for extended historical data coverage, parsing browser network captures to extract additional pricing data beyond API limitations.
 
-The fetcher tries sources in this order:
-1. **Kraken** - Primary source for most queries
-2. **Binance** - Secondary source with extended coverage
-3. **BRK** - Fallback for cached/computed prices
+## Code Analysis Summary
 
-If all sources fail, it retries up to 12 hours with 60-second intervals.
-
-## Performance and Reliability
-
-- **Automatic retries**: Up to 720 attempts (12 hours) with 60-second delays
-- **Cache management**: Clears cache on failures to force fresh data
-- **Error logging**: Detailed failure reporting with recovery instructions
-- **Graceful degradation**: Falls back through sources until successful
-
-## Dependencies
-
-- `brk_structs` - Bitcoin-aware type system (Date, Height, OHLC types)
-- `brk_error` - Unified error handling
-- `minreq` - HTTP client for API requests
-- `serde_json` - JSON parsing for API responses
-- `log` - Logging for retry and error reporting
+**Main Types**: `Fetcher` aggregator with `Binance`, `Kraken`, and `BRK` source implementations \
+**Caching**: BTreeMap-based caching for both timestamp and date-indexed price data \
+**Network Layer**: Built on `minreq` HTTP client with automatic JSON parsing \
+**Error Handling**: Comprehensive retry logic with source rotation and cache management \
+**Dependencies**: Integrates `brk_structs` for type definitions and `brk_error` for unified error handling \
+**Architecture**: Multi-source aggregation pattern with hierarchical fallback and intelligent caching
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

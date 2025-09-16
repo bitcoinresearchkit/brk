@@ -3,18 +3,26 @@
 Generate a professional, comprehensive README.md for each crate based SOLELY on code analysis. Use NO external documentation, commit messages, or existing READMEs.
 
 ## MANDATORY PROCESS - FOLLOW EXACTLY:
-1. Analyze each crate's source code thoroughly using file system exploration
-2. **MANDATORY CODE ANALYSIS**: Before writing ANY README content, you MUST:
+1. **IGNORE EXISTING DOCS**: Do NOT read any .md, .txt, .rst, or documentation files in the crate directory
+2. **CODE-ONLY ANALYSIS**: Examine ONLY these files:
+   - All .rs files in src/ directory and subdirectories
+   - Cargo.toml for dependencies and metadata
+   - Code structure and organization
+3. **MANDATORY CODE ANALYSIS**: Before writing ANY README content, you MUST:
    - Examine all Rust files in src/ directory
    - Identify the main structs, enums, traits, and functions
    - Understand the crate's architecture and data flow
    - Determine the crate's purpose from its implementation
    - Map dependencies to understand external integrations
-3. Generate one complete README.md per crate
-4. Focus on one crate at a time for thorough analysis
+4. **FRESH PERSPECTIVE**: Write the README as if you're the first person to document this crate
+5. Generate one complete README.md per crate
+6. Focus on one crate at a time for thorough analysis
 
 ## ABSOLUTE REQUIREMENTS:
 - **SOURCE OF TRUTH**: Use ONLY the actual Rust code - no external docs, comments may provide hints but focus on implementation
+- **CRITICAL**: DO NOT read any existing README.md, CHANGELOG.md, or documentation files
+- **IGNORE ALL TEXT FILES**: .md, .txt, .rst files are FORBIDDEN sources - treat them as if they don't exist
+- **CODE ONLY**: Focus exclusively on .rs files, Cargo.toml, and code structure
 - **PROFESSIONAL GRADE**: Write as if this will be published on crates.io for other developers
 - **PROGRAMMER FOCUSED**: Assume audience knows Rust and relevant domain concepts
 - **IMPLEMENTATION-BASED**: Describe what the code actually does, not what comments claim it should do
@@ -74,6 +82,9 @@ crate_name = "X.Y.Z"
 - **NEVER** write marketing copy: "cutting-edge", "state-of-the-art", "enterprise-grade"
 - **NEVER** make claims you can't verify from code: "blazingly fast", "memory efficient"
 - **NEVER** copy-paste from existing documentation or comments
+- **NEVER** read or reference existing README.md files - pretend they don't exist
+- **NEVER** use phrases like "as mentioned in the documentation" or "according to the docs"
+- **NEVER** let existing documentation influence your analysis or writing
 
 ### REQUIRED SPECIFICITY:
 - **Data structures**: Mention specific types (HashMap, Vec, etc.)
@@ -82,7 +93,27 @@ crate_name = "X.Y.Z"
 - **Error handling**: How errors are represented and handled
 - **Async/sync**: Clearly state if operations are blocking or async
 
-### CODE ANALYSIS DEPTH:
+### ANTI-BIAS PROTOCOL:
+
+### BEFORE STARTING ANY ANALYSIS:
+1. **Explicitly ignore**: Any README.md, CHANGELOG.md, docs/, documentation files
+2. **File filtering**: Only examine .rs and Cargo.toml files
+3. **Fresh eyes approach**: Analyze the code as if you've never seen this crate before
+4. **Independent thinking**: Form your own understanding purely from code inspection
+
+### IF YOU ACCIDENTALLY READ EXISTING DOCS:
+- Stop immediately and restart your analysis
+- Consciously disregard any information from documentation files
+- Base all descriptions solely on what you observe in the code
+- Ask yourself: "What would I think this code does if I had no documentation?"
+
+### VALIDATION CHECKS:
+- **Unique descriptions**: Your descriptions should differ significantly from any existing docs
+- **Code-derived insights**: Every feature mentioned must be visible in the source code
+- **Independent voice**: Write in your own technical style, not mimicking existing documentation
+- **Fresh examples**: Create new code examples based on API analysis, not existing samples
+
+## CODE ANALYSIS DEPTH:
 **You MUST analyze and understand:**
 1. **Public API surface**: All pub structs, functions, traits, modules
 2. **Core abstractions**: Main data types and their relationships

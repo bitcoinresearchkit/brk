@@ -1,197 +1,273 @@
 # brk
 
-**Main wrapper crate for the Bitcoin Research Kit (BRK)**
+Unified Bitcoin Research Kit crate providing optional feature-gated access to all BRK components.
 
-The `brk` crate serves as the primary entry point for the Bitcoin Research Kit, providing a unified interface to all BRK components through feature flags. It enables developers to selectively include only the components they need while maintaining a consistent API.
+[![Crates.io](https://img.shields.io/crates/v/brk.svg)](https://crates.io/crates/brk)
+[![Documentation](https://docs.rs/brk/badge.svg)](https://docs.rs/brk)
 
-## What it provides
+## Overview
 
-- **Unified Access**: Single crate providing access to the entire BRK ecosystem
-- **Feature-based Selection**: Choose only the components you need
-- **Consistent Versioning**: All components versioned together for compatibility
-- **Simplified Dependencies**: Single dependency instead of multiple individual crates
+This crate serves as a unified entry point to the Bitcoin Research Kit ecosystem, providing feature-gated re-exports of all BRK components. It allows users to selectively include only the functionality they need while maintaining a single dependency declaration, with the `brk_cli` component always available for command-line interface access.
 
-## Available Components
+**Key Features:**
 
-### Core Data Pipeline
-- **`parser`** ([brk_parser](../brk_parser/)) - High-performance Bitcoin block parser
-- **`indexer`** ([brk_indexer](../brk_indexer/)) - Blockchain data indexer with dual storage
-- **`computer`** ([brk_computer](../brk_computer/)) - Analytics engine for computed datasets
-- **`interface`** ([brk_interface](../brk_interface/)) - Unified data query and formatting API
+- Feature-gated modular access to 12 specialized BRK components
+- Single dependency entry point with selective compilation
+- Always-available CLI component for command-line operations
+- Comprehensive documentation aggregation with inline re-exports
+- `full` feature for complete BRK functionality inclusion
+- Optimized build configuration with docs.rs integration
 
-### Infrastructure
-- **`structs`** ([brk_structs](../brk_structs/)) - Bitcoin-aware type system and data structures
-- **`error`** ([brk_error](../brk_error/)) - Centralized error handling
-- **`store`** ([brk_store](../brk_store/)) - Blockchain-aware key-value storage
+**Target Use Cases:**
 
-### External Integration
-- **`fetcher`** ([brk_fetcher](../brk_fetcher/)) - Bitcoin price data fetcher with multi-source fallback
-- **`server`** ([brk_server](../brk_server/)) - HTTP server with REST API
-- **`mcp`** ([brk_mcp](../brk_mcp/)) - Model Context Protocol for LLM integration
+- Applications requiring selective BRK functionality to minimize dependencies
+- Library development where only specific Bitcoin analysis components are needed
+- Prototyping and experimentation with different BRK component combinations
+- Educational use cases demonstrating modular blockchain analytics architecture
 
-### Utilities
-- **`cli`** ([brk_cli](../brk_cli/)) - Command line interface (always enabled)
-- **`logger`** ([brk_logger](../brk_logger/)) - Logging utilities
-- **`bundler`** ([brk_bundler](../brk_bundler/)) - Asset bundling for web interfaces
-
-## Usage
-
-### Full Installation
+## Installation
 
 ```toml
 [dependencies]
-brk = { version = "0.0.88", features = ["full"] }
+# Minimal installation with CLI only
+brk = "0.0.107"
+
+# Full functionality
+brk = { version = "0.0.107", features = ["full"] }
+
+# Selective features
+brk = { version = "0.0.107", features = ["indexer", "computer", "server"] }
 ```
+
+## Quick Start
 
 ```rust
-use brk::*;
+// CLI is always available
+use brk::cli;
 
-// Access all components
-let config = cli::Config::load()?;
-let parser = parser::Parser::new(/* ... */);
-let indexer = indexer::Indexer::forced_import("./data")?;
-let computer = computer::Computer::forced_import("./data", &indexer, None)?;
+// Feature-gated components
+#[cfg(feature = "indexer")]
+use brk::indexer::Indexer;
+
+#[cfg(feature = "computer")]
+use brk::computer::Computer;
+
+#[cfg(feature = "server")]
+use brk::server::Server;
+
+// Build complete pipeline with selected features
+#[cfg(all(feature = "indexer", feature = "computer", feature = "server"))]
+fn build_pipeline() -> Result<(), Box<dyn std::error::Error>> {
+    let indexer = Indexer::build("./data")?;
+    let computer = Computer::build("./analytics", &indexer)?;
+    let interface = brk::interface::Interface::build(&indexer, &computer);
+    let server = Server::new(interface, None);
+    Ok(())
+}
 ```
 
-### Selective Components
+## API Overview
 
-```toml
-[dependencies]
-brk = { version = "0.0.88", features = ["parser", "indexer", "computer"] }
-```
+### Feature Organization
+
+The crate provides feature-gated access to BRK components organized by functionality:
+
+**Core Data Processing:**
+- `structs` - Bitcoin-aware data structures and type system
+- `error` - Centralized error handling across components
+- `store` - Transactional key-value storage wrapper
+
+**Blockchain Processing:**
+- `parser` - Multi-threaded Bitcoin block parsing
+- `indexer` - Blockchain data indexing with columnar storage
+- `computer` - Analytics computation engine
+
+**Data Access:**
+- `interface` - Unified query interface with fuzzy search
+- `fetcher` - Multi-source price data aggregation
+
+**Service Layer:**
+- `server` - HTTP API server with caching and compression
+- `mcp` - Model Context Protocol bridge for LLM integration
+- `logger` - Enhanced logging with colored output
+
+**Web Infrastructure:**
+- `bundler` - Web asset bundling using Rolldown
+
+### Always Available
+
+**`cli`**: Command-line interface module (no feature gate required)
+Provides access to the complete BRK command-line interface for running full instances.
+
+## Examples
+
+### Minimal Bitcoin Parser
 
 ```rust
-use brk::{parser, indexer, computer};
+use brk::parser::Parser;
 
-// Core data pipeline only
-let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
-let mut indexer = indexer::Indexer::forced_import(output_dir)?;
-let mut computer = computer::Computer::forced_import(output_dir, &indexer, None)?;
+fn parse_blocks() -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(feature = "parser")]
+    {
+        let parser = Parser::new("/path/to/blocks", None, rpc_client);
+        // Parse blockchain data
+        Ok(())
+    }
+    #[cfg(not(feature = "parser"))]
+    {
+        Err("Parser feature not enabled".into())
+    }
+}
 ```
 
-### Minimal Setup
-
-```toml
-[dependencies]
-brk = { version = "0.0.88", features = ["structs", "parser"] }
-```
-
-```rust
-use brk::{structs, parser};
-
-// Just parsing and types
-let height = structs::Height::new(800_000);
-let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
-```
-
-## Feature Flags
-
-| Feature | Description | Dependencies |
-|---------|-------------|--------------|
-| `full` | Enable all components | All crates |
-| `cli` | Command line interface | Always enabled |
-| `structs` | Core type system | Foundation for other crates |
-| `error` | Error handling | Used by most crates |
-| `parser` | Block parsing | `structs`, `error` |
-| `store` | Key-value storage | `structs`, `error` |
-| `indexer` | Blockchain indexing | `parser`, `store` |
-| `computer` | Analytics computation | `indexer`, `fetcher` (optional) |
-| `fetcher` | Price data fetching | `structs`, `error` |
-| `interface` | Data query API | `indexer`, `computer` |
-| `server` | HTTP server | `interface`, `mcp` |
-| `mcp` | LLM integration | `interface` |
-| `logger` | Logging utilities | Standalone |
-| `bundler` | Asset bundling | Standalone |
-
-## Common Usage Patterns
-
-### Complete BRK Instance
-
-```rust
-use brk::*;
-
-// Full data pipeline setup
-let config = cli::Config::load()?;
-let rpc = /* Bitcoin Core RPC client */;
-let parser = parser::Parser::new(config.blocks_dir, Some(config.output_dir), rpc);
-let mut indexer = indexer::Indexer::forced_import(&config.output_dir)?;
-let mut computer = computer::Computer::forced_import(&config.output_dir, &indexer, None)?;
-let interface = interface::Interface::build(&indexer, &computer);
-let server = server::Server::new(interface, config.website_path);
-
-// Start server
-server.serve(true).await?;
-```
-
-### Data Analysis
+### Analytics Pipeline
 
 ```rust
 use brk::{indexer, computer, interface};
 
-// Analysis-focused setup
-let indexer = indexer::Indexer::forced_import("./brk_data")?;
-let computer = computer::Computer::forced_import("./brk_data", &indexer, None)?;
-let interface = interface::Interface::build(&indexer, &computer);
+#[cfg(all(feature = "indexer", feature = "computer", feature = "interface"))]
+fn analytics_pipeline() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize indexer
+    let indexer = indexer::Indexer::build("./blockchain_data")?;
 
-// Query data
-let params = interface::Params {
-    index: interface::Index::Height,
-    ids: vec!["price_usd", "difficulty"].into(),
-    rest: interface::ParamsOpt::default()
-        .set_from(-100)
-        .set_format(interface::Format::CSV),
-};
+    // Compute analytics
+    let computer = computer::Computer::build("./analytics", &indexer)?;
 
-let csv_data = interface.search_and_format(params)?;
-```
+    // Create query interface
+    let interface = interface::Interface::build(&indexer, &computer);
 
-### Custom Integration
+    // Query latest price
+    let params = interface::Params {
+        index: "date".to_string(),
+        ids: vec!["price-close".to_string()].into(),
+        from: Some(-1),
+        ..Default::default()
+    };
 
-```rust
-use brk::{structs, parser, error};
-
-// Custom application with BRK components
-fn analyze_blocks() -> error::Result<()> {
-    let parser = parser::Parser::new(blocks_dir, Some(output_dir), rpc);
-
-    parser.parse(None, None)
-        .iter()
-        .take(1000)  // First 1000 blocks
-        .for_each(|(height, block, hash)| {
-            println!("Block {}: {} transactions", height, block.txdata.len());
-        });
+    let result = interface.search_and_format(params)?;
+    println!("Latest Bitcoin price: {:?}", result);
 
     Ok(())
 }
 ```
 
-## Version Compatibility
+### Web Server Setup
 
-All BRK crates are released together with synchronized versions. When using the `brk` wrapper crate, you're guaranteed compatibility between all components.
+```rust
+use brk::{server, interface, indexer, computer};
 
-- **Current version**: 0.0.88
-- **Rust MSRV**: 1.89+
-- **Bitcoin Core**: v25.0 - v29.0
+#[cfg(all(feature = "server", feature = "interface", feature = "indexer", feature = "computer"))]
+async fn web_server() -> Result<(), Box<dyn std::error::Error>> {
+    let indexer = indexer::Indexer::build("./data")?;
+    let computer = computer::Computer::build("./analytics", &indexer)?;
+    let interface = interface::Interface::build(&indexer, &computer);
 
-## Performance Characteristics
+    let server = server::Server::new(interface, None);
+    server.serve(true).await?;
 
-The `brk` crate itself adds no runtime overhead - it simply re-exports the underlying crates. Performance characteristics depend on which components you use:
+    Ok(())
+}
+```
 
-- **Full pipeline**: ~13-15 hours initial sync, ~40GB storage overhead
-- **Parser only**: ~4 minutes to parse entire blockchain
-- **Indexer only**: ~7-8 hours to index blockchain, ~5-6GB RAM usage
-- **Server**: Low latency API responses with caching and compression
+### MCP Integration
 
-## Dependencies
+```rust
+use brk::{mcp, interface, indexer, computer};
 
-The `brk` crate's dependencies are determined by enabled features. Core dependencies include:
+#[cfg(all(feature = "mcp", feature = "interface"))]
+fn mcp_server(interface: &'static interface::Interface) -> mcp::MCP {
+    mcp::MCP::new(interface)
+}
+```
 
-- `brk_cli` - Always included for configuration and CLI support
-- Individual `brk_*` crates based on enabled features
-- Transitive dependencies from enabled components
+## Feature Combinations
 
-For specific dependency information, see individual crate READMEs.
+### Common Combinations
+
+**Data Processing**: `["structs", "parser", "indexer"]`
+Basic blockchain data processing and indexing.
+
+**Analytics**: `["indexer", "computer", "fetcher", "interface"]`
+Complete analytics pipeline with price data integration.
+
+**API Server**: `["interface", "server", "logger"]`
+HTTP API server with logging capabilities.
+
+**Full Stack**: `["full"]`
+All components for complete BRK functionality.
+
+### Dependency Optimization
+
+Feature selection allows for significant dependency reduction:
+
+```toml
+# Minimal parser-only dependency
+brk = { version = "0.0.107", features = ["parser"] }
+
+# Analytics without web server
+brk = { version = "0.0.107", features = ["indexer", "computer", "interface"] }
+
+# Web server without parsing
+brk = { version = "0.0.107", features = ["interface", "server"] }
+```
+
+## Architecture
+
+### Re-export Pattern
+
+The crate uses `#[doc(inline)]` re-exports to provide seamless access to component APIs:
+
+```rust
+#[cfg(feature = "component")]
+#[doc(inline)]
+pub use brk_component as component;
+```
+
+This pattern ensures:
+- Feature-gated compilation for dependency optimization
+- Inline documentation for unified API reference
+- Namespace preservation for component-specific functionality
+
+### Build Configuration
+
+- **Documentation**: `all-features = true` for complete docs.rs documentation
+- **CLI Integration**: `brk_cli` always available without feature gates
+- **Optional Dependencies**: All components except CLI are optional
+
+## Configuration
+
+### Feature Flags
+
+| Feature | Component | Description |
+|---------|-----------|-------------|
+| `bundler` | `brk_bundler` | Web asset bundling |
+| `computer` | `brk_computer` | Analytics computation |
+| `error` | `brk_error` | Error handling |
+| `fetcher` | `brk_fetcher` | Price data fetching |
+| `indexer` | `brk_indexer` | Blockchain indexing |
+| `interface` | `brk_interface` | Data query interface |
+| `logger` | `brk_logger` | Enhanced logging |
+| `mcp` | `brk_mcp` | Model Context Protocol |
+| `parser` | `brk_parser` | Block parsing |
+| `server` | `brk_server` | HTTP server |
+| `store` | `brk_store` | Key-value storage |
+| `structs` | `brk_structs` | Data structures |
+| `full` | All components | Complete functionality |
+
+### Documentation
+
+Documentation is aggregated from all components with `#![doc = include_str!("../README.md")]` ensuring comprehensive API reference across all features.
+
+## Code Analysis Summary
+
+**Main Structure**: Feature-gated re-export crate providing unified access to 12 BRK components \
+**Feature System**: Cargo features enabling selective compilation and dependency optimization \
+**CLI Integration**: Always-available `brk_cli` access without feature requirements \
+**Documentation**: Inline re-exports with comprehensive docs.rs integration \
+**Dependency Management**: Optional dependencies for all components except CLI \
+**Build Configuration**: Optimized compilation with all-features documentation \
+**Architecture**: Modular aggregation crate enabling flexible BRK ecosystem usage
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

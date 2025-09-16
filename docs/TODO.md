@@ -21,6 +21,7 @@
         - highest dominance
         - consecutive blocks
         - max consecutive blocks
+        - add indexes back to the mempool.space version of pools as we need the correct one for the API
       - price
         - oracle (https://utxo.live/oracle/UTXOracle.py)
       - cohorts

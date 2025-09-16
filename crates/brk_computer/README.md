@@ -1,200 +1,303 @@
 # brk_computer
 
-**Bitcoin analytics engine that transforms indexed blockchain data into comprehensive metrics**
+Advanced Bitcoin analytics engine that transforms indexed blockchain data into comprehensive metrics and financial analytics.
 
-`brk_computer` is the computational layer of BRK that processes indexed blockchain data to generate analytics across multiple specialized domains. It provides comprehensive Bitcoin metrics with efficient storage and lazy computation for optimal performance.
+[![Crates.io](https://img.shields.io/crates/v/brk_computer.svg)](https://crates.io/crates/brk_computer)
+[![Documentation](https://docs.rs/brk_computer/badge.svg)](https://docs.rs/brk_computer)
 
-## What it provides
+## Overview
 
-- **Comprehensive Analytics**: 9 specialized domains covering all aspects of Bitcoin analysis
-- **Lazy Computation**: On-demand calculation with dependency tracking and caching
-- **Incremental Updates**: Only processes new data since last computation
-- **Memory Efficiency**: ~100MB operation footprint via compressed storage and memory mapping
-- **Multi-timeframe Analysis**: Daily, weekly, monthly, quarterly, yearly perspectives
+This crate provides a sophisticated analytics engine that processes indexed Bitcoin blockchain data to compute comprehensive metrics, financial analytics, and statistical aggregations. Built on top of `brk_indexer`, it transforms raw blockchain data into actionable insights through state tracking, cohort analysis, market metrics, and advanced Bitcoin-specific calculations.
 
-## Nine Analytics Domains
+**Key Features:**
 
-The computer processes data through a fixed dependency chain:
+- Comprehensive Bitcoin analytics pipeline with 6 major computation modules
+- UTXO and address cohort analysis with lifecycle tracking
+- Market metrics integration with price data and financial calculations
+- Cointime economics and realized/unrealized profit/loss analysis
+- Supply dynamics and monetary policy metrics
+- Pool analysis for centralization and mining statistics
+- Memory allocation tracking and performance optimization
+- Parallel computation with multi-threaded processing
 
-1. **indexes** - Time-based indexing (date/height mappings, epoch calculations)
-2. **constants** - Baseline values and reference metrics
-3. **blocks** - Block analytics (sizes, intervals, transaction counts, weight)
-4. **mining** - Mining economics (hashrate, difficulty, rewards, epochs)
-5. **fetched** - External price data integration (optional)
-6. **price** - OHLC data across multiple timeframes (optional, requires fetched)
-7. **transactions** - Transaction analysis (fees, sizes, patterns, RBF detection)
-8. **market** - Price correlations and market metrics (optional, requires price)
-9. **stateful** - UTXO tracking and accumulated state computations
-10. **cointime** - Coin age and time-based value analysis
+**Target Use Cases:**
 
-## Key Features
+- Bitcoin market analysis and research platforms
+- On-chain analytics for investment and trading decisions
+- Academic research requiring comprehensive blockchain metrics
+- Financial applications needing Bitcoin exposure and risk metrics
 
-### Computation Strategy
-- **Fixed dependency chain**: Ensures data consistency across all domains
-- **Parallel processing**: Uses Rayon for performance optimization
-- **State management**: Rollback capabilities for error recovery
-- **Incremental updates**: Only computes new data since last run
+## Installation
 
-### Analytics Capabilities
-- **Multi-timeframe analysis**: Daily, weekly, monthly, quarterly, yearly aggregations
-- **Chain-based metrics**: Height, difficulty epoch, halving epoch indexing
-- **Price correlation**: Both dollar and satoshi denominated metrics
-- **DCA analysis**: Dollar Cost Averaging with configurable periods
-- **Supply analysis**: Circulating, realized, unrealized supply metrics
-- **Address cohort tracking**: Analysis across different Bitcoin address types
-- **UTXO cohort analysis**: Realized/unrealized gains tracking
-- **Coin time analysis**: Understanding Bitcoin velocity and dormancy
+```toml
+cargo add brk_computer
+```
 
-### Storage Optimization
-- **Compressed vectors**: Efficient disk storage with lazy computation
-- **Memory mapping**: Minimal RAM usage during operation
-- **Version management**: Automatic invalidation on schema changes
-- **Dependency tracking**: Smart recomputation based on data changes
-
-## Usage
-
-### Basic Setup (No Price Data)
+## Quick Start
 
 ```rust
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use vecdb::Exit;
-
-// Setup without external price data
-let indexer = Indexer::forced_import("./brk_data")?;
-let mut computer = Computer::forced_import("./brk_data", &indexer, None)?;
-
-// Setup exit handler
-let exit = Exit::new();
-exit.set_ctrlc_handler();
-
-// Compute all analytics
-let starting_indexes = indexer.get_starting_indexes();
-computer.compute(&indexer, starting_indexes, &exit)?;
-```
-
-### Advanced Setup (With Price Data)
-
-```rust
 use brk_fetcher::Fetcher;
+use vecdb::Exit;
+use std::path::Path;
 
-// Setup with external price data for market analytics
+// Initialize dependencies
+let outputs_path = Path::new("./analytics_data");
+let indexer = Indexer::forced_import(outputs_path)?;
 let fetcher = Some(Fetcher::import(true, None)?);
-let mut computer = Computer::forced_import("./brk_data", &indexer, fetcher)?;
 
-// Compute all analytics including price/market domains
+// Create computer with price data support
+let mut computer = Computer::forced_import(outputs_path, &indexer, fetcher)?;
+
+// Compute analytics from indexer state
+let exit = Exit::default();
+let starting_indexes = brk_indexer::Indexes::default();
 computer.compute(&indexer, starting_indexes, &exit)?;
+
+println!("Analytics computation completed!");
 ```
 
-### Accessing Computed Data
+## API Overview
+
+### Core Structure
+
+The Computer is organized into 7 specialized computation modules:
+
+- **`indexes`**: Fundamental blockchain index computations
+- **`constants`**: Network constants and protocol parameters
+- **`market`**: Price-based financial metrics and market analysis
+- **`pools`**: Mining pool analysis and centralization metrics
+- **`chain`**: Core blockchain metrics (difficulty, hashrate, fees)
+- **`stateful`**: Advanced state tracking (UTXO lifecycles, address behaviors)
+- **`cointime`**: Cointime economics and value-time calculations
+
+### Key Methods
+
+**`Computer::forced_import(outputs_path, indexer, fetcher) -> Result<Self>`**
+Creates computer instance with optional price data integration.
+
+**`compute(&mut self, indexer: &Indexer, starting_indexes: Indexes, exit: &Exit) -> Result<()>`**
+Main computation pipeline processing all analytics modules.
+
+### Analytics Categories
+
+**Market Analytics:**
+
+- Price-based metrics (market cap, realized cap, MVRV)
+- Trading volume analysis and liquidity metrics
+- Return calculations and volatility measurements
+- Dollar-cost averaging and investment strategy metrics
+
+**On-Chain Analytics:**
+
+- Transaction count and size statistics
+- Fee analysis and block space utilization
+- Address activity and entity clustering
+- UTXO age distributions and spending patterns
+
+**Monetary Analytics:**
+
+- Circulating supply and issuance tracking
+- Realized vs. unrealized gains/losses
+- Cointime destruction and accumulation
+- Velocity and economic activity indicators
+
+## Examples
+
+### Basic Analytics Computation
 
 ```rust
-// Access all computed vectors
-let all_vecs = computer.vecs(); // Returns Vec<&dyn AnyCollectableVec>
+use brk_computer::Computer;
 
-// Access specific domain data
-let block_metrics = &computer.blocks;
-let mining_data = &computer.mining;
-let transaction_stats = &computer.transactions;
+// Initialize with indexer and optional price data
+let computer = Computer::forced_import(
+    "./analytics_output",
+    &indexer,
+    Some(price_fetcher)
+)?;
 
-// Access price data (if available)
-if let Some(price_data) = &computer.price {
-    // Use OHLC data
-}
+// Compute all analytics modules
+let exit = vecdb::Exit::default();
+computer.compute(&indexer, starting_indexes, &exit)?;
+
+// Access computed metrics
+println!("Market cap vectors computed: {}", computer.market.len());
+println!("Chain metrics computed: {}", computer.chain.len());
+println!("Stateful analysis completed: {}", computer.stateful.len());
 ```
 
-### Incremental Updates
+### Market Analysis
 
 ```rust
-// Continuous computation loop
-loop {
-    // Get latest indexes from indexer
-    let current_indexes = indexer.get_current_indexes();
-    
-    // Compute only new data
-    computer.compute(&indexer, current_indexes, &exit)?;
-    
-    // Check for exit signal
-    if exit.is_signaled() {
-        break;
+use brk_computer::Computer;
+use brk_structs::{DateIndex, Height};
+
+let computer = Computer::forced_import(/* ... */)?;
+
+// Access market metrics after computation
+if let Some(market) = &computer.market {
+    // Daily market cap analysis
+    let date_index = DateIndex::from_days_since_genesis(5000);
+    if let Some(market_cap) = market.dateindex_to_market_cap.get(date_index)? {
+        println!("Market cap on day {}: ${}", date_index, market_cap.to_dollars());
     }
-    
-    // Wait before next update
-    sleep(Duration::from_secs(60));
+
+    // MVRV (Market Value to Realized Value) ratio
+    if let Some(mvrv) = market.dateindex_to_mvrv.get(date_index)? {
+        println!("MVRV ratio: {:.2}", mvrv);
+    }
+}
+
+// Chain-level metrics
+let height = Height::new(800000);
+if let Some(difficulty) = computer.chain.height_to_difficulty.get(height)? {
+    println!("Network difficulty at height {}: {}", height, difficulty);
 }
 ```
 
-## Core Computer Structure
+### Cohort Analysis
 
 ```rust
-pub struct Computer {
-    pub indexes: indexes::Vecs,           // Time indexing
-    pub constants: constants::Vecs,       // Baseline values
-    pub blocks: blocks::Vecs,            // Block analytics
-    pub mining: mining::Vecs,            // Mining economics
-    pub market: market::Vecs,            // Market metrics (optional)
-    pub price: Option<price::Vecs>,      // OHLC price data (optional)
-    pub transactions: transactions::Vecs, // Transaction analysis
-    pub stateful: stateful::Vecs,        // UTXO tracking
-    pub fetched: Option<fetched::Vecs>,  // External data (optional)
-    pub cointime: cointime::Vecs,        // Coin age analysis
+use brk_computer::Computer;
+use brk_structs::{DateIndex, CohortId};
+
+let computer = Computer::forced_import(/* ... */)?;
+
+// Address cohort analysis
+let cohort_date = DateIndex::from_days_since_genesis(4000);
+
+// Analyze address behavior patterns
+if let Some(address_cohorts) = &computer.stateful.address_cohorts {
+    for cohort_id in address_cohorts.get_cohort_ids_for_date(cohort_date)? {
+        let cohort_data = address_cohorts.get_cohort(cohort_id)?;
+
+        println!("Cohort {}: {} addresses created",
+                 cohort_id, cohort_data.addresses.len());
+        println!("Average holding period: {} days",
+                 cohort_data.avg_holding_period.as_days());
+    }
+}
+
+// UTXO cohort lifecycle analysis
+if let Some(utxo_cohorts) = &computer.stateful.utxo_cohorts {
+    let active_utxos = utxo_cohorts.get_active_utxos_for_date(cohort_date)?;
+    println!("Active UTXOs from cohort: {}", active_utxos.len());
 }
 ```
 
-## Performance Characteristics
+### Supply and Monetary Analysis
 
-**Benchmarked on MacBook Pro M3 Pro:**
-- **Initial computation**: ~6-7 hours for complete Bitcoin blockchain
-- **Storage efficiency**: All computed datasets total ~40GB
-- **Incremental updates**: 3-5 seconds per new block
-- **Memory footprint**: Peak ~7-8GB during computation, ~100MB during operation
-- **Dependencies**: Price data domains optional (fetched, price, market)
+```rust
+use brk_computer::Computer;
+use brk_structs::{Height, DateIndex};
 
-## Domain-Specific Analytics
+let computer = Computer::forced_import(/* ... */)?;
 
-### Block Analytics
-- Block sizes, weights, transaction counts
-- Block intervals and mining statistics
-- Fee analysis per block
+// Supply dynamics
+let height = Height::new(750000);
+if let Some(supply) = computer.chain.height_to_circulating_supply.get(height)? {
+    println!("Circulating supply: {} BTC", supply.to_btc());
+}
 
-### Mining Economics
-- Hashrate estimation and difficulty tracking
-- Mining reward analysis
-- Epoch-based calculations
+// Realized vs unrealized analysis
+let date = DateIndex::from_days_since_genesis(5000);
+if let Some(realized_cap) = computer.market.dateindex_to_realized_cap.get(date)? {
+    if let Some(market_cap) = computer.market.dateindex_to_market_cap.get(date)? {
+        let unrealized_pnl = market_cap - realized_cap;
+        println!("Unrealized P&L: ${:.2}B", unrealized_pnl.to_dollars() / 1e9);
+    }
+}
+```
 
-### Transaction Analysis
-- Fee rate distributions
-- RBF (Replace-By-Fee) detection
-- Output type analysis
-- Transaction size patterns
+## Architecture
 
-### Market Metrics (Optional)
-- Price correlations with on-chain metrics
-- Market cap calculations
-- DCA analysis across timeframes
+### Computation Pipeline
 
-### Stateful Analysis
-- UTXO set tracking
-- Address cohort analysis
-- Realized/unrealized gains
-- Supply distribution metrics
+The computer implements a sophisticated multi-stage pipeline:
 
-## Requirements
+1. **Index Computation**: Fundamental blockchain metrics and time-based indexes
+2. **Constants Computation**: Network parameters and protocol constants
+3. **Price Integration**: Optional price data fetching and processing
+4. **Parallel Computation**: Chain, market, pools, stateful, and cointime analytics
+5. **Cross-Dependencies**: Advanced metrics requiring multiple data sources
 
-- **Indexed data**: Requires completed `brk_indexer` output
-- **Storage space**: Additional ~40GB for computed datasets
-- **Memory**: 8GB+ RAM recommended for initial computation
-- **CPU**: Multi-core recommended for parallel processing
-- **Price data**: Optional external price feeds for market analytics
+### Memory Management
 
-## Dependencies
+**Allocation Tracking:**
 
-- `brk_indexer` - Source of indexed blockchain data
-- `brk_fetcher` - External price data (optional)
-- `vecdb` - Vector database with lazy computation
-- `rayon` - Parallel processing framework
-- `brk_structs` - Bitcoin-aware type system
+- `allocative` integration for memory usage analysis
+- Efficient vector storage with compression options
+- Strategic lazy vs. eager evaluation for memory optimization
+
+**Performance Optimization:**
+
+- `rayon` parallel processing for CPU-intensive calculations
+- Vectorized operations for time-series computations
+- Memory-mapped storage for large datasets
+
+### State Management
+
+**Stateful Analytics:**
+
+- UTXO lifecycle tracking with creation/destruction events
+- Address cohort analysis with behavioral clustering
+- Transaction pattern recognition and anomaly detection
+- Economic cycle analysis with market phase detection
+
+**Cointime Economics:**
+
+- Bitcoin days destroyed and accumulated calculations
+- Velocity measurements and economic activity indicators
+- Age-weighted value transfer analysis
+- Long-term holder vs. active trader segmentation
+
+### Modular Design
+
+Each computation module operates independently:
+
+- **Chain Module**: Basic blockchain metrics (fees, difficulty, hashrate)
+- **Market Module**: Price-dependent financial calculations
+- **Pools Module**: Mining centralization and pool analysis
+- **Stateful Module**: Advanced lifecycle and behavior tracking
+- **Cointime Module**: Economic time-value calculations
+
+### Data Dependencies
+
+**Required Dependencies:**
+
+- `brk_indexer`: Raw blockchain data access
+- `brk_structs`: Type definitions and conversions
+
+**Optional Dependencies:**
+
+- `brk_fetcher`: Price data for financial metrics
+- Market analysis requires price integration
+
+### Computation Orchestration
+
+**Sequential Stages:**
+
+1. Indexes → Constants (foundational metrics)
+2. Fetched → Price (price data processing)
+3. Parallel: Chain, Market, Pools, Stateful, Cointime
+
+**Exit Handling:**
+
+- Graceful shutdown with consistent state preservation
+- Checkpoint-based recovery for long-running computations
+- Multi-threaded coordination with exit signaling
+
+## Code Analysis Summary
+
+**Main Structure**: `Computer` struct coordinating 7 specialized analytics modules (indexes, constants, market, pools, chain, stateful, cointime) \
+**Computation Pipeline**: Multi-stage analytics processing with parallel execution and dependency management \
+**State Tracking**: Advanced UTXO and address lifecycle analysis with cohort-based behavioral clustering \
+**Financial Analytics**: Comprehensive market metrics including realized/unrealized analysis and cointime economics \
+**Memory Optimization**: `allocative` tracking with lazy/eager evaluation strategies and compressed vector storage \
+**Parallel Processing**: `rayon` integration for CPU-intensive calculations with coordinated exit handling \
+**Architecture**: Modular analytics engine transforming indexed blockchain data into actionable financial and economic insights
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

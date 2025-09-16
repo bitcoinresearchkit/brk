@@ -1,140 +1,143 @@
 # brk_error
 
-**Centralized error handling for the Bitcoin Research Kit**
+Centralized error handling for Bitcoin-related operations and database interactions.
 
-`brk_error` provides a unified error type and result system used throughout the BRK ecosystem. It consolidates error handling from multiple external dependencies and adds Bitcoin-specific error variants.
+[![Crates.io](https://img.shields.io/crates/v/brk_error.svg)](https://crates.io/crates/brk_error)
+[![Documentation](https://docs.rs/brk_error/badge.svg)](https://docs.rs/brk_error)
 
-## What it provides
+## Overview
 
-- **Unified Error Type**: Single `Error` enum that covers all error cases across BRK crates
-- **Convenient Result Type**: Pre-configured `Result<T, E = Error>` for consistent error handling
-- **External Error Integration**: Automatic conversions from common library errors
-- **Bitcoin-Specific Errors**: Domain-specific error variants for blockchain data processing
+This crate provides a unified error type that consolidates error handling across Bitcoin blockchain analysis tools. It wraps errors from multiple external libraries including Bitcoin Core RPC, database operations, HTTP requests, and serialization operations into a single `Error` enum.
 
-## Key Features
+**Key Features:**
 
-### Centralized Error Management
-- Single error type for the entire BRK ecosystem
-- Consistent error handling patterns across all crates
-- Reduced error type complexity in public APIs
+- Unified error type covering 11+ different error sources
+- Automatic conversions from external library errors
+- Bitcoin-specific error variants for blockchain operations
+- Database error handling for both Fjall and VecDB storage backends
+- Custom error types for domain-specific validation failures
 
-### External Library Integration
-Automatic `From` implementations for errors from:
-- **I/O Operations**: `std::io::Error`
-- **Bitcoin Core RPC**: `bitcoincore_rpc::Error`
-- **Database Operations**: `fjall::Error`, `vecdb::Error`
-- **Serialization**: `serde_json::Error`
-- **Time Operations**: `jiff::Error`, `SystemTimeError`
-- **HTTP Requests**: `minreq::Error`
-- **Zero-Copy Operations**: `zerocopy` conversion errors
+**Target Use Cases:**
 
-### Bitcoin-Specific Error Variants
-- `WrongAddressType` - Invalid address type for operation
-- `UnindexableDate` - Date before Bitcoin genesis (2009-01-03)
-- `WrongLength` - Invalid data length for Bitcoin structures
-- `QuickCacheError` - Cache operation failures
+- Applications processing Bitcoin blockchain data
+- Systems requiring unified error handling across multiple storage backends
+- Tools integrating Bitcoin Core RPC with local databases
 
-## Usage
+## Installation
 
-### Basic Error Handling
+```toml
+cargo add brk_error
+```
+
+## Quick Start
 
 ```rust
 use brk_error::{Error, Result};
 
-fn process_block() -> Result<Block> {
-    let rpc_client = get_rpc_client()?;  // bitcoincore_rpc::Error -> Error
-    let block_data = rpc_client.get_block_info(&hash)?;
-    
-    // Custom Bitcoin-specific validation
-    if block_data.height < 0 {
-        return Err(Error::Str("Invalid block height"));
+fn process_transaction() -> Result<()> {
+    // Function automatically converts various error types
+    let data = std::fs::read("transaction.json")?; // IO error auto-converted
+    let parsed: serde_json::Value = serde_json::from_slice(&data)?; // JSON error auto-converted
+
+    // Custom domain errors
+    if data.len() < 32 {
+        return Err(Error::WrongLength);
     }
-    
-    Ok(block_data)
+
+    Ok(())
 }
 ```
 
-### Working with External Libraries
+## API Overview
+
+### Core Types
+
+- **`Error`**: Main error enum consolidating all error types
+- **`Result<T, E = Error>`**: Type alias for `std::result::Result` with default `Error` type
+
+### Error Categories
+
+**External Library Errors:**
+
+- `BitcoinRPC`: Bitcoin Core RPC client errors
+- `BitcoinConsensusEncode`: Bitcoin consensus encoding failures
+- `Fjall`/`VecDB`/`SeqDB`: Database operation errors
+- `Minreq`: HTTP request errors
+- `SerdeJson`: JSON serialization errors
+- `Jiff`: Date/time handling errors
+- `ZeroCopyError`: Zero-copy conversion failures
+
+**Domain-Specific Errors:**
+
+- `WrongLength`: Invalid data length for Bitcoin operations
+- `WrongAddressType`: Unsupported Bitcoin address format
+- `UnindexableDate`: Date outside valid blockchain range (before 2009-01-03)
+- `QuickCacheError`: Cache operation failures
+
+**Generic Errors:**
+
+- `Str(&'static str)`: Static string errors
+- `String(String)`: Dynamic string errors
+
+### Key Methods
+
+All external error types automatically convert to `Error` via `From` trait implementations. The error type implements `std::error::Error`, `Debug`, and `Display` traits for comprehensive error reporting.
+
+## Examples
+
+### Bitcoin RPC Integration
+
+```rust
+use brk_error::Result;
+use bitcoincore_rpc::{Client, Auth};
+
+fn get_block_count(client: &Client) -> Result<u64> {
+    let count = client.get_block_count()?; // Auto-converts bitcoincore_rpc::Error
+    Ok(count)
+}
+```
+
+### Database Operations
 
 ```rust
 use brk_error::Result;
 
-fn save_data(data: &[u8]) -> Result<()> {
-    // I/O error automatically converted
-    std::fs::write("data.bin", data)?;
-    
-    // JSON serialization error automatically converted  
-    let json = serde_json::to_string(&data)?;
-    
-    // Database error automatically converted
-    database.insert("key", &json)?;
-    
+fn store_transaction_data(db: &fjall::Keyspace, data: &[u8]) -> Result<()> {
+    if data.len() != 32 {
+        return Err(brk_error::Error::WrongLength);
+    }
+
+    db.insert(b"tx_hash", data)?; // Auto-converts fjall::Error
     Ok(())
 }
 ```
 
-### Bitcoin-Specific Validation
+### Date Validation
 
 ```rust
 use brk_error::{Error, Result};
+use jiff::civil::Date;
 
-fn validate_date(date: &Date) -> Result<()> {
-    if *date < Date::new(2009, 1, 3) {
+fn validate_blockchain_date(date: Date) -> Result<()> {
+    let genesis_date = Date::constant(2009, 1, 3);
+    let earliest_valid = Date::constant(2009, 1, 9);
+
+    if date < genesis_date || (date > genesis_date && date < earliest_valid) {
         return Err(Error::UnindexableDate);
     }
-    Ok(())
-}
 
-fn validate_address_type(output_type: OutputType) -> Result<()> {
-    if !output_type.is_address() {
-        return Err(Error::WrongAddressType);
-    }
     Ok(())
 }
 ```
 
-### String Errors
+## Code Analysis Summary
 
-```rust
-// Static string errors (zero allocation)
-Err(Error::Str("Invalid configuration"))
-
-// Dynamic string errors
-Err(Error::String(format!("Block {} not found", height)))
-```
-
-## Result Type
-
-The crate provides a convenient `Result` type alias:
-
-```rust
-pub type Result<T, E = Error> = std::result::Result<T, E>;
-```
-
-This allows for clean function signatures throughout BRK:
-
-```rust
-fn parse_block() -> Result<Block> { /* ... */ }
-fn index_transactions() -> Result<Vec<Transaction>> { /* ... */ }
-```
-
-## Error Display
-
-All errors implement `Display` and `std::error::Error`, providing:
-- Formatted error messages for debugging
-- Error chain support for nested errors
-- Integration with error handling libraries like `anyhow`
-
-## Dependencies
-
-- `vecdb` - Vector database error types
-- `bitcoincore-rpc` - Bitcoin Core RPC client errors
-- `fjall` - Key-value store errors
-- `jiff` - Date/time operation errors
-- `minreq` - HTTP request errors
-- `serde_json` - JSON serialization errors
-- `zerocopy` - Zero-copy conversion errors
+**Main Type**: `Error` enum with 24 variants covering external libraries and domain-specific cases \
+**Conversion Traits**: Implements `From` for 10+ external error types enabling automatic error propagation \
+**Error Handling**: Standard Rust error handling with `std::error::Error` trait implementation \
+**Dependencies**: Integrates errors from `bitcoin`, `bitcoincore-rpc`, `fjall`, `vecdb`, `jiff`, `minreq`, `serde_json`, and `zerocopy` crates \
+**Architecture**: Centralized error aggregation pattern with automatic conversions and custom domain errors
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

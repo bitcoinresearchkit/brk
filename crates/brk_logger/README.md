@@ -1,41 +1,36 @@
 # brk_logger
 
-**Logging utilities with colored console output and file logging**
+Colored console logging with optional file output for Bitcoin Research Kit applications.
 
-`brk_logger` provides a thin wrapper around `env_logger` with BRK-specific defaults, colored console output, and optional file logging. It's designed to provide clear, readable logs for Bitcoin data processing operations.
+[![Crates.io](https://img.shields.io/crates/v/brk_logger.svg)](https://crates.io/crates/brk_logger)
+[![Documentation](https://docs.rs/brk_logger/badge.svg)](https://docs.rs/brk_logger)
 
-## What it provides
+## Overview
 
-- **Colored Console Output**: Level-based color coding for easy visual parsing
-- **File Logging**: Optional log file output with automatic rotation
-- **Sensible Defaults**: Pre-configured log levels for Bitcoin and dependency crates
-- **Timestamp Formatting**: Human-readable timestamps with system timezone
+This crate provides a thin wrapper around `env_logger` with enhanced formatting, colored output, and optional file logging. Designed specifically for BRK applications, it offers structured logging with timestamps, level-based coloring, and automatic filtering of noisy dependencies.
 
-## Key Features
+**Key Features:**
 
-### Console Logging
-- **Color-coded levels**: Error (red), Warn (yellow), Info (green), Debug (blue), Trace (cyan)
-- **Formatted timestamps**: `YYYY-MM-DD HH:MM:SS` format with dimmed styling
-- **Clean output**: Minimal formatting focused on readability
+- Level-based color coding for console output (error=red, warn=yellow, info=green, etc.)
+- Dual output: colored console logs and optional plain-text file logging
+- System timezone-aware timestamps with customizable formatting
+- Automatic filtering of verbose dependencies (bitcoin, fjall, tracing, etc.)
+- Environment variable configuration support via `RUST_LOG`
 
-### File Logging
-- **Optional file output**: Writes to specified file path
-- **Automatic cleanup**: Removes existing log file on initialization
-- **Append mode**: New log entries appended to file
-- **Plain text format**: No colors in file output for better compatibility
+**Target Use Cases:**
 
-### Dependency Filtering
-Pre-configured to suppress noisy logs from common dependencies:
-- `bitcoin=off` - Bitcoin protocol library
-- `bitcoincore-rpc=off` - RPC client
-- `fjall=off` - Key-value store
-- `lsm_tree=off` - LSM tree implementation
-- `rolldown=off` - Bundler
-- `tracing=off` - Tracing framework
+- Bitcoin blockchain analysis applications requiring structured logging
+- Development and debugging of BRK components
+- Production deployments with file-based log archival
+- Applications needing both human-readable and machine-parseable logs
 
-## Usage
+## Installation
 
-### Basic Setup (Console Only)
+```toml
+cargo add brk_logger
+```
+
+## Quick Start
 
 ```rust
 use brk_logger;
@@ -43,150 +38,175 @@ use brk_logger;
 // Initialize with console output only
 brk_logger::init(None)?;
 
-// Now use standard logging macros
-log::info!("BRK starting up");
-log::warn!("Bitcoin Core not fully synced");
-log::error!("Failed to connect to RPC");
-```
-
-### With File Logging
-
-```rust
-use std::path::Path;
-
-// Initialize with both console and file output
-let log_path = Path::new("~/.brk/brk.log");
+// Initialize with file logging
+let log_path = std::path::Path::new("application.log");
 brk_logger::init(Some(log_path))?;
 
-log::info!("Logs will appear in console and file");
+// Use standard log macros
+log::info!("Application started");
+log::warn!("Configuration issue detected");
+log::error!("Failed to process block");
 ```
 
-### Environment Variable Control
+## API Overview
+
+### Core Functions
+
+**`init(path: Option<&Path>) -> io::Result<()>`**
+Initializes the logging system with optional file output. Console logging is always enabled with color formatting.
+
+**Re-exported Types:**
+
+- **`OwoColorize`**: Color formatting trait for custom colored output
+
+### Log Formatting
+
+**Console Output Format:**
+
+```
+2024-09-16 14:23:45 - INFO  Application started successfully
+2024-09-16 14:23:46 - WARN  Bitcoin RPC connection slow
+2024-09-16 14:23:47 - ERROR Failed to parse block data
+```
+
+**File Output Format (Plain Text):**
+
+```
+2024-09-16 14:23:45 - info  Application started successfully
+2024-09-16 14:23:46 - warn  Bitcoin RPC connection slow
+2024-09-16 14:23:47 - error Failed to parse block data
+```
+
+### Default Filtering
+
+The logger automatically filters out verbose logs from common dependencies:
+
+- `bitcoin=off` - Bitcoin library internals
+- `bitcoincore-rpc=off` - RPC client details
+- `fjall=off` - Database engine logs
+- `lsm_tree=off` - LSM tree operations
+- `tracing=off` - Tracing framework internals
+
+## Examples
+
+### Basic Logging Setup
+
+```rust
+use brk_logger;
+use log::{info, warn, error};
+
+fn main() -> std::io::Result<()> {
+    // Initialize logging to console only
+    brk_logger::init(None)?;
+
+    info!("Starting Bitcoin analysis");
+    warn!("Price feed temporarily unavailable");
+    error!("Block parsing failed at height 750000");
+
+    Ok(())
+}
+```
+
+### File Logging with Custom Path
+
+```rust
+use brk_logger;
+use std::path::Path;
+
+fn main() -> std::io::Result<()> {
+    let log_file = Path::new("/var/log/brk/application.log");
+
+    // Initialize with dual output: console + file
+    brk_logger::init(Some(log_file))?;
+
+    log::info!("Application configured with file logging");
+
+    // Both console (colored) and file (plain) will receive this log
+    log::error!("Critical system error occurred");
+
+    Ok(())
+}
+```
+
+### Environment Variable Configuration
 
 ```bash
-# Set log level via environment variable
-export RUST_LOG=debug
-export RUST_LOG=info,brk_parser=debug  # Override for specific crates
+# Set custom log level and targets
+export RUST_LOG="debug,brk_indexer=trace,bitcoin=warn"
 
-# Run with custom log level
-RUST_LOG=trace brk
+# Run application - logger respects RUST_LOG
+./my_brk_app
 ```
 
-### Using Color Utilities
+```rust
+use brk_logger;
 
-The crate re-exports `OwoColorize` for consistent coloring:
+fn main() -> std::io::Result<()> {
+    // Respects RUST_LOG environment variable
+    brk_logger::init(None)?;
+
+    log::debug!("Debug information (only shown if RUST_LOG=debug)");
+    log::trace!("Trace information (only for specific modules)");
+
+    Ok(())
+}
+```
+
+### Colored Output Usage
 
 ```rust
 use brk_logger::OwoColorize;
 
-println!("Success: {}", "Operation completed".green());
-println!("Warning: {}", "Low disk space".yellow());
-println!("Error: {}", "Connection failed".red());
-println!("Info: {}", "Processing block 800000".bright_black());
-```
-
-## Log Format
-
-### Console Output
-```
-2024-12-25 10:30:15 - info  Starting BRK indexer
-2024-12-25 10:30:16 - warn  Bitcoin Core still syncing (99.8% complete)
-2024-12-25 10:30:45 - info  Indexed block 900000 (1.2M transactions)
-2024-12-25 10:30:46 - error Connection to RPC failed, retrying...
-```
-
-### File Output
-```
-2024-12-25 10:30:15 - info  Starting BRK indexer
-2024-12-25 10:30:16 - warn  Bitcoin Core still syncing (99.8% complete)
-2024-12-25 10:30:45 - info  Indexed block 900000 (1.2M transactions)
-2024-12-25 10:30:46 - error Connection to RPC failed, retrying...
-```
-
-## Default Log Levels
-
-The logger uses these default settings:
-
-- **Default level**: `info` - Shows important operational information
-- **Suppressed crates**: Dependencies that produce excessive output are set to `off`
-- **Override capability**: Can be overridden via `RUST_LOG` environment variable
-
-### Common Log Level Settings
-
-```bash
-# Minimal output (errors and warnings only)
-RUST_LOG=warn
-
-# Standard output (recommended)
-RUST_LOG=info
-
-# Verbose output (for debugging)
-RUST_LOG=debug
-
-# Maximum output (for development)
-RUST_LOG=trace
-
-# Mixed levels (info by default, debug for specific crates)
-RUST_LOG=info,brk_indexer=debug,brk_computer=trace
-```
-
-## Integration Examples
-
-### In BRK CLI
-
-```rust
-use brk_logger;
-use log::info;
-
-fn main() -> Result<()> {
-    // Initialize logging early in main
-    brk_logger::init(Some(Path::new("~/.brk/brk.log")))?;
-    
-    info!("BRK CLI starting");
-    
-    // ... rest of application
-    Ok(())
+fn print_status() {
+    println!("Status: {}", "Connected".green());
+    println!("Height: {}", "800000".bright_blue());
+    println!("Error:  {}", "Connection failed".red());
 }
 ```
 
-### In Custom Applications
+## Architecture
 
-```rust
-use brk_logger::{self, OwoColorize};
-use log::{info, warn, error};
+### Logging Pipeline
 
-fn setup_logging() -> std::io::Result<()> {
-    // Console only for development
-    brk_logger::init(None)?;
-    
-    info!("Application initialized");
-    Ok(())
-}
+1. **Initialization**: `init()` configures `env_logger` with custom formatter
+2. **Environment**: Reads `RUST_LOG` or uses default filter configuration
+3. **Formatting**: Applies timestamp, level formatting, and color coding
+4. **Dual Output**: Writes colored logs to console, plain logs to file (if configured)
 
-fn process_data() {
-    info!("Processing Bitcoin data...");
-    
-    // Use color utilities for progress
-    println!("Progress: {}", "50%".green());
-    
-    warn!("Large memory usage detected");
-    error!("Critical error: {}", "Database connection lost".red());
-}
-```
+### Color Scheme
 
-## Performance Considerations
+- **ERROR**: Red text for critical failures
+- **WARN**: Yellow text for warnings and issues
+- **INFO**: Green text for normal operations
+- **DEBUG**: Blue text for debugging information
+- **TRACE**: Cyan text for detailed tracing
+- **Timestamps**: Bright black (gray) for visual hierarchy
 
-- **Minimal overhead**: Lightweight wrapper around `env_logger`
-- **Lazy evaluation**: Log messages only formatted when level is enabled
-- **File I/O**: Asynchronous file writing doesn't block main thread
-- **Memory usage**: No buffering, logs written immediately
+### File Handling
 
-## Dependencies
+- **File Creation**: Creates log file if it doesn't exist
+- **Append Mode**: Appends to existing files without truncation
+- **Error Resilience**: Console logging continues even if file write fails
+- **File Rotation**: Manual - application responsible for log rotation
 
-- `env_logger` - Core logging implementation
-- `owo_colors` - Terminal color support  
-- `jiff` - Modern date/time handling for timestamps
+### Filtering Strategy
+
+Default filter prioritizes BRK application logs while suppressing:
+
+- Verbose dependency logging that clutters output
+- Internal library debug information not relevant to users
+- Framework-level tracing that doesn't aid in debugging BRK logic
+
+## Code Analysis Summary
+
+**Main Function**: `init()` function that configures `env_logger` with custom formatting and dual output \
+**Dependencies**: Built on `env_logger` for filtering, `jiff` for timestamps, `owo-colors` for terminal colors \
+**Output Streams**: Simultaneous console (colored) and file (plain text) logging with different formatting \
+**Timestamp Format**: System timezone-aware formatting using `%Y-%m-%d %H:%M:%S` pattern \
+**Color Implementation**: Level-based color mapping with `owo-colors` for terminal output \
+**Filter Configuration**: Predefined filter string that suppresses verbose dependencies while enabling BRK logs \
+**Architecture**: Thin wrapper pattern that enhances `env_logger` with BRK-specific formatting and behavior
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

@@ -1,218 +1,238 @@
 # brk_server
 
-**HTTP server providing REST API access to Bitcoin analytics data**
+HTTP server providing REST API access to Bitcoin analytics data
 
-`brk_server` provides a high-performance HTTP server that exposes BRK's indexed blockchain data and computed analytics through a comprehensive REST API. It offers multiple output formats, intelligent caching, compression, and optional web interface serving.
+[![Crates.io](https://img.shields.io/crates/v/brk_server.svg)](https://crates.io/crates/brk_server)
+[![Documentation](https://docs.rs/brk_server/badge.svg)](https://docs.rs/brk_server)
 
-URL: [`https://bitview.space/api`](https://bitview.space/api)
+## Overview
 
-## What it provides
+This crate provides a high-performance HTTP server built on `axum` that exposes Bitcoin blockchain analytics data through a comprehensive REST API. It integrates with the entire BRK ecosystem, serving data from indexers, computers, and parsers with intelligent caching, compression, and multiple output formats.
 
-- **REST API**: Vector-based data access with flexible querying and pagination
-- **Multiple Output Formats**: JSON, CSV, TSV, and Markdown table formatting
-- **Performance Features**: ETag caching, compression, and request weight limiting
-- **Web Interface**: Optional static file serving for web applications
-- **MCP Integration**: Model Context Protocol support for LLM integration
+**Key Features:**
 
-## Key Features
+- RESTful API for blockchain data queries with flexible filtering
+- Multiple output formats: JSON, CSV, TSV, Markdown
+- Intelligent caching system with ETags and conditional requests
+- HTTP compression (Gzip, Brotli, Deflate, Zstd) for bandwidth efficiency
+- Static file serving for web interfaces and documentation
+- Bitcoin address and transaction lookup endpoints
+- Vector database query interface with pagination
+- Health monitoring and status endpoints
 
-### API Capabilities
-- **Direct vector access**: Single vector queries with index-to-ID pattern
-- **Multi-vector queries**: Query multiple datasets simultaneously
-- **Flexible pagination**: Positive/negative indexing with range queries
-- **Format negotiation**: Multiple output formats based on use case
+**Target Use Cases:**
 
-### Performance Features
-- **ETag caching**: Conditional requests with 304 Not Modified responses
-- **Compression**: Brotli, Gzip, Zstd, Deflate support with automatic negotiation
-- **Request weight limiting**: Protects against oversized queries (max 320,000 weight)
-- **In-memory caching**: 10,000-item cache with 50ms guard timeout
+- Bitcoin data APIs for applications and research
+- Web-based blockchain explorers and analytics dashboards
+- Research data export and analysis tools
+- Integration with external systems requiring Bitcoin data
 
-### HTTP Features
-- **Auto port assignment**: Starts from port 3110, increments if busy
-- **CORS enabled**: Cross-origin requests for web clients
-- **Tracing middleware**: Colored request/response logging
-- **Static file serving**: Optional website hosting
+## Installation
 
-## Usage
+```toml
+cargo add brk_server
+```
+
+## Quick Start
+
+```rust
+use brk_server::Server;
+use brk_interface::Interface;
+use std::path::PathBuf;
+
+// Initialize interface with your data sources
+let interface = Interface::new(/* your config */);
+
+// Optional static file serving directory
+let files_path = Some(PathBuf::from("./web"));
+
+// Create and start server
+let server = Server::new(interface, files_path);
+
+// Start server with optional MCP (Model Context Protocol) support
+server.serve(true).await?;
+```
+
+## API Overview
+
+### Core Endpoints
+
+**Blockchain Queries:**
+
+- `GET /api/address/{address}` - Address information, balance, transaction counts
+- `GET /api/tx/{txid}` - Transaction details including version, locktime
+- `GET /api/vecs/{variant}` - Vector database queries with filtering
+
+**System Information:**
+
+- `GET /api/vecs/index-count` - Total number of indexes available
+- `GET /api/vecs/id-count` - Vector ID statistics
+- `GET /api/vecs/indexes` - List of available data indexes
+- `GET /health` - Service health status
+- `GET /version` - Server version information
+
+### Vector Database API
+
+**Query Interface:**
+
+- `GET /api/vecs/query` - Generic vector query with parameters
+- `GET /api/vecs/{variant}?from={start}&to={end}&format={format}` - Range queries
+
+**Supported Parameters:**
+
+- `from` / `to`: Range filtering (height, timestamp, date-based)
+- `format`: Output format (json, csv, tsv, md)
+- Pagination parameters for large datasets
+
+### Address API Response Format
+
+```json
+{
+  "address": "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+  "type": "p2pkh",
+  "index": 12345,
+  "chain_stats": {
+    "funded_txo_sum": 500000000,
+    "spent_txo_sum": 400000000,
+    "utxo_count": 5,
+    "balance": 100000000,
+    "balance_usd": 4200.5,
+    "realized_value": 450000000,
+    "avg_cost_basis": 45000.0
+  }
+}
+```
+
+## Examples
 
 ### Basic Server Setup
 
 ```rust
 use brk_server::Server;
 use brk_interface::Interface;
-use brk_indexer::Indexer;
-use brk_computer::Computer;
 
-// Load data sources
-let indexer = Indexer::forced_import("./brk_data")?;
-let computer = Computer::forced_import("./brk_data", &indexer, None)?;
+// Initialize with BRK interface
+let interface = Interface::builder()
+    .with_indexer_path("./data/indexer")
+    .with_computer_path("./data/computer")
+    .build()?;
 
-// Create interface and server
-let interface = Interface::build(&indexer, &computer);
-let server = Server::new(interface, Some("./website".into()));
+let server = Server::new(interface, None);
 
-// Start server (with MCP support)
-server.serve(true).await?;
+// Server automatically finds available port starting from 3110
+server.serve(false).await?;
 ```
 
-### API Access Patterns
-
-#### Single Vector Queries
+### Address Balance Lookup
 
 ```bash
-# Latest 100 price values
-curl "https://bitview.space/api/vecs/date-to-close?from=-100"
+# Get address information
+curl http://localhost:3110/api/address/1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
 
-# First 50 difficulty values as CSV
-curl "https://bitview.space/api/vecs/height-to-difficulty?count=50&format=csv"
-
-# Range from block 800,000 to 800,100
-curl "https://bitview.space/api/vecs/height-to-timestamp?from=800000&to=800100"
-```
-
-#### Multi-Vector Queries
-
-```bash
-# Multiple price metrics for last 30 days
-curl "https://bitview.space/api/vecs/query?index=date&ids=open,high,low,close&from=-30&format=csv"
-
-# Block statistics for specific range
-curl "https://bitview.space/api/vecs/query?index=height&ids=size,weight,tx_count,fee_sum&from=800000&count=100"
-
-# Weekly analytics as JSON matrix
-curl "https://bitview.space/api/vecs/query?index=week&ids=close,difficulty&from=-52"
-```
-
-## API Reference
-
-### Vector Metadata Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/vecs/index-count` | Total number of available indexes |
-| `GET /api/vecs/id-count` | Total number of vector IDs |
-| `GET /api/vecs/vec-count` | Total vectors (all index/ID combinations) |
-| `GET /api/vecs/indexes` | List of all available indexes |
-| `GET /api/vecs/accepted-indexes` | Mapping of indexes to accepted variants |
-| `GET /api/vecs/ids?page=N` | Paginated vector IDs (1000/page) |
-| `GET /api/vecs/index-to-ids?index=INDEX&page=N` | IDs supporting given index |
-| `GET /api/vecs/id-to-indexes?id=ID` | Indexes supported by given ID |
-
-### Vector Data Access
-
-#### Direct Access Pattern
-`GET /api/vecs/{INDEX}-to-{ID}`
-
-```bash
-# Examples
-curl "/api/vecs/height-to-timestamp"
-curl "/api/vecs/date-to-close"
-curl "/api/vecs/month-to-supply"
-```
-
-#### Multi-Vector Query
-`GET /api/vecs/query`
-
-**Required Parameters:**
-- `index`: Vector index type (height, date, week, month, etc.)
-- `ids`: Comma or space-separated vector IDs
-
-**Optional Parameters:**
-- `from` (i64): Start index (negative = from end, default: 0)
-- `to` (i64): End index (exclusive, negative = from end)
-- `count` (usize): Maximum number of results
-- `format`: Output format (`json`, `csv`, `tsv`, `md`)
-
-### Response Types
-
-**Single Value** (one vector, one result):
-```json
-42.5
-```
-
-**Array** (one vector, multiple results):
-```json
-[42.5, 43.1, 44.2]
-```
-
-**Matrix** (multiple vectors):
-```json
-[
-  [42.5, 43.1, 44.2],
-  [1500, 1520, 1480],
-  [0.05, 0.052, 0.048]
-]
-```
-
-**CSV Format**:
-```csv
-index,close,supply,fee_rate
-0,42.5,1500,0.05
-1,43.1,1520,0.052
-2,44.2,1480,0.048
-```
-
-### System Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /version` | Server version information |
-| `GET /health` | Health check with timestamp |
-| `GET /api` | API documentation redirect |
-| `GET /*` | Static file serving (if enabled) |
-
-## Configuration
-
-### Server State
-
-```rust
-pub struct AppState {
-    interface: &'static Interface<'static>,  // Data access interface
-    path: Option<PathBuf>,                   // Static files path
-    cache: Arc<Cache<String, Bytes>>,        // Response cache
+# Response includes balance, transaction counts, USD value
+{
+  "address": "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+  "type": "p2pkh",
+  "chain_stats": {
+    "balance": 100000000,
+    "balance_usd": 4200.50,
+    "utxo_count": 5
+  }
 }
 ```
 
-### Middleware Stack
+### Data Export Queries
 
-- **Compression Layer**: Brotli, Gzip, Zstd, Deflate
-- **Response URI Layer**: Adds URI to response extensions for logging
-- **Trace Layer**: Request/response logging with colored output
+```bash
+# Export height-to-price data as CSV
+curl "http://localhost:3110/api/vecs/height-to-price?from=800000&to=800100&format=csv" \
+  -H "Accept-Encoding: gzip"
+
+# Query with caching - subsequent requests return 304 Not Modified
+curl "http://localhost:3110/api/vecs/dateindex-to-price-ohlc?from=0&to=1000" \
+  -H "If-None-Match: \"etag-hash\""
+```
+
+### Transaction Details
+
+```bash
+# Get transaction information
+curl http://localhost:3110/api/tx/abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+
+# Response includes version, locktime, and internal indexing
+{
+  "txid": "abcdef...",
+  "index": 98765,
+  "version": 2,
+  "locktime": 0
+}
+```
+
+## Architecture
+
+### Server Stack
+
+- **HTTP Framework**: `axum` with async/await for high concurrency
+- **Compression**: Multi-algorithm support (Gzip, Brotli, Deflate, Zstd)
+- **Caching**: `quick_cache` with LRU eviction and ETag validation
+- **Tracing**: Request/response logging with latency tracking
+- **Static Files**: Optional web interface serving
 
 ### Caching Strategy
 
-- **ETag generation**: Based on data content and query parameters
-- **Conditional requests**: 304 Not Modified for unchanged data
-- **In-memory cache**: 10,000 items with LRU eviction
-- **Cache headers**: `Cache-Control: must-revalidate`
+The server implements intelligent caching:
 
-## Performance Characteristics
+- **ETags**: Generated from data version and query parameters
+- **Conditional Requests**: 304 Not Modified responses for unchanged data
+- **Memory Cache**: LRU cache with configurable capacity (5,000 entries)
+- **Cache Control**: `must-revalidate` headers for data consistency
 
-### Request Weight System
-- **Weight calculation**: Based on data range size and complexity
-- **Weight limit**: 320,000 units per request
-- **Protection**: Prevents oversized queries that could impact performance
+### Request Processing
 
-### Compression
-- **Automatic negotiation**: Based on `Accept-Encoding` header
-- **Multiple algorithms**: Brotli (best), Zstd, Gzip, Deflate
-- **Transparent**: Applied automatically to all responses
+1. **Route Matching**: Path-based routing to appropriate handlers
+2. **Parameter Validation**: Query parameter parsing and validation
+3. **Data Retrieval**: Interface calls to indexer/computer components
+4. **Caching Logic**: ETag generation and cache lookup
+5. **Format Conversion**: JSON/CSV/TSV/MD output formatting
+6. **Compression**: Response compression based on Accept-Encoding
+7. **Response**: HTTP response with appropriate headers
 
-### Logging
-- **Colored output**: Green for 200, red for errors, gray for redirects
-- **Request timing**: Latency measurement and display
-- **Status tracking**: HTTP status codes with appropriate colors
+### Static File Serving
 
-## Dependencies
+Optional static file serving supports:
 
-- `axum` - High-performance async web framework
-- `tower-http` - HTTP middleware (compression, tracing, CORS)
-- `brk_interface` - Data access and formatting layer
-- `brk_mcp` - Model Context Protocol routes
-- `quick_cache` - Fast in-memory caching
-- `tokio` - Async runtime for networking
+- Web interface hosting for blockchain explorers
+- Documentation and API reference serving
+- Asset serving (CSS, JS, images) with proper MIME types
+- Directory browsing with index.html fallback
+
+## Configuration
+
+### Environment Variables
+
+The server automatically configures itself but respects:
+
+- Port selection: Starts at 3110, increments if unavailable
+- Compression: Enabled by default for all supported algorithms
+- CORS: Permissive headers for cross-origin requests
+
+### Memory Management
+
+- Cache size: 5,000 entries by default
+- Request weight limits: 65MB maximum per query
+- Timeout handling: 50ms cache guard timeout
+- Compression: Adaptive based on content type and size
+
+## Code Analysis Summary
+
+**Main Components**: `Server` struct with `AppState` containing interface, cache, and file paths \
+**HTTP Framework**: Built on `axum` with middleware for compression, tracing, and CORS \
+**API Routes**: Address lookup, transaction details, vector queries, and system information \
+**Caching Layer**: `quick_cache` integration with ETag-based conditional requests \
+**Data Integration**: Direct interface to BRK indexer, computer, parser, and fetcher components \
+**Static Serving**: Optional file serving for web interfaces and documentation \
+**Architecture**: Async HTTP server with intelligent caching and multi-format data export capabilities
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_
