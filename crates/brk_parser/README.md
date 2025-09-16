@@ -1,153 +1,199 @@
 # brk_parser
 
-**High-performance Bitcoin block parser for raw Bitcoin Core block files**
+High-performance Bitcoin block parser for raw Bitcoin Core block files with XOR encryption support.
 
-`brk_parser` provides efficient sequential access to Bitcoin Core's raw block files (`blkXXXXX.dat`), delivering blocks in height order with automatic fork filtering and XOR encryption support. Built for blockchain analysis and indexing applications that need complete Bitcoin data access.
+[![Crates.io](https://img.shields.io/crates/v/brk_parser.svg)](https://crates.io/crates/brk_parser)
+[![Documentation](https://docs.rs/brk_parser/badge.svg)](https://docs.rs/brk_parser)
 
-## What it provides
+## Overview
 
-- **Sequential block access**: Blocks delivered in height order (0, 1, 2, ...) regardless of physical file storage
-- **Fork filtering**: Automatically excludes orphaned blocks using Bitcoin Core RPC verification
-- **XOR encryption support**: Transparently handles XOR-encrypted block files
-- **High performance**: Multi-threaded parsing with ~500MB peak memory usage
-- **State persistence**: Caches parsing state for fast restarts
+This crate provides a multi-threaded Bitcoin block parser that processes raw Bitcoin Core `.dat` files from the blockchain directory. It supports XOR-encoded block data, parallel processing with `rayon`, and maintains chronological ordering through crossbeam channels. The parser integrates with Bitcoin Core RPC to validate block confirmations and handles file metadata tracking for incremental processing.
 
-## Key Features
+**Key Features:**
 
-### Performance Optimization
-- **Multi-threaded pipeline**: 3-stage processing (file reading, decoding, ordering)
-- **Parallel decoding**: Uses rayon for concurrent block deserialization
-- **Memory efficient**: Bounded channels prevent memory bloat
-- **State caching**: Saves parsing state to avoid re-scanning unchanged files
+- Multi-threaded pipeline architecture with crossbeam channels
+- XOR decryption support for encrypted block files
+- Parallel block decoding with rayon thread pools
+- Chronological block ordering with height-based validation
+- Bitcoin Core RPC integration for confirmation checking
+- File metadata tracking and incremental processing
+- Magic byte detection for block boundary identification
 
-### Bitcoin Integration
-- **RPC verification**: Uses Bitcoin Core RPC to filter orphaned blocks
-- **Confirmation checks**: Only processes blocks with positive confirmations
-- **Height ordering**: Ensures sequential delivery regardless of storage order
+**Target Use Cases:**
 
-### XOR Encryption Support
-- **Transparent decryption**: Automatically handles XOR-encrypted block files
-- **Streaming processing**: Applies XOR decryption on-the-fly during parsing
+- Bitcoin blockchain analysis tools requiring raw block access
+- Historical data processing applications
+- Block explorers and analytics platforms
+- Research tools needing ordered block iteration
 
-## Usage
+## Installation
 
-### Basic Block Parsing
+```toml
+cargo add brk_parser
+```
+
+## Quick Start
 
 ```rust
 use brk_parser::Parser;
+use bitcoincore_rpc::{Client, Auth, RpcApi};
 use brk_structs::Height;
-use bitcoincore_rpc::{Auth, Client};
+use std::path::PathBuf;
 
-// Setup RPC client (must have static lifetime)
+// Initialize Bitcoin Core RPC client
 let rpc = Box::leak(Box::new(Client::new(
     "http://localhost:8332",
-    Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
-)?));
+    Auth::None
+).unwrap()));
 
-// Create parser
-let parser = Parser::new(
-    Path::new("~/.bitcoin/blocks").to_path_buf(),
-    Some(Path::new("./output").to_path_buf()),
-    rpc,
-);
+// Create parser with blocks directory
+let blocks_dir = PathBuf::from("/path/to/bitcoin/blocks");
+let outputs_dir = Some(PathBuf::from("./parser_output"));
+let parser = Parser::new(blocks_dir, outputs_dir, rpc);
 
-// Parse all blocks sequentially
-parser.parse(None, None)
-    .iter()
-    .for_each(|(height, block, hash)| {
-        println!("Block {}: {} ({} txs)", height, hash, block.txdata.len());
-    });
-```
+// Parse blocks in height range
+let start_height = Some(Height::new(700000));
+let end_height = Some(Height::new(700100));
+let receiver = parser.parse(start_height, end_height);
 
-### Range Parsing
-
-```rust
-// Parse specific height range
-let start = Some(Height::new(800_000));
-let end = Some(Height::new(800_100));
-
-parser.parse(start, end)
-    .iter()
-    .for_each(|(height, block, hash)| {
-        // Process blocks 800,000 to 800,100
-    });
-```
-
-### Single Block Access
-
-```rust
-// Get single block by height
-let genesis = parser.get(Height::new(0));
-println!("Genesis has {} transactions", genesis.txdata.len());
-```
-
-### Real-world Usage Example
-
-```rust
-use brk_parser::Parser;
-use bitcoin::Block;
-
-fn analyze_blockchain(parser: &Parser) {
-    let mut total_transactions = 0;
-    let mut total_outputs = 0;
-
-    parser.parse(None, None)
-        .iter()
-        .for_each(|(height, block, _hash)| {
-            total_transactions += block.txdata.len();
-            total_outputs += block.txdata.iter()
-                .map(|tx| tx.output.len())
-                .sum::<usize>();
-
-            if height.0 % 10000 == 0 {
-                println!("Processed {} blocks", height);
-            }
-        });
-
-    println!("Total transactions: {}", total_transactions);
-    println!("Total outputs: {}", total_outputs);
+// Process blocks as they arrive
+for (height, block, block_hash) in receiver.iter() {
+    println!("Block {}: {} transactions", height, block.txdata.len());
+    println!("Block hash: {}", block_hash);
 }
 ```
 
-## Output Format
+## API Overview
 
-The parser returns tuples for each block:
-- `Height`: Block height (sequential: 0, 1, 2, ...)
-- `Block`: Complete block data from the `bitcoin` crate
-- `BlockHash`: Block's cryptographic hash
+### Core Types
 
-## Performance Characteristics
+- **`Parser`**: Main parser coordinating multi-threaded block processing
+- **`AnyBlock`**: Enum representing different block states (Raw, Decoded, Skipped)
+- **`XORBytes`**: XOR key bytes for decrypting block data
+- **`XORIndex`**: Circular index for XOR byte application
+- **`BlkMetadata`**: Block file metadata including index and modification time
 
-Benchmarked on MacBook Pro M3 Pro:
-- **Full blockchain** (0 to 855,000): ~4 minutes
-- **Recent blocks** (800,000 to 855,000): ~52 seconds
-- **Peak memory usage**: ~500MB
-- **Restart performance**: Subsequent runs much faster due to state caching
+### Key Methods
 
-## Requirements
+**`Parser::new(blocks_dir: PathBuf, outputs_dir: Option<PathBuf>, rpc: &'static Client) -> Self`**
+Creates a new parser instance with blockchain directory and RPC client.
 
-- Running Bitcoin Core node with RPC enabled
-- Access to Bitcoin Core's `blocks/` directory
-- Bitcoin Core versions v25.0 through v29.0 supported
-- RPC authentication (cookie file or username/password)
+**`parse(&self, start: Option<Height>, end: Option<Height>) -> Receiver<(Height, Block, BlockHash)>`**
+Returns a channel receiver that yields blocks in chronological order for the specified height range.
 
-## State Management
+### Processing Pipeline
 
-The parser saves parsing state in `{output_dir}/blk_index_to_blk_recap.json` containing:
-- Block file indices and maximum heights
-- File modification times for change detection
-- Restart optimization metadata
+The parser implements a three-stage pipeline:
 
-**Note**: Only one parser instance should run at a time as the state file doesn't support concurrent access.
+1. **File Reading Stage**: Scans `.dat` files, identifies magic bytes, extracts raw block data
+2. **Decoding Stage**: Parallel XOR decryption and Bitcoin block deserialization
+3. **Ordering Stage**: RPC validation and chronological ordering by block height
 
-## Dependencies
+## Examples
 
-- `bitcoin` - Bitcoin protocol types and block parsing
-- `bitcoincore_rpc` - RPC communication with Bitcoin Core
-- `crossbeam` - Multi-producer, multi-consumer channels
-- `rayon` - Data parallelism for block decoding
-- `serde` - State serialization and persistence
+### Basic Block Iteration
+
+```rust
+use brk_parser::Parser;
+
+let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
+
+// Parse all blocks from height 650000 onwards
+let receiver = parser.parse(Some(Height::new(650000)), None);
+
+for (height, block, hash) in receiver.iter() {
+    println!("Processing block {} with {} transactions",
+             height, block.txdata.len());
+
+    // Process block transactions
+    for (idx, tx) in block.txdata.iter().enumerate() {
+        println!("  Tx {}: {}", idx, tx.txid());
+    }
+}
+```
+
+### Range-Based Processing
+
+```rust
+use brk_parser::Parser;
+
+let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
+
+// Process specific block range
+let start = Height::new(600000);
+let end = Height::new(600999);
+let receiver = parser.parse(Some(start), Some(end));
+
+let mut total_tx_count = 0;
+for (height, block, _hash) in receiver.iter() {
+    total_tx_count += block.txdata.len();
+
+    if height == end {
+        break; // End of range reached
+    }
+}
+
+println!("Processed 1000 blocks with {} total transactions", total_tx_count);
+```
+
+### Incremental Processing with Metadata
+
+```rust
+use brk_parser::Parser;
+
+let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
+
+// Parser automatically handles file metadata tracking
+// Only processes blocks that have been modified since last run
+let receiver = parser.parse(None, None); // Process all available blocks
+
+for (height, block, hash) in receiver.iter() {
+    // Parser ensures blocks are delivered in chronological order
+    // even when processing multiple .dat files in parallel
+
+    if height.as_u32() % 10000 == 0 {
+        println!("Reached block height {}", height);
+    }
+}
+```
+
+## Architecture
+
+### Multi-Threading Design
+
+The parser uses a sophisticated multi-threaded architecture:
+
+- **File Scanner Thread**: Reads raw bytes from `.dat` files and identifies block boundaries
+- **Decoder Thread Pool**: Parallel XOR decryption and block deserialization using rayon
+- **Ordering Thread**: RPC validation and chronological ordering with future block buffering
+
+### XOR Encryption Support
+
+Bitcoin Core optionally XOR-encrypts block files using an 8-byte key stored in `xor.dat`. The parser:
+
+- Automatically detects XOR encryption presence
+- Implements circular XOR index for efficient decryption
+- Supports both encrypted and unencrypted block files
+
+### Block File Management
+
+The parser handles Bitcoin Core's block file structure:
+
+- Scans directory for `blk*.dat` files
+- Tracks file modification times for incremental processing
+- Maintains block height mappings with RPC validation
+- Exports processing metadata for resumable operations
+
+## Code Analysis Summary
+
+**Main Type**: `Parser` struct coordinating multi-threaded block processing pipeline \
+**Threading**: Three-stage pipeline using crossbeam channels with bounded capacity (50) \
+**Parallelization**: rayon-based parallel block decoding with configurable batch sizes \
+**XOR Handling**: Custom XORBytes and XORIndex types for efficient encryption/decryption \
+**RPC Integration**: Bitcoin Core RPC validation for block confirmation and height mapping \
+**File Processing**: Automatic `.dat` file discovery and magic byte boundary detection \
+**Architecture**: Producer-consumer pattern with ordered delivery despite parallel processing
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

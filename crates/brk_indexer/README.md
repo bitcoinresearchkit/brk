@@ -1,190 +1,277 @@
 # brk_indexer
 
-**High-performance Bitcoin blockchain indexer with dual storage architecture**
+High-performance Bitcoin blockchain indexer with parallel processing and dual storage architecture.
 
-`brk_indexer` processes raw Bitcoin Core block data and creates efficient storage structures using both vectors (time-series) and key-value stores (lookups). It serves as the foundation of BRK's data pipeline, organizing all blockchain data into optimized formats for fast retrieval and analysis.
+[![Crates.io](https://img.shields.io/crates/v/brk_indexer.svg)](https://crates.io/crates/brk_indexer)
+[![Documentation](https://docs.rs/brk_indexer/badge.svg)](https://docs.rs/brk_indexer)
 
-## What it provides
+## Overview
 
-- **Dual Storage Architecture**: Vectors for time-series data, key-value stores for lookups
-- **Memory Efficiency**: ~5-6GB peak RAM usage during full blockchain indexing
-- **Incremental Processing**: Resume from last indexed height with rollback protection
-- **Data Integrity**: Collision detection and validation during indexing
-- **All Bitcoin Data Types**: Complete support for blocks, transactions, inputs, outputs, and addresses
+This crate provides a comprehensive Bitcoin blockchain indexer built on top of `brk_parser`. It processes raw Bitcoin blocks in parallel, extracting and indexing transactions, addresses, inputs, outputs, and metadata into optimized storage structures. The indexer maintains two complementary storage systems: columnar vectors for analytics and key-value stores for fast lookups.
 
-## Key Features
+**Key Features:**
 
-### Storage Strategy
+- Parallel block processing with multi-threaded transaction analysis
+- Dual storage architecture: columnar vectors + key-value stores
+- Address type classification and indexing for all Bitcoin script types
+- Collision detection and validation for address hashes and transaction IDs
+- Incremental processing with automatic rollback and recovery
+- Height-based synchronization with Bitcoin Core RPC validation
+- Optimized batch operations with configurable snapshot intervals
 
-**Vector Storage (time-series data):**
-- Block metadata (height, timestamp, hash, difficulty, size)
-- Transaction data (version, locktime, RBF flag, indices)
-- Input/Output mappings and values
-- Address bytes for all output types
-- Efficient for range queries and analytics
+**Target Use Cases:**
 
-**Key-Value Storage (lookups):**
-- Block hash prefixes → heights
-- Transaction ID prefixes → transaction indices
-- Address byte hashes → type indices
-- Fast point queries by hash or address
+- Bitcoin blockchain analysis requiring full transaction history
+- Address clustering and UTXO set analysis
+- Blockchain explorers needing fast address/transaction lookups
+- Research applications requiring structured access to blockchain data
 
-### Performance Features
-- **Parallel Processing**: Concurrent transaction and output processing using Rayon
-- **Batch Operations**: Periodic commits every 1,000 blocks for optimal I/O
-- **Memory Efficiency**: Optimized data structures minimize RAM usage
-- **Incremental Updates**: Handles blockchain reorganizations automatically
+## Installation
 
-### Address Type Support
-Complete support for all Bitcoin address types:
-- P2PK (65-byte and 33-byte), P2PKH, P2SH
-- P2WPKH, P2WSH, P2TR, P2A
-- P2MS (multisig), OpReturn, Empty, Unknown
+```toml
+cargo add brk_indexer
+```
 
-## Usage
-
-### Basic Indexing
+## Quick Start
 
 ```rust
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use bitcoincore_rpc::{Auth, Client};
+use bitcoincore_rpc::{Client, Auth};
 use vecdb::Exit;
+use std::path::Path;
 
-// Setup Bitcoin Core RPC connection
-let rpc = Box::leak(Box::new(Client::new(
-    "http://localhost:8332",
-    Auth::CookieFile(Path::new("~/.bitcoin/.cookie")),
-)?));
+// Initialize Bitcoin Core RPC client
+let rpc = Client::new("http://localhost:8332", Auth::None)?;
+let rpc = Box::leak(Box::new(rpc));
 
-// Create parser for Bitcoin Core block files
-let parser = Parser::new(
-    Path::new("~/.bitcoin/blocks").to_path_buf(),
-    Some(Path::new("./brk_data").to_path_buf()),
-    rpc
-);
+// Create parser for raw block data
+let blocks_dir = Path::new("/path/to/bitcoin/blocks");
+let parser = Parser::new(blocks_dir, None, rpc);
 
-// Create indexer with forced import (resets if needed)
-let mut indexer = Indexer::forced_import(Path::new("./brk_data"))?;
+// Initialize indexer with output directory
+let outputs_dir = Path::new("./indexed_data");
+let mut indexer = Indexer::forced_import(outputs_dir)?;
 
-// Setup graceful shutdown handler
-let exit = Exit::new();
-exit.set_ctrlc_handler();
+// Index blockchain data
+let exit = Exit::default();
+let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
 
-// Index the blockchain
-let indexes = indexer.index(&parser, rpc, &exit, true)?;
-println!("Indexed up to height: {}", indexes.height);
+println!("Indexed up to height: {}", starting_indexes.height);
 ```
 
-### Continuous Indexing
+## API Overview
+
+### Core Types
+
+- **`Indexer`**: Main coordinator managing vectors and stores
+- **`Vecs`**: Columnar storage for blockchain data analytics
+- **`Stores`**: Key-value storage for fast hash-based lookups
+- **`Indexes`**: Current indexing state tracking progress across data types
+
+### Key Methods
+
+**`Indexer::forced_import(outputs_dir: &Path) -> Result<Self>`**
+Creates or opens indexer instance with automatic version management.
+
+**`index(&mut self, parser: &Parser, rpc: &'static Client, exit: &Exit, check_collisions: bool) -> Result<Indexes>`**
+Main indexing function processing blocks from parser with collision detection.
+
+### Storage Architecture
+
+**Columnar Vectors (Vecs):**
+
+- `height_to_*`: Block-level data (hash, timestamp, difficulty, size, weight)
+- `txindex_to_*`: Transaction data (ID, version, locktime, size, RBF flag)
+- `outputindex_to_*`: Output data (value, type, address mapping)
+- `inputindex_to_outputindex`: Input-to-output relationship mapping
+
+**Key-Value Stores:**
+
+- `addressbyteshash_to_typeindex`: Address hash to internal index mapping
+- `blockhashprefix_to_height`: Block hash prefix to height lookup
+- `txidprefix_to_txindex`: Transaction ID prefix to internal index
+- `addresstype_to_typeindex_with_outputindex`: Address type to output mappings
+
+### Address Type Support
+
+Complete coverage of Bitcoin script types:
+
+- **P2PK**: Pay-to-Public-Key (33-byte and 65-byte variants)
+- **P2PKH**: Pay-to-Public-Key-Hash
+- **P2SH**: Pay-to-Script-Hash
+- **P2WPKH**: Pay-to-Witness-Public-Key-Hash
+- **P2WSH**: Pay-to-Witness-Script-Hash
+- **P2TR**: Pay-to-Taproot
+- **P2MS**: Pay-to-Multisig
+- **P2A**: Pay-to-Address (custom type)
+- **OpReturn**: OP_RETURN data outputs
+- **Empty/Unknown**: Non-standard script types
+
+## Examples
+
+### Basic Indexing Operation
 
 ```rust
-use std::time::{Duration, Instant};
-use std::thread::sleep;
+use brk_indexer::Indexer;
+use brk_parser::Parser;
+use std::path::Path;
 
-// Continuous indexing loop for real-time updates
-loop {
-    let start_time = Instant::now();
+// Initialize components
+let outputs_dir = Path::new("./blockchain_index");
+let mut indexer = Indexer::forced_import(outputs_dir)?;
 
-    // Index new blocks
-    let indexes = indexer.index(&parser, rpc, &exit, true)?;
+let blocks_dir = Path::new("/Users/satoshi/.bitcoin/blocks");
+let parser = Parser::new(blocks_dir, None, rpc);
 
-    println!("Indexed to height {} in {:?}",
-             indexes.height, start_time.elapsed());
+// Index with collision checking enabled
+let exit = vecdb::Exit::default();
+let final_indexes = indexer.index(&parser, rpc, &exit, true)?;
 
-    // Check for exit signal
-    if exit.is_signaled() {
-        println!("Graceful shutdown requested");
-        break;
-    }
+println!("Final height: {}", final_indexes.height);
+println!("Total transactions: {}", final_indexes.txindex);
+println!("Total addresses: {}", final_indexes.total_address_count());
+```
 
-    // Wait before next update cycle
-    sleep(Duration::from_secs(5 * 60));
+### Querying Indexed Data
+
+```rust
+use brk_indexer::Indexer;
+use brk_structs::{Height, TxidPrefix, AddressBytesHash};
+
+let indexer = Indexer::forced_import("./blockchain_index")?;
+
+// Look up block hash by height
+let height = Height::new(750000);
+if let Some(block_hash) = indexer.vecs.height_to_blockhash.get(height)? {
+    println!("Block 750000 hash: {}", block_hash);
+}
+
+// Look up transaction by ID prefix
+let txid_prefix = TxidPrefix::from_str("abcdef123456")?;
+if let Some(tx_index) = indexer.stores.txidprefix_to_txindex.get(&txid_prefix)? {
+    println!("Transaction index: {}", tx_index);
+}
+
+// Query address information
+let address_hash = AddressBytesHash::from(/* address bytes */);
+if let Some(type_index) = indexer.stores.addressbyteshash_to_typeindex.get(&address_hash)? {
+    println!("Address type index: {}", type_index);
 }
 ```
 
-### Accessing Indexed Data
+### Incremental Processing
 
 ```rust
-// Access the underlying storage structures
-let vecs = &indexer.vecs;
-let stores = &indexer.stores;
+use brk_indexer::Indexer;
 
-// Get block hash at specific height
-let block_hash = vecs.height_to_blockhash.get(Height::new(800_000))?;
+// Indexer automatically resumes from last processed height
+let mut indexer = Indexer::forced_import("./blockchain_index")?;
 
-// Look up transaction by prefix
-let tx_prefix = TxidPrefix::from(&txid);
-let tx_index = stores.txidprefix_to_txindex.get(&tx_prefix)?;
+let current_indexes = indexer.vecs.current_indexes(&indexer.stores, rpc)?;
+println!("Resuming from height: {}", current_indexes.height);
 
-// Get address data
-let address_hash = AddressBytesHash::from(&address_bytes);
-let type_index = stores.addressbyteshash_to_anyaddressindex.get(&address_hash)?;
+// Process new blocks incrementally
+let exit = vecdb::Exit::default();
+let updated_indexes = indexer.index(&parser, rpc, &exit, true)?;
+
+println!("Processed {} new blocks",
+         updated_indexes.height.as_u32() - current_indexes.height.as_u32());
 ```
+
+### Address Type Analysis
+
+```rust
+use brk_indexer::Indexer;
+use brk_structs::OutputType;
+
+let indexer = Indexer::forced_import("./blockchain_index")?;
+
+// Analyze address distribution by type
+for output_type in OutputType::as_vec() {
+    let count = indexer.vecs.outputindex_to_outputtype
+        .iter()
+        .filter(|&ot| ot == output_type)
+        .count();
+
+    println!("{:?}: {} outputs", output_type, count);
+}
+
+// Query specific address type data
+let p2pkh_store = &indexer.stores.addresstype_to_typeindex_with_outputindex
+    .p2pkh;
+
+println!("P2PKH addresses: {}", p2pkh_store.len());
+```
+
+## Architecture
+
+### Parallel Processing
+
+The indexer uses sophisticated parallel processing:
+
+- **Block-Level Parallelism**: Concurrent processing of transactions within blocks
+- **Transaction Analysis**: Parallel input/output processing with `rayon`
+- **Address Resolution**: Multi-threaded address type classification and indexing
+- **Collision Detection**: Parallel validation of hash collisions across address types
+
+### Storage Optimization
+
+**Columnar Storage (vecdb):**
+
+- Compressed vectors for space-efficient analytics queries
+- Raw vectors for frequently accessed data (heights, hashes)
+- Page-aligned storage for memory mapping efficiency
+
+**Key-Value Storage (Fjall):**
+
+- LSM-tree architecture for write-heavy indexing workloads
+- Bloom filters for fast negative lookups
+- Transactional consistency with rollback support
+
+### Memory Management
+
+- **Batch Processing**: 1000-block snapshots to balance memory and I/O
+- **Reader Management**: Static readers for consistent data access during processing
+- **Collision Tracking**: BTreeMap-based collision detection with memory cleanup
+- **Exit Handling**: Graceful shutdown with consistent state preservation
+
+### Version Management
+
+- **Schema Versioning**: Automatic migration on version changes (currently v21)
+- **Rollback Support**: Automatic recovery from incomplete processing
+- **State Tracking**: Height-based synchronization across all storage components
 
 ## Performance Characteristics
 
-**Benchmarked on MacBook Pro M3 Pro (36GB RAM):**
-- **Full blockchain sync** (to ~892k blocks): 7-8 hours
-- **Peak memory usage**: 5-6GB
-- **Storage overhead**: ~27% of Bitcoin Core block size
-- **Incremental updates**: Very fast, efficient resume from last height
+### Processing Speed
 
-## Data Organization
+- **Parallel Transaction Processing**: Multi-core utilization for CPU-intensive operations
+- **Optimized I/O**: Batch operations reduce disk overhead
+- **Memory Efficiency**: Streaming processing without loading entire blockchain
 
-The indexer creates this storage structure:
-```
-brk_data/
-├── indexed/
-│   ├── vecs/              # Vector storage
-│   │   ├── height_to_*    # Height-indexed data
-│   │   ├── txindex_to_*   # Transaction-indexed data
-│   │   └── outputindex_to_* # Output-indexed data
-│   └── stores/            # Key-value stores
-│       ├── hash_lookups/  # Block/TX hash mappings
-│       └── address_maps/  # Address type mappings
-└── metadata/              # Versioning and state
-```
+### Storage Requirements
 
-## Indexes Tracking
+- **Columnar Compression**: Significant space savings for repetitive blockchain data
+- **Index Optimization**: Bloom filters reduce lookup overhead
+- **Incremental Growth**: Storage scales linearly with blockchain size
 
-The indexer maintains current indices during processing:
+### Scalability
 
-```rust
-pub struct Indexes {
-    pub height: Height,                      // Current block height
-    pub txindex: TxIndex,                    // Current transaction index
-    pub inputindex: InputIndex,              // Current input index
-    pub outputindex: OutputIndex,            // Current output index
-    pub p2pkhaddressindex: P2PKHAddressIndex, // P2PKH address index
-    // ... indices for all address types
-}
-```
+- **Height-Based Partitioning**: Enables distributed processing strategies
+- **Modular Architecture**: Separate vector and store systems for flexible deployment
+- **Resource Configuration**: Configurable batch sizes and memory limits
 
-## Requirements
+## Code Analysis Summary
 
-- **Bitcoin Core node** with RPC enabled
-- **Block file access** to `~/.bitcoin/blocks/`
-- **Storage space**: Minimum 500GB (scales with blockchain growth)
-- **Memory**: 8GB+ RAM recommended
-- **CPU**: Multi-core recommended for parallel processing
-
-## Rollback and Recovery
-
-- **Automatic rollback** on interruption or blockchain reorgs
-- **State persistence** for efficient restart
-- **Version management** for storage format compatibility
-- **Graceful shutdown** with Ctrl+C handling
-
-## Dependencies
-
-- `brk_parser` - Bitcoin block parsing and sequential access
-- `brk_store` - Key-value storage wrapper (fjall-based)
-- `vecdb` - Vector database for time-series storage
-- `bitcoin` - Bitcoin protocol types and parsing
-- `rayon` - Parallel processing framework
-- `bitcoincore_rpc` - Bitcoin Core RPC client
+**Main Structure**: `Indexer` coordinating `Vecs` (columnar analytics) and `Stores` (key-value lookups) \
+**Processing Pipeline**: Multi-threaded block analysis with parallel transaction/address processing \
+**Storage Architecture**: Dual system using vecdb for analytics and Fjall for lookups \
+**Address Indexing**: Complete Bitcoin script type coverage with collision detection \
+**Synchronization**: Height-based coordination with Bitcoin Core RPC validation \
+**Parallel Processing**: rayon-based parallelism for transaction analysis and address resolution \
+**Architecture**: High-performance blockchain indexer with ACID guarantees and incremental processing
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

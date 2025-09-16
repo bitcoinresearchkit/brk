@@ -1,186 +1,278 @@
 # brk_bundler
 
-**Asset bundling for BRK web interfaces using Rolldown**
+Asset bundling and development server for BRK web interfaces with hot reloading and file watching.
 
-`brk_bundler` provides JavaScript/TypeScript bundling capabilities for BRK's web interfaces. It's a thin wrapper around Rolldown (Rust-based Rollup alternative) with BRK-specific configuration for building optimized web assets with file watching and automatic rebuilding.
+[![Crates.io](https://img.shields.io/crates/v/brk_bundler.svg)](https://crates.io/crates/brk_bundler)
+[![Documentation](https://docs.rs/brk_bundler/badge.svg)](https://docs.rs/brk_bundler)
 
-## What it provides
+## Overview
 
-- **JavaScript Bundling**: Modern ES modules bundling with minification
-- **File Watching**: Automatic rebuilding on source file changes
-- **Asset Processing**: Copies and processes static assets
-- **Version Injection**: Automatic version string replacement in service workers
-- **Development Mode**: Live rebuilding for rapid development
+This crate provides a thin wrapper around the Rolldown JavaScript bundler specifically designed for BRK web interface development. It handles asset bundling, file copying, template processing, and development-mode file watching with automatic rebuilds and hot reloading for efficient web development workflows.
 
-## Key Features
+**Key Features:**
 
-### Bundling Capabilities
-- **ES Module Support**: Modern JavaScript bundling with tree-shaking
-- **Minification**: Automatic code minification for production builds
-- **Source Maps**: Generated source maps for debugging
-- **Entry Point Processing**: Configurable entry points with hashed output names
+- JavaScript bundling with Rolldown (Rust-based bundler)
+- Automatic file watching and hot reloading in development mode
+- Template processing with version injection and asset hash replacement
+- Service worker generation with version management
+- Source map generation for debugging
+- Minification for production builds
+- Async/await support with Tokio integration
 
-### File System Operations
-- **Directory Copying**: Copies entire source directories to distribution
-- **Selective Processing**: Special handling for specific file types
-- **Path Resolution**: Automatic path resolution and asset linking
+**Target Use Cases:**
 
-### Development Features
-- **Hot Rebuilding**: Automatic rebuilds on file changes
-- **Watch Mode**: Monitors source files and triggers rebuilds
-- **Version Replacement**: Injects build version into service workers
+- BRK blockchain explorer web interfaces
+- Development of Bitcoin analytics dashboards
+- Building responsive web applications for blockchain data visualization
+- Hot reloading development environment for rapid iteration
 
-## Usage
+## Installation
 
-### Basic Bundling
+```toml
+cargo add brk_bundler
+```
+
+## Quick Start
 
 ```rust
 use brk_bundler::bundle;
 use std::path::Path;
 
-// Bundle without watching (production)
-let websites_path = Path::new("./websites");
-let source_folder = "default";
-let dist_path = bundle(websites_path, source_folder, false).await?;
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let websites_path = Path::new("./web");
+    let source_folder = "src";
+    let watch = true; // Enable hot reloading
 
-println!("Bundled to: {:?}", dist_path);
-```
+    // Bundle assets and start development server
+    let dist_path = bundle(websites_path, source_folder, watch).await?;
 
-### Development Mode with Watching
+    println!("Assets bundled to: {}", dist_path.display());
 
-```rust
-// Bundle with file watching (development)
-let dist_path = bundle(websites_path, "default", true).await?;
+    // Keep running for file watching (in watch mode)
+    if watch {
+        tokio::signal::ctrl_c().await?;
+    }
 
-// Bundler now watches for changes and rebuilds automatically
-// This will run in the background until the process exits
-```
-
-### Integration with BRK CLI
-
-```rust
-// Typically called from brk_cli when serving websites
-async fn setup_website(config: &Config) -> Result<PathBuf> {
-    let websites_path = config.websites_path();
-    let source_folder = match config.website_mode {
-        WebsiteMode::Default => "default",
-        WebsiteMode::Custom => "custom",
-        WebsiteMode::None => return Ok(PathBuf::new()),
-    };
-    
-    // Bundle the website assets
-    let dist_path = bundle(websites_path, source_folder, config.dev_mode).await?;
-    
-    Ok(dist_path)
+    Ok(())
 }
 ```
 
-## File Structure
+## API Overview
 
-The bundler expects this directory structure:
+### Core Functions
 
+**`bundle(websites_path: &Path, source_folder: &str, watch: bool) -> io::Result<PathBuf>`**
+Main bundling function that processes web assets and optionally starts file watching.
+
+### Bundling Process
+
+1. **Directory Setup**: Creates `dist/` directory and copies source files
+2. **JavaScript Bundling**: Processes `scripts/entry.js` with Rolldown bundler
+3. **Template Processing**: Updates `index.html` with hashed asset references
+4. **Service Worker**: Generates service worker with version injection
+5. **File Watching**: Optionally monitors source files for changes
+
+### Configuration
+
+**Rolldown Bundler Options:**
+
+- **Input**: `./src/scripts/entry.js` (main JavaScript entry point)
+- **Output**: `./dist/scripts/` directory
+- **Minification**: Enabled for production builds
+- **Source Maps**: File-based source maps for debugging
+- **Asset Hashing**: Automatic hash generation for cache busting
+
+## Examples
+
+### Development Mode with Hot Reloading
+
+```rust
+use brk_bundler::bundle;
+use std::path::Path;
+
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let web_root = Path::new("./websites");
+
+    // Start development server with file watching
+    let _dist_path = bundle(web_root, "explorer", true).await?;
+
+    println!("Development server started!");
+    println!("Hot reloading enabled - edit files to see changes");
+
+    // Keep server running
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    }
+}
 ```
-websites/
-├── default/                 # Default website source
-│   ├── index.html          # Main HTML file
-│   ├── service-worker.js   # Service worker (version injected)
-│   ├── scripts/            # JavaScript/TypeScript source
-│   │   ├── entry.js        # Main entry point
-│   │   ├── main.js         # Application logic
-│   │   └── ...             # Other JS modules
-│   └── assets/             # Static assets
-└── dist/                   # Generated output directory
-    ├── index.html          # Processed HTML with updated script references
-    ├── service-worker.js   # Service worker with version injected
-    ├── scripts/            # Bundled and minified JavaScript
-    │   └── main-[hash].js  # Hashed output file
-    └── assets/             # Copied static assets
+
+### Production Build
+
+```rust
+use brk_bundler::bundle;
+use std::path::Path;
+
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let web_root = Path::new("./websites");
+
+    // Build for production (no watching)
+    let dist_path = bundle(web_root, "dashboard", false).await?;
+
+    println!("Production build completed: {}", dist_path.display());
+
+    // Assets are minified and ready for deployment
+    Ok(())
+}
 ```
 
-## Bundling Process
+### Custom Web Application Structure
 
-1. **Clean**: Removes existing `dist/` directory
-2. **Copy**: Copies all source files to `dist/`
-3. **Bundle JavaScript**: 
-   - Processes `scripts/entry.js` as entry point
-   - Generates minified bundle with source maps
-   - Creates hashed filename for cache busting
-4. **Process HTML**: Updates script references to hashed filenames
-5. **Process Service Worker**: Injects current version string
-6. **Watch** (if enabled): Monitors for file changes and rebuilds
+```rust
+use brk_bundler::bundle;
+use std::path::Path;
 
-## Configuration
+// Expected directory structure:
+// websites/
+// ├── my_app/
+// │   ├── index.html          // Main HTML template
+// │   ├── service-worker.js   // Service worker template
+// │   ├── scripts/
+// │   │   └── entry.js        // JavaScript entry point
+// │   ├── styles/
+// │   │   └── main.css        // CSS files
+// │   └── assets/
+// │       └── images/         // Static assets
+// └── dist/                   // Generated output
 
-The bundler uses Rolldown with these optimized settings:
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let websites_path = Path::new("./websites");
+    let source_folder = "my_app";
+
+    let dist_path = bundle(websites_path, source_folder, false).await?;
+
+    // Result: dist/ contains bundled and processed files
+    // - dist/index.html (with updated script references)
+    // - dist/service-worker.js (with version injection)
+    // - dist/scripts/main.[hash].js (minified and hashed)
+    // - dist/styles/ (copied CSS files)
+    // - dist/assets/ (copied static assets)
+
+    Ok(())
+}
+```
+
+## Architecture
+
+### File Processing Pipeline
+
+1. **Source Copying**: Recursively copies all source files to dist directory
+2. **JavaScript Bundling**: Rolldown processes entry.js with dependencies
+3. **Asset Hashing**: Generates content-based hashes for cache busting
+4. **Template Updates**: Replaces placeholders in HTML templates
+5. **Version Injection**: Updates service worker with current package version
+
+### File Watching System
+
+**Development Mode Watchers:**
+
+- **Source File Watcher**: Monitors non-script files for changes
+- **Bundle Watcher**: Watches JavaScript files and triggers rebuilds
+- **Template Watcher**: Updates HTML when bundled assets change
+
+**Event Handling:**
+
+- **File Creation/Modification**: Automatic copying to dist directory
+- **Script Changes**: Triggers Rolldown rebuild and template update
+- **Template Changes**: Processes HTML and updates asset references
+
+### Template Processing
+
+**index.html Processing:**
+
+- Scans bundled JavaScript for asset hash
+- Replaces `/scripts/main.js` with `/scripts/main.[hash].js`
+- Maintains cache busting while preserving template structure
+
+**service-worker.js Processing:**
+
+- Replaces `__VERSION__` placeholder with current crate version
+- Enables version-based cache invalidation
+- Maintains service worker functionality
+
+### Async Architecture
+
+Built on Tokio async runtime:
+
+- **Non-blocking I/O**: Efficient file operations and watching
+- **Concurrent Tasks**: Parallel file watching and bundle processing
+- **Background Processing**: Development server runs in background task
+
+## Configuration Options
+
+### Rolldown Configuration
+
+The bundler uses optimized Rolldown settings:
 
 ```rust
 BundlerOptions {
-    input: Some(vec![source_entry.into()]),    // scripts/entry.js
-    dir: Some("./dist/scripts".to_string()),   // Output directory
-    cwd: Some(websites_path),                  // Working directory
-    minify: Some(RawMinifyOptions::Bool(true)), // Enable minification
-    sourcemap: Some(SourceMapType::File),      // Generate source maps
-    ..Default::default()
+    input: Some(vec!["./src/scripts/entry.js".into()]),
+    dir: Some("./dist/scripts".to_string()),
+    minify: Some(RawMinifyOptions::Bool(true)),
+    sourcemap: Some(SourceMapType::File),
+    // ... other default options
 }
 ```
 
-## File Watching
+### File Structure Requirements
 
-In watch mode, the bundler monitors:
+**Required Files:**
 
-- **Source files**: Non-script files are copied on change
-- **JavaScript files**: Trigger full rebuild via Rolldown watcher
-- **HTML files**: Processed to update script references
-- **Service worker**: Version injection on changes
+- `src/scripts/entry.js` - JavaScript entry point
+- `src/index.html` - HTML template
+- `src/service-worker.js` - Service worker template
 
-### Watch Events Handled
+**Optional Directories:**
 
-- `Create` - New files added
-- `Modify` - Existing files changed
-- Ignores `Delete` and other events
+- `src/styles/` - CSS stylesheets
+- `src/assets/` - Static assets (images, fonts, etc.)
+- `src/components/` - Additional JavaScript modules
 
-## Version Injection
+## Development Workflow
 
-Service workers get automatic version injection:
+### Setup
 
-```javascript
-// In source service-worker.js
-const VERSION = '__VERSION__';
+1. Create web application in `websites/app_name/`
+2. Add required files (index.html, entry.js, service-worker.js)
+3. Run bundler in watch mode for development
 
-// After bundling
-const VERSION = 'v0.0.88';
-```
+### Hot Reloading
 
-This enables proper cache invalidation across releases.
+- **Script Changes**: Automatic bundle rebuild and browser refresh
+- **Template Changes**: Immediate HTML update with asset hash replacement
+- **Asset Changes**: Instant copy to dist directory
+- **Style Changes**: Direct copy without bundling
 
-## Performance Features
+### Production Deployment
 
-- **Async Operations**: All bundling operations are async
-- **Incremental Builds**: Only rebuilds changed files in watch mode
-- **Parallel Processing**: Uses Tokio for concurrent file operations
-- **Efficient Copying**: Direct file system operations
+1. Run bundler without watch mode
+2. Deploy `dist/` directory contents
+3. Assets include content hashes for cache busting
+4. Service worker includes version for cache management
 
-## Error Handling
+## Code Analysis Summary
 
-- **Graceful Failures**: Logs errors but continues watching
-- **Path Resolution**: Automatic path absolutization and validation
-- **File System Errors**: Proper error propagation with context
-
-## Dependencies
-
-- `brk_rolldown` - Rust-based Rollup bundler
-- `notify` - File system watching
-- `tokio` - Async runtime for file operations
-- `sugar_path` - Path manipulation utilities
-- `log` - Error logging
-
-## Integration Points
-
-The bundler integrates with:
-- **brk_cli**: Called during website setup
-- **brk_server**: Serves bundled assets
-- **Development workflow**: Provides live rebuilding
+**Main Function**: `bundle()` async function coordinating Rolldown bundler with file processing and watching \
+**File Operations**: Recursive directory copying with `copy_dir_all()` and selective file processing \
+**Templating**: String replacement for asset hash injection and version management \
+**File Watching**: Multi-watcher system using `notify` crate for real-time development feedback \
+**Async Integration**: Tokio-based async architecture with background task spawning \
+**Bundler Integration**: Rolldown wrapper with optimized configuration for web development \
+**Architecture**: Development-focused asset pipeline with hot reloading and production optimization
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_

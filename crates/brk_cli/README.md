@@ -1,189 +1,232 @@
 # brk_cli
 
-**Command line interface for running complete BRK instances**
+Command-line interface orchestrating complete Bitcoin Research Kit instances with automatic configuration and continuous blockchain processing.
 
-`brk_cli` provides the main command-line interface for operating the Bitcoin Research Kit. It orchestrates the complete data pipeline from Bitcoin Core block parsing through analytics computation to HTTP API serving, with automatic configuration management and graceful operation.
+[![Crates.io](https://img.shields.io/crates/v/brk_cli.svg)](https://crates.io/crates/brk_cli)
+[![Documentation](https://docs.rs/brk_cli/badge.svg)](https://docs.rs/brk_cli)
 
-## What it provides
+## Overview
 
-- **Complete Pipeline Orchestration**: Coordinates parser, indexer, computer, and server components
-- **Automatic Configuration**: Saves settings to `~/.brk/config.toml` for consistent operation
-- **Continuous Operation**: Handles blockchain updates and incremental processing
-- **Web Interface Options**: Configurable website serving (none, default, custom)
-- **Graceful Shutdown**: Ctrl+C handling with proper cleanup
+This crate provides the primary command-line interface for running Bitcoin Research Kit instances. It orchestrates the entire data processing pipeline from Bitcoin Core block parsing through analytics computation to HTTP API serving, with persistent configuration management, automatic error recovery, and continuous blockchain synchronization.
 
-## Key Features
+**Key Features:**
 
-### Pipeline Management
-- **Automatic dependency handling**: Ensures Bitcoin Core sync before processing
-- **Incremental updates**: Only processes new blocks since last run
-- **Error recovery**: Automatic retry logic and graceful error handling
-- **Resource management**: Optimized memory usage and disk I/O
+- Complete BRK pipeline orchestration with parser, indexer, computer, and server coordination
+- Persistent configuration system with TOML-based auto-save functionality
+- Continuous blockchain processing with new block detection and incremental updates
+- Flexible Bitcoin Core RPC authentication with cookie file and user/password support
+- Configurable web interface options including auto-downloading from GitHub releases
+- Large stack allocation (512MB) for handling complex blockchain processing workloads
+- Graceful shutdown handling with proper cleanup and state preservation
 
-### Configuration System
-- **Auto-save configuration**: All CLI options saved to persistent config
-- **Flexible paths**: Configurable Bitcoin directory, blocks directory, and output directory
-- **RPC authentication**: Cookie file or username/password authentication
-- **Data source options**: Configurable price fetching and exchange APIs
+**Target Use Cases:**
 
-### Operation Modes
-- **Initial sync**: Full blockchain processing from genesis
-- **Continuous operation**: Real-time processing of new blocks
-- **Update mode**: Resume from last processed block
-- **Server mode**: HTTP API with optional web interface
+- Production Bitcoin analytics deployments requiring full pipeline operation
+- Development environments for Bitcoin research and analysis
+- Continuous blockchain monitoring with real-time data updates
+- Academic research requiring comprehensive historical blockchain datasets
 
 ## Installation
 
-### Binary Release
 ```bash
-# Download from GitHub releases
-# https://github.com/bitcoinresearchkit/brk/releases/latest
+cargo install brk # or cargo install brk_cli
 ```
 
-### Via Cargo
-```bash
-cargo install brk --locked
-```
-
-### From Source
-```bash
-git clone https://github.com/bitcoinresearchkit/brk.git
-cd brk && cargo build --release
-```
-
-## Usage
-
-### First Run (Configuration Setup)
+## Quick Start
 
 ```bash
-# Basic setup with default options
-brk --brkdir ./my_brk_data
+# First run - configure and start processing
+brk --brkdir ./data --bitcoindir ~/.bitcoin --fetch true
 
-# Full configuration
-brk --bitcoindir ~/.bitcoin \
-    --brkdir ./brk_data \
-    --fetch true \
-    --exchanges true \
-    --website default
-```
-
-### Subsequent Runs
-
-```bash
-# Uses saved configuration from ~/.brk/config.toml
+# Subsequent runs use saved configuration
 brk
 
 # Override specific options
 brk --website none --fetch false
 ```
 
-### Command Line Options
+## API Overview
+
+### Core Structure
+
+- **`Config`**: Persistent configuration with clap-based CLI parsing and TOML serialization
+- **`Bridge`**: Interface trait for generating JavaScript bridge files for web interfaces
+- **`Website`**: Enum for web interface options (None, Bitview, Custom)
+- **Path Functions**: Cross-platform default path resolution for Bitcoin and BRK directories
+
+### Main Operations
+
+**`main() -> color_eyre::Result<()>`**
+Entry point with error handling setup, directory creation, logging initialization, and high-stack thread spawning.
+
+**`run() -> color_eyre::Result<()>`**
+Core processing loop handling configuration, RPC connection, component initialization, and continuous blockchain monitoring.
+
+### Configuration Management
+
+**Persistent Settings:**
+
+- All CLI arguments automatically saved to `~/.brk/config.toml`
+- Argument overrides update saved configuration on each run
+- Cross-platform path resolution with tilde and $HOME expansion
+- Validation of Bitcoin directory, blocks directory, and RPC authentication
+
+**CLI Parameters:**
+
+- `--bitcoindir`, `--blocksdir`, `--brkdir`: Directory configuration
+- `--fetch`, `--exchanges`: Data source configuration
+- `--website`: Web interface selection
+- `--rpcconnect`, `--rpcport`, `--rpccookiefile`, `--rpcuser`, `--rpcpassword`: RPC settings
+
+## Examples
+
+### Basic Usage
 
 ```bash
-brk --help
+# Initialize with custom directories
+brk --bitcoindir /data/bitcoin --brkdir /data/brk
+
+# Enable all features with custom RPC
+brk --fetch true --exchanges true --website bitview \
+    --rpcuser myuser --rpcpassword mypass
+
+# Minimal setup with API only
+brk --website none --fetch false
 ```
 
-## Configuration Reference
+### Configuration File Example
 
-All options are automatically saved to `~/.brk/config.toml`:
+After first run, settings are saved to `~/.brk/config.toml`:
 
-### Core Paths
-- `--bitcoindir <PATH>` - Bitcoin Core directory (default: `~/.bitcoin`)
-- `--blocksdir <PATH>` - Block files directory (default: `bitcoindir/blocks`)
-- `--brkdir <PATH>` - BRK output directory (default: `~/.brk`)
-
-### Data Sources
-- `--fetch <BOOL>` - Enable price data fetching (default: `true`)
-- `--exchanges <BOOL>` - Use exchange APIs for prices (default: `true`)
-
-### Web Interface
-- `--website <OPTION>` - Web interface mode:
-  - `none` - API only, no web interface
-  - `default` - Built-in web interface from `websites/default/`
-  - `custom` - Serve custom website from `websites/custom/`
-
-### Bitcoin Core RPC
-- `--rpcconnect <IP>` - RPC host (default: `localhost`)
-- `--rpcport <PORT>` - RPC port (default: `8332`)
-- `--rpccookiefile <PATH>` - Cookie authentication file
-- `--rpcuser <USERNAME>` - Username authentication
-- `--rpcpassword <PASSWORD>` - Password authentication
-
-## Operation Flow
-
-1. **Configuration Loading**: Loads saved config from `~/.brk/config.toml`
-2. **Bitcoin Core Connection**: Establishes RPC connection and waits for sync
-3. **Data Pipeline Initialization**: Sets up parser, indexer, computer, and interface
-4. **Processing Loop**:
-   - Index new blocks from Bitcoin Core
-   - Compute analytics on new data
-   - Update cached data
-5. **Server Startup**: Launches HTTP API with optional web interface
-6. **Continuous Operation**: Monitors for new blocks and processes incrementally
-
-## System Requirements
-
-- **Bitcoin Core**: Fully synced node with RPC enabled
-- **Storage**: ~32% of blockchain size (~233GB as of 2025)
-- **Memory**:
-  - Peak: ~7-8GB during initial indexing
-  - Steady state: ~4-5GB during operation
-- **OS**: macOS or Linux
-  - Ubuntu: `sudo apt install libssl-dev pkg-config`
-
-## Performance Characteristics
-
-### Initial Sync
-- **Full blockchain processing**: ~13-15 hours total
-- **Parser phase**: ~4 minutes for block parsing
-- **Indexer phase**: ~7-8 hours for data indexing
-- **Computer phase**: ~6-7 hours for analytics computation
-
-### Continuous Operation
-- **New block processing**: 3-5 seconds per block
-- **API response times**: Typically <100ms with caching
-- **Memory usage**: Stable ~4-5GB during normal operation
-
-## Configuration File
-
-Example `~/.brk/config.toml`:
 ```toml
-bitcoindir = "/Users/username/.bitcoin"
-blocksdir = "/Users/username/.bitcoin/blocks"
-brkdir = "/Users/username/brk_data"
+bitcoindir = "/home/user/.bitcoin"
+blocksdir = "/home/user/.bitcoin/blocks"
+brkdir = "/home/user/brk_data"
 fetch = true
 exchanges = true
-website = "default"
+website = "bitview"
 rpcconnect = "localhost"
 rpcport = 8332
-rpccookiefile = "/Users/username/.bitcoin/.cookie"
+rpccookiefile = "/home/user/.bitcoin/.cookie"
 ```
 
-## Error Handling
+### Web Interface Configuration
 
-- **Bitcoin Core sync**: Waits for node sync before processing
-- **RPC connection**: Automatic retry logic for connection issues
-- **Processing errors**: Graceful error handling with detailed logging
-- **Graceful shutdown**: Ctrl+C handling with proper cleanup and state saving
+```bash
+# Use built-in Bitview interface
+brk --website bitview
 
-## Logging
+# Use custom web interface
+brk --website custom
 
-Logs are written to `~/.brk/brk.log` with colored console output:
-- Request/response logging with timing
-- Processing progress indicators
-- Error reporting and debugging information
+# API only, no web interface
+brk --website none
+```
 
-## Dependencies
+### Development Mode
 
-- `brk_parser` - Bitcoin block parsing
-- `brk_indexer` - Blockchain data indexing
-- `brk_computer` - Analytics computation
-- `brk_interface` - Data query interface
-- `brk_server` - HTTP API server
-- `brk_logger` - Logging utilities
-- `bitcoincore_rpc` - Bitcoin Core RPC client
-- `color_eyre` - Enhanced error reporting
+```bash
+# Development with local website directory
+# Looks for ../../websites directory first
+brk --website bitview
+
+# Production with auto-download from GitHub
+# Downloads websites from release artifacts
+brk --website bitview
+```
+
+## Architecture
+
+### Startup Sequence
+
+1. **Environment Setup**: Color eyre error handling, directory creation, logging initialization
+2. **High-Stack Thread**: 512MB stack for complex blockchain processing operations
+3. **Configuration Loading**: CLI parsing, TOML reading, argument merging, validation
+4. **Component Initialization**: Parser, indexer, computer, interface creation with proper dependencies
+
+### Processing Pipeline
+
+**Continuous Operation Loop:**
+
+1. **Bitcoin Core Sync Wait**: Monitors `headers == blocks` for full node synchronization
+2. **Block Count Detection**: Compares current and previous block counts for new block detection
+3. **Indexing Phase**: Processes new blocks through parser with collision detection option
+4. **Computing Phase**: Runs analytics computations on newly indexed data
+5. **Server Operation**: Serves HTTP API with optional web interface throughout processing
+
+### Web Interface Integration
+
+**Website Handling:**
+
+- **Development Mode**: Uses local `../../websites` directory if available
+- **Production Mode**: Downloads release artifacts from GitHub using semantic versioning
+- **Bundle Generation**: Creates optimized JavaScript bundles using `brk_bundler`
+- **Bridge Files**: Generates JavaScript bridge files for vector IDs and pool data
+
+**Download and Bundle Process:**
+
+```rust
+// Automatic website download and bundling
+let url = format!("https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip");
+let response = minreq::get(url).send()?;
+zip::ZipArchive::new(cursor).extract(downloads_path)?;
+bundle(&websites_path, website.to_folder_name(), true).await?
+```
+
+### RPC Authentication
+
+**Flexible Authentication Methods:**
+
+- **Cookie File**: Automatic detection at `--bitcoindir/.cookie`
+- **User/Password**: Manual configuration with `--rpcuser` and `--rpcpassword`
+- **Connection Validation**: Startup checks ensure proper Bitcoin Core connectivity
+
+### Configuration System
+
+**TOML Persistence:**
+
+- Automatic serialization/deserialization with `serde` and `toml`
+- Error-tolerant parsing with `default_on_error` deserializer
+- Argument consumption validation ensuring all CLI options are processed
+- Path expansion supporting `~` and `$HOME` environment variables
+
+## Configuration
+
+### Default Paths
+
+**Cross-Platform Path Resolution:**
+
+- **Linux**: `~/.bitcoin` for Bitcoin Core, `~/.brk` for BRK data
+- **macOS**: `~/Library/Application Support/Bitcoin` for Bitcoin Core
+- **Logs**: `~/.brk/log` for application logging
+- **Downloads**: `~/.brk/downloads` for temporary website artifacts
+
+### Performance Settings
+
+**Memory Management:**
+
+- 512MB stack size for main processing thread
+- Multi-threaded tokio runtime with all features enabled
+- Persistent configuration caching to minimize I/O operations
+
+### Error Handling
+
+**Comprehensive Validation:**
+
+- Directory existence checks with user-friendly error messages
+- RPC authentication verification before processing begins
+- Graceful exit with help suggestions for configuration issues
+
+## Code Analysis Summary
+
+**Main Structure**: `Config` struct with clap-derived CLI parsing and persistent TOML configuration management \
+**Processing Loop**: Continuous Bitcoin Core monitoring with sync detection and incremental block processing \
+**Web Integration**: Automatic website download from GitHub releases with JavaScript bundle generation \
+**Component Orchestration**: Coordination of parser, indexer, computer, and server with proper dependency management \
+**Error Handling**: `color_eyre` integration with comprehensive validation and user-friendly error messages \
+**Threading**: High-stack thread allocation (512MB) with tokio multi-threaded runtime for complex operations \
+**Architecture**: Complete BRK pipeline orchestration with persistent configuration and continuous blockchain synchronization
 
 ---
 
-*This README was generated by Claude Code*
+_This README was generated by Claude Code_
