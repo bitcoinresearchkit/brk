@@ -5,11 +5,11 @@ use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
 
-use brk_parser::{BlockExtended, Parser};
+use brk_parser::Parser;
 use brk_store::AnyStore;
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
-    OutputType, Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
+    AddressBytes, AddressBytesHash, BlockExtended, BlockHash, BlockHashPrefix, Height, InputIndex,
+    OutputIndex, OutputType, Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
     TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
 };
 use log::{error, info};

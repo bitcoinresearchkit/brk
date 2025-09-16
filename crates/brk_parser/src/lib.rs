@@ -2,30 +2,26 @@
 
 use std::{cmp::Ordering, collections::BTreeMap, fs, ops::ControlFlow, path::PathBuf, thread};
 
-use bitcoin::{Block, BlockHash};
+use bitcoin::BlockHash;
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use blk_recap::BlkRecap;
-use brk_structs::Height;
+use brk_structs::{Block, Height};
 use crossbeam::channel::{Receiver, bounded};
 use rayon::prelude::*;
 
+mod any_block;
 mod blk_index_to_blk_path;
 mod blk_index_to_blk_recap;
 mod blk_metadata;
 mod blk_recap;
-mod block;
-mod block_state;
-mod error;
 mod utils;
 mod xor_bytes;
 mod xor_index;
 
+use any_block::*;
 use blk_index_to_blk_recap::*;
 use blk_metadata::*;
-pub use block::*;
-use block_state::*;
-pub use error::*;
 use utils::*;
 use xor_bytes::*;
 use xor_index::*;
@@ -54,13 +50,13 @@ impl Parser {
         }
     }
 
-    pub fn get(&self, height: Height) -> Block {
-        self.parse(Some(height), Some(height))
-            .iter()
-            .next()
-            .unwrap()
-            .1
-    }
+    // pub fn get(&self, height: Height) -> Block {
+    //     self.parse(Some(height), Some(height))
+    //         .iter()
+    //         .next()
+    //         .unwrap()
+    //         .1
+    // }
 
     ///
     /// Returns a crossbeam channel receiver that receives `(Height, Block, BlockHash)` tuples from an **inclusive** range (`start` and `end`)
@@ -71,13 +67,13 @@ impl Parser {
         &self,
         start: Option<Height>,
         end: Option<Height>,
-    ) -> Receiver<(Height, Block, BlockHash)> {
+    ) -> Receiver<(Height, bitcoin::Block, BlockHash)> {
         let blocks_dir = self.blocks_dir.as_path();
         let rpc = self.rpc;
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP);
         let (send_block, recv_block) = bounded(BOUND_CAP);
-        let (send_height_block_hash, recv_height_block_hash) = bounded(BOUND_CAP);
+        let (send_ordered, recv_ordered) = bounded(BOUND_CAP);
 
         let blk_index_to_blk_path = BlkIndexToBlkPath::scan(blocks_dir);
 
@@ -135,7 +131,7 @@ impl Parser {
                         let block_bytes = (blk_bytes[i..(i + len)]).to_vec();
 
                         if send_bytes
-                            .send((blk_metadata, BlockState::Raw(block_bytes), xor_i))
+                            .send((blk_metadata, AnyBlock::Raw(block_bytes), xor_i))
                             .is_err()
                         {
                             return ControlFlow::Break(());
@@ -157,23 +153,22 @@ impl Parser {
 
             let drain_and_send = |bulk: &mut Vec<_>| {
                 // Using a vec and sending after to not end up with stuck threads in par iter
-                bulk.par_iter_mut().for_each(|(_, block_state, xor_i)| {
-                    BlockState::decode(block_state, xor_i, &xor_bytes);
+                bulk.par_iter_mut().for_each(|(_, any_block, xor_i)| {
+                    AnyBlock::decode(any_block, xor_i, &xor_bytes);
                 });
 
-                bulk.drain(..)
-                    .try_for_each(|(blk_metadata, block_state, _)| {
-                        let block = match block_state {
-                            BlockState::Decoded(block) => block,
-                            _ => unreachable!(),
-                        };
+                bulk.drain(..).try_for_each(|(blk_metadata, any_block, _)| {
+                    let block = match any_block {
+                        AnyBlock::Decoded(block) => block,
+                        _ => unreachable!(),
+                    };
 
-                        if send_block.send((blk_metadata, block)).is_err() {
-                            return ControlFlow::Break(());
-                        }
+                    if send_block.send((blk_metadata, block)).is_err() {
+                        return ControlFlow::Break(());
+                    }
 
-                        ControlFlow::Continue(())
-                    })
+                    ControlFlow::Continue(())
+                })
             };
 
             recv_bytes.iter().try_for_each(|tuple| {
@@ -259,9 +254,7 @@ impl Parser {
                             return ControlFlow::Break(());
                         }
 
-                        send_height_block_hash
-                            .send((current_height, block, hash))
-                            .unwrap();
+                        send_ordered.send((current_height, block, hash)).unwrap();
 
                         if end.is_some_and(|end| end == current_height) {
                             return ControlFlow::Break(());
@@ -276,6 +269,6 @@ impl Parser {
             blk_index_to_blk_recap.export();
         });
 
-        recv_height_block_hash
+        recv_ordered
     }
 }

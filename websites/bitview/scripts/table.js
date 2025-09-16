@@ -141,7 +141,7 @@ function createTable({
         list: serializedIndexes,
         signal: serializedIndex,
       }),
-      unit: "Index",
+      unit: "index",
     });
 
     let from = 0;
@@ -163,7 +163,7 @@ function createTable({
           const th = window.document.createElement("th");
           th.innerHTML = serializeValue({
             value,
-            unit: "Index",
+            unit: "index",
           });
           th.scope = "row";
           tr.append(th);
@@ -527,12 +527,12 @@ function serializeValue({ value, unit }) {
   } else if (t !== "number") {
     return JSON.stringify(value).replaceAll('"', "").slice(1, -1);
   } else if (value !== 18446744073709552000) {
-    if (unit === "USD" || unit === "Difficulty" || unit === "sat/vB") {
+    if (unit === "usd" || unit === "difficulty" || unit === "sat/vb") {
       return value.toLocaleString("en-us", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-    } else if (unit === "BTC") {
+    } else if (unit === "btc") {
       return value.toLocaleString("en-us", {
         minimumFractionDigits: 8,
         maximumFractionDigits: 8,

@@ -174,12 +174,12 @@ export function init({
 
   const { field: topUnitField, selected: topUnit } =
     utils.dom.createHorizontalChoiceField({
-      defaultValue: "USD",
+      defaultValue: "usd",
       keyPrefix,
       key: "unit-0",
       choices: /** @type {const} */ ([
-        /** @satisfies {Unit} */ ("USD"),
-        /** @satisfies {Unit} */ ("Sats"),
+        /** @satisfies {Unit} */ ("usd"),
+        /** @satisfies {Unit} */ ("sats"),
       ]),
       signals,
       sorted: true,
@@ -210,7 +210,7 @@ export function init({
 
     const latest = { ..._latest };
 
-    if (unit === "Sats") {
+    if (unit === "sats") {
       latest.open = Math.floor(ONE_BTC_IN_SATS / latest.open);
       latest.high = Math.floor(ONE_BTC_IN_SATS / latest.high);
       latest.low = Math.floor(ONE_BTC_IN_SATS / latest.low);
@@ -332,7 +332,7 @@ export function init({
           console.log({ topUnit, topSeriesType });
 
           switch (topUnit) {
-            case "USD": {
+            case "usd": {
               switch (topSeriesType) {
                 case null:
                 case CANDLE: {
@@ -362,7 +362,7 @@ export function init({
               }
               break;
             }
-            case "Sats": {
+            case "sats": {
               switch (topSeriesType) {
                 case null:
                 case CANDLE: {

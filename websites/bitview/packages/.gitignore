@@ -10,6 +10,5 @@ dev.js
 *.iife.*
 nano.*
 worker.*
-*.ts
 *.mts
 *.cts
