@@ -25,4 +25,4 @@ flamegraph.svg
 *.trace
 
 # AI
-.claude
+.claude/settings*
