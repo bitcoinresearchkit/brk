@@ -668,6 +668,7 @@ version = "0.0.107"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
+ "brk_error",
  "brk_structs",
  "crossbeam",
  "derive_deref",

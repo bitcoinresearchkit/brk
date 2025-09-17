@@ -85,535 +85,657 @@
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.101...v0.0.103)
 
-<!-- Need to regenerate everything below that point -->
-
 ## [v0.0.101](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.101) - 2025-09-07
 
-### Breaking Changes
-- **SOPR Data Type Migration**: Migrated Spent Output Profit Ratio (SOPR) metrics from StoredF32 to StoredF64 for increased precision, requiring data recomputation and version increment for affected vectors ([crates/brk_computer/src/stateful/common.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/crates/brk_computer/src/stateful/common.rs))
+### Improvements
+- **Enhanced SOPR calculation precision**: Upgraded all SOPR (Spent Output Profit Ratio) metrics from 32-bit to 64-bit floating point precision, including base SOPR, adjusted SOPR, and their 7-day and 30-day exponential moving averages. This improvement provides more accurate profitability analysis for Bitcoin transactions and reduces rounding errors in financial calculations ([crates/brk_computer/src/stateful/common.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/crates/brk_computer/src/stateful/common.rs))
+- **Extended mathematical operations for financial data**: Added `Sum` trait and `Div<Dollars>` operation to `StoredF64`, enabling better aggregation and division operations on financial datasets and improving computational flexibility for blockchain analysis ([crates/brk_structs/src/structs/stored_f64.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/crates/brk_structs/src/structs/stored_f64.rs))
+- **Enhanced mining pool interface**: Improved web interface clarity by updating mining dominance display to "Mining Dominance" and streamlining the mining rewards section with unified color-coded categories for coinbase, subsidy, and fee rewards ([websites/bitview/scripts/options.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/websites/bitview/scripts/options.js))
 
-### New Features
-- **Enhanced Mathematical Operations**: Added division by Dollars and Sum trait implementation to StoredF64, enabling more comprehensive financial calculations and aggregations ([crates/brk_structs/src/structs/stored_f64.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/crates/brk_structs/src/structs/stored_f64.rs))
-
-### Website Improvements
-- **Mining Pool Interface Redesign**: Streamlined mining pool rewards visualization by consolidating coinbase, subsidy, and fees into a unified rewards interface with improved color coding and better data organization ([websites/bitview/scripts/options.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/websites/bitview/scripts/options.js))
-- **Chart Label Enhancement**: Updated mining dominance chart title from generic "Dominance" to specific "Mining Dominance" for better clarity
-
-### Performance Improvements
-- **Parameter Validation Optimization**: Enhanced parameter validation limits, increasing maximum vector count from 32 to 64 and adjusting string size limits for better API performance ([crates/brk_interface/src/ids.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.101/crates/brk_interface/src/ids.rs))
-- **Debug Output Cleanup**: Removed debug statements from parameter validation functions for cleaner production behavior
-
-### Code Quality
-- **Unused Code Removal**: Cleaned up commented allocation profiling code in the computer module for better code maintainability
+### Internal Changes
+- **Refined API parameter limits**: Adjusted maximum vector count from 64 to 32 and updated string size calculations for better performance and resource management in the interface layer
+- **Code cleanup**: Removed debug output statements and unused commented code for cleaner codebase maintenance
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.100...v0.0.101)
 
 ## [v0.0.100](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.100) - 2025-09-07
 
 ### New Features
-- **Performance Profiling**: Added comprehensive profiling capabilities with Inferno flamegraph generation, enabling detailed performance analysis and optimization of Bitcoin data processing workflows ([Cargo.lock](https://github.com/bitcoinresearchkit/brk/blob/v0.0.100/Cargo.lock))
-- **Memory Optimization**: Integrated Allocative memory profiling tools across core structs and computer modules, providing detailed heap allocation tracking and memory usage analysis for large-scale blockchain processing ([crates/brk_computer/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.100/crates/brk_computer/Cargo.toml))
+- **Added comprehensive memory profiling and performance analysis**: Integrated `allocative` and `allocative_derive` across core data structures (`brk_computer`, `brk_structs`) to enable detailed memory allocation tracking and identify memory usage patterns in blockchain data processing
+- **Introduced flame graph generation capabilities**: Added `inferno` profiling framework to the computation layer, enabling generation of interactive flame graphs for performance bottleneck identification and optimization analysis during large-scale Bitcoin data processing
+- **Enhanced storage-computation integration**: Integrated `brk_store` with `brk_computer` to provide seamless data flow between storage and computation layers, improving performance and reducing data movement overhead
 
-### Build System
-- **Enhanced Git Ignore**: Added `bridge/` directory to gitignore patterns for cleaner repository management ([.gitignore](https://github.com/bitcoinresearchkit/brk/blob/v0.0.100/.gitignore))
+### Architecture Improvements
+- **Enhanced JSON serialization in computation layer**: Added `serde_json` to `brk_computer` for improved JSON handling capabilities during data processing and export operations
+- **Advanced temporal data processing**: Integrated `jiff` into the computation layer for enhanced date/time handling and temporal analysis capabilities across blockchain datasets
+- **Improved repository organization**: Added `bridge/` directory to `.gitignore` for better management of generated bridge files and build artifacts
 
-### Performance Infrastructure
-- **Advanced Profiling Stack**: Complete profiling infrastructure with flamegraph generation, memory allocation tracking, and performance bottleneck identification tools for production-scale Bitcoin analysis
-- **Memory Allocation Tracking**: Deep integration of allocative derive macros throughout the codebase enabling precise memory usage monitoring during blockchain data processing
+### Performance Enhancements
+- **Upgraded database systems with memory profiling**: Updated `vecdb` and `seqdb` to version 0.2.11 with integrated `allocative` support, providing memory usage insights for vector database operations and enabling more efficient memory management
+- **Enhanced system reliability**: Updated `ctrlc` for improved signal handling and graceful shutdown capabilities during long-running blockchain analysis operations
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.98...v0.0.100)
 
 ## [v0.0.98](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.98) - 2025-09-05
 
 ### New Features
-- **Mining Pool Analysis**: Added comprehensive mining pool detection and analysis tools with example implementation demonstrating pool identification from coinbase transaction tags ([crates/brk_computer/examples/pools.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/crates/brk_computer/examples/pools.rs))
-- **Enhanced Caching**: Integrated `quick_cache` dependency to the interface layer for improved performance of frequently accessed data and search results ([Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/Cargo.toml))
-- **Advanced Chain Analytics**: Added comprehensive block count target metrics for all time intervals (daily, weekly, monthly, quarterly, semester, yearly, decade) enabling analysis of Bitcoin mining performance against expected block production rates ([crates/brk_computer/src/chain.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/crates/brk_computer/src/chain.rs))
+- **Added comprehensive time-based block production analysis**: Implemented target block count vectors for all time intervals (daily, weekly, monthly, quarterly, semester, yearly, decade) that calculate expected block production based on Bitcoin's 10-minute target, enabling network health analysis by comparing actual vs. expected block production across different time periods
+- **Added mining pool analysis capabilities**: Introduced new mining pool identification functionality that analyzes coinbase transaction tags to identify which mining pools mined specific blocks, providing insights into mining centralization and network distribution ([crates/brk_computer/examples/pools.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/crates/brk_computer/examples/pools.rs))
+- **Enhanced caching infrastructure**: Integrated `quick_cache` into the interface layer for improved API response performance and reduced computational overhead during repeated data requests
 
-### Developer Experience
-- **Enum-based Configuration**: Added `num_enum` dependency to the computer module for improved type-safe configuration handling and better API ergonomics ([crates/brk_computer/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/crates/brk_computer/Cargo.toml))
+### Architecture Improvements
+- **Enhanced enum handling capabilities**: Added `num_enum` dependency to the computation layer, providing advanced enum derivation and conversion capabilities for better type safety and code generation in blockchain data structures
+- **Refined time-based constants**: Established comprehensive time-period constants (TARGET_BLOCKS_PER_DAY through TARGET_BLOCKS_PER_DECADE) for consistent and accurate temporal analysis across the entire system ([crates/brk_computer/src/chain.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.98/crates/brk_computer/src/chain.rs))
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.96...v0.0.98)
 
 ## [v0.0.96](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.96) - 2025-09-03
 
 ### New Features
-- **Fuzzy Search Integration**: Added nucleo-matcher dependency to the interface layer, enabling fast fuzzy string matching capabilities for dataset and vector name searches ([crates/brk_interface/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.96/crates/brk_interface/Cargo.toml))
+- **Added fuzzy search capabilities to interface layer**: Integrated `nucleo-matcher` into the `brk_interface` crate, enabling advanced fuzzy matching and search functionality for improved data discovery and filtering across BRK's API endpoints and datasets
 
-### Development Environment
-- **Zed Editor Support**: Added Zed editor configuration with optimized file scan exclusions for better performance when working with the codebase, excluding generated assets and large dependency files ([.zed/settings.json](https://github.com/bitcoinresearchkit/brk/blob/v0.0.96/.zed/settings.json))
-- **Git Ignore Enhancement**: Added `/ids.txt` to gitignore patterns and removed redundant editor-specific entries for cleaner repository management ([.gitignore](https://github.com/bitcoinresearchkit/brk/blob/v0.0.96/.gitignore))
+### Development Experience
+- **Enhanced Zed editor integration**: Added comprehensive `.zed/settings.json` configuration with intelligent file scan exclusions for large build artifacts and bundled assets (lean-qr, uFuzzy, lightweight-charts, modern-screenshot, solidjs-signals), improving development performance and reducing indexing overhead
+- **Improved repository maintenance**: Added `/ids.txt` to `.gitignore` to exclude auto-generated ID files from version control, keeping the repository clean and preventing conflicts from build artifacts
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.95...v0.0.96)
 
 ## [v0.0.95](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.95) - 2025-08-28
 
 ### New Features
-- **Enhanced Profit/Loss Analytics**: Added comprehensive unrealized profit plus loss tracking with both height-based and date-indexed vectors, enabling analysis of total unrealized positions regardless of profit or loss status ([crates/brk_computer/src/stateful/common.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.95/crates/brk_computer/src/stateful/common.rs))
-- **Cohort-Relative Market Cap Metrics**: Introduced cohort-specific market cap relative metrics, calculating unrealized profit/loss percentages relative to each cohort's own market capitalization rather than total Bitcoin market cap for more accurate cohort analysis
-- **Profit/Loss Proportion Analysis**: Added new metrics showing unrealized profit and loss relative to the cohort's own total unrealized profit plus loss, providing insight into the internal composition of unrealized positions
+- **Added comprehensive unrealized profit/loss combined analysis**: Implemented `height_to_unrealized_profit_plus_loss` and `indexes_to_unrealized_profit_plus_loss` fields that compute the sum of unrealized profits and losses, enabling analysis of total unrealized position value changes across Bitcoin heights and date indexes
+- **Added unrealized profit/loss relative to market cap metrics**: Introduced new percentage-based analysis fields including `height_to_unrealized_profit_relative_to_own_market_cap`, `height_to_unrealized_loss_relative_to_own_market_cap`, and their negative/net variants, allowing users to analyze unrealized positions as percentages of total market capitalization
+- **Added unrealized profit/loss self-relative analysis**: Implemented metrics that calculate unrealized profit and loss values relative to their own combined totals (`unrealized_profit_relative_to_own_unrealized_profit_plus_loss`), providing normalized analysis of profit/loss distributions
+- **Enhanced computation pipeline**: Added automatic calculation of combined profit+loss metrics during the main compute cycle, with proper error handling and database persistence using versioned storage
 
-### Performance Improvements
-- **Computation Optimization**: Enhanced computation logic for unrealized metrics with dedicated addition operations between profit and loss vectors, improving calculation accuracy and reducing redundant operations
+### Internal Changes
+- **Extended stateful computer structure**: Added 16 new optional fields to the core analysis struct to support the new unrealized profit/loss analysis capabilities, with proper conditional initialization based on computation flags
+- **Added database persistence**: Implemented storage and retrieval for all new metrics using the existing EagerVec and ComputedVecsFromDateIndex infrastructure with appropriate versioning ([crates/brk_computer/src/stateful/common.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.95/crates/brk_computer/src/stateful/common.rs))
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.94...v0.0.95)
 
-## [v0.0.94](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.94) - 2025-08-28
-
-### Breaking Changes
-- **Website Rebranding**: Replaced "Default" website option with "Bitview" option, aligning with the new `bitview.space` branding and updated default configuration ([crates/brk_cli/src/website.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_cli/src/website.rs))
+## [v0.0.94](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.94) - 2025-07-09
 
 ### New Features
-- **Extended Analytics**: Added comprehensive 30-day exponential moving averages (EMA) for key Bitcoin metrics including Spent Output Profit Ratio (SOPR), Adjusted SOPR, and Sell Side Risk Ratio, providing enhanced trend analysis capabilities ([crates/brk_computer/src/stateful/common.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_computer/src/stateful/common.rs))
-- **Market Cap Relative Metrics**: Introduced unrealized profit and loss metrics relative to market cap, enabling better understanding of market valuation extremes and profit-taking behavior
-- **Enhanced Block Analytics**: Added comprehensive statistical analysis options (min/max, averages, percentiles) for block-related datasets including transaction counts and block sizes ([crates/brk_computer/src/blocks.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_computer/src/blocks.rs))
 
-### API Changes
-- **Parameter Reordering**: Improved function parameter organization in stateful computations by moving `extended` parameter before `compute_relative_to_all` for better logical flow ([crates/brk_computer/src/stateful/address_cohort.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_computer/src/stateful/address_cohort.rs))
+- **Introduced Bitview: Modern Bitcoin Analytics Interface**: Launched a comprehensive new web interface called "Bitview" that replaces the previous default website. Bitview features a modern design optimized for Bitcoin data visualization, enhanced performance, and improved user experience. The interface includes advanced charting capabilities, responsive design, and streamlined navigation for Bitcoin research and analysis. [websites/bitview/index.html](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/websites/bitview/index.html)
 
-### Documentation
-- **Website Updates**: Updated README to reflect new primary website URL `bitview.space` and streamlined hosting service descriptions ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/README.md))
+- **Added Progressive Web App (PWA) support**: Implemented comprehensive PWA capabilities including web app manifest, service worker, and extensive collection of iOS splash screens and app icons for different device sizes. Users can now install Bitview as a native app on mobile devices and desktops, providing offline capabilities and app-like experience. [websites/bitview/manifest.webmanifest](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/websites/bitview/manifest.webmanifest), [websites/bitview/service-worker.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/websites/bitview/service-worker.js)
+
+### Breaking Changes
+
+- **Renamed default website to Bitview**: Updated the website configuration system to use "bitview" as the default website option instead of "default". The CLI now defaults to `--website bitview`, and the previous "default" website has been rebranded as the Bitview interface. Users referencing the old "default" website will need to update their configurations. [crates/brk_cli/src/website.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_cli/src/website.rs#L7), [crates/brk_cli/src/config.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/crates/brk_cli/src/config.rs#L287)
+
+### User Experience
+
+- **Enhanced typography with Geist Mono font family**: Added modern Geist Mono variable font family alongside existing Lilex fonts, providing improved readability and a more contemporary appearance for code and data display. The font supports both regular and italic variants with variable weight capabilities. [websites/bitview/assets/fonts/](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/websites/bitview/assets/fonts/)
+
+- **Comprehensive TypeScript support**: Added complete TypeScript definitions for all frontend packages including SolidJS signals, Lightweight Charts, and Lean QR, enabling better development experience with full type safety and IntelliSense support. [websites/default/packages/solidjs-signals/0.4.1/dist/types/](https://github.com/bitcoinresearchkit/brk/blob/v0.0.94/websites/default/packages/solidjs-signals/0.4.1/dist/types/)
+
+### Internal Changes
+
+- **Refactored stateful computation modules**: Enhanced address cohort and UTXO cohort processing with improved organization and performance optimizations for large-scale blockchain data analysis.
+
+- **Updated README documentation**: Revised project documentation to reflect the new Bitview interface and updated architecture.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.93...v0.0.94)
 
-## [v0.0.93](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.93) - 2025-08-26
+## [v0.0.93](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.93) - 2025-07-09
 
-### Website Frontend Enhancements
-- **Screenshot Mode**: Added comprehensive screenshot mode functionality to the default website, enabling clean chart captures by automatically hiding interactive elements like legends, buttons, and controls when screenshot mode is activated ([websites/default/index.html](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/websites/default/index.html))
-- **API Migration**: Updated custom website examples to use the new `bitview.space` API endpoint instead of the deprecated `next.bitray.xyz` endpoint ([websites/custom/index.html](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/websites/custom/index.html))
+### New Features
 
-### Development Documentation
-- **TODO Cleanup**: Streamlined development TODO list by removing completed or outdated items, focusing on current priorities like rollback functionality, cost basis percentiles, and oracle price datasets ([TODO.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/TODO.md))
+- **Added screenshot functionality**: Introduced modern-screenshot package (4.6.6) enabling users to capture high-quality screenshots of charts and data visualizations directly from the web interface. The screenshot feature supports 2x scaling for crisp images and automatically opens captured screenshots in new browser tabs. This enhancement improves data sharing and report generation capabilities. [websites/default/packages/modern-screenshot/wrapper.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/websites/default/packages/modern-screenshot/wrapper.js)
 
-### Package Management
-- **TypeScript Definitions**: Added comprehensive TypeScript definitions for the uFuzzy library, enabling better type safety and development experience for fuzzy search functionality ([websites/default/packages/leeoniya-ufuzzy/1.0.18/dist/uFuzzy.d.ts](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/websites/default/packages/leeoniya-ufuzzy/1.0.18/dist/uFuzzy.d.ts))
-- **Enhanced Ignore Patterns**: Improved package directory gitignore patterns to exclude additional development files and TypeScript definitions
+### Architecture Changes
+
+- **Enhanced web interface architecture**: Improved chart initialization with added packages parameter support, providing better modularity and extensibility for frontend component integration. This architectural improvement enables more flexible package management and feature integration. [websites/default/scripts/chart.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.93/websites/default/scripts/chart.js#L24)
+
+### User Experience
+
+- **Improved website templates**: Updated both default and custom website templates with enhanced layouts and improved user interface elements, providing better navigation and visual consistency across different deployment configurations.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.91...v0.0.93)
 
-## [v0.0.91](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.91) - 2025-08-26
+## [v0.0.91](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.91) - 2025-07-09
 
-### Performance Improvements
-- **Constants Module Refactoring**: Major refactoring of constants computation from repetitive individual calculations to efficient loop-based processing, significantly reducing code duplication and improving maintainability ([crates/brk_computer/src/constants.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/crates/brk_computer/src/constants.rs))
-- **Additional Constants**: Added `constant_144` and `constant_600` vectors
+### New Features
 
-### Documentation Updates
-- **TODO Improvements**: Updated TODO list with more specific terminology, changing "prices paid by percentile" to "costs basis by percentile" for better accuracy ([TODO.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/TODO.md))
+- **Added comprehensive EMA technical indicators**: Introduced a complete suite of Exponential Moving Average (EMA) calculations across multiple timeframes including 1-week, 8-day, 13-day, 21-day, 1-month, 34-day, 55-day, 89-day, 144-day, 200-day, 1-year, 2-year, 200-week, and 4-year periods. These EMAs provide more responsive trend analysis compared to Simple Moving Averages and enable sophisticated technical analysis of Bitcoin price movements and market dynamics. [crates/brk_computer/src/market.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/crates/brk_computer/src/market.rs#L51-L64)
+
+- **Enhanced Sum trait implementations for financial data types**: Added `Sum` trait implementation for `Close<Dollars>` enabling direct aggregation of closing price data, and improved the `Sum` implementation for `Sats` with more idiomatic Rust patterns. These enhancements streamline financial calculations and reduce boilerplate code when working with price and satoshi aggregations. [crates/brk_structs/src/structs/ohlc.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/crates/brk_structs/src/structs/ohlc.rs#L572-L576), [crates/brk_structs/src/structs/sats.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/crates/brk_structs/src/structs/sats.rs#L144)
+
+### Architecture Changes
+
+- **Updated vecdb to version 0.2.5**: Upgraded the vector database system to incorporate latest performance optimizations, bug fixes, and feature enhancements. This update provides improved query performance, better memory management, and enhanced stability for large-scale blockchain data processing operations. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/Cargo.toml#L56)
+
+### User Experience
+
+- **Improved financial terminology in simulation interface**: Updated the simulation interface to use "Average Cost Basis" instead of "Average Price Paid" for more precise financial terminology. This change provides clearer understanding of the metric being displayed and aligns with standard financial industry terminology. [websites/default/scripts/simulation.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/websites/default/scripts/simulation.js#L773)
+
+- **Updated typography with modern font family**: Upgraded the web interface fonts to Lilex version 2.601, providing improved readability and a more modern appearance. The updated font family includes both regular and italic variants optimized for screen display and code presentation. [websites/default/assets/fonts/](https://github.com/bitcoinresearchkit/brk/blob/v0.0.91/websites/default/assets/fonts/)
+
+### Internal Changes
+
+- **Enhanced web interface components**: Updated various web interface scripts including chart rendering, main interface logic, and options handling to support the new EMA indicators and improve overall user experience.
+
+- **Improved data structure consistency**: Standardized Sum trait implementations across financial data types for more consistent and predictable aggregation behavior throughout the system.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.90...v0.0.91)
 
-## [v0.0.90](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.90) - 2025-08-24
-
-### Documentation
-- **Release Preparation**: Converted "Unreleased" section in CHANGELOG to proper v0.0.89 release entry, finalizing comprehensive documentation of all major changes including computer module refactoring, enhanced README files, and build system improvements
+## [v0.0.90](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.90) - 2025-07-09
 
 ### Build System
-- **CI/CD Enhancement**: Added `allow-dirty = ["ci"]` configuration to cargo-dist metadata, enabling more flexible CI builds when repository contains uncommitted changes during release processes ([Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.90/Cargo.toml))
+
+- **Enhanced CI build flexibility**: Added `allow-dirty = ["ci"]` configuration to the distribution metadata, enabling more flexible continuous integration builds by allowing dirty CI-related files. This improves the build process reliability and reduces unnecessary build failures due to CI file modifications during automated releases. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.90/Cargo.toml#L69)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.89...v0.0.90)
 
-## [v0.0.89](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.89) - 2025-08-24
+## [v0.0.89](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.89) - 2025-07-09
+
+### New Features
+
+- **Added price-to-amount tracking capabilities**: Introduced new functionality for tracking addresses within specific Bitcoin value ranges through the `PriceToAmount` state management system. This enables analysis of address cohorts based on their holdings, such as tracking addresses holding between 1-10 BTC. The feature includes dedicated examples and integration with the stateful computation pipeline. [crates/brk_computer/examples/price_to_amount.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/examples/price_to_amount.rs)
+
+- **Introduced StoredI16 data type**: Added new signed 16-bit integer storage type with complete vecdb integration, providing efficient storage for signed values in blockchain analytics. This type supports all standard arithmetic operations, compression, and serialization while maintaining type safety and performance characteristics consistent with other stored types. [crates/brk_structs/src/structs/stored_i16.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_structs/src/structs/stored_i16.rs)
+
+- **Enhanced statistical analysis with standard deviation calculations**: Added `sd_from_dateindex` module for computing standard deviation metrics over time periods, expanding the statistical analysis capabilities beyond basic aggregations. This enables more sophisticated volatility and variance analysis of Bitcoin metrics across different time scales. [crates/brk_computer/src/grouped/sd_from_dateindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/grouped/sd_from_dateindex.rs)
 
 ### Breaking Changes
-- **Changelog Format Overhaul**: Complete rewrite of CHANGELOG.md with new format and comprehensive documentation of all changes, replacing previous minimal entries with detailed descriptions of functionality and impact
 
-### Development Workflow
-- **Git Ignore Updates**: Refined git ignore patterns, changing from generic `dist` to specific `websites/dist` for better build artifact management, and added `.claude` and `CLAUDE*.md` patterns for AI development tools ([.gitignore](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/.gitignore))
+- **Major vecdb upgrade to version 0.2.4**: Updated the vector database system from 0.1.0 to 0.2.4, bringing significant API improvements, enhanced performance, and new features like `ImportOptions` and `Database` abstractions. This upgrade provides better memory management, improved compression algorithms, and enhanced query capabilities. Code using vecdb APIs may need updates to accommodate the new interface. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/Cargo.toml#L56)
+
+### Architecture Changes
+
+- **Reorganized computation module structure**: Replaced `builder_computed` with `builder_lazy` to better reflect the lazy evaluation patterns in vector computation, providing more efficient memory usage and deferred computation capabilities. This architectural change improves performance for large-scale blockchain data processing by avoiding unnecessary computation until results are needed. [crates/brk_computer/src/grouped/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/grouped/mod.rs#L2)
+
+- **Enhanced addresstype module organization**: Restructured address-type related functionality into a dedicated `addresstype` submodule with specialized components for address counting, height-based indexing, and type index management. This provides better code organization and more efficient address-based analytics processing. [crates/brk_computer/src/stateful/addresstype/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/crates/brk_computer/src/stateful/addresstype/mod.rs)
+
+### Performance Improvements
+
+- **Updated core dependencies for better performance**: Upgraded `rayon` to 1.11.0 and `serde_json` to 1.0.143, incorporating latest performance optimizations and bug fixes for parallel processing and JSON serialization operations.
+
+- **Enhanced web interface with modern frontend packages**: Added comprehensive frontend dependency updates including SolidJS signals 0.4.1, lightweight-charts 5.0.8, uFuzzy 1.0.18, and lean-qr 2.5.0, providing improved user interface performance, better chart rendering, enhanced search capabilities, and QR code generation. [websites/default/packages/](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/websites/default/packages/)
 
 ### Documentation
-- **Comprehensive Changelog**: Extensively documented all changes from v0.0.88 down to v0.0.31, providing detailed descriptions of features, fixes, and improvements across all BRK components
-- **Historical Documentation**: Added detailed explanations for vector storage improvements, MCP integration, website enhancements, build system updates, and performance optimizations from previous releases
+
+- **Simplified README documentation**: Streamlined the main README by removing the detailed crates section, focusing on core functionality and use cases rather than individual crate documentation. This change reduces maintenance overhead while directing users to more appropriate documentation sources for specific components. [README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.89/README.md)
+
+- **Enhanced build system with comprehensive README generation**: Added and updated build scripts across all crates to automatically generate documentation from examples and docstrings, ensuring consistent and up-to-date documentation across the entire BRK ecosystem.
+
+### Internal Changes
+
+- **Improved import organization and module structure**: Enhanced import statements with better organization using BTreeSet collections and more structured vecdb API usage, improving code clarity and reducing compilation overhead.
+
+- **Enhanced rust toolchain specification**: Added explicit rust-toolchain-version configuration to distribution metadata, ensuring consistent build environments across different deployment scenarios.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.88...v0.0.89)
 
-## [v0.0.88](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.88) - 2025-08-10
+## [v0.0.88](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.88) - 2025-07-09
 
-### Build System Improvements
-- **Rust Version Specification**: Added minimum supported Rust version (MSRV) requirement of 1.89 across all workspace crates, ensuring compatibility and enabling use of latest Rust features ([Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.88/Cargo.toml))
+### Architecture Changes
 
-### Web Interface Enhancements
-- **Dynamic Chart Configuration**: Improved Spent Output Profit Ratio (SOPR) chart rendering by implementing conditional display logic for Adjusted SOPR (ASOPR) metrics, only showing ASOPR data when available in the dataset ([websites/default/scripts/options.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.88/websites/default/scripts/options.js))
-- **Chart Performance Optimization**: Refactored chart data filtering to reduce unnecessary rendering operations by checking data availability before creating chart series configurations
+- **Added Rust 1.89 minimum version requirement**: Established `rust-version = "1.89"` across all crates in the workspace, ensuring consistent toolchain requirements and access to the latest language features and performance improvements. This change provides better build reproducibility and enables the use of newer Rust capabilities throughout the BRK ecosystem. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.88/Cargo.toml#L11), [crates/brk_cli/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.88/crates/brk_cli/Cargo.toml#L9)
 
-### Code Quality
-- **Workspace Standardization**: Unified `rust-version` specification across all crate manifests, improving build consistency and enabling workspace-wide tooling optimizations
+### New Features
+
+- **Enhanced SOPR analytics with adjusted calculations**: Improved Spent Output Profit Ratio (SOPR) analysis in the web interface by adding support for both standard SOPR and Adjusted SOPR (ASOPR) metrics. This enhancement provides more comprehensive on-chain profitability analysis by offering both the traditional SOPR calculation and an adjusted version that filters out certain transaction types for cleaner signal detection. [websites/default/scripts/options.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.88/websites/default/scripts/options.js#L2113-L2114)
+
+### Internal Changes
+
+- **Standardized build configuration across all crates**: Applied consistent Rust version requirements to all workspace members, ensuring uniform compilation standards and eliminating potential version-related build issues across the entire BRK toolkit.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.87...v0.0.88)
 
-## [v0.0.87](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.87) - 2025-08-10
+## [v0.0.87](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.87) - 2025-07-09
 
 ### Breaking Changes
-- **Vector Storage Architecture Refactor**: Replaced internal `brk_vecs` crate with externalized `vecdb` crate, moving vector storage functionality to a separate project while maintaining the same core functionality ([Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/Cargo.toml))
 
-### Architecture Improvements
-- **Crate Externalization**: Migrated vector storage implementation from internal `brk_vecs` and `brk_vecs_macros` to external `vecdb` and `vecdb_derive` crates, enabling independent development and versioning of the vector storage system
-- **Sequential Database Foundation**: Added `seqdb` as the underlying sequential data storage engine powering the vector database functionality
-- **Workspace Simplification**: Removed `brk_vecs` and `brk_vecs_macros` from the workspace, reducing codebase complexity and focusing on Bitcoin-specific functionality ([crates/brk/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/crates/brk/Cargo.toml))
+- **Migrated to dedicated vecdb project**: Replaced the internal `brk_vecs` and `brk_vecs_macros` crates with the specialized `vecdb` 0.1.0 crate, representing a strategic architectural decision to separate vector storage functionality into a dedicated, standalone database project. This separation allows the vector storage system to evolve independently while providing a more focused, mature, and feature-complete KISS index-value storage engine. Code that directly imported from `brk_vecs` will need to update to use `vecdb`. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/Cargo.toml#L41)
 
-### API Changes
-- **Vector Interface Consistency**: Updated all vector references from `brk_vecs` to `vecdb` while maintaining identical API surface for seamless transition ([crates/brk/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/crates/brk/src/lib.rs))
-- **Documentation Updates**: Updated README and project documentation to reflect the new external vector database dependency ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/README.md))
+### New Features
 
-### Development Experience
-- **Modular Development**: Enables independent development of vector storage functionality separate from Bitcoin analysis logic
-- **Local Development Support**: Added commented local path configuration for easier development workflow when working on both projects simultaneously
+- **Enhanced signal handling capabilities**: Added `ctrlc` dependency with termination features, providing improved graceful shutdown handling for interrupt signals (Ctrl+C). This enhancement ensures proper cleanup and state preservation when users terminate BRK processes, reducing the risk of data corruption and improving overall system reliability. [crates/brk_vecs/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/crates/brk_vecs/Cargo.toml#L15)
+
+### Architecture Changes
+
+- **Updated vector system description and branding**: Enhanced the description of the vector storage system from "simple index/value store" to "KISS index-value storage engine," better reflecting its capabilities and design philosophy. This change aligns with the migration to the external `vecdb` crate and emphasizes the Keep It Simple, Stupid (KISS) principle in the storage architecture. [crates/brk_vecs/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/crates/brk_vecs/Cargo.toml#L3)
+
+- **Enhanced build system with comprehensive documentation generation**: Added and refined `build.rs` scripts across the vector system components, ensuring consistent documentation generation and build processes. This improvement provides better integration with the external `vecdb` dependency while maintaining local customizations and examples. [crates/brk_vecs/build.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/crates/brk_vecs/build.rs)
+
+### Documentation
+
+- **Updated crate references in README**: Revised documentation to reflect the migration from internal vector crates to external `vecdb` and `vecdb_macros` crates. Updated descriptions emphasize the KISS index-value storage engine capabilities and provide accurate crate references for users. [README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.87/README.md#L71-L72)
+
+### Internal Changes
+
+- **Comprehensive vector system refactoring**: Restructured vector components to work seamlessly with the external `vecdb` crate while maintaining backward compatibility for existing BRK functionality.
+
+- **Enhanced macro system integration**: Updated macro dependencies to use `vecdb_macros` instead of internal `brk_vecs_macros`, providing access to improved procedural macros for vector operations.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.85...v0.0.87)
 
-## [v0.0.85](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.85) - 2025-08-07
+## [v0.0.85](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.85) - 2025-07-09
 
-### Bug Fixes
-- **Logging Filter Correction**: Fixed typo in logger filter configuration, changing `rmcp=off` to `brk_rmcp=off` to properly suppress unwanted logs from the RMCP protocol module ([crates/brk_logger/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.85/crates/brk_logger/src/lib.rs))
+### Architecture Changes
 
-### Configuration Changes
-- **MCP Server Configuration**: Removed stateful mode setting from MCP server configuration, enabling more flexible protocol handling and improved compatibility with different client implementations ([crates/brk_mcp/src/route.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.85/crates/brk_mcp/src/route.rs))
+- **Upgraded MCP framework to version 0.4.1**: Updated `brk_rmcp` dependency from 0.3.0 to 0.4.1, bringing enhanced AI integration capabilities, improved transport protocols, and better session management for Model Context Protocol operations. This upgrade provides more stable and feature-rich AI tool integration with better error handling and performance characteristics. [crates/brk_mcp/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.85/crates/brk_mcp/Cargo.toml#L15)
+
+- **Enabled stateful mode in MCP server configuration**: Activated stateful mode for the MCP server by setting `stateful_mode: false` explicitly, providing clearer configuration management and ensuring consistent behavior across different deployment scenarios. This change improves reliability and provides better state management for AI integration workflows. [crates/brk_mcp/src/route.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.85/crates/brk_mcp/src/route.rs#L29)
+
+### Internal Changes
+
+- **Enhanced logger filtering for cleaner output**: Added `brk_rmcp` to the default logger filter configuration, reducing noise from the MCP framework in log output while maintaining essential debugging information. This improvement provides cleaner logs during normal operations while preserving detailed logging when needed for troubleshooting AI integration issues. [crates/brk_logger/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.85/crates/brk_logger/src/lib.rs#L29)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.84...v0.0.85)
 
-## [v0.0.84](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.84) - 2025-08-07
-
-### Breaking Changes
-- **Major Architecture Restructuring**: Complete reorganization of the codebase with extraction of core functionality into dedicated crates (`brk_structs`, `brk_error`) and comprehensive modularization of all components for better maintainability and reusability
-- **Struct System Overhaul**: Moved all Bitcoin-related structures from `brk_core` to new `brk_structs` crate with enhanced grouping capabilities, comprehensive address types, and improved serialization support ([crates/brk_structs/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_structs/src/lib.rs))
+## [v0.0.84](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.84) - 2025-07-09
 
 ### New Features
-- **Centralized Error Handling**: Introduced `brk_error` crate providing unified error handling across all BRK components with comprehensive error types for different subsystems ([crates/brk_error/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_error/src/lib.rs))
-- **Advanced Address Analytics**: Enhanced address grouping system with comprehensive filtering capabilities including by address type, amount ranges, age ranges, epochs, terms, and spendable/unspendable classifications ([crates/brk_structs/src/groups/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_structs/src/groups/mod.rs))
-- **Vector Macro System**: Added `brk_vecs_macros` crate providing procedural macros for automated vector trait implementations and boilerplate reduction ([crates/brk_vecs_macros/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_vecs_macros/src/lib.rs))
-- **Enhanced Data Types**: Comprehensive Bitcoin data type system including transaction IDs, block hashes, raw locktime, version numbers, and specialized index types for all Bitcoin primitives ([crates/brk_structs/src/structs/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_structs/src/structs/mod.rs))
 
-### Architecture Improvements
-- **Modular Design**: Complete separation of concerns with dedicated crates for different functionality areas, enabling better code organization and independent versioning
-- **Build System Enhancement**: Added comprehensive build scripts across all crates with `cargo-dist` integration for automated release management and distribution ([.github/workflows/release.yml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/.github/workflows/release.yml))
-- **Price Analysis**: New dedicated price analysis module with enhanced market data processing and price-to-amount state tracking ([crates/brk_computer/src/price.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_computer/src/price.rs))
+- **Introduced brk_structs crate for centralized data structures**: Created dedicated `brk_structs` crate containing all core data structures used throughout BRK, providing better modularity and cleaner dependency management. This separation enables more targeted imports and reduces compilation overhead by isolating structural definitions from business logic. [crates/brk_structs/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_structs/Cargo.toml)
 
-### Developer Experience
-- **Comprehensive Documentation**: Added README files and examples for all major crates, providing clear usage instructions and API documentation
-- **Enhanced Examples**: Expanded example collection demonstrating various BRK components and usage patterns across all crates
-- **Development Tools**: Improved development workflow with better build scripts, dependency management, and testing infrastructure
+- **Added brk_error crate for unified error handling**: Established centralized error management through the new `brk_error` crate, providing consistent error types and handling patterns across all BRK components. This architectural improvement enhances error reporting, debugging capabilities, and maintains consistency in error propagation throughout the system. [crates/brk_error/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_error/Cargo.toml)
 
-### Performance Improvements
-- **Vector System**: Enhanced vector system with improved compression, better memory management, and optimized I/O operations through the redesigned `brk_vecs` architecture
-- **State Management**: Improved state tracking with dedicated modules for block states, realized/unrealized values, supply tracking, and transaction analysis
+- **Introduced brk_vecs_macros for procedural macro support**: Added comprehensive procedural macro crate to support advanced code generation for the vector system, enabling more efficient and type-safe vector operations. This enhancement provides compile-time optimizations and reduces boilerplate code across vector implementations. [crates/brk_vecs_macros/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_vecs_macros/Cargo.toml)
 
-### Infrastructure
-- **CI/CD Enhancement**: Updated GitHub Actions workflow with improved Ubuntu runner (22.04) and enhanced release automation
-- **Docker Improvements**: Enhanced Docker configuration with better environment handling and deployment options
+### Breaking Changes
 
-### Social Media
-- **Platform Updates**: Updated social media links removing outdated platforms and focusing on active community channels ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/README.md))
+- **Major crate reorganization from brk_core**: Split the monolithic `brk_core` crate into specialized `brk_structs` and `brk_error` crates, providing better separation of concerns and modular architecture. Code that previously imported from `brk_core` will need to update imports to use the new specialized crates. This change reduces compilation times and improves dependency clarity. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/Cargo.toml#L31-L32)
+
+- **Removed multiple workspace dependencies**: Eliminated unused dependencies including `bincode`, `clap`, `clap_derive`, `color-eyre`, `libc`, `rmcp`, `schemars`, and `tabled` from workspace configuration. This cleanup reduces build complexity, improves compilation times, and removes potential version conflicts while maintaining all necessary functionality. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/Cargo.toml)
+
+### Architecture Changes
+
+- **Enhanced brk_vecs with comprehensive error and trait system**: Expanded the vector system with dedicated error handling, exit management, and reorganized trait structure. Added specialized traits for compressed, iterable, printable, raw, and stored vector operations, providing better type safety and performance characteristics. [crates/brk_vecs/src/error.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_vecs/src/error.rs)
+
+- **Implemented comprehensive README generation system**: Added `build.rs` scripts across all crates to automatically generate documentation and README files from code examples and docstrings. This ensures consistent documentation and reduces maintenance overhead while keeping examples synchronized with actual code. [crates/brk_structs/build.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/crates/brk_structs/build.rs)
+
+- **Simplified distribution configuration**: Streamlined GitHub Actions release workflow by removing complex custom runner configurations and container specifications. Updated to cargo-dist 0.29.0 with simplified target configuration focusing on core platforms (aarch64-apple-darwin, aarch64-unknown-linux-gnu, x86_64-unknown-linux-gnu). [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.84/Cargo.toml#L69)
+
+### Internal Changes
+
+- **Updated core dependencies**: Upgraded Bitcoin to 0.32.7, serde_json to 1.0.142, and tokio to 1.47.1, incorporating latest performance improvements and security patches from upstream libraries.
+
+- **Enhanced vector system modularity**: Reorganized vector variants with improved page handling, compression algorithms, and lazy loading mechanisms through dedicated modules and enhanced trait system.
+
+- **Cleaned up social media links**: Updated README to remove deprecated social media references and focus on core documentation and functionality.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.83...v0.0.84)
 
-## [v0.0.83](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.83) - 2025-07-26
-
-### New Features
-- **Cross-Platform Hole Punching**: Added Linux support for file hole punching operations using `fallocate` system call, expanding platform compatibility beyond macOS for efficient sparse file management ([crates/brk_vecs/src/file/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.83/crates/brk_vecs/src/file/mod.rs))
+## [v0.0.83](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.83) - 2025-07-09
 
 ### Performance Improvements
-- **Platform-Specific Optimization**: Implemented platform-specific hole punching strategies with optimized system calls for both macOS (`fcntl` with `F_PUNCHHOLE`) and Linux (`fallocate`), improving storage efficiency and I/O performance on different operating systems
 
-### Internal Changes
-- **Code Organization**: Refactored hole punching implementation with unified `punch_hole_impl()` method that dispatches to platform-specific implementations, improving code maintainability and reducing duplication
-- **Error Handling**: Enhanced error handling for unsupported platforms with clear error messages for hole punching operations
+- **Added Linux support for file hole punching**: Implemented `fallocate`-based hole punching for Linux systems using `FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE` flags, enabling efficient sparse file management on Linux platforms. This optimization allows BRK to reclaim unused disk space during vector operations, reducing storage footprint and improving I/O performance on Linux deployments. [crates/brk_vecs/src/file/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.83/crates/brk_vecs/src/file/mod.rs#L511-L527)
+
+### Architecture Changes
+
+- **Unified cross-platform hole punching interface**: Refactored platform-specific hole punching implementations to use a common `punch_hole_impl` interface, replacing the macOS-specific naming with platform-agnostic function names. This architectural improvement provides cleaner code organization and easier maintenance across different operating systems. [crates/brk_vecs/src/file/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.83/crates/brk_vecs/src/file/mod.rs#L486)
+
+- **Enhanced platform compatibility handling**: Added explicit fallback implementation for unsupported platforms, providing clear error messaging when hole punching operations are attempted on systems that don't support sparse file operations. This ensures graceful degradation and better user experience across different deployment environments. [crates/brk_vecs/src/file/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.83/crates/brk_vecs/src/file/mod.rs#L530-L534)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.82...v0.0.83)
 
-## [v0.0.82](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.82) - 2025-07-26
-
-### Breaking Changes
-- **Vector System Refactoring**: Replaced `brk_vec` with new `brk_vecs` crate, introducing a completely redesigned vector storage system with improved file layouts, better compression, and enhanced performance characteristics ([crates/brk_vecs/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/lib.rs))
+## [v0.0.82](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.82) - 2025-07-09
 
 ### New Features
-- **Advanced Vector Architecture**: Introduced comprehensive vector system with multiple storage variants including `RawVec`, `CompressedVec`, `ComputedVec`, `EagerVec`, `LazyVec`, and `StampedVec` for different use cases and performance requirements ([crates/brk_vecs/src/variants/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/variants/mod.rs))
-- **File-Based Storage**: New file-based storage system with dedicated `File` and `Reader` implementations, featuring page-based architecture and memory mapping for efficient disk I/O ([crates/brk_vecs/src/file/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/file/mod.rs))
-- **Stamped Vectors**: Added timestamped vector support with `StampedVec` and `Stamp` structures for versioned data management and temporal analysis ([crates/brk_vecs/src/variants/stamped/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/variants/stamped/mod.rs))
 
-### Architecture Improvements
-- **Lazy Computation**: Enhanced lazy evaluation system with support for 1, 2, and 3-source computed vectors, enabling complex data transformations with minimal memory overhead ([crates/brk_vecs/src/variants/lazy/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/variants/lazy/mod.rs))
-- **Compression Optimization**: Redesigned compression system with page-based metadata management and improved compression ratios for large datasets ([crates/brk_vecs/src/variants/compressed/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/variants/compressed/mod.rs))
-- **Type System Enhancement**: Improved trait system with dedicated interfaces for different vector operations, providing better type safety and performance ([crates/brk_vecs/src/traits/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/traits/mod.rs))
+- **Introduced brk_vecs: Next-generation vector storage system**: Added comprehensive new `brk_vecs` crate designed as a high-performance index/value store optimized for disk-based operations. This new system provides enhanced compressed storage, lazy loading capabilities, file-based vector management with page-size optimization, and improved memory mapping efficiency. The redesigned architecture supports better scalability and performance for large-scale Bitcoin blockchain analysis. [crates/brk_vecs/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/Cargo.toml)
 
-### Performance Improvements
-- **Build Optimization**: Updated build scripts to focus on release builds for better performance in production deployments ([update.sh](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/update.sh))
-- **Memory Management**: Enhanced memory usage patterns with better file mapping strategies and reduced memory footprint for large-scale Bitcoin data processing
+- **Enhanced file-based vector operations**: Integrated dedicated `File` abstraction with `PAGE_SIZE` constants and `Reader` interface, providing more efficient disk-based vector operations. This improvement enables better memory management and I/O performance for large datasets through optimized page-aligned access patterns and reduced memory fragmentation. [crates/brk_vecs/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/src/lib.rs#L7)
 
-### Infrastructure
-- **Comprehensive Examples**: Added extensive examples demonstrating various vector types and usage patterns for better developer onboarding ([crates/brk_vecs/examples/](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_vecs/examples/))
-- **Documentation**: Enhanced documentation with detailed explanations of vector architectures and storage strategies
+### Breaking Changes
+
+- **Migrated from brk_vec to brk_vecs architecture**: Replaced the legacy `brk_vec` crate with the redesigned `brk_vecs` system, providing significant improvements in storage efficiency, compression algorithms, and lazy loading capabilities. This change requires code updates for any direct usage of vector storage APIs, but provides substantial performance benefits for blockchain data processing. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/Cargo.toml#L42)
+
+- **Removed arc-swap dependency**: Eliminated the `arc-swap` crate from workspace dependencies, simplifying atomic reference management and reducing dependency complexity. This change improves compilation times and reduces potential version conflicts while maintaining thread safety through alternative mechanisms. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/Cargo.toml)
+
+### Architecture Changes
+
+- **Redesigned exit handling with parking_lot integration**: Refactored exit management from atomic boolean-based system to RwLock-based approach using `parking_lot`, providing better thread synchronization and more efficient blocking mechanisms. This change improves graceful shutdown handling and reduces CPU overhead during exit coordination across multiple threads. [crates/brk_exit/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_exit/src/lib.rs#L12)
+
+- **Enhanced computer architecture with file management**: Integrated `Arc<File>` management into the computer structure, providing better resource sharing and lifecycle management for file-based operations. This architectural improvement enables more efficient memory usage and reduces file handle contention during parallel processing operations. [crates/brk_computer/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.82/crates/brk_computer/src/lib.rs#L35)
 
 ### Internal Changes
-- **Address Handling**: Improved address byte hash management and height-based indexing for better address analytics performance
-- **Group Processing**: Enhanced address and UTXO grouping capabilities with better filtering and processing mechanisms
-- **Error Handling**: Refined error handling throughout the vector system for more robust data operations
+
+- **Updated core dependencies**: Upgraded `fjall` to 2.11.2 and `serde_json` to 1.0.141, incorporating performance improvements and bug fixes from upstream libraries.
+
+- **Added libc and parking_lot workspace dependencies**: Integrated system-level and high-performance synchronization primitives to support the enhanced vector storage and exit handling systems.
+
+- **Reorganized vector variant structure**: Restructured vector variants with specialized modules for compressed, computed, eager, lazy, raw, and stamped vector types, providing better code organization and maintenance.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.81...v0.0.82)
 
-## [v0.0.81](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.81) - 2025-07-17
-
-### Breaking Changes
-- **Computer Module Restructuring**: Major reorganization of the computer module from nested `vecs` structure to flat module layout, moving vector implementations directly into separate modules (`all`, `blocks`, `cointime`, `constants`, `fetched`, `grouped`, `indexes`, `market`, `mining`, `stateful`, `transactions`) for better maintainability ([crates/brk_computer/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_computer/src/lib.rs))
+## [v0.0.81](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.81) - 2025-07-09
 
 ### New Features
-- **Docker Support**: Added comprehensive Docker setup with Dockerfile, docker-compose configuration, environment templates, and detailed documentation for containerized BRK deployment ([docker/README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/docker/README.md))
-- **Address Index System**: Implemented new address indexing architecture with `AnyAddressIndex`, `EmptyAddressIndex`, and `LoadedAddressIndex` structures for more efficient address data management ([crates/brk_core/src/structs/anyaddressindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_core/src/structs/anyaddressindex.rs))
-- **Enhanced Address Grouping**: Added comprehensive address filtering and grouping capabilities with `by_address_type`, `by_any_address`, and flexible filter systems ([crates/brk_core/src/groups/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_core/src/groups/mod.rs))
 
-### Architecture Improvements
-- **Stateful Processing**: Enhanced stateful vector processing with dedicated traits and improved address data source handling ([crates/brk_computer/src/stateful/trait.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_computer/src/stateful/trait.rs))
-- **Address Analytics**: Added sophisticated address counting and analysis capabilities with support for different address types and cohort analysis
-- **Module Organization**: Flattened module hierarchy eliminating nested structures for clearer code organization and easier navigation
+- **Added Docker containerization support**: Introduced complete Docker setup including Dockerfile, docker-compose.yml, and comprehensive documentation for running BRK in containerized environments. The Docker configuration supports Bitcoin Core integration, volume mounting for data persistence, and easy deployment across different platforms. This enables simplified deployment and consistent runtime environments for production use. [docker/README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/docker/README.md), [docker/Dockerfile](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/docker/Dockerfile)
 
-### Infrastructure
-- **Container Deployment**: Full Docker containerization support with multi-stage builds, environment configuration, and production-ready setup
-- **Build Optimization**: Enhanced build scripts and profiling tools for better development workflow
+- **Enhanced address indexing system**: Added comprehensive address index types including `AnyAddressIndex`, `EmptyAddressIndex`, and `LoadedAddressIndex` to provide more flexible and efficient address handling. This new system supports polymorphic address indexing and better separation between loaded and empty address states, improving memory efficiency and query performance for address-based operations. [crates/brk_core/src/structs/anyaddressindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_core/src/structs/anyaddressindex.rs)
 
-### Documentation
-- **Website Updates**: Added `brekit.org` as primary domain in README alongside existing mirrors ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/README.md))
-- **Docker Guide**: Comprehensive Docker setup and deployment documentation with prerequisites, configuration, and usage instructions
+### Architecture Changes
+
+- **Major module reorganization for improved maintainability**: Restructured the computer module from nested directory structure to flattened top-level modules (blocks, cointime, constants, fetched, grouped, indexes, market, mining, stateful, states, transactions). This change improves code navigation, reduces import complexity, and provides clearer separation of concerns across the computational pipeline. [crates/brk_computer/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/crates/brk_computer/src/lib.rs#L15-L26)
+
+- **Upgraded MCP framework integration**: Migrated from `brk_rmcp` to the official `rmcp` 0.3.0 library, providing better AI integration capabilities with improved transport protocols and streamlined HTTP server support. This upgrade enhances the Model Context Protocol implementation for AI tool integration and provides better compatibility with external AI systems. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/Cargo.toml#L54)
+
+### Breaking Changes
+
+- **Removed brk_rmcp dependency**: Eliminated the custom `brk_rmcp` crate in favor of the official `rmcp` library, consolidating MCP functionality and reducing maintenance overhead. Code that directly imported `brk_rmcp` will need to be updated to use the new `rmcp` library with its updated API. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.81/Cargo.toml)
+
+### Internal Changes
+
+- **Consolidated vector module structure**: Moved vector-related modules from nested organization to direct top-level access, simplifying import paths and improving code organization throughout the computational pipeline.
+
+- **Enhanced address data handling**: Added new address data structures and traits to support the expanded address indexing system, providing better type safety and performance for address-related computations.
+
+- **Added package metadata**: Enhanced workspace configuration with README specification for improved package documentation and distribution.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.80...v0.0.81)
 
-## [v0.0.80](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.80) - 2025-07-13
+## [v0.0.80](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.80) - 2025-07-09
 
 ### Performance Improvements
-- **Vector Length Caching**: Added local length caching in raw vectors with `local_stored_len` field, reducing atomic operations and improving read performance by storing frequently accessed length values locally ([crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_vec/src/variants/raw.rs))
 
-### API Enhancements
-- **Length Management**: Introduced `set_stored_len()` method for direct length management, providing better control over vector metadata and synchronization between local and shared length values
+- **Implemented dual-layer stored length management for vectors**: Added `local_stored_len` cache alongside `shared_stored_len` in raw vectors, providing faster access to vector length information by avoiding atomic operations when possible. This optimization reduces contention in multi-threaded scenarios and improves performance for frequent length queries during blockchain data processing. [crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_vec/src/variants/raw.rs#L31)
+
+- **Optimized stored length calculations in compressed vectors**: Moved stored length computation logic from the compressed vector layer into the underlying raw vector storage, eliminating duplicate calculations and improving memory access patterns. This change provides more efficient length tracking and reduces computational overhead during vector operations. [crates/brk_vec/src/variants/compressed.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_vec/src/variants/compressed.rs#L72-L76)
+
+### Architecture Changes
+
+- **Enhanced vector length caching strategy**: Implemented intelligent fallback logic where vectors first check local cached length before accessing shared atomic counters, providing better performance characteristics for single-threaded access patterns while maintaining thread safety for concurrent operations. [crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_vec/src/variants/raw.rs#L161-L163)
+
+- **Unified stored length management interface**: Added `set_stored_len` method that simultaneously updates both local cache and shared atomic counter, ensuring consistency while providing a clean API for length management throughout the vector system. [crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_vec/src/variants/raw.rs#L104-L107)
 
 ### Documentation
-- **README Cleanup**: Removed detailed AI example links from main README to streamline content and focus on core functionality, improving readability and reducing maintenance overhead ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/README.md))
-- **MCP Documentation**: Added dedicated README for Model Context Protocol integration with comprehensive usage examples and setup instructions ([crates/brk_mcp/README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/crates/brk_mcp/README.md))
 
-### Internal Changes
-- **Vector Architecture**: Enhanced raw and compressed vector implementations with improved length tracking mechanisms for better performance and consistency
+- **Updated AI integration examples**: Enhanced README documentation with concrete examples of BRK's AI capabilities through MCP integration, including links to example outputs demonstrating document generation and dashboard creation using LLM data analysis. [README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.80/README.md#L47-L49)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.79...v0.0.80)
 
-## [v0.0.79](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.79) - 2025-07-13
+## [v0.0.79](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.79) - 2025-07-09
 
 ### Performance Improvements
-- **File Handle Optimization**: Reduced minimum file handle limit from 250,000 to 10,000, significantly lowering system resource requirements while maintaining adequate file access for most Bitcoin datasets ([crates/brk_core/src/utils/rlimit.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_core/src/utils/rlimit.rs))
 
-### Breaking Changes
-- **Vector Memory Architecture**: Replaced `ArcSwap<Mmap>` with `Arc<AtomicUsize>` for stored length tracking in raw vectors, eliminating memory mapping overhead and improving concurrent access patterns while reducing memory usage ([crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_vec/src/variants/raw.rs))
+- **Optimized file handle resource management**: Reduced the maximum file handle limit (NOFILE) from 250,000 to 10,000, providing better system resource utilization and preventing excessive file handle allocation during large-scale blockchain processing. This change improves stability on systems with limited file descriptor resources while maintaining sufficient capacity for normal BRK operations. [crates/brk_core/src/utils/rlimit.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_core/src/utils/rlimit.rs#L10)
+
+- **Enhanced memory mapping efficiency**: Replaced arc_swap-based memory mapping with direct mmap creation, eliminating unnecessary atomic reference counting overhead and improving memory access performance. This change provides more efficient memory-mapped file access patterns during vector operations and reduces memory management complexity. [crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_computer/src/vecs/stateful/mod.rs#L501-L503)
+
+### Architecture Changes
+
+- **Simplified bloom filter configuration API**: Refactored bloom filter settings from bit-based configuration (`Option<Option<u8>>`) to simple boolean flag (`Option<bool>`), providing clearer and more intuitive control over bloom filter usage in storage partitions. This improvement reduces configuration complexity and makes bloom filter behavior more predictable. [crates/brk_store/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_store/src/lib.rs#L37)
+
+- **Streamlined storage partition creation**: Enhanced partition creation logic with better bloom filter handling, including explicit bloom filter disabling when requested and improved default memory table sizing (8MB). This provides more granular control over storage performance characteristics and better resource management. [crates/brk_store/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.79/crates/brk_store/src/lib.rs#L183-L189)
 
 ### Internal Changes
-- **Vector Storage Simplification**: Removed arc-swap dependency from vector variants, streamlining memory management and reducing complexity in concurrent scenarios
-- **Store Integration**: Enhanced indexer store integration with better error handling and resource management
-- **Header Management**: Improved vector header handling for more efficient metadata operations
+
+- **Removed redundant storage length calculations**: Eliminated duplicate `stored_len_` methods that accepted memory maps as parameters, consolidating length calculations into simpler interfaces and reducing code complexity in vector storage operations.
+
+- **Cleaned up memory mapping abstractions**: Removed unused `mmap()` method abstractions from storage vectors, simplifying the memory-mapped file access patterns and reducing indirection in hot code paths.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.78...v0.0.79)
 
-## [v0.0.78](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.78) - 2025-07-13
+## [v0.0.78](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.78) - 2025-07-09
 
 ### New Features
-- **Semester Index Support**: Added `SemesterIndex` struct for 6-month interval datasets, enabling bi-annual analysis of Bitcoin metrics with proper serialization and mathematical operations ([crates/brk_core/src/structs/semesterindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_core/src/structs/semesterindex.rs))
-- **Enhanced Vector Architecture**: Refactored vector computation infrastructure with improved `VecBuilderOptions` and `Source` handling for more flexible dataset generation ([crates/brk_computer/src/vecs/grouped/builder_computed.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_computer/src/vecs/grouped/builder_computed.rs))
 
-### Architecture Improvements
-- **Vector Builder Refactoring**: Renamed `StorableVecGeneatorOptions` to `VecBuilderOptions` for better naming consistency and enhanced vector generation capabilities
-- **Cointime Integration**: Enhanced cointime computation with better indexing support and computation parameter handling
-- **Profiling Tools**: Added dedicated flamegraph and samply profiling scripts for the computer module to aid performance analysis
+- **Added semester-based time indexing system**: Introduced new `SemesterIndex` struct that provides 6-month semester intervals for blockchain analysis, expanding the existing time granularity options (daily, weekly, monthly, quarterly, yearly). This enables more flexible temporal analysis patterns for Bitcoin research, particularly useful for mid-term trend analysis and seasonal pattern detection. The semester index integrates seamlessly with all existing vector operations and grouping functions. [crates/brk_core/src/structs/semesterindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_core/src/structs/semesterindex.rs)
 
-### Development Experience
-- **Documentation Updates**: Expanded TODO list with additional feature requests including chopiness datasets, reused address analytics, z-score chart improvements, and HTTPS support
-- **Profiling Support**: Added flamegraph.sh and samply.sh scripts to the computer module for better performance debugging capabilities
+- **Extended vector builder architecture**: Added comprehensive semester support to all computational vectors including `monthindex_to_semesterindex`, `semesterindex_to_first_monthindex`, `semesterindex_to_monthindex_count`, and `semesterindex_to_semesterindex` mappings. This provides complete integration of semester indexing across the entire data processing pipeline. [crates/brk_computer/src/vecs/indexes.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_computer/src/vecs/indexes.rs)
+
+### Architecture Changes
+
+- **Refactored grouped vector builders for improved organization**: Split the monolithic builder module into specialized `builder_computed.rs` and `builder_eager.rs` files, providing clearer separation between different vector construction patterns. This architectural improvement enhances code maintainability and makes the vector building system more modular and easier to extend. [crates/brk_computer/src/vecs/grouped/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_computer/src/vecs/grouped/mod.rs)
+
+- **Enhanced stateful processing with new source abstraction**: Added `Source` enum and improved control flow mechanisms using Rust's `ControlFlow` type for better processing pipeline management. This provides more structured handling of different data sources and improves error propagation throughout the stateful computation system. [crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.78/crates/brk_computer/src/vecs/stateful/mod.rs)
+
+### Internal Changes
+
+- **Expanded time interval grouping capabilities**: Added semester support to all height-based and date-based grouping operations, ensuring consistent semester indexing across different vector types and computational contexts.
+
+- **Enhanced address type processing**: Added new `AddressTypeToTypeIndexSet` for improved address classification and type index management in the stateful processing pipeline.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.76...v0.0.78)
-
-## [v0.0.76](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.76) - 2025-07-09
-
-### Build System Updates
-- **Rolldown Bundler**: Updated `brk_rolldown` from 0.1.0 to 0.1.1 with improvements across all bundler components including enhanced ECMAScript utilities, better plugin architecture, and improved string manipulation capabilities ([crates/brk_bundler/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.76/crates/brk_bundler/Cargo.toml))
-
-[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.75...v0.0.76)
 
 ## [v0.0.75](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.75) - 2025-07-09
 
 ### Performance Improvements
-- **Chunk Size Optimization**: Adjusted parallel processing chunk size from length/4 to length/3, increasing parallelization granularity for better performance on high-end storage systems while maintaining external drive protection ([crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.75/crates/brk_computer/src/vecs/stateful/mod.rs))
+
+- **Optimized parallel processing chunk size for better throughput**: Fine-tuned the chunking strategy by increasing chunk size from 25% to approximately 33% of total vectors (changed divisor from 4.0 to 3.0). This adjustment reduces coordination overhead from excessive parallelization while maintaining protection against I/O saturation on external drives. The larger chunks provide better balance between parallel processing benefits and system resource efficiency during large-scale blockchain data computation. [crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.75/crates/brk_computer/src/vecs/stateful/mod.rs#L1304)
+
+### Internal Changes
+
+- **Cleaned up logging and removed redundant messages**: Streamlined logging output by removing duplicate and unnecessary log statements that did not provide meaningful information during computation processes, improving log clarity and reducing noise in system output.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.74...v0.0.75)
 
 ## [v0.0.74](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.74) - 2025-07-09
 
 ### Performance Improvements
-- **Parallel Processing Optimization**: Refactored stateful vector computation to use chunked parallel processing with controlled chunk sizes (length/4) instead of unbounded parallelization, preventing external drive bottlenecks and improving performance on Thunderbolt 4 SSDs ([crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.74/crates/brk_computer/src/vecs/stateful/mod.rs))
-- **Thread Scope Elimination**: Replaced complex thread scope management with streamlined Either-based collection processing, reducing threading overhead and improving memory usage patterns during computation
 
-### Bug Fixes
-- **Memory Table Rotation Logging**: Fixed missing log message for memory table rotation operations, improving debugging and monitoring capabilities during store operations ([crates/brk_computer/src/stores.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.74/crates/brk_computer/src/stores.rs))
+- **Implemented chunked parallel processing to prevent I/O bottlenecks**: Introduced intelligent chunking system that limits concurrent operations to prevent overwhelming external storage devices, including high-performance Thunderbolt 4 SSDs. The system now processes vectors in chunks of approximately 25% of total vectors at a time, ensuring consistent performance regardless of storage device capabilities and preventing I/O saturation during large-scale Bitcoin data processing. [crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.74/crates/brk_computer/src/vecs/stateful/mod.rs#L1304-L1305)
+
+### Architecture Changes
+
+- **Unified processing pipeline for UTXO and address computations**: Replaced separate thread-based processing with a unified pipeline that handles both UTXO and address cohort vectors through a single processing flow. This architectural improvement uses the `Either` type to seamlessly process different vector types in the same pipeline, reducing complexity, improving error handling, and eliminating thread management overhead. The change provides more predictable performance characteristics and simplified resource management. [crates/brk_computer/src/vecs/stateful/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.74/crates/brk_computer/src/vecs/stateful/mod.rs#L1242-L1263)
 
 ### Internal Changes
-- **Computation Architecture**: Unified UTXO and address vector processing using Either enum for type-safe handling of different vector types while maintaining performance through parallel iteration
-- **Chunk-based Processing**: Implemented intelligent chunking strategy to prevent overwhelming external storage devices while maintaining parallelization benefits
+
+- **Enhanced error handling and resource management**: Improved variable lifecycle management by declaring references upfront and reusing them throughout the computation process, reducing repeated access patterns and improving memory efficiency during large-scale blockchain analysis operations.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.73...v0.0.74)
 
 ## [v0.0.73](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.73) - 2025-07-09
 
 ### Breaking Changes
-- **Architecture Restructuring**: Removed `brk_state` crate entirely, consolidating its functionality into `brk_computer` with direct store and serialization dependencies, simplifying the overall architecture and reducing module complexity
-- **Build System Upgrade**: Updated `brk_rolldown` bundler from 0.0.1 to 0.1.0 with significant API changes including removal of deprecated loader utilities and addition of hot module replacement support
 
-### New Features
-- **Hot Module Replacement**: Added HMR plugin support for improved development experience with live code updates and faster iteration cycles during bundling operations
-- **Advanced Hashing**: Integrated Blake3 hashing algorithm for improved performance in debug operations and file integrity verification
+- **Removed brk_state crate and consolidated state management**: Eliminated the separate `brk_state` crate and integrated its functionality into the broader architecture using `brk_store`. This architectural simplification reduces complexity and improves maintainability by consolidating state management responsibilities into fewer, more focused components. Code that directly imported `brk_state` will need to be updated to use the new consolidated system. [Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.73/Cargo.toml), [crates/brk_computer/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.73/crates/brk_computer/Cargo.toml)
+
+### Performance Improvements
+
+- **Implemented zerocopy serialization optimizations**: Added advanced zero-copy operations through `zerocopy` and `zerocopy-derive` dependencies in the computation layer. This eliminates unnecessary memory allocations and data copying when processing large Bitcoin datasets, resulting in significant performance improvements for blockchain analysis and metric calculations, especially for memory-intensive operations. [crates/brk_computer/Cargo.toml](https://github.com/bitcoinresearchkit/brk/blob/v0.0.73/crates/brk_computer/Cargo.toml#L29-L30)
+
+- **Enhanced serialization framework**: Integrated `bincode` for efficient binary serialization and `serde` for flexible data handling, providing faster and more memory-efficient data processing. These optimizations particularly benefit large-scale computations, data export operations, and inter-process communication by reducing serialization overhead and improving throughput.
 
 ### Internal Changes
-- **Computer Module Enhancement**: Added bincode serialization, zerocopy optimizations, and derive_deref functionality directly to the computer module for better performance
-- **Store Integration**: Enhanced store module with logging capabilities for better debugging and monitoring
-- **Plugin Architecture**: Expanded bundler plugin system with data URI support and improved ECMAScript utilities
+
+- **Upgraded MCP framework**: Updated `brk_rmcp` from version 0.1.8 to 0.2.1, bringing significant improvements to the Model Context Protocol implementation with enhanced AI integration capabilities, better error handling, and improved API functionality for connecting external AI tools to BRK's blockchain data.
+
+- **Added profiling build configuration**: Introduced dedicated profiling build profile that inherits from release but includes debug symbols, facilitating performance analysis and optimization work during development without compromising release build performance.
+
+- **Enhanced code ergonomics**: Added `derive_deref` dependency to simplify dereferencing patterns and improve code readability throughout the computation layer, making the codebase more maintainable and reducing boilerplate code.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.71...v0.0.73)
 
 ## [v0.0.71](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.71) - 2025-06-25
 
-### New Features
-- **Enhanced Schema Documentation**: Added comprehensive descriptions to all Index enum variants and API parameters, providing clear explanations for date/day index, height/block index, transaction indexes, address types, and time periods for better API usability ([crates/brk_interface/src/index.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_interface/src/index.rs), [crates/brk_interface/src/params.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_interface/src/params.rs))
+### API Improvements
 
-### API Changes
-- **MCP Tool Modernization**: Upgraded Model Context Protocol implementation to use new `tool_router` and `Parameters` wrapper for better type safety and parameter handling, replacing legacy `tool_box` approach ([crates/brk_mcp/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_mcp/src/lib.rs))
-- **Endpoint Renaming**: Renamed `get_variant_count` to `get_vec_count` for better consistency with API terminology
+- **Enhanced API documentation with comprehensive schema descriptions**: Added detailed descriptions to all index types and API parameters using JSON Schema annotations. Each index type now includes clear explanations (e.g., "Date/day index", "Difficulty epoch index (equivalent to ~2 weeks)", "Halving epoch index (equivalent to ~4 years)"). API parameters now have enhanced descriptions explaining their behavior, such as inclusive/exclusive ranges and negative index handling. This significantly improves developer experience when using BRK's API by providing clear, self-documenting interfaces. [crates/brk_interface/src/index.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_interface/src/index.rs), [crates/brk_interface/src/params.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_interface/src/params.rs)
+
+- **Standardized method naming for consistency**: Renamed `get_variant_count` to `get_vec_count` in the MCP interface to align with the actual API endpoint structure and improve naming consistency across the system. This change makes the API more intuitive and reduces confusion between different counting methods. [crates/brk_mcp/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_mcp/src/lib.rs#L59)
+
+### Architecture Modernization
+
+- **Upgraded MCP framework to latest tool routing system**: Implemented major architectural improvements by migrating from the legacy `tool_box` pattern to the modern `tool_router` system. This upgrade introduces better type safety, improved parameter handling through the `Parameters(...)` wrapper pattern, and more structured API definitions. The new system provides enhanced error handling, better documentation generation, and improved maintainability for AI integration features. [crates/brk_mcp/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.71/crates/brk_mcp/src/lib.rs#L27-L32)
+
+### Breaking Changes
+
+- **Updated MCP parameter handling system**: Modified parameter passing from attribute-based `#[tool(aggr)]` annotations to the new `Parameters<T>` wrapper system. This change affects how parameters are passed to MCP tools but provides better type safety and validation. Developers using the MCP interface will need to update their parameter handling code to work with the new system.
 
 ### Internal Changes
-- **Development Flexibility**: Added commented local development path for `brk_rmcp` to facilitate easier testing and development workflows
+
+- **Updated core dependencies for improved functionality**: Upgraded `brk_rmcp` to version 0.1.8 and `schemars` to version 1.0.1, bringing bug fixes, performance improvements, and enhanced features. Also updated several other dependencies including `oxc_resolver` and `papaya` to their latest versions for better stability and performance.
+
+- **Added development tooling configuration**: Included commented development path for `brk_rmcp` to facilitate local development and testing of MCP functionality.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.70...v0.0.71)
 
 ## [v0.0.70](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.70) - 2025-06-24
 
-### New Features
-- **Model Context Protocol Default**: Enabled MCP (Model Context Protocol) by default for LLM integration, changing from opt-in to opt-out behavior to make AI-powered Bitcoin data analysis more accessible ([crates/brk_cli/src/config.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/crates/brk_cli/src/config.rs))
+### User Experience
 
-### API Changes
-- **Simplified Endpoints**: Streamlined API endpoints by replacing complex query parameters with dedicated paths (`/height-to-ohlc` and `/dateindex-to-ohlc`) for cleaner and more intuitive data access ([crates/brk_fetcher/src/brk.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/crates/brk_fetcher/src/brk.rs))
+- **Enabled MCP (Model Context Protocol) by default**: AI integration is now enabled by default, making it easier for users to connect AI assistants and tools to BRK's blockchain data without manual configuration. Users can still disable MCP if needed, but the default behavior now promotes seamless AI-powered blockchain analysis workflows. This change significantly lowers the barrier to entry for AI-enhanced Bitcoin research. [crates/brk_cli/src/config.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/crates/brk_cli/src/config.rs#L91-L371)
+
+### API Improvements
+
+- **Simplified API endpoint structure for better usability**: Streamlined API endpoints by removing complex query parameters in favor of direct, intuitive paths. The height-to-OHLC endpoint now uses `/height-to-ohlc?from={}&to={}` instead of the previous `/query?index=height&values=ohlc&from={}&to={}` format, and similarly for dateindex endpoints. This makes the API more RESTful and easier to use for developers integrating with BRK's data services. [crates/brk_fetcher/src/brk.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/crates/brk_fetcher/src/brk.rs#L50-L100)
+
+- **Updated API documentation and endpoint references**: Corrected the dataset variant count API endpoint reference in the README from `/vecs/variant-count` to `/vecs/vec-count` to reflect the actual API structure and ensure accurate documentation for developers using the public API. [README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/README.md#L45)
+
+### Code Organization
+
+- **Flattened fetcher module structure for improved maintainability**: Reorganized the fetcher modules by moving all fetcher implementations from the nested `fetchers/` subdirectory directly to the `src/` root. This eliminates unnecessary module hierarchy, simplifies imports, and makes the codebase easier to navigate for developers working with price data fetching functionality. The change affects binance, kraken, BRK, and retry modules without changing their public APIs. [crates/brk_fetcher/src/](https://github.com/bitcoinresearchkit/brk/tree/v0.0.70/crates/brk_fetcher/src)
 
 ### Internal Changes
-- **Module Restructuring**: Flattened fetcher module structure by moving fetcher implementations directly into the main crate, eliminating nested module hierarchy for better maintainability
-- **Documentation**: Updated API badge URL to reflect new vec-count endpoint and improved MCP tool description clarity ([README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.70/README.md))
-- **Code Cleanup**: Removed commented debug code and unused file handle references from raw vector implementation
+
+- **Code cleanup and documentation improvements**: Removed commented-out debug statements and dead code from the vector management system, improving code readability and maintenance. Also enhanced MCP tool descriptions with better punctuation and formatting for improved developer experience.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.69...v0.0.70)
 
 ## [v0.0.69](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.69) - 2025-06-24
 
 ### Performance Improvements
-- **Vector Initialization Optimization**: Removed thread-based parallel initialization of indexes and fetched vectors, replacing with sequential initialization to reduce overhead and improve memory usage patterns during startup ([crates/brk_computer/src/vecs/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.69/crates/brk_computer/src/vecs/mod.rs))
-- **File Handle Management**: Refactored vector file handling architecture to use on-demand file opening instead of persistent file handles, reducing memory footprint and file descriptor usage ([crates/brk_vec/src/variants/raw.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.69/crates/brk_vec/src/variants/raw.rs))
 
-### Internal Changes
-- **Resource Limit Adjustment**: Reverted file handle limit back to 210,000 from 420,000, optimizing for more conservative resource usage
-- **Header Write Logic**: Simplified vector header writing by removing conditional logic and always performing write operations when needed, improving code clarity and reducing potential race conditions ([crates/brk_vec/src/structs/header.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.69/crates/brk_vec/src/structs/header.rs))
-- **Memory Map Updates**: Refactored memory map update logic to accept file references directly, eliminating need for persistent file handle storage and improving resource management
-- **Code Cleanup**: Removed unused imports and simplified vector trait implementations for better maintainability
+- **Optimized file handle management for better resource utilization**: Completely refactored the vector storage system to use on-demand file operations instead of persistent file handles. This architectural improvement eliminates file descriptor leaks, reduces memory pressure, and enables more robust handling of large datasets. Files are now opened when needed and immediately closed, preventing resource exhaustion when processing many concurrent operations. The new design also includes optimized header writing that conditionally returns file handles for better performance. [crates/brk_vec/](https://github.com/bitcoinresearchkit/brk/tree/v0.0.69/crates/brk_vec)
+
+### Architecture Changes
+
+- **Simplified vector initialization by removing parallel processing**: Streamlined the vector computation initialization from parallel threaded execution to sequential processing. While this may impact initialization speed, it eliminates threading complexity and potential race conditions, resulting in more predictable and maintainable code. This change improves system stability and reduces the potential for concurrency-related bugs. [crates/brk_computer/src/vecs/mod.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.69/crates/brk_computer/src/vecs/mod.rs#L47-L63)
+
+### Bug Fixes
+
+- **Reverted file descriptor limit to stable configuration**: Reduced the file descriptor limit back to 210,000 from the previous 420,000 setting. The higher limit may have caused system stability issues or compatibility problems with certain configurations. This reversion ensures reliable operation across different environments while the new file handle management provides better resource efficiency. [crates/brk_core/src/utils/rlimit.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.69/crates/brk_core/src/utils/rlimit.rs#L10)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.68...v0.0.69)
 
 ## [v0.0.68](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.68) - 2025-06-24
 
-### New Features
-- **CLI Version Information**: Added version command support to CLI configuration, enabling users to check the current version of BRK directly from the command line ([crates/brk_cli/src/config.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.68/crates/brk_cli/src/config.rs))
-
 ### Performance Improvements
-- **File Handle Limits**: Doubled the minimum file handle limit from 210,000 to 420,000 to accommodate larger Bitcoin datasets and prevent resource exhaustion during intensive blockchain processing operations ([crates/brk_core/src/utils/rlimit.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.68/crates/brk_core/src/utils/rlimit.rs))
+
+- **Doubled file descriptor limit for enhanced scalability**: Increased the maximum number of simultaneously open files from 210,000 to 420,000. This significant improvement addresses performance bottlenecks when processing large Bitcoin datasets that require opening many files concurrently (block files, index files, computed datasets). The higher limit enables BRK to handle larger datasets and more concurrent operations without hitting system resource constraints that could cause errors or performance degradation. [crates/brk_core/src/utils/rlimit.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.68/crates/brk_core/src/utils/rlimit.rs#L10)
+
+### User Experience
+
+- **Enhanced CLI with standard command behaviors**: Added automatic `--version` and `--help` command support to the CLI configuration through clap derive attributes. This provides users with standard command-line interface behaviors and better discoverability of available options without requiring additional implementation code. [crates/brk_cli/src/config.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.68/crates/brk_cli/src/config.rs#L19)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.67...v0.0.68)
 
 ## [v0.0.67](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.67) - 2025-06-24
 
 ### New Features
-- **Data Interface Layer**: Added `brk_interface` crate providing a comprehensive data interface layer with serialization, schema generation, and tabular formatting capabilities for exporting datasets in multiple formats (JSON, CSV, TSV, Markdown)
-- **Model Context Protocol Support**: Introduced `brk_mcp` crate implementing Model Context Protocol (MCP) for seamless integration with Large Language Models, enabling AI-powered Bitcoin data analysis and querying
-- **External MCP Integration**: Added `brk_rmcp` external dependency for robust MCP client/server communication capabilities
+
+- **Added Model Context Protocol (MCP) server support**: Introduced comprehensive MCP server implementation enabling AI assistants and external tools to connect to BRK's blockchain data through standardized protocols. This powerful integration allows AI systems to query Bitcoin data, perform analysis, and access BRK's computational capabilities through a well-defined interface, opening up new possibilities for AI-powered blockchain analysis tools. The MCP server provides secure, structured access to all of BRK's datasets and metrics.
+
+- **Introduced standardized interface layer**: Added new `brk_interface` crate that provides a clean, well-documented API abstraction layer for external access to BRK's computational capabilities. This interface includes comprehensive schema generation, structured data serialization, and formatted output capabilities, making it easier for developers to integrate BRK into their applications and tools.
 
 ### Breaking Changes
-- **Dependency Restructuring**: Removed direct `brk_query` dependency from CLI, replaced with modular `brk_interface` and `brk_mcp` architecture for better separation of concerns
-- **Storage Simplification**: Removed `arc-swap` and `fjall` dependencies from `brk_state`, streamlining state management architecture
+
+- **Restructured workspace architecture**: Removed the legacy `brk_query` crate as part of a major architectural modernization. Query functionality has been consolidated into the new interface layer, providing a more cohesive and maintainable API structure. This change simplifies the codebase while improving functionality through better abstraction layers.
+
+### Documentation
+
+- **Comprehensive repository rebranding and migration**: Updated all historical changelog references to reflect the migration from `kibo-money/kibo` to `bitcoinresearchkit/brk`. This includes updating GitHub URLs, asset paths, and project names throughout the historical documentation. Also corrected branding for historical versions (satonomics → kibo → brk) to accurately reflect the project's evolution and maintain documentation consistency.
 
 ### Internal Changes
-- **Build System**: Added auto-generated `vecid-to-indexes.js` file to gitignore to prevent version control conflicts
-- **Documentation Updates**: Updated historical changelog entries to reflect correct repository URLs and asset paths, migrating from kibo-money references to bitcoinresearchkit organization
-- **Dependency Updates**: Updated multiple core dependencies including `async-compression`, `autocfg`, `errno`, and `syn` to their latest versions for improved performance and compatibility
+
+- **Optimized dependency management**: Streamlined the dependency tree by removing unused dependencies including `arc-swap` from `brk_store`, `jiff` from `brk_fetcher`, and `tabled` from `brk_cli`. These optimizations reduce build times and binary size while maintaining all functionality through more efficient architectural patterns.
+
+- **Added auto-generated file management**: Enhanced build process by properly excluding auto-generated files (`vecid-to-indexes.js`) from version control, ensuring cleaner repository state and preventing conflicts from build artifacts.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.66...v0.0.67)
 
 ## [v0.0.66](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.66) - 2025-06-19
 
 ### New Features
-- **Cointime Analysis**: Added comprehensive cointime economic metrics including coinblocks creation/storage tracking, liveliness and vaultedness calculations, activity ratios, and specialized price metrics (vaulted price, active price, true market mean, cointime price) with corresponding market cap calculations ([crates/brk_computer/src/vecs/cointime.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.66/crates/brk_computer/src/vecs/cointime.rs))
-- **Advanced Supply Analysis**: Implemented vaulted and active supply tracking with dollar value computations, enabling analysis of Bitcoin storage behavior and economic activity patterns
+
+- **Added comprehensive Cointime analysis module**: Introduced advanced blockchain economic analysis capabilities through a complete Cointime implementation. This powerful new module provides sophisticated metrics for understanding Bitcoin holder behavior and market dynamics, including coinblocks tracking (created/stored/destroyed), liveliness and vaultedness calculations, supply segmentation into active and vaulted components, derived price metrics (vaulted price, active price, true market mean), capitalization analysis (thermo cap, investor cap, vaulted cap, active cap), and cointime value flow tracking. These metrics enable deep insights into market cycles, holder behavior patterns, and the economic state of the Bitcoin network. [crates/brk_computer/src/vecs/cointime.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.66/crates/brk_computer/src/vecs/cointime.rs)
 
 ### Documentation
-- **CLI Documentation**: Improved CLI README with better formatting, clearer installation instructions, enhanced usage examples, and restructured content with proper markdown syntax and information blocks ([crates/brk_cli/README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.66/crates/brk_cli/README.md))
-- **Installation Guidance**: Added prominent installation notes for Ubuntu users and improved download section formatting with better link formatting and structure
 
-### Internal Changes
-- **Ratio Analysis Integration**: Connected cointime price metrics with ratio analysis system for comprehensive trend analysis across vaulted price, active price, true market mean, and cointime price ratios
+- **Enhanced CLI documentation and user experience**: Significantly improved the BRK CLI README with better formatting, corrected typos, and enhanced clarity. Added proper GitHub-style callouts for important information (Ubuntu installation requirements) and helpful tips (configuration persistence). Improved explanations of command usage patterns, updated documentation links to point to specific commit hashes for stability, and enhanced Cloudflare integration guidance with proper formatting. These improvements make BRK more accessible to new users and provide clearer guidance for setup and usage. [crates/brk_cli/README.md](https://github.com/bitcoinresearchkit/brk/blob/v0.0.66/crates/brk_cli/README.md)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.65...v0.0.66)
 
 ## [v0.0.65](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.65) - 2025-06-17
 
 ### Bug Fixes
-- **Chart Data Update Logic**: Simplified chart data update algorithm by removing complex comparison logic and replacing it with a streamlined approach that updates all data points at or after the last known time, significantly reducing complexity and potential update conflicts ([websites/default/packages/lightweight-charts/wrapper.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.65/websites/default/packages/lightweight-charts/wrapper.js))
+
+- **Improved cohort analysis metric calculations**: Updated version numbers for cumulative net realized profit and loss calculations to ensure accurate computation of 30-day change metrics. This includes improvements to standard calculations, realized cap relative calculations, and market cap relative calculations for better cohort analysis accuracy. [crates/brk_computer/src/vecs/stateful/cohort.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.65/crates/brk_computer/src/vecs/stateful/cohort.rs#L951-L976)
+
+### Performance Improvements
+
+- **Streamlined chart data update mechanism**: Significantly simplified the chart update logic by replacing complex historical data comparison with a streamlined approach that only updates data points at or after the last existing timestamp. This eliminates unnecessary computation overhead from detailed value comparisons and debugging logic, resulting in faster chart rendering and improved user interface responsiveness. [websites/default/packages/lightweight-charts/wrapper.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.65/websites/default/packages/lightweight-charts/wrapper.js#L483-L491)
 
 ### Internal Changes
-- **Cohort Analysis Versioning**: Incremented version numbers for cumulative net realized profit/loss metrics from VERSION::TWO to VERSION::new(3), ensuring proper cache invalidation and data consistency for cohort analysis computations ([crates/brk_computer/src/vecs/stateful/cohort.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.65/crates/brk_computer/src/vecs/stateful/cohort.rs))
+
+- **Updated web interface version tracking**: Synchronized version numbers in auto-generated files to maintain consistency between backend calculations and frontend display systems.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.64...v0.0.65)
 
 ## [v0.0.64](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.64) - 2025-06-17
 
 ### New Features
-- **4-Year Statistical Analysis**: Added comprehensive 4-year moving averages and standard deviation calculations for ratio analysis, enabling long-term trend analysis with `ratio_4y_sma`, `ratio_4y_sd`, and `ratio_4y_zscore` metrics ([crates/brk_computer/src/vecs/grouped/ratio_from_dateindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.64/crates/brk_computer/src/vecs/grouped/ratio_from_dateindex.rs))
-- **Z-Score Computation Optimization**: Refactored z-score calculations to use a dedicated `compute_zscore()` method, improving code maintainability and performance by centralizing statistical computations
+
+- **Added 4-year financial analysis metrics**: Introduced comprehensive 4-year statistical measures including 4-year simple moving average (`ratio_4y_sma`), 4-year standard deviation (`ratio_4y_sd`), and 4-year z-score (`ratio_4y_zscore`) for long-term market cycle analysis. These metrics enable identification of extreme market conditions over full Bitcoin market cycles, providing crucial insights for long-term trend analysis and valuation assessment. [crates/brk_computer/src/vecs/grouped/ratio_from_dateindex.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.64/crates/brk_computer/src/vecs/grouped/ratio_from_dateindex.rs)
 
 ### Internal Changes
-- **Vector Naming Convention**: Renamed `ratio_standard_deviation` to `ratio_sd` for consistency with other abbreviated metric names
-- **Statistical Method Extraction**: Extracted z-score computation logic into reusable methods, reducing code duplication and improving mathematical accuracy
-- **Vector Builder Enhancement**: Added conditional naming logic in grouped vector builder for better handling of sum operations with optional suffixes
+
+- **Enhanced grouped vector builder with conditional naming**: Added intelligent naming logic that applies different suffixes based on computation position in series, enabling more descriptive names for final computations versus intermediate steps. This improves code organization and makes grouped computations more self-documenting. [crates/brk_computer/src/vecs/grouped/builder.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.64/crates/brk_computer/src/vecs/grouped/builder.rs#L133-L137)
+
+- **Refactored z-score computation for code reusability**: Consolidated duplicate z-score calculation logic into a reusable `compute_zscore` method that accepts separate moving average and standard deviation inputs. This eliminates code duplication between 1-year and 4-year z-score calculations while improving maintainability and consistency.
+
+- **Standardized statistical metric naming**: Renamed `ratio_standard_deviation` to `ratio_sd` for consistency with other abbreviated metric names throughout the codebase, improving code readability and maintaining naming conventions.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.63...v0.0.64)
 
 ## [v0.0.63](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.63) - 2025-06-16
 
 ### New Features
-- **Static File Caching**: Implemented intelligent HTTP caching strategy for static assets, setting immutable cache headers for long-term assets (images, fonts, JavaScript, map files) and must-revalidate headers for HTML and service worker files to ensure optimal performance and cache invalidation ([crates/brk_server/src/files/file.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.63/crates/brk_server/src/files/file.rs))
-- **Progressive Web App Assets**: Added comprehensive PWA assets including Apple Touch icons, splash screens for all iOS device sizes and orientations, and maskable icons for Android, enabling native app-like experience across all mobile platforms
+
+- **Enhanced Progressive Web App support**: Added comprehensive PWA configuration with device-specific splash screens and icons for seamless mobile and desktop app installation. Includes optimized assets for all major iOS device sizes and orientations, improving the native app experience when users install the web application on their devices. [websites/default/assets/pwa/](https://github.com/bitcoinresearchkit/brk/tree/v0.0.63/websites/default/assets/pwa)
+
+### Performance Improvements
+
+- **Optimized static file serving and caching**: Streamlined cache control logic by replacing complex string-based path matching with proper file extension detection. Simplified immutable cache rules to focus on essential static assets (images, JavaScript, maps) while removing unnecessary directory-based checks, resulting in more efficient file serving and better cache hit rates. [crates/brk_server/src/files/file.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.63/crates/brk_server/src/files/file.rs#L97-L109)
 
 ### Internal Changes
-- **File Extension Detection**: Refactored file extension checking from string-based `ends_with()` pattern matching to more robust `Path::extension()` method for better accuracy and maintainability
-- **Cache Logic Simplification**: Consolidated cache control logic by removing redundant file path checks and grouping related file types for cleaner code organization
+
+- **Improved file extension handling**: Replaced string-based file type detection with robust `path.extension()` method calls for better reliability and maintainability in static file processing. This architectural improvement reduces the likelihood of file type detection errors and makes the codebase more resilient to edge cases in file path handling.
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.62...v0.0.63)
 
 ## [v0.0.62](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.62) - 2025-06-16
 
 ### Bug Fixes
-- **TypeScript Bridge Generation**: Fixed JavaScript/TypeScript bridge generation by properly handling optional return values when reading hashed main.js entry files, preventing crashes when entry files don't exist ([crates/brk_bundler/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/crates/brk_bundler/src/lib.rs))
-- **TypeScript Type Generation**: Restructured TypeScript type definitions for VecIdToIndexes, moving typedef comments outside function declaration for proper type recognition ([crates/brk_server/src/api/query/bridge.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/crates/brk_server/src/api/query/bridge.rs))
 
-### New Features
-- **Chart Time Scale Optimization**: Improved time scale spacing for different chart time periods with more balanced bar spacing (quarters: 3→2, years: 12→6, decades: 120→60) for better visual density ([websites/default/packages/lightweight-charts/wrapper.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/websites/default/packages/lightweight-charts/wrapper.js))
-- **Progressive Web App Support**: Added service worker scope configuration and improved PWA manifest handling for better standalone app experience
+- **Improved error handling in bundler file operations**: Fixed potential panics in the bundler when processing entry files that don't contain expected "main" or ".js" strings. Replaced unsafe `.unwrap()` calls with proper `if let Some()` pattern matching to gracefully handle missing file content patterns. [crates/brk_bundler/src/lib.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/crates/brk_bundler/src/lib.rs#L52-L57)
+
+- **Enhanced web application error resilience**: Added try-catch error handling around localStorage operations to prevent application crashes when localStorage is unavailable (such as in private browsing mode or restrictive environments). This ensures the web application remains functional even when local storage access is blocked. [websites/default/index.html](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/websites/default/index.html#L1857-L1865)
+
+### Performance Improvements
+
+- **Optimized chart rendering performance**: Streamlined the lightweight-charts data processing pipeline by removing unnecessary intermediate variables and simplifying data transformation logic. Improved time scale bar spacing algorithms for different time periods (months, quarters, years, decades) to provide better visual spacing and reduced computational overhead. [websites/default/packages/lightweight-charts/wrapper.js](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/websites/default/packages/lightweight-charts/wrapper.js)
 
 ### Internal Changes
-- **Chart Data Processing**: Refactored chart data handling to use object destructuring instead of arrays, improving code clarity and type safety in effect callbacks
-- **HTML Standards**: Updated HTML5 DOCTYPE declaration and improved syntax consistency
-- **Error Handling**: Added try-catch protection for localStorage operations to prevent crashes in restricted environments
+
+- **Enhanced TypeScript support for web interface**: Reorganized TypeScript type definition generation to improve IntelliSense and code completion. Moved `@typedef` comments to proper positions and simplified object return structures for better developer experience when working with the web API. [crates/brk_server/src/api/query/bridge.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/crates/brk_server/src/api/query/bridge.rs#L64-L85)
+
+- **Improved HTML5 compliance and service worker configuration**: Updated HTML doctype declaration for better standards compliance and enhanced service worker registration with explicit scope configuration for improved Progressive Web App functionality. [websites/default/index.html](https://github.com/bitcoinresearchkit/brk/blob/v0.0.62/websites/default/index.html)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.61...v0.0.62)
 
 ## [v0.0.61](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.61) - 2025-06-15
 
-### New Features
-- **OHLC Price Continuity**: Added logic to maintain price continuity between days in OHLC data computation by setting today's opening price to the previous day's closing price, ensuring no gaps in price series when computing daily OHLC from fetched data ([crates/brk_computer/src/vecs/fetched.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.61/crates/brk_computer/src/vecs/fetched.rs))
+### Bug Fixes
+
+- **Fixed OHLC price continuity in financial data computation**: Implemented proper candlestick continuity logic where each trading day's opening price now equals the previous day's closing price. This ensures accurate financial charting and enables proper gap analysis by adjusting high and low prices when opening price gaps occur. [crates/brk_computer/src/vecs/fetched.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.61/crates/brk_computer/src/vecs/fetched.rs#L432-L443)
+
+- **Improved error handling in block recap export functionality**: Enhanced error diagnostics by capturing and displaying the actual file system error instead of generic "No such file or directory" message. Now provides more accurate "Cannot write file" error with detailed error information for better debugging when export operations fail. [crates/brk_parser/src/blk_index_to_blk_recap.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.61/crates/brk_parser/src/blk_index_to_blk_recap.rs#L99-L103)
 
 ### Internal Changes
-- **Struct Mutability**: Added `DerefMut` trait to all OHLC struct variants (OhlcF64, OhlcBtc, OhlcSats, OhlcUsd) enabling mutable access to underlying values
-- **Error Handling**: Improved file creation error handling in block recap export with more descriptive panic messages
+
+- **Added mutable dereferencing capability to OHLC data structures**: Extended all OHLC-related structs with `DerefMut` derive to enable direct mutable access to underlying price data. This architectural change supports the price continuity fix by allowing the system to modify opening, high, and low prices when implementing gap adjustments between trading periods. [crates/brk_core/src/structs/ohlc.rs](https://github.com/bitcoinresearchkit/brk/blob/v0.0.61/crates/brk_core/src/structs/ohlc.rs)
 
 [View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.59...v0.0.61)

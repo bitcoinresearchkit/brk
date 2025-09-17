@@ -34,11 +34,7 @@ pub fn main() -> Result<()> {
             let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
             // let outputs_dir = Path::new("../../_outputs");
 
-            let parser = Parser::new(
-                bitcoin_dir.join("blocks"),
-                Some(outputs_dir.to_path_buf()),
-                rpc,
-            );
+            let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
             let mut indexer = Indexer::forced_import(&outputs_dir)?;
 

@@ -7,7 +7,7 @@ use std::{
 use derive_deref::{Deref, DerefMut};
 
 const BLK: &str = "blk";
-const DAT: &str = ".dat";
+const DOT_DAT: &str = ".dat";
 
 #[derive(Debug, Deref, DerefMut)]
 pub struct BlkIndexToBlkPath(BTreeMap<u16, PathBuf>);
@@ -24,7 +24,7 @@ impl BlkIndexToBlkPath {
                     if is_file {
                         let file_name = path.file_name().unwrap().to_str().unwrap();
 
-                        file_name.starts_with(BLK) && file_name.ends_with(DAT)
+                        file_name.starts_with(BLK) && file_name.ends_with(DOT_DAT)
                     } else {
                         false
                     }
@@ -32,7 +32,7 @@ impl BlkIndexToBlkPath {
                 .map(|path| {
                     let file_name = path.file_name().unwrap().to_str().unwrap();
 
-                    let blk_index = file_name[BLK.len()..(file_name.len() - DAT.len())]
+                    let blk_index = file_name[BLK.len()..(file_name.len() - DOT_DAT.len())]
                         .parse::<u16>()
                         .unwrap();
 

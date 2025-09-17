@@ -1,10 +1,10 @@
 # Changelog Generation Prompt
 
-Update docs/CHANGELOG.md for ALL releases starting from v0.0.103 onwards. Use ONLY git commands - no other sources.
+Update docs/CHANGELOG.md for ALL releases starting from v0.0.107 onwards. Use ONLY git commands - no other sources.
 
 ## MANDATORY PROCESS - FOLLOW EXACTLY - NO EXCEPTIONS:
 1. Run `git tag --list --sort=version:refname` to get releases in order
-2. Process EXACTLY ONE release at a time starting from v0.0.103
+2. Process EXACTLY ONE release at a time
 3. For EACH SINGLE release: run `git diff [previous-tag]..[current-tag]`
 4. **MANDATORY ANALYSIS STEP**: Before writing ANY changelog entry, you MUST:
    - Analyze each file change and explain what the code is doing
