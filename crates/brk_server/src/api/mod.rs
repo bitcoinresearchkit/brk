@@ -14,7 +14,6 @@ use brk_structs::{
     AddressBytesHash, AnyAddressDataIndexEnum, Bitcoin, OutputType, Txid, TxidPrefix,
 };
 use serde_json::Number;
-use tracing::info;
 use vecdb::{AnyIterableVec, VecIterator};
 
 use super::AppState;
@@ -34,8 +33,9 @@ impl ApiRoutes for Router<AppState> {
             "/api/address/{address}",
             get(
                 async |Path(address): Path<String>, state: State<AppState>| -> Response {
-                    info!(address);
-                    let address = Address::from_str(&address).unwrap();
+                    let Ok(address) = Address::from_str(&address) else {
+                        return "Invalid address".into_response();
+                    };
                     if !address.is_valid_for_network(Network::Bitcoin) {
                         return "Invalid address".into_response();
                     }
@@ -52,12 +52,14 @@ impl ApiRoutes for Router<AppState> {
                         address.script_pubkey(),
                         OutputType::from(&address)
                     );
-                    let addri = stores
+
+                    let Ok(Some(addri)) = stores
                         .addressbyteshash_to_typeindex
                         .get(&hash)
-                        .unwrap()
-                        .unwrap()
-                        .into_owned();
+                        .map(|opt| opt.map(|cow| cow.into_owned())) else {
+                            return "Unknown address".into_response();
+                        };
+
                     println!("Script pubkey: {}", address.script_pubkey());
                     println!("Address type: {:?}", address.address_type());
                     let output_type = OutputType::from(&address);
@@ -150,18 +152,20 @@ impl ApiRoutes for Router<AppState> {
             "/api/tx/{txid}",
             get(
                 async |Path(txid): Path<String>, state: State<AppState>| -> Response {
-                    let txid = bitcoin::Txid::from_str(&txid).unwrap();
+                    let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
+                        return "Invalid txid".into_response()
+                    };
                     let txid = Txid::from(txid);
                     let prefix = TxidPrefix::from(&txid);
                     let interface = state.interface;
                     let indexer = interface.indexer();
-                    let txindex = indexer
+                    let Ok(Some(txindex)) = indexer
                         .stores
                         .txidprefix_to_txindex
                         .get(&prefix)
-                        .unwrap()
-                        .unwrap()
-                        .into_owned();
+                        .map(|opt| opt.map(|cow| cow.into_owned())) else {
+                            return "Unknown transaction".into_response();
+                        };
                     let version = indexer
                         .vecs
                         .txindex_to_txversion
