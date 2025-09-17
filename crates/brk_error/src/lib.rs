@@ -18,6 +18,7 @@ pub enum Error {
     Minreq(minreq::Error),
     SystemTimeError(time::SystemTimeError),
     BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
+    BitcoinBip34Error(bitcoin::block::Bip34Error),
     SerdeJson(serde_json::Error),
     ZeroCopyError,
     Vecs(vecdb::Error),
@@ -28,6 +29,12 @@ pub enum Error {
     QuickCacheError,
     Str(&'static str),
     String(String),
+}
+
+impl From<bitcoin::block::Bip34Error> for Error {
+    fn from(value: bitcoin::block::Bip34Error) -> Self {
+        Self::BitcoinBip34Error(value)
+    }
 }
 
 impl From<bitcoin::consensus::encode::Error> for Error {
@@ -90,6 +97,12 @@ impl From<fjall::Error> for Error {
     }
 }
 
+impl From<&'static str> for Error {
+    fn from(value: &'static str) -> Self {
+        Self::Str(value)
+    }
+}
+
 impl<A, B, C> From<zerocopy::error::ConvertError<A, B, C>> for Error {
     fn from(_: zerocopy::error::ConvertError<A, B, C>) -> Self {
         Self::ZeroCopyError
@@ -106,6 +119,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::BitcoinConsensusEncode(error) => Display::fmt(&error, f),
+            Error::BitcoinBip34Error(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
             Error::Fjall(error) => Display::fmt(&error, f),
             Error::IO(error) => Display::fmt(&error, f),

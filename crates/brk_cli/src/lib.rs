@@ -47,7 +47,7 @@ pub fn run() -> color_eyre::Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(config.blocksdir(), Some(config.brkdir()), rpc);
+    let parser = Parser::new(config.blocksdir(), rpc);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 

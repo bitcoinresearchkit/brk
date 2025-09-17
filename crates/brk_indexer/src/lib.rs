@@ -8,9 +8,9 @@ use brk_error::{Error, Result};
 use brk_parser::Parser;
 use brk_store::AnyStore;
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockExtended, BlockHash, BlockHashPrefix, Height, InputIndex,
-    OutputIndex, OutputType, Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
-    TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, InputIndex, OutputIndex, OutputType,
+    Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, TypeIndexWithOutputindex,
+    Unit, Version, Vin, Vout,
 };
 use log::{error, info};
 use rayon::prelude::*;
@@ -165,7 +165,10 @@ impl Indexer {
         );
 
         parser.parse(start, end).iter().try_for_each(
-            |(height, block, blockhash)| -> Result<()> {
+            |block| -> Result<()> {
+                let height = block.height();
+                let blockhash = block.hash();
+
                 info!("Indexing block {height}...");
 
                 idxs.height = height;
@@ -183,8 +186,7 @@ impl Indexer {
                 // Used to check rapidhash collisions
                 let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO ;
 
-                let blockhash = BlockHash::from(blockhash);
-                let blockhash_prefix = BlockHashPrefix::from(&blockhash);
+                let blockhash_prefix = BlockHashPrefix::from(blockhash);
 
                 if stores
                     .blockhashprefix_to_height
@@ -205,7 +207,7 @@ impl Indexer {
                     .height_to_coinbase_tag
                     .insert_if_needed( height, block.coinbase_tag().into(), height);
 
-                vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
+                vecs.height_to_blockhash.push_if_needed(height, blockhash.clone())?;
                 vecs.height_to_difficulty
                     .push_if_needed(height, block.header.difficulty_float().into())?;
                 vecs.height_to_timestamp

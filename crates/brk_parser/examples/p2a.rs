@@ -8,7 +8,6 @@ fn main() {
     let i = std::time::Instant::now();
 
     let bitcoin_dir = Path::new("").join("");
-    let brk_dir = Path::new("").join("");
 
     let rpc = Box::leak(Box::new(
         Client::new(
@@ -21,7 +20,7 @@ fn main() {
     // let start = None;
     // let end = None;
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), Some(brk_dir), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
     // parser
     //     .parse(start, end)
@@ -43,7 +42,7 @@ fn main() {
     //         .script_pubkey
     // );
 
-    let block_850_000 = parser.get(Height::new(850_000));
+    let block_850_000 = parser.get(Height::new(850_000)).unwrap();
 
     let tx = block_850_000.txdata.iter().find(|tx| {
         tx.compute_txid().to_string()

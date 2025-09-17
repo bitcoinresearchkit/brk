@@ -17,7 +17,6 @@ pub fn main() -> Result<()> {
     let process = true;
 
     let bitcoin_dir = Path::new("");
-    let brk_dir = Path::new("");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
@@ -26,7 +25,7 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), Some(brk_dir.to_path_buf()), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 
