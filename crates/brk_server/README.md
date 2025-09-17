@@ -29,7 +29,7 @@ This crate provides a high-performance HTTP server built on `axum` that exposes 
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_server
 ```
 

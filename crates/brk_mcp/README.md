@@ -26,13 +26,23 @@ This crate provides a Model Context Protocol (MCP) server implementation that ex
 - AI-driven financial analysis requiring Bitcoin metrics
 - Automated research tools with natural language queries
 
-## Installation
+## Claude
 
-```toml
+### Quick Start
+
+Add a `bitview` custom connector with the following URL:
+
+`https://bitview.space/mcp`
+
+## Rust
+
+### Installation
+
+```bash
 cargo add brk_mcp
 ```
 
-## Quick Start
+### Quick Start
 
 ```rust
 use brk_mcp::MCP;

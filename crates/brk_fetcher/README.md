@@ -26,7 +26,7 @@ This crate provides a unified interface for fetching Bitcoin price data from mul
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_fetcher
 ```
 

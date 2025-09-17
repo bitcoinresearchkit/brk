@@ -1,4 +1,4 @@
-use bitcoin::absolute::LockTime;
+use bitcoin::{absolute::LockTime, locktime::absolute::LOCK_TIME_THRESHOLD};
 use serde::Serialize;
 use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -14,12 +14,10 @@ impl From<LockTime> for RawLockTime {
     }
 }
 
-const CONSENSUS_DELIMITER: u32 = 500_000_000;
-
 impl From<RawLockTime> for LockTime {
     fn from(value: RawLockTime) -> Self {
         let value = value.0;
-        if value >= CONSENSUS_DELIMITER {
+        if value < LOCK_TIME_THRESHOLD {
             bitcoin::locktime::absolute::Height::from_consensus(value)
                 .unwrap()
                 .into()

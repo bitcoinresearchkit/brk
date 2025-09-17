@@ -26,7 +26,7 @@ This crate provides a thin wrapper around `env_logger` with enhanced formatting,
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_logger
 ```
 

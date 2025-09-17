@@ -28,7 +28,7 @@ This crate provides a type-safe wrapper around the Fjall LSM-tree database engin
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_store
 ```
 
