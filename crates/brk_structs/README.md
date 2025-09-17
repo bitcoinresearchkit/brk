@@ -28,7 +28,7 @@ This crate provides a comprehensive type system for Bitcoin blockchain analysis,
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_structs
 ```
 

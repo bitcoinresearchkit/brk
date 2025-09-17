@@ -25,7 +25,7 @@ This crate provides a unified error type that consolidates error handling across
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_error
 ```
 

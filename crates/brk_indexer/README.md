@@ -28,7 +28,7 @@ This crate provides a comprehensive Bitcoin blockchain indexer built on top of `
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_indexer
 ```
 

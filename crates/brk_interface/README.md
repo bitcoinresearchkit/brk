@@ -28,7 +28,7 @@ This crate provides a high-level interface for querying and formatting data from
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_interface
 ```
 

@@ -28,7 +28,7 @@ This crate provides a thin wrapper around the Rolldown JavaScript bundler specif
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_bundler
 ```
 

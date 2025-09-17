@@ -28,7 +28,7 @@ This crate provides a multi-threaded Bitcoin block parser that processes raw Bit
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_parser
 ```
 

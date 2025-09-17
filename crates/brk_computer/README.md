@@ -29,7 +29,7 @@ This crate provides a sophisticated analytics engine that processes indexed Bitc
 
 ## Installation
 
-```toml
+```bash
 cargo add brk_computer
 ```
 
