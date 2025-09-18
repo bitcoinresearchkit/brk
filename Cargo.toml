@@ -68,9 +68,9 @@ minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.4"
 quick_cache = "0.6.16"
 rayon = "1.11.0"
-serde = "1.0.223"
-serde_bytes = "0.11.18"
-serde_derive = "1.0.223"
+serde = "1.0.225"
+serde_bytes = "0.11.19"
+serde_derive = "1.0.225"
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}

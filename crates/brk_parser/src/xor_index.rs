@@ -4,7 +4,7 @@ use crate::xor_bytes::{XOR_LEN, XORBytes};
 pub struct XORIndex(usize);
 
 impl XORIndex {
-    pub fn bytes<'a>(&mut self, bytes: &'a mut [u8], xor_bytes: &XORBytes) -> &'a mut [u8] {
+    pub fn bytes<'a>(&mut self, bytes: &'a mut [u8], xor_bytes: XORBytes) -> &'a mut [u8] {
         let len = bytes.len();
         let mut bytes_index = 0;
 
@@ -18,7 +18,7 @@ impl XORIndex {
     }
 
     #[inline]
-    pub fn byte(&mut self, mut byte: u8, xor_bytes: &XORBytes) -> u8 {
+    pub fn byte(&mut self, mut byte: u8, xor_bytes: XORBytes) -> u8 {
         byte ^= xor_bytes[self.0];
         self.increment();
         byte

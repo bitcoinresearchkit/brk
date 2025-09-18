@@ -9,7 +9,7 @@ use derive_deref::{Deref, DerefMut};
 const BLK: &str = "blk";
 const DOT_DAT: &str = ".dat";
 
-#[derive(Debug, Deref, DerefMut)]
+#[derive(Debug, Clone, Deref, DerefMut)]
 pub struct BlkIndexToBlkPath(BTreeMap<u16, PathBuf>);
 
 impl BlkIndexToBlkPath {

@@ -73,7 +73,7 @@ pub fn run() -> color_eyre::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let interface = Interface::build(&indexer, &computer);
+            let interface = Interface::build(&parser, &indexer, &computer);
 
             let website = config.website();
 
@@ -135,9 +135,7 @@ pub fn run() -> color_eyre::Result<()> {
                 let starting_indexes =
                     indexer.index(&parser, rpc, &exit, config.check_collisions()).unwrap();
 
-                // dbg!(&starting_indexes);
-
-                computer.compute(&indexer, starting_indexes, &exit).unwrap();
+                computer.compute(&indexer, starting_indexes, &parser, &exit).unwrap();
 
                 info!("Waiting for new blocks...");
 

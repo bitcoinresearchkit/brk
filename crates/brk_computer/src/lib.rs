@@ -5,6 +5,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
+use brk_parser::Parser;
 use brk_structs::Version;
 use log::info;
 use vecdb::{AnyCollectableVec, Exit, Format};
@@ -17,6 +18,7 @@ mod grouped;
 mod indexes;
 mod market;
 mod pools;
+mod positions;
 mod price;
 mod stateful;
 mod states;
@@ -31,15 +33,16 @@ use states::*;
 
 #[derive(Clone)]
 pub struct Computer {
-    pub indexes: indexes::Vecs,
+    pub chain: chain::Vecs,
+    pub cointime: cointime::Vecs,
     pub constants: constants::Vecs,
+    pub fetched: Option<fetched::Vecs>,
+    pub indexes: indexes::Vecs,
     pub market: market::Vecs,
     pub pools: pools::Vecs,
+    pub positions: positions::Vecs,
     pub price: Option<price::Vecs>,
-    pub chain: chain::Vecs,
     pub stateful: stateful::Vecs,
-    pub fetched: Option<fetched::Vecs>,
-    pub cointime: cointime::Vecs,
 }
 
 const VERSION: Version = Version::new(4);
@@ -87,6 +90,7 @@ impl Computer {
                 &indexes,
                 price.as_ref(),
             )?,
+            positions: positions::Vecs::forced_import(&computed_path, VERSION + Version::ZERO)?,
             pools: pools::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
@@ -109,14 +113,11 @@ impl Computer {
         &mut self,
         indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
+        parser: &Parser,
         exit: &Exit,
     ) -> Result<()> {
         info!("Computing indexes...");
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
-
-        info!("Computing constants...");
-        self.constants
-            .compute(&self.indexes, &starting_indexes, exit)?;
 
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
@@ -131,7 +132,25 @@ impl Computer {
             )?;
         }
 
+        info!("Computing positions...");
+        self.positions
+            .compute(indexer, &self.indexes, &starting_indexes, parser, exit)?;
+
         std::thread::scope(|scope| -> Result<()> {
+            let constants = scope.spawn(|| -> Result<()> {
+                info!("Computing constants...");
+                self.constants
+                    .compute(&self.indexes, &starting_indexes, exit)?;
+                Ok(())
+            });
+
+            // let positions = scope.spawn(|| -> Result<()> {
+            //     info!("Computing positions...");
+            //     self.positions
+            //         .compute(indexer, &self.indexes, &starting_indexes, parser, exit)?;
+            //     Ok(())
+            // });
+
             let chain = scope.spawn(|| -> Result<()> {
                 info!("Computing chain...");
                 self.chain.compute(
@@ -149,6 +168,8 @@ impl Computer {
                 self.market.compute(price, &starting_indexes, exit)?;
             }
 
+            constants.join().unwrap()?;
+            // positions.join().unwrap()?;
             chain.join().unwrap()?;
             Ok(())
         })?;
@@ -161,8 +182,6 @@ impl Computer {
             self.price.as_ref(),
             exit,
         )?;
-
-        // return Ok(());
 
         info!("Computing stateful...");
         self.stateful.compute(
@@ -191,14 +210,15 @@ impl Computer {
         let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(self.fetched.iter().flat_map(|v| v.iter_any_collectable()));
 
-        iter = Box::new(iter.chain(self.price.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.pools.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.chain.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.cointime.iter_any_collectable()));
         iter = Box::new(iter.chain(self.constants.iter_any_collectable()));
         iter = Box::new(iter.chain(self.indexes.iter_any_collectable()));
         iter = Box::new(iter.chain(self.market.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.chain.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.pools.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.positions.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.price.iter().flat_map(|v| v.iter_any_collectable())));
         iter = Box::new(iter.chain(self.stateful.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.cointime.iter_any_collectable()));
 
         iter
     }
