@@ -27,11 +27,7 @@ impl<'a> Vecs<'a> {
     pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
         let mut this = Vecs::default();
 
-        indexer
-            .vecs
-            .vecs()
-            .into_iter()
-            .for_each(|vec| this.insert(vec));
+        indexer.vecs.iter().for_each(|vec| this.insert(vec));
 
         computer
             .iter_any_collectable()

@@ -20,7 +20,6 @@ use crate::Indexes;
 #[derive(Clone)]
 pub struct Vecs {
     db: Database,
-
     pub emptyoutputindex_to_txindex: CompressedVec<EmptyOutputIndex, TxIndex>,
     pub height_to_blockhash: RawVec<Height, BlockHash>,
     pub height_to_difficulty: CompressedVec<Height, StoredF64>,
@@ -39,7 +38,7 @@ pub struct Vecs {
     pub height_to_first_p2wshaddressindex: CompressedVec<Height, P2WSHAddressIndex>,
     pub height_to_first_txindex: CompressedVec<Height, TxIndex>,
     pub height_to_first_unknownoutputindex: CompressedVec<Height, UnknownOutputIndex>,
-    /// Doesn't guarantee continuity due to possible reorgs
+    /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     pub height_to_timestamp: CompressedVec<Height, Timestamp>,
     pub height_to_total_size: CompressedVec<Height, StoredU64>,
     pub height_to_weight: CompressedVec<Height, Weight>,
@@ -72,8 +71,10 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
         let db = Database::open(&parent.join("vecs"))?;
-
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
+
+        let db_positions = Database::open(&parent.join("vecs/positions"))?;
+        db_positions.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let this = Self {
             emptyoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
@@ -192,12 +193,8 @@ impl Vecs {
             db,
         };
 
-        // self.db.retain_regions(
-        //     this.vecs()
-        //         .into_iter()
-        //         .flat_map(|v| v.region_names())
-        //         .collect(),
-        // )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -349,16 +346,15 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.mut_vecs()
-            .into_par_iter()
+        self.iter_mut()
+            .par_bridge()
             .try_for_each(|vec| vec.stamped_flush(Stamp::from(height)))?;
         self.db.flush()?;
         Ok(())
     }
 
     pub fn starting_height(&mut self) -> Height {
-        self.mut_vecs()
-            .into_iter()
+        self.iter_mut()
             .map(|vec| {
                 let h = Height::from(vec.stamp());
                 if h > Height::ZERO { h.incremented() } else { h }
@@ -372,9 +368,9 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        vec![
-            &self.emptyoutputindex_to_txindex,
+    pub fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [
+            &self.emptyoutputindex_to_txindex as &dyn AnyCollectableVec,
             &self.height_to_blockhash,
             &self.height_to_difficulty,
             &self.height_to_first_emptyoutputindex,
@@ -419,11 +415,12 @@ impl Vecs {
             &self.txindex_to_txversion,
             &self.unknownoutputindex_to_txindex,
         ]
+        .into_iter()
     }
 
-    fn mut_vecs(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.emptyoutputindex_to_txindex,
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+        [
+            &mut self.emptyoutputindex_to_txindex as &mut dyn AnyStoredVec,
             &mut self.height_to_blockhash,
             &mut self.height_to_difficulty,
             &mut self.height_to_first_emptyoutputindex,
@@ -468,5 +465,6 @@ impl Vecs {
             &mut self.txindex_to_txversion,
             &mut self.unknownoutputindex_to_txindex,
         ]
+        .into_iter()
     }
 }

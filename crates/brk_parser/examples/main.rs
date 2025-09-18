@@ -3,7 +3,6 @@ use std::{collections::BTreeMap, path::Path};
 use bitcoincore_rpc::{Auth, Client};
 use brk_error::Result;
 use brk_parser::Parser;
-use brk_structs::Height;
 
 #[allow(clippy::needless_doctest_main)]
 fn main() -> Result<()> {
@@ -21,13 +20,13 @@ fn main() -> Result<()> {
 
     let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
-    let start = Some(915_155_u32.into());
+    let start = Some(915_138_u32.into());
     let end = None;
     let mut blk_index = 0;
     let mut diff = BTreeMap::new();
     parser.parse(start, end).iter().for_each(|block| {
         println!("{}: {}", block.height(), block.hash());
-        let new_blk_index = block.position().blk_index;
+        let new_blk_index = block.position().blk_index();
         if new_blk_index < blk_index {
             diff.insert(blk_index - new_blk_index, block.height());
         }

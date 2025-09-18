@@ -45,7 +45,7 @@ pub fn main() -> Result<()> {
             loop {
                 let i = Instant::now();
                 let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
-                computer.compute(&indexer, starting_indexes, &exit)?;
+                computer.compute(&indexer, starting_indexes, &parser, &exit)?;
                 dbg!(i.elapsed());
                 sleep(Duration::from_secs(10));
             }

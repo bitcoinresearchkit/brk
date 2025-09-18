@@ -1,14 +1,6 @@
-use std::{
-    borrow::Cow,
-    collections::{BTreeMap, HashMap},
-    io::Cursor,
-    ops::Deref,
-};
+use std::{borrow::Cow, ops::Deref};
 
-use bitcoin::{block::Header, consensus::Decodable};
-use brk_error::Result;
-
-use crate::BlockPosition;
+use crate::BlkPosition;
 
 use super::{BlockHash, Height};
 
@@ -26,40 +18,6 @@ impl Block {
 
     pub fn hash(&self) -> &BlockHash {
         &self.hash
-    }
-
-    pub fn parse(block_data: &[u8]) -> Result<Self> {
-        let mut cursor = Cursor::new(block_data);
-
-        let header = Header::consensus_decode(&mut cursor)?;
-
-        // Parse transactions with positions
-        let tx_count = bitcoin::VarInt::consensus_decode(&mut cursor)?.0 as usize;
-        let mut transactions = Vec::with_capacity(tx_count);
-        let mut tx_positions = HashMap::with_capacity(tx_count);
-
-        for _ in 0..tx_count {
-            let start = cursor.position() as usize;
-            let tx = bitcoin::Transaction::consensus_decode(&mut cursor)?;
-
-            tx_positions.insert(tx.compute_txid(), start);
-            transactions.push(tx);
-        }
-
-        let block = bitcoin::Block {
-            header,
-            txdata: transactions,
-        };
-
-        // block.bip34_block_height()
-
-        let hash = block.block_hash();
-
-        Ok(Block {
-            block,
-            hash: hash.into(),
-            height: Height::ZERO,
-        })
     }
 
     pub fn coinbase_tag(&self) -> Cow<'_, str> {
@@ -100,70 +58,28 @@ impl Deref for Block {
 #[derive(Debug)]
 pub struct ParsedBlock {
     block: Block,
-    position: BlockPosition,
-    tx_positions: BTreeMap<usize, usize>, // txid -> offset
+    position: BlkPosition,
+    tx_positions: Vec<BlkPosition>,
 }
 
-impl From<(Block, BlockPosition)> for ParsedBlock {
-    fn from((block, position): (Block, BlockPosition)) -> Self {
+impl From<(Block, BlkPosition, Vec<BlkPosition>)> for ParsedBlock {
+    fn from((block, position, tx_positions): (Block, BlkPosition, Vec<BlkPosition>)) -> Self {
         Self {
             block,
             position,
-            tx_positions: BTreeMap::default(),
+            tx_positions,
         }
     }
 }
 
 impl ParsedBlock {
-    pub fn position(&self) -> &BlockPosition {
+    pub fn position(&self) -> &BlkPosition {
         &self.position
     }
 
-    pub fn tx_positions(&self) -> &BTreeMap<usize, usize> {
+    pub fn tx_positions(&self) -> &Vec<BlkPosition> {
         &self.tx_positions
     }
-
-    // pub fn parse(block_data: &[u8], file_offset: usize) -> Result<Self> {
-    //     let mut cursor = std::io::Cursor::new(block_data);
-
-    //     let header = Header::consensus_decode(&mut cursor)?;
-
-    //     // Parse transactions with positions
-    //     let tx_count = bitcoin::VarInt::consensus_decode(&mut cursor)?.0 as usize;
-    //     let mut transactions = Vec::with_capacity(tx_count);
-    //     let mut tx_positions = HashMap::with_capacity(tx_count);
-
-    //     for _ in 0..tx_count {
-    //         let start = cursor.position() as usize;
-    //         let tx = bitcoin::Transaction::consensus_decode(&mut cursor)?;
-
-    //         tx_positions.insert(tx.compute_txid(), start);
-    //         transactions.push(tx);
-    //     }
-
-    //     let block = bitcoin::Block {
-    //         header,
-    //         txdata: transactions,
-    //     };
-
-    //     // block.bip34_block_height()
-
-    //     let hash = block.block_hash();
-
-    //     Ok(Block {
-    //         block,
-    //         hash: hash.into(),
-    //         height: Height::ZERO,
-    //         tx_positions,
-    //         block_start_offset: file_offset,
-    //     })
-    // }
-
-    // pub fn get_absolute_position(&self, txid: &Txid) -> Option<usize> {
-    //     self.tx_positions
-    //         .get(txid)
-    //         .map(|offset| self.block_start_offset + offset)
-    // }
 }
 
 impl Deref for ParsedBlock {

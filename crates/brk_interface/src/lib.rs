@@ -5,6 +5,7 @@ use std::{collections::BTreeMap, sync::OnceLock};
 use brk_computer::Computer;
 use brk_error::{Error, Result};
 use brk_indexer::Indexer;
+use brk_parser::Parser;
 use brk_structs::Height;
 use nucleo_matcher::{
     Config, Matcher,
@@ -42,18 +43,21 @@ pub fn cached_errors() -> &'static Cache<String, String> {
 #[allow(dead_code)]
 pub struct Interface<'a> {
     vecs: Vecs<'a>,
+    parser: &'a Parser,
     indexer: &'a Indexer,
     computer: &'a Computer,
 }
 
 impl<'a> Interface<'a> {
-    pub fn build(indexer: &Indexer, computer: &Computer) -> Self {
+    pub fn build(parser: &Parser, indexer: &Indexer, computer: &Computer) -> Self {
+        let parser = parser.static_clone();
         let indexer = indexer.static_clone();
         let computer = computer.static_clone();
         let vecs = Vecs::build(indexer, computer);
 
         Self {
             vecs,
+            parser,
             indexer,
             computer,
         }
@@ -260,6 +264,10 @@ impl<'a> Interface<'a> {
 
     pub fn get_vecid_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
         self.vecs.id_to_indexes(id)
+    }
+
+    pub fn parser(&self) -> &Parser {
+        self.parser
     }
 
     pub fn indexer(&self) -> &Indexer {

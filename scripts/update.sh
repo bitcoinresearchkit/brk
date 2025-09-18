@@ -4,4 +4,4 @@ cargo clean
 rustup update
 cargo upgrade --incompatible
 cargo update
-cargo build --package brk -r
+cargo build --package brk

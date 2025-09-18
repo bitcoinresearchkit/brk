@@ -1,4 +1,8 @@
-use std::str::FromStr;
+use std::{
+    fs::File,
+    io::{BufReader, Seek, SeekFrom},
+    str::FromStr,
+};
 
 use axum::{
     Json, Router,
@@ -7,9 +11,10 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use bitcoin::{Address, Network, absolute::LockTime};
+use bitcoin::{Address, Network, Transaction, absolute::LockTime, consensus::Decodable};
 use bitcoincore_rpc::bitcoin;
 use brk_interface::{IdParam, Index, PaginatedIndexParam, PaginationParam, Params, ParamsOpt};
+use brk_parser::XORIndex;
 use brk_structs::{
     AddressBytesHash, AnyAddressDataIndexEnum, Bitcoin, OutputType, Txid, TxidPrefix,
 };
@@ -45,13 +50,6 @@ impl ApiRoutes for Router<AppState> {
                     let computer = interface.computer();
                     let stores = &indexer.stores;
                     let hash = AddressBytesHash::from(&address);
-                    dbg!(&hash);
-                    dbg!(
-                        &address,
-                        address.address_type(),
-                        address.script_pubkey(),
-                        OutputType::from(&address)
-                    );
 
                     let Ok(Some(addri)) = stores
                         .addressbyteshash_to_typeindex
@@ -60,8 +58,6 @@ impl ApiRoutes for Router<AppState> {
                             return "Unknown address".into_response();
                         };
 
-                    println!("Script pubkey: {}", address.script_pubkey());
-                    println!("Address type: {:?}", address.address_type());
                     let output_type = OutputType::from(&address);
                     let stateful = &computer.stateful;
                     let price = computer.price.as_ref().map(|v| {
@@ -178,11 +174,38 @@ impl ApiRoutes for Router<AppState> {
                         .unwrap_get_inner(txindex);
                     let locktime = LockTime::from(rawlocktime);
 
+                    let parser = interface.parser();
+                    let computer = interface.computer();
+
+                    let position = computer.positions.txindex_to_position.iter().unwrap_get_inner(txindex);
+
+                    let blk_index_to_blk_path = parser.blk_index_to_blk_path();
+
+                    let Some(blk_path) = blk_index_to_blk_path.get(&position.blk_index()) else {
+                        return "Unknown blk index".into_response();
+                    };
+
+                    let mut xori = XORIndex::default();
+                    xori.add_assign(position.offset() as usize);
+
+                    let Ok(file) = File::open(blk_path) else {
+                        return "Error opening blk file".into_response();
+                    };
+                    let mut reader = BufReader::new(file);
+                    if reader.seek(SeekFrom::Start(position.offset() as u64)).is_err() {
+                         return "Error seeking position in blk file".into_response();
+                    }
+
+                    let Ok(tx) = Transaction::consensus_decode(&mut reader) else {
+                        return "Error decoding transaction".into_response();
+                    };
+
                     Json(serde_json::json!({
                         "txid": txid,
                         "index": txindex,
                         "version": version,
-                        "locktime": locktime
+                        "locktime": locktime,
+                        "tx": tx,
                     }))
                     .into_response()
                 },

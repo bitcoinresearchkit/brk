@@ -132,6 +132,7 @@
         - https://fonts.google.com/specimen/Space+Mono
 
     - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
+    - No classes: https://news.ycombinator.com/item?id=45287155
 - __GLOBAL__
   - check `TODO`s in codebase
   - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`

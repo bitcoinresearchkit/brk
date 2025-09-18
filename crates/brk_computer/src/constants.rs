@@ -12,8 +12,6 @@ use super::{
     indexes,
 };
 
-const VERSION: Version = Version::ZERO;
-
 #[derive(Clone)]
 pub struct Vecs {
     db: Database,
@@ -35,15 +33,21 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let db = Database::open(&parent.join("constants"))?;
+    pub fn forced_import(
+        parent_path: &Path,
+        parent_version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        let db = Database::open(&parent_path.join("constants"))?;
+
+        let version = parent_version + Version::ZERO;
 
         let this = Self {
             constant_0: ComputedVecsFromHeight::forced_import(
                 &db,
                 "constant_0",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -51,7 +55,7 @@ impl Vecs {
                 &db,
                 "constant_1",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -59,7 +63,7 @@ impl Vecs {
                 &db,
                 "constant_2",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -67,7 +71,7 @@ impl Vecs {
                 &db,
                 "constant_3",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -75,7 +79,7 @@ impl Vecs {
                 &db,
                 "constant_4",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -83,7 +87,7 @@ impl Vecs {
                 &db,
                 "constant_38_2",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -91,7 +95,7 @@ impl Vecs {
                 &db,
                 "constant_50",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -99,7 +103,7 @@ impl Vecs {
                 &db,
                 "constant_61_8",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -107,7 +111,7 @@ impl Vecs {
                 &db,
                 "constant_100",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -115,7 +119,7 @@ impl Vecs {
                 &db,
                 "constant_600",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -123,7 +127,7 @@ impl Vecs {
                 &db,
                 "constant_minus_1",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -131,7 +135,7 @@ impl Vecs {
                 &db,
                 "constant_minus_2",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -139,7 +143,7 @@ impl Vecs {
                 &db,
                 "constant_minus_3",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -147,7 +151,7 @@ impl Vecs {
                 &db,
                 "constant_minus_4",
                 Source::Compute,
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
