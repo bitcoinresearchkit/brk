@@ -11,7 +11,6 @@ build = "build.rs"
 
 [dependencies]
 allocative = { workspace = true }
-allocative_derive = { workspace = true }
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 brk_structs = { workspace = true }
@@ -23,8 +22,6 @@ brk_store = { workspace = true }
 brk_parser = { workspace = true }
 vecdb = { workspace = true }
 derive_deref = { workspace = true }
-inferno = "0.12.3"
-jiff = { workspace = true }
 log = { workspace = true }
 num_enum = "0.7.4"
 pco = "0.4.6"

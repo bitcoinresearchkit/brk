@@ -42,7 +42,6 @@ debug-assertions = false
 
 [workspace.dependencies]
 allocative = { version = "0.3.4", features = ["parking_lot"] }
-allocative_derive = "0.3.3"
 axum = "0.8.4"
 bitcoin = { version = "0.32.7", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
@@ -74,7 +73,7 @@ serde_derive = "1.0.225"
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
-vecdb = { version = "0.2.14", features = ["derive"]}
+vecdb = { version = "0.2.15", features = ["derive"]}
 zerocopy = "0.8.27"
 zerocopy-derive = "0.8.27"
 

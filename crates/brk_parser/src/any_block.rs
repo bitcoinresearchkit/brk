@@ -1,7 +1,7 @@
 use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable, io::Cursor};
 use bitcoincore_rpc::RpcApi;
 use brk_error::Result;
-use brk_structs::{BlkPosition, Block, Height, ParsedBlock};
+use brk_structs::{BlkMetadata, Block, Height, ParsedBlock};
 
 use crate::{XORBytes, XORIndex};
 
@@ -14,7 +14,7 @@ pub enum AnyBlock {
 impl AnyBlock {
     pub fn decode(
         self,
-        position: BlkPosition,
+        metadata: BlkMetadata,
         rpc: &'static bitcoincore_rpc::Client,
         mut xor_i: XORIndex,
         xor_bytes: XORBytes,
@@ -55,17 +55,19 @@ impl AnyBlock {
         }
 
         let mut txdata = Vec::with_capacity(tx_count as usize);
-        let mut tx_positions = Vec::with_capacity(tx_count as usize);
+        let mut tx_metadata = Vec::with_capacity(tx_count as usize);
         for _ in 0..tx_count {
-            let tx_position = BlkPosition::new(position.blk_index(), cursor.position() as u32);
-            tx_positions.push(tx_position);
+            let offset = cursor.position() as u32;
+            let position = metadata.position() + offset;
             let tx = Transaction::consensus_decode(&mut cursor)?;
             txdata.push(tx);
+            let len = cursor.position() as u32 - offset;
+            tx_metadata.push(BlkMetadata::new(position, len));
         }
 
         let block = bitcoin::Block { header, txdata };
         let block = Block::from((height, hash, block));
-        let block = ParsedBlock::from((block, position, tx_positions));
+        let block = ParsedBlock::from((block, metadata, tx_metadata));
 
         Ok(Self::Decoded(block))
     }

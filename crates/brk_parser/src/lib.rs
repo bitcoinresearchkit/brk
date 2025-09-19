@@ -15,7 +15,7 @@ use bitcoin::{block::Header, consensus::Decodable};
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use brk_error::Result;
-use brk_structs::{BlkPosition, Block, Height, ParsedBlock};
+use brk_structs::{BlkMetadata, BlkPosition, Block, Height, ParsedBlock};
 use crossbeam::channel::{Receiver, bounded};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
@@ -123,8 +123,6 @@ impl Parser {
                             }
                         }
 
-                        let position = BlkPosition::new(blk_index, i as u32);
-
                         let len = u32::from_le_bytes(
                             xor_i
                                 .bytes(&mut blk_bytes[i..(i + 4)], xor_bytes)
@@ -133,10 +131,13 @@ impl Parser {
                         ) as usize;
                         i += 4;
 
+                        let position = BlkPosition::new(blk_index, i as u32);
+                        let metadata = BlkMetadata::new(position, len as u32);
+
                         let block_bytes = (blk_bytes[i..(i + len)]).to_vec();
 
                         if send_bytes
-                            .send((position, AnyBlock::Raw(block_bytes), xor_i))
+                            .send((metadata, AnyBlock::Raw(block_bytes), xor_i))
                             .is_err()
                         {
                             return ControlFlow::Break(());
@@ -156,13 +157,13 @@ impl Parser {
 
             let mut bulk = vec![];
 
-            let drain_and_send = |bulk: &mut Vec<(BlkPosition, AnyBlock, XORIndex)>| {
+            let drain_and_send = |bulk: &mut Vec<(BlkMetadata, AnyBlock, XORIndex)>| {
                 // Using a vec and sending after to not end up with stuck threads in par iter
                 mem::take(bulk)
                     .into_par_iter()
-                    .try_for_each(|(position, any_block, xor_i)| {
+                    .try_for_each(|(metdata, any_block, xor_i)| {
                         if let Ok(AnyBlock::Decoded(block)) =
-                            any_block.decode(position, rpc, xor_i, xor_bytes, start, end)
+                            any_block.decode(metdata, rpc, xor_i, xor_bytes, start, end)
                             && send_block.send(block).is_err()
                         {
                             return ControlFlow::Break(());

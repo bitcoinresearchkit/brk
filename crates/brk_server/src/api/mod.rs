@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, Seek, SeekFrom},
+    io::{Cursor, Read, Seek, SeekFrom},
     str::FromStr,
 };
 
@@ -162,6 +162,11 @@ impl ApiRoutes for Router<AppState> {
                         .map(|opt| opt.map(|cow| cow.into_owned())) else {
                             return "Unknown transaction".into_response();
                         };
+                    let txid = indexer
+                        .vecs
+                        .txindex_to_txid
+                        .iter()
+                        .unwrap_get_inner(txindex);
                     let version = indexer
                         .vecs
                         .txindex_to_txversion
@@ -177,7 +182,8 @@ impl ApiRoutes for Router<AppState> {
                     let parser = interface.parser();
                     let computer = interface.computer();
 
-                    let position = computer.positions.txindex_to_position.iter().unwrap_get_inner(txindex);
+                    let position = computer.blks.txindex_to_position.iter().unwrap_get_inner(txindex);
+                    let len = computer.blks.txindex_to_len.iter().unwrap_get_inner(txindex);
 
                     let blk_index_to_blk_path = parser.blk_index_to_blk_path();
 
@@ -188,14 +194,21 @@ impl ApiRoutes for Router<AppState> {
                     let mut xori = XORIndex::default();
                     xori.add_assign(position.offset() as usize);
 
-                    let Ok(file) = File::open(blk_path) else {
+                    let Ok(mut file) = File::open(blk_path) else {
                         return "Error opening blk file".into_response();
                     };
-                    let mut reader = BufReader::new(file);
-                    if reader.seek(SeekFrom::Start(position.offset() as u64)).is_err() {
+
+                    if file.seek(SeekFrom::Start(position.offset() as u64)).is_err() {
                          return "Error seeking position in blk file".into_response();
                     }
 
+                    let mut buffer = vec![0u8; *len as usize];
+                    if file.read_exact(&mut buffer).is_err() {
+                            return "File fail read exact".into_response();
+                    }
+                    xori.bytes(&mut buffer, parser.xor_bytes());
+
+                    let mut reader = Cursor::new(buffer);
                     let Ok(tx) = Transaction::consensus_decode(&mut reader) else {
                         return "Error decoding transaction".into_response();
                     };

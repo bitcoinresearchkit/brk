@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     let mut diff = BTreeMap::new();
     parser.parse(start, end).iter().for_each(|block| {
         println!("{}: {}", block.height(), block.hash());
-        let new_blk_index = block.position().blk_index();
+        let new_blk_index = block.metadata().blk_index();
         if new_blk_index < blk_index {
             diff.insert(blk_index - new_blk_index, block.height());
         }

@@ -25,12 +25,13 @@ use log::info;
 use meta::*;
 use parking_lot::RwLock;
 
+#[derive(Clone)]
 pub struct Store<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
     keyspace: TransactionalKeyspace,
     partition: Arc<RwLock<Option<TransactionalPartitionHandle>>>,
-    rtx: ReadTransaction,
+    rtx: Arc<RwLock<Option<ReadTransaction>>>,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
     bloom_filters: Option<bool>,
@@ -79,7 +80,7 @@ where
             name: Box::leak(Box::new(name.to_string())),
             keyspace: keyspace.clone(),
             partition: Arc::new(RwLock::new(Some(partition))),
-            rtx,
+            rtx: Arc::new(RwLock::new(Some(rtx))),
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
             bloom_filters,
@@ -91,6 +92,9 @@ where
             Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self
             .rtx
+            .read()
+            .as_ref()
+            .unwrap()
             .get(self.partition.read().as_ref().unwrap(), ByteView::from(key))?
         {
             Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
@@ -101,6 +105,9 @@ where
 
     pub fn is_empty(&self) -> Result<bool> {
         self.rtx
+            .read()
+            .as_ref()
+            .unwrap()
             .is_empty(self.partition.read().as_ref().unwrap())
             .map_err(|e| e.into())
     }
@@ -129,6 +136,9 @@ where
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
         self.rtx
+            .read()
+            .as_ref()
+            .unwrap()
             .iter(self.partition.read().as_ref().unwrap())
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
@@ -202,6 +212,9 @@ where
 
         self.meta.export(height)?;
 
+        let mut rtx = self.rtx.write();
+        let _ = rtx.take();
+
         let mut wtx = self.keyspace.write_tx();
 
         let partition = self.partition.read();
@@ -228,7 +241,7 @@ where
 
         wtx.commit()?;
 
-        self.rtx = self.keyspace.read_tx();
+        rtx.replace(self.keyspace.read_tx());
 
         Ok(())
     }
@@ -293,24 +306,5 @@ where
 
     fn version(&self) -> Version {
         self.meta.version()
-    }
-}
-
-impl<Key, Value> Clone for Store<Key, Value>
-where
-    Key: Clone,
-    Value: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            meta: self.meta.clone(),
-            name: self.name,
-            keyspace: self.keyspace.clone(),
-            partition: self.partition.clone(),
-            rtx: self.keyspace.read_tx(),
-            puts: self.puts.clone(),
-            dels: self.dels.clone(),
-            bloom_filters: self.bloom_filters,
-        }
     }
 }
