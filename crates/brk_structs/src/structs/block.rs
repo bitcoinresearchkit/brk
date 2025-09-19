@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use crate::BlkPosition;
+use crate::BlkMetadata;
 
 use super::{BlockHash, Height};
 
@@ -58,27 +58,27 @@ impl Deref for Block {
 #[derive(Debug)]
 pub struct ParsedBlock {
     block: Block,
-    position: BlkPosition,
-    tx_positions: Vec<BlkPosition>,
+    metadata: BlkMetadata,
+    tx_metadata: Vec<BlkMetadata>,
 }
 
-impl From<(Block, BlkPosition, Vec<BlkPosition>)> for ParsedBlock {
-    fn from((block, position, tx_positions): (Block, BlkPosition, Vec<BlkPosition>)) -> Self {
+impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ParsedBlock {
+    fn from((block, metadata, tx_metadata): (Block, BlkMetadata, Vec<BlkMetadata>)) -> Self {
         Self {
             block,
-            position,
-            tx_positions,
+            metadata,
+            tx_metadata,
         }
     }
 }
 
 impl ParsedBlock {
-    pub fn position(&self) -> &BlkPosition {
-        &self.position
+    pub fn metadata(&self) -> &BlkMetadata {
+        &self.metadata
     }
 
-    pub fn tx_positions(&self) -> &Vec<BlkPosition> {
-        &self.tx_positions
+    pub fn tx_metadata(&self) -> &Vec<BlkMetadata> {
+        &self.tx_metadata
     }
 }
 

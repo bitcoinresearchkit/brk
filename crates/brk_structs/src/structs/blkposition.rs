@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use serde::Serialize;
 use vecdb::StoredCompressed;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -13,10 +15,17 @@ impl BlkPosition {
     }
 
     pub fn blk_index(&self) -> u16 {
-        (self.0 >> 31) as u16
+        (self.0 >> 32) as u16
     }
 
     pub fn offset(&self) -> u32 {
         self.0 as u32
+    }
+}
+
+impl Add<u32> for BlkPosition {
+    type Output = Self;
+    fn add(self, rhs: u32) -> Self::Output {
+        Self(self.0 + rhs as u64)
     }
 }

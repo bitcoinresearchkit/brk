@@ -10,6 +10,7 @@ use brk_structs::Version;
 use log::info;
 use vecdb::{AnyCollectableVec, Exit, Format};
 
+mod blks;
 mod chain;
 mod cointime;
 mod constants;
@@ -18,7 +19,6 @@ mod grouped;
 mod indexes;
 mod market;
 mod pools;
-mod positions;
 mod price;
 mod stateful;
 mod states;
@@ -40,7 +40,7 @@ pub struct Computer {
     pub indexes: indexes::Vecs,
     pub market: market::Vecs,
     pub pools: pools::Vecs,
-    pub positions: positions::Vecs,
+    pub blks: blks::Vecs,
     pub price: Option<price::Vecs>,
     pub stateful: stateful::Vecs,
 }
@@ -90,7 +90,7 @@ impl Computer {
                 &indexes,
                 price.as_ref(),
             )?,
-            positions: positions::Vecs::forced_import(&computed_path, VERSION + Version::ZERO)?,
+            blks: blks::Vecs::forced_import(&computed_path, VERSION + Version::ZERO)?,
             pools: pools::Vecs::forced_import(
                 &computed_path,
                 VERSION + Version::ZERO,
@@ -132,8 +132,8 @@ impl Computer {
             )?;
         }
 
-        info!("Computing positions...");
-        self.positions
+        info!("Computing BLKs metadata...");
+        self.blks
             .compute(indexer, &self.indexes, &starting_indexes, parser, exit)?;
 
         std::thread::scope(|scope| -> Result<()> {
@@ -144,9 +144,9 @@ impl Computer {
                 Ok(())
             });
 
-            // let positions = scope.spawn(|| -> Result<()> {
-            //     info!("Computing positions...");
-            //     self.positions
+            // let blks = scope.spawn(|| -> Result<()> {
+            //     info!("Computing blks...");
+            //     self.blks
             //         .compute(indexer, &self.indexes, &starting_indexes, parser, exit)?;
             //     Ok(())
             // });
@@ -169,7 +169,7 @@ impl Computer {
             }
 
             constants.join().unwrap()?;
-            // positions.join().unwrap()?;
+            // blks.join().unwrap()?;
             chain.join().unwrap()?;
             Ok(())
         })?;
@@ -216,7 +216,7 @@ impl Computer {
         iter = Box::new(iter.chain(self.indexes.iter_any_collectable()));
         iter = Box::new(iter.chain(self.market.iter_any_collectable()));
         iter = Box::new(iter.chain(self.pools.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.positions.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.blks.iter_any_collectable()));
         iter = Box::new(iter.chain(self.price.iter().flat_map(|v| v.iter_any_collectable())));
         iter = Box::new(iter.chain(self.stateful.iter_any_collectable()));
 
