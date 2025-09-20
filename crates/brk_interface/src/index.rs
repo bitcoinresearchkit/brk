@@ -5,7 +5,7 @@ use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
     Height, InputIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, OutputIndex,
     P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Printable,
+    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, PrintableIndex,
     QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;

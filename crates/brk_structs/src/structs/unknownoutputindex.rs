@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -59,12 +59,18 @@ impl CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
     }
 }
 
-impl Printable for UnknownOutputIndex {
+impl PrintableIndex for UnknownOutputIndex {
     fn to_string() -> &'static str {
         "unknownoutputindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["unknownout", "unknownoutputindex"]
+    }
+}
+
+impl std::fmt::Display for UnknownOutputIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

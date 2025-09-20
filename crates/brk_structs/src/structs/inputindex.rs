@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign};
 use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Vin;
@@ -99,12 +99,20 @@ impl From<InputIndex> for usize {
     }
 }
 
-impl Printable for InputIndex {
+impl PrintableIndex for InputIndex {
     fn to_string() -> &'static str {
         "inputindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["in", "inputindex"]
+    }
+}
+
+impl std::fmt::Display for InputIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

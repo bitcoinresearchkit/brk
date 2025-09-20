@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, path::Path, thread};
 
-use brk_computer::{Computer, pools};
+use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_structs::{AddressBytes, OutputIndex, OutputType};
+use brk_structs::{AddressBytes, OutputIndex, OutputType, pools};
 use vecdb::{AnyIterableVec, Exit, VecIterator};
 
 fn main() -> Result<()> {

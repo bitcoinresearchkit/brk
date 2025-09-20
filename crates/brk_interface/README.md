@@ -7,13 +7,13 @@ Unified data query and formatting interface for Bitcoin datasets with intelligen
 
 ## Overview
 
-This crate provides a high-level interface for querying and formatting data from BRK's indexer and computer components. It offers intelligent vector search with fuzzy matching, parameter validation, range queries, and multi-format output (JSON, CSV, TSV, Markdown) with efficient caching and pagination support.
+This crate provides a high-level interface for querying and formatting data from BRK's indexer and computer components. It offers intelligent vector search with fuzzy matching, parameter validation, range queries, and multi-format output (JSON, CSV) with efficient caching and pagination support.
 
 **Key Features:**
 
 - Unified query interface across indexer and computer data sources
 - Intelligent search with fuzzy matching and helpful error messages
-- Multi-format output: JSON, CSV, TSV, Markdown with proper formatting
+- Multi-format output: JSON, CSV with proper formatting
 - Range-based data queries with flexible from/to parameters
 - Comprehensive pagination support for large datasets
 - Schema validation with JSON Schema generation for API documentation
@@ -66,7 +66,7 @@ println!("{}", output);
 - **`Interface<'a>`**: Main query interface coordinating indexer and computer access
 - **`Params`**: Query parameters including index, IDs, range, and formatting options
 - **`Index`**: Enumeration of available data indexes (Height, Date, Address, etc.)
-- **`Format`**: Output format specification (JSON, CSV, TSV, MD)
+- **`Format`**: Output format specification (JSON, CSV)
 - **`Output`**: Formatted query results with multiple value types
 
 ### Key Methods
@@ -146,31 +146,6 @@ match interface.search_and_format(params)? {
 }
 ```
 
-### Multi-Vector Query with Markdown Table
-
-```rust
-use brk_interface::{Interface, Params, Index, Format};
-
-// Query multiple vectors and format as table
-let params = Params {
-    index: Index::Height,
-    ids: vec![
-        "height-to-blockhash".to_string(),
-        "height-to-timestamp".to_string(),
-        "height-to-difficulty".to_string()
-    ].into(),
-    from: Some(800000),
-    to: Some(800005),
-    format: Some(Format::MD),
-    ..Default::default()
-};
-
-match interface.search_and_format(params)? {
-    Output::MD(table) => println!("{}", table),
-    _ => unreachable!(),
-}
-```
-
 ### Intelligent Error Handling
 
 ```rust
@@ -219,11 +194,10 @@ The interface acts as a bridge between:
 - List: Array of values
 - Matrix: Array of arrays for multi-vector queries
 
-**Tabular Output (CSV/TSV/MD):**
+**CSV Output:**
 
 - Column headers from vector IDs
 - Row-wise data iteration with proper escaping
-- Markdown tables use `tabled` crate formatting
 
 ### Caching Strategy
 
@@ -247,15 +221,13 @@ Available indexes include:
 
 - **JSON**: Structured data with nested objects/arrays
 - **CSV**: Comma-separated values with proper escaping
-- **TSV**: Tab-separated values for import compatibility
-- **MD**: Markdown tables for documentation and reports
 
 ## Code Analysis Summary
 
 **Main Structure**: `Interface` struct coordinating between `Indexer` and `Computer` data sources \
 **Query System**: Parameter-driven search with `Params` struct supporting range queries and formatting options \
 **Error Handling**: Intelligent fuzzy matching with cached error messages and helpful suggestions \
-**Output Formats**: Multi-format support (JSON, CSV, TSV, Markdown) with proper data serialization \
+**Output Formats**: Multi-format support (JSON, CSV) with proper data serialization \
 **Caching**: `quick_cache` integration for error messages and expensive operations \
 **Search Logic**: `nucleo-matcher` fuzzy search for user-friendly vector name resolution \
 **Architecture**: Abstraction layer providing unified access to heterogeneous Bitcoin data sources

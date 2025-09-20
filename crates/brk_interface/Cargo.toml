@@ -23,5 +23,4 @@ schemars = "1.0.4"
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_with = "3.14.0"
-tabled = "0.20.0"
 nucleo-matcher = "0.3.1"

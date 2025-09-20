@@ -5,7 +5,7 @@ use std::{
 
 use allocative::Allocative;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex};
@@ -118,12 +118,20 @@ impl CheckedSub for WeekIndex {
     }
 }
 
-impl Printable for WeekIndex {
+impl PrintableIndex for WeekIndex {
     fn to_string() -> &'static str {
         "weekindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["w", "week", "weekindex"]
+    }
+}
+
+impl std::fmt::Display for WeekIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

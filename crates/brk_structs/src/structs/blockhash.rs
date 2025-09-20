@@ -38,7 +38,7 @@ impl TryFrom<(&Client, Height)> for BlockHash {
 
 impl fmt::Display for BlockHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", bitcoin::BlockHash::from(self))
+        f.write_str(&bitcoin::BlockHash::from(self).to_string())
     }
 }
 

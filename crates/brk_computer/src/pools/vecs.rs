@@ -1,10 +1,10 @@
 use allocative::Allocative;
 use brk_error::Result;
-use brk_structs::{Height, Sats, StoredF32, StoredU16, StoredU32};
+use brk_structs::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{AnyCollectableVec, AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
 
 use crate::{
-    PoolId, Pools, chain,
+    chain,
     grouped::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
         VecBuilderOptions,

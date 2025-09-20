@@ -5,7 +5,7 @@ use std::{
 
 use allocative::Allocative;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::MonthIndex;
@@ -95,12 +95,20 @@ impl CheckedSub for SemesterIndex {
     }
 }
 
-impl Printable for SemesterIndex {
+impl PrintableIndex for SemesterIndex {
     fn to_string() -> &'static str {
         "semesterindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["s", "semester", "semesterindex"]
+    }
+}
+
+impl std::fmt::Display for SemesterIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use byteview::ByteView;
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::Printable;
+use vecdb::PrintableIndex;
 
 #[derive(Default, Debug, Deref, Clone, Serialize)]
 pub struct StoredString(String);
@@ -53,7 +53,7 @@ impl From<&StoredString> for ByteView {
     }
 }
 
-impl Printable for StoredString {
+impl PrintableIndex for StoredString {
     fn to_string() -> &'static str {
         "string"
     }

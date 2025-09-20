@@ -1,13 +1,10 @@
-use std::{
-    fmt,
-    ops::{Add, Rem},
-};
+use std::ops::{Add, Rem};
 
 use allocative::Allocative;
 use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
-use vecdb::{CheckedSub, FromCoarserIndex, Printable, StoredCompressed};
+use vecdb::{CheckedSub, FromCoarserIndex, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
@@ -99,13 +96,15 @@ impl Rem<usize> for DateIndex {
     }
 }
 
-impl fmt::Display for DateIndex {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+impl std::fmt::Display for DateIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }
 
-impl Printable for DateIndex {
+impl PrintableIndex for DateIndex {
     fn to_string() -> &'static str {
         "dateindex"
     }

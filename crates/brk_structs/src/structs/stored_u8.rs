@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign, Div};
 
-use vecdb::{CheckedSub, Printable};
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::{CheckedSub, PrintableIndex};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 pub type StoredPhantom = StoredU8;
@@ -99,12 +99,20 @@ impl From<StoredU8> for usize {
     }
 }
 
-impl Printable for StoredU8 {
+impl PrintableIndex for StoredU8 {
     fn to_string() -> &'static str {
         "u8"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["u8"]
+    }
+}
+
+impl std::fmt::Display for StoredU8 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

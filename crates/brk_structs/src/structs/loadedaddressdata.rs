@@ -89,6 +89,7 @@ impl From<EmptyAddressData> for LoadedAddressData {
         Self::from(&value)
     }
 }
+
 impl From<&EmptyAddressData> for LoadedAddressData {
     fn from(value: &EmptyAddressData) -> Self {
         Self {
@@ -98,5 +99,15 @@ impl From<&EmptyAddressData> for LoadedAddressData {
             utxos: 0,
             padding: 0,
         }
+    }
+}
+
+impl std::fmt::Display for LoadedAddressData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "sent: {}, received: {}, realized_cap: {}, utxos: {}",
+            self.sent, self.received, self.realized_cap, self.utxos
+        )
     }
 }

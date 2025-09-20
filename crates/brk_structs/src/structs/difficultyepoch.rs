@@ -5,7 +5,7 @@ use std::{
 
 use allocative::Allocative;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
@@ -91,12 +91,20 @@ impl CheckedSub for DifficultyEpoch {
     }
 }
 
-impl Printable for DifficultyEpoch {
+impl PrintableIndex for DifficultyEpoch {
     fn to_string() -> &'static str {
         "difficultyepoch"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["difficulty", "difficultyepoch"]
+    }
+}
+
+impl std::fmt::Display for DifficultyEpoch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

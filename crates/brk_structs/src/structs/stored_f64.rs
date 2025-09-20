@@ -8,7 +8,7 @@ use std::{
 use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars};
@@ -174,7 +174,7 @@ impl From<Bitcoin> for StoredF64 {
     }
 }
 
-impl Printable for StoredF64 {
+impl PrintableIndex for StoredF64 {
     fn to_string() -> &'static str {
         "f64"
     }
@@ -194,5 +194,13 @@ impl Div<Bitcoin> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Bitcoin) -> Self::Output {
         Self(self.0 / f64::from(rhs))
+    }
+}
+
+impl std::fmt::Display for StoredF64 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = ryu::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

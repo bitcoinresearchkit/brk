@@ -464,7 +464,7 @@ impl Vecs {
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
                 &db,
                 "block_size",
-                Source::Compute,
+                Source::None,
                 version + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default()

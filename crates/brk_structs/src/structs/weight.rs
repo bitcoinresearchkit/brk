@@ -81,3 +81,11 @@ impl Div<Weight> for Weight {
         Self(self.0 / rhs.0)
     }
 }
+
+impl std::fmt::Display for Weight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
+    }
+}

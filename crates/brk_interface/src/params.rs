@@ -63,7 +63,7 @@ pub struct ParamsOpt {
     #[serde(default)]
     /// Format of the output
     #[schemars(description = "Format of the output")]
-    format: Option<Format>,
+    format: Format,
 }
 
 impl ParamsOpt {
@@ -79,11 +79,6 @@ impl ParamsOpt {
 
     pub fn set_count(mut self, count: usize) -> Self {
         self.count.replace(count);
-        self
-    }
-
-    pub fn set_format(mut self, format: Format) -> Self {
-        self.format.replace(format);
         self
     }
 
@@ -107,7 +102,7 @@ impl ParamsOpt {
         self.to
     }
 
-    pub fn format(&self) -> Option<Format> {
+    pub fn format(&self) -> Format {
         self.format
     }
 }

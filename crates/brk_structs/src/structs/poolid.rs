@@ -1,6 +1,7 @@
 use allocative::Allocative;
 use num_enum::{FromPrimitive, IntoPrimitive};
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 // Created from the list in `pools.rs`
@@ -9,6 +10,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 #[derive(
     Debug,
     Copy,
+    Display,
     Clone,
     PartialEq,
     Eq,
@@ -25,6 +27,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Allocative,
 )]
 #[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
 #[repr(u8)]
 pub enum PoolId {
     #[default]

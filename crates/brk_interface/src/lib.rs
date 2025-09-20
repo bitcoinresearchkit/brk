@@ -12,7 +12,6 @@ use nucleo_matcher::{
     pattern::{AtomKind, CaseMatching, Normalization, Pattern},
 };
 use quick_cache::sync::Cache;
-use tabled::settings::Style;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod deser;
@@ -22,7 +21,6 @@ mod index;
 mod output;
 mod pagination;
 mod params;
-mod table;
 mod vecs;
 
 pub use format::Format;
@@ -30,7 +28,6 @@ pub use index::Index;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginationParam};
 pub use params::{IdParam, Params, ParamsOpt};
-pub use table::Tabled;
 use vecs::Vecs;
 
 use crate::vecs::{IdToVec, IndexToVec};
@@ -146,75 +143,66 @@ impl<'a> Interface<'a> {
                 .unwrap_or_default()
         });
 
-        let mut values = vecs
-            .iter()
-            .map(|(_, vec)| -> Result<Vec<serde_json::Value>> {
-                Ok(vec.collect_range_serde_json(from, to)?)
-            })
-            .collect::<Result<Vec<_>>>()?;
-
         let format = params.format();
 
-        if values.is_empty() {
-            return Ok(Output::default(format));
-        }
-
-        let ids_last_i = vecs.len() - 1;
-
         Ok(match format {
-            Some(Format::CSV) | Some(Format::TSV) => {
-                let delimiter = if format == Some(Format::CSV) {
-                    ','
-                } else {
-                    '\t'
-                };
-
-                let mut text = vecs
+            Format::CSV => {
+                let headers = vecs.iter().map(|(id, _)| id.as_str()).collect::<Vec<_>>();
+                let mut values = vecs
                     .iter()
-                    .map(|(id, _)| id.to_owned())
-                    .collect::<Vec<_>>()
-                    .join(&delimiter.to_string());
+                    .map(|(_, vec)| Ok(vec.collect_range_string(from, to)?))
+                    .collect::<Result<Vec<_>>>()?;
 
-                text.push('\n');
-
-                let values_len = values.first().unwrap().len();
-
-                (0..values_len).for_each(|i| {
-                    let mut line = "".to_string();
-                    values.iter().enumerate().for_each(|(id_i, v)| {
-                        line += &v.get(i).unwrap().to_string();
-                        if id_i == ids_last_i {
-                            line.push('\n');
-                        } else {
-                            line.push(delimiter);
-                        }
-                    });
-                    text += &line;
-                });
-
-                if format == Some(Format::CSV) {
-                    Output::CSV(text)
-                } else {
-                    Output::TSV(text)
+                if values.is_empty() {
+                    return Ok(Output::CSV(headers.join(",")));
                 }
-            }
-            Some(Format::MD) => {
-                let mut table =
-                    values.to_table(vecs.iter().map(|(s, _)| s.to_owned()).collect::<Vec<_>>());
 
-                table.with(Style::markdown());
+                let first_len = values[0].len();
+                let estimated_size = (headers.len() + values.len() * first_len) * 15;
+                let mut csv = String::with_capacity(estimated_size);
 
-                Output::MD(table.to_string())
-            }
-            Some(Format::JSON) | None => {
-                if values.len() == 1 {
-                    let mut values = values.pop().unwrap();
-                    if values.len() == 1 {
-                        let value = values.pop().unwrap();
-                        Output::Json(Value::Single(value))
-                    } else {
-                        Output::Json(Value::List(values))
+                csv.push_str(&headers.join(","));
+                csv.push('\n');
+
+                for col_index in 0..first_len {
+                    let mut first = true;
+                    for vec in &mut values {
+                        if col_index < vec.len() {
+                            if !first {
+                                csv.push(',');
+                            }
+                            first = false;
+
+                            let field = std::mem::take(&mut vec[col_index]);
+
+                            if field.contains(',') {
+                                csv.push('"');
+                                csv.push_str(&field);
+                                csv.push('"');
+                            } else {
+                                csv.push_str(&field);
+                            }
+                        }
                     }
+                    csv.push('\n');
+                }
+
+                Output::CSV(csv)
+            }
+            Format::JSON => {
+                let mut values = vecs
+                    .iter()
+                    .map(|(_, vec)| -> Result<Vec<u8>> {
+                        Ok(vec.collect_range_json_bytes(from, to)?)
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+
+                if values.is_empty() {
+                    return Ok(Output::default(format));
+                }
+
+                if values.len() == 1 {
+                    Output::Json(Value::List(values.pop().unwrap()))
                 } else {
                     Output::Json(Value::Matrix(values))
                 }

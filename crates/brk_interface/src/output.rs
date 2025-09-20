@@ -1,44 +1,54 @@
-use std::fmt;
-
-use serde::Serialize;
-use tabled::Tabled as TabledTabled;
-
 use crate::Format;
 
-#[derive(Debug, Serialize)]
-#[serde(untagged, rename_all = "lowercase")]
+#[derive(Debug)]
 pub enum Output {
     Json(Value),
     CSV(String),
-    TSV(String),
-    MD(String),
-}
-
-#[derive(Debug, Serialize, TabledTabled)]
-#[serde(untagged)]
-pub enum Value {
-    Matrix(Vec<Vec<serde_json::Value>>),
-    List(Vec<serde_json::Value>),
-    Single(serde_json::Value),
 }
 
 impl Output {
-    pub fn default(format: Option<Format>) -> Self {
-        match format {
-            Some(Format::CSV) => Output::CSV("".to_string()),
-            Some(Format::TSV) => Output::TSV("".to_string()),
-            _ => Output::Json(Value::Single(serde_json::Value::Null)),
+    #[allow(clippy::inherent_to_string)]
+    pub fn to_string(self) -> String {
+        match self {
+            Output::CSV(s) => s,
+            Output::Json(v) => unsafe { String::from_utf8_unchecked(v.to_vec()) },
         }
     }
 }
 
-impl fmt::Display for Output {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[derive(Debug)]
+pub enum Value {
+    Matrix(Vec<Vec<u8>>),
+    List(Vec<u8>),
+}
+
+impl Value {
+    pub fn to_vec(self) -> Vec<u8> {
         match self {
-            Self::Json(value) => write!(f, "{}", serde_json::to_string_pretty(value).unwrap()),
-            Self::CSV(string) => write!(f, "{string}"),
-            Self::TSV(string) => write!(f, "{string}"),
-            Self::MD(string) => write!(f, "{string}"),
+            Value::List(v) => v,
+            Self::Matrix(m) => {
+                let total_size = m.iter().map(|v| v.len()).sum::<usize>() + m.len() - 1 + 2;
+                let mut matrix = Vec::with_capacity(total_size);
+                matrix.push(b'[');
+
+                for (i, vec) in m.into_iter().enumerate() {
+                    if i > 0 {
+                        matrix.push(b',');
+                    }
+                    matrix.extend(vec);
+                }
+                matrix.push(b']');
+                matrix
+            }
+        }
+    }
+}
+
+impl Output {
+    pub fn default(format: Format) -> Self {
+        match format {
+            Format::CSV => Output::CSV("".to_string()),
+            Format::JSON => Output::Json(Value::List(b"[]".to_vec())),
         }
     }
 }

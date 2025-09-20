@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -94,12 +94,20 @@ impl From<StoredI16> for usize {
     }
 }
 
-impl Printable for StoredI16 {
+impl PrintableIndex for StoredI16 {
     fn to_string() -> &'static str {
         "i16"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["i16"]
+    }
+}
+
+impl std::fmt::Display for StoredI16 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

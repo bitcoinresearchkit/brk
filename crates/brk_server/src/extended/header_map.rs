@@ -44,7 +44,6 @@ pub trait HeaderMapExtended {
     fn insert_content_type_application_pdf(&mut self);
     fn insert_content_type_text_css(&mut self);
     fn insert_content_type_text_csv(&mut self);
-    fn insert_content_type_text_tsv(&mut self);
     fn insert_content_type_text_html(&mut self);
     fn insert_content_type_text_plain(&mut self);
     fn insert_content_type_font_woff2(&mut self);
@@ -190,13 +189,6 @@ impl HeaderMapExtended for HeaderMap {
 
     fn insert_content_type_text_csv(&mut self) {
         self.insert(header::CONTENT_TYPE, "text/csv".parse().unwrap());
-    }
-
-    fn insert_content_type_text_tsv(&mut self) {
-        self.insert(
-            header::CONTENT_TYPE,
-            "text/tab-separated-values".parse().unwrap(),
-        );
     }
 
     fn insert_content_type_text_html(&mut self) {

@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign};
 use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_8bytes;
@@ -115,12 +115,20 @@ impl From<&[u8]> for OutputIndex {
     }
 }
 
-impl Printable for OutputIndex {
+impl PrintableIndex for OutputIndex {
     fn to_string() -> &'static str {
         "outputindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["out", "outputindex"]
+    }
+}
+
+impl std::fmt::Display for OutputIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

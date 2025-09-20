@@ -1,8 +1,8 @@
 use std::{fs, io, path::Path};
 
-use brk_computer::pools;
 use brk_interface::{Index, Interface};
 use brk_server::VERSION;
+use brk_structs::pools;
 
 use crate::website::Website;
 

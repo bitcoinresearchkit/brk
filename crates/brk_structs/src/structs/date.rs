@@ -118,12 +118,24 @@ impl From<DateIndex> for Date {
 
 impl std::fmt::Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!(
-            "{}-{:0>2}-{:0>2}",
-            self.year(),
-            self.month(),
-            self.day()
-        ))
+        let mut buf = itoa::Buffer::new();
+
+        f.write_str(buf.format(self.year()))?;
+        f.write_str("-")?;
+
+        let month = self.month();
+        if month < 10 {
+            f.write_str("0")?;
+        }
+        f.write_str(buf.format(month))?;
+        f.write_str("-")?;
+
+        let day = self.day();
+        if day < 10 {
+            f.write_str("0")?;
+        }
+
+        f.write_str(buf.format(day))
     }
 }
 

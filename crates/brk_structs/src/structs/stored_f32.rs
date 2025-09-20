@@ -9,7 +9,7 @@ use std::{
 use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Close, StoredU32};
@@ -206,7 +206,7 @@ impl Ord for StoredF32 {
     }
 }
 
-impl Printable for StoredF32 {
+impl PrintableIndex for StoredF32 {
     fn to_string() -> &'static str {
         "f32"
     }
@@ -219,5 +219,13 @@ impl Printable for StoredF32 {
 impl Sum for StoredF32 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         Self(iter.map(|v| v.0).sum::<f32>())
+    }
+}
+
+impl std::fmt::Display for StoredF32 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = ryu::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }
