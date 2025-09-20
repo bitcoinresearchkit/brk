@@ -41,8 +41,10 @@
  *   "height" |
  *   "id" |
  *   "index" |
+ *   "len" |
  *   "locktime" |
  *   "percentage" |
+ *   "position" |
  *   "ratio" |
  *   "sat/vb" |
  *   "satblocks" |
@@ -1020,6 +1022,12 @@ function createUtils() {
     }
     if ((!unit || thoroughUnitCheck) && id.includes("years_between")) {
       setUnit("years");
+    }
+    if ((!unit || thoroughUnitCheck) && id == "len") {
+      setUnit("len");
+    }
+    if ((!unit || thoroughUnitCheck) && id == "position") {
+      setUnit("position");
     }
     if ((!unit || thoroughUnitCheck) && id.startsWith("constant")) {
       setUnit("constant");
