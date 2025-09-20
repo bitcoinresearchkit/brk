@@ -100,7 +100,7 @@ let version = mcp.get_version().await?;
 - `index`: Time dimension (height, date, week, month, etc.)
 - `ids`: Dataset identifiers (comma or space separated)
 - `from`/`to`: Range filtering (supports negative indexing from end)
-- `format`: Output format (json, csv, tsv, md)
+- `format`: Output format (json, csv)
 
 **Pagination Parameters:**
 

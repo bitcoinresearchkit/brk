@@ -16,7 +16,7 @@ use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use brk_error::Result;
 use brk_structs::{BlkMetadata, BlkPosition, Block, Height, ParsedBlock};
-use crossbeam::channel::{Receiver, bounded};
+use crossbeam::channel::{bounded, Receiver};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
 

@@ -4,7 +4,7 @@ use allocative::Allocative;
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
@@ -115,12 +115,20 @@ impl From<TxIndex> for StoredU32 {
     }
 }
 
-impl Printable for TxIndex {
+impl PrintableIndex for TxIndex {
     fn to_string() -> &'static str {
         "txindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["tx", "txindex"]
+    }
+}
+
+impl std::fmt::Display for TxIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

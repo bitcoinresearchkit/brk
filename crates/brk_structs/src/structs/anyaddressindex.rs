@@ -43,6 +43,12 @@ impl Serialize for AnyAddressIndex {
     }
 }
 
+impl std::fmt::Display for AnyAddressIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AnyAddressDataIndexEnum {
@@ -60,3 +66,12 @@ impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
         }
     }
 }
+
+// impl std::fmt::Display for AnyAddressDataIndexEnum {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+
+//         }
+//         self.0.fmt(f)
+//     }
+// }

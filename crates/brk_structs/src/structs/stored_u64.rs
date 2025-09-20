@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
@@ -220,12 +220,20 @@ impl From<EmptyOutputIndex> for StoredU64 {
     }
 }
 
-impl Printable for StoredU64 {
+impl PrintableIndex for StoredU64 {
     fn to_string() -> &'static str {
         "u64"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["u64"]
+    }
+}
+
+impl std::fmt::Display for StoredU64 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

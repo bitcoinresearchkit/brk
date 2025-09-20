@@ -6,4 +6,4 @@ mod structs;
 pub use groups::*;
 pub use structs::*;
 
-pub use vecdb::{CheckedSub, Exit, Printable, Version};
+pub use vecdb::{CheckedSub, Exit, PrintableIndex, Version};

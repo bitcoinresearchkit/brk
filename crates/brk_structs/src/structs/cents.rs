@@ -165,3 +165,11 @@ impl CheckedSub for Cents {
         self.0.checked_sub(rhs.0).map(Cents::from)
     }
 }
+
+impl std::fmt::Display for Cents {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
+    }
+}

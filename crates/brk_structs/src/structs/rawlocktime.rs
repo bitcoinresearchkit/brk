@@ -28,3 +28,10 @@ impl From<RawLockTime> for LockTime {
         }
     }
 }
+
+impl std::fmt::Display for RawLockTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let lock_time = LockTime::from(*self);
+        f.write_str(&lock_time.to_string())
+    }
+}

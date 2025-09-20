@@ -5,7 +5,7 @@ use std::{
 
 use allocative::Allocative;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex, MonthIndex};
@@ -113,12 +113,20 @@ impl From<MonthIndex> for YearIndex {
     }
 }
 
-impl Printable for YearIndex {
+impl PrintableIndex for YearIndex {
     fn to_string() -> &'static str {
         "yearindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["y", "year", "yearindex"]
+    }
+}
+
+impl std::fmt::Display for YearIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

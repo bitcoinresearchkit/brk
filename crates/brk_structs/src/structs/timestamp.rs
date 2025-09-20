@@ -158,3 +158,11 @@ impl From<Timestamp> for f64 {
         value.0 as f64
     }
 }
+
+impl std::fmt::Display for Timestamp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
+    }
+}

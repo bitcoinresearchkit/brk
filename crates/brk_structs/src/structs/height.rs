@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Debug},
+    fmt::Debug,
     ops::{Add, AddAssign, Rem},
 };
 
@@ -8,7 +8,7 @@ use bitcoincore_rpc::{Client, RpcApi};
 use byteview::ByteView;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Printable, Stamp, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, Stamp, StoredCompressed};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -170,12 +170,6 @@ impl Rem<usize> for Height {
     }
 }
 
-impl fmt::Display for Height {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 impl From<u32> for Height {
     fn from(value: u32) -> Self {
         Self(value)
@@ -268,12 +262,20 @@ impl From<Height> for Stamp {
     }
 }
 
-impl Printable for Height {
+impl PrintableIndex for Height {
     fn to_string() -> &'static str {
         "height"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["h", "height"]
+    }
+}
+
+impl std::fmt::Display for Height {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
     }
 }

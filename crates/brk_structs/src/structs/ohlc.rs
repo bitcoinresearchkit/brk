@@ -58,6 +58,16 @@ impl Serialize for OHLCCents {
     }
 }
 
+impl std::fmt::Display for OHLCCents {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}, {}, {}, {}",
+            self.open, self.high, self.low, self.close
+        )
+    }
+}
+
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCDollars {
@@ -120,6 +130,16 @@ impl From<&OHLCCents> for OHLCDollars {
     }
 }
 
+impl std::fmt::Display for OHLCDollars {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}, {}, {}, {}",
+            self.open, self.high, self.low, self.close
+        )
+    }
+}
+
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCSats {
@@ -162,6 +182,16 @@ impl From<Close<Sats>> for OHLCSats {
             low: Low::from(value),
             close: value,
         }
+    }
+}
+
+impl std::fmt::Display for OHLCSats {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}, {}, {}, {}",
+            self.open, self.high, self.low, self.close
+        )
     }
 }
 
@@ -272,6 +302,15 @@ where
     }
 }
 
+impl<T> std::fmt::Display for Open<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 #[derive(
     Debug,
     Default,
@@ -379,6 +418,15 @@ where
     }
 }
 
+impl<T> std::fmt::Display for High<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 #[derive(
     Debug,
     Default,
@@ -483,6 +531,15 @@ where
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs)
+    }
+}
+
+impl<T> std::fmt::Display for Low<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -615,12 +672,11 @@ impl Sum for Close<Dollars> {
     }
 }
 
-// impl<T> Mul<usize> for Close<T>
-// where
-//     T: Mul<usize, Output = T>,
-// {
-//     type Output = Self;
-//     fn mul(self, rhs: usize) -> Self::Output {
-//         Self(self.0 * rhs)
-//     }
-// }
+impl<T> std::fmt::Display for Close<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}

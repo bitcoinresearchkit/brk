@@ -79,6 +79,8 @@
     - add support for https (rustls)
   - _STORE_
     - save height and version in one file
+  - _STRUCTS_
+    - remove `checked_sub` trait ? (checked with the `dev` profile)
 - __DOCS__
   - _README_
     - add a comparison table with alternatives

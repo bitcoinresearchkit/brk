@@ -1,12 +1,14 @@
 use bitcoin::{Address, AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
 use brk_error::Error;
 use serde::Serialize;
+use strum::Display;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
     Debug,
     Clone,
     Copy,
+    Display,
     PartialEq,
     Eq,
     PartialOrd,
@@ -18,6 +20,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Serialize,
 )]
 #[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
 #[repr(u8)]
 pub enum OutputType {
     P2PK65,

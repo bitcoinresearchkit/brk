@@ -133,9 +133,12 @@ The response's format will depend on the given parameters, it will be:
 ")]
     fn get_vecs(&self, Parameters(params): Parameters<Params>) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecs");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.interface.search_and_format(params).unwrap()).unwrap(),
-        ]))
+        Ok(CallToolResult::success(vec![Content::text(
+            match self.interface.search_and_format(params) {
+                Ok(output) => output.to_string(),
+                Err(e) => format!("Error:\n{e}"),
+            },
+        )]))
     }
 
     #[tool(description = "

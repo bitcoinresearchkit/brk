@@ -14,13 +14,17 @@ allocative = { workspace = true }
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 brk_error = {workspace = true}
-vecdb = {workspace = true}
 byteview = { workspace = true }
 derive_deref = { workspace = true }
+itoa = "1.0.15"
 jiff = { workspace = true }
+num_enum = "0.7.4"
 rapidhash = "4.1.0"
+ryu = "1.0.20"
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+strum = { version = "0.27", features = ["derive"] }
+vecdb = { workspace = true }
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
 

@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -58,12 +58,18 @@ impl CheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
     }
 }
 
-impl Printable for P2MSOutputIndex {
+impl PrintableIndex for P2MSOutputIndex {
     fn to_string() -> &'static str {
         "p2msoutputindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["msout", "p2msout", "p2msoutputindex"]
+    }
+}
+
+impl std::fmt::Display for P2MSOutputIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

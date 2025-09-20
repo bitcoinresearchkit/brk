@@ -12,7 +12,7 @@ This crate provides a high-performance HTTP server built on `axum` that exposes 
 **Key Features:**
 
 - RESTful API for blockchain data queries with flexible filtering
-- Multiple output formats: JSON, CSV, TSV, Markdown
+- Multiple output formats: JSON, CSV
 - Intelligent caching system with ETags and conditional requests
 - HTTP compression (Gzip, Brotli, Deflate, Zstd) for bandwidth efficiency
 - Static file serving for web interfaces and documentation
@@ -81,7 +81,7 @@ server.serve(true).await?;
 **Supported Parameters:**
 
 - `from` / `to`: Range filtering (height, timestamp, date-based)
-- `format`: Output format (json, csv, tsv, md)
+- `format`: Output format (json, csv)
 - Pagination parameters for large datasets
 
 ### Address API Response Format
@@ -193,7 +193,7 @@ The server implements intelligent caching:
 2. **Parameter Validation**: Query parameter parsing and validation
 3. **Data Retrieval**: Interface calls to indexer/computer components
 4. **Caching Logic**: ETag generation and cache lookup
-5. **Format Conversion**: JSON/CSV/TSV/MD output formatting
+5. **Format Conversion**: JSON/CSV output formatting
 6. **Compression**: Response compression based on Accept-Encoding
 7. **Response**: HTTP response with appropriate headers
 

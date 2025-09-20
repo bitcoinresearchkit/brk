@@ -1,6 +1,6 @@
 use allocative::Allocative;
 
-use crate::pools::PoolId;
+use super::PoolId;
 
 #[derive(Debug, Allocative)]
 pub struct Pool {
@@ -14,8 +14,7 @@ pub struct Pool {
 
 impl Pool {
     pub fn serialized_id(&self) -> String {
-        let value = serde_json::to_value(self.id).unwrap();
-        value.as_str().unwrap().to_string()
+        self.id.to_string()
     }
 }
 

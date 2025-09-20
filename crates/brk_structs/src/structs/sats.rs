@@ -251,3 +251,11 @@ impl Mul<Sats> for usize {
         Self::Output::from(rhs.0 * self as u64)
     }
 }
+
+impl std::fmt::Display for Sats {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
+    }
+}

@@ -28,7 +28,7 @@ impl From<&Txid> for bitcoin::Txid {
 
 impl fmt::Display for Txid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", bitcoin::Txid::from(self))
+        f.write_str(&bitcoin::Txid::from(self).to_string())
     }
 }
 

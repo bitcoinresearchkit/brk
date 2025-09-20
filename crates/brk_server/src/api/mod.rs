@@ -11,13 +11,14 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use bitcoin::{Address, Network, Transaction, absolute::LockTime, consensus::Decodable};
+use bitcoin::{Address, Network, Transaction, consensus::Decodable};
 use bitcoincore_rpc::bitcoin;
 use brk_interface::{IdParam, Index, PaginatedIndexParam, PaginationParam, Params, ParamsOpt};
 use brk_parser::XORIndex;
 use brk_structs::{
-    AddressBytesHash, AnyAddressDataIndexEnum, Bitcoin, OutputType, Txid, TxidPrefix,
+    AddressBytesHash, AnyAddressDataIndexEnum, Bitcoin, OutputType, TxIndex, Txid, TxidPrefix,
 };
+use serde::Serialize;
 use serde_json::Number;
 use vecdb::{AnyIterableVec, VecIterator};
 
@@ -31,6 +32,13 @@ pub trait ApiRoutes {
 }
 
 const TO_SEPARATOR: &str = "_to_";
+
+#[derive(Serialize)]
+struct TxResponse {
+    txid: Txid,
+    index: TxIndex,
+    tx: Transaction,
+}
 
 impl ApiRoutes for Router<AppState> {
     fn add_api_routes(self) -> Self {
@@ -151,6 +159,7 @@ impl ApiRoutes for Router<AppState> {
                     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
                         return "Invalid txid".into_response()
                     };
+
                     let txid = Txid::from(txid);
                     let prefix = TxidPrefix::from(&txid);
                     let interface = state.interface;
@@ -162,22 +171,12 @@ impl ApiRoutes for Router<AppState> {
                         .map(|opt| opt.map(|cow| cow.into_owned())) else {
                             return "Unknown transaction".into_response();
                         };
+
                     let txid = indexer
                         .vecs
                         .txindex_to_txid
                         .iter()
                         .unwrap_get_inner(txindex);
-                    let version = indexer
-                        .vecs
-                        .txindex_to_txversion
-                        .iter()
-                        .unwrap_get_inner(txindex);
-                    let rawlocktime = indexer
-                        .vecs
-                        .txindex_to_rawlocktime
-                        .iter()
-                        .unwrap_get_inner(txindex);
-                    let locktime = LockTime::from(rawlocktime);
 
                     let parser = interface.parser();
                     let computer = interface.computer();
@@ -213,14 +212,14 @@ impl ApiRoutes for Router<AppState> {
                         return "Error decoding transaction".into_response();
                     };
 
-                    Json(serde_json::json!({
-                        "txid": txid,
-                        "index": txindex,
-                        "version": version,
-                        "locktime": locktime,
-                        "tx": tx,
-                    }))
-                    .into_response()
+                    let response = TxResponse { txid, index: txindex, tx };
+
+                    let bytes = sonic_rs::to_vec(&response).unwrap();
+
+                    Response::builder()
+                            .header("content-type", "application/json")
+                            .body(bytes.into())
+                            .unwrap()
                 },
             ),
         )

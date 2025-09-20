@@ -1,8 +1,8 @@
 use std::ops::Add;
 
-use vecdb::{CheckedSub, Printable, StoredCompressed};
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -73,12 +73,18 @@ impl CheckedSub<P2WSHAddressIndex> for P2WSHAddressIndex {
     }
 }
 
-impl Printable for P2WSHAddressIndex {
+impl PrintableIndex for P2WSHAddressIndex {
     fn to_string() -> &'static str {
         "p2wshaddressindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["wshaddr", "p2wshaddr", "p2wshaddressindex"]
+    }
+}
+
+impl std::fmt::Display for P2WSHAddressIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

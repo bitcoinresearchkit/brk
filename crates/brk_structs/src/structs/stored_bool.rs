@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{Printable, StoredCompressed};
+use vecdb::{PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -49,12 +49,22 @@ impl From<StoredBool> for usize {
     }
 }
 
-impl Printable for StoredBool {
+impl PrintableIndex for StoredBool {
     fn to_string() -> &'static str {
         "bool"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["bool"]
+    }
+}
+
+impl std::fmt::Display for StoredBool {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_true() {
+            f.write_str("true")
+        } else {
+            f.write_str("false")
+        }
     }
 }

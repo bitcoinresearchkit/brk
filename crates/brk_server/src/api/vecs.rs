@@ -89,7 +89,7 @@ fn req_to_response_res(
         Response::new(Body::from(v))
     } else {
         match interface.format(vecs, &params.rest)? {
-            Output::CSV(s) | Output::TSV(s) | Output::MD(s) => {
+            Output::CSV(s) => {
                 if let GuardResult::Guard(g) = guard_res {
                     g.insert(s.clone().into())
                         .map_err(|_| Error::QuickCacheError)?;
@@ -97,7 +97,7 @@ fn req_to_response_res(
                 s.into_response()
             }
             Output::Json(v) => {
-                let json = serde_json::to_vec(&v)?;
+                let json = v.to_vec();
                 if let GuardResult::Guard(g) = guard_res {
                     g.insert(json.clone().into())
                         .map_err(|_| Error::QuickCacheError)?;
@@ -115,17 +115,12 @@ fn req_to_response_res(
     headers.insert_cache_control_must_revalidate();
 
     match format {
-        Some(format) => {
+        Format::CSV => {
             headers.insert_content_disposition_attachment();
-            match format {
-                Format::CSV => headers.insert_content_type_text_csv(),
-                Format::MD => headers.insert_content_type_text_plain(),
-                Format::TSV => headers.insert_content_type_text_tsv(),
-                Format::JSON => headers.insert_content_type_application_json(),
-            }
+            headers.insert_content_type_text_csv()
         }
-        None => headers.insert_content_type_application_json(),
-    };
+        Format::JSON => headers.insert_content_type_application_json(),
+    }
 
     Ok(response)
 }

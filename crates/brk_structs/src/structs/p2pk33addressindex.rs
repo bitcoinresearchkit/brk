@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -73,12 +73,18 @@ impl CheckedSub<P2PK33AddressIndex> for P2PK33AddressIndex {
     }
 }
 
-impl Printable for P2PK33AddressIndex {
+impl PrintableIndex for P2PK33AddressIndex {
     fn to_string() -> &'static str {
         "p2pk33addressindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["pk33addr", "p2pk33addr", "p2pk33addressindex"]
+    }
+}
+
+impl std::fmt::Display for P2PK33AddressIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

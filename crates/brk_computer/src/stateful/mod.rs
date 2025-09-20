@@ -656,11 +656,11 @@ impl Vecs {
         // info!("stateful_starting_height = {stateful_starting_height}");
 
         let starting_height = starting_indexes.height.min(stateful_starting_height);
-        info!("starting_height = {starting_height}");
+        // info!("starting_height = {starting_height}");
         let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
-        info!("last_height = {last_height}");
+        // info!("last_height = {last_height}");
         if starting_height <= last_height {
-            info!("starting_height = {starting_height}");
+            // info!("starting_height = {starting_height}");
 
             let starting_height = if starting_height.is_not_zero() {
                 let mut set = [
@@ -716,7 +716,7 @@ impl Vecs {
             } else {
                 Height::ZERO
             };
-            info!("starting_height = {starting_height}");
+            // info!("starting_height = {starting_height}");
 
             let starting_height = if starting_height.is_not_zero()
                 && separate_address_vecs
@@ -729,7 +729,7 @@ impl Vecs {
                 Height::ZERO
             };
 
-            info!("starting_height = {starting_height}");
+            // info!("starting_height = {starting_height}");
 
             let mut chain_state: Vec<BlockState>;
             if starting_height.is_not_zero() {

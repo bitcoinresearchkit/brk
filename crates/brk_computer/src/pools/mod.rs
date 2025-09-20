@@ -4,22 +4,14 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
-use brk_structs::{AddressBytes, Height, OutputIndex, OutputType};
+use brk_structs::{AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec,
     PAGE_SIZE, RawVec, StoredIndex, VecIterator, Version,
 };
 
-mod id;
-mod pool;
-#[allow(clippy::module_inception)]
-mod pools;
 mod vecs;
-
-pub use id::*;
-pub use pool::*;
-pub use pools::*;
 
 use crate::{
     chain,

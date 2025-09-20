@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -55,17 +55,25 @@ impl Add<usize> for EmptyAddressIndex {
         Self(self.0 + rhs)
     }
 }
+
 impl CheckedSub<EmptyAddressIndex> for EmptyAddressIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-impl Printable for EmptyAddressIndex {
+
+impl PrintableIndex for EmptyAddressIndex {
     fn to_string() -> &'static str {
         "emptyaddressindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["emptyaddr", "emptyaddressindex"]
+    }
+}
+
+impl std::fmt::Display for EmptyAddressIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

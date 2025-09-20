@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Printable, StoredCompressed};
+use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -59,12 +59,18 @@ impl CheckedSub<OpReturnIndex> for OpReturnIndex {
     }
 }
 
-impl Printable for OpReturnIndex {
+impl PrintableIndex for OpReturnIndex {
     fn to_string() -> &'static str {
         "opreturnindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["op", "opreturn", "opreturnindex"]
+    }
+}
+
+impl std::fmt::Display for OpReturnIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
