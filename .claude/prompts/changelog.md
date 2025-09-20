@@ -1,6 +1,6 @@
 # Changelog Generation Prompt
 
-Update docs/CHANGELOG.md for ALL releases starting from v0.0.107 onwards. Use ONLY git commands - no other sources.
+Update docs/CHANGELOG.md for ALL latest releases not present in the file. Use ONLY git commands - no other sources.
 
 ## MANDATORY PROCESS - FOLLOW EXACTLY - NO EXCEPTIONS:
 1. Run `git tag --list --sort=version:refname` to get releases in order

@@ -43,6 +43,19 @@
     - parse only the needed block number instead the last 100 blocks
       - maybe using https://developer.bitcoin.org/reference/rpc/getblockhash.html
   - _INTERFACE_
+    - Maybe change `json` to:
+      ```json
+      {
+        "price_close": {
+          "data": [115976.6, 115943.4],
+          "unit": "USD",
+          "range": {
+            "from": 19627,
+            "to": 19628
+          }
+        }
+      }
+      ```
     - create pagination enum
       - from to
       - from option<count>

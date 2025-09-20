@@ -570,7 +570,6 @@ dependencies = [
  "pco",
  "rayon",
  "serde",
- "serde_json",
  "vecdb",
  "zerocopy",
  "zerocopy-derive",
@@ -709,7 +708,7 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b49ac541e14b18e43696144176faeabc547ce198cb10d575c13fcc6245d337c"
 dependencies = [
- "darling 0.21.3",
+ "darling",
  "proc-macro2",
  "quote",
  "serde_json",
@@ -1070,7 +1069,7 @@ dependencies = [
  "quick_cache",
  "serde",
  "serde_json",
- "sonic-rs",
+ "sonic-rs 0.5.4",
  "tokio",
  "tower-http",
  "tracing",
@@ -1512,36 +1511,12 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.20.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee"
-dependencies = [
- "darling_core 0.20.11",
- "darling_macro 0.20.11",
-]
-
-[[package]]
-name = "darling"
 version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9cdf337090841a411e2a7f3deb9187445851f91b309c0c0a29e05f74a00a48c0"
 dependencies = [
- "darling_core 0.21.3",
- "darling_macro 0.21.3",
-]
-
-[[package]]
-name = "darling_core"
-version = "0.20.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d00b9596d185e565c2207a0b01f8bd1a135483d02d9b7b0a54b11da8d53412e"
-dependencies = [
- "fnv",
- "ident_case",
- "proc-macro2",
- "quote",
- "strsim",
- "syn 2.0.106",
+ "darling_core",
+ "darling_macro",
 ]
 
 [[package]]
@@ -1560,22 +1535,11 @@ dependencies = [
 
 [[package]]
 name = "darling_macro"
-version = "0.20.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
-dependencies = [
- "darling_core 0.20.11",
- "quote",
- "syn 2.0.106",
-]
-
-[[package]]
-name = "darling_macro"
 version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d38308df82d1080de0afee5d069fa14b0326a88c14f15c5ccda35b4a6c414c81"
 dependencies = [
- "darling_core 0.21.3",
+ "darling_core",
  "quote",
  "syn 2.0.106",
 ]
@@ -2944,9 +2908,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ca83f99170f095592784131ed47b6782974c98165ec4da64e90df64bdc2b3cf"
+checksum = "37c5bf598bf7f55955c737d580cdadaeeda80e0e6430834f6165aef21220e3a2"
 dependencies = [
  "bincode",
  "flate2",
@@ -4153,7 +4117,9 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 
 [[package]]
 name = "seqdb"
-version = "0.2.15"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4b5a103ae4ceaaf11b372ffcc267d9236e33d0d515dca7b5813579511e3f6c9"
 dependencies = [
  "allocative",
  "libc",
@@ -4264,9 +4230,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2c45cd61fefa9db6f254525d46e392b852e0e61d9a1fd36e5bd183450a556d5"
+checksum = "c522100790450cf78eeac1507263d0a350d4d5b30df0c8e1fe051a10c22b376e"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -4284,11 +4250,11 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de90945e6565ce0d9a25098082ed4ee4002e047cb59892c318d66821e14bb30f"
+checksum = "327ada00f7d64abaac1e55a6911e90cf665aa051b9a561c7006c157f4633135e"
 dependencies = [
- "darling 0.20.11",
+ "darling",
  "proc-macro2",
  "quote",
  "syn 2.0.106",
@@ -4381,6 +4347,27 @@ version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0275f9f2f07d47556fe60c2759da8bc4be6083b047b491b2d476aa0bfa558eb1"
 dependencies = [
+ "bumpalo",
+ "bytes",
+ "cfg-if",
+ "faststr",
+ "itoa",
+ "ref-cast",
+ "ryu",
+ "serde",
+ "simdutf8",
+ "sonic-number",
+ "sonic-simd",
+ "thiserror 2.0.16",
+]
+
+[[package]]
+name = "sonic-rs"
+version = "0.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0e0c5c1c429b500b4583e860ed48f9e34968cb1ba49dd16c1e2743678e3fd18"
+dependencies = [
+ "ahash",
  "bumpalo",
  "bytes",
  "cfg-if",
@@ -5052,7 +5039,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.2.15"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46ec3679b15875862bb8133094dbc6adc80089e651b739198e4a6b4dddcd4e7a"
 dependencies = [
  "allocative",
  "ctrlc",
@@ -5063,7 +5052,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "sonic-rs",
+ "sonic-rs 0.3.17",
  "vecdb_derive",
  "zerocopy",
  "zerocopy-derive",
@@ -5071,7 +5060,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.2.15"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e97a132b0d890f90bced783a546be84ba0fb0abfa868628cbc19a506739c761"
 dependencies = [
  "quote",
  "syn 2.0.106",
