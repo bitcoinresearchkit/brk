@@ -2,12 +2,12 @@
 
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType } from "./options"
- * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions } from "../packages/lightweight-charts/wrapper"
- * @import * as _ from "../packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
+ * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions } from "./packages/lightweight-charts/wrapper"
+ * @import * as _ from "./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  * @import { SerializedChartableIndex } from "./chart";
- * @import { Signal, Signals, Accessor } from "../packages/solidjs-signals/wrapper";
+ * @import { Signal, Signals, Accessor } from "./packages/solidjs-signals/wrapper";
  * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex, EmptyAddressIndex, LoadedAddressIndex } from "./bridge/vecs"
- * @import { Pools, Pool} from "./bridge/pools"
+ * @import { Pools, Pool } from "./bridge/pools"
  */
 
 /**
@@ -72,27 +72,27 @@ const localhost = window.location.hostname === "localhost";
 function initPackages() {
   const imports = {
     async signals() {
-      return import("../packages/solidjs-signals/wrapper.js").then(
+      return import("./packages/solidjs-signals/wrapper.js").then(
         (d) => d.default,
       );
     },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
-        import("../packages/lightweight-charts/wrapper.js").then(
+        import("./packages/lightweight-charts/wrapper.js").then(
           (d) => d.default,
         ),
       );
     },
     async leanQr() {
-      return import("../packages/lean-qr/2.5.0/index.mjs").then((d) => d);
+      return import("./packages/lean-qr/2.5.0/index.mjs").then((d) => d);
     },
     async ufuzzy() {
-      return import("../packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs").then(
+      return import("./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs").then(
         ({ default: d }) => d,
       );
     },
     async modernScreenshot() {
-      return import("../packages/modern-screenshot/wrapper.js").then((d) => d);
+      return import("./packages/modern-screenshot/wrapper.js").then((d) => d);
     },
   };
 
