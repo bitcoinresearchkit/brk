@@ -16,7 +16,7 @@
     "**/solidjs-signals/*/dist/prod.js",
     "uFuzzy.mjs",
     "lightweight-charts.standalone.production.mjs",
-    "scripts/packages",
+    // "scripts/packages",
     "dist"
   ]
 }

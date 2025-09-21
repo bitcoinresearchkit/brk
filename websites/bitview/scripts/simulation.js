@@ -3,7 +3,7 @@
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {LightweightCharts} args.lightweightCharts
+ * @param {CreateChartElement} args.createChartElement
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {Elements} args.elements
@@ -12,7 +12,7 @@
 export function init({
   colors,
   elements,
-  lightweightCharts,
+  createChartElement,
   signals,
   utils,
   vecsResources,
@@ -679,7 +679,7 @@ export function init({
 
   const index = () => /** @type {DateIndex} */ (0);
 
-  lightweightCharts.createChartElement({
+  createChartElement({
     index,
     parent: resultsElement,
     signals,
@@ -724,7 +724,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChartElement({
+  createChartElement({
     index,
     parent: resultsElement,
     signals,
@@ -749,7 +749,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChartElement({
+  createChartElement({
     index,
     parent: resultsElement,
     signals,
@@ -780,7 +780,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChartElement({
+  createChartElement({
     index,
     parent: resultsElement,
     signals,
@@ -804,7 +804,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChartElement({
+  createChartElement({
     index,
     parent: resultsElement,
     signals,
