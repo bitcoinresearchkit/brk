@@ -2,9 +2,9 @@
 
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType } from "./options"
- * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions } from "./packages/lightweight-charts/wrapper"
+ * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./chart"
  * @import * as _ from "./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
- * @import { SerializedChartableIndex } from "./chart";
+ * @import { SerializedChartableIndex } from "./charts";
  * @import { Signal, Signals, Accessor } from "./packages/solidjs-signals/wrapper";
  * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex, EmptyAddressIndex, LoadedAddressIndex } from "./bridge/vecs"
  * @import { Pools, Pool } from "./bridge/pools"
@@ -76,11 +76,9 @@ function initPackages() {
         (d) => d.default,
       );
     },
-    async lightweightCharts() {
+    async chart() {
       return window.document.fonts.ready.then(() =>
-        import("./packages/lightweight-charts/wrapper.js").then(
-          (d) => d.default,
-        ),
+        import("./chart.js").then((d) => d.default),
       );
     },
     async leanQr() {
@@ -100,7 +98,7 @@ function initPackages() {
    * @template {keyof typeof imports} K
    * @param {K} key
    */
-  function importPackage(key) {
+  function lazyImport(key) {
     /** @type {ReturnType<typeof imports[K]> | null} */
     let packagePromise = null;
 
@@ -114,17 +112,15 @@ function initPackages() {
   }
 
   return {
-    signals: importPackage("signals"),
-    lightweightCharts: importPackage("lightweightCharts"),
-    leanQr: importPackage("leanQr"),
-    ufuzzy: importPackage("ufuzzy"),
-    modernScreenshot: importPackage("modernScreenshot"),
+    signals: lazyImport("signals"),
+    chart: lazyImport("chart"),
+    leanQr: lazyImport("leanQr"),
+    ufuzzy: lazyImport("ufuzzy"),
+    modernScreenshot: lazyImport("modernScreenshot"),
   };
 }
 /**
  * @typedef {ReturnType<typeof initPackages>} Packages
- * @typedef {Awaited<ReturnType<Packages["lightweightCharts"]>>} LightweightCharts
- * @typedef {ReturnType<LightweightCharts['createChartElement']>} Chart
  */
 
 function createUtils() {
@@ -2314,14 +2310,14 @@ function main() {
                   element = elements.explorer;
 
                   if (firstTimeLoadingExplorer) {
-                    const lightweightCharts = packages.lightweightCharts();
+                    const chartPkg = packages.chart();
                     import("./explorer.js").then(({ init }) =>
-                      lightweightCharts.then((lightweightCharts) =>
+                      chartPkg.then(({ createChartElement }) =>
                         signals.runWithOwner(owner, () =>
                           init({
                             colors,
                             elements,
-                            lightweightCharts,
+                            createChartElement,
                             option: /** @type {Accessor<ChartOption>} */ (
                               chartOption
                             ),
@@ -2345,14 +2341,14 @@ function main() {
                   chartOption.set(option);
 
                   if (firstTimeLoadingChart) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    import("./chart.js").then(({ init: initChartsElement }) =>
-                      lightweightCharts.then((lightweightCharts) =>
+                    const chartPkg = packages.chart();
+                    import("./charts.js").then(({ init: initChartsElement }) =>
+                      chartPkg.then(({ createChartElement }) =>
                         signals.runWithOwner(owner, () =>
                           initChartsElement({
                             colors,
                             elements,
-                            lightweightCharts,
+                            createChartElement,
                             option: /** @type {Accessor<ChartOption>} */ (
                               chartOption
                             ),
@@ -2399,14 +2395,14 @@ function main() {
                   simOption.set(option);
 
                   if (firstTimeLoadingSimulation) {
-                    const lightweightCharts = packages.lightweightCharts();
+                    const chart = packages.chart();
                     import("./simulation.js").then(({ init }) =>
-                      lightweightCharts.then((lightweightCharts) =>
+                      chart.then(({ createChartElement }) =>
                         signals.runWithOwner(owner, () =>
                           init({
                             colors,
                             elements,
-                            lightweightCharts,
+                            createChartElement,
                             signals,
                             utils,
                             vecsResources,

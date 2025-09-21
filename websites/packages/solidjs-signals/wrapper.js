@@ -16,8 +16,6 @@
  * @typedef {Accessor<T> & { set: Setter<T>; reset: VoidFunction }} Signal
  */
 
-console.log("bob");
-
 import {
   createSignal,
   createEffect,

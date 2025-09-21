@@ -1,14 +1,13 @@
 # TODO
 
 - __CRATES__
+  - _BUNDLER_
   - _CLI_
     - launch
       - if first, test read/write speed, add warning if too low (<2gb/s)
       - check available disk space
       - pull latest version and notify if out of date
     - add custom path support for config.toml
-    - maybe add bitcoind download and launch support
-      - via: https://github.com/rust-bitcoin/corepc/blob/master/node
   - _COMPUTER_
     - **add rollback of states (in stateful)**
     - add support for per index computation
@@ -39,6 +38,8 @@
       - https://checkonchain.com
       - https://researchbitcoin.net/exciting-update-coming-to-the-bitcoin-lab/
       - https://mempool.space/research
+  - _ERROR_
+  - _FETCHER_
   - _INDEXER_
     - parse only the needed block number instead the last 100 blocks
       - maybe using https://developer.bitcoin.org/reference/rpc/getblockhash.html
@@ -65,9 +66,8 @@
       - example: from -10,000 count 10, won’t work if underlying vec isn’t 10k or more long
   - _LOGGER_
     - remove colors from file
+  - _MCP_
   - _PARSER_
-    - Stateless
-    - if less than X (10 maybe ?) get block using rpc instead of parsing the block files
   - _SERVER_
     - api
       - copy mempool's rest api
@@ -93,7 +93,6 @@
   - _STORE_
     - save height and version in one file
   - _STRUCTS_
-    - remove `checked_sub` trait ? (checked with the `dev` profile)
 - __DOCS__
   - _README_
     - add a comparison table with alternatives
@@ -102,7 +101,6 @@
     - add faq
 - __WEBSITES__
   - _PACKAGES_
-    - move packages from `bitview` to `/packages` or `/websites/packages` or else
     - move the fetching logic from `bitview` website to an independent `brk` package which could be published to npm
       - https://www.npmjs.com/package/@mempool/mempool.js
       - auto publish with github actions
@@ -145,9 +143,8 @@
         - by having a global state
       - font:
         - https://fonts.google.com/specimen/Space+Mono
-
     - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
-    - No classes: https://news.ycombinator.com/item?id=45287155
+    - [No classes](https://news.ycombinator.com/item?id=45287155)
 - __GLOBAL__
   - check `TODO`s in codebase
   - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`

@@ -3,7 +3,7 @@
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {LightweightCharts} args.lightweightCharts
+ * @param {CreateChartElement} args.createChartElement
  * @param {Accessor<ChartOption>} args.option
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
@@ -15,7 +15,7 @@
 export function init({
   colors,
   elements,
-  lightweightCharts,
+  createChartElement,
   option,
   signals,
   utils,
