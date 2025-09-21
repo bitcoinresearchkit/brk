@@ -1,9 +1,9 @@
 // @ts-check
 
 /**
- * @import { SignalOptions } from "./0.4.1/dist/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./0.4.1/dist/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "./0.4.1/dist/types/signals";
+ * @import { SignalOptions } from "./0.4.11/dist/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./0.4.11/dist/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "./0.4.11/dist/types/signals";
  */
 
 /**
@@ -16,6 +16,8 @@
  * @typedef {Accessor<T> & { set: Setter<T>; reset: VoidFunction }} Signal
  */
 
+console.log("bob");
+
 import {
   createSignal,
   createEffect,
@@ -24,7 +26,7 @@ import {
   createRoot,
   runWithOwner,
   onCleanup,
-} from "./0.4.1/dist/prod.js";
+} from "./0.4.11/dist/prod.js";
 
 let effectCount = 0;
 

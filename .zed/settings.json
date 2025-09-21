@@ -12,9 +12,11 @@
     "**/.settings",
     // custom
     "**/lean-qr/*/index.mjs",
+    "**/modern-screenshot/*/index.mjs",
+    "**/solidjs-signals/*/dist/prod.js",
     "uFuzzy.mjs",
     "lightweight-charts.standalone.production.mjs",
-    "**/modern-screenshot/*/index.mjs",
-    "**/solidjs-signals/*/dist/prod.js"
+    "scripts/packages",
+    "dist"
   ]
 }

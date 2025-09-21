@@ -15,19 +15,39 @@ use tokio::sync::Mutex;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> io::Result<PathBuf> {
-    let source_path = websites_path.join(source_folder);
-    let dist_path = websites_path.join("dist");
-
-    let _ = fs::remove_dir_all(&dist_path);
-    copy_dir_all(&source_path, &dist_path)?;
-
-    let source_scripts = format!("./{source_folder}/scripts");
-    let source_entry = format!("{source_scripts}/entry.js");
+    let relative_source_path = websites_path.join(source_folder);
+    let relative_dist_path = websites_path.join("dist");
+    let relative_packages_path = websites_path.join("packages");
 
     let absolute_websites_path = websites_path.absolutize();
+    let absolute_websites_path_clone = absolute_websites_path.clone();
+
+    let absolute_packages_path = relative_packages_path.absolutize();
+
+    let absolute_source_path = relative_source_path.absolutize();
+    let absolute_source_index_path = absolute_source_path.join("index.html");
+    let absolute_source_index_path_clone = absolute_source_index_path.clone();
+    let absolute_source_scripts_path = absolute_source_path.join("scripts");
+    let absolute_source_scripts_packages_path = absolute_source_scripts_path.join("packages");
+    let absolute_source_sw_path = absolute_source_path.join("service-worker.js");
+    let absolute_source_sw_path_clone = absolute_source_sw_path.clone();
+
+    let absolute_dist_path = relative_dist_path.absolutize();
+    let absolute_dist_scripts_entry_path = absolute_dist_path.join("scripts/entry.js");
+    let absolute_dist_scripts_entry_path_clone = absolute_dist_scripts_entry_path.clone();
+    let absolute_dist_index_path = absolute_dist_path.join("index.html");
+    let absolute_dist_sw_path = absolute_dist_path.join("service-worker.js");
+
+    let _ = fs::remove_dir_all(&absolute_dist_path);
+    let _ = fs::remove_dir_all(&absolute_source_scripts_packages_path);
+    copy_dir_all(
+        &absolute_packages_path,
+        &absolute_source_scripts_packages_path,
+    )?;
+    copy_dir_all(&absolute_source_path, &absolute_dist_path)?;
 
     let mut bundler = Bundler::new(BundlerOptions {
-        input: Some(vec![source_entry.into()]),
+        input: Some(vec![format!("./{source_folder}/scripts/entry.js").into()]),
         dir: Some("./dist/scripts".to_string()),
         cwd: Some(absolute_websites_path),
         minify: Some(RawMinifyOptions::Bool(true)),
@@ -39,24 +59,10 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         error!("{error:?}");
     }
 
-    let absolute_source_index_path = source_path.join("index.html").absolutize();
-    let absolute_source_index_path_clone = absolute_source_index_path.clone();
-    let absolute_source_path = source_path.absolutize();
-    let absolute_source_path_clone = absolute_source_path.clone();
-    let absolute_source_scripts_path = websites_path.join(source_scripts).absolutize();
-    let absolute_source_sw_path = source_path.join("service-worker.js").absolutize();
-    let absolute_source_sw_path_clone = absolute_source_sw_path.clone();
-
-    let absolute_dist_entry_path = dist_path.join("scripts/entry.js").absolutize();
-    let absolute_dist_index_path = dist_path.join("index.html").absolutize();
-    let absolute_dist_path = dist_path.absolutize();
-    let absolute_dist_path_clone = absolute_dist_path.clone();
-    let absolute_dist_sw_path = dist_path.join("service-worker.js").absolutize();
-
     let write_index = move || {
         let mut contents = fs::read_to_string(&absolute_source_index_path).unwrap();
 
-        if let Ok(entry) = fs::read_to_string(absolute_dist_path_clone.join("scripts/entry.js"))
+        if let Ok(entry) = fs::read_to_string(&absolute_dist_scripts_entry_path_clone)
             && let Some(start) = entry.find("main")
             && let Some(end) = entry.find(".js")
         {
@@ -78,25 +84,13 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
     write_sw();
 
     if !watch {
-        return Ok(dist_path);
+        return Ok(relative_dist_path);
     }
 
     tokio::spawn(async move {
-        let write_index_clone = write_index.clone();
+        let absolute_websites_path = absolute_websites_path_clone.clone();
 
-        let mut entry_watcher = notify::recommended_watcher(
-            move |res: Result<notify::Event, notify::Error>| match res {
-                Ok(_) => write_index_clone(),
-                Err(e) => error!("watch error: {e:?}"),
-            },
-        )
-        .unwrap();
-
-        entry_watcher
-            .watch(&absolute_dist_entry_path, RecursiveMode::Recursive)
-            .unwrap();
-
-        let mut source_watcher = notify::recommended_watcher(
+        let mut event_watcher = notify::recommended_watcher(
             move |res: Result<notify::Event, notify::Error>| match res {
                 Ok(event) => match event.kind {
                     EventKind::Create(_) => event.paths,
@@ -104,18 +98,33 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
                     _ => vec![],
                 }
                 .into_iter()
-                .filter(|path| path.starts_with(&absolute_source_path))
-                .filter(|path| !path.starts_with(&absolute_source_scripts_path))
-                .for_each(|source_path| {
-                    let suffix = source_path.strip_prefix(&absolute_source_path).unwrap();
-                    let dist_path = absolute_dist_path.join(suffix);
-
-                    if source_path == absolute_source_index_path_clone {
+                .for_each(|path| {
+                    if path == absolute_dist_scripts_entry_path
+                        || path == absolute_source_index_path_clone
+                    {
                         write_index();
-                    } else if source_path == absolute_source_sw_path_clone {
+                    } else if path == absolute_source_sw_path_clone {
                         write_sw();
-                    } else {
-                        let _ = fs::copy(&source_path, &dist_path);
+                    } else if path.starts_with(&absolute_packages_path) {
+                        let suffix = path.strip_prefix(&absolute_websites_path).unwrap();
+                        let dist_path = absolute_source_scripts_path.join(suffix);
+
+                        dbg!(&suffix, &dist_path);
+                        if path.is_file() {
+                            let _ = fs::create_dir_all(path.parent().unwrap());
+                            let _ = fs::copy(&path, &dist_path);
+                        }
+                    } else if path.starts_with(&absolute_source_path)
+                        // scripts are handled by rolldown
+                        && !path.starts_with(&absolute_source_scripts_path)
+                    {
+                        let suffix = path.strip_prefix(&absolute_source_path).unwrap();
+                        let dist_path = absolute_dist_path.join(suffix);
+
+                        if path.is_file() {
+                            let _ = fs::create_dir_all(path.parent().unwrap());
+                            let _ = fs::copy(&path, &dist_path);
+                        }
                     }
                 }),
                 Err(e) => error!("watch error: {e:?}"),
@@ -123,8 +132,8 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         )
         .unwrap();
 
-        source_watcher
-            .watch(&absolute_source_path_clone, RecursiveMode::Recursive)
+        event_watcher
+            .watch(&absolute_websites_path_clone, RecursiveMode::Recursive)
             .unwrap();
 
         let watcher =
@@ -133,7 +142,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         watcher.start().await;
     });
 
-    Ok(dist_path)
+    Ok(relative_dist_path)
 }
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
