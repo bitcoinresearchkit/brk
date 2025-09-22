@@ -127,7 +127,7 @@
  * @param {Pools} args.pools
  * @returns {PartialOptionsTree}
  */
-function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
+export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   /**
    * @template {string} S
    * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
@@ -720,7 +720,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `UTXOs ${title}`,
         color,
-      })
+      }),
   );
 
   const addressesAboveAmount = aboveAmount.map(
@@ -730,7 +730,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `Addresses ${title}`,
         color,
-      })
+      }),
   );
 
   const underAmount = /** @type {const} */ ([
@@ -821,7 +821,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `UTXOs ${title}`,
         color,
-      })
+      }),
   );
 
   const addressesUnderAmount = underAmount.map(
@@ -831,7 +831,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `Addresses ${title}`,
         color,
-      })
+      }),
   );
 
   const amountRanges = /** @type {const} */ ([
@@ -934,7 +934,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `UTXOs ${title}`,
         color,
-      })
+      }),
   );
 
   const addressesAmountRanges = amountRanges.map(
@@ -944,7 +944,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
         name,
         title: `Addresses ${title}`,
         color,
-      })
+      }),
   );
 
   const type = /** @type {const} */ ([
@@ -1129,7 +1129,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
             lastValueVisible: false,
             crosshairMarkerVisible: false,
           },
-        })
+        }),
     );
   }
 
@@ -1426,7 +1426,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   options: {
                     lineStyle: 1,
                   },
-                })
+                }),
               )
             : []),
         ],
@@ -1449,7 +1449,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   options: {
                     lineStyle: 1,
                   },
-                })
+                }),
               )
             : []),
           ...(`${key}_ratio_sma` in vecIdToIndexes
@@ -1462,7 +1462,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   options: {
                     lineStyle: 1,
                   },
-                })
+                }),
               )
             : []),
           createPriceLine({
@@ -1641,7 +1641,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         options: {
                           lineStyle: 1,
                         },
-                      })
+                      }),
                     ),
                   ],
                   bottom: [
@@ -2014,11 +2014,11 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
           }),
         },
         ...(list.filter(
-          ({ key }) => `${fixKey(key)}addr_count` in vecIdToIndexes
+          ({ key }) => `${fixKey(key)}addr_count` in vecIdToIndexes,
         ).length > ("list" in args ? 1 : 0)
           ? !("list" in args) ||
             list.filter(
-              ({ key }) => `${fixKey(key)}empty_addr_count` in vecIdToIndexes
+              ({ key }) => `${fixKey(key)}empty_addr_count` in vecIdToIndexes,
             ).length <= 1
             ? [
                 {
@@ -2060,7 +2060,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       bottom: list
                         .filter(
                           ({ key }) =>
-                            `${fixKey(key)}addr_count` in vecIdToIndexes
+                            `${fixKey(key)}addr_count` in vecIdToIndexes,
                         )
                         .flatMap(({ name, color, key: _key }) => {
                           const key = fixKey(_key);
@@ -2075,7 +2075,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     },
                     ...(list.filter(
                       ({ key }) =>
-                        `${fixKey(key)}empty_addr_count` in vecIdToIndexes
+                        `${fixKey(key)}empty_addr_count` in vecIdToIndexes,
                     ).length
                       ? [
                           {
@@ -2085,7 +2085,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               .filter(
                                 ({ key }) =>
                                   `${fixKey(key)}empty_addr_count` in
-                                  vecIdToIndexes
+                                  vecIdToIndexes,
                               )
                               .flatMap(({ name, color, key: _key }) => {
                                 const key = fixKey(_key);
@@ -2117,7 +2117,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         key: `${fixKey(key)}realized_price`,
                         name,
                         color,
-                      })
+                      }),
                     ),
                   },
                   {
@@ -2129,7 +2129,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           key: `${fixKey(key)}realized_price_ratio`,
                           name,
                           color,
-                        })
+                        }),
                       ),
                       createPriceLine({
                         unit: "ratio",
@@ -2195,7 +2195,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}realized_profit_to_loss_ratio`,
                               name: "proft / loss",
                               color: colors.yellow,
@@ -2234,7 +2234,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_profit_rel_to_realized_cap`,
                         title: "Profit",
                         color: colors.green,
@@ -2242,7 +2242,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_loss_rel_to_realized_cap`,
                         title: "Loss",
                         color: colors.red,
@@ -2274,7 +2274,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_pnl_cumulative_30d_delta`,
                         title: "cumulative 30d change",
                         defaultActive: false,
@@ -2282,14 +2282,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_pnl_rel_to_realized_cap`,
                         title: "Raw",
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap`,
                         title: "cumulative 30d change",
                         defaultActive: false,
@@ -2297,7 +2297,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_pnl_cumulative_30d_delta_rel_to_market_cap`,
                         title: "cumulative 30d change",
                       }),
@@ -2500,7 +2500,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
                           key: `${fixKey(
-                            key
+                            key,
                           )}net_realized_pnl_rel_to_realized_cap`,
                           title: name,
                           color,
@@ -2571,7 +2571,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
                               key: `${fixKey(
-                                key
+                                key,
                               )}net_realized_pnl_cumulative_30d_delta`,
                               title: name,
                               color,
@@ -2579,7 +2579,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
                               key: `${fixKey(
-                                key
+                                key,
                               )}net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap`,
                               title: name,
                               color,
@@ -2587,7 +2587,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
                               key: `${fixKey(
-                                key
+                                key,
                               )}net_realized_pnl_cumulative_30d_delta_rel_to_market_cap`,
                               title: name,
                               color,
@@ -2650,7 +2650,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                         title: name,
                                         color,
                                       }),
-                                    ]
+                                    ],
                                   ),
                                   createPriceLine({
                                     number: 1,
@@ -2730,7 +2730,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         bottom: list.flatMap(({ color, name, key }) => {
                           const normalKey = `${fixKey(key)}value_destroyed`;
                           const adjKey = `${fixKey(
-                            key
+                            key,
                           )}adjusted_value_destroyed`;
                           return [
                             createBaseSeries({
@@ -2785,7 +2785,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                           key,
                                           name,
                                           color,
-                                        })
+                                        }),
                                     ),
                                   },
                                 ]
@@ -2826,7 +2826,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                           key,
                                           name,
                                           color,
-                                        })
+                                        }),
                                     ),
                                   },
                                 ]
@@ -2871,14 +2871,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       }),
                       createBaseSeries({
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}unrealized_profit_rel_to_market_cap`,
                         name: "Profit",
                         color: colors.green,
                       }),
                       createBaseSeries({
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}unrealized_loss_rel_to_market_cap`,
                         name: "Loss",
                         color: colors.red,
@@ -2886,26 +2886,26 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       }),
                       createBaseSeries({
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}neg_unrealized_loss_rel_to_market_cap`,
                         name: "Negative Loss",
                         color: colors.red,
                       }),
                       ...(`${fixKey(
-                        args.key
+                        args.key,
                       )}unrealized_profit_rel_to_own_market_cap` in
                       vecIdToIndexes
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}unrealized_profit_rel_to_own_market_cap`,
                               name: "Profit",
                               color: colors.green,
                             }),
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}unrealized_loss_rel_to_own_market_cap`,
                               name: "Loss",
                               color: colors.red,
@@ -2913,7 +2913,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             }),
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}neg_unrealized_loss_rel_to_own_market_cap`,
                               name: "Negative Loss",
                               color: colors.red,
@@ -2928,20 +2928,20 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           ]
                         : []),
                       ...(`${fixKey(
-                        args.key
+                        args.key,
                       )}unrealized_profit_rel_to_own_total_unrealized_pnl` in
                       vecIdToIndexes
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}unrealized_profit_rel_to_own_total_unrealized_pnl`,
                               name: "Profit",
                               color: colors.green,
                             }),
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}unrealized_loss_rel_to_own_total_unrealized_pnl`,
                               name: "Loss",
                               color: colors.red,
@@ -2949,7 +2949,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             }),
                             createBaseSeries({
                               key: `${fixKey(
-                                args.key
+                                args.key,
                               )}neg_unrealized_loss_rel_to_own_total_unrealized_pnl`,
                               name: "Negative Loss",
                               color: colors.red,
@@ -3036,13 +3036,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     color: useGroupName ? color : undefined,
                   }),
                   ...(`${fixKey(
-                    key
+                    key,
                   )}net_unrealized_pnl_rel_to_own_market_cap` in vecIdToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
                           key: `${fixKey(
-                            key
+                            key,
                           )}net_unrealized_pnl_rel_to_own_market_cap`,
                           title: useGroupName ? name : "Net",
                           color: useGroupName ? color : undefined,
@@ -3053,14 +3053,14 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       ]
                     : []),
                   ...(`${fixKey(
-                    key
+                    key,
                   )}net_unrealized_pnl_rel_to_own_total_unrealized_pnl` in
                   vecIdToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
                           key: `${fixKey(
-                            key
+                            key,
                           )}net_unrealized_pnl_rel_to_own_total_unrealized_pnl`,
                           title: useGroupName ? name : "Net",
                           color: useGroupName ? color : undefined,
@@ -3277,7 +3277,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         key: `price_${key}_${keyAddon}`,
                         name: key,
                         color,
-                      })
+                      }),
                     ),
                   },
                   ...averages.map(({ key, name, color }) => ({
@@ -3494,7 +3494,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               unit: "percentage",
                             }),
                           ],
-                        })
+                        }),
                     ),
                     .../** @type {const} */ ([
                       { name: "2 Year", key: "2y" },
@@ -3551,7 +3551,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               unit: "percentage",
                             }),
                           ],
-                        })
+                        }),
                     ),
                   ],
                 },
@@ -3567,7 +3567,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           name: `${year}`,
                           color,
                           defaultActive,
-                        })
+                        }),
                       ),
                     },
                     ...dcaClasses.map(
@@ -3592,7 +3592,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               unit: "percentage",
                             }),
                           ],
-                        })
+                        }),
                     ),
                   ],
                 },
@@ -3681,13 +3681,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     //   name: "Weight",
                     // }),
                     ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                      "block_size"
+                      "block_size",
                     ),
                     ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                      "block_weight"
+                      "block_weight",
                     ),
                     ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                      "block_vbytes"
+                      "block_vbytes",
                     ),
                   ],
                 },
@@ -3703,7 +3703,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     {
                       key: "tx_count",
                       name: "Count",
-                    }
+                    },
                   ),
                 },
                 {
@@ -3771,7 +3771,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       common: `v${index + 1}`,
                       sumColor,
                       cumulativeColor,
-                    })
+                    }),
                   ),
                 },
                 {
@@ -3905,19 +3905,19 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           {
                             key: "coinbase",
                             name: "Coinbase",
-                          }
+                          },
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
                             key: "coinbase_btc",
                             name: "Coinbase",
-                          }
+                          },
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
                             key: "coinbase_usd",
                             name: "Coinbase",
-                          }
+                          },
                         ),
                       ],
                     },
@@ -3929,7 +3929,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           {
                             key: "subsidy",
                             name: "Subsidy",
-                          }
+                          },
                         ),
                         createBaseSeries({
                           key: "subsidy_usd_1y_sma",
@@ -3939,13 +3939,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                           {
                             key: "subsidy_btc",
                             name: "Subsidy",
-                          }
+                          },
                         ),
                         ...createBaseAverageSumCumulativeMinMaxPercentilesSeries(
                           {
                             key: "subsidy_usd",
                             name: "Subsidy",
-                          }
+                          },
                         ),
                       ],
                     },
@@ -3954,13 +3954,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       title: "Transaction Fee",
                       bottom: [
                         ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                          "fee"
+                          "fee",
                         ),
                         ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                          "fee_btc"
+                          "fee_btc",
                         ),
                         ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                          "fee_usd"
+                          "fee_usd",
                         ),
                       ],
                     },
@@ -4312,7 +4312,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                 sumColor,
                                 cumulativeColor,
                               }),
-                            ]
+                            ],
                           ),
                         },
                         {
@@ -4550,7 +4550,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       key,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...cointimePrices.map(({ key, name, color, title }) => ({
@@ -4587,7 +4587,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         key,
                         name,
                         color,
-                      })
+                      }),
                     ),
                   ],
                 },
@@ -4612,7 +4612,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         color: colors.orange,
                       }),
                     ],
-                  })
+                  }),
                 ),
               ],
             },
@@ -4653,7 +4653,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       name,
                       color,
                     }),
-                  ])
+                  ]),
               ),
             },
             {
@@ -4868,373 +4868,3 @@ function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
     },
   ];
 }
-
-/**
- * @param {Object} args
- * @param {Colors} args.colors
- * @param {Signals} args.signals
- * @param {Env} args.env
- * @param {Utilities} args.utils
- * @param {VecIdToIndexes} args.vecIdToIndexes
- * @param {Pools} args.pools
- * @param {Signal<string | null>} args.qrcode
- */
-export function initOptions({
-  colors,
-  signals,
-  env,
-  utils,
-  qrcode,
-  vecIdToIndexes,
-  pools,
-}) {
-  const LS_SELECTED_KEY = `selected_path`;
-
-  const urlPath_ = window.document.location.pathname
-    .split("/")
-    .filter((v) => v);
-  const urlPath = urlPath_.length ? urlPath_ : undefined;
-  const savedPath = /** @type {string[]} */ (
-    JSON.parse(utils.storage.read(LS_SELECTED_KEY) || "[]") || []
-  ).filter((v) => v);
-  console.log(savedPath);
-
-  /** @type {Signal<Option>} */
-  const selected = signals.createSignal(/** @type {any} */ (undefined));
-
-  const partialOptions = createPartialOptions({
-    env,
-    colors,
-    vecIdToIndexes,
-    pools,
-  });
-
-  /** @type {Option[]} */
-  const list = [];
-
-  const parent = signals.createSignal(/** @type {HTMLElement | null} */ (null));
-
-  /**
-   * @param {AnyFetchedSeriesBlueprint[]} [arr]
-   */
-  function arrayToRecord(arr = []) {
-    return (arr || []).reduce((record, blueprint) => {
-      if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
-        throw Error(`${blueprint.key} not recognized`);
-      }
-      const unit = blueprint.unit ?? utils.vecidToUnit(blueprint.key);
-      record[unit] ??= [];
-      record[unit].push(blueprint);
-      return record;
-    }, /** @type {Record<Unit, AnyFetchedSeriesBlueprint[]>} */ ({}));
-  }
-
-  /**
-   * @param {Option} option
-   */
-  function selectOption(option) {
-    utils.url.pushHistory(option.path);
-    utils.url.resetParams(option);
-    utils.storage.write(LS_SELECTED_KEY, JSON.stringify(option.path));
-    selected.set(option);
-  }
-
-  /**
-   * @param {Object} args
-   * @param {Option} args.option
-   * @param {string} args.frame
-   * @param {Signal<string | null>} args.qrcode
-   * @param {string} [args.name]
-   */
-  function createOptionElement({ option, frame, name, qrcode }) {
-    const title = option.title;
-    if (option.kind === "url") {
-      const href = option.url();
-
-      if (option.qrcode) {
-        return utils.dom.createButtonElement({
-          inside: option.name,
-          title,
-          onClick: () => {
-            qrcode.set(option.url);
-          },
-        });
-      } else {
-        return utils.dom.createAnchorElement({
-          href,
-          blank: true,
-          text: option.name,
-          title,
-        });
-      }
-    } else {
-      return utils.dom.createAnchorElement({
-        href: `/${option.path.join("/")}`,
-        title,
-        text: name || option.name,
-        onClick: () => {
-          selectOption(option);
-        },
-      });
-    }
-  }
-
-  /** @type {Option | undefined} */
-  let savedOption;
-
-  /**
-   * @param {PartialOptionsTree} partialTree
-   * @param {Accessor<HTMLElement | null>} parent
-   * @param {string[] | undefined} parentPath
-   * @returns {Accessor<number>}
-   */
-  function recursiveProcessPartialTree(
-    partialTree,
-    parent,
-    parentPath = [],
-    depth = 0
-  ) {
-    /** @type {Accessor<number>[]} */
-    const listForSum = [];
-
-    const ul = signals.createMemo(
-      // @ts_ignore
-      (_previous) => {
-        const previous = /** @type {HTMLUListElement | null} */ (_previous);
-        previous?.remove();
-
-        const _parent = parent();
-        if (_parent) {
-          if ("open" in _parent && !_parent.open) {
-            throw "Set accesor to null instead";
-          }
-
-          const ul = window.document.createElement("ul");
-          _parent.append(ul);
-          return ul;
-        } else {
-          return null;
-        }
-      },
-      null
-    );
-
-    partialTree.forEach((anyPartial, partialIndex) => {
-      const renderLi = signals.createSignal(true);
-
-      const li = signals.createMemo((_previous) => {
-        const previous = _previous;
-        previous?.remove();
-
-        const _ul = ul();
-
-        if (renderLi() && _ul) {
-          const li = window.document.createElement("li");
-          utils.dom.insertElementAtIndex(_ul, li, partialIndex);
-          return li;
-        } else {
-          return null;
-        }
-      }, /** @type {HTMLLIElement | null} */ (null));
-
-      if ("tree" in anyPartial) {
-        /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
-        const groupAddons = {};
-
-        Object.assign(anyPartial, groupAddons);
-
-        const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
-        );
-
-        const serName = utils.stringToId(anyPartial.name);
-        const path = [...parentPath, serName];
-        const childOptionsCount = recursiveProcessPartialTree(
-          anyPartial.tree,
-          passedDetails,
-          path,
-          depth + 1
-        );
-
-        listForSum.push(childOptionsCount);
-
-        signals.createEffect(li, (li) => {
-          if (!li) {
-            passedDetails.set(null);
-            return;
-          }
-
-          signals.createEffect(selected, (selected) => {
-            if (
-              path.length <= selected.path.length &&
-              path.every((v, i) => selected.path.at(i) === v)
-            ) {
-              li.dataset.highlight = "";
-            } else {
-              delete li.dataset.highlight;
-            }
-          });
-
-          const details = window.document.createElement("details");
-          details.dataset.name = serName;
-          li.appendChild(details);
-
-          const summary = window.document.createElement("summary");
-          details.append(summary);
-          summary.append(anyPartial.name);
-
-          const supCount = window.document.createElement("sup");
-          summary.append(supCount);
-
-          signals.createEffect(childOptionsCount, (childOptionsCount) => {
-            supCount.innerHTML = childOptionsCount.toLocaleString("en-us");
-          });
-
-          details.addEventListener("toggle", () => {
-            const open = details.open;
-
-            if (open) {
-              passedDetails.set(details);
-            } else {
-              passedDetails.set(null);
-            }
-          });
-        });
-
-        function createRenderLiEffect() {
-          signals.createEffect(childOptionsCount, (count) => {
-            renderLi.set(!!count);
-          });
-        }
-        createRenderLiEffect();
-      } else {
-        const option = /** @type {Option} */ (anyPartial);
-
-        const name = option.name;
-        const path = [...parentPath, utils.stringToId(option.name)];
-
-        if ("kind" in anyPartial && anyPartial.kind === "explorer") {
-          Object.assign(
-            option,
-            /** @satisfies {ExplorerOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: option.title,
-            })
-          );
-        } else if ("kind" in anyPartial && anyPartial.kind === "table") {
-          Object.assign(
-            option,
-            /** @satisfies {TableOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: option.title,
-            })
-          );
-        } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
-          Object.assign(
-            option,
-            /** @satisfies {SimulationOption} */ ({
-              kind: anyPartial.kind,
-              path,
-              name,
-              title: anyPartial.title,
-            })
-          );
-        } else if ("url" in anyPartial) {
-          Object.assign(
-            option,
-            /** @satisfies {UrlOption} */ ({
-              kind: "url",
-              path,
-              name,
-              title: name,
-              qrcode: !!anyPartial.qrcode,
-              url: anyPartial.url,
-            })
-          );
-        } else {
-          const title = option.title || option.name;
-          Object.assign(
-            option,
-            /** @satisfies {ChartOption} */ ({
-              kind: "chart",
-              name,
-              title,
-              path,
-              top: arrayToRecord(anyPartial.top),
-              bottom: arrayToRecord(anyPartial.bottom),
-            })
-          );
-        }
-
-        list.push(option);
-
-        if (urlPath) {
-          const sameAsURLPath =
-            urlPath.length === path.length &&
-            urlPath.every((val, i) => val === path[i]);
-          if (sameAsURLPath) {
-            selected.set(option);
-          }
-        } else if (savedPath) {
-          const sameAsSavedPath =
-            savedPath.length === path.length &&
-            savedPath.every((val, i) => val === path[i]);
-          if (sameAsSavedPath) {
-            savedOption = option;
-          }
-        }
-
-        signals.createEffect(li, (li) => {
-          if (!li) {
-            return;
-          }
-
-          signals.createEffect(selected, (selected) => {
-            if (selected === option) {
-              li.dataset.highlight = "";
-            } else {
-              delete li.dataset.highlight;
-            }
-          });
-
-          const element = createOptionElement({
-            option,
-            frame: "nav",
-            qrcode,
-          });
-
-          li.append(element);
-        });
-
-        listForSum.push(() => 1);
-      }
-    });
-
-    return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
-    );
-  }
-  recursiveProcessPartialTree(partialOptions, parent);
-
-  if (!selected()) {
-    const option =
-      savedOption || list.find((option) => option.kind === "chart");
-    if (option) {
-      selected.set(option);
-    }
-  }
-
-  return {
-    selected,
-    list,
-    tree: /** @type {OptionsTree} */ (partialOptions),
-    parent,
-    createOptionElement,
-    selectOption,
-  };
-}
-/** @typedef {ReturnType<typeof initOptions>} Options */
