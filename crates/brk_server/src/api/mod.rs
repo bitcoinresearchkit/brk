@@ -12,7 +12,6 @@ use axum::{
     routing::get,
 };
 use bitcoin::{Address, Network, Transaction, consensus::Decodable};
-use bitcoincore_rpc::bitcoin;
 use brk_interface::{IdParam, Index, PaginatedIndexParam, PaginationParam, Params, ParamsOpt};
 use brk_parser::XORIndex;
 use brk_structs::{
@@ -182,7 +181,7 @@ impl ApiRoutes for Router<AppState> {
                     let computer = interface.computer();
 
                     let position = computer.blks.txindex_to_position.iter().unwrap_get_inner(txindex);
-                    let len = computer.blks.txindex_to_len.iter().unwrap_get_inner(txindex);
+                    let len = indexer.vecs.txindex_to_total_size.iter().unwrap_get_inner(txindex);
 
                     let blk_index_to_blk_path = parser.blk_index_to_blk_path();
 

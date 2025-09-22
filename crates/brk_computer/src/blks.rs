@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_structs::{BlkPosition, Height, StoredU32, TxIndex, Version};
+use brk_structs::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CompressedVec, Database, Exit,
     GenericStoredVec, PAGE_SIZE, VecIterator,
@@ -16,9 +16,7 @@ pub struct Vecs {
     db: Database,
 
     pub height_to_position: CompressedVec<Height, BlkPosition>,
-    pub height_to_len: CompressedVec<Height, StoredU32>,
     pub txindex_to_position: CompressedVec<TxIndex, BlkPosition>,
-    pub txindex_to_len: CompressedVec<TxIndex, StoredU32>,
 }
 
 impl Vecs {
@@ -34,13 +32,11 @@ impl Vecs {
                 "position",
                 version + Version::TWO,
             )?,
-            height_to_len: CompressedVec::forced_import(&db, "len", version + Version::TWO)?,
             txindex_to_position: CompressedVec::forced_import(
                 &db,
                 "position",
                 version + Version::TWO,
             )?,
-            txindex_to_len: CompressedVec::forced_import(&db, "len", version + Version::TWO)?,
 
             db,
         };
@@ -104,9 +100,6 @@ impl Vecs {
                     exit,
                 )?;
 
-                self.height_to_len
-                    .forced_push_at(height, block.metadata().len().into(), exit)?;
-
                 let txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
 
                 block.tx_metadata().iter().enumerate().try_for_each(
@@ -117,8 +110,6 @@ impl Vecs {
                             metadata.position(),
                             exit,
                         )?;
-                        self.txindex_to_len
-                            .forced_push_at(txindex, metadata.len().into(), exit)?;
                         Ok(())
                     },
                 )?;
@@ -126,18 +117,14 @@ impl Vecs {
                 if *height % 1_000 == 0 {
                     let _lock = exit.lock();
                     self.height_to_position.flush()?;
-                    self.height_to_len.flush()?;
                     self.txindex_to_position.flush()?;
-                    self.txindex_to_len.flush()?;
                 }
                 Ok(())
             })?;
 
         let _lock = exit.lock();
         self.height_to_position.flush()?;
-        self.height_to_len.flush()?;
         self.txindex_to_position.flush()?;
-        self.txindex_to_len.flush()?;
 
         Ok(())
     }
@@ -146,9 +133,7 @@ impl Vecs {
         Box::new(
             [
                 &self.height_to_position as &dyn AnyCollectableVec,
-                &self.height_to_len,
                 &self.txindex_to_position,
-                &self.txindex_to_len,
             ]
             .into_iter(),
         )

@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './packages/lightweight-charts/5.0.8/dist/typings' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../packages/lightweight-charts/5.0.8/dist/typings' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -46,7 +46,7 @@ import {
   LineSeries,
   BaselineSeries,
   // } from "./5.0.8/dist/lightweight-charts.standalone.development.mjs";
-} from "./packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
+} from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 const oklchToRGBA = createOklchToRGBA();
 

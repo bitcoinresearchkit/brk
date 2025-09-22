@@ -15,8 +15,8 @@
     "**/modern-screenshot/*/index.mjs",
     "**/solidjs-signals/*/dist/prod.js",
     "uFuzzy.mjs",
-    "lightweight-charts.standalone.production.mjs",
+    "lightweight-charts.standalone.production.mjs"
     // "scripts/packages",
-    "dist"
+    // "dist"
   ]
 }
