@@ -1,4 +1,9 @@
 import { createPartialOptions } from "./partial";
+import {
+  createButtonElement,
+  createAnchorElement,
+  insertElementAtIndex,
+} from "../dom";
 
 /**
  * @param {Object} args
@@ -26,7 +31,7 @@ export function initOptions({
     .filter((v) => v);
   const urlPath = urlPath_.length ? urlPath_ : undefined;
   const savedPath = /** @type {string[]} */ (
-    JSON.parse(utils.storage.read(LS_SELECTED_KEY) || "[]") || []
+    JSON.parse(storage.read(LS_SELECTED_KEY) || "[]") || []
   ).filter((v) => v);
   console.log(savedPath);
 
@@ -83,7 +88,7 @@ export function initOptions({
       const href = option.url();
 
       if (option.qrcode) {
-        return utils.dom.createButtonElement({
+        return createButtonElement({
           inside: option.name,
           title,
           onClick: () => {
@@ -91,7 +96,7 @@ export function initOptions({
           },
         });
       } else {
-        return utils.dom.createAnchorElement({
+        return createAnchorElement({
           href,
           blank: true,
           text: option.name,
@@ -99,7 +104,7 @@ export function initOptions({
         });
       }
     } else {
-      return utils.dom.createAnchorElement({
+      return createAnchorElement({
         href: `/${option.path.join("/")}`,
         title,
         text: name || option.name,
@@ -161,7 +166,7 @@ export function initOptions({
 
         if (renderLi() && _ul) {
           const li = window.document.createElement("li");
-          utils.dom.insertElementAtIndex(_ul, li, partialIndex);
+          insertElementAtIndex(_ul, li, partialIndex);
           return li;
         } else {
           return null;

@@ -1,11 +1,4 @@
-/**
- * @param {string} id
- */
-function getElementById(id) {
-  const element = window.document.getElementById(id);
-  if (!element) throw `Element with id = "${id}" should exist`;
-  return element;
-}
+import { getElementById } from "./dom";
 
 export default {
   head: window.document.getElementsByTagName("head")[0],

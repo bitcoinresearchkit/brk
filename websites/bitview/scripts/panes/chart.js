@@ -1,4 +1,9 @@
-// @ts-check
+import {
+  createShadow,
+  createHorizontalChoiceField,
+  createHeader,
+} from "../core/dom";
+import { throttle } from "../core/scheduling";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -7,7 +12,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "d.epoch" | "month" | "quarter" | "semester" | "year" | "decade" } SerializedChartableIndex
+ * @typedef {"timestamp" | "date" | "week" | "epoch" | "month" | "quarter" | "semester" | "year" | "decade" } SerializedChartableIndex
  */
 
 /**
@@ -37,10 +42,10 @@ export function init({
   vecIdToIndexes,
   packages,
 }) {
-  elements.charts.append(utils.dom.createShadow("left"));
-  elements.charts.append(utils.dom.createShadow("right"));
+  elements.charts.append(createShadow("left"));
+  elements.charts.append(createShadow("right"));
 
-  const { headerElement, headingElement } = utils.dom.createHeader();
+  const { headerElement, headingElement } = createHeader();
   elements.charts.append(headerElement);
 
   const { index, fieldset } = createIndexSelector({
@@ -99,7 +104,6 @@ export function init({
     },
   });
 
-  console.log(env.ios, "canShare" in navigator);
   if (!(env.ios && !("canShare" in navigator))) {
     const chartBottomRightCanvas = Array.from(
       chart.inner.chartElement().getElementsByTagName("tr"),
@@ -136,7 +140,7 @@ export function init({
   }
 
   chart.inner.timeScale().subscribeVisibleLogicalRangeChange(
-    utils.throttle((t) => {
+    throttle((t) => {
       if (!t) return;
       from.set(t.from);
       to.set(t.to);
@@ -146,7 +150,7 @@ export function init({
   elements.charts.append(fieldset);
 
   const { field: seriesTypeField, selected: topSeriesType_ } =
-    utils.dom.createHorizontalChoiceField({
+    createHorizontalChoiceField({
       defaultValue: CANDLE,
       keyPrefix,
       key: "seriestype-0",
@@ -172,7 +176,7 @@ export function init({
   });
 
   const { field: topUnitField, selected: topUnit } =
-    utils.dom.createHorizontalChoiceField({
+    createHorizontalChoiceField({
       defaultValue: "usd",
       keyPrefix,
       key: "unit-0",
@@ -289,7 +293,7 @@ export function init({
       Object.keys(option.bottom)
     );
     const { field: bottomUnitField, selected: bottomUnit } =
-      utils.dom.createHorizontalChoiceField({
+      createHorizontalChoiceField({
         defaultValue: bottomUnits.at(0) || "",
         keyPrefix,
         key: "unit-1",
@@ -523,12 +527,12 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     "timestamp",
     "date",
     "week",
-    "d.epoch",
+    "epoch",
     "month",
     "quarter",
     "semester",
     "year",
-    // "halving epoch",
+    // "h.epoch",
     "decade",
   ]);
 
@@ -557,7 +561,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     );
   });
 
-  const { field, selected } = utils.dom.createHorizontalChoiceField({
+  const { field, selected } = createHorizontalChoiceField({
     defaultValue: "date",
     keyPrefix,
     key: "index",

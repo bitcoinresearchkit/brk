@@ -1,4 +1,3 @@
-// @ts-check
 
 /**
  * @param {Object} args
@@ -6,6 +5,8 @@
  * @param {CreateChartElement} args.createChartElement
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
+ * @param {Serde} args.serde
+ * @param {Dom} args.dom
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
  */
@@ -14,6 +15,8 @@ export function init({
   elements,
   createChartElement,
   signals,
+  serde,
+  dom,
   utils,
   vecsResources,
 }) {
@@ -30,7 +33,7 @@ export function init({
 
   const simulationElement = elements.simulation;
 
-  const dom = {
+  const domExtended = {
     /**
      * @param {Object} args
      * @param {string} args.id
@@ -166,7 +169,7 @@ export function init({
       if (!element) throw "createResetableField element missing";
       div.append(element);
 
-      const button = utils.dom.createButtonElement({
+      const button = dom.createButtonElement({
         onClick: signal.reset,
         inside: "Reset",
         title: "Reset field",
@@ -306,7 +309,7 @@ export function init({
       initial: {
         amount: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...utils.serde.optNumber,
+            ...serde.optNumber,
             keyPrefix,
             key: "initial-amount",
           },
@@ -315,7 +318,7 @@ export function init({
       topUp: {
         amount: signals.createSignal(/** @type {number | null} */ (150), {
           save: {
-            ...utils.serde.optNumber,
+            ...serde.optNumber,
             keyPrefix,
             key: "top-up-amount",
           },
@@ -336,14 +339,14 @@ export function init({
       investment: {
         initial: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...utils.serde.optNumber,
+            ...serde.optNumber,
             keyPrefix,
             key: "initial-swap",
           },
         }),
         recurrent: signals.createSignal(/** @type {number | null} */ (5), {
           save: {
-            ...utils.serde.optNumber,
+            ...serde.optNumber,
             keyPrefix,
             key: "recurrent-swap",
           },
@@ -365,7 +368,7 @@ export function init({
         /** @type {Date | null} */ (new Date("2021-04-15")),
         {
           save: {
-            ...utils.serde.optDate,
+            ...serde.optDate,
             keyPrefix,
             key: "interval-start",
           },
@@ -373,7 +376,7 @@ export function init({
       ),
       end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
         save: {
-          ...utils.serde.optDate,
+          ...serde.optDate,
           keyPrefix,
           key: "interval-end",
         },
@@ -382,7 +385,7 @@ export function init({
     fees: {
       percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
         save: {
-          ...utils.serde.optNumber,
+          ...serde.optNumber,
           keyPrefix,
           key: "percentage",
         },
@@ -390,9 +393,7 @@ export function init({
     },
   };
 
-  parametersElement.append(
-    utils.dom.createHeader("Save in Bitcoin").headerElement,
-  );
+  parametersElement.append(dom.createHeader("Save in Bitcoin").headerElement);
 
   /**
    * @param {Object} param0
@@ -417,7 +418,7 @@ export function init({
   }
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -425,8 +426,8 @@ export function init({
       }),
       description:
         "The amount of dollars you have ready on the exchange on day one.",
-      input: dom.createResetableInput(
-        dom.createInputDollar({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDollar({
           id: "simulation-dollars-initial",
           title: "Initial Dollar Amount",
           signal: settings.dollars.initial.amount,
@@ -437,7 +438,7 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -445,8 +446,8 @@ export function init({
       }),
       description:
         "The frequency at which you'll top up your account at the exchange.",
-      input: dom.createResetableInput(
-        utils.dom.createSelect({
+      input: domExtended.createResetableInput(
+        dom.createSelect({
           id: "top-up-frequency",
           list: frequencies.list,
           signal: settings.dollars.topUp.frenquency,
@@ -457,7 +458,7 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -465,8 +466,8 @@ export function init({
       }),
       description:
         "The recurrent amount of dollars you'll be transfering to said exchange.",
-      input: dom.createResetableInput(
-        dom.createInputDollar({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDollar({
           id: "simulation-dollars-top-up-amount",
           title: "Top Up Dollar Amount",
           signal: settings.dollars.topUp.amount,
@@ -477,7 +478,7 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -485,8 +486,8 @@ export function init({
       }),
       description:
         "The amount, if available, of dollars that will be used to buy Bitcoin on day one.",
-      input: dom.createResetableInput(
-        dom.createInputDollar({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDollar({
           id: "simulation-bitcoin-initial-investment",
           title: "Initial Swap Amount",
           signal: settings.bitcoin.investment.initial,
@@ -497,15 +498,15 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
         text: "Investment Frequency",
       }),
       description: "The frequency at which you'll be buying Bitcoin.",
-      input: dom.createResetableInput(
-        utils.dom.createSelect({
+      input: domExtended.createResetableInput(
+        dom.createSelect({
           id: "investment-frequency",
           list: frequencies.list,
           signal: settings.bitcoin.investment.frequency,
@@ -516,7 +517,7 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -524,8 +525,8 @@ export function init({
       }),
       description:
         "The recurrent amount, if available, of dollars that will be used to buy Bitcoin.",
-      input: dom.createResetableInput(
-        dom.createInputDollar({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDollar({
           id: "simulation-bitcoin-recurrent-investment",
           title: "Bitcoin Recurrent Investment",
           signal: settings.bitcoin.investment.recurrent,
@@ -536,15 +537,15 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
         text: "Start",
       }),
       description: "The first day of the simulation.",
-      input: dom.createResetableInput(
-        dom.createInputDate({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDate({
           id: "simulation-inverval-start",
           title: "First Simulation Date",
           signal: settings.interval.start,
@@ -555,15 +556,15 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
         text: "End",
       }),
       description: "The last day of the simulation.",
-      input: dom.createResetableInput(
-        dom.createInputDate({
+      input: domExtended.createResetableInput(
+        domExtended.createInputDate({
           id: "simulation-inverval-end",
           title: "Last Simulation Day",
           signal: settings.interval.end,
@@ -574,15 +575,15 @@ export function init({
   );
 
   parametersElement.append(
-    utils.dom.createFieldElement({
+    dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "red",
         type: "Fees",
         text: "Exchange",
       }),
       description: "The amount of trading fees (in %) at the exchange.",
-      input: dom.createResetableInput(
-        dom.createInputNumberElement({
+      input: domExtended.createResetableInput(
+        domExtended.createInputNumberElement({
           id: "simulation-fees",
           title: "Exchange Fees",
           signal: settings.fees.percentage,

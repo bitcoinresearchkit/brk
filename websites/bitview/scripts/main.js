@@ -1,145 +1,10 @@
-// @ts-check
-
 import { createColors } from "./core/colors";
 import { createWebSockets } from "./core/ws";
 import * as utils from "./core/utils";
 import elements from "./core/elements";
 import env from "./core/env";
 import packages from "./lazy";
-
-/**
- * @param {Signals} signals
- * @param {Utilities} utils
- * @param {Env} env
- * @param {VecIdToIndexes} vecIdToIndexes
- */
-function createVecsResources(signals, utils, env, vecIdToIndexes) {
-  const owner = signals.getOwner();
-
-  const defaultFrom = -10_000;
-  const defaultTo = undefined;
-
-  /**
-   * Defaults
-   * - from: -10_000
-   * - to: undefined
-   *
-   * @param {Object} [args]
-   * @param {number} [args.from]
-   * @param {number} [args.to]
-   */
-  function genFetchedKey(args) {
-    return `${args?.from}-${args?.to}`;
-  }
-
-  const defaultFetchedKey = genFetchedKey({ from: defaultFrom, to: defaultTo });
-
-  /**
-   * @template {number | OHLCTuple} [T=number]
-   * @param {Index} index
-   * @param {VecId} id
-   */
-  function createVecResource(index, id) {
-    if (env.localhost && !(id in vecIdToIndexes)) {
-      throw Error(`${id} not recognized`);
-    }
-
-    return signals.runWithOwner(owner, () => {
-      /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
-
-      const fetchedRecord = signals.createSignal(
-        /** @type {Map<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ (
-          new Map()
-        ),
-      );
-
-      return {
-        url: utils.api.genUrl(index, id, defaultFrom),
-        fetched: fetchedRecord,
-        /**
-         * Defaults
-         * - from: -10_000
-         * - to: undefined
-         *
-         * @param {Object} [args]
-         * @param {number} [args.from]
-         * @param {number} [args.to]
-         */
-        async fetch(args) {
-          const from = args?.from ?? defaultFrom;
-          const to = args?.to ?? defaultTo;
-          const fetchedKey = genFetchedKey({ from, to });
-          if (!fetchedRecord().has(fetchedKey)) {
-            fetchedRecord.set((map) => {
-              map.set(fetchedKey, {
-                loading: false,
-                at: null,
-                vec: signals.createSignal(/** @type {T[] | null} */ (null), {
-                  equals: false,
-                }),
-              });
-              return map;
-            });
-          }
-          const fetched = fetchedRecord().get(fetchedKey);
-          if (!fetched) throw Error("Unreachable");
-          if (fetched.loading) return fetched.vec();
-          if (fetched.at) {
-            const diff = new Date().getTime() - fetched.at.getTime();
-            const ONE_MINUTE_IN_MS = 60_000;
-            if (diff < ONE_MINUTE_IN_MS) return fetched.vec();
-          }
-          fetched.loading = true;
-          const res = /** @type {T[] | null} */ (
-            await utils.api.fetchVec(
-              (values) => {
-                if (values.length || !fetched.vec()) {
-                  fetched.vec.set(values);
-                }
-              },
-              index,
-              id,
-              from,
-              to,
-            )
-          );
-          fetched.at = new Date();
-          fetched.loading = false;
-          return res;
-        },
-      };
-    });
-  }
-
-  /** @type {Map<string, NonNullable<ReturnType<typeof createVecResource>>>} */
-  const map = new Map();
-
-  const vecs = {
-    /**
-     * @template {number | OHLCTuple} [T=number]
-     * @param {Index} index
-     * @param {VecId} id
-     */
-    getOrCreate(index, id) {
-      const key = `${index},${id}`;
-      const found = map.get(key);
-      if (found) {
-        return found;
-      }
-
-      const vec = createVecResource(index, id);
-      if (!vec) throw Error("vec is undefined");
-      map.set(key, /** @type {any} */ (vec));
-      return vec;
-    },
-    genFetchedKey,
-    defaultFetchedKey,
-  };
-
-  return vecs;
-}
-/** @typedef {ReturnType<typeof createVecsResources>} VecsResources */
-/** @typedef {ReturnType<VecsResources["getOrCreate"]>} VecResource */
+import { onFirstIntersection, getElementById } from "./core/dom";
 
 function initFrameSelectors() {
   const children = Array.from(elements.selectors.children);
@@ -497,13 +362,13 @@ Promise.all([
         }
         createMobileSwitchEffect();
 
-        utils.dom.onFirstIntersection(elements.aside, () =>
+        onFirstIntersection(elements.aside, () =>
           signals.runWithOwner(owner, initSelectedFrame),
         );
       }
       initSelected();
 
-      utils.dom.onFirstIntersection(elements.nav, async () => {
+      onFirstIntersection(elements.nav, async () => {
         options.parent.set(elements.nav);
 
         const option = options.selected();
@@ -578,7 +443,7 @@ Promise.all([
           });
       });
 
-      utils.dom.onFirstIntersection(elements.search, () => {
+      onFirstIntersection(elements.search, () => {
         console.log("search: init");
 
         const haystack = options.list.map((option) => option.title);
@@ -754,8 +619,8 @@ Promise.all([
       });
 
       function initShare() {
-        const shareDiv = utils.dom.getElementById("share-div");
-        const shareContentDiv = utils.dom.getElementById("share-content-div");
+        const shareDiv = getElementById("share-div");
+        const shareContentDiv = getElementById("share-content-div");
 
         shareDiv.addEventListener("click", () => {
           qrcode.set(null);
@@ -769,11 +634,11 @@ Promise.all([
         packages.leanQr().then(({ generate }) =>
           signals.runWithOwner(owner, () => {
             const imgQrcode = /** @type {HTMLImageElement} */ (
-              utils.dom.getElementById("share-img")
+              getElementById("share-img")
             );
 
             const anchor = /** @type {HTMLAnchorElement} */ (
-              utils.dom.getElementById("share-anchor")
+              getElementById("share-anchor")
             );
 
             signals.createEffect(qrcode, (qrcode) => {
@@ -804,7 +669,7 @@ Promise.all([
       initShare();
 
       function initDesktopResizeBar() {
-        const resizeBar = utils.dom.getElementById("resize-bar");
+        const resizeBar = getElementById("resize-bar");
         let resize = false;
         let startingWidth = 0;
         let startingClientX = 0;
