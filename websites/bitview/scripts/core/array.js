@@ -15,6 +15,6 @@ export function range(start, end) {
  * @template T
  * @param {T[]} array
  */
-export function random(array) {
+export function randomFromArray(array) {
   return array[Math.floor(Math.random() * array.length)];
 }

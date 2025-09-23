@@ -1,3 +1,15 @@
+import {
+  createDateRange,
+  dateToDateIndex,
+  differenceBetweenDates,
+} from "../core/date";
+import {
+  createButtonElement,
+  createFieldElement,
+  createHeader,
+  createSelect,
+} from "../core/dom";
+import { serdeDate, serdeOptDate, serdeOptNumber } from "../core/serde";
 
 /**
  * @param {Object} args
@@ -5,8 +17,6 @@
  * @param {CreateChartElement} args.createChartElement
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
- * @param {Serde} args.serde
- * @param {Dom} args.dom
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
  */
@@ -15,8 +25,6 @@ export function init({
   elements,
   createChartElement,
   signals,
-  serde,
-  dom,
   utils,
   vecsResources,
 }) {
@@ -126,7 +134,7 @@ export function init({
       const min = "2011-01-01";
       const minDate = new Date(min);
       const maxDate = new Date();
-      const max = utils.date.toString(maxDate);
+      const max = serdeDate.serialize(maxDate);
       input.min = min;
       input.max = max;
 
@@ -135,7 +143,7 @@ export function init({
       signals.createEffect(
         () => {
           const dateSignal = signal();
-          return dateSignal ? utils.date.toString(dateSignal) : "";
+          return dateSignal ? serdeDate.serialize(dateSignal) : "";
         },
         (value) => {
           if (stateValue !== value) {
@@ -169,7 +177,7 @@ export function init({
       if (!element) throw "createResetableField element missing";
       div.append(element);
 
-      const button = dom.createButtonElement({
+      const button = createButtonElement({
         onClick: signal.reset,
         inside: "Reset",
         title: "Reset field",
@@ -309,7 +317,7 @@ export function init({
       initial: {
         amount: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...serde.optNumber,
+            ...serdeOptNumber,
             keyPrefix,
             key: "initial-amount",
           },
@@ -318,7 +326,7 @@ export function init({
       topUp: {
         amount: signals.createSignal(/** @type {number | null} */ (150), {
           save: {
-            ...serde.optNumber,
+            ...serdeOptNumber,
             keyPrefix,
             key: "top-up-amount",
           },
@@ -339,14 +347,14 @@ export function init({
       investment: {
         initial: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...serde.optNumber,
+            ...serdeOptNumber,
             keyPrefix,
             key: "initial-swap",
           },
         }),
         recurrent: signals.createSignal(/** @type {number | null} */ (5), {
           save: {
-            ...serde.optNumber,
+            ...serdeOptNumber,
             keyPrefix,
             key: "recurrent-swap",
           },
@@ -368,7 +376,7 @@ export function init({
         /** @type {Date | null} */ (new Date("2021-04-15")),
         {
           save: {
-            ...serde.optDate,
+            ...serdeOptDate,
             keyPrefix,
             key: "interval-start",
           },
@@ -376,7 +384,7 @@ export function init({
       ),
       end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
         save: {
-          ...serde.optDate,
+          ...serdeOptDate,
           keyPrefix,
           key: "interval-end",
         },
@@ -385,7 +393,7 @@ export function init({
     fees: {
       percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
         save: {
-          ...serde.optNumber,
+          ...serdeOptNumber,
           keyPrefix,
           key: "percentage",
         },
@@ -393,7 +401,7 @@ export function init({
     },
   };
 
-  parametersElement.append(dom.createHeader("Save in Bitcoin").headerElement);
+  parametersElement.append(createHeader("Save in Bitcoin").headerElement);
 
   /**
    * @param {Object} param0
@@ -418,7 +426,7 @@ export function init({
   }
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -438,7 +446,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -447,7 +455,7 @@ export function init({
       description:
         "The frequency at which you'll top up your account at the exchange.",
       input: domExtended.createResetableInput(
-        dom.createSelect({
+        createSelect({
           id: "top-up-frequency",
           list: frequencies.list,
           signal: settings.dollars.topUp.frenquency,
@@ -458,7 +466,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -478,7 +486,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -498,7 +506,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -506,7 +514,7 @@ export function init({
       }),
       description: "The frequency at which you'll be buying Bitcoin.",
       input: domExtended.createResetableInput(
-        dom.createSelect({
+        createSelect({
           id: "investment-frequency",
           list: frequencies.list,
           signal: settings.bitcoin.investment.frequency,
@@ -517,7 +525,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -537,7 +545,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
@@ -556,7 +564,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
@@ -575,7 +583,7 @@ export function init({
   );
 
   parametersElement.append(
-    dom.createFieldElement({
+    createFieldElement({
       title: createColoredTypeHTML({
         color: "red",
         type: "Fees",
@@ -869,7 +877,7 @@ export function init({
           }) => {
             if (!start || !end || start > end) return;
 
-            const range = utils.date.getRange(start, end);
+            const range = createDateRange(start, end);
 
             totalInvestedAmountData().length = 0;
             bitcoinValueData().length = 0;
@@ -916,7 +924,7 @@ export function init({
                 dollars += topUpAmount;
               }
 
-              const close = closes[utils.date.toDateIndex(date)];
+              const close = closes[dateToDateIndex(date)];
 
               if (!close) return;
 
@@ -1071,7 +1079,7 @@ export function init({
             p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
 
             const dayDiff = Math.floor(
-              utils.date.differenceBetween(new Date(), lastInvestDay),
+              differenceBetweenDates(new Date(), lastInvestDay),
             );
             const serDailyInvestment = c("emerald", fd(dailyInvestment));
             const setLastSatsAdded = c("orange", f(lastSatsAdded));

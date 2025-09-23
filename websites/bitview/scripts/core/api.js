@@ -1,13 +1,13 @@
-import { index as serdeIndex } from "./serde";
-import { runWhenIdle } from "./scheduling";
+import { serdeIndex } from "./serde";
+import { runWhenIdle } from "./timing";
 
 /**
  * @param {Signals} signals
  * @param {Utilities} utils
  * @param {Env} env
- * @param {VecIdToIndexes} vecIdToIndexes
+ * @param {MetricToIndexes} metricToIndexes
  */
-export function createVecsResources(signals, utils, env, vecIdToIndexes) {
+export function createVecsResources(signals, utils, env, metricToIndexes) {
   const owner = signals.getOwner();
 
   const defaultFrom = -10_000;
@@ -31,11 +31,11 @@ export function createVecsResources(signals, utils, env, vecIdToIndexes) {
   /**
    * @template {number | OHLCTuple} [T=number]
    * @param {Index} index
-   * @param {VecId} id
+   * @param {Metric} metric
    */
-  function createVecResource(index, id) {
-    if (env.localhost && !(id in vecIdToIndexes)) {
-      throw Error(`${id} not recognized`);
+  function createVecResource(index, metric) {
+    if (env.localhost && !(metric in metricToIndexes)) {
+      throw Error(`${metric} not recognized`);
     }
 
     return signals.runWithOwner(owner, () => {
@@ -48,7 +48,7 @@ export function createVecsResources(signals, utils, env, vecIdToIndexes) {
       );
 
       return {
-        url: api.genUrl(index, id, defaultFrom),
+        url: api.genUrl(index, metric, defaultFrom),
         fetched: fetchedRecord,
         /**
          * Defaults
@@ -92,7 +92,7 @@ export function createVecsResources(signals, utils, env, vecIdToIndexes) {
                 }
               },
               index,
-              id,
+              metric,
               from,
               to,
             )
@@ -112,16 +112,16 @@ export function createVecsResources(signals, utils, env, vecIdToIndexes) {
     /**
      * @template {number | OHLCTuple} [T=number]
      * @param {Index} index
-     * @param {VecId} id
+     * @param {Metric} metric
      */
-    getOrCreate(index, id) {
-      const key = `${index},${id}`;
+    getOrCreate(index, metric) {
+      const key = `${index},${metric}`;
       const found = map.get(key);
       if (found) {
         return found;
       }
 
-      const vec = createVecResource(index, id);
+      const vec = createVecResource(index, metric);
       if (!vec) throw Error("vec is undefined");
       map.set(key, /** @type {any} */ (vec));
       return vec;
@@ -230,12 +230,12 @@ async function fetchApi(callback, path, mustBeArray) {
 
 /**
  * @param {Index} index
- * @param {VecId} vecId
+ * @param {Metric} metric
  * @param {number} [from]
  * @param {number} [to]
  */
-function genPath(index, vecId, from, to) {
-  let path = `/${serdeIndex.serialize(index)}-to-${vecId.replaceAll("_", "-")}?`;
+function genPath(index, metric, from, to) {
+  let path = `/${serdeIndex.serialize(index)}-to-${metric.replaceAll("_", "-")}?`;
 
   if (from !== undefined) {
     path += `from=${from}`;
@@ -252,30 +252,30 @@ function genPath(index, vecId, from, to) {
 export const api = {
   /**
    * @param {Index} index
-   * @param {VecId} vecId
+   * @param {Metric} metric
    * @param {number} from
    */
-  genUrl(index, vecId, from) {
-    return `${API_VECS_PREFIX}${genPath(index, vecId, from)}`;
+  genUrl(index, metric, from) {
+    return `${API_VECS_PREFIX}${genPath(index, metric, from)}`;
   },
   /**
    * @template {number | OHLCTuple} [T=number]
    * @param {(v: T[]) => void} callback
    * @param {Index} index
-   * @param {VecId} vecId
+   * @param {Metric} metric
    * @param {number} [from]
    * @param {number} [to]
    */
-  fetchVec(callback, index, vecId, from, to) {
-    return fetchApi(callback, genPath(index, vecId, from, to), true);
+  fetchVec(callback, index, metric, from, to) {
+    return fetchApi(callback, genPath(index, metric, from, to), true);
   },
   /**
    * @template {number | OHLCTuple} [T=number]
    * @param {(v: T) => void} callback
    * @param {Index} index
-   * @param {VecId} vecId
+   * @param {Metric} metric
    */
-  fetchLast(callback, index, vecId) {
-    return fetchApi(callback, genPath(index, vecId, -1));
+  fetchLast(callback, index, metric) {
+    return fetchApi(callback, genPath(index, metric, -1));
   },
 };

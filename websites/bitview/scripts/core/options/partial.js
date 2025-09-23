@@ -38,7 +38,7 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ key: VecId, unit?: Unit }} FetchedAnySeriesOptions
+ * @typedef {{ metric: Metric, unit?: Unit }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
@@ -123,18 +123,18 @@
  * @param {Object} args
  * @param {Env} args.env
  * @param {Colors} args.colors
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  * @param {Pools} args.pools
  * @returns {PartialOptionsTree}
  */
-export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
+export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   /**
    * @template {string} S
-   * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
+   * @typedef {Extract<Metric, `${S}${string}`>} StartsWith
    */
   /**
    * @template {string} S
-   * @typedef {Extract<VecId, `${string}${S}`>} EndsWith
+   * @typedef {Extract<Metric, `${string}${S}`>} EndsWith
    */
   /**
    * @template {string} K
@@ -155,32 +155,32 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   /**
    * @typedef {"cumulative_"} CumulativePrefix
    * @typedef {"_30d_delta"} _30DChageSubString
-   * @typedef {StartsWith<CumulativePrefix>} CumulativeVecId
-   * @typedef {ExcludeSubstring<WithoutPrefix<CumulativeVecId, CumulativePrefix>, _30DChageSubString>} CumulativeVecIdBase
+   * @typedef {StartsWith<CumulativePrefix>} CumulativeMetric
+   * @typedef {ExcludeSubstring<WithoutPrefix<CumulativeMetric, CumulativePrefix>, _30DChageSubString>} CumulativeMetricBase
    * @typedef {"_avg"} AverageSuffix
-   * @typedef {EndsWith<AverageSuffix>} VecIdAverage
-   * @typedef {WithoutSuffix<VecIdAverage, AverageSuffix>} VecIdAverageBase
+   * @typedef {EndsWith<AverageSuffix>} MetricAverage
+   * @typedef {WithoutSuffix<MetricAverage, AverageSuffix>} MetricAverageBase
    * @typedef {"_median"} MedianSuffix
-   * @typedef {EndsWith<MedianSuffix>} VecIdMedian
-   * @typedef {WithoutSuffix<VecIdMedian, MedianSuffix>} VecIdMedianBase
+   * @typedef {EndsWith<MedianSuffix>} MetricMedian
+   * @typedef {WithoutSuffix<MetricMedian, MedianSuffix>} MetricMedianBase
    * @typedef {"_pct90"} _pct90Suffix
-   * @typedef {EndsWith<_pct90Suffix>} VecIdpct90
-   * @typedef {WithoutSuffix<VecIdpct90, _pct90Suffix>} VecIdpct90Base
+   * @typedef {EndsWith<_pct90Suffix>} MetricPct90
+   * @typedef {WithoutSuffix<MetricPct90, _pct90Suffix>} MetricPct90Base
    * @typedef {"_pct75"} _pct75Suffix
-   * @typedef {EndsWith<_pct75Suffix>} VecIdpct75
-   * @typedef {WithoutSuffix<VecIdpct75, _pct75Suffix>} VecIdpct75Base
+   * @typedef {EndsWith<_pct75Suffix>} MetricPct75
+   * @typedef {WithoutSuffix<MetricPct75, _pct75Suffix>} MetricPct75Base
    * @typedef {"_pct25"} _pct25Suffix
-   * @typedef {EndsWith<_pct25Suffix>} VecIdpct25
-   * @typedef {WithoutSuffix<VecIdpct25, _pct25Suffix>} VecIdpct25Base
+   * @typedef {EndsWith<_pct25Suffix>} MetricPct25
+   * @typedef {WithoutSuffix<MetricPct25, _pct25Suffix>} MetricPct25Base
    * @typedef {"_pct10"} _pct10Suffix
-   * @typedef {EndsWith<_pct10Suffix>} VecIdpct10
-   * @typedef {WithoutSuffix<VecIdpct10, _pct10Suffix>} VecIdpct10Base
+   * @typedef {EndsWith<_pct10Suffix>} MetricPct10
+   * @typedef {WithoutSuffix<MetricPct10, _pct10Suffix>} MetricPct10Base
    * @typedef {"_max"} MaxSuffix
-   * @typedef {EndsWith<MaxSuffix>} VecIdMax
-   * @typedef {WithoutSuffix<VecIdMax, MaxSuffix>} VecIdMaxBase
+   * @typedef {EndsWith<MaxSuffix>} MetricMax
+   * @typedef {WithoutSuffix<MetricMax, MaxSuffix>} MetricMaxBase
    * @typedef {"_min"} MinSuffix
-   * @typedef {EndsWith<MinSuffix>} VecIdMin
-   * @typedef {WithoutSuffix<VecIdMin, MinSuffix>} VecIdMinBase
+   * @typedef {EndsWith<MinSuffix>} MetricMin
+   * @typedef {WithoutSuffix<MetricMin, MinSuffix>} MetricMinBase
    */
 
   const averages = /** @type {const} */ ([
@@ -1135,7 +1135,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecId} args.key
+   * @param {Metric} args.key
    * @param {string} args.name
    * @param {Color} [args.color]
    * @param {Unit} [args.unit]
@@ -1162,7 +1162,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecIdAverageBase} args.concat
+   * @param {MetricAverageBase} args.concat
    * @param {string} [args.title]
    */
   function createAverageSeries({ concat, title = "" }) {
@@ -1174,7 +1174,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {CumulativeVecIdBase} args.concat
+   * @param {CumulativeMetricBase} args.concat
    * @param {Color} [args.sumColor]
    * @param {Color} [args.cumulativeColor]
    * @param {string} [args.common]
@@ -1201,14 +1201,14 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {CumulativeVecIdBase} args.key
+   * @param {CumulativeMetricBase} args.key
    * @param {string} [args.title]
    * @param {Color} [args.color]
    */
   function createSumSeries({ key, title = "", color }) {
     const sumKey = `${key}_sum`;
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
-      key: `${key}_sum` in vecIdToIndexes ? sumKey : key,
+      key: `${key}_sum` in metricToIndexes ? sumKey : key,
       title: `Sum ${title}`,
       color: color ?? colors.red,
     });
@@ -1216,7 +1216,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {CumulativeVecIdBase} args.concat
+   * @param {CumulativeMetricBase} args.concat
    * @param {string} [args.title]
    * @param {Color} [args.color]
    */
@@ -1231,7 +1231,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} args.concat
+   * @param {MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} args.concat
    * @param {string} [args.title]
    */
   function createMinMaxPercentilesSeries({ concat, title = "" }) {
@@ -1282,7 +1282,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} key
+   * @param {MetricAverageBase & CumulativeMetricBase & MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} key
    */
   function createSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1292,7 +1292,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
   }
 
   /**
-   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} key
+   * @param {MetricAverageBase & CumulativeMetricBase & MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} key
    */
   function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -1303,7 +1303,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @param {Object} args
-   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecIdpct90Base & VecIdpct75Base & VecIdMedianBase & VecIdpct25Base & VecIdpct10Base} args.key
+   * @param {Metric & MetricAverageBase & CumulativeMetricBase & MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} args.key
    * @param {string} args.name
    */
   function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
@@ -1321,8 +1321,8 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @typedef {"_ratio_zscore"} RatioZScoreCapSuffix
-   * @typedef {EndsWith<RatioZScoreCapSuffix>} VecIdRatioZScoreCap
-   * @typedef {WithoutSuffix<VecIdRatioZScoreCap, RatioZScoreCapSuffix>} VecIdRatioZScoreCapBase
+   * @typedef {EndsWith<RatioZScoreCapSuffix>} MetricRatioZScoreCap
+   * @typedef {WithoutSuffix<MetricRatioZScoreCap, RatioZScoreCapSuffix>} MetricRatioZScoreCapBase
    */
 
   /**
@@ -1331,7 +1331,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
    * @param {string} args.name
    * @param {string} args.legend
    * @param {string} args.title
-   * @param {VecIdRatioZScoreCapBase} args.key
+   * @param {MetricRatioZScoreCapBase} args.key
    * @param {Color} [args.color]
    */
   function createPriceWithRatioOptions({ name, title, legend, key, color }) {
@@ -1416,7 +1416,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
             name: legend,
             color,
           }),
-          ...(`${key}_ratio_p1sd_usd` in vecIdToIndexes
+          ...(`${key}_ratio_p1sd_usd` in metricToIndexes
             ? percentiles.map(({ name, color }) =>
                 createBaseSeries({
                   key: `${key}_ratio_${name}_usd`,
@@ -1439,7 +1439,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
               baseValue: { price: 1 },
             },
           }),
-          ...(`${key}_ratio_p1sd` in vecIdToIndexes
+          ...(`${key}_ratio_p1sd` in metricToIndexes
             ? percentiles.map(({ name, color }) =>
                 createBaseSeries({
                   key: `${key}_ratio_${name}`,
@@ -1452,7 +1452,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                 }),
               )
             : []),
-          ...(`${key}_ratio_sma` in vecIdToIndexes
+          ...(`${key}_ratio_sma` in metricToIndexes
             ? ratioAverages.map(({ name, key: keyAddon, color }) =>
                 createBaseSeries({
                   key: `${key}_ratio_${keyAddon}`,
@@ -1471,7 +1471,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
           }),
         ],
       },
-      ...(`${key}_ratio_zscore` in vecIdToIndexes
+      ...(`${key}_ratio_zscore` in metricToIndexes
         ? [
             {
               name: "ZScores",
@@ -1665,8 +1665,8 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
 
   /**
    * @typedef {"_supply_in_profit"} SupplyInProfitSuffix
-   * @typedef {EndsWith<SupplyInProfitSuffix>} VecIdSupplyInProfit
-   * @typedef {WithoutSuffix<VecIdSupplyInProfit, SupplyInProfitSuffix>} CohortId
+   * @typedef {EndsWith<SupplyInProfitSuffix>} MetricSupplyInProfit
+   * @typedef {WithoutSuffix<MetricSupplyInProfit, SupplyInProfitSuffix>} CohortId
    */
 
   /**
@@ -2014,11 +2014,11 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
           }),
         },
         ...(list.filter(
-          ({ key }) => `${fixKey(key)}addr_count` in vecIdToIndexes,
+          ({ key }) => `${fixKey(key)}addr_count` in metricToIndexes,
         ).length > ("list" in args ? 1 : 0)
           ? !("list" in args) ||
             list.filter(
-              ({ key }) => `${fixKey(key)}empty_addr_count` in vecIdToIndexes,
+              ({ key }) => `${fixKey(key)}empty_addr_count` in metricToIndexes,
             ).length <= 1
             ? [
                 {
@@ -2027,7 +2027,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   bottom: list.flatMap(({ name, color, key: _key }) => {
                     const key = fixKey(_key);
                     return [
-                      ...(`${key}addr_count` in vecIdToIndexes
+                      ...(`${key}addr_count` in metricToIndexes
                         ? /** @type {const} */ ([
                             createBaseSeries({
                               key: `${key}addr_count`,
@@ -2036,7 +2036,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             }),
                           ])
                         : []),
-                      ...(`${key}empty_addr_count` in vecIdToIndexes
+                      ...(`${key}empty_addr_count` in metricToIndexes
                         ? /** @type {const} */ ([
                             createBaseSeries({
                               key: `${key}empty_addr_count`,
@@ -2060,7 +2060,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       bottom: list
                         .filter(
                           ({ key }) =>
-                            `${fixKey(key)}addr_count` in vecIdToIndexes,
+                            `${fixKey(key)}addr_count` in metricToIndexes,
                         )
                         .flatMap(({ name, color, key: _key }) => {
                           const key = fixKey(_key);
@@ -2075,7 +2075,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                     },
                     ...(list.filter(
                       ({ key }) =>
-                        `${fixKey(key)}empty_addr_count` in vecIdToIndexes,
+                        `${fixKey(key)}empty_addr_count` in metricToIndexes,
                     ).length
                       ? [
                           {
@@ -2085,7 +2085,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               .filter(
                                 ({ key }) =>
                                   `${fixKey(key)}empty_addr_count` in
-                                  vecIdToIndexes,
+                                  metricToIndexes,
                               )
                               .flatMap(({ name, color, key: _key }) => {
                                 const key = fixKey(_key);
@@ -2191,7 +2191,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                         defaultActive: false,
                       }),
                       ...(`${fixKey(args.key)}realized_profit_to_loss_ratio` in
-                      vecIdToIndexes
+                      metricToIndexes
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
@@ -2329,7 +2329,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             },
                           },
                         }),
-                        ...(asoprKey in vecIdToIndexes
+                        ...(asoprKey in metricToIndexes
                           ? [
                               /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                 type: "Baseline",
@@ -2357,7 +2357,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             },
                           },
                         }),
-                        ...(asoprKey in vecIdToIndexes
+                        ...(asoprKey in metricToIndexes
                           ? [
                               /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                 type: "Baseline",
@@ -2385,7 +2385,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             },
                           },
                         }),
-                        ...(asoprKey in vecIdToIndexes
+                        ...(asoprKey in metricToIndexes
                           ? [
                               /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                 type: "Baseline",
@@ -2473,7 +2473,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             color,
                           }),
                           ...(`${key}realized_profit_to_loss_ratio` in
-                          vecIdToIndexes
+                          metricToIndexes
                             ? [
                                 createBaseSeries({
                                   key: `${key}realized_profit_to_loss_ratio`,
@@ -2634,7 +2634,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                             name,
                             key: `${fixKey(key)}adjusted_sopr`,
                           }))
-                          .filter(({ key }) => key in vecIdToIndexes);
+                          .filter(({ key }) => key in metricToIndexes);
 
                         return reducedList.length
                           ? [
@@ -2712,7 +2712,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               name: "normal",
                               color: colors.emerald,
                             }),
-                            ...(adjKey in vecIdToIndexes
+                            ...(adjKey in metricToIndexes
                               ? [
                                   createBaseSeries({
                                     key: adjKey,
@@ -2738,7 +2738,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                               name: "normal",
                               color: colors.red,
                             }),
-                            ...(adjKey in vecIdToIndexes
+                            ...(adjKey in metricToIndexes
                               ? [
                                   createBaseSeries({
                                     key: adjKey,
@@ -2773,7 +2773,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                 name,
                                 key: `${fixKey(key)}adjusted_value_created`,
                               }))
-                              .filter(({ key }) => key in vecIdToIndexes);
+                              .filter(({ key }) => key in metricToIndexes);
                             return reducedList.length
                               ? [
                                   {
@@ -2814,7 +2814,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                                 name,
                                 key: `${fixKey(key)}adjusted_value_destroyed`,
                               }))
-                              .filter(({ key }) => key in vecIdToIndexes);
+                              .filter(({ key }) => key in metricToIndexes);
                             return reducedList.length
                               ? [
                                   {
@@ -2894,7 +2894,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       ...(`${fixKey(
                         args.key,
                       )}unrealized_profit_rel_to_own_market_cap` in
-                      vecIdToIndexes
+                      metricToIndexes
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
@@ -2930,7 +2930,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                       ...(`${fixKey(
                         args.key,
                       )}unrealized_profit_rel_to_own_total_unrealized_pnl` in
-                      vecIdToIndexes
+                      metricToIndexes
                         ? [
                             createBaseSeries({
                               key: `${fixKey(
@@ -3037,7 +3037,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   }),
                   ...(`${fixKey(
                     key,
-                  )}net_unrealized_pnl_rel_to_own_market_cap` in vecIdToIndexes
+                  )}net_unrealized_pnl_rel_to_own_market_cap` in metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
@@ -3055,7 +3055,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   ...(`${fixKey(
                     key,
                   )}net_unrealized_pnl_rel_to_own_total_unrealized_pnl` in
-                  vecIdToIndexes
+                  metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
@@ -3321,7 +3321,7 @@ export function createPartialOptions({ env, colors, vecIdToIndexes, pools }) {
                   createPriceLine({
                     unit: "percentage",
                   }),
-                  ...(`${key}_cagr` in vecIdToIndexes
+                  ...(`${key}_cagr` in metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}_cagr`,

@@ -1,6 +1,6 @@
 const localhost = window.location.hostname === "localhost";
 
-export const string = {
+export const serdeString = {
   /**
    * @param {string} v
    */
@@ -15,9 +15,9 @@ export const string = {
   },
 };
 
-export const vecIds = {
+export const serdeMetrics = {
   /**
-   * @param {VecId[]} v
+   * @param {Metric[]} v
    */
   serialize(v) {
     return v.join(",");
@@ -26,11 +26,11 @@ export const vecIds = {
    * @param {string} v
    */
   deserialize(v) {
-    return /** @type {VecId[]} */ (v.split(","));
+    return /** @type {Metric[]} */ (v.split(","));
   },
 };
 
-export const number = {
+export const serdeNumber = {
   /**
    * @param {number} v
    */
@@ -45,7 +45,7 @@ export const number = {
   },
 };
 
-export const optNumber = {
+export const serdeOptNumber = {
   /**
    * @param {number | null} v
    */
@@ -60,9 +60,24 @@ export const optNumber = {
   },
 };
 
-export const optDate = {
+export const serdeDate = {
   /**
-   * @param {Date |  null} date
+   * @param {Date} date
+   */
+  serialize(date) {
+    return date.toString();
+  },
+  /**
+   * @param {string} v
+   */
+  deserialize(v) {
+    return new Date(v);
+  },
+};
+
+export const serdeOptDate = {
+  /**
+   * @param {Date | null} date
    */
   serialize(date) {
     return date !== null ? date.toString() : "";
@@ -75,7 +90,7 @@ export const optDate = {
   },
 };
 
-export const boolean = {
+export const serdeBool = {
   /**
    * @param {boolean} v
    */
@@ -96,7 +111,7 @@ export const boolean = {
   },
 };
 
-export const index = {
+export const serdeIndex = {
   /**
    * @param {Index} v
    */
@@ -160,7 +175,7 @@ export const index = {
   },
 };
 
-export const chartableIndex = {
+export const serdeChartableIndex = {
   /**
    * @param {number} v
    * @returns {SerializedChartableIndex | null}
@@ -278,9 +293,9 @@ export const chartableIndex = {
  * "" } Unit
  */
 
-export const unit = {
+export const serdeUnit = {
   /**
-   * @param {VecId} v
+   * @param {string} v
    */
   deserialize(v) {
     /** @type {Unit | undefined} */

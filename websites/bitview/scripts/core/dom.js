@@ -1,4 +1,4 @@
-import { string as stringSerde } from "./serde";
+import { serdeString } from "./serde";
 
 /**
  * @param {string} id
@@ -253,7 +253,7 @@ export function createHorizontalChoiceField({
   /** @type {Signal<T[number]>} */
   const selected = signals.createSignal(defaultValue, {
     save: {
-      ...stringSerde,
+      ...serdeString,
       keyPrefix: keyPrefix ?? "",
       key,
       saveDefaultValue: true,
