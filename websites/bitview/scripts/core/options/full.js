@@ -4,6 +4,9 @@ import {
   createAnchorElement,
   insertElementAtIndex,
 } from "../dom";
+import { serdeUnit } from "../serde";
+import { pushHistory, resetParams } from "../url";
+import { readStored, writeToStorage } from "../storage";
 
 /**
  * @param {Object} args
@@ -11,7 +14,7 @@ import {
  * @param {Signals} args.signals
  * @param {Env} args.env
  * @param {Utilities} args.utils
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  * @param {Pools} args.pools
  * @param {Signal<string | null>} args.qrcode
  */
@@ -21,7 +24,7 @@ export function initOptions({
   env,
   utils,
   qrcode,
-  vecIdToIndexes,
+  metricToIndexes,
   pools,
 }) {
   const LS_SELECTED_KEY = `selected_path`;
@@ -31,7 +34,7 @@ export function initOptions({
     .filter((v) => v);
   const urlPath = urlPath_.length ? urlPath_ : undefined;
   const savedPath = /** @type {string[]} */ (
-    JSON.parse(storage.read(LS_SELECTED_KEY) || "[]") || []
+    JSON.parse(readStored(LS_SELECTED_KEY) || "[]") || []
   ).filter((v) => v);
   console.log(savedPath);
 
@@ -41,7 +44,7 @@ export function initOptions({
   const partialOptions = createPartialOptions({
     env,
     colors,
-    vecIdToIndexes,
+    metricToIndexes,
     pools,
   });
 
@@ -55,10 +58,10 @@ export function initOptions({
    */
   function arrayToRecord(arr = []) {
     return (arr || []).reduce((record, blueprint) => {
-      if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
-        throw Error(`${blueprint.key} not recognized`);
+      if (env.localhost && !(blueprint.metric in metricToIndexes)) {
+        throw Error(`${blueprint.metric} not recognized`);
       }
-      const unit = blueprint.unit ?? utils.vecidToUnit(blueprint.key);
+      const unit = blueprint.unit ?? serdeUnit.deserialize(blueprint.metric);
       record[unit] ??= [];
       record[unit].push(blueprint);
       return record;
@@ -69,9 +72,9 @@ export function initOptions({
    * @param {Option} option
    */
   function selectOption(option) {
-    utils.url.pushHistory(option.path);
-    utils.url.resetParams(option);
-    utils.storage.write(LS_SELECTED_KEY, JSON.stringify(option.path));
+    pushHistory(option.path);
+    resetParams(option);
+    writeToStorage(LS_SELECTED_KEY, JSON.stringify(option.path));
     selected.set(option);
   }
 

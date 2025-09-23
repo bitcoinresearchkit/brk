@@ -1,8 +1,11 @@
-import { createButtonElement, createSelect } from "../core/dom";
+import { randomFromArray } from "../core/array";
+import { createButtonElement, createHeader, createSelect } from "../core/dom";
+import { serdeMetrics, serdeString, serdeUnit } from "../core/serde";
+import { resetParams } from "../core/url";
 
 /**
  * @param {Object} args
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  * @param {Option} args.option
  * @param {Utilities} args.utils
  * @param {Signals} args.signals
@@ -10,12 +13,12 @@ import { createButtonElement, createSelect } from "../core/dom";
  */
 function createTable({
   utils,
-  vecIdToIndexes,
+  metricToIndexes,
   signals,
   option,
   vecsResources,
 }) {
-  const indexToVecIds = createIndexToVecIds(vecIdToIndexes);
+  const indexToMetrics = createIndexToMetrics(metricToIndexes);
 
   const serializedIndexes = createSerializedIndexes();
   /** @type {SerializedIndex} */
@@ -25,7 +28,7 @@ function createTable({
       /** @type {SerializedIndex} */ (defaultSerializedIndex),
       {
         save: {
-          ...utils.serde.string,
+          ...serdeString,
           keyPrefix: "table",
           key: "index",
         },
@@ -45,20 +48,20 @@ function createTable({
 
   signals.createEffect(index, (index, prevIndex) => {
     if (prevIndex !== undefined) {
-      utils.url.resetParams(option);
+      resetParams(option);
     }
 
-    const possibleVecIds = indexToVecIds[index];
+    const possibleMetrics = indexToMetrics[index];
 
-    const columns = signals.createSignal(/** @type {VecId[]} */ ([]), {
+    const columns = signals.createSignal(/** @type {Metric[]} */ ([]), {
       equals: false,
       save: {
-        ...utils.serde.vecIds,
+        ...serdeMetrics,
         keyPrefix: `table-${serializedIndex()}`,
         key: `columns`,
       },
     });
-    columns.set((l) => l.filter((id) => possibleVecIds.includes(id)));
+    columns.set((l) => l.filter((id) => possibleMetrics.includes(id)));
 
     signals.createEffect(columns, (columns) => {
       console.log(columns);
@@ -174,35 +177,35 @@ function createTable({
     const owner = signals.getOwner();
 
     /**
-     * @param {VecId} vecId
+     * @param {Metric} metric
      * @param {number} [_colIndex]
      */
-    function addCol(vecId, _colIndex = columns().length) {
+    function addCol(metric, _colIndex = columns().length) {
       signals.runWithOwner(owner, () => {
         /** @type {VoidFunction | undefined} */
         let dispose;
         signals.createRoot((_dispose) => {
           dispose = _dispose;
 
-          const vecIdOption = signals.createSignal({
-            name: vecId,
-            value: vecId,
+          const metricOption = signals.createSignal({
+            name: metric,
+            value: metric,
           });
           const { select } = createSelect({
-            list: possibleVecIds.map((vecId) => ({
-              name: vecId,
-              value: vecId,
+            list: possibleMetrics.map((metric) => ({
+              name: metric,
+              value: metric,
             })),
-            signal: vecIdOption,
+            signal: metricOption,
           });
 
-          signals.createEffect(vecIdOption, (vecIdOption) => {
-            select.style.width = `${21 + 7.25 * vecIdOption.name.length}px`;
+          signals.createEffect(metricOption, (metricOption) => {
+            select.style.width = `${21 + 7.25 * metricOption.name.length}px`;
           });
 
           if (_colIndex === columns().length) {
             columns.set((l) => {
-              l.push(vecId);
+              l.push(metric);
               return l;
             });
           }
@@ -252,7 +255,7 @@ function createTable({
 
           const th = addThCol({
             select,
-            unit: utils.vecidToUnit(vecId),
+            unit: serdeUnit.deserialize(metric),
             onLeft: createMoveColumnFunction(false),
             onRight: createMoveColumnFunction(true),
             onRemove: () => {
@@ -284,23 +287,23 @@ function createTable({
             }
 
             signals.createEffect(
-              () => vecIdOption().name,
-              (vecId, prevVecId) => {
-                const unit = utils.vecidToUnit(vecId);
+              () => metricOption().name,
+              (metric, prevMetric) => {
+                const unit = serdeUnit.deserialize(metric);
                 th.setUnit(unit);
 
-                const vec = vecsResources.getOrCreate(index, vecId);
+                const vec = vecsResources.getOrCreate(index, metric);
 
                 vec.fetch({ from, to });
 
                 const fetchedKey = vecsResources.genFetchedKey({ from, to });
 
                 columns.set((l) => {
-                  const i = l.indexOf(prevVecId ?? vecId);
+                  const i = l.indexOf(prevMetric ?? metric);
                   if (i === -1) {
-                    l.push(vecId);
+                    l.push(metric);
                   } else {
-                    l[i] = vecId;
+                    l[i] = metric;
                   }
                   return l;
                 });
@@ -325,7 +328,7 @@ function createTable({
                   },
                 );
 
-                return () => vecId;
+                return () => metric;
               },
             );
           });
@@ -337,10 +340,10 @@ function createTable({
       });
     }
 
-    columns().forEach((vecId, colIndex) => addCol(vecId, colIndex));
+    columns().forEach((metric, colIndex) => addCol(metric, colIndex));
 
     obj.addRandomCol = function () {
-      addCol(utils.array.random(possibleVecIds));
+      addCol(randomFromArray(possibleMetrics));
     };
 
     return () => index;
@@ -356,7 +359,7 @@ function createTable({
  * @param {Option} args.option
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  */
 export function init({
   elements,
@@ -364,7 +367,7 @@ export function init({
   option,
   utils,
   vecsResources,
-  vecIdToIndexes,
+  metricToIndexes,
 }) {
   const parent = elements.table;
   const { headerElement } = createHeader("Table");
@@ -376,7 +379,7 @@ export function init({
   const table = createTable({
     signals,
     utils,
-    vecIdToIndexes,
+    metricToIndexes,
     vecsResources,
     option,
   });
@@ -397,33 +400,33 @@ export function init({
 
 function createSerializedIndexes() {
   return /** @type {const} */ ([
-    /** @satisfies {VecId} */ ("dateindex"),
-    /** @satisfies {VecId} */ ("decadeindex"),
-    /** @satisfies {VecId} */ ("difficultyepoch"),
-    /** @satisfies {VecId} */ ("emptyoutputindex"),
-    /** @satisfies {VecId} */ ("halvingepoch"),
-    /** @satisfies {VecId} */ ("height"),
-    /** @satisfies {VecId} */ ("inputindex"),
-    /** @satisfies {VecId} */ ("monthindex"),
-    /** @satisfies {VecId} */ ("opreturnindex"),
-    /** @satisfies {VecId} */ ("semesterindex"),
-    /** @satisfies {VecId} */ ("outputindex"),
-    /** @satisfies {VecId} */ ("p2aaddressindex"),
-    /** @satisfies {VecId} */ ("p2msoutputindex"),
-    /** @satisfies {VecId} */ ("p2pk33addressindex"),
-    /** @satisfies {VecId} */ ("p2pk65addressindex"),
-    /** @satisfies {VecId} */ ("p2pkhaddressindex"),
-    /** @satisfies {VecId} */ ("p2shaddressindex"),
-    /** @satisfies {VecId} */ ("p2traddressindex"),
-    /** @satisfies {VecId} */ ("p2wpkhaddressindex"),
-    /** @satisfies {VecId} */ ("p2wshaddressindex"),
-    /** @satisfies {VecId} */ ("quarterindex"),
-    /** @satisfies {VecId} */ ("txindex"),
-    /** @satisfies {VecId} */ ("unknownoutputindex"),
-    /** @satisfies {VecId} */ ("weekindex"),
-    /** @satisfies {VecId} */ ("yearindex"),
-    /** @satisfies {VecId} */ ("loadedaddressindex"),
-    /** @satisfies {VecId} */ ("emptyaddressindex"),
+    /** @satisfies {Metric} */ ("dateindex"),
+    /** @satisfies {Metric} */ ("decadeindex"),
+    /** @satisfies {Metric} */ ("difficultyepoch"),
+    /** @satisfies {Metric} */ ("emptyoutputindex"),
+    /** @satisfies {Metric} */ ("halvingepoch"),
+    /** @satisfies {Metric} */ ("height"),
+    /** @satisfies {Metric} */ ("inputindex"),
+    /** @satisfies {Metric} */ ("monthindex"),
+    /** @satisfies {Metric} */ ("opreturnindex"),
+    /** @satisfies {Metric} */ ("semesterindex"),
+    /** @satisfies {Metric} */ ("outputindex"),
+    /** @satisfies {Metric} */ ("p2aaddressindex"),
+    /** @satisfies {Metric} */ ("p2msoutputindex"),
+    /** @satisfies {Metric} */ ("p2pk33addressindex"),
+    /** @satisfies {Metric} */ ("p2pk65addressindex"),
+    /** @satisfies {Metric} */ ("p2pkhaddressindex"),
+    /** @satisfies {Metric} */ ("p2shaddressindex"),
+    /** @satisfies {Metric} */ ("p2traddressindex"),
+    /** @satisfies {Metric} */ ("p2wpkhaddressindex"),
+    /** @satisfies {Metric} */ ("p2wshaddressindex"),
+    /** @satisfies {Metric} */ ("quarterindex"),
+    /** @satisfies {Metric} */ ("txindex"),
+    /** @satisfies {Metric} */ ("unknownoutputindex"),
+    /** @satisfies {Metric} */ ("weekindex"),
+    /** @satisfies {Metric} */ ("yearindex"),
+    /** @satisfies {Metric} */ ("loadedaddressindex"),
+    /** @satisfies {Metric} */ ("emptyaddressindex"),
   ]);
 }
 /** @typedef {ReturnType<typeof createSerializedIndexes>} SerializedIndexes */
@@ -493,24 +496,24 @@ function serializedIndexToIndex(serializedIndex) {
 }
 
 /**
- * @param {VecIdToIndexes} vecIdToIndexes
+ * @param {MetricToIndexes} metricToIndexes
  */
-function createIndexToVecIds(vecIdToIndexes) {
-  const indexToVecIds = Object.entries(vecIdToIndexes).reduce(
+function createIndexToMetrics(metricToIndexes) {
+  const indexToMetrics = Object.entries(metricToIndexes).reduce(
     (arr, [_id, indexes]) => {
-      const id = /** @type {VecId} */ (_id);
+      const id = /** @type {Metric} */ (_id);
       indexes.forEach((i) => {
         arr[i] ??= [];
         arr[i].push(id);
       });
       return arr;
     },
-    /** @type {VecId[][]} */ (Array.from({ length: 24 })),
+    /** @type {Metric[][]} */ (Array.from({ length: 24 })),
   );
-  indexToVecIds.forEach((arr) => {
+  indexToMetrics.forEach((arr) => {
     arr.sort();
   });
-  return indexToVecIds;
+  return indexToMetrics;
 }
 
 /**

@@ -4,7 +4,11 @@ import * as utils from "./core/utils";
 import elements from "./core/elements";
 import env from "./core/env";
 import packages from "./lazy";
-import { onFirstIntersection, getElementById } from "./core/dom";
+import { onFirstIntersection, getElementById, isHidden } from "./core/dom";
+import { next } from "./core/timing";
+import { replaceHistory } from "./core/url";
+import { serdeUnit } from "./core/serde";
+import { removeStored, writeToStorage } from "./core/storage";
 
 function initFrameSelectors() {
   const children = Array.from(elements.selectors.children);
@@ -95,7 +99,7 @@ Promise.all([
 ]).then(
   ([
     signals,
-    { createVecIdToIndexes, VERSION },
+    { createMetricToIndexes, VERSION },
     { createPools },
     { initOptions },
   ]) =>
@@ -104,11 +108,11 @@ Promise.all([
 
       console.log(`VERSION = ${VERSION}`);
 
-      const vecIdToIndexes = createVecIdToIndexes();
+      const metricToIndexes = createMetricToIndexes();
 
       if (env.localhost) {
-        Object.keys(vecIdToIndexes).forEach((id) => {
-          utils.vecidToUnit(/** @type {VecId} */ (id));
+        Object.keys(metricToIndexes).forEach((metric) => {
+          serdeUnit.deserialize(metric);
         });
       }
 
@@ -154,7 +158,7 @@ Promise.all([
         signals,
         utils,
         env,
-        vecIdToIndexes,
+        metricToIndexes,
       );
 
       const pools = createPools();
@@ -167,7 +171,7 @@ Promise.all([
         signals,
         utils,
         qrcode,
-        vecIdToIndexes,
+        metricToIndexes,
         pools,
       });
 
@@ -242,7 +246,7 @@ Promise.all([
                           utils,
                           webSockets,
                           vecsResources,
-                          vecIdToIndexes,
+                          metricToIndexes,
                         }),
                       ),
                     ),
@@ -275,7 +279,7 @@ Promise.all([
                             utils,
                             webSockets,
                             vecsResources,
-                            vecIdToIndexes,
+                            metricToIndexes,
                             packages,
                           }),
                         ),
@@ -298,7 +302,7 @@ Promise.all([
                         utils,
                         vecsResources,
                         option,
-                        vecIdToIndexes,
+                        metricToIndexes,
                       }),
                     ),
                   );
@@ -344,7 +348,7 @@ Promise.all([
             }
 
             if (!previousElement) {
-              utils.url.replaceHistory({ pathname: option.path });
+              replaceHistory({ pathname: option.path });
             }
 
             previousElement = element;
@@ -354,7 +358,7 @@ Promise.all([
         function createMobileSwitchEffect() {
           let firstRun = true;
           signals.createEffect(options.selected, () => {
-            if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
+            if (!firstRun && !isHidden(elements.asideLabel)) {
               elements.asideLabel.click();
             }
             firstRun = false;
@@ -382,12 +386,12 @@ Promise.all([
             ul = /** @type {HTMLUListElement} */ (
               elements.nav.firstElementChild
             );
-            await utils.next();
+            await next();
             if (!ul) {
               await getFirstChild();
             }
           } catch (_) {
-            await utils.next();
+            await next();
             await getFirstChild();
           }
         }
@@ -405,7 +409,7 @@ Promise.all([
               ul.querySelectorAll(":scope > li > details"),
             );
             if (!detailsList.length) {
-              await utils.next();
+              await next();
             }
           }
           const details = detailsList.find((s) => s.dataset.name == name);
@@ -417,7 +421,7 @@ Promise.all([
               Array.from(details.querySelectorAll(":scope > ul"))
             );
             if (!uls.length) {
-              await utils.next();
+              await next();
             } else if (uls.length > 1) {
               throw "Shouldn't be possible";
             } else {
@@ -430,7 +434,7 @@ Promise.all([
         while (!anchors.length) {
           anchors = Array.from(ul.querySelectorAll(":scope > li > a"));
           if (!anchors.length) {
-            await utils.next();
+            await next();
           }
         }
         anchors
@@ -684,12 +688,12 @@ Promise.all([
           try {
             if (typeof width === "number") {
               elements.main.style.width = `${width}px`;
-              utils.storage.write(barWidthLocalStorageKey, String(width));
+              writeToStorage(barWidthLocalStorageKey, String(width));
             } else {
               elements.main.style.width = elements.style.getPropertyValue(
                 "--default-main-width",
               );
-              utils.storage.remove(barWidthLocalStorageKey);
+              removeStored(barWidthLocalStorageKey);
             }
           } catch (_) {}
         }

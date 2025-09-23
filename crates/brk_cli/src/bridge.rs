@@ -124,13 +124,13 @@ return {
     contents += "  };\n}\n";
 
     contents += "
-/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes
-/** @typedef {keyof VecIdToIndexes} VecId */
+/** @typedef {ReturnType<typeof createMetricToIndexes>} MetricToIndexes
+/** @typedef {keyof MetricToIndexes} Metric */
 
 /**
 * @returns {Record<any, number[]>}
 */
-export function createVecIdToIndexes() {
+export function createMetricToIndexes() {
 return {
 ";
 

@@ -17,28 +17,21 @@ export function todayUTC() {
 /**
  * @param {Date} date
  */
-export function toString(date) {
-  return date.toJSON().split("T")[0];
-}
-
-/**
- * @param {Date} date
- */
-export function toDateIndex(date) {
+export function dateToDateIndex(date) {
   if (
     date.getUTCFullYear() === 2009 &&
     date.getUTCMonth() === 0 &&
     date.getUTCDate() === 3
   )
     return 0;
-  return differenceBetween(date, new Date("2009-01-09"));
+  return differenceBetweenDates(date, new Date("2009-01-09"));
 }
 
 /**
  * @param {Date} start
  * @param {Date} end
  */
-export function getRange(start, end) {
+export function createDateRange(start, end) {
   const dates = /** @type {Date[]} */ ([]);
   let currentDate = new Date(start);
   while (currentDate <= end) {
@@ -52,17 +45,14 @@ export function getRange(start, end) {
  * @param {Date} date1
  * @param {Date} date2
  */
-export function differenceBetween(date1, date2) {
+export function differenceBetweenDates(date1, date2) {
   return Math.abs(date1.valueOf() - date2.valueOf()) / ONE_DAY_IN_MS;
 }
 
 /**
- * @param {Date} oldest
- * @param {Date} youngest
- * @returns {number}
+ * @param {Date} date1
+ * @param {Date} date2
  */
-export function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
-  return Math.round(
-    Math.abs((youngest.getTime() - oldest.getTime()) / ONE_DAY_IN_MS),
-  );
+export function roundedDifferenceBetweenDates(date1, date2) {
+  return Math.round(differenceBetweenDates(date1, date2));
 }

@@ -1,12 +1,22 @@
 /** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../packages/lightweight-charts/5.0.8/dist/typings' */
 
 import {
+  createChart,
+  CandlestickSeries,
+  HistogramSeries,
+  LineSeries,
+  BaselineSeries,
+  // } from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.development.mjs";
+} from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
+
+import {
   createHorizontalChoiceField,
   createLabeledInput,
   createSpanName,
 } from "./dom";
 import { createOklchToRGBA } from "./colors";
-import { throttle } from "./scheduling";
+import { throttle } from "./timing";
+import { serdeBool } from "./serde";
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -44,15 +54,6 @@ import { throttle } from "./scheduling";
  *
  * @typedef {function({ iseries: ISeries; unit: Unit; index: Index }): void} SetDataCallback
  */
-
-import {
-  createChart,
-  CandlestickSeries,
-  HistogramSeries,
-  LineSeries,
-  BaselineSeries,
-  // } from "./5.0.8/dist/lightweight-charts.standalone.development.mjs";
-} from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 const oklchToRGBA = createOklchToRGBA();
 
@@ -321,7 +322,7 @@ function createChartElement({
    * @param {number} args.order
    * @param {Color[]} args.colors
    * @param {SeriesType} args.seriesType
-   * @param {VecId} [args.vecId]
+   * @param {Metric} [args.metric]
    * @param {SetDataCallback} [args.setDataCallback]
    * @param {Accessor<WhitespaceData<number>[]>} [args.data]
    * @param {number} args.paneIndex
@@ -329,7 +330,7 @@ function createChartElement({
    */
   function addSeries({
     iseries,
-    vecId,
+    metric,
     name,
     unit,
     order,
@@ -347,7 +348,7 @@ function createChartElement({
         save: {
           keyPrefix: "",
           key: id,
-          ...serde.boolean,
+          ...serdeBool,
         },
       });
 
@@ -382,7 +383,7 @@ function createChartElement({
         },
       };
 
-      if (vecId) {
+      if (metric) {
         signals.createEffect(index, (index) => {
           const timeResource = vecsResources.getOrCreate(
             index,
@@ -392,7 +393,7 @@ function createChartElement({
           );
           timeResource.fetch();
 
-          const valuesResource = vecsResources.getOrCreate(index, vecId);
+          const valuesResource = vecsResources.getOrCreate(index, metric);
           _valuesResource = valuesResource;
 
           series.url.set(() => valuesResource.url);
@@ -556,7 +557,7 @@ function createChartElement({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {VecId} [args.vecId]
+     * @param {Metric} [args.metric]
      * @param {Accessor<CandlestickData[]>} [args.data]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -565,7 +566,7 @@ function createChartElement({
      * @param {CandlestickSeriesPartialOptions} [args.options]
      */
     addCandlestickSeries({
-      vecId,
+      metric,
       name,
       unit,
       order,
@@ -607,7 +608,7 @@ function createChartElement({
         data,
         setDataCallback,
         defaultActive,
-        vecId,
+        metric,
       });
     },
     /**
@@ -616,7 +617,7 @@ function createChartElement({
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Color} args.color
-     * @param {VecId} [args.vecId]
+     * @param {Metric} [args.metric]
      * @param {Accessor<HistogramData[]>} [args.data]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -624,7 +625,7 @@ function createChartElement({
      * @param {HistogramSeriesPartialOptions} [args.options]
      */
     addHistogramSeries({
-      vecId,
+      metric,
       name,
       unit,
       color,
@@ -659,7 +660,7 @@ function createChartElement({
         data,
         setDataCallback,
         defaultActive,
-        vecId,
+        metric,
       });
     },
     /**
@@ -668,7 +669,7 @@ function createChartElement({
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Accessor<LineData[]>} [args.data]
-     * @param {VecId} [args.vecId]
+     * @param {Metric} [args.metric]
      * @param {Color} [args.color]
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
@@ -676,7 +677,7 @@ function createChartElement({
      * @param {LineSeriesPartialOptions} [args.options]
      */
     addLineSeries({
-      vecId,
+      metric,
       name,
       unit,
       order,
@@ -718,7 +719,7 @@ function createChartElement({
         setDataCallback,
         data,
         defaultActive,
-        vecId,
+        metric,
       });
     },
     /**
@@ -727,14 +728,14 @@ function createChartElement({
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Accessor<BaselineData[]>} [args.data]
-     * @param {VecId} [args.vecId]
+     * @param {Metric} [args.metric]
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {BaselineSeriesPartialOptions} [args.options]
      */
     addBaselineSeries({
-      vecId,
+      metric,
       name,
       unit,
       order,
@@ -784,7 +785,7 @@ function createChartElement({
         unit,
         data,
         defaultActive,
-        vecId,
+        metric,
       });
     },
   };

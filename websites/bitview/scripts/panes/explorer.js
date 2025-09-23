@@ -1,3 +1,4 @@
+import { randomFromArray } from "../core/array";
 
 /**
  * @param {Object} args
@@ -9,7 +10,7 @@
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  */
 export function init({
   colors,
@@ -20,7 +21,7 @@ export function init({
   utils,
   webSockets,
   vecsResources,
-  vecIdToIndexes,
+  metricToIndexes,
 }) {
   const chain = window.document.createElement("div");
   chain.id = "chain";
@@ -41,7 +42,7 @@ export function init({
   ];
 
   for (let i = 0; i <= 10; i++) {
-    const { name, color } = utils.array.random(miners);
+    const { name, color } = randomFromArray(miners);
     const { cubeElement, leftFaceElement, rightFaceElement, topFaceElement } =
       createCube();
 

@@ -3,7 +3,8 @@ import {
   createHorizontalChoiceField,
   createHeader,
 } from "../core/dom";
-import { throttle } from "../core/scheduling";
+import { serdeChartableIndex, serdeOptNumber } from "../core/serde";
+import { throttle } from "../core/timing";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -26,7 +27,7 @@ const CANDLE = "candle";
  * @param {Elements} args.elements
  * @param {Env} args.env
  * @param {VecsResources} args.vecsResources
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  * @param {Packages} args.packages
  */
 export function init({
@@ -39,7 +40,7 @@ export function init({
   env,
   webSockets,
   vecsResources,
-  vecIdToIndexes,
+  metricToIndexes,
   packages,
 }) {
   elements.charts.append(createShadow("left"));
@@ -50,7 +51,7 @@ export function init({
 
   const { index, fieldset } = createIndexSelector({
     option,
-    vecIdToIndexes,
+    metricToIndexes,
     signals,
     utils,
   });
@@ -63,7 +64,7 @@ export function init({
 
   const from = signals.createSignal(/** @type {number | null} */ (null), {
     save: {
-      ...utils.serde.optNumber,
+      ...serdeOptNumber,
       keyPrefix: TIMERANGE_LS_KEY,
       key: "from",
       serializeParam: firstRun,
@@ -71,7 +72,7 @@ export function init({
   });
   const to = signals.createSignal(/** @type {number | null} */ (null), {
     save: {
-      ...utils.serde.optNumber,
+      ...serdeOptNumber,
       keyPrefix: TIMERANGE_LS_KEY,
       key: "to",
       serializeParam: firstRun,
@@ -340,7 +341,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    vecId: "price_ohlc",
+                    metric: "price_ohlc",
                     name: "Price",
                     unit: topUnit,
                     setDataCallback: printLatest,
@@ -350,7 +351,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    vecId: "price_close",
+                    metric: "price_close",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -370,7 +371,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    vecId: "price_ohlc_in_sats",
+                    metric: "price_ohlc_in_sats",
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
@@ -381,7 +382,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    vecId: "price_close_in_sats",
+                    metric: "price_close_in_sats",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -446,7 +447,7 @@ export function init({
               order += orderStart;
 
               const indexes = /** @type {readonly number[]} */ (
-                vecIdToIndexes[blueprint.key]
+                metricToIndexes[blueprint.metric]
               );
 
               if (indexes.includes(index)) {
@@ -454,7 +455,7 @@ export function init({
                   case "Baseline": {
                     seriesList.push(
                       chart.addBaselineSeries({
-                        vecId: blueprint.key,
+                        metric: blueprint.metric,
                         name: blueprint.title,
                         unit,
                         defaultActive: blueprint.defaultActive,
@@ -474,7 +475,7 @@ export function init({
                   case "Histogram": {
                     seriesList.push(
                       chart.addHistogramSeries({
-                        vecId: blueprint.key,
+                        metric: blueprint.metric,
                         name: blueprint.title,
                         unit,
                         color: blueprint.color,
@@ -493,7 +494,7 @@ export function init({
                   case undefined:
                     seriesList.push(
                       chart.addLineSeries({
-                        vecId: blueprint.key,
+                        metric: blueprint.metric,
                         color: blueprint.color,
                         name: blueprint.title,
                         unit,
@@ -518,11 +519,11 @@ export function init({
 /**
  * @param {Object} args
  * @param {Accessor<ChartOption>} args.option
- * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {MetricToIndexes} args.metricToIndexes
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  */
-function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
+function createIndexSelector({ option, metricToIndexes, signals, utils }) {
   const choices_ = /** @satisfies {SerializedChartableIndex[]} */ ([
     "timestamp",
     "date",
@@ -546,13 +547,13 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     const rawIndexes = new Set(
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
-        .filter((blueprint) => !blueprint.key.startsWith("constant_"))
-        .map((blueprint) => vecIdToIndexes[blueprint.key])
+        .filter((blueprint) => !blueprint.metric.startsWith("constant_"))
+        .map((blueprint) => metricToIndexes[blueprint.metric])
         .flat(),
     );
 
     const serializedIndexes = [...rawIndexes].flatMap((index) => {
-      const c = utils.serde.chartableIndex.serialize(index);
+      const c = serdeChartableIndex.serialize(index);
       return c ? [c] : [];
     });
 
@@ -581,7 +582,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
   fieldset.dataset.size = "sm";
 
   const index = signals.createMemo(() =>
-    utils.serde.chartableIndex.deserialize(selected()),
+    serdeChartableIndex.deserialize(selected()),
   );
 
   return { fieldset, index };
