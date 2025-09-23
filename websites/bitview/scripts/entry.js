@@ -17,6 +17,8 @@
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree } from "./core/options/partial"
  *
  * @import { WebSockets } from "./core/ws"
+ *
+ * @import { Unit } from "./core/serde"
  */
 
 /**
@@ -24,63 +26,6 @@
  * @typedef {typeof import("./core/utils")} Utilities
  * @typedef {typeof import("./core/env")["default"]} Env
  * @typedef {typeof import("./core/elements")["default"]} Elements
- */
-
-/**
- * @typedef {"" |
- *   "%all" |
- *   "%cmcap" |
- *   "%cp+l" |
- *   "%mcap" |
- *   "%pnl" |
- *   "%rcap" |
- *   "%self" |
- *   "/sec" |
- *   "address data" |
- *   "block" |
- *   "blocks" |
- *   "bool" |
- *   "btc" |
- *   "bytes" |
- *   "cents" |
- *   "coinblocks" |
- *   "coindays" |
- *   "constant" |
- *   "count" |
- *   "date" |
- *   "days" |
- *   "difficulty" |
- *   "epoch" |
- *   "gigabytes" |
- *   "h/s" |
- *   "hash" |
- *   "height" |
- *   "id" |
- *   "index" |
- *   "len" |
- *   "locktime" |
- *   "percentage" |
- *   "position" |
- *   "ratio" |
- *   "sat/vb" |
- *   "satblocks" |
- *   "satdays" |
- *   "sats" |
- *   "sats/(ph/s)/day" |
- *   "sats/(th/s)/day" |
- *   "sd" |
- *   "secs" |
- *   "timestamp" |
- *   "tx" |
- *   "type" |
- *   "usd" |
- *   "usd/(ph/s)/day" |
- *   "usd/(th/s)/day" |
- *   "vb" |
- *   "version" |
- *   "wu" |
- *   "years" |
- * "" } Unit
  */
 
 // DO NOT CHANGE, Exact format is expected in `brk_bundler`

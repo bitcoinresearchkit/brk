@@ -1,4 +1,4 @@
-// @ts-check
+import { createButtonElement, createSelect } from "../core/dom";
 
 /**
  * @param {Object} args
@@ -94,7 +94,7 @@ function createTable({
       // div.append(top);
       // top.append(select);
       // top.append(
-      //   utils.dom.createAnchorElement({
+      //   createAnchorElement({
       //     href: "",
       //     blank: true,
       //   }),
@@ -104,17 +104,17 @@ function createTable({
       if (_unit) {
         unit.innerHTML = _unit;
       }
-      const moveLeft = utils.dom.createButtonElement({
+      const moveLeft = createButtonElement({
         inside: "←",
         title: "Move column to the left",
         onClick: onLeft || (() => {}),
       });
-      const moveRight = utils.dom.createButtonElement({
+      const moveRight = createButtonElement({
         inside: "→",
         title: "Move column to the right",
         onClick: onRight || (() => {}),
       });
-      const remove = utils.dom.createButtonElement({
+      const remove = createButtonElement({
         inside: "×",
         title: "Remove column",
         onClick: onRemove || (() => {}),
@@ -137,7 +137,7 @@ function createTable({
     }
 
     addThCol({
-      ...utils.dom.createSelect({
+      ...createSelect({
         list: serializedIndexes,
         signal: serializedIndex,
       }),
@@ -188,7 +188,7 @@ function createTable({
             name: vecId,
             value: vecId,
           });
-          const { select } = utils.dom.createSelect({
+          const { select } = createSelect({
             list: possibleVecIds.map((vecId) => ({
               name: vecId,
               value: vecId,
@@ -367,7 +367,7 @@ export function init({
   vecIdToIndexes,
 }) {
   const parent = elements.table;
-  const { headerElement } = utils.dom.createHeader("Table");
+  const { headerElement } = createHeader("Table");
   parent.append(headerElement);
 
   const div = window.document.createElement("div");
@@ -385,7 +385,7 @@ export function init({
   const span = window.document.createElement("span");
   span.innerHTML = "Add column";
   div.append(
-    utils.dom.createButtonElement({
+    createButtonElement({
       onClick: () => {
         table.addRandomCol?.();
       },

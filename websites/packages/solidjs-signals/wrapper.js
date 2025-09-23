@@ -1,4 +1,3 @@
-// @ts-check
 
 /**
  * @import { SignalOptions } from "./0.4.11/dist/types/core/core"
