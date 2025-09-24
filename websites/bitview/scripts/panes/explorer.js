@@ -95,18 +95,22 @@ export function init({
 function createCube() {
   const cubeElement = window.document.createElement("div");
   cubeElement.classList.add("cube");
+
   const rightFaceElement = window.document.createElement("div");
   rightFaceElement.classList.add("face");
   rightFaceElement.classList.add("right");
   cubeElement.append(rightFaceElement);
+
   const leftFaceElement = window.document.createElement("div");
   leftFaceElement.classList.add("face");
   leftFaceElement.classList.add("left");
   cubeElement.append(leftFaceElement);
+
   const topFaceElement = window.document.createElement("div");
   topFaceElement.classList.add("face");
   topFaceElement.classList.add("top");
   cubeElement.append(topFaceElement);
+
   return {
     cubeElement,
     leftFaceElement,

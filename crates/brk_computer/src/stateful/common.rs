@@ -24,7 +24,6 @@ pub struct Vecs {
     pub height_to_supply: EagerVec<Height, Sats>,
     pub height_to_utxo_count: EagerVec<Height, StoredU64>,
     // Single
-    pub dateindex_to_supply_breakeven: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_supply_in_loss: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_supply_in_profit: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_unrealized_loss: Option<EagerVec<DateIndex, Dollars>>,
@@ -35,7 +34,6 @@ pub struct Vecs {
     pub height_to_min_price_paid: Option<EagerVec<Height, Dollars>>,
     pub height_to_realized_loss: Option<EagerVec<Height, Dollars>>,
     pub height_to_realized_profit: Option<EagerVec<Height, Dollars>>,
-    pub height_to_supply_breakeven: Option<EagerVec<Height, Sats>>,
     pub height_to_supply_in_loss: Option<EagerVec<Height, Sats>>,
     pub height_to_supply_in_profit: Option<EagerVec<Height, Sats>>,
     pub height_to_unrealized_loss: Option<EagerVec<Height, Dollars>>,
@@ -129,24 +127,17 @@ pub struct Vecs {
     pub indexes_to_realized_profit_rel_to_realized_cap: Option<ComputedVecsFromHeight<StoredF32>>,
     pub indexes_to_realized_loss_rel_to_realized_cap: Option<ComputedVecsFromHeight<StoredF32>>,
     pub indexes_to_net_realized_pnl_rel_to_realized_cap: Option<ComputedVecsFromHeight<StoredF32>>,
-    pub height_to_supply_breakeven_value: Option<ComputedHeightValueVecs>,
     pub height_to_supply_in_loss_value: Option<ComputedHeightValueVecs>,
     pub height_to_supply_in_profit_value: Option<ComputedHeightValueVecs>,
-    pub indexes_to_supply_breakeven: Option<ComputedValueVecsFromDateIndex>,
     pub indexes_to_supply_in_loss: Option<ComputedValueVecsFromDateIndex>,
     pub indexes_to_supply_in_profit: Option<ComputedValueVecsFromDateIndex>,
-    pub height_to_supply_breakeven_rel_to_own_supply: Option<EagerVec<Height, StoredF64>>,
     pub height_to_supply_in_loss_rel_to_own_supply: Option<EagerVec<Height, StoredF64>>,
     pub height_to_supply_in_profit_rel_to_own_supply: Option<EagerVec<Height, StoredF64>>,
-    pub indexes_to_supply_breakeven_rel_to_own_supply: Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_loss_rel_to_own_supply: Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_profit_rel_to_own_supply: Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_rel_to_circulating_supply: Option<ComputedVecsFromHeight<StoredF64>>,
-    pub height_to_supply_breakeven_rel_to_circulating_supply: Option<EagerVec<Height, StoredF64>>,
     pub height_to_supply_in_loss_rel_to_circulating_supply: Option<EagerVec<Height, StoredF64>>,
     pub height_to_supply_in_profit_rel_to_circulating_supply: Option<EagerVec<Height, StoredF64>>,
-    pub indexes_to_supply_breakeven_rel_to_circulating_supply:
-        Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_loss_rel_to_circulating_supply:
         Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_profit_rel_to_circulating_supply:
@@ -185,16 +176,6 @@ impl Vecs {
             EagerVec::forced_import(
                 db,
                 &suffix("supply_in_profit"),
-                version + Version::ZERO,
-                format,
-            )
-            .unwrap()
-        });
-
-        let dateindex_to_supply_breakeven = compute_dollars.then(|| {
-            EagerVec::forced_import(
-                db,
-                &suffix("supply_breakeven"),
                 version + Version::ZERO,
                 format,
             )
@@ -257,31 +238,6 @@ impl Vecs {
                 .unwrap()
             }),
             dateindex_to_supply_in_profit,
-            height_to_supply_breakeven: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &suffix("supply_breakeven"),
-                    version + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
-            indexes_to_supply_breakeven: compute_dollars.then(|| {
-                ComputedValueVecsFromDateIndex::forced_import(
-                    db,
-                    &suffix("supply_breakeven"),
-                    dateindex_to_supply_breakeven
-                        .as_ref()
-                        .map(|v| v.boxed_clone())
-                        .into(),
-                    version + Version::ZERO,
-                    VecBuilderOptions::default().add_last(),
-                    compute_dollars,
-                    indexes,
-                )
-                .unwrap()
-            }),
-            dateindex_to_supply_breakeven,
             height_to_supply_in_loss: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     db,
@@ -1125,17 +1081,6 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            height_to_supply_breakeven_value: compute_dollars.then(|| {
-                ComputedHeightValueVecs::forced_import(
-                    db,
-                    &suffix("supply_breakeven"),
-                    Source::None,
-                    version + Version::ZERO,
-                    format,
-                    compute_dollars,
-                )
-                .unwrap()
-            }),
             height_to_supply_in_loss_value: compute_dollars.then(|| {
                 ComputedHeightValueVecs::forced_import(
                     db,
@@ -1158,15 +1103,6 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            height_to_supply_breakeven_rel_to_own_supply: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &suffix("supply_breakeven_rel_to_own_supply"),
-                    version + Version::ONE,
-                    format,
-                )
-                .unwrap()
-            }),
             height_to_supply_in_loss_rel_to_own_supply: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     db,
@@ -1182,17 +1118,6 @@ impl Vecs {
                     &suffix("supply_in_profit_rel_to_own_supply"),
                     version + Version::ONE,
                     format,
-                )
-                .unwrap()
-            }),
-            indexes_to_supply_breakeven_rel_to_own_supply: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &suffix("supply_breakeven_rel_to_own_supply"),
-                    Source::Compute,
-                    version + Version::ONE,
-                    indexes,
-                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -1229,17 +1154,6 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            height_to_supply_breakeven_rel_to_circulating_supply: (compute_rel_to_all
-                && compute_dollars)
-                .then(|| {
-                    EagerVec::forced_import(
-                        db,
-                        &suffix("supply_breakeven_rel_to_circulating_supply"),
-                        version + Version::ONE,
-                        format,
-                    )
-                    .unwrap()
-                }),
             height_to_supply_in_loss_rel_to_circulating_supply: (compute_rel_to_all
                 && compute_dollars)
                 .then(|| {
@@ -1259,19 +1173,6 @@ impl Vecs {
                         &suffix("supply_in_profit_rel_to_circulating_supply"),
                         version + Version::ONE,
                         format,
-                    )
-                    .unwrap()
-                }),
-            indexes_to_supply_breakeven_rel_to_circulating_supply: (compute_rel_to_all
-                && compute_dollars)
-                .then(|| {
-                    ComputedVecsFromDateIndex::forced_import(
-                        db,
-                        &suffix("supply_breakeven_rel_to_circulating_supply"),
-                        Source::Compute,
-                        version + Version::ONE,
-                        indexes,
-                        VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -1404,9 +1305,6 @@ impl Vecs {
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
             self.height_to_supply_in_loss
-                .as_ref()
-                .map_or(usize::MAX, |v| v.len()),
-            self.height_to_supply_breakeven
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
             self.height_to_unrealized_profit
@@ -1551,17 +1449,6 @@ impl Vecs {
                 .validate_computed_version_or_reset(
                     base_version + height_to_supply_in_loss_inner_version,
                 )?;
-            let height_to_supply_breakeven_inner_version = self
-                .height_to_supply_breakeven
-                .as_ref()
-                .unwrap()
-                .inner_version();
-            self.height_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .validate_computed_version_or_reset(
-                    base_version + height_to_supply_breakeven_inner_version,
-                )?;
             let height_to_unrealized_profit_inner_version = self
                 .height_to_unrealized_profit
                 .as_ref()
@@ -1605,17 +1492,6 @@ impl Vecs {
                 .unwrap()
                 .validate_computed_version_or_reset(
                     base_version + dateindex_to_supply_in_loss_inner_version,
-                )?;
-            let dateindex_to_supply_breakeven_inner_version = self
-                .dateindex_to_supply_breakeven
-                .as_ref()
-                .unwrap()
-                .inner_version();
-            self.dateindex_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .validate_computed_version_or_reset(
-                    base_version + dateindex_to_supply_breakeven_inner_version,
                 )?;
             let dateindex_to_unrealized_profit_inner_version = self
                 .dateindex_to_unrealized_profit
@@ -1790,10 +1666,6 @@ impl Vecs {
             let (height_unrealized_state, date_unrealized_state) =
                 state.compute_unrealized_states(height_price, date_price.unwrap());
 
-            self.height_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .forced_push_at(height, height_unrealized_state.supply_breakeven, exit)?;
             self.height_to_supply_in_profit
                 .as_mut()
                 .unwrap()
@@ -1814,10 +1686,6 @@ impl Vecs {
             if let Some(date_unrealized_state) = date_unrealized_state {
                 let dateindex = dateindex.unwrap();
 
-                self.dateindex_to_supply_breakeven
-                    .as_mut()
-                    .unwrap()
-                    .forced_push_at(dateindex, date_unrealized_state.supply_breakeven, exit)?;
                 self.dateindex_to_supply_in_profit
                     .as_mut()
                     .unwrap()
@@ -1877,10 +1745,6 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .safe_flush(exit)?;
-            self.height_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .safe_flush(exit)?;
             self.height_to_unrealized_profit
                 .as_mut()
                 .unwrap()
@@ -1894,10 +1758,6 @@ impl Vecs {
                 .unwrap()
                 .safe_flush(exit)?;
             self.dateindex_to_supply_in_loss
-                .as_mut()
-                .unwrap()
-                .safe_flush(exit)?;
-            self.dateindex_to_supply_breakeven
                 .as_mut()
                 .unwrap()
                 .safe_flush(exit)?;
@@ -2085,18 +1945,6 @@ impl Vecs {
                         .as_slice(),
                     exit,
                 )?;
-            self.height_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .compute_sum_of_others(
-                    starting_indexes.height,
-                    others
-                        .iter()
-                        .map(|v| v.height_to_supply_breakeven.as_ref().unwrap())
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )?;
             self.height_to_unrealized_profit
                 .as_mut()
                 .unwrap()
@@ -2141,18 +1989,6 @@ impl Vecs {
                     others
                         .iter()
                         .map(|v| v.dateindex_to_supply_in_loss.as_ref().unwrap())
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )?;
-            self.dateindex_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .compute_sum_of_others(
-                    starting_indexes.dateindex,
-                    others
-                        .iter()
-                        .map(|v| v.dateindex_to_supply_breakeven.as_ref().unwrap())
                         .collect::<Vec<_>>()
                         .as_slice(),
                     exit,
@@ -2587,15 +2423,6 @@ impl Vecs {
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_supply_in_loss.as_ref().unwrap()),
-                )?;
-            self.indexes_to_supply_breakeven
-                .as_mut()
-                .unwrap()
-                .compute_rest(
-                    price,
-                    starting_indexes,
-                    exit,
-                    Some(self.dateindex_to_supply_breakeven.as_ref().unwrap()),
                 )?;
             self.indexes_to_unrealized_profit
                 .as_mut()
@@ -3109,15 +2936,6 @@ impl Vecs {
                     Ok(())
                 })?;
 
-            self.height_to_supply_breakeven_value
-                .as_mut()
-                .unwrap()
-                .compute_rest(
-                    price,
-                    starting_indexes,
-                    exit,
-                    Some(self.height_to_supply_breakeven.as_ref().unwrap()),
-                )?;
             self.height_to_supply_in_loss_value
                 .as_mut()
                 .unwrap()
@@ -3135,19 +2953,6 @@ impl Vecs {
                     starting_indexes,
                     exit,
                     Some(self.height_to_supply_in_profit.as_ref().unwrap()),
-                )?;
-            self.height_to_supply_breakeven_rel_to_own_supply
-                .as_mut()
-                .unwrap()
-                .compute_percentage(
-                    starting_indexes.height,
-                    &self
-                        .height_to_supply_breakeven_value
-                        .as_ref()
-                        .unwrap()
-                        .bitcoin,
-                    &self.height_to_supply_value.bitcoin,
-                    exit,
                 )?;
             self.height_to_supply_in_loss_rel_to_own_supply
                 .as_mut()
@@ -3175,24 +2980,6 @@ impl Vecs {
                     &self.height_to_supply_value.bitcoin,
                     exit,
                 )?;
-            self.indexes_to_supply_breakeven_rel_to_own_supply
-                .as_mut()
-                .unwrap()
-                .compute_all(starting_indexes, exit, |v| {
-                    v.compute_percentage(
-                        starting_indexes.dateindex,
-                        self.indexes_to_supply_breakeven
-                            .as_ref()
-                            .unwrap()
-                            .bitcoin
-                            .dateindex
-                            .as_ref()
-                            .unwrap(),
-                        self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
             self.indexes_to_supply_in_loss_rel_to_own_supply
                 .as_mut()
                 .unwrap()
@@ -3283,20 +3070,11 @@ impl Vecs {
                     Ok(())
                 })?;
 
-            if let Some(height_to_supply_breakeven_rel_to_circulating_supply) = self
-                .height_to_supply_breakeven_rel_to_circulating_supply
+            if self
+                .height_to_supply_in_profit_rel_to_circulating_supply
                 .as_mut()
+                .is_some()
             {
-                height_to_supply_breakeven_rel_to_circulating_supply.compute_percentage(
-                    starting_indexes.height,
-                    &self
-                        .height_to_supply_breakeven_value
-                        .as_ref()
-                        .unwrap()
-                        .bitcoin,
-                    height_to_supply,
-                    exit,
-                )?;
                 self.height_to_supply_in_loss_rel_to_circulating_supply
                     .as_mut()
                     .unwrap()
@@ -3323,24 +3101,6 @@ impl Vecs {
                         height_to_supply,
                         exit,
                     )?;
-                self.indexes_to_supply_breakeven_rel_to_circulating_supply
-                    .as_mut()
-                    .unwrap()
-                    .compute_all(starting_indexes, exit, |v| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            self.indexes_to_supply_breakeven
-                                .as_ref()
-                                .unwrap()
-                                .bitcoin
-                                .dateindex
-                                .as_ref()
-                                .unwrap(),
-                            dateindex_to_supply,
-                            exit,
-                        )?;
-                        Ok(())
-                    })?;
                 self.indexes_to_supply_in_loss_rel_to_circulating_supply
                     .as_mut()
                     .unwrap()
@@ -3557,13 +3317,6 @@ impl Vecs {
         );
         iter = Box::new(
             iter.chain(
-                self.dateindex_to_supply_breakeven
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
                 self.dateindex_to_supply_in_loss
                     .iter()
                     .map(|v| v as &dyn AnyCollectableVec),
@@ -3693,34 +3446,6 @@ impl Vecs {
                 self.height_to_realized_profit
                     .iter()
                     .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.height_to_supply_breakeven
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.height_to_supply_breakeven_rel_to_circulating_supply
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.height_to_supply_breakeven_rel_to_own_supply
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.height_to_supply_breakeven_value
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
             ),
         );
         iter = Box::new(iter.chain(self.height_to_supply_half_value.iter_any_collectable()));
@@ -4064,27 +3789,6 @@ impl Vecs {
             ),
         );
         iter = Box::new(iter.chain(self.indexes_to_supply.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_supply_breakeven
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_supply_breakeven_rel_to_circulating_supply
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_supply_breakeven_rel_to_own_supply
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
         iter = Box::new(iter.chain(self.indexes_to_supply_half.iter_any_collectable()));
         iter = Box::new(
             iter.chain(

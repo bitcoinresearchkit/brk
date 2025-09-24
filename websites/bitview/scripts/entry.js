@@ -1,6 +1,6 @@
 /**
  *
- * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./core/chart"
+ * @import { Valued, SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./core/chart"
  *
  * @import * as _ from "./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  *
