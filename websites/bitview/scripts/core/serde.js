@@ -320,7 +320,6 @@ export const serdeUnit = {
         v === "sent" ||
         v === "annualized_volume" ||
         v.endsWith("supply_half") ||
-        v.endsWith("supply_breakeven") ||
         v.endsWith("supply_in_profit") ||
         v.endsWith("supply_in_loss") ||
         v.endsWith("stack") ||

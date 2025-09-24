@@ -257,10 +257,11 @@ impl CohortState {
 
         let update_state =
             |price: Dollars, current_price: Dollars, sats: Sats, state: &mut UnrealizedState| {
-                match price.cmp(&current_price) {
-                    Ordering::Less => {
+                let cmp = price.cmp(&current_price);
+                match cmp {
+                    Ordering::Equal | Ordering::Less => {
                         state.supply_in_profit += sats;
-                        if price > Dollars::ZERO && current_price > Dollars::ZERO {
+                        if !cmp.is_eq() && price > Dollars::ZERO && current_price > Dollars::ZERO {
                             let diff = current_price.checked_sub(price).unwrap();
                             // Add back once in a while to verify, but generally not needed
                             // if diff <= Dollars::ZERO {
@@ -281,9 +282,6 @@ impl CohortState {
                             // }
                             state.unrealized_loss += diff * sats;
                         }
-                    }
-                    Ordering::Equal => {
-                        state.supply_breakeven += sats;
                     }
                 }
             };
