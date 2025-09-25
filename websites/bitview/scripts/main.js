@@ -91,24 +91,12 @@ function initFrameSelectors() {
 }
 initFrameSelectors();
 
-Promise.all([
-  packages.signals(),
-  packages.vecs(),
-  packages.pools(),
-  packages.options(),
-]).then(
-  ([
-    signals,
-    { createMetricToIndexes, VERSION },
-    { createPools },
-    { initOptions },
-  ]) =>
+Promise.all([packages.signals(), packages.brk(), packages.options()]).then(
+  ([signals, { initOptions }]) =>
     signals.createRoot(() => {
       const owner = signals.getOwner();
 
       console.log(`VERSION = ${VERSION}`);
-
-      const metricToIndexes = createMetricToIndexes();
 
       if (env.localhost) {
         Object.keys(metricToIndexes).forEach((metric) => {
@@ -135,22 +123,22 @@ Promise.all([
 
       const qrcode = signals.createSignal(/** @type {string | null} */ (null));
 
-      function createLastHeightResource() {
-        const lastHeight = signals.createSignal(0);
-        function fetchLastHeight() {
-          utils.api.fetchLast(
-            (h) => {
-              lastHeight.set(h);
-            },
-            /** @satisfies {Height} */ (5),
-            "height",
-          );
-        }
-        fetchLastHeight();
-        setInterval(fetchLastHeight, 10_000);
-        return lastHeight;
-      }
-      const lastHeight = createLastHeightResource();
+      // function createLastHeightResource() {
+      //   const lastHeight = signals.createSignal(0);
+      //   function fetchLastHeight() {
+      //     utils.api.fetchLast(
+      //       (h) => {
+      //         lastHeight.set(h);
+      //       },
+      //       /** @satisfies {Height} */ (5),
+      //       "height",
+      //     );
+      //   }
+      //   fetchLastHeight();
+      //   setInterval(fetchLastHeight, 10_000);
+      //   return lastHeight;
+      // }
+      // const lastHeight = createLastHeightResource();
 
       const webSockets = createWebSockets(signals);
 

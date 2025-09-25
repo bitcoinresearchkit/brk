@@ -1,4 +1,4 @@
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../packages/lightweight-charts/5.0.8/dist/typings' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../../packages/lightweight-charts/5.0.8/dist/typings' */
 
 import {
   createChart,
@@ -7,20 +7,18 @@ import {
   LineSeries,
   BaselineSeries,
   // } from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.development.mjs";
-} from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
+} from "../../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 import {
   createHorizontalChoiceField,
   createLabeledInput,
   createSpanName,
-} from "./dom";
-import { createOklchToRGBA } from "./colors";
-import { throttle } from "./timing";
-import { serdeBool } from "./serde";
+} from "../dom";
+import { createOklchToRGBA } from "./oklch";
+import { throttle } from "../timing";
+import { serdeBool } from "../serde";
 
 /**
- * @typedef {[number, number, number, number]} OHLCTuple
- *
  * @typedef {Object} Valued
  * @property {number} value
  *
@@ -1003,7 +1001,7 @@ function numberToShortUSFormat(value, digits) {
     return numberToUSFormat(value, Math.min(1, digits || 10));
   } else if (absoluteValue < 1_000_000) {
     return numberToUSFormat(value, 0);
-  } else if (absoluteValue >= 900_000_000_000_000_000_000_000) {
+  } else if (absoluteValue >= 1_000_000_000_000_000_000_000) {
     return "Inf.";
   }
 
@@ -1014,11 +1012,6 @@ function numberToShortUSFormat(value, digits) {
   const letter = suffices[letterIndex];
 
   const modulused = log % 3;
-
-  // return `${numberToUSFormat(
-  //   value / (1_000_000 * 1_000 ** letterIndex),
-  //   3,
-  // )}${letter}`;
 
   if (modulused === 0) {
     return `${numberToUSFormat(

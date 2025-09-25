@@ -1,12 +1,10 @@
 const imports = {
   async signals() {
-    return import("./packages/solidjs-signals/wrapper.js").then(
-      (d) => d.default,
-    );
+    return import("./packages/solidjs-signals/index.js").then((d) => d.default);
   },
   async chart() {
     return window.document.fonts.ready.then(() =>
-      import("./core/chart.js").then((d) => d.default),
+      import("./core/chart/index.js").then((d) => d.default),
     );
   },
   async leanQr() {
@@ -18,17 +16,14 @@ const imports = {
     );
   },
   async modernScreenshot() {
-    return import("./packages/modern-screenshot/wrapper.js").then((d) => d);
+    return import("./packages/modern-screenshot/index.js").then((d) => d);
+  },
+  async brk() {
+    return import("./packages/brk/index.js").then((d) => d);
   },
 
   async options() {
     return import("./core/options/full.js").then((d) => d);
-  },
-  async vecs() {
-    return import("./bridge/vecs.js").then((d) => d);
-  },
-  async pools() {
-    return import("./bridge/pools.js").then((d) => d);
   },
 };
 

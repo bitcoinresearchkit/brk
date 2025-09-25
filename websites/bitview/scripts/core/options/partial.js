@@ -468,7 +468,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   const utxosUnderAmount = underAmount.map(
     ({ id, name, title, color }) =>
       /** @type {const} */ ({
-        metric: `utxos_${id}`,
+        id: `utxos_${id}`,
         name,
         title: `UTXOs ${title}`,
         color,
@@ -545,12 +545,12 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   );
 
   const type = /** @type {const} */ ([
-    ["p2pk65", "Pay To Long Public Key", "red"],
-    ["p2pk33", "Pay To Short Public Key", "orange"],
-    ["p2pkh", "Pay To Public Key Hash", "yellow"],
+    ["p2pk65", "Pay To Long Public id", "red"],
+    ["p2pk33", "Pay To Short Public id", "orange"],
+    ["p2pkh", "Pay To Public id Hash", "yellow"],
     ["p2ms_outputs", "Pay To Bare Multisig", "lime"],
     ["p2sh", "Pay To Script Hash", "green"],
-    ["p2wpkh", "Pay To Witness Public Key Hash", "teal"],
+    ["p2wpkh", "Pay To Witness Public id Hash", "teal"],
     ["p2wsh", "Pay To Witness Script Hash", "blue"],
     ["p2tr", "Pay To Taproot", "indigo"],
     ["p2a", "Pay To Anchor", "purple"],
@@ -572,11 +572,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
     ["active_price", "Active", "rose"],
     ["cointime_price", "cointime", "yellow"],
   ]).map(
-    ([id, name, colorKey]) =>
+    ([metric, name, colorKey]) =>
       /** @type {const} */ ({
-        id,
+        metric,
         name,
-        title: id.replace(/_/g, " "),
+        title: metric.replace(/_/g, " "),
         color: colors[colorKey],
       }),
   );
@@ -589,7 +589,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
     ["thermo", "emerald"],
   ]).map(([id, colorKey]) => {
     return /** @type {const} */ ({
-      id: `${id}_cap`,
+      metric: `${id}_cap`,
       name: id,
       title: `${id} Capitalization`,
       color: colors[colorKey],
@@ -681,14 +681,12 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   }
 
   /**
-   * @param {Object} args
-   * @param {MetricAverageBase} args.metric
-   * @param {string} [args.title]
+   * @param {MetricAverageBase} metric
    */
-  function createAverageSeries({ metric, title = "" }) {
+  function createAverageSeries(metric) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
       metric: `${metric}_avg`,
-      title: `Average ${title}`,
+      title: "Average",
     });
   }
 
@@ -750,51 +748,49 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   }
 
   /**
-   * @param {Object} args
-   * @param {MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} args.metric
-   * @param {string} [args.title]
+   * @param {MetricMinBase & MetricMaxBase & MetricPct90Base & MetricPct75Base & MetricMedianBase & MetricPct25Base & MetricPct10Base} metric
    */
-  function createMinMaxPercentilesSeries({ metric, title = "" }) {
+  function createMinMaxPercentilesSeries(metric) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
       {
         metric: `${metric}_max`,
-        title: `Max ${title}`,
+        title: "Max",
         color: colors.pink,
         defaultActive: false,
       },
       {
         metric: `${metric}_min`,
-        title: `Min ${title}`,
+        title: "Min",
         color: colors.green,
         defaultActive: false,
       },
       {
         metric: `${metric}_median`,
-        title: `Median ${title}`,
+        title: "Median",
         color: colors.amber,
         defaultActive: false,
       },
       {
         metric: `${metric}_pct75`,
-        title: `pct75 ${title}`,
+        title: "pct75",
         color: colors.red,
         defaultActive: false,
       },
       {
         metric: `${metric}_pct25`,
-        title: `pct25 ${title}`,
+        title: "pct25",
         color: colors.yellow,
         defaultActive: false,
       },
       {
         metric: `${metric}_pct90`,
-        title: `pct90 ${title}`,
+        title: "pct90",
         color: colors.rose,
         defaultActive: false,
       },
       {
         metric: `${metric}_pct10`,
-        title: `pct10 ${title}`,
+        title: "pct10",
         color: colors.lime,
         defaultActive: false,
       },
@@ -807,7 +803,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
   function createSumCumulativeMinMaxPercentilesSeries(metric) {
     return [
       ...createSumCumulativeSeries({ metric }),
-      ...createMinMaxPercentilesSeries({ metric }),
+      ...createMinMaxPercentilesSeries(metric),
     ];
   }
 
@@ -816,7 +812,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
    */
   function createAverageSumCumulativeMinMaxPercentilesSeries(metric) {
     return [
-      createAverageSeries({ metric }),
+      createAverageSeries(metric),
       ...createSumCumulativeMinMaxPercentilesSeries(metric),
     ];
   }
@@ -1193,7 +1189,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
    * @property {string} args.name
    * @property {string} args.title
    * @property {Color} args.color
-   * @property {"" | CohortId} args.key
+   * @property {"" | CohortId} args.id
    */
 
   /**
@@ -1205,11 +1201,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
 
   /**
    * @template {"" | CohortId} T
-   * @param {T} key
+   * @param {T} id
    */
-  const applySuffixIfNeeded = (key) =>
-    key !== ""
-      ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${key}_`)
+  const fixId = (id) =>
+    id !== ""
+      ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${id}_`)
       : /** @type {const} */ ("");
 
   /**
@@ -1230,65 +1226,65 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
           ? {
               name: "supply",
               title: `Supply ${title}`,
-              bottom: list.flatMap(({ color, name, id: _key }) => {
-                const key = applySuffixIfNeeded(_key);
+              bottom: list.flatMap(({ color, name, id: _id }) => {
+                const id = fixId(_id);
                 return /** @type {const} */ ([
                   createBaseSeries({
-                    metric: `${key}supply`,
+                    metric: `${id}supply`,
                     name: "Supply",
                     color: colors.default,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_btc`,
+                    metric: `${id}supply_btc`,
                     name: "Supply",
                     color: colors.default,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_usd`,
+                    metric: `${id}supply_usd`,
                     name: "Supply",
                     color: colors.default,
                   }),
-                  ...(key
+                  ...(id
                     ? [
                         createBaseSeries({
-                          metric: `${key}supply_rel_to_circulating_supply`,
+                          metric: `${id}supply_rel_to_circulating_supply`,
                           name: "Supply",
                           color: colors.default,
                         }),
                       ]
                     : []),
                   createBaseSeries({
-                    metric: `${key}supply_in_profit`,
+                    metric: `${id}supply_in_profit`,
                     name: "In Profit",
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_profit_btc`,
+                    metric: `${id}supply_in_profit_btc`,
                     name: "In Profit",
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_profit_usd`,
+                    metric: `${id}supply_in_profit_usd`,
                     name: "In Profit",
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_loss`,
+                    metric: `${id}supply_in_loss`,
                     name: "In Loss",
                     color: colors.red,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_loss_btc`,
+                    metric: `${id}supply_in_loss_btc`,
                     name: "In Loss",
                     color: colors.red,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_loss_usd`,
+                    metric: `${id}supply_in_loss_usd`,
                     name: "In Loss",
                     color: colors.red,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_half`,
+                    metric: `${id}supply_half`,
                     name: "half",
                     color: colors.gray,
                     options: {
@@ -1296,7 +1292,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     },
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_half_btc`,
+                    metric: `${id}supply_half_btc`,
                     name: useGroupName ? name : "half",
                     color: "list" in args ? color : colors.gray,
                     options: {
@@ -1304,34 +1300,34 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     },
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_half_usd`,
+                    metric: `${id}supply_half_usd`,
                     name: useGroupName ? name : "half",
                     color: "list" in args ? color : colors.gray,
                     options: {
                       lineStyle: 4,
                     },
                   }),
-                  ...(key
+                  ...(id
                     ? [
                         createBaseSeries({
-                          metric: `${key}supply_in_profit_rel_to_circulating_supply`,
+                          metric: `${id}supply_in_profit_rel_to_circulating_supply`,
                           name: "In Profit",
                           color: colors.green,
                         }),
                         createBaseSeries({
-                          metric: `${key}supply_in_loss_rel_to_circulating_supply`,
+                          metric: `${id}supply_in_loss_rel_to_circulating_supply`,
                           name: "In Loss",
                           color: colors.red,
                         }),
                       ]
                     : []),
                   createBaseSeries({
-                    metric: `${key}supply_in_profit_rel_to_own_supply`,
+                    metric: `${id}supply_in_profit_rel_to_own_supply`,
                     name: "In Profit",
                     color: colors.green,
                   }),
                   createBaseSeries({
-                    metric: `${key}supply_in_loss_rel_to_own_supply`,
+                    metric: `${id}supply_in_loss_rel_to_own_supply`,
                     name: "In Loss",
                     color: colors.red,
                   }),
@@ -1354,27 +1350,27 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 {
                   name: "total",
                   title: `Supply ${title}`,
-                  bottom: list.flatMap(({ color, name, key: _key }) => {
-                    const key = applySuffixIfNeeded(_key);
+                  bottom: list.flatMap(({ color, name, id: _id }) => {
+                    const id = fixId(_id);
                     return /** @type {const} */ ([
                       createBaseSeries({
-                        metric: `${key}supply`,
+                        metric: `${id}supply`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_btc`,
+                        metric: `${id}supply_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_usd`,
+                        metric: `${id}supply_usd`,
                         name,
                         color,
                       }),
-                      key
+                      id
                         ? createBaseSeries({
-                            metric: `${key}supply_rel_to_circulating_supply`,
+                            metric: `${id}supply_rel_to_circulating_supply`,
                             name,
                             color,
                           })
@@ -1390,28 +1386,28 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 {
                   name: "in profit",
                   title: `Supply In Profit ${title}`,
-                  bottom: list.flatMap(({ color, name, key: _key }) => {
-                    const key = applySuffixIfNeeded(_key);
+                  bottom: list.flatMap(({ color, name, id: _id }) => {
+                    const id = fixId(_id);
                     return /** @type {const} */ ([
                       createBaseSeries({
-                        metric: `${key}supply_in_profit`,
+                        metric: `${id}supply_in_profit`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_in_profit_btc`,
+                        metric: `${id}supply_in_profit_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_in_profit_usd`,
+                        metric: `${id}supply_in_profit_usd`,
                         name,
                         color,
                       }),
-                      ...(key
+                      ...(id
                         ? [
                             createBaseSeries({
-                              metric: `${key}supply_in_profit_rel_to_circulating_supply`,
+                              metric: `${id}supply_in_profit_rel_to_circulating_supply`,
                               name,
                               color,
                             }),
@@ -1423,28 +1419,28 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 {
                   name: "in loss",
                   title: `Supply In loss ${title}`,
-                  bottom: list.flatMap(({ color, name, key: _key }) => {
-                    const key = applySuffixIfNeeded(_key);
+                  bottom: list.flatMap(({ color, name, id: _id }) => {
+                    const id = fixId(_id);
                     return /** @type {const} */ ([
                       createBaseSeries({
-                        metric: `${key}supply_in_loss`,
+                        metric: `${id}supply_in_loss`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_in_loss_btc`,
+                        metric: `${id}supply_in_loss_btc`,
                         name,
                         color,
                       }),
                       createBaseSeries({
-                        metric: `${key}supply_in_loss_usd`,
+                        metric: `${id}supply_in_loss_usd`,
                         name,
                         color,
                       }),
-                      ...(key
+                      ...(id
                         ? [
                             createBaseSeries({
-                              metric: `${key}supply_in_loss_rel_to_circulating_supply`,
+                              metric: `${id}supply_in_loss_rel_to_circulating_supply`,
                               name,
                               color,
                             }),
@@ -1458,47 +1454,43 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
         {
           name: "utxo count",
           title: `UTXO Count ${title}`,
-          bottom: list.flatMap(({ color, name, key: _key }) => {
-            const key = applySuffixIfNeeded(_key);
+          bottom: list.flatMap(({ color, name, id: _id }) => {
+            const id = fixId(_id);
             return /** @type {const} */ ([
               createBaseSeries({
-                metric: `${key}utxo_count`,
+                metric: `${id}utxo_count`,
                 name: useGroupName ? name : "Count",
                 color,
               }),
             ]);
           }),
         },
-        ...(list.filter(
-          ({ key }) =>
-            `${applySuffixIfNeeded(key)}addr_count` in metricToIndexes,
-        ).length > ("list" in args ? 1 : 0)
+        ...(list.filter(({ id }) => `${fixId(id)}addr_count` in metricToIndexes)
+          .length > ("list" in args ? 1 : 0)
           ? !("list" in args) ||
             list.filter(
-              ({ key }) =>
-                `${applySuffixIfNeeded(key)}empty_addr_count` in
-                metricToIndexes,
+              ({ id }) => `${fixId(id)}empty_addr_count` in metricToIndexes,
             ).length <= 1
             ? [
                 {
                   name: "address count",
                   title: `Address Count ${title}`,
-                  bottom: list.flatMap(({ name, color, key: _key }) => {
-                    const key = applySuffixIfNeeded(_key);
+                  bottom: list.flatMap(({ name, color, id: _id }) => {
+                    const id = fixId(_id);
                     return [
-                      ...(`${key}addr_count` in metricToIndexes
+                      ...(`${id}addr_count` in metricToIndexes
                         ? /** @type {const} */ ([
                             createBaseSeries({
-                              metric: `${key}addr_count`,
+                              metric: `${id}addr_count`,
                               name: useGroupName ? name : "Loaded",
                               color: useGroupName ? color : colors.orange,
                             }),
                           ])
                         : []),
-                      ...(`${key}empty_addr_count` in metricToIndexes
+                      ...(`${id}empty_addr_count` in metricToIndexes
                         ? /** @type {const} */ ([
                             createBaseSeries({
-                              metric: `${key}empty_addr_count`,
+                              metric: `${id}empty_addr_count`,
                               name: "Empty",
                               color: colors.gray,
                               defaultActive: false,
@@ -1518,15 +1510,14 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       title: `Loaded Address Count ${title}`,
                       bottom: list
                         .filter(
-                          ({ key }) =>
-                            `${applySuffixIfNeeded(key)}addr_count` in
-                            metricToIndexes,
+                          ({ id }) =>
+                            `${fixId(id)}addr_count` in metricToIndexes,
                         )
-                        .flatMap(({ name, color, key: _key }) => {
-                          const key = applySuffixIfNeeded(_key);
+                        .flatMap(({ name, color, id: _id }) => {
+                          const id = fixId(_id);
                           return [
                             createBaseSeries({
-                              metric: `${key}addr_count`,
+                              metric: `${id}addr_count`,
                               name,
                               color,
                             }),
@@ -1534,9 +1525,8 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                         }),
                     },
                     ...(list.filter(
-                      ({ key }) =>
-                        `${applySuffixIfNeeded(key)}empty_addr_count` in
-                        metricToIndexes,
+                      ({ id }) =>
+                        `${fixId(id)}empty_addr_count` in metricToIndexes,
                     ).length
                       ? [
                           {
@@ -1544,15 +1534,15 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                             title: `Empty Address Count ${title}`,
                             bottom: list
                               .filter(
-                                ({ key }) =>
-                                  `${applySuffixIfNeeded(key)}empty_addr_count` in
+                                ({ id }) =>
+                                  `${fixId(id)}empty_addr_count` in
                                   metricToIndexes,
                               )
-                              .flatMap(({ name, color, key: _key }) => {
-                                const key = applySuffixIfNeeded(_key);
+                              .flatMap(({ name, color, id: _id }) => {
+                                const id = fixId(_id);
                                 return [
                                   createBaseSeries({
-                                    metric: `${key}empty_addr_count`,
+                                    metric: `${id}empty_addr_count`,
                                     name,
                                     color,
                                   }),
@@ -1573,9 +1563,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Price",
                     title: `Realized Price ${title}`,
-                    top: list.map(({ color, name, key }) =>
+                    top: list.map(({ color, name, id }) =>
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(key)}realized_price`,
+                        metric: `${fixId(id)}realized_price`,
                         name,
                         color,
                       }),
@@ -1585,9 +1575,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     name: "Ratio",
                     title: `Realized Price Ratio ${title}`,
                     bottom: [
-                      ...list.map(({ color, name, key }) =>
+                      ...list.map(({ color, name, id }) =>
                         createBaseSeries({
-                          metric: `${applySuffixIfNeeded(key)}realized_price_ratio`,
+                          metric: `${fixId(id)}realized_price_ratio`,
                           name,
                           color,
                         }),
@@ -1601,7 +1591,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 ]
               : createPriceWithRatioOptions({
                   title: `Realized Price ${title}`,
-                  metric: `${applySuffixIfNeeded(args.key)}realized_price`,
+                  metric: `${fixId(args.id)}realized_price`,
                   name: "price",
                   legend: "realized",
                   color: args.color,
@@ -1609,11 +1599,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
             {
               name: "capitalization",
               title: `Realized Capitalization ${title}`,
-              bottom: list.flatMap(({ color, name, key: _key }) => {
-                const key = applySuffixIfNeeded(_key);
+              bottom: list.flatMap(({ color, name, id: _id }) => {
+                const id = fixId(_id);
                 return /** @type {const} */ ([
                   createBaseSeries({
-                    metric: `${key}realized_cap`,
+                    metric: `${id}realized_cap`,
                     name: useGroupName ? name : "Capitalization",
                     color,
                   }),
@@ -1621,7 +1611,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${key}realized_cap_30d_delta`,
+                          metric: `${id}realized_cap_30d_delta`,
                           title: "30d change",
                           defaultActive: false,
                         }),
@@ -1632,11 +1622,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       ]
                     : []),
                   ...(!("list" in args) &&
-                  `${key}realized_cap_rel_to_own_market_cap` in metricToIndexes
+                  `${id}realized_cap_rel_to_own_market_cap` in metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${key}realized_cap_rel_to_own_market_cap`,
+                          metric: `${id}realized_cap_rel_to_own_market_cap`,
                           title: "ratio",
                           options: { baseValue: { price: 100 } },
                           colors: [colors.red, colors.green],
@@ -1658,22 +1648,22 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     title: `Realized Profit And Loss ${title}`,
                     bottom: [
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}realized_profit`,
+                        metric: `${fixId(args.id)}realized_profit`,
                         name: "Profit",
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}realized_loss`,
+                        metric: `${fixId(args.id)}realized_loss`,
                         name: "Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
-                      ...(`${applySuffixIfNeeded(args.key)}realized_profit_to_loss_ratio` in
+                      ...(`${fixId(args.id)}realized_profit_to_loss_ratio` in
                       metricToIndexes
                         ? [
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}realized_profit_to_loss_ratio`,
                               name: "proft / loss",
                               color: colors.yellow,
@@ -1681,46 +1671,46 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           ]
                         : []),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}total_realized_pnl`,
+                        metric: `${fixId(args.id)}total_realized_pnl`,
                         name: "Total",
                         color: colors.default,
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}neg_realized_loss`,
+                        metric: `${fixId(args.id)}neg_realized_loss`,
                         name: "Negative Loss",
                         color: colors.red,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}realized_profit_cumulative`,
+                        metric: `${fixId(args.id)}realized_profit_cumulative`,
                         name: "Cumulative Profit",
                         color: colors.green,
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}realized_loss_cumulative`,
+                        metric: `${fixId(args.id)}realized_loss_cumulative`,
                         name: "Cumulative Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}neg_realized_loss_cumulative`,
+                        metric: `${fixId(args.id)}neg_realized_loss_cumulative`,
                         name: "Cumulative Negative Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          args.key,
+                        metric: `${fixId(
+                          args.id,
                         )}realized_profit_rel_to_realized_cap`,
                         title: "Profit",
                         color: colors.green,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          args.key,
+                        metric: `${fixId(
+                          args.id,
                         )}realized_loss_rel_to_realized_cap`,
                         title: "Loss",
                         color: colors.red,
@@ -1737,45 +1727,45 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Net pnl",
                     title: `Net Realized Profit And Loss ${title}`,
-                    bottom: list.flatMap(({ color, name, key }) => [
+                    bottom: list.flatMap(({ color, name, id }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(key)}net_realized_pnl`,
+                        metric: `${fixId(id)}net_realized_pnl`,
                         title: "Raw",
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(key)}net_realized_pnl_cumulative`,
+                        metric: `${fixId(id)}net_realized_pnl_cumulative`,
                         title: "Cumulative",
                         defaultActive: false,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          key,
+                        metric: `${fixId(
+                          id,
                         )}net_realized_pnl_cumulative_30d_delta`,
                         title: "cumulative 30d change",
                         defaultActive: false,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          key,
+                        metric: `${fixId(
+                          id,
                         )}net_realized_pnl_rel_to_realized_cap`,
                         title: "Raw",
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          key,
+                        metric: `${fixId(
+                          id,
                         )}net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap`,
                         title: "cumulative 30d change",
                         defaultActive: false,
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        metric: `${applySuffixIfNeeded(
-                          key,
+                        metric: `${fixId(
+                          id,
                         )}net_realized_pnl_cumulative_30d_delta_rel_to_market_cap`,
                         title: "cumulative 30d change",
                       }),
@@ -1793,9 +1783,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "sopr",
                     title: `Spent Output Profit Ratio ${title}`,
-                    bottom: list.flatMap(({ color, name, key }) => {
-                      const soprKey = `${applySuffixIfNeeded(key)}sopr`;
-                      const asoprKey = `${applySuffixIfNeeded(key)}adjusted_sopr`;
+                    bottom: list.flatMap(({ color, name, id }) => {
+                      const soprKey = `${fixId(id)}sopr`;
+                      const asoprKey = `${fixId(id)}adjusted_sopr`;
                       return [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
@@ -1892,17 +1882,17 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     name: "profit",
                     title: `Realized Profit ${title}`,
                     bottom: [
-                      ...list.flatMap(({ color, name, key: _key }) => {
-                        const key = applySuffixIfNeeded(_key);
+                      ...list.flatMap(({ color, name, id: _id }) => {
+                        const id = fixId(_id);
                         return /** @type {const} */ ([
                           createBaseSeries({
-                            metric: `${key}realized_profit`,
+                            metric: `${id}realized_profit`,
                             name,
                             color,
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            metric: `${key}realized_profit_rel_to_realized_cap`,
+                            metric: `${id}realized_profit_rel_to_realized_cap`,
                             title: name,
                             color,
                           }),
@@ -1917,17 +1907,17 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     name: "loss",
                     title: `Realized Loss ${title}`,
                     bottom: [
-                      ...list.flatMap(({ color, name, key: _key }) => {
-                        const key = applySuffixIfNeeded(_key);
+                      ...list.flatMap(({ color, name, id: _id }) => {
+                        const id = fixId(_id);
                         return /** @type {const} */ ([
                           createBaseSeries({
-                            metric: `${key}realized_loss`,
+                            metric: `${id}realized_loss`,
                             name,
                             color,
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            metric: `${key}realized_loss_rel_to_realized_cap`,
+                            metric: `${id}realized_loss_rel_to_realized_cap`,
                             title: name,
                             color,
                           }),
@@ -1942,19 +1932,19 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     name: "Total pnl",
                     title: `Total Realized Profit And Loss Loss ${title}`,
                     bottom: [
-                      ...list.flatMap(({ color, name, key: _key }) => {
-                        const key = applySuffixIfNeeded(_key);
+                      ...list.flatMap(({ color, name, id: _id }) => {
+                        const id = fixId(_id);
                         return /** @type {const} */ ([
                           createBaseSeries({
-                            metric: `${key}total_realized_pnl`,
+                            metric: `${id}total_realized_pnl`,
                             name,
                             color,
                           }),
-                          ...(`${key}realized_profit_to_loss_ratio` in
+                          ...(`${id}realized_profit_to_loss_ratio` in
                           metricToIndexes
                             ? [
                                 createBaseSeries({
-                                  metric: `${key}realized_profit_to_loss_ratio`,
+                                  metric: `${id}realized_profit_to_loss_ratio`,
                                   name,
                                   color,
                                 }),
@@ -1968,17 +1958,17 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     name: "Net pnl",
                     title: `Net Realized Profit And Loss ${title}`,
                     bottom: [
-                      ...list.flatMap(({ color, name, key }) => [
+                      ...list.flatMap(({ color, name, id }) => [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${applySuffixIfNeeded(key)}net_realized_pnl`,
+                          metric: `${fixId(id)}net_realized_pnl`,
                           title: name,
                           color,
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${applySuffixIfNeeded(
-                            key,
+                          metric: `${fixId(
+                            id,
                           )}net_realized_pnl_rel_to_realized_cap`,
                           title: name,
                           color,
@@ -1998,11 +1988,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       {
                         name: "profit",
                         title: `Cumulative Realized Profit ${title}`,
-                        bottom: list.flatMap(({ color, name, key: _key }) => {
-                          const key = applySuffixIfNeeded(_key);
+                        bottom: list.flatMap(({ color, name, id: _id }) => {
+                          const id = fixId(_id);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              metric: `${key}realized_profit_cumulative`,
+                              metric: `${id}realized_profit_cumulative`,
                               name,
                               color,
                             }),
@@ -2012,11 +2002,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       {
                         name: "loss",
                         title: `Cumulative Realized Loss ${title}`,
-                        bottom: list.flatMap(({ color, name, key: _key }) => {
-                          const key = applySuffixIfNeeded(_key);
+                        bottom: list.flatMap(({ color, name, id: _id }) => {
+                          const id = fixId(_id);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              metric: `${key}realized_loss_cumulative`,
+                              metric: `${id}realized_loss_cumulative`,
                               name,
                               color,
                             }),
@@ -2027,10 +2017,10 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                         name: "Net pnl",
                         title: `Cumulative Net Realized Profit And Loss ${title}`,
                         bottom: [
-                          ...list.flatMap(({ color, name, key }) => [
+                          ...list.flatMap(({ color, name, id }) => [
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
-                              metric: `${applySuffixIfNeeded(key)}net_realized_pnl_cumulative`,
+                              metric: `${fixId(id)}net_realized_pnl_cumulative`,
                               title: name,
                               color,
                               defaultActive: false,
@@ -2045,27 +2035,27 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                         name: "Net pnl 30d change",
                         title: `Cumulative Net Realized Profit And Loss 30 Day Change ${title}`,
                         bottom: [
-                          ...list.flatMap(({ color, name, key }) => [
+                          ...list.flatMap(({ color, name, id }) => [
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
-                              metric: `${applySuffixIfNeeded(
-                                key,
+                              metric: `${fixId(
+                                id,
                               )}net_realized_pnl_cumulative_30d_delta`,
                               title: name,
                               color,
                             }),
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
-                              metric: `${applySuffixIfNeeded(
-                                key,
+                              metric: `${fixId(
+                                id,
                               )}net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap`,
                               title: name,
                               color,
                             }),
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
-                              metric: `${applySuffixIfNeeded(
-                                key,
+                              metric: `${fixId(
+                                id,
                               )}net_realized_pnl_cumulative_30d_delta_rel_to_market_cap`,
                               title: name,
                               color,
@@ -2091,10 +2081,10 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                         name: "Normal",
                         title: `Spent Output Profit Ratio ${title}`,
                         bottom: [
-                          ...list.flatMap(({ color, name, key }) => [
+                          ...list.flatMap(({ color, name, id }) => [
                             /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                               type: "Baseline",
-                              metric: `${applySuffixIfNeeded(key)}sopr`,
+                              metric: `${fixId(id)}sopr`,
                               title: name,
                               color,
                             }),
@@ -2107,12 +2097,12 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       },
                       ...(() => {
                         const reducedList = list
-                          .map(({ color, name, key }) => ({
+                          .map(({ color, name, id }) => ({
                             color,
                             name,
-                            metric: `${applySuffixIfNeeded(key)}adjusted_sopr`,
+                            metric: `${fixId(id)}adjusted_sopr`,
                           }))
-                          .filter(({ key }) => key in metricToIndexes);
+                          .filter(({ metric }) => metric in metricToIndexes);
 
                         return reducedList.length
                           ? [
@@ -2121,10 +2111,10 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                                 title: `Adjusted Spent Output Profit Ratio ${title}`,
                                 bottom: [
                                   ...reducedList.flatMap(
-                                    ({ color, name, key }) => [
+                                    ({ color, name, metric }) => [
                                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                                         type: "Baseline",
-                                        key,
+                                        metric,
                                         title: name,
                                         color,
                                       }),
@@ -2146,28 +2136,28 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
               name: "Sell Side Risk",
               title: `Sell Side Risk Ratio ${title}`,
               bottom: !("list" in args)
-                ? list.flatMap(({ key }) => [
+                ? list.flatMap(({ id }) => [
                     createBaseSeries({
-                      metric: `${applySuffixIfNeeded(key)}sell_side_risk_ratio`,
+                      metric: `${fixId(id)}sell_side_risk_ratio`,
                       name: "raw",
                       color: colors.orange,
                     }),
                     createBaseSeries({
-                      metric: `${applySuffixIfNeeded(key)}sell_side_risk_ratio_7d_ema`,
+                      metric: `${fixId(id)}sell_side_risk_ratio_7d_ema`,
                       name: "7d ema",
                       color: colors.red,
                       defaultActive: false,
                     }),
                     createBaseSeries({
-                      metric: `${applySuffixIfNeeded(key)}sell_side_risk_ratio_30d_ema`,
+                      metric: `${fixId(id)}sell_side_risk_ratio_30d_ema`,
                       name: "30d ema",
                       color: colors.rose,
                       defaultActive: false,
                     }),
                   ])
-                : list.flatMap(({ color, name, key }) => [
+                : list.flatMap(({ color, name, id }) => [
                     createBaseSeries({
-                      metric: `${applySuffixIfNeeded(key)}sell_side_risk_ratio`,
+                      metric: `${fixId(id)}sell_side_risk_ratio`,
                       name,
                       color: color,
                     }),
@@ -2181,9 +2171,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       {
                         name: "created",
                         title: `value created ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => {
-                          const normalKey = `${applySuffixIfNeeded(key)}value_created`;
-                          const adjKey = `${applySuffixIfNeeded(key)}adjusted_value_created`;
+                        bottom: list.flatMap(({ color, name, id }) => {
+                          const normalKey = `${fixId(id)}value_created`;
+                          const adjKey = `${fixId(id)}adjusted_value_created`;
                           return [
                             createBaseSeries({
                               metric: normalKey,
@@ -2205,11 +2195,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       {
                         name: "destroyed",
                         title: `value destroyed ${title}`,
-                        bottom: list.flatMap(({ color, name, key }) => {
-                          const normalKey = `${applySuffixIfNeeded(key)}value_destroyed`;
-                          const adjKey = `${applySuffixIfNeeded(
-                            key,
-                          )}adjusted_value_destroyed`;
+                        bottom: list.flatMap(({ color, name, id }) => {
+                          const normalKey = `${fixId(id)}value_destroyed`;
+                          const adjKey = `${fixId(id)}adjusted_value_destroyed`;
                           return [
                             createBaseSeries({
                               metric: normalKey,
@@ -2236,9 +2224,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           {
                             name: "Normal",
                             title: `Value Created ${title}`,
-                            bottom: list.flatMap(({ color, name, key }) => [
+                            bottom: list.flatMap(({ color, name, id }) => [
                               createBaseSeries({
-                                metric: `${applySuffixIfNeeded(key)}value_created`,
+                                metric: `${fixId(id)}value_created`,
                                 name,
                                 color,
                               }),
@@ -2246,21 +2234,23 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           },
                           ...(() => {
                             const reducedList = list
-                              .map(({ color, name, key }) => ({
+                              .map(({ color, name, id }) => ({
                                 color,
                                 name,
-                                metric: `${applySuffixIfNeeded(key)}adjusted_value_created`,
+                                metric: `${fixId(id)}adjusted_value_created`,
                               }))
-                              .filter(({ key }) => key in metricToIndexes);
+                              .filter(
+                                ({ metric }) => metric in metricToIndexes,
+                              );
                             return reducedList.length
                               ? [
                                   {
                                     name: "Adjusted",
                                     title: `Adjusted value created ${title}`,
                                     bottom: reducedList.map(
-                                      ({ color, name, key }) =>
+                                      ({ color, name, metric }) =>
                                         createBaseSeries({
-                                          key,
+                                          metric,
                                           name,
                                           color,
                                         }),
@@ -2277,9 +2267,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           {
                             name: "Normal",
                             title: `Value destroyed ${title}`,
-                            bottom: list.flatMap(({ color, name, key }) => [
+                            bottom: list.flatMap(({ color, name, id }) => [
                               createBaseSeries({
-                                metric: `${applySuffixIfNeeded(key)}value_destroyed`,
+                                metric: `${fixId(id)}value_destroyed`,
                                 name,
                                 color,
                               }),
@@ -2287,21 +2277,23 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           },
                           ...(() => {
                             const reducedList = list
-                              .map(({ color, name, key }) => ({
+                              .map(({ color, name, id }) => ({
                                 color,
                                 name,
-                                metric: `${applySuffixIfNeeded(key)}adjusted_value_destroyed`,
+                                metric: `${fixId(id)}adjusted_value_destroyed`,
                               }))
-                              .filter(({ key }) => key in metricToIndexes);
+                              .filter(
+                                ({ metric }) => metric in metricToIndexes,
+                              );
                             return reducedList.length
                               ? [
                                   {
                                     name: "Adjusted",
                                     title: `Adjusted value destroyed ${title}`,
                                     bottom: reducedList.map(
-                                      ({ color, name, key }) =>
+                                      ({ color, name, metric }) =>
                                         createBaseSeries({
-                                          key,
+                                          metric,
                                           name,
                                           color,
                                         }),
@@ -2327,71 +2319,71 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     title: `Unrealized Profit And Loss ${title}`,
                     bottom: [
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}total_unrealized_pnl`,
+                        metric: `${fixId(args.id)}total_unrealized_pnl`,
                         name: "total",
                         color: colors.default,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}unrealized_profit`,
+                        metric: `${fixId(args.id)}unrealized_profit`,
                         name: "Profit",
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}unrealized_loss`,
+                        metric: `${fixId(args.id)}unrealized_loss`,
                         name: "Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(args.key)}neg_unrealized_loss`,
+                        metric: `${fixId(args.id)}neg_unrealized_loss`,
                         name: "Negative Loss",
                         color: colors.red,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(
-                          args.key,
+                        metric: `${fixId(
+                          args.id,
                         )}unrealized_profit_rel_to_market_cap`,
                         name: "Profit",
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(
-                          args.key,
+                        metric: `${fixId(
+                          args.id,
                         )}unrealized_loss_rel_to_market_cap`,
                         name: "Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        metric: `${applySuffixIfNeeded(
-                          args.key,
+                        metric: `${fixId(
+                          args.id,
                         )}neg_unrealized_loss_rel_to_market_cap`,
                         name: "Negative Loss",
                         color: colors.red,
                       }),
-                      ...(`${applySuffixIfNeeded(
-                        args.key,
+                      ...(`${fixId(
+                        args.id,
                       )}unrealized_profit_rel_to_own_market_cap` in
                       metricToIndexes
                         ? [
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}unrealized_profit_rel_to_own_market_cap`,
                               name: "Profit",
                               color: colors.green,
                             }),
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}unrealized_loss_rel_to_own_market_cap`,
                               name: "Loss",
                               color: colors.red,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}neg_unrealized_loss_rel_to_own_market_cap`,
                               name: "Negative Loss",
                               color: colors.red,
@@ -2405,29 +2397,29 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                             }),
                           ]
                         : []),
-                      ...(`${applySuffixIfNeeded(
-                        args.key,
+                      ...(`${fixId(
+                        args.id,
                       )}unrealized_profit_rel_to_own_total_unrealized_pnl` in
                       metricToIndexes
                         ? [
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}unrealized_profit_rel_to_own_total_unrealized_pnl`,
                               name: "Profit",
                               color: colors.green,
                             }),
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}unrealized_loss_rel_to_own_total_unrealized_pnl`,
                               name: "Loss",
                               color: colors.red,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${applySuffixIfNeeded(
-                                args.key,
+                              metric: `${fixId(
+                                args.id,
                               )}neg_unrealized_loss_rel_to_own_total_unrealized_pnl`,
                               name: "Negative Loss",
                               color: colors.red,
@@ -2456,11 +2448,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "profit",
                     title: `Unrealized Profit ${title}`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    bottom: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}unrealized_profit`,
+                          metric: `${id}unrealized_profit`,
                           name,
                           color,
                         }),
@@ -2470,11 +2462,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "loss",
                     title: `Unrealized Loss ${title}`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    bottom: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}unrealized_loss`,
+                          metric: `${id}unrealized_loss`,
                           name,
                           color,
                         }),
@@ -2484,11 +2476,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "total pnl",
                     title: `Unrealized Total Profit And Loss ${title}`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    bottom: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}total_unrealized_pnl`,
+                          metric: `${id}total_unrealized_pnl`,
                           name,
                           color,
                         }),
@@ -2500,27 +2492,26 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
               name: "Net pnl",
               title: `Net Unrealized Profit And Loss ${title}`,
               bottom: [
-                ...list.flatMap(({ color, name, key }) => [
+                ...list.flatMap(({ color, name, id }) => [
                   /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                     type: "Baseline",
-                    metric: `${applySuffixIfNeeded(key)}net_unrealized_pnl`,
+                    metric: `${fixId(id)}net_unrealized_pnl`,
                     title: useGroupName ? name : "Net",
                     color: useGroupName ? color : undefined,
                   }),
                   /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                     type: "Baseline",
-                    metric: `${applySuffixIfNeeded(key)}net_unrealized_pnl_rel_to_market_cap`,
+                    metric: `${fixId(id)}net_unrealized_pnl_rel_to_market_cap`,
                     title: useGroupName ? name : "Net",
                     color: useGroupName ? color : undefined,
                   }),
-                  ...(`${applySuffixIfNeeded(
-                    key,
-                  )}net_unrealized_pnl_rel_to_own_market_cap` in metricToIndexes
+                  ...(`${fixId(id)}net_unrealized_pnl_rel_to_own_market_cap` in
+                  metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${applySuffixIfNeeded(
-                            key,
+                          metric: `${fixId(
+                            id,
                           )}net_unrealized_pnl_rel_to_own_market_cap`,
                           title: useGroupName ? name : "Net",
                           color: useGroupName ? color : undefined,
@@ -2530,15 +2521,15 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                         }),
                       ]
                     : []),
-                  ...(`${applySuffixIfNeeded(
-                    key,
+                  ...(`${fixId(
+                    id,
                   )}net_unrealized_pnl_rel_to_own_total_unrealized_pnl` in
                   metricToIndexes
                     ? [
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           type: "Baseline",
-                          metric: `${applySuffixIfNeeded(
-                            key,
+                          metric: `${fixId(
+                            id,
                           )}net_unrealized_pnl_rel_to_own_total_unrealized_pnl`,
                           title: useGroupName ? name : "Net",
                           color: useGroupName ? color : undefined,
@@ -2567,11 +2558,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Average",
                     title: `Average Cost Basis ${title}`,
-                    top: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    top: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}realized_price`,
+                          metric: `${id}realized_price`,
                           name,
                           color: color,
                         }),
@@ -2581,11 +2572,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Min",
                     title: `Min Cost Basis ${title}`,
-                    top: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    top: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}min_price_paid`,
+                          metric: `${id}min_price_paid`,
                           name,
                           color: color,
                         }),
@@ -2595,11 +2586,11 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Max",
                     title: `Max Cost Basis ${title}`,
-                    top: list.flatMap(({ color, name, key: _key }) => {
-                      const key = applySuffixIfNeeded(_key);
+                    top: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
                       return /** @type {const} */ ([
                         createBaseSeries({
-                          metric: `${key}max_price_paid`,
+                          metric: `${id}max_price_paid`,
                           name,
                           color: color,
                         }),
@@ -2615,21 +2606,20 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 title: `Costs Basis ${title}`,
                 top: [
                   createBaseSeries({
-                    metric: `${applySuffixIfNeeded(args.key)}realized_price`,
+                    metric: `${fixId(args.id)}realized_price`,
                     name: "Average",
                     color: args.color,
                   }),
                   createBaseSeries({
-                    metric: `${applySuffixIfNeeded(args.key)}min_price_paid`,
+                    metric: `${fixId(args.id)}min_price_paid`,
                     name: "Min",
                     color: colors.green,
-                    // defaultActive: false,
+                    defaultActive: false,
                   }),
                   createBaseSeries({
-                    metric: `${applySuffixIfNeeded(args.key)}max_price_paid`,
+                    metric: `${fixId(args.id)}max_price_paid`,
                     name: "Max",
                     color: colors.red,
-                    // defaultActive: false,
                   }),
                 ],
               },
@@ -2637,27 +2627,27 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
         {
           name: "Coins Destroyed",
           title: `Coins Destroyed ${title}`,
-          bottom: list.flatMap(({ color, name, key: _key }) => {
-            const key = applySuffixIfNeeded(_key);
+          bottom: list.flatMap(({ color, name, id: _id }) => {
+            const id = fixId(_id);
             return /** @type {const} */ ([
               createBaseSeries({
-                metric: `${key}coinblocks_destroyed`,
+                metric: `${id}coinblocks_destroyed`,
                 name: useGroupName ? name : "sum",
                 color,
               }),
               createBaseSeries({
-                metric: `${key}coinblocks_destroyed_cumulative`,
+                metric: `${id}coinblocks_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
               }),
               createBaseSeries({
-                metric: `${key}coindays_destroyed`,
+                metric: `${id}coindays_destroyed`,
                 name: useGroupName ? name : "sum",
                 color,
               }),
               createBaseSeries({
-                metric: `${key}coindays_destroyed_cumulative`,
+                metric: `${id}coindays_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2750,18 +2740,18 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   {
                     name: "Compare",
                     title: `Market Price ${nameAddon} Moving Averages`,
-                    top: averages.map(({ days, key, name, color }) =>
+                    top: averages.map(({ days, id, name, color }) =>
                       createBaseSeries({
-                        metric: `price_${key}_${metricAddon}`,
-                        name: key,
+                        metric: `price_${id}_${metricAddon}`,
+                        name: id,
                         color,
                       }),
                     ),
                   },
-                  ...averages.map(({ key, name, color }) => ({
+                  ...averages.map(({ id, name, color }) => ({
                     name,
                     tree: createPriceWithRatioOptions({
-                      metric: `price_${key}_${metricAddon}`,
+                      metric: `price_${id}_${metricAddon}`,
                       name,
                       title: `${name} Market Price ${nameAddon} Moving Average`,
                       legend: "average",
@@ -2774,45 +2764,49 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
             {
               name: "Performance",
               tree: /** @type {const} */ ([
-                { name: "1 Day", metric: "1d" },
-                { name: "1 Week", metric: "1w" },
-                { name: "1 Month", metric: "1m" },
-                { name: "3 Month", metric: "3m" },
-                { name: "6 Month", metric: "6m" },
-                { name: "1 Year", metric: "1y" },
-                { name: "2 Year", metric: "2y" },
-                { name: "3 Year", metric: "3y" },
-                { name: "4 Year", metric: "4y" },
-                { name: "5 Year", metric: "5y" },
-                { name: "6 Year", metric: "6y" },
-                { name: "8 Year", metric: "8y" },
-                { name: "10 Year", metric: "10y" },
-              ]).map(({ name, metric }) => ({
-                name,
-                title: `${name} Performance`,
-                bottom: [
-                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                    metric: `${metric}_price_returns`,
-                    title: "Returns",
-                    type: "Baseline",
-                  }),
-                  createPriceLine({
-                    unit: "percentage",
-                  }),
-                  ...(`${metric}_cagr` in metricToIndexes
-                    ? [
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          metric: `${metric}_cagr`,
-                          title: "cagr",
-                          type: "Baseline",
-                        }),
-                        createPriceLine({
-                          unit: "percentage",
-                        }),
-                      ]
-                    : []),
-                ],
-              })),
+                "1d",
+                "1w",
+                "1m",
+                "3m",
+                "6m",
+                "1y",
+                "2y",
+                "3y",
+                "4y",
+                "5y",
+                "6y",
+                "8y",
+                "10y",
+              ]).map((id) => {
+                const name = periodIdToName(id, true);
+                const cagr = `${id}_cagr`;
+                return {
+                  name,
+                  title: `${name} Performance`,
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      metric: `${id}_price_returns`,
+                      title: "Returns",
+                      type: "Baseline",
+                    }),
+                    createPriceLine({
+                      unit: "percentage",
+                    }),
+                    ...(cagr in metricToIndexes
+                      ? [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: cagr,
+                            title: "cagr",
+                            type: "Baseline",
+                          }),
+                          createPriceLine({
+                            unit: "percentage",
+                          }),
+                        ]
+                      : []),
+                  ],
+                };
+              }),
             },
             {
               name: "Indicators",
@@ -2934,103 +2928,104 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   name: "DCA vs Lump sum",
                   tree: [
                     .../** @type {const} */ ([
-                      { name: "1 Week", key: "1w" },
-                      { name: "1 Month", key: "1m" },
-                      { name: "3 Month", key: "3m" },
-                      { name: "6 Month", key: "6m" },
-                      { name: "1 Year", key: "1y" },
-                    ]).map(
-                      ({ name, key }) =>
-                        /** @satisfies {PartialChartOption} */ ({
-                          name,
-                          title: `${name} DCA vs Lump Sum Returns`,
-                          top: [
-                            createBaseSeries({
-                              metric: `${key}_dca_avg_price`,
-                              name: `dca`,
-                              color: colors.orange,
-                            }),
-                            createBaseSeries({
-                              metric: `price_${key}_ago`,
-                              name: `lump sum`,
-                              color: colors.cyan,
-                            }),
-                          ],
-                          bottom: [
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_dca_returns`,
-                              title: "dca",
-                              type: "Baseline",
-                              colors: [colors.yellow, colors.pink],
-                            }),
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_price_returns`,
-                              title: "lump sum",
-                              type: "Baseline",
-                            }),
-                            createPriceLine({
-                              unit: "percentage",
-                            }),
-                          ],
-                        }),
-                    ),
-                    .../** @type {const} */ ([
-                      { name: "2 Year", metric: "2y" },
-                      { name: "3 Year", metric: "3y" },
-                      { name: "4 Year", metric: "4y" },
-                      { name: "5 Year", metric: "5y" },
-                      { name: "6 Year", metric: "6y" },
-                      { name: "8 Year", metric: "8y" },
-                      { name: "10 Year", metric: "10y" },
-                    ]).map(
-                      ({ name, key }) =>
-                        /** @satisfies {PartialChartOption} */ ({
-                          name,
-                          title: `${name} DCA vs Lump Sum Returns`,
-                          top: [
-                            createBaseSeries({
-                              metric: `${key}_dca_avg_price`,
-                              name: `dca`,
-                              color: colors.orange,
-                            }),
-                            createBaseSeries({
-                              metric: `price_${key}_ago`,
-                              name: `lump sum`,
-                              color: colors.cyan,
-                            }),
-                          ],
-                          bottom: [
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_dca_returns`,
-                              title: "dca",
-                              type: "Baseline",
-                              colors: [colors.yellow, colors.pink],
-                            }),
+                      "1w",
+                      "1m",
+                      "3m",
+                      "6m",
+                      "1y",
+                    ]).map((id) => {
+                      const name = periodIdToName(id, true);
 
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_price_returns`,
-                              title: "lump sum",
-                              type: "Baseline",
-                            }),
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_dca_cagr`,
-                              title: "dca cagr",
-                              type: "Baseline",
-                              colors: [colors.yellow, colors.pink],
-                              defaultActive: false,
-                            }),
-                            /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                              metric: `${key}_cagr`,
-                              title: "lump sum cagr",
-                              type: "Baseline",
-                              defaultActive: false,
-                            }),
-                            createPriceLine({
-                              unit: "percentage",
-                            }),
-                          ],
-                        }),
-                    ),
+                      return /** @satisfies {PartialChartOption} */ ({
+                        name,
+                        title: `${name} DCA vs Lump Sum Returns`,
+                        top: [
+                          createBaseSeries({
+                            metric: `${id}_dca_avg_price`,
+                            name: `dca`,
+                            color: colors.orange,
+                          }),
+                          createBaseSeries({
+                            metric: `price_${id}_ago`,
+                            name: `lump sum`,
+                            color: colors.cyan,
+                          }),
+                        ],
+                        bottom: [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_dca_returns`,
+                            title: "dca",
+                            type: "Baseline",
+                            colors: [colors.yellow, colors.pink],
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_price_returns`,
+                            title: "lump sum",
+                            type: "Baseline",
+                          }),
+                          createPriceLine({
+                            unit: "percentage",
+                          }),
+                        ],
+                      });
+                    }),
+                    .../** @type {const} */ ([
+                      "2y",
+                      "3y",
+                      "4y",
+                      "5y",
+                      "6y",
+                      "8y",
+                      "10y",
+                    ]).map((id) => {
+                      const name = periodIdToName(id, true);
+                      return /** @satisfies {PartialChartOption} */ ({
+                        name,
+                        title: `${name} DCA vs Lump Sum Returns`,
+                        top: [
+                          createBaseSeries({
+                            metric: `${id}_dca_avg_price`,
+                            name: `dca`,
+                            color: colors.orange,
+                          }),
+                          createBaseSeries({
+                            metric: `price_${id}_ago`,
+                            name: `lump sum`,
+                            color: colors.cyan,
+                          }),
+                        ],
+                        bottom: [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_dca_returns`,
+                            title: "dca",
+                            type: "Baseline",
+                            colors: [colors.yellow, colors.pink],
+                          }),
+
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_price_returns`,
+                            title: "lump sum",
+                            type: "Baseline",
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_dca_cagr`,
+                            title: "dca cagr",
+                            type: "Baseline",
+                            colors: [colors.yellow, colors.pink],
+                            defaultActive: false,
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            metric: `${id}_cagr`,
+                            title: "lump sum cagr",
+                            type: "Baseline",
+                            defaultActive: false,
+                          }),
+                          createPriceLine({
+                            unit: "percentage",
+                          }),
+                        ],
+                      });
+                    }),
                   ],
                 },
                 {
@@ -3127,10 +3122,8 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       metric: "interval",
                       name: "Interval",
                     }),
-                    createAverageSeries({ concat: "block_interval" }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "block_interval",
-                    }),
+                    createAverageSeries("block_interval"),
+                    ...createMinMaxPercentilesSeries("block_interval"),
                     createPriceLine({
                       unit: "secs",
                       name: "Target",
@@ -3154,10 +3147,6 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       metric: "weight",
                       name: "raw",
                     }),
-                    // createBaseSeries({
-                    //   metric: "weight",
-                    //   name: "Weight",
-                    // }),
                     ...createAverageSumCumulativeMinMaxPercentilesSeries(
                       "block_size",
                     ),
@@ -3224,16 +3213,10 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   name: "Size",
                   title: "Transaction Size",
                   bottom: [
-                    createAverageSeries({
-                      concat: "tx_weight",
-                    }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "tx_weight",
-                    }),
-                    createAverageSeries({ concat: "tx_vsize" }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "tx_vsize",
-                    }),
+                    createAverageSeries("tx_weight"),
+                    ...createMinMaxPercentilesSeries("tx_weight"),
+                    createAverageSeries("tx_vsize"),
+                    ...createMinMaxPercentilesSeries("tx_vsize"),
                   ],
                 },
                 {
@@ -3245,7 +3228,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                     [colors.lime, colors.green],
                   ].flatMap(([sumColor, cumulativeColor], index) =>
                     createSumCumulativeSeries({
-                      concat: `tx_v${index + 1}`,
+                      metric: `tx_v${index + 1}`,
                       common: `v${index + 1}`,
                       sumColor,
                       cumulativeColor,
@@ -3286,13 +3269,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   name: "Count",
                   title: "Transaction Input Count",
                   bottom: [
-                    createAverageSeries({ concat: "input_count" }),
-                    createCumulativeSeries({
-                      concat: "input_count",
-                    }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "input_count",
-                    }),
+                    createAverageSeries("input_count"),
+                    createCumulativeSeries({ metric: "input_count" }),
+                    ...createMinMaxPercentilesSeries("input_count"),
                   ],
                 },
                 {
@@ -3322,13 +3301,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   name: "Count",
                   title: "Transaction Output Count",
                   bottom: [
-                    createAverageSeries({ concat: "output_count" }),
-                    createCumulativeSeries({
-                      concat: "output_count",
-                    }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "output_count",
-                    }),
+                    createAverageSeries("output_count"),
+                    createCumulativeSeries({ metric: "output_count" }),
+                    ...createMinMaxPercentilesSeries("output_count"),
                   ],
                 },
                 {
@@ -3463,13 +3438,13 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       title: "Unclaimed Rewards",
                       bottom: [
                         ...createSumCumulativeSeries({
-                          concat: "unclaimed_rewards",
+                          metric: "unclaimed_rewards",
                         }),
                         ...createSumCumulativeSeries({
-                          concat: "unclaimed_rewards_btc",
+                          metric: "unclaimed_rewards_btc",
                         }),
                         ...createSumCumulativeSeries({
-                          concat: "unclaimed_rewards_usd",
+                          metric: "unclaimed_rewards_usd",
                         }),
                       ],
                     },
@@ -3499,10 +3474,8 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   name: "Feerate",
                   title: "Transaction Fee Rate",
                   bottom: [
-                    createAverageSeries({ concat: "fee_rate" }),
-                    ...createMinMaxPercentilesSeries({
-                      concat: "fee_rate",
-                    }),
+                    createAverageSeries("fee_rate"),
+                    ...createMinMaxPercentilesSeries("fee_rate"),
                   ],
                 },
                 {
@@ -3679,8 +3652,8 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 },
                 {
                   name: "Pools",
-                  tree: Object.entries(pools).map(([_key, name]) => {
-                    const key = /** @type {Pool} */ (_key);
+                  tree: Object.entries(pools).map(([_id, name]) => {
+                    const id = /** @type {Pool} */ (_id);
                     return {
                       name,
                       tree: [
@@ -3689,29 +3662,29 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           title: `Mining Dominance of ${name}`,
                           bottom: [
                             createBaseSeries({
-                              metric: `${key}_1d_dominance`,
+                              metric: `${id}_1d_dominance`,
                               name: "1d",
                               color: colors.rose,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${key}_1w_dominance`,
+                              metric: `${id}_1w_dominance`,
                               name: "1w",
                               color: colors.red,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${key}_1m_dominance`,
+                              metric: `${id}_1m_dominance`,
                               name: "1m",
                             }),
                             createBaseSeries({
-                              metric: `${key}_1y_dominance`,
+                              metric: `${id}_1y_dominance`,
                               name: "1y",
                               color: colors.lime,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${key}_dominance`,
+                              metric: `${id}_dominance`,
                               name: "all time",
                               color: colors.teal,
                               defaultActive: false,
@@ -3723,28 +3696,28 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           title: `Blocks mined by ${name}`,
                           bottom: [
                             createBaseSeries({
-                              metric: `${key}_blocks_mined`,
+                              metric: `${id}_blocks_mined`,
                               name: "Sum",
                             }),
                             createBaseSeries({
-                              metric: `${key}_blocks_mined_cumulative`,
+                              metric: `${id}_blocks_mined_cumulative`,
                               name: "Cumulative",
                               color: colors.blue,
                             }),
                             createBaseSeries({
-                              metric: `${key}_1w_blocks_mined`,
+                              metric: `${id}_1w_blocks_mined`,
                               name: "1w Sum",
                               color: colors.red,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${key}_1m_blocks_mined`,
+                              metric: `${id}_1m_blocks_mined`,
                               name: "1m Sum",
                               color: colors.pink,
                               defaultActive: false,
                             }),
                             createBaseSeries({
-                              metric: `${key}_1y_blocks_mined`,
+                              metric: `${id}_1y_blocks_mined`,
                               name: "1y Sum",
                               color: colors.purple,
                               defaultActive: false,
@@ -3773,19 +3746,19 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           ].flatMap(
                             ({ metricAddon, sumColor, cumulativeColor }) => [
                               ...createSumCumulativeSeries({
-                                concat: `${key}_${metricAddon}`,
+                                metric: `${id}_${metricAddon}`,
                                 common: metricAddon,
                                 sumColor,
                                 cumulativeColor,
                               }),
                               ...createSumCumulativeSeries({
-                                concat: `${key}_${metricAddon}_btc`,
+                                metric: `${id}_${metricAddon}_btc`,
                                 common: metricAddon,
                                 sumColor,
                                 cumulativeColor,
                               }),
                               ...createSumCumulativeSeries({
-                                concat: `${key}_${metricAddon}_usd`,
+                                metric: `${id}_${metricAddon}_usd`,
                                 common: metricAddon,
                                 sumColor,
                                 cumulativeColor,
@@ -3798,7 +3771,7 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                           title: `Days since ${name} mined a block`,
                           bottom: [
                             createBaseSeries({
-                              metric: `${key}_days_since_block`,
+                              metric: `${id}_days_since_block`,
                               name: "Since block",
                             }),
                           ],
@@ -4023,18 +3996,18 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                 {
                   name: "Compare",
                   title: "Compare Cointime Prices",
-                  top: cointimePrices.map(({ key, name, color }) =>
+                  top: cointimePrices.map(({ metric, name, color }) =>
                     createBaseSeries({
-                      key,
+                      metric,
                       name,
                       color,
                     }),
                   ),
                 },
-                ...cointimePrices.map(({ key, name, color, title }) => ({
+                ...cointimePrices.map(({ metric, name, color, title }) => ({
                   name,
                   tree: createPriceWithRatioOptions({
-                    metric: key,
+                    metric,
                     legend: name,
                     color,
                     name,
@@ -4060,9 +4033,9 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                       name: "Realized",
                       color: colors.orange,
                     }),
-                    ...cointimeCapitalizations.map(({ key, name, color }) =>
+                    ...cointimeCapitalizations.map(({ metric, name, color }) =>
                       createBaseSeries({
-                        key,
+                        metric,
                         name,
                         color,
                       }),
@@ -4070,12 +4043,12 @@ export function createPartialOptions({ env, colors, metricToIndexes, pools }) {
                   ],
                 },
                 ...cointimeCapitalizations.map(
-                  ({ key, name, color, title }) => ({
+                  ({ metric, name, color, title }) => ({
                     name,
                     title,
                     bottom: [
                       createBaseSeries({
-                        key,
+                        metric,
                         name,
                         color,
                       }),

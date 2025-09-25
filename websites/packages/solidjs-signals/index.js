@@ -1,4 +1,3 @@
-
 /**
  * @import { SignalOptions } from "./0.4.11/dist/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./0.4.11/dist/types/core/owner"

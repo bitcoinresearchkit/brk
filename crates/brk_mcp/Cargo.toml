@@ -12,8 +12,9 @@ build = "build.rs"
 [dependencies]
 axum = { workspace = true }
 brk_interface = { workspace = true }
-log = { workspace = true }
-brk_rmcp = { version = "0.6.0", features = [
+brk_rmcp = { version = "0.7.1", features = [
     "transport-worker",
     "transport-streamable-http-server",
 ] }
+log = { workspace = true }
+serde_json = { workspace = true }
