@@ -1,14 +1,18 @@
 import { serdeIndex } from "./serde";
-import { runWhenIdle } from "./timing";
+import { runWhenIdle } from "./idle";
+import { createPools } from "./pools";
+import { createMetricToIndexes } from "./metrics";
+
+const localhost = window.location.hostname === "localhost";
 
 /**
  * @param {Signals} signals
- * @param {Utilities} utils
- * @param {Env} env
- * @param {MetricToIndexes} metricToIndexes
  */
-export function createVecsResources(signals, utils, env, metricToIndexes) {
+export default function (signals) {
   const owner = signals.getOwner();
+
+  const pools = createPools();
+  const metricToIndexes = createMetricToIndexes();
 
   const defaultFrom = -10_000;
   const defaultTo = undefined;
@@ -30,17 +34,15 @@ export function createVecsResources(signals, utils, env, metricToIndexes) {
 
   /**
    * @template {number | OHLCTuple} [T=number]
-   * @param {Index} index
    * @param {Metric} metric
+   * @param {Index} index
    */
-  function createVecResource(index, metric) {
-    if (env.localhost && !(metric in metricToIndexes)) {
+  function createMetricResource(metric, index) {
+    if (localhost && !(metric in metricToIndexes)) {
       throw Error(`${metric} not recognized`);
     }
 
     return signals.runWithOwner(owner, () => {
-      /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
-
       const fetchedRecord = signals.createSignal(
         /** @type {Map<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ (
           new Map()
@@ -85,7 +87,7 @@ export function createVecsResources(signals, utils, env, metricToIndexes) {
           }
           fetched.loading = true;
           const res = /** @type {T[] | null} */ (
-            await api.fetchVec(
+            await fetchVec(
               (values) => {
                 if (values.length || !fetched.vec()) {
                   fetched.vec.set(values);
@@ -105,23 +107,23 @@ export function createVecsResources(signals, utils, env, metricToIndexes) {
     });
   }
 
-  /** @type {Map<string, NonNullable<ReturnType<typeof createVecResource>>>} */
+  /** @type {Map<string, NonNullable<ReturnType<typeof createMetricResource>>>} */
   const map = new Map();
 
-  const vecs = {
+  const metrics = {
     /**
      * @template {number | OHLCTuple} [T=number]
-     * @param {Index} index
      * @param {Metric} metric
+     * @param {Index} index
      */
-    getOrCreate(index, metric) {
-      const key = `${index},${metric}`;
+    getOrCreate(metric, index) {
+      const key = `${metric}/${index}`;
       const found = map.get(key);
       if (found) {
         return found;
       }
 
-      const vec = createVecResource(index, metric);
+      const vec = createMetricResource(index, metric);
       if (!vec) throw Error("vec is undefined");
       map.set(key, /** @type {any} */ (vec));
       return vec;
@@ -130,10 +132,10 @@ export function createVecsResources(signals, utils, env, metricToIndexes) {
     defaultFetchedKey,
   };
 
-  return vecs;
+  return { metrics, pools };
 }
-/** @typedef {ReturnType<typeof createVecsResources>} VecsResources */
-/** @typedef {ReturnType<VecsResources["getOrCreate"]>} VecResource */
+// /** @typedef {ReturnType<typeof createVecsResources>} VecsResources */
+// /** @typedef {ReturnType<VecsResources["getOrCreate"]>} VecResource */
 
 const CACHE_NAME = "api";
 const API_VECS_PREFIX = "/api/vecs";
@@ -142,9 +144,8 @@ const API_VECS_PREFIX = "/api/vecs";
  * @template T
  * @param {(value: T) => void} callback
  * @param {string} path
- * @param {boolean} [mustBeArray]
  */
-async function fetchApi(callback, path, mustBeArray) {
+async function fetchApi(callback, path) {
   const url = `${API_VECS_PREFIX}${path}`;
 
   /** @type {T | null} */
@@ -184,9 +185,7 @@ async function fetchApi(callback, path, mustBeArray) {
     let fetchedJson = /** @type {T | null} */ (null);
     try {
       const f = await fetchedResponse.json();
-      fetchedJson = /** @type {T} */ (
-        mustBeArray && !Array.isArray(f) ? [f] : f
-      );
+      fetchedJson = /** @type {T} */ (f);
     } catch (_) {
       return cachedJson;
     }
@@ -249,33 +248,23 @@ function genPath(index, metric, from, to) {
   return path;
 }
 
-export const api = {
-  /**
-   * @param {Index} index
-   * @param {Metric} metric
-   * @param {number} from
-   */
-  genUrl(index, metric, from) {
-    return `${API_VECS_PREFIX}${genPath(index, metric, from)}`;
-  },
-  /**
-   * @template {number | OHLCTuple} [T=number]
-   * @param {(v: T[]) => void} callback
-   * @param {Index} index
-   * @param {Metric} metric
-   * @param {number} [from]
-   * @param {number} [to]
-   */
-  fetchVec(callback, index, metric, from, to) {
-    return fetchApi(callback, genPath(index, metric, from, to), true);
-  },
-  /**
-   * @template {number | OHLCTuple} [T=number]
-   * @param {(v: T) => void} callback
-   * @param {Index} index
-   * @param {Metric} metric
-   */
-  fetchLast(callback, index, metric) {
-    return fetchApi(callback, genPath(index, metric, -1));
-  },
-};
+// /**
+//  * @template {number | OHLCTuple} [T=number]
+//  * @param {(v: T[]) => void} callback
+//  * @param {Index} index
+//  * @param {Metric} metric
+//  * @param {number} [from]
+//  * @param {number} [to]
+//  */
+// function fetchMetric(callback, index, metric, from, to) {
+//   return fetchApi(callback, genPath(index, metric, from, to));
+// }
+
+// /**
+//  * @param {Index} index
+//  * @param {Metric} metric
+//  * @param {number} from
+//  */
+// function genUrl(index, metric, from) {
+//   return `${API_VECS_PREFIX}${genPath(index, metric, from)}`;
+// }

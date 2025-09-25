@@ -3,7 +3,7 @@
 use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
 use brk_rmcp::{
     ErrorData as McpError, RoleServer, ServerHandler,
-    handler::server::{router::tool::ToolRouter, tool::Parameters},
+    handler::server::{router::tool::ToolRouter, wrapper::Parameters},
     model::*,
     service::RequestContext,
     tool, tool_handler, tool_router,

@@ -101,76 +101,12 @@ export const serdeBool = {
    * @param {string} v
    */
   deserialize(v) {
-    if (v === "true") {
+    if (v === "true" || v === "1") {
       return true;
-    } else if (v === "false") {
+    } else if (v === "false" || v === "0") {
       return false;
     } else {
       throw "deser bool err";
-    }
-  },
-};
-
-export const serdeIndex = {
-  /**
-   * @param {Index} v
-   */
-  serialize(v) {
-    switch (v) {
-      case /** @satisfies {DateIndex} */ (0):
-        return "dateindex";
-      case /** @satisfies {DecadeIndex} */ (1):
-        return "decadeindex";
-      case /** @satisfies {DifficultyEpoch} */ (2):
-        return "difficultyepoch";
-      case /** @satisfies {EmptyOutputIndex} */ (3):
-        return "emptyoutputindex";
-      case /** @satisfies {HalvingEpoch} */ (4):
-        return "halvingepoch";
-      case /** @satisfies {Height} */ (5):
-        return "height";
-      case /** @satisfies {InputIndex} */ (6):
-        return "inputindex";
-      case /** @satisfies {MonthIndex} */ (7):
-        return "monthindex";
-      case /** @satisfies {OpReturnIndex} */ (8):
-        return "opreturnindex";
-      case /** @satisfies {OutputIndex} */ (9):
-        return "outputindex";
-      case /** @satisfies {P2AAddressIndex} */ (10):
-        return "p2aaddressindex";
-      case /** @satisfies {P2MSOutputIndex} */ (11):
-        return "p2msoutputindex";
-      case /** @satisfies {P2PK33AddressIndex} */ (12):
-        return "p2pk33addressindex";
-      case /** @satisfies {P2PK65AddressIndex} */ (13):
-        return "p2pk65addressindex";
-      case /** @satisfies {P2PKHAddressIndex} */ (14):
-        return "p2pkhaddressindex";
-      case /** @satisfies {P2SHAddressIndex} */ (15):
-        return "p2shaddressindex";
-      case /** @satisfies {P2TRAddressIndex} */ (16):
-        return "p2traddressindex";
-      case /** @satisfies {P2WPKHAddressIndex} */ (17):
-        return "p2wpkhaddressindex";
-      case /** @satisfies {P2WSHAddressIndex} */ (18):
-        return "p2wshaddressindex";
-      case /** @satisfies {QuarterIndex} */ (19):
-        return "quarterindex";
-      case /** @satisfies {SemesterIndex} */ (20):
-        return "semesterindex";
-      case /** @satisfies {TxIndex} */ (21):
-        return "txindex";
-      case /** @satisfies {UnknownOutputIndex} */ (22):
-        return "unknownoutputindex";
-      case /** @satisfies {WeekIndex} */ (23):
-        return "weekindex";
-      case /** @satisfies {YearIndex} */ (24):
-        return "yearindex";
-      case /** @satisfies {LoadedAddressIndex} */ (25):
-        return "loadedaddressindex";
-      case /** @satisfies {EmptyAddressIndex} */ (26):
-        return "emptyaddressindex";
     }
   },
 };

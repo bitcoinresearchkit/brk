@@ -1,6 +1,6 @@
 /**
  *
- * @import { Valued, SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./core/chart"
+ * @import { Valued, SingleValueData, CandlestickData, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./core/chart/index"
  *
  * @import * as _ from "./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  *
@@ -26,7 +26,6 @@
  * @typedef {typeof import("./core/utils")} Utilities
  * @typedef {typeof import("./core/env")["default"]} Env
  * @typedef {typeof import("./core/elements")["default"]} Elements
- * @typedef {string} Metric
  */
 
 // DO NOT CHANGE, Exact format is expected in `brk_bundler`

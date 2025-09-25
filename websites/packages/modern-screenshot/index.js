@@ -5,8 +5,6 @@ const iphone = userAgent.includes("iphone");
 const ipad = userAgent.includes("ipad");
 const ios = iphone || ipad;
 
-console.log({ ios });
-
 /**
  * @param {Object} args
  * @param {Element} args.element

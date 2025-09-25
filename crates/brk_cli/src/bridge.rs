@@ -29,7 +29,7 @@ impl Bridge for Interface<'static> {
 
         fs::create_dir_all(&path)?;
 
-        generate_vecs_file(self, &path)?;
+        generate_metrics_file(self, &path)?;
         generate_pools_file(&path)
     }
 }
@@ -70,8 +70,8 @@ return /** @type {const} */ ({
     fs::write(path, contents)
 }
 
-fn generate_vecs_file(interface: &Interface<'static>, parent: &Path) -> io::Result<()> {
-    let path = parent.join(Path::new("vecs.js"));
+fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::Result<()> {
+    let path = parent.join(Path::new("metrics.js"));
 
     let indexes = Index::all();
 
