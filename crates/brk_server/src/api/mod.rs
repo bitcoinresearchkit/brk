@@ -229,9 +229,9 @@ impl ApiRoutes for Router<AppState> {
             }),
         )
         .route(
-            "/api/vecs/id-count",
+            "/api/vecs/metric-count",
             get(async |State(app_state): State<AppState>| -> Response {
-                Json(app_state.interface.get_vecid_count()).into_response()
+                Json(app_state.interface.get_metric_count()).into_response()
             }),
         )
         .route(
@@ -253,17 +253,17 @@ impl ApiRoutes for Router<AppState> {
             }),
         )
         .route(
-            "/api/vecs/ids",
+            "/api/vecs/metrics",
             get(
                 async |State(app_state): State<AppState>,
                        Query(pagination): Query<PaginationParam>|
                        -> Response {
-                    Json(app_state.interface.get_vecids(pagination)).into_response()
+                    Json(app_state.interface.get_metrics(pagination)).into_response()
                 },
             ),
         )
         .route(
-            "/api/vecs/index-to-ids",
+            "/api/vecs/index-to-metrics",
             get(
                 async |State(app_state): State<AppState>,
                        Query(paginated_index): Query<PaginatedIndexParam>|

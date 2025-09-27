@@ -40,12 +40,12 @@ Get the count of all existing indexes.
     }
 
     #[tool(description = "
-Get the count of all existing vec ids.
+Get the count of all existing metrics.
 ")]
-    async fn get_vecid_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_vecid_count");
+    async fn get_metric_count(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_metric_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_vecid_count()).unwrap(),
+            Content::json(self.interface.get_metric_count()).unwrap(),
         ]))
     }
 
@@ -89,9 +89,9 @@ If the `page` param is omitted, it will default to the first page.
         &self,
         Parameters(pagination): Parameters<PaginationParam>,
     ) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_vecids");
+        info!("mcp: get_metrics");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_vecids(pagination)).unwrap(),
+            Content::json(self.interface.get_metrics(pagination)).unwrap(),
         ]))
     }
 

@@ -30,7 +30,7 @@ pub use pagination::{PaginatedIndexParam, PaginationParam};
 pub use params::{IdParam, Params, ParamsOpt};
 use vecs::Vecs;
 
-use crate::vecs::{IdToVec, IndexToVec};
+use crate::vecs::{IndexToVec, MetricToVec};
 
 pub fn cached_errors() -> &'static Cache<String, String> {
     static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
@@ -70,7 +70,7 @@ impl<'a> Interface<'a> {
 
         let ids_to_vec = self
             .vecs
-            .index_to_id_to_vec
+            .index_to_metric_to_vec
             .get(&index)
             .ok_or(Error::String(format!(
                 "Index \"{}\" isn't a valid index",
@@ -111,7 +111,7 @@ impl<'a> Interface<'a> {
                             &format!("\nMaybe you meant one of the following: {matches:#?} ?\n");
                     }
 
-                    if let Some(index_to_vec) = self.id_to_index_to_vec().get(id.as_str()) {
+                    if let Some(index_to_vec) = self.metric_to_index_to_vec().get(id.as_str()) {
                         message += &format!("\nBut there is a vec named {id} which supports the following indexes: {:#?}\n", index_to_vec.keys());
                     }
 
@@ -214,16 +214,16 @@ impl<'a> Interface<'a> {
         self.format(self.search(&params)?, &params.rest)
     }
 
-    pub fn id_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
-        &self.vecs.id_to_index_to_vec
+    pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
+        &self.vecs.metric_to_index_to_vec
     }
 
-    pub fn index_to_id_to_vec(&self) -> &BTreeMap<Index, IdToVec<'_>> {
-        &self.vecs.index_to_id_to_vec
+    pub fn index_to_metric_to_vec(&self) -> &BTreeMap<Index, MetricToVec<'_>> {
+        &self.vecs.index_to_metric_to_vec
     }
 
-    pub fn get_vecid_count(&self) -> usize {
-        self.vecs.id_count
+    pub fn get_metric_count(&self) -> usize {
+        self.vecs.metric_count
     }
 
     pub fn get_index_count(&self) -> usize {
@@ -242,8 +242,8 @@ impl<'a> Interface<'a> {
         &self.vecs.accepted_indexes
     }
 
-    pub fn get_vecids(&self, pagination: PaginationParam) -> &[&str] {
-        self.vecs.ids(pagination)
+    pub fn get_metrics(&self, pagination: PaginationParam) -> &[&str] {
+        self.vecs.metrics(pagination)
     }
 
     pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {
