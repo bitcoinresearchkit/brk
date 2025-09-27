@@ -9,6 +9,7 @@ use std::{
 };
 
 use bitcoincore_rpc::{self, RpcApi};
+use brk_bridge::Bridge;
 use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_indexer::Indexer;
@@ -18,12 +19,11 @@ use brk_server::{Server, VERSION};
 use log::info;
 use vecdb::Exit;
 
-mod bridge;
 mod config;
 mod paths;
 mod website;
 
-use crate::{bridge::Bridge, config::Config, paths::*};
+use crate::{config::Config, paths::*};
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -51,97 +51,107 @@ pub fn run() -> color_eyre::Result<()> {
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
-    let wait_for_synced_node = |rpc_client: &bitcoincore_rpc::Client| -> color_eyre::Result<()> {
-        let is_synced = || -> color_eyre::Result<bool> {
-            let info = rpc_client.get_blockchain_info()?;
-            Ok(info.headers == info.blocks)
+    let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
+
+    let interface = Interface::build(&parser, &indexer, &computer);
+
+    let website = config.website();
+
+    let downloads_path = config.downloads_dir();
+
+    let future = async {
+        let bundle_path = if website.is_some() {
+            let websites_dev_path = Path::new("../../websites");
+            let packages_dev_path = Path::new("../../packages");
+
+            let websites_path;
+            let packages_path;
+
+            if fs::exists(websites_dev_path)? {
+                websites_path = websites_dev_path.to_path_buf();
+                packages_path = packages_dev_path.to_path_buf();
+            } else {
+                let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
+
+                let downloaded_websites_path = downloaded_brk_path.join("websites");
+                let downloaded_packages_path = downloaded_brk_path.join("packages");
+
+                if !fs::exists(&downloaded_websites_path)? {
+                    info!("Downloading source from Github...");
+
+                    let url = format!(
+                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
+                    );
+
+                    let response = minreq::get(url).send()?;
+                    let bytes = response.as_bytes();
+                    let cursor = Cursor::new(bytes);
+
+                    let mut zip = zip::ZipArchive::new(cursor).unwrap();
+
+                    zip.extract(downloads_path).unwrap();
+                }
+
+                websites_path = downloaded_websites_path;
+                packages_path = downloaded_packages_path;
+            }
+
+            interface.generate_js_files(&packages_path)?;
+
+            Some(bundle(&websites_path, website.to_folder_name(), true).await?)
+        } else {
+            None
         };
 
-        if !is_synced()? {
-            info!("Waiting for node to be synced...");
-            while !is_synced()? {
+        let server = Server::new(interface, bundle_path);
+
+        tokio::spawn(async move {
+            server.serve(true).await.unwrap();
+        });
+
+        sleep(Duration::from_secs(1));
+
+        loop {
+            wait_for_synced_node(rpc)?;
+
+            let block_count = rpc.get_block_count()?;
+
+            info!("{} blocks found.", block_count + 1);
+
+            let starting_indexes = indexer
+                .index(&parser, rpc, &exit, config.check_collisions())
+                .unwrap();
+
+            computer
+                .compute(&indexer, starting_indexes, &parser, &exit)
+                .unwrap();
+
+            info!("Waiting for new blocks...");
+
+            while block_count == rpc.get_block_count()? {
                 sleep(Duration::from_secs(1))
             }
         }
-
-        Ok(())
     };
-
-    let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
-        .block_on(async {
-            let interface = Interface::build(&parser, &indexer, &computer);
+        .block_on(future)
+}
 
-            let website = config.website();
+fn wait_for_synced_node(rpc_client: &bitcoincore_rpc::Client) -> color_eyre::Result<()> {
+    let is_synced = || -> color_eyre::Result<bool> {
+        let info = rpc_client.get_blockchain_info()?;
+        Ok(info.headers == info.blocks)
+    };
 
-            let downloads_path = config.downloads_dir();
+    if !is_synced()? {
+        info!("Waiting for node to be synced...");
+        while !is_synced()? {
+            sleep(Duration::from_secs(1))
+        }
+    }
 
-            let bundle_path = if website.is_some() {
-                let websites_dev_path = Path::new("../../websites");
-
-                let websites_path = if fs::exists(websites_dev_path)? {
-                    websites_dev_path.to_path_buf()
-                } else {
-                    let downloaded_websites_path =
-                        downloads_path.join(format!("brk-{VERSION}")).join("websites");
-
-                    if !fs::exists(&downloaded_websites_path)? {
-                        info!("Downloading websites from Github...");
-
-                        let url = format!(
-                            "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
-                        );
-
-                        let response = minreq::get(url).send()?;
-                        let bytes = response.as_bytes();
-                        let cursor = Cursor::new(bytes);
-
-                        let mut zip = zip::ZipArchive::new(cursor).unwrap();
-
-                        zip.extract(downloads_path).unwrap();
-                    }
-
-                    downloaded_websites_path
-                };
-
-                interface.generate_bridge_files(website, websites_path.as_path())?;
-
-                Some(bundle(&websites_path, website.to_folder_name(), true).await?)
-            } else {
-                None
-            };
-
-            let server = Server::new(
-                interface,
-                bundle_path,
-            );
-
-            tokio::spawn(async move {
-                server.serve(true).await.unwrap();
-            });
-
-            sleep(Duration::from_secs(1));
-
-            loop {
-                wait_for_synced_node(rpc)?;
-
-                let block_count = rpc.get_block_count()?;
-
-                info!("{} blocks found.", block_count + 1);
-
-                let starting_indexes =
-                    indexer.index(&parser, rpc, &exit, config.check_collisions()).unwrap();
-
-                computer.compute(&indexer, starting_indexes, &parser, &exit).unwrap();
-
-                info!("Waiting for new blocks...");
-
-                while block_count == rpc.get_block_count()? {
-                    sleep(Duration::from_secs(1))
-                }
-            }
-        })
+    Ok(())
 }

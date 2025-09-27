@@ -93,6 +93,8 @@
   - _STORE_
     - save height and version in one file
   - _STRUCTS_
+  - _GLOBAL_
+    - https://davidlattimore.github.io/posts/2025/09/02/rustforge-wild-performance-tricks.html
 - __DOCS__
   - _README_
     - add a comparison table with alternatives
@@ -145,6 +147,7 @@
         - https://fonts.google.com/specimen/Space+Mono
     - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
     - [No classes](https://news.ycombinator.com/item?id=45287155)
+    - [Organic animations](https://courses.joshwcomeau.com/playground/magic-wand-final)
 - __GLOBAL__
   - check `TODO`s in codebase
   - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`

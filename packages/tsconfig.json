@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "outDir": "/tmp/brk",
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+    "skipLibCheck": true
+  },
+  "exclude": ["dist"]
+}

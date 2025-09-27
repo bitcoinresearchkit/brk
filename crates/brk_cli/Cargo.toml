@@ -11,6 +11,7 @@ build = "build.rs"
 
 [dependencies]
 bitcoincore-rpc = { workspace = true }
+brk_bridge = { workspace = true }
 brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
 brk_fetcher = { workspace = true }
