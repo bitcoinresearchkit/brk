@@ -14,13 +14,13 @@ bitcoincore-rpc = { workspace = true }
 brk_bridge = { workspace = true }
 brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
+brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_interface = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }
 brk_server = { workspace = true }
-brk_structs = { workspace = true }
 vecdb = { workspace = true }
 clap = { version = "4.5.48", features = ["derive", "string"] }
 color-eyre = "0.6.5"

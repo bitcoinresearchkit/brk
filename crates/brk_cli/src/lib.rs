@@ -12,6 +12,7 @@ use bitcoincore_rpc::{self, RpcApi};
 use brk_bridge::Bridge;
 use brk_bundler::bundle;
 use brk_computer::Computer;
+use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
 use brk_parser::Parser;
@@ -59,7 +60,7 @@ pub fn run() -> color_eyre::Result<()> {
 
     let downloads_path = config.downloads_dir();
 
-    let future = async {
+    let future = async move {
         let bundle_path = if website.is_some() {
             let websites_dev_path = Path::new("../../websites");
             let packages_dev_path = Path::new("../../packages");
@@ -67,7 +68,7 @@ pub fn run() -> color_eyre::Result<()> {
             let websites_path;
             let packages_path;
 
-            if fs::exists(websites_dev_path)? {
+            if fs::exists(websites_dev_path)? && fs::exists(packages_dev_path)? {
                 websites_path = websites_dev_path.to_path_buf();
                 packages_path = packages_dev_path.to_path_buf();
             } else {
@@ -98,7 +99,15 @@ pub fn run() -> color_eyre::Result<()> {
 
             interface.generate_js_files(&packages_path)?;
 
-            Some(bundle(&websites_path, website.to_folder_name(), true).await?)
+            Some(
+                bundle(
+                    &packages_path,
+                    &websites_path,
+                    website.to_folder_name(),
+                    true,
+                )
+                .await?,
+            )
         } else {
             None
         };
@@ -109,35 +118,35 @@ pub fn run() -> color_eyre::Result<()> {
             server.serve(true).await.unwrap();
         });
 
-        sleep(Duration::from_secs(1));
-
-        loop {
-            wait_for_synced_node(rpc)?;
-
-            let block_count = rpc.get_block_count()?;
-
-            info!("{} blocks found.", block_count + 1);
-
-            let starting_indexes = indexer
-                .index(&parser, rpc, &exit, config.check_collisions())
-                .unwrap();
-
-            computer
-                .compute(&indexer, starting_indexes, &parser, &exit)
-                .unwrap();
-
-            info!("Waiting for new blocks...");
-
-            while block_count == rpc.get_block_count()? {
-                sleep(Duration::from_secs(1))
-            }
-        }
+        Ok(()) as Result<()>
     };
 
-    tokio::runtime::Builder::new_multi_thread()
+    let _handle = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
-        .block_on(future)
+        .spawn(future);
+
+    loop {
+        wait_for_synced_node(rpc)?;
+
+        let block_count = rpc.get_block_count()?;
+
+        info!("{} blocks found.", block_count + 1);
+
+        let starting_indexes = indexer
+            .index(&parser, rpc, &exit, config.check_collisions())
+            .unwrap();
+
+        computer
+            .compute(&indexer, starting_indexes, &parser, &exit)
+            .unwrap();
+
+        info!("Waiting for new blocks...");
+
+        while block_count == rpc.get_block_count()? {
+            sleep(Duration::from_secs(1))
+        }
+    }
 }
 
 fn wait_for_synced_node(rpc_client: &bitcoincore_rpc::Client) -> color_eyre::Result<()> {
@@ -147,7 +156,7 @@ fn wait_for_synced_node(rpc_client: &bitcoincore_rpc::Client) -> color_eyre::Res
     };
 
     if !is_synced()? {
-        info!("Waiting for node to be synced...");
+        info!("Waiting for node to sync...");
         while !is_synced()? {
             sleep(Duration::from_secs(1))
         }

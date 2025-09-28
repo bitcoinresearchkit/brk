@@ -20,17 +20,18 @@ fn main() -> Result<()> {
 
     let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
-    let start = Some(915_138_u32.into());
+    let start = None;
+    // let start = Some(916037_u32.into());
     let end = None;
-    let mut blk_index = 0;
-    let mut diff = BTreeMap::new();
+    // let mut blk_index = 0;
+    // let mut diff = BTreeMap::new();
     parser.parse(start, end).iter().for_each(|block| {
         println!("{}: {}", block.height(), block.hash());
-        let new_blk_index = block.metadata().blk_index();
-        if new_blk_index < blk_index {
-            diff.insert(blk_index - new_blk_index, block.height());
-        }
-        blk_index = new_blk_index;
+        // let new_blk_index = block.metadata().blk_index();
+        // if new_blk_index < blk_index {
+        //     diff.insert(blk_index - new_blk_index, block.height());
+        // }
+        // blk_index = new_blk_index;
     });
 
     // let v = diff.iter().rev().take(10).collect::<Vec<_>>();

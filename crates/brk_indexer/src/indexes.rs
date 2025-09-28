@@ -34,7 +34,7 @@ pub struct Indexes {
 }
 
 impl Indexes {
-    pub fn typeindex(&self, outputtype: OutputType) -> TypeIndex {
+    pub fn to_typeindex(&self, outputtype: OutputType) -> TypeIndex {
         match outputtype {
             OutputType::Empty => *self.emptyoutputindex,
             OutputType::OpReturn => *self.opreturnindex,

@@ -12,7 +12,7 @@ build = "build.rs"
 [dependencies]
 log = { workspace = true }
 notify = "8.2.0"
-brk_rolldown = "0.1.5"
+brk_rolldown = "0.2.3"
 # brk_rolldown = { path = "../../../rolldown/crates/rolldown"}
 sugar_path = "1.2.0"
 tokio = { workspace = true }

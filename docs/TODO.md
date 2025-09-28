@@ -151,3 +151,4 @@
 - __GLOBAL__
   - check `TODO`s in codebase
   - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`
+  - https://マリウス.com/thoughts-on-cloudflare/

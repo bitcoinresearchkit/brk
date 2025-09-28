@@ -14,15 +14,20 @@ use tokio::sync::Mutex;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> io::Result<PathBuf> {
+pub async fn bundle(
+    packages_path: &Path,
+    websites_path: &Path,
+    source_folder: &str,
+    watch: bool,
+) -> io::Result<PathBuf> {
+    let relative_packages_path = packages_path;
     let relative_source_path = websites_path.join(source_folder);
     let relative_dist_path = websites_path.join("dist");
-    let relative_packages_path = websites_path.join("packages");
-
-    let absolute_websites_path = websites_path.absolutize();
-    let absolute_websites_path_clone = absolute_websites_path.clone();
 
     let absolute_packages_path = relative_packages_path.absolutize();
+    let absolute_packages_path_clone = absolute_packages_path.clone();
+    let absolute_websites_path = websites_path.absolutize();
+    let absolute_websites_path_clone = absolute_websites_path.clone();
 
     let absolute_source_path = relative_source_path.absolutize();
     let absolute_source_index_path = absolute_source_path.join("index.html");
@@ -53,7 +58,8 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         minify: Some(RawMinifyOptions::Bool(true)),
         sourcemap: Some(SourceMapType::File),
         ..Default::default()
-    });
+    })
+    .unwrap();
 
     if let Err(error) = bundler.write().await {
         error!("{error:?}");
@@ -134,6 +140,9 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
 
         event_watcher
             .watch(&absolute_websites_path_clone, RecursiveMode::Recursive)
+            .unwrap();
+        event_watcher
+            .watch(&absolute_packages_path_clone, RecursiveMode::Recursive)
             .unwrap();
 
         let watcher =
