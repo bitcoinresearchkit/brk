@@ -1,6 +1,5 @@
-import { serdeIndex } from "./serde";
 import { runWhenIdle } from "./idle";
-import { createPools } from "./pools";
+import { POOL_ID_TO_POOL_NAME } from "./generated/pools";
 import { createMetricToIndexes } from "./metrics";
 
 const localhost = window.location.hostname === "localhost";
@@ -11,7 +10,7 @@ const localhost = window.location.hostname === "localhost";
 export default function (signals) {
   const owner = signals.getOwner();
 
-  const pools = createPools();
+  const pools = POOL_ID_TO_POOL_NAME;
   const metricToIndexes = createMetricToIndexes();
 
   const defaultFrom = -10_000;

@@ -26,7 +26,7 @@ impl Bridge for Interface<'static> {
             return Ok(());
         }
 
-        let path = packages_path.join("generated");
+        let path = path.join("generated");
         fs::create_dir_all(&path)?;
 
         generate_version_file(&path)?;
@@ -101,7 +101,10 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
 
     contents += &format!(
         "
- * @typedef {{{}}} Index",
+ * @typedef {{{}}} Index
+ */
+
+",
         indexes
             .iter()
             .map(|i| i.to_string())
@@ -110,14 +113,6 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
     );
 
     let mut unique_index_groups = BTreeMap::new();
-
-    contents += "
- *
- * @typedef {typeof COMPRESSED_METRIC_TO_INDEXES} MetricToIndexes
- * @typedef {string} Metric
- */
-
-";
 
     let mut word_to_freq: BTreeMap<_, usize> = BTreeMap::new();
     interface
@@ -136,9 +131,10 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
         .collect::<Vec<_>>();
 
     contents += &format!(
-        "const INDEX_TO_WORD = [
+        "export const INDEX_TO_WORD = [
   {}
 ];
+
 ",
         words
             .iter()
@@ -146,55 +142,6 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
             .collect::<Vec<_>>()
             .join(",\n  ")
     );
-
-    contents += "
-const WORD_TO_INDEX = {};
-INDEX_TO_WORD.forEach((word, index) => {
-    WORD_TO_INDEX[word] = index;
-});
-
-function lettersToIndex(s) {
-    let result = 0;
-    for (let i = 0; i < s.length; i++) {
-        const value = charToIndex(s.charCodeAt(i));
-        result = result * 52 + value + 1;
-    }
-    return result - 1;
-}
-
-function charToIndex(c) {
-    const A = 65, Z = 90, a = 97, z = 122;
-
-    if (c >= A && c <= Z) {
-        return c - A;
-        } else if (c >= a && c <= z) {
-        return c - a + 26;
-    } else {
-        return 255; // Invalid
-    }
-}
-
-function compressMetric(metric) {
-    return metric
-        .split('_')
-        .map((word) => {
-            const index = WORD_TO_INDEX[word];
-            if (index === undefined) throw \"bad word\";
-            return indexToLetters(index);
-        })
-        .join('_');
-}
-
-function decompressMetric(compressedMetric) {
-    return compressedMetric
-        .split('_')
-        .map((code) => {
-            const index = lettersToIndex(code);
-            return WORDS[index] || code; // Fallback to original if not found
-        })
-        .join('_');
-}
-";
 
     let word_to_base62 = words
         .into_iter()
@@ -204,7 +151,7 @@ function decompressMetric(compressedMetric) {
 
     let mut ser_metric_to_indexes = "
 /** @type {Record<string, Index[]>} */
-const COMPRESSED_METRIC_TO_INDEXES = {
+export const COMPRESSED_METRIC_TO_INDEXES = {
 "
     .to_string();
 

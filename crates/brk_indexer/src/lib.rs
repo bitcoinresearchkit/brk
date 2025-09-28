@@ -1,10 +1,9 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant};
+use std::{collections::BTreeMap, path::Path, str::FromStr, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
-
 use brk_parser::Parser;
 use brk_store::AnyStore;
 use brk_structs::{
@@ -24,9 +23,8 @@ pub use stores::*;
 pub use vecs::*;
 
 // One version for all data sources
-// Increment on change OR addition
+// Increment on **change _OR_ addition**
 const VERSION: Version = Version::new(21);
-
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 const COLLISIONS_CHECKED_UP_TO: Height = Height::new(909_150);
 
@@ -92,6 +90,7 @@ impl Indexer {
         let export =
             |stores: &mut Stores, vecs: &mut Vecs, height: Height, exit: &Exit| -> Result<()> {
                 info!("Exporting...");
+                // std::process::exit(0);
                 let _lock = exit.lock();
                 let i = Instant::now();
                 stores.commit(height).unwrap();
@@ -184,7 +183,7 @@ impl Indexer {
                 let p2aaddressindex_to_p2abytes_reader = p2aaddressindex_to_p2abytes_reader_opt.as_ref().unwrap();
 
                 // Used to check rapidhash collisions
-                let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO ;
+                let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO;
 
                 let blockhash_prefix = BlockHashPrefix::from(blockhash);
 
@@ -215,275 +214,241 @@ impl Indexer {
                 vecs.height_to_total_size.push_if_needed(height, block.total_size().into())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
 
-                let (
-                    txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle,
-                    input_source_vec_handle,
-                    outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle,
-                ) = thread::scope(|scope| {
-                    let txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle =
-                        scope.spawn(|| -> Result<_> {
-                            block
-                                .txdata
-                                .iter()
-                                .enumerate()
-                                .map(|(index, tx)| {
-                                    let txid = Txid::from(tx.compute_txid());
+                let txid_prefix_to_txid_and_block_txindex_and_prev_txindex = block
+                    .txdata
+                    .par_iter()
+                    .enumerate()
+                    .map(|(index, tx)| {
+                        let txid = Txid::from(tx.compute_txid());
 
-                                    let txid_prefix = TxidPrefix::from(&txid);
+                        let txid_prefix = TxidPrefix::from(&txid);
 
-                                    let prev_txindex_opt =
-                                        if check_collisions && stores.txidprefix_to_txindex.needs(height) {
-                                            // Should only find collisions for two txids (duplicates), see below
-                                            stores.txidprefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
-                                        } else {
-                                            None
-                                        };
+                        let prev_txindex_opt =
+                            if check_collisions && stores.txidprefix_to_txindex.needs(height) {
+                                // Should only find collisions for two txids (duplicates), see below
+                                stores.txidprefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
+                            } else {
+                                None
+                            };
 
-                                    Ok((txid_prefix, (tx, txid, TxIndex::from(index), prev_txindex_opt)))
-                                })
-                                .collect::<Result<BTreeMap<_, _>>>()
-                        });
+                        Ok((txid_prefix, (tx, txid, TxIndex::from(index), prev_txindex_opt)))
+                    })
+                    .collect::<Result<BTreeMap<_, _>>>()?;
 
-                    let input_source_vec_handle = scope.spawn(|| {
-                        let inputs = block
-                            .txdata
+                let inputs = block
+                    .txdata
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, tx)| {
+                        tx.input
                             .iter()
                             .enumerate()
-                            .flat_map(|(index, tx)| {
-                                tx.input
-                                    .iter()
-                                    .enumerate()
-                                    .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
-                            })
-                            .collect::<Vec<_>>();
+                            .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
+                    })
+                    .collect::<Vec<_>>();
 
-                        inputs
-                            .into_par_iter()
+                let input_source_vec = inputs
+                    .into_par_iter()
+                    .enumerate()
+                    .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> Result<(InputIndex, InputSource)> {
+                        let txindex = idxs.txindex + block_txindex;
+                        let inputindex = idxs.inputindex + InputIndex::from(block_inputindex);
+
+                        let outpoint = txin.previous_output;
+                        let txid = Txid::from(outpoint.txid);
+
+                        if tx.is_coinbase() {
+                            return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                        }
+
+                        let prev_txindex = if let Some(txindex) = stores
+                            .txidprefix_to_txindex
+                            .get(&TxidPrefix::from(&txid))?
+                            .map(|v| *v)
+                            .and_then(|txindex| {
+                                // Checking if not finding txindex from the future
+                                (txindex < idxs.txindex).then_some(txindex)
+                            }) {
+                            txindex
+                        } else {
+                            // dbg!(indexes.txindex + block_txindex, txindex, txin, vin);
+                            return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                        };
+
+                        let vout = Vout::from(outpoint.vout);
+
+                        let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_reader)?
+                            .ok_or(Error::Str("Expect outputindex to not be none"))
+                            .inspect_err(|_| {
+                                dbg!(outpoint.txid, prev_txindex, vout);
+                            })?.into_owned()
+                            + vout;
+
+                        Ok((inputindex, InputSource::PreviousBlock((
+                            vin,
+                            txindex,
+                            outputindex,
+                        ))))
+                    })
+                    .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
+                        let (key, value) = tuple?;
+                        map.insert(key, value);
+                        Ok(map)
+                    })
+                    .try_reduce(BTreeMap::new, |mut map, mut map2| {
+                        if map.len() > map2.len() {
+                            map.append(&mut map2);
+                            Ok(map)
+                        } else {
+                            map2.append(&mut map);
+                            Ok(map2)
+                        }
+                    })?;
+
+                let outputs = block
+                    .txdata
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, tx)| {
+                        tx.output
+                            .iter()
                             .enumerate()
-                            .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> Result<(InputIndex, InputSource)> {
-                                let txindex = idxs.txindex + block_txindex;
-                                let inputindex = idxs.inputindex + InputIndex::from(block_inputindex);
+                            .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
+                    }).collect::<Vec<_>>();
 
-                                let outpoint = txin.previous_output;
-                                let txid = Txid::from(outpoint.txid);
+                let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt = outputs.into_par_iter()
+                    .enumerate()
+                    .map(
+                        #[allow(clippy::type_complexity)]
+                        |(block_outputindex, (block_txindex, vout, txout, tx))| -> Result<(
+                            OutputIndex,
+                            (
+                                &TxOut,
+                                TxIndex,
+                                Vout,
+                                OutputType,
+                                Result<AddressBytes>,
+                                Option<TypeIndex>,
+                                &Transaction,
+                            ),
+                        )> {
+                            let txindex = idxs.txindex + block_txindex;
+                            let outputindex = idxs.outputindex + OutputIndex::from(block_outputindex);
 
-                                if tx.is_coinbase() {
-                                    return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
-                                }
+                            let script = &txout.script_pubkey;
 
-                                let prev_txindex = if let Some(txindex) = stores
-                                    .txidprefix_to_txindex
-                                    .get(&TxidPrefix::from(&txid))?
-                                    .map(|v| *v)
-                                    .and_then(|txindex| {
-                                        // Checking if not finding txindex from the future
-                                        (txindex < idxs.txindex).then_some(txindex)
-                                    }) {
-                                    txindex
-                                } else {
-                                    // dbg!(indexes.txindex + block_txindex, txindex, txin, vin);
-                                    return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
-                                };
+                            let outputtype = OutputType::from(script);
 
-                                let vout = Vout::from(outpoint.vout);
-
-                                let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_reader)?
-                                    .ok_or(Error::Str("Expect outputindex to not be none"))
-                                    .inspect_err(|_| {
-                                        dbg!(outpoint.txid, prev_txindex, vout);
-                                    })?.into_owned()
-                                    + vout;
-
-                                Ok((inputindex, InputSource::PreviousBlock((
-                                    vin,
-                                    txindex,
-                                    outputindex,
-                                ))))
-                            })
-                            .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
-                                let (key, value) = tuple?;
-                                map.insert(key, value);
-                                Ok(map)
-                            })
-                            .try_reduce(BTreeMap::new, |mut map, mut map2| {
-                                if map.len() > map2.len() {
-                                    map.append(&mut map2);
-                                    Ok(map)
-                                } else {
-                                    map2.append(&mut map);
-                                    Ok(map2)
-                                }
-                            })
-                    });
-
-                    let outputs = block
-                        .txdata
-                        .iter()
-                        .enumerate()
-                        .flat_map(|(index, tx)| {
-                            tx.output
-                                .iter()
-                                .enumerate()
-                                .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
-                        }).collect::<Vec<_>>();
-
-                    let outputindex_to_txout_outputtype_addressbytes_res_addressindex = outputs.into_par_iter()
-                        .enumerate()
-                        .map(
-                            #[allow(clippy::type_complexity)]
-                            |(block_outputindex, (block_txindex, vout, txout, tx))| -> Result<(
-                                OutputIndex,
-                                (
-                                    &TxOut,
-                                    TxIndex,
-                                    Vout,
-                                    OutputType,
-                                    Result<AddressBytes>,
-                                    Option<TypeIndex>,
-                                    &Transaction,
-                                ),
-                            )> {
-                                let txindex = idxs.txindex + block_txindex;
-                                let outputindex = idxs.outputindex + OutputIndex::from(block_outputindex);
-
-                                let script = &txout.script_pubkey;
-
-                                let outputtype = OutputType::from(script);
-
-                                let address_bytes_res =
-                                    AddressBytes::try_from((script, outputtype)).inspect_err(|_| {
-                                        // dbg!(&txout, height, txi, &tx.compute_txid());
-                                    });
-
-                                let typeindex_opt = address_bytes_res.as_ref().ok().and_then(|addressbytes| {
-                                    stores
-                                        .addressbyteshash_to_typeindex
-                                        .get(&AddressBytesHash::from((addressbytes, outputtype)))
-                                        .unwrap()
-                                        .map(|v| *v)
-                                        // Checking if not in the future
-                                        .and_then(|typeindex_local| {
-                                            (typeindex_local < idxs.typeindex(outputtype)).then_some(typeindex_local)
-                                        })
+                            let address_bytes_res =
+                                AddressBytes::try_from((script, outputtype)).inspect_err(|_| {
+                                    // dbg!(&txout, height, txi, &tx.compute_txid());
                                 });
 
-                                if let Some(Some(typeindex)) = check_collisions.then_some(typeindex_opt) {
-                                    let addressbytes = address_bytes_res.as_ref().unwrap();
+                            let typeindex_opt = address_bytes_res.as_ref().ok().and_then(|addressbytes| {
+                                stores
+                                    .addressbyteshash_to_typeindex
+                                    .get(&AddressBytesHash::from((addressbytes, outputtype)))
+                                    .unwrap()
+                                    .map(|v| *v)
+                                    // Checking if not in the future
+                                    .and_then(|typeindex_local| {
+                                        (typeindex_local < idxs.to_typeindex(outputtype)).then_some(typeindex_local)
+                                    })
+                            });
 
-                                    let prev_addressbytes_opt = match outputtype {
-                                        OutputType::P2PK65 => vecs
-                                            .p2pk65addressindex_to_p2pk65bytes
-                                            .get_or_read(typeindex.into(), p2pk65addressindex_to_p2pk65bytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2PK33 => vecs
-                                            .p2pk33addressindex_to_p2pk33bytes
-                                            .get_or_read(typeindex.into(), p2pk33addressindex_to_p2pk33bytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2PKH => vecs
-                                            .p2pkhaddressindex_to_p2pkhbytes
-                                            .get_or_read(typeindex.into(), p2pkhaddressindex_to_p2pkhbytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2SH => vecs
-                                            .p2shaddressindex_to_p2shbytes
-                                            .get_or_read(typeindex.into(), p2shaddressindex_to_p2shbytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2WPKH => vecs
-                                            .p2wpkhaddressindex_to_p2wpkhbytes
-                                            .get_or_read(typeindex.into(), p2wpkhaddressindex_to_p2wpkhbytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2WSH => vecs
-                                            .p2wshaddressindex_to_p2wshbytes
-                                            .get_or_read(typeindex.into(), p2wshaddressindex_to_p2wshbytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2TR => vecs
-                                            .p2traddressindex_to_p2trbytes
-                                            .get_or_read(typeindex.into(), p2traddressindex_to_p2trbytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::P2A => vecs
-                                            .p2aaddressindex_to_p2abytes
-                                            .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_reader)?
-                                            .map(|v| AddressBytes::from(v.into_owned())),
-                                        _ => {
-                                            unreachable!()
-                                        }
-                                    };
-                                    let prev_addressbytes =
-                                        prev_addressbytes_opt.as_ref().ok_or(Error::Str("Expect to have addressbytes"))?;
+                            if let Some(Some(typeindex)) = check_collisions.then_some(typeindex_opt) {
+                                let addressbytes = address_bytes_res.as_ref().unwrap();
 
-                                    if stores.addressbyteshash_to_typeindex.needs(height)
-                                            && prev_addressbytes != addressbytes
-                                    {
-                                        let txid = tx.compute_txid();
-                                        dbg!(
-                                            height,
-                                            txid,
-                                            vout,
-                                            block_txindex,
-                                            outputtype,
-                                            prev_addressbytes,
-                                            addressbytes,
-                                            &idxs,
-                                            typeindex,
-                                            typeindex,
-                                            txout,
-                                            AddressBytesHash::from((addressbytes, outputtype)),
-                                        );
-                                        panic!()
+                                let prev_addressbytes_opt = match outputtype {
+                                    OutputType::P2PK65 => vecs
+                                        .p2pk65addressindex_to_p2pk65bytes
+                                        .get_or_read(typeindex.into(), p2pk65addressindex_to_p2pk65bytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2PK33 => vecs
+                                        .p2pk33addressindex_to_p2pk33bytes
+                                        .get_or_read(typeindex.into(), p2pk33addressindex_to_p2pk33bytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2PKH => vecs
+                                        .p2pkhaddressindex_to_p2pkhbytes
+                                        .get_or_read(typeindex.into(), p2pkhaddressindex_to_p2pkhbytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2SH => vecs
+                                        .p2shaddressindex_to_p2shbytes
+                                        .get_or_read(typeindex.into(), p2shaddressindex_to_p2shbytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2WPKH => vecs
+                                        .p2wpkhaddressindex_to_p2wpkhbytes
+                                        .get_or_read(typeindex.into(), p2wpkhaddressindex_to_p2wpkhbytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2WSH => vecs
+                                        .p2wshaddressindex_to_p2wshbytes
+                                        .get_or_read(typeindex.into(), p2wshaddressindex_to_p2wshbytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2TR => vecs
+                                        .p2traddressindex_to_p2trbytes
+                                        .get_or_read(typeindex.into(), p2traddressindex_to_p2trbytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    OutputType::P2A => vecs
+                                        .p2aaddressindex_to_p2abytes
+                                        .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_reader)?
+                                        .map(|v| AddressBytes::from(v.into_owned())),
+                                    _ => {
+                                        unreachable!()
                                     }
-                                }
+                                };
+                                let prev_addressbytes =
+                                    prev_addressbytes_opt.as_ref().ok_or(Error::Str("Expect to have addressbytes"))?;
 
-                                Ok((
-                                    outputindex,
-                                    (
-                                        txout,
-                                        txindex,
+                                if stores.addressbyteshash_to_typeindex.needs(height)
+                                        && prev_addressbytes != addressbytes
+                                {
+                                    let txid = tx.compute_txid();
+                                    dbg!(
+                                        height,
+                                        txid,
                                         vout,
+                                        block_txindex,
                                         outputtype,
-                                        address_bytes_res,
-                                        typeindex_opt,
-                                        tx,
-                                    ),
-                                ))
-                            },
-                        )
-                        .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
-                            let (key, value) = tuple?;
-                            map.insert(key, value);
-                            Ok(map)
-                        })
-                        .try_reduce(BTreeMap::new, |mut map, mut map2| {
-                            if map.len() > map2.len() {
-                                map.append(&mut map2);
-                                Ok(map)
-                            } else {
-                                map2.append(&mut map);
-                                Ok(map2)
+                                        prev_addressbytes,
+                                        addressbytes,
+                                        &idxs,
+                                        typeindex,
+                                        typeindex,
+                                        txout,
+                                        AddressBytesHash::from((addressbytes, outputtype)),
+                                    );
+                                    panic!()
+                                }
                             }
-                        });
 
-                    (
-                        txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle.join(),
-                        input_source_vec_handle.join(),
-                        outputindex_to_txout_outputtype_addressbytes_res_addressindex,
+                            Ok((
+                                outputindex,
+                                (
+                                    txout,
+                                    txindex,
+                                    vout,
+                                    outputtype,
+                                    address_bytes_res,
+                                    typeindex_opt,
+                                    tx,
+                                ),
+                            ))
+                        },
                     )
-                });
-
-                let txid_prefix_to_txid_and_block_txindex_and_prev_txindex =
-                    txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle
-                        .map_err(|_|
-                            Error::Str("Expect txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle to join")
-                        )??;
-
-                let input_source_vec = input_source_vec_handle
-                    .map_err(|_|
-                        Error::Str("Export input_source_vec_handle to join")
-                    )??;
-
-                let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt =
-                    outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle
-                        .map_err(|_|
-                            Error::Str("Expect outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle to join")
-                        )?;
+                    .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
+                        let (key, value) = tuple?;
+                        map.insert(key, value);
+                        Ok(map)
+                    })
+                    .try_reduce(BTreeMap::new, |mut map, mut map2| {
+                        if map.len() > map2.len() {
+                            map.append(&mut map2);
+                            Ok(map)
+                        } else {
+                            map2.append(&mut map);
+                            Ok(map2)
+                        }
+                    })?;
 
                 let outputs_len = outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt.len();
                 let inputs_len = input_source_vec.len();
@@ -746,7 +711,6 @@ impl Indexer {
                 idxs.txindex += TxIndex::from(tx_len);
                 idxs.inputindex += InputIndex::from(inputs_len);
                 idxs.outputindex += OutputIndex::from(outputs_len);
-
 
                 if should_export(height, false) {
                     txindex_to_first_outputindex_reader_opt.take();
