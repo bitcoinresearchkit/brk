@@ -9,6 +9,7 @@ use std::{
     path::PathBuf,
     sync::Arc,
     thread,
+    time::Duration,
 };
 
 use bitcoin::{block::Header, consensus::Decodable};
@@ -28,8 +29,6 @@ mod xor_index;
 use any_block::*;
 pub use xor_bytes::*;
 pub use xor_index::*;
-
-pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 100;
 
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
@@ -79,7 +78,7 @@ impl Parser {
     pub fn parse(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ParsedBlock> {
         let rpc = self.rpc;
 
-        let (send_bytes, recv_bytes) = bounded(BOUND_CAP);
+        let (send_bytes, recv_bytes) = bounded(BOUND_CAP / 2);
         let (send_block, recv_block) = bounded(BOUND_CAP);
         let (send_ordered, recv_ordered) = bounded(BOUND_CAP);
 
@@ -183,10 +182,13 @@ impl Parser {
             recv_bytes.iter().try_for_each(|tuple| {
                 bulk.push(tuple);
 
-                if bulk.len() < BOUND_CAP {
+                if bulk.len() < BOUND_CAP / 2 {
                     return ControlFlow::Continue(());
                 }
 
+                while send_block.len() >= bulk.len() {
+                    thread::sleep(Duration::from_micros(100));
+                }
                 drain_and_send(&mut bulk)
             })?;
 

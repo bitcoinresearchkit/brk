@@ -20,7 +20,7 @@ pub trait Bridge {
 
 impl Bridge for Interface<'static> {
     fn generate_js_files(&self, packages_path: &Path) -> io::Result<()> {
-        let path = packages_path.join("brk");
+        let path = packages_path.join("brk-client");
 
         if !fs::exists(&path)? {
             return Ok(());

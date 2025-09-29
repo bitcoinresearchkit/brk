@@ -121,10 +121,11 @@ pub fn run() -> color_eyre::Result<()> {
         Ok(()) as Result<()>
     };
 
-    let _handle = tokio::runtime::Builder::new_multi_thread()
+    let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .build()?
-        .spawn(future);
+        .build()?;
+
+    let _handle = runtime.spawn(future);
 
     loop {
         wait_for_synced_node(rpc)?;

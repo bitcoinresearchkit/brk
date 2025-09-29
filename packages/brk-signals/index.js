@@ -1,8 +1,11 @@
 /**
- * @import { SignalOptions } from "./0.4.11/dist/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./0.4.11/dist/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "./0.4.11/dist/types/signals";
+ * @import { SignalOptions } from "../solidjs-signals/0.6.3/dist/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "../solidjs-signals/0.6.3/dist/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "../solidjs-signals/0.6.3/dist/types/signals";
  */
+
+// test
+// wkopwfk
 
 /**
  * @template T
@@ -22,7 +25,7 @@ import {
   createRoot,
   runWithOwner,
   onCleanup,
-} from "./0.4.11/dist/prod.js";
+} from "../solidjs-signals/0.6.3/dist/prod.js";
 
 let effectCount = 0;
 
