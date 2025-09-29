@@ -24,7 +24,7 @@ use vecdb::{AnyIterableVec, VecIterator};
 use super::AppState;
 
 mod explorer;
-mod vecs;
+mod metrics;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
@@ -273,7 +273,7 @@ impl ApiRoutes for Router<AppState> {
             ),
         )
         .route(
-            "/api/vecs/id-to-indexes",
+            "/api/vecs/metric-to-indexes",
             get(
                 async |State(app_state): State<AppState>,
                        Query(param): Query<IdParam>|
@@ -282,8 +282,9 @@ impl ApiRoutes for Router<AppState> {
                 },
             ),
         )
-        // .route("/api/vecs/variants", get(variants_handler))
-        .route("/api/vecs/query", get(vecs::handler))
+        // DEPRECATED
+        .route("/api/vecs/query", get(metrics::handler))
+        // DEPRECATED
         .route(
             "/api/vecs/{variant}",
             get(
@@ -301,7 +302,7 @@ impl ApiRoutes for Router<AppState> {
                             (index, split.collect::<Vec<_>>().join(TO_SEPARATOR)),
                             params_opt,
                         ));
-                        vecs::handler(uri, headers, Query(params), state).await
+                        metrics::handler(uri, headers, Query(params), state).await
                     } else {
                         "Bad variant".into_response()
                     }

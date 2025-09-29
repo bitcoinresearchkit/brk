@@ -1,6 +1,5 @@
 use bitcoincore_rpc::Client;
 use brk_error::{Error, Result};
-use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use brk_structs::{
     BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
     OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
@@ -12,6 +11,8 @@ use vecdb::{
 };
 
 use crate::{Stores, Vecs};
+
+const NUMBER_OF_UNSAFE_BLOCKS: usize = 100;
 
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {

@@ -1,4 +1,7 @@
-import { INDEX_TO_WORD } from "./generated/metrics";
+import {
+  INDEX_TO_WORD,
+  COMPRESSED_METRIC_TO_INDEXES,
+} from "./generated/metrics";
 
 /** @type {Record<string, number>} */
 const WORD_TO_INDEX = {};
@@ -6,6 +9,20 @@ const WORD_TO_INDEX = {};
 INDEX_TO_WORD.forEach((word, index) => {
   WORD_TO_INDEX[word] = index;
 });
+
+/**
+ * @param {Metric} metric
+ */
+export function metricToIndexes(metric) {
+  return COMPRESSED_METRIC_TO_INDEXES[compressMetric(metric)];
+}
+
+/**
+ * @param {Metric} metric
+ */
+export function hasMetric(metric) {
+  return compressMetric(metric) in COMPRESSED_METRIC_TO_INDEXES;
+}
 
 /**
  * @param {string} metric

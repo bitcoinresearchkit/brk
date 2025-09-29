@@ -26,7 +26,7 @@ sw.addEventListener("activate", (event) => {
         .then((keys) =>
           Promise.all(
             keys
-              .filter((key) => key !== "api" && key !== CACHE_VERSION)
+              .filter((key) => key !== CACHE_VERSION)
               .map((key) => caches.delete(key)),
           ),
         ),

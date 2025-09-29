@@ -38,7 +38,8 @@ pub async fn bundle(
     let absolute_source_sw_path_clone = absolute_source_sw_path.clone();
 
     let absolute_dist_path = relative_dist_path.absolutize();
-    let absolute_dist_scripts_entry_path = absolute_dist_path.join("scripts/entry.js");
+    let absolute_dist_scripts_path = absolute_dist_path.join("scripts");
+    let absolute_dist_scripts_entry_path = absolute_dist_scripts_path.join("entry.js");
     let absolute_dist_scripts_entry_path_clone = absolute_dist_scripts_entry_path.clone();
     let absolute_dist_index_path = absolute_dist_path.join("index.html");
     let absolute_dist_sw_path = absolute_dist_path.join("service-worker.js");
@@ -50,6 +51,8 @@ pub async fn bundle(
         &absolute_source_scripts_packages_path,
     )?;
     copy_dir_all(&absolute_source_path, &absolute_dist_path)?;
+    fs::remove_dir_all(&absolute_dist_scripts_path)?;
+    fs::create_dir(&absolute_dist_scripts_path)?;
 
     let mut bundler = Bundler::new(BundlerOptions {
         input: Some(vec![format!("./{source_folder}/scripts/entry.js").into()]),
@@ -65,7 +68,7 @@ pub async fn bundle(
         error!("{error:?}");
     }
 
-    let write_index = move || {
+    let update_dist_index = move || {
         let mut contents = fs::read_to_string(&absolute_source_index_path).unwrap();
 
         if let Ok(entry) = fs::read_to_string(&absolute_dist_scripts_entry_path_clone)
@@ -79,23 +82,21 @@ pub async fn bundle(
         let _ = fs::write(&absolute_dist_index_path, contents);
     };
 
-    let write_sw = move || {
+    let update_source_sw = move || {
         let contents = fs::read_to_string(&absolute_source_sw_path)
             .unwrap()
             .replace("__VERSION__", &format!("v{VERSION}"));
         let _ = fs::write(&absolute_dist_sw_path, contents);
     };
 
-    write_index();
-    write_sw();
+    update_dist_index();
+    update_source_sw();
 
     if !watch {
         return Ok(relative_dist_path);
     }
 
     tokio::spawn(async move {
-        let absolute_websites_path = absolute_websites_path_clone.clone();
-
         let mut event_watcher = notify::recommended_watcher(
             move |res: Result<notify::Event, notify::Error>| match res {
                 Ok(event) => match event.kind {
@@ -105,28 +106,26 @@ pub async fn bundle(
                 }
                 .into_iter()
                 .for_each(|path| {
+                    let path = path.absolutize();
+
                     if path == absolute_dist_scripts_entry_path
                         || path == absolute_source_index_path_clone
                     {
-                        write_index();
+                        update_dist_index();
                     } else if path == absolute_source_sw_path_clone {
-                        write_sw();
-                    } else if path.starts_with(&absolute_packages_path) {
-                        let suffix = path.strip_prefix(&absolute_websites_path).unwrap();
-                        let dist_path = absolute_source_scripts_path.join(suffix);
-
-                        dbg!(&suffix, &dist_path);
+                        update_source_sw();
+                    } else if let Ok(suffix) = path.strip_prefix(&absolute_packages_path) {
+                        let source_packages_path =
+                            absolute_source_scripts_packages_path.join(suffix);
                         if path.is_file() {
                             let _ = fs::create_dir_all(path.parent().unwrap());
-                            let _ = fs::copy(&path, &dist_path);
+                            let _ = fs::copy(&path, &source_packages_path);
                         }
-                    } else if path.starts_with(&absolute_source_path)
+                    } else if let Ok(suffix) = path.strip_prefix(&absolute_source_path)
                         // scripts are handled by rolldown
                         && !path.starts_with(&absolute_source_scripts_path)
                     {
-                        let suffix = path.strip_prefix(&absolute_source_path).unwrap();
                         let dist_path = absolute_dist_path.join(suffix);
-
                         if path.is_file() {
                             let _ = fs::create_dir_all(path.parent().unwrap());
                             let _ = fs::copy(&path, &dist_path);
