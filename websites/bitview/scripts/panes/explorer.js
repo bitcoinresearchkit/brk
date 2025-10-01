@@ -1,4 +1,5 @@
 import { randomFromArray } from "../core/array";
+import { explorerElement } from "../core/elements";
 
 /**
  * @param {Object} args
@@ -6,26 +7,22 @@ import { randomFromArray } from "../core/array";
  * @param {CreateChartElement} args.createChartElement
  * @param {Accessor<ChartOption>} args.option
  * @param {Signals} args.signals
- * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
- * @param {Elements} args.elements
- * @param {VecsResources} args.vecsResources
- * @param {MetricToIndexes} args.metricToIndexes
+ * @param {Resources} args.resources
+ * @param {BRK} args.brk
  */
 export function init({
   colors,
-  elements,
   createChartElement,
   option,
   signals,
-  utils,
   webSockets,
-  vecsResources,
-  metricToIndexes,
+  resources,
+  brk,
 }) {
   const chain = window.document.createElement("div");
   chain.id = "chain";
-  elements.explorer.append(chain);
+  explorerElement.append(chain);
 
   // vecsResources.getOrCreate(/** @satisfies {Height}*/ (5), "height");
   //

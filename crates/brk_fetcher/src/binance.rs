@@ -3,13 +3,12 @@ use std::{
     fs::{self, File},
     io::BufReader,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use brk_error::{Error, Result};
 use brk_structs::{Cents, OHLCCents, Timestamp};
 use log::info;
-use serde_json::Value;
+use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 
 use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, default_retry};
 
@@ -17,7 +16,7 @@ use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, default_retry};
 pub struct Binance {
     path: Option<PathBuf>,
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
-    pub _1d: Option<BTreeMap<Date, OHLCCents>>,
+    _1d: Option<BTreeMap<Date, OHLCCents>>,
     har: Option<BTreeMap<Timestamp, OHLCCents>>,
 }
 
@@ -69,11 +68,11 @@ impl Binance {
         info!("Fetching 1mn prices from Binance...");
 
         default_retry(|_| {
-            Self::json_to_timestamp_to_ohlc(
-                &minreq::get(Self::url("interval=1m&limit=1000"))
+            Self::json_to_timestamp_to_ohlc(&sonic_rs::from_str(
+                minreq::get(Self::url("interval=1m&limit=1000"))
                     .send()?
-                    .json()?,
-            )
+                    .as_str()?,
+            )?)
         })
     }
 
@@ -94,7 +93,9 @@ impl Binance {
         info!("Fetching daily prices from Binance...");
 
         default_retry(|_| {
-            Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?)
+            Self::json_to_date_to_ohlc(&sonic_rs::from_str(
+                minreq::get(Self::url("interval=1d")).send()?.as_str()?,
+            )?)
         })
     }
 
@@ -119,7 +120,7 @@ impl Binance {
 
         let reader = BufReader::new(file);
 
-        let json: BTreeMap<String, Value> = if let Ok(json) = serde_json::from_reader(reader) {
+        let json: BTreeMap<String, Value> = if let Ok(json) = sonic_rs::from_reader(reader) {
             json
         } else {
             return Ok(Default::default());
@@ -129,7 +130,7 @@ impl Binance {
             .ok_or(Error::Str("Expect object to have log attribute"))?
             .as_object()
             .ok_or(Error::Str("Expect to be an object"))?
-            .get("entries")
+            .get(&"entries")
             .ok_or(Error::Str("Expect object to have entries"))?
             .as_array()
             .ok_or(Error::Str("Expect to be an array"))?
@@ -138,11 +139,11 @@ impl Binance {
                 entry
                     .as_object()
                     .unwrap()
-                    .get("request")
+                    .get(&"request")
                     .unwrap()
                     .as_object()
                     .unwrap()
-                    .get("url")
+                    .get(&"url")
                     .unwrap()
                     .as_str()
                     .unwrap()
@@ -152,14 +153,14 @@ impl Binance {
                 let response = entry
                     .as_object()
                     .unwrap()
-                    .get("response")
+                    .get(&"response")
                     .unwrap()
                     .as_object()
                     .unwrap();
 
-                let content = response.get("content").unwrap().as_object().unwrap();
+                let content = response.get(&"content").unwrap().as_object().unwrap();
 
-                let text = content.get("text");
+                let text = content.get(&"text");
 
                 if text.is_none() {
                     return Ok(BTreeMap::new());
@@ -167,7 +168,7 @@ impl Binance {
 
                 let text = text.unwrap().as_str().unwrap();
 
-                Self::json_to_timestamp_to_ohlc(&serde_json::Value::from_str(text).unwrap())
+                Self::json_to_timestamp_to_ohlc(&sonic_rs::from_str(text).unwrap())
             })
             .try_fold(BTreeMap::default(), |mut all, res| {
                 all.append(&mut res?);

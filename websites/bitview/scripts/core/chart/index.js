@@ -1,4 +1,4 @@
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../../packages/lightweight-charts/5.0.8/dist/typings' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../../modules/lightweight-charts/5.0.8/dist/typings' */
 
 import {
   createChart,
@@ -6,8 +6,8 @@ import {
   HistogramSeries,
   LineSeries,
   BaselineSeries,
-  // } from "../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.development.mjs";
-} from "../../packages/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
+  // } from "../modules/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.development.mjs";
+} from "../../modules/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
 
 import {
   createHorizontalChoiceField,
@@ -17,6 +17,8 @@ import {
 import { createOklchToRGBA } from "./oklch";
 import { throttle } from "../timing";
 import { serdeBool } from "../serde";
+import { stringToId } from "../format";
+import { style } from "../elements";
 
 /**
  * @typedef {Object} Valued
@@ -50,7 +52,7 @@ import { serdeBool } from "../serde";
  * @typedef {_BaselineData<number>} BaselineData
  * @typedef {_HistogramData<number>} HistogramData
  *
- * @typedef {function({ iseries: ISeries; unit: Unit; index: Index }): void} SetDataCallback
+ * @typedef {function({ iseries: ISeries; unit: Unit; index: IndexName }): void} SetDataCallback
  */
 
 const oklchToRGBA = createOklchToRGBA();
@@ -63,10 +65,8 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {HTMLElement} args.parent
  * @param {Signals} args.signals
  * @param {Colors} args.colors
- * @param {Utilities} args.utils
- * @param {Elements} args.elements
- * @param {VecsResources} args.vecsResources
- * @param {Accessor<Index>} args.index
+ * @param {Resources} args.resources
+ * @param {Accessor<IndexName>} args.index
  * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
  * @param {true} [args.fitContent]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
@@ -75,11 +75,9 @@ function createChartElement({
   parent,
   signals,
   colors,
-  utils,
-  elements,
   id: chartId,
   index,
-  vecsResources,
+  resources,
   timeScaleSetCallback,
   fitContent,
   config,
@@ -88,20 +86,14 @@ function createChartElement({
   div.classList.add("chart");
   parent.append(div);
 
-  const legendTop = createLegend({
-    utils,
-    signals,
-  });
+  const legendTop = createLegend(signals);
   div.append(legendTop.element);
 
   const chartDiv = window.document.createElement("div");
   chartDiv.classList.add("lightweight-chart");
   div.append(chartDiv);
 
-  const legendBottom = createLegend({
-    utils,
-    signals,
-  });
+  const legendBottom = createLegend(signals);
   div.append(legendBottom.element);
 
   /** @type {IChartApi} */
@@ -110,7 +102,7 @@ function createChartElement({
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
       autoSize: true,
       layout: {
-        fontFamily: elements.style.fontFamily,
+        fontFamily: style.fontFamily,
         background: { color: "transparent" },
         attributionLogo: false,
         colorSpace: "display-p3",
@@ -185,24 +177,24 @@ function createChartElement({
 
   signals.createEffect(index, (index) => {
     const minBarSpacing =
-      index === /** @satisfies {MonthIndex} */ (7)
+      index === "monthindex"
         ? 1
-        : index === /** @satisfies {QuarterIndex} */ (19)
+        : index === "quarterindex"
           ? 2
-          : index === /** @satisfies {SemesterIndex} */ (20)
+          : index === "semesterindex"
             ? 3
-            : index === /** @satisfies {YearIndex} */ (24)
+            : index === "yearindex"
               ? 6
-              : index === /** @satisfies {DecadeIndex} */ (1)
+              : index === "decadeindex"
                 ? 60
                 : 0.5;
 
     ichart.applyOptions({
       timeScale: {
         timeVisible:
-          index === /** @satisfies {Height} */ (5) ||
-          index === /** @satisfies {DifficultyEpoch} */ (2) ||
-          index === /** @satisfies {HalvingEpoch} */ (4),
+          index === "height" ||
+          index === "difficultyepoch" ||
+          index === "halvingepoch",
         ...(!fitContent
           ? {
               minBarSpacing,
@@ -212,7 +204,7 @@ function createChartElement({
     });
   });
 
-  const activeResources = /** @type {Set<VecResource>} */ (new Set());
+  const activeResources = /** @type {Set<MetricResource>} */ (new Set());
   ichart.subscribeCrosshairMove(
     throttle(() => {
       activeResources.forEach((v) => {
@@ -292,7 +284,7 @@ function createChartElement({
       createChild(pane) {
         const { field, selected } = createHorizontalChoiceField({
           choices: /** @type {const} */ (["lin", "log"]),
-          id: utils.stringToId(`${id} ${paneIndex} ${unit}`),
+          id: stringToId(`${id} ${paneIndex} ${unit}`),
           defaultValue:
             unit === "usd" && seriesType !== "Baseline" ? "log" : "lin",
           key: `${id}-price-scale-${paneIndex}`,
@@ -340,7 +332,7 @@ function createChartElement({
     data,
   }) {
     return signals.createRoot((dispose) => {
-      const id = `${utils.stringToId(name)}-${paneIndex}`;
+      const id = `${stringToId(name)}-${paneIndex}`;
 
       const active = signals.createSignal(defaultActive ?? true, {
         save: {
@@ -361,7 +353,7 @@ function createChartElement({
 
       iseries.setSeriesOrder(order);
 
-      /** @type {VecResource | undefined} */
+      /** @type {MetricResource | undefined} */
       let _valuesResource;
 
       /** @type {Series} */
@@ -383,15 +375,13 @@ function createChartElement({
 
       if (metric) {
         signals.createEffect(index, (index) => {
-          const timeResource = vecsResources.getOrCreate(
+          const timeResource = resources.metrics.getOrCreate(
+            index === "height" ? "timestamp_fixed" : "timestamp",
             index,
-            index === /** @satisfies {Height} */ (5)
-              ? "timestamp_fixed"
-              : "timestamp",
           );
           timeResource.fetch();
 
-          const valuesResource = vecsResources.getOrCreate(index, metric);
+          const valuesResource = resources.metrics.getOrCreate(metric, index);
           _valuesResource = valuesResource;
 
           series.url.set(() => valuesResource.url);
@@ -401,11 +391,11 @@ function createChartElement({
               valuesResource.fetch();
               activeResources.add(valuesResource);
 
-              const fetchedKey = vecsResources.defaultFetchedKey;
+              const fetchedKey = resources.metrics.genKey();
               signals.createEffect(
                 () => ({
-                  _indexes: timeResource.fetched().get(fetchedKey)?.vec(),
-                  values: valuesResource.fetched().get(fetchedKey)?.vec(),
+                  _indexes: timeResource.fetched().get(fetchedKey)?.data(),
+                  values: valuesResource.fetched().get(fetchedKey)?.data(),
                 }),
                 ({ _indexes, values }) => {
                   if (!_indexes?.length || !values?.length) return;
@@ -477,10 +467,10 @@ function createChartElement({
 
                     timeScaleSetCallback?.(() => {
                       if (
-                        index === /** @satisfies {QuarterIndex} */ (19) ||
-                        index === /** @satisfies {SemesterIndex} */ (20) ||
-                        index === /** @satisfies {YearIndex} */ (24) ||
-                        index === /** @satisfies {DecadeIndex} */ (1)
+                        index === "quarterindex" ||
+                        index === "semesterindex" ||
+                        index === "yearindex" ||
+                        index === "decadeindex"
                       ) {
                         ichart.timeScale().setVisibleLogicalRange({
                           from: -1,
@@ -836,11 +826,9 @@ function createChartElement({
 }
 
 /**
- * @param {Object} args
- * @param {Signals} args.signals
- * @param {Utilities} args.utils
+ * @param {Signals} signals
  */
-function createLegend({ signals, utils }) {
+function createLegend(signals) {
   const element = window.document.createElement("legend");
 
   const hovered = signals.createSignal(/** @type {Series | null} */ (null));
@@ -874,8 +862,8 @@ function createLegend({ signals, utils }) {
       legends[order] = div;
 
       const { input, label } = createLabeledInput({
-        inputId: utils.stringToId(`legend-${series.id}`),
-        inputName: utils.stringToId(`selected-${series.id}`),
+        inputId: stringToId(`legend-${series.id}`),
+        inputName: stringToId(`selected-${series.id}`),
         inputValue: "value",
         title: "Click to toggle",
         inputChecked: series.active(),

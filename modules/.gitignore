@@ -1,5 +1,5 @@
 LICENSE
-*/**/*.json
+**/*.*.*/*.json
 *webcomponent*
 README*.md
 cli*

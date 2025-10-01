@@ -131,8 +131,9 @@ impl<'a> Vecs<'a> {
         &self.metrics[start..end]
     }
 
-    pub fn id_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
-        self.metric_to_indexes.get(id.as_str())
+    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<&'static str>> {
+        self.metric_to_indexes
+            .get(metric.replace("-", "_").as_str())
     }
 
     pub fn index_to_ids(

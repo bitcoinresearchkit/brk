@@ -1,23 +1,17 @@
 import { randomFromArray } from "../core/array";
 import { createButtonElement, createHeader, createSelect } from "../core/dom";
+import { tableElement } from "../core/elements";
 import { serdeMetrics, serdeString, serdeUnit } from "../core/serde";
 import { resetParams } from "../core/url";
 
 /**
  * @param {Object} args
- * @param {MetricToIndexes} args.metricToIndexes
  * @param {Option} args.option
- * @param {Utilities} args.utils
  * @param {Signals} args.signals
- * @param {VecsResources} args.vecsResources
+ * @param {BRK} args.brk
+ * @param {Resources} args.resources
  */
-function createTable({
-  utils,
-  metricToIndexes,
-  signals,
-  option,
-  vecsResources,
-}) {
+function createTable({ brk, signals, option, resources }) {
   const indexToMetrics = createIndexToMetrics(metricToIndexes);
 
   const serializedIndexes = createSerializedIndexes();
@@ -150,7 +144,7 @@ function createTable({
     let from = 0;
     let to = 0;
 
-    vecsResources
+    resources
       .getOrCreate(index, serializedIndex())
       .fetch()
       .then((vec) => {
@@ -292,11 +286,11 @@ function createTable({
                 const unit = serdeUnit.deserialize(metric);
                 th.setUnit(unit);
 
-                const vec = vecsResources.getOrCreate(index, metric);
+                const vec = resources.getOrCreate(index, metric);
 
                 vec.fetch({ from, to });
 
-                const fetchedKey = vecsResources.genFetchedKey({ from, to });
+                const fetchedKey = resources.genFetchedKey({ from, to });
 
                 columns.set((l) => {
                   const i = l.indexOf(prevMetric ?? metric);
@@ -355,21 +349,12 @@ function createTable({
 /**
  * @param {Object} args
  * @param {Signals} args.signals
- * @param {Utilities} args.utils
  * @param {Option} args.option
- * @param {Elements} args.elements
- * @param {VecsResources} args.vecsResources
- * @param {MetricToIndexes} args.metricToIndexes
+ * @param {Resources} args.resources
+ * @param {BRK} args.brk
  */
-export function init({
-  elements,
-  signals,
-  option,
-  utils,
-  vecsResources,
-  metricToIndexes,
-}) {
-  const parent = elements.table;
+export function init({ signals, option, resources, brk }) {
+  const parent = tableElement;
   const { headerElement } = createHeader("Table");
   parent.append(headerElement);
 
@@ -378,9 +363,8 @@ export function init({
 
   const table = createTable({
     signals,
-    utils,
-    metricToIndexes,
-    vecsResources,
+    brk,
+    resources,
     option,
   });
   div.append(table.element);
@@ -396,103 +380,6 @@ export function init({
       title: "Click or tap to add a column to the table",
     }),
   );
-}
-
-function createSerializedIndexes() {
-  return /** @type {const} */ ([
-    /** @satisfies {Metric} */ ("dateindex"),
-    /** @satisfies {Metric} */ ("decadeindex"),
-    /** @satisfies {Metric} */ ("difficultyepoch"),
-    /** @satisfies {Metric} */ ("emptyoutputindex"),
-    /** @satisfies {Metric} */ ("halvingepoch"),
-    /** @satisfies {Metric} */ ("height"),
-    /** @satisfies {Metric} */ ("inputindex"),
-    /** @satisfies {Metric} */ ("monthindex"),
-    /** @satisfies {Metric} */ ("opreturnindex"),
-    /** @satisfies {Metric} */ ("semesterindex"),
-    /** @satisfies {Metric} */ ("outputindex"),
-    /** @satisfies {Metric} */ ("p2aaddressindex"),
-    /** @satisfies {Metric} */ ("p2msoutputindex"),
-    /** @satisfies {Metric} */ ("p2pk33addressindex"),
-    /** @satisfies {Metric} */ ("p2pk65addressindex"),
-    /** @satisfies {Metric} */ ("p2pkhaddressindex"),
-    /** @satisfies {Metric} */ ("p2shaddressindex"),
-    /** @satisfies {Metric} */ ("p2traddressindex"),
-    /** @satisfies {Metric} */ ("p2wpkhaddressindex"),
-    /** @satisfies {Metric} */ ("p2wshaddressindex"),
-    /** @satisfies {Metric} */ ("quarterindex"),
-    /** @satisfies {Metric} */ ("txindex"),
-    /** @satisfies {Metric} */ ("unknownoutputindex"),
-    /** @satisfies {Metric} */ ("weekindex"),
-    /** @satisfies {Metric} */ ("yearindex"),
-    /** @satisfies {Metric} */ ("loadedaddressindex"),
-    /** @satisfies {Metric} */ ("emptyaddressindex"),
-  ]);
-}
-/** @typedef {ReturnType<typeof createSerializedIndexes>} SerializedIndexes */
-/** @typedef {SerializedIndexes[number]} SerializedIndex */
-
-/**
- * @param {SerializedIndex} serializedIndex
- * @returns {Index}
- */
-function serializedIndexToIndex(serializedIndex) {
-  switch (serializedIndex) {
-    case "height":
-      return /** @satisfies {Height} */ (5);
-    case "dateindex":
-      return /** @satisfies {DateIndex} */ (0);
-    case "weekindex":
-      return /** @satisfies {WeekIndex} */ (23);
-    case "difficultyepoch":
-      return /** @satisfies {DifficultyEpoch} */ (2);
-    case "monthindex":
-      return /** @satisfies {MonthIndex} */ (7);
-    case "quarterindex":
-      return /** @satisfies {QuarterIndex} */ (19);
-    case "semesterindex":
-      return /** @satisfies {SemesterIndex} */ (20);
-    case "yearindex":
-      return /** @satisfies {YearIndex} */ (24);
-    case "decadeindex":
-      return /** @satisfies {DecadeIndex} */ (1);
-    case "halvingepoch":
-      return /** @satisfies {HalvingEpoch} */ (4);
-    case "txindex":
-      return /** @satisfies {TxIndex} */ (21);
-    case "inputindex":
-      return /** @satisfies {InputIndex} */ (6);
-    case "outputindex":
-      return /** @satisfies {OutputIndex} */ (9);
-    case "p2pk33addressindex":
-      return /** @satisfies {P2PK33AddressIndex} */ (12);
-    case "p2pk65addressindex":
-      return /** @satisfies {P2PK65AddressIndex} */ (13);
-    case "p2pkhaddressindex":
-      return /** @satisfies {P2PKHAddressIndex} */ (14);
-    case "p2shaddressindex":
-      return /** @satisfies {P2SHAddressIndex} */ (15);
-    case "p2traddressindex":
-      return /** @satisfies {P2TRAddressIndex} */ (16);
-    case "p2wpkhaddressindex":
-      return /** @satisfies {P2WPKHAddressIndex} */ (17);
-    case "p2wshaddressindex":
-      return /** @satisfies {P2WSHAddressIndex} */ (18);
-    case "p2aaddressindex":
-      return /** @satisfies {P2AAddressIndex} */ (10);
-    case "p2msoutputindex":
-      return /** @satisfies {P2MSOutputIndex} */ (11);
-    case "opreturnindex":
-      return /** @satisfies {OpReturnIndex} */ (8);
-    case "emptyoutputindex":
-      return /** @satisfies {EmptyOutputIndex} */ (3);
-    case "unknownoutputindex":
-      return /** @satisfies {UnknownOutputIndex} */ (22);
-    case "emptyaddressindex":
-      return /** @satisfies {EmptyAddressIndex} */ (26);
-    case "loadedaddressindex":
-      return /** @satisfies {LoadedAddressIndex} */ (25);
-  }
 }
 
 /**

@@ -101,7 +101,7 @@ impl Server {
             .route("/version", get(Json(VERSION)))
             .route(
                 "/health",
-                get(Json(serde_json::json!({
+                get(Json(sonic_rs::json!({
                     "status": "healthy",
                     "service": "brk-server",
                     "timestamp": jiff::Timestamp::now().to_string()

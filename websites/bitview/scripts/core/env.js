@@ -1,24 +1,12 @@
-const localhost = window.location.hostname === "localhost";
-const standalone =
+export const localhost = window.location.hostname === "localhost";
+export const standalone =
   "standalone" in window.navigator && !!window.navigator.standalone;
-const userAgent = navigator.userAgent.toLowerCase();
-const isChrome = userAgent.includes("chrome");
-const safari = userAgent.includes("safari");
-const safariOnly = safari && !isChrome;
-const macOS = userAgent.includes("mac os");
-const iphone = userAgent.includes("iphone");
-const ipad = userAgent.includes("ipad");
-const ios = iphone || ipad;
-
-export default {
-  standalone,
-  userAgent,
-  isChrome,
-  safari,
-  safariOnly,
-  macOS,
-  iphone,
-  ipad,
-  ios,
-  localhost,
-};
+export const userAgent = navigator.userAgent.toLowerCase();
+export const isChrome = userAgent.includes("chrome");
+export const safari = userAgent.includes("safari");
+export const safariOnly = safari && !isChrome;
+export const macOS = userAgent.includes("mac os");
+export const iphone = userAgent.includes("iphone");
+export const ipad = userAgent.includes("ipad");
+export const ios = iphone || ipad;
+export const canShare = "canShare" in navigator;

@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use brk_error::{Error, Result};
 use brk_structs::{Cents, CheckedSub, Date, DateIndex, Height, OHLCCents};
 use log::info;
-use serde_json::Value;
+use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 
 use crate::{Close, Dollars, High, Low, Open, default_retry};
 
@@ -51,7 +51,7 @@ impl BRK {
                 height + CHUNK_SIZE
             );
 
-            let body: Value = minreq::get(url).send()?.json()?;
+            let body: Value = sonic_rs::from_str(minreq::get(url).send()?.as_str()?)?;
 
             body.as_array()
                 .ok_or(Error::Str("Expect to be an array"))?
@@ -96,7 +96,7 @@ impl BRK {
                 dateindex + CHUNK_SIZE
             );
 
-            let body: Value = minreq::get(url).send()?.json()?;
+            let body: Value = sonic_rs::from_str(minreq::get(url).send()?.json()?)?;
 
             body.as_array()
                 .ok_or(Error::Str("Expect to be an array"))?

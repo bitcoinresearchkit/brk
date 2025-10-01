@@ -106,8 +106,3 @@ impl ParamsOpt {
         self.format
     }
 }
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct IdParam {
-    pub id: String,
-}

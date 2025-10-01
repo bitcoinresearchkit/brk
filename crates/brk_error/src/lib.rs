@@ -19,7 +19,7 @@ pub enum Error {
     SystemTimeError(time::SystemTimeError),
     BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
     BitcoinBip34Error(bitcoin::block::Bip34Error),
-    SerdeJson(serde_json::Error),
+    SonicRS(sonic_rs::Error),
     ZeroCopyError,
     Vecs(vecdb::Error),
 
@@ -49,9 +49,9 @@ impl From<time::SystemTimeError> for Error {
     }
 }
 
-impl From<serde_json::Error> for Error {
-    fn from(error: serde_json::Error) -> Self {
-        Self::SerdeJson(error)
+impl From<sonic_rs::Error> for Error {
+    fn from(error: sonic_rs::Error) -> Self {
+        Self::SonicRS(error)
     }
 }
 
@@ -126,7 +126,7 @@ impl fmt::Display for Error {
             Error::Jiff(error) => Display::fmt(&error, f),
             Error::Minreq(error) => Display::fmt(&error, f),
             Error::SeqDB(error) => Display::fmt(&error, f),
-            Error::SerdeJson(error) => Display::fmt(&error, f),
+            Error::SonicRS(error) => Display::fmt(&error, f),
             Error::SystemTimeError(error) => Display::fmt(&error, f),
             Error::VecDB(error) => Display::fmt(&error, f),
             Error::Vecs(error) => Display::fmt(&error, f),

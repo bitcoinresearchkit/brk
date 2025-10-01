@@ -7,26 +7,16 @@ import {
 import { serdeUnit } from "../serde";
 import { pushHistory, resetParams } from "../url";
 import { readStored, writeToStorage } from "../storage";
+import { stringToId } from "../format";
 
 /**
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {Signals} args.signals
- * @param {Env} args.env
- * @param {Utilities} args.utils
- * @param {MetricToIndexes} args.metricToIndexes
- * @param {Pools} args.pools
+ * @param {BRK} args.brk
  * @param {Signal<string | null>} args.qrcode
  */
-export function initOptions({
-  colors,
-  signals,
-  env,
-  utils,
-  qrcode,
-  metricToIndexes,
-  pools,
-}) {
+export function initOptions({ colors, signals, brk, qrcode }) {
   const LS_SELECTED_KEY = `selected_path`;
 
   const urlPath_ = window.document.location.pathname
@@ -42,10 +32,8 @@ export function initOptions({
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
   const partialOptions = createPartialOptions({
-    env,
     colors,
-    metricToIndexes,
-    pools,
+    brk,
   });
 
   /** @type {Option[]} */
@@ -58,7 +46,8 @@ export function initOptions({
    */
   function arrayToRecord(arr = []) {
     return (arr || []).reduce((record, blueprint) => {
-      if (env.localhost && !(blueprint.metric in metricToIndexes)) {
+      if (!brk.hasMetric(blueprint.metric)) {
+        // if (localhost && !brk.hasMetric(blueprint.metric)) {
         throw Error(`${blueprint.metric} not recognized`);
       }
       const unit = blueprint.unit ?? serdeUnit.deserialize(blueprint.metric);
@@ -186,7 +175,7 @@ export function initOptions({
           /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
-        const serName = utils.stringToId(anyPartial.name);
+        const serName = stringToId(anyPartial.name);
         const path = [...parentPath, serName];
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
@@ -250,7 +239,7 @@ export function initOptions({
         const option = /** @type {Option} */ (anyPartial);
 
         const name = option.name;
-        const path = [...parentPath, utils.stringToId(option.name)];
+        const path = [...parentPath, stringToId(option.name)];
 
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
           Object.assign(

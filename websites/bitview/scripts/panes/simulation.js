@@ -9,6 +9,12 @@ import {
   createHeader,
   createSelect,
 } from "../core/dom";
+import { simulationElement } from "../core/elements";
+import {
+  numberToDollars,
+  numberToPercentage,
+  numberToUSNumber,
+} from "../core/format";
 import { serdeDate, serdeOptDate, serdeOptNumber } from "../core/serde";
 
 /**
@@ -16,18 +22,9 @@ import { serdeDate, serdeOptDate, serdeOptNumber } from "../core/serde";
  * @param {Colors} args.colors
  * @param {CreateChartElement} args.createChartElement
  * @param {Signals} args.signals
- * @param {Utilities} args.utils
- * @param {Elements} args.elements
- * @param {VecsResources} args.vecsResources
+ * @param {Resources} args.resources
  */
-export function init({
-  colors,
-  elements,
-  createChartElement,
-  signals,
-  utils,
-  vecsResources,
-}) {
+export function init({ colors, createChartElement, signals, resources }) {
   /**
    * @typedef {Object} Frequency
    * @property {string} name
@@ -38,8 +35,6 @@ export function init({
    * @property {string} name
    * @property {Frequency[]} list
    */
-
-  const simulationElement = elements.simulation;
 
   const domExtended = {
     /**
@@ -686,7 +681,8 @@ export function init({
     },
   );
 
-  const index = () => /** @type {DateIndex} */ (0);
+  /** @type {() => IndexName} */
+  const index = () => "dateindex";
 
   createChartElement({
     index,
@@ -695,9 +691,7 @@ export function init({
     colors,
     id: `result`,
     fitContent: true,
-    vecsResources,
-    utils,
-    elements,
+    resources,
     config: [
       {
         unit: "usd",
@@ -740,9 +734,7 @@ export function init({
     colors,
     id: `bitcoin`,
     fitContent: true,
-    vecsResources,
-    elements,
-    utils,
+    resources,
     config: [
       {
         unit: "btc",
@@ -765,9 +757,7 @@ export function init({
     colors,
     id: `average-price`,
     fitContent: true,
-    vecsResources,
-    utils,
-    elements,
+    resources,
     config: [
       {
         unit: "usd",
@@ -794,11 +784,9 @@ export function init({
     parent: resultsElement,
     signals,
     colors,
-    vecsResources,
+    resources,
     id: `return-ratio`,
     fitContent: true,
-    utils,
-    elements,
     config: [
       {
         unit: "usd",
@@ -820,9 +808,7 @@ export function init({
     colors,
     id: `simulation-profitability-ratios`,
     fitContent: true,
-    vecsResources,
-    utils,
-    elements,
+    resources,
     config: [
       {
         unit: "percentage",
@@ -844,8 +830,8 @@ export function init({
     ],
   });
 
-  vecsResources
-    .getOrCreate(/** @satisfies {DateIndex} */ (0), "price_close")
+  resources.metrics
+    .getOrCreate("price_close", "dateindex")
     .fetch()
     .then((_closes) => {
       if (!_closes) return;
@@ -1055,11 +1041,11 @@ export function init({
               });
             });
 
-            const f = utils.locale.numberToUSFormat;
+            const f = numberToUSNumber;
             /** @param {number} v */
-            const fd = (v) => utils.formatters.dollars.format(v);
+            const fd = (v) => numberToDollars.format(v);
             /** @param {number} v */
-            const fp = (v) => utils.formatters.percentage.format(v);
+            const fp = (v) => numberToPercentage.format(v);
             /**
              * @param {ColorName} c
              * @param {string} t
@@ -1097,45 +1083,6 @@ export function init({
             );
 
             p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
-
-            signals.createEffect(
-              () => 0.073,
-              (lowestAnnual4YReturn) => {
-                const serLowestAnnual4YReturn = c(
-                  "cyan",
-                  `${fp(lowestAnnual4YReturn)}`,
-                );
-
-                const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
-                /**
-                 * @param {number} power
-                 */
-                function bitcoinValueReturn(power) {
-                  return (
-                    bitcoinValue *
-                    Math.pow(lowestAnnual4YReturnPercentage, power)
-                  );
-                }
-                const bitcoinValueAfter4y = bitcoinValueReturn(4);
-                const serBitcoinValueAfter4y = c(
-                  "purple",
-                  fd(bitcoinValueAfter4y),
-                );
-                const bitcoinValueAfter10y = bitcoinValueReturn(10);
-                const serBitcoinValueAfter10y = c(
-                  "fuchsia",
-                  fd(bitcoinValueAfter10y),
-                );
-                const bitcoinValueAfter21y = bitcoinValueReturn(21);
-                const serBitcoinValueAfter21y = c(
-                  "pink",
-                  fd(bitcoinValueAfter21y),
-                );
-
-                /** @param {number} v */
-                p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
-              },
-            );
 
             totalInvestedAmountData.set((a) => a);
             bitcoinValueData.set((a) => a);

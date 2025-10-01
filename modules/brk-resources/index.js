@@ -1,17 +1,20 @@
 /**
  * @import { Signal, Signals } from "../brk-signals/index";
+ * @import { BRK } from '../brk-client/index'
+ * @import { Metric } from '../brk-client/metrics'
+ * @import { IndexName } from '../brk-client/generated/metrics'
  */
 
 /**
- * @typedef {ReturnType<createResources>} BRKResources
- * @typedef {ReturnType<BRKResources["metrics"]["getOrCreate"]>} BRKMetricResource
+ * @typedef {ReturnType<typeof createResources>} Resources
+ * @typedef {ReturnType<Resources["metrics"]["getOrCreate"]>} MetricResource
  */
 
 /**
- * @param {BRKClient} client
+ * @param {BRK} brk
  * @param {Signals} signals
  */
-export function createResources(client, signals) {
+export function createResources(brk, signals) {
   const owner = signals.getOwner();
 
   const defaultFrom = -10_000;
@@ -29,10 +32,10 @@ export function createResources(client, signals) {
   /**
    * @template T
    * @param {Metric} metric
-   * @param {Index} index
+   * @param {IndexName} index
    */
   function createMetricResource(metric, index) {
-    if (client.hasMetric(metric)) {
+    if (!brk.hasMetric(metric)) {
       throw Error(`${metric} is invalid`);
     }
 
@@ -44,7 +47,7 @@ export function createResources(client, signals) {
       );
 
       return {
-        url: client.genMetricURL(metric, index, defaultFrom),
+        url: brk.genMetricURL(metric, index, defaultFrom),
         fetched: fetchedRecord,
         /**
          * Defaults
@@ -81,7 +84,7 @@ export function createResources(client, signals) {
           }
           fetched.loading = true;
           const res = /** @type {T[] | null} */ (
-            await client.fetchMetric(
+            await brk.fetchMetric(
               (data) => {
                 if (data.length || !fetched.data()) {
                   fetched.data.set(data);
@@ -108,7 +111,7 @@ export function createResources(client, signals) {
     /**
      * @template T
      * @param {Metric} metric
-     * @param {Index} index
+     * @param {IndexName} index
      */
     getOrCreate(metric, index) {
       const key = `${metric}/${index}`;

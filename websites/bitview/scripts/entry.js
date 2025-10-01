@@ -1,31 +1,33 @@
 /**
+ * @import * as _ from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
+ *
+ * @import { Signal, Signals, Accessor } from "./modules/brk-signals/index";
+ *
+ * @import { BRK } from "./modules/brk-client/index.js"
+ * @import { Metric, MetricToIndexes } from "./modules/brk-client/metrics"
+ * @import { IndexName } from "./modules/brk-client/generated/metrics"
+ * @import { PoolId, PoolIdToPoolName } from "./modules/brk-client/generated/pools"
+ *
+ * @import { Resources, MetricResource } from './modules/brk-resources/index.js'
  *
  * @import { Valued, SingleValueData, CandlestickData, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./core/chart/index"
  *
- * @import * as _ from "./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
- *
- * @import { SerializedChartableIndex } from "./panes/chart";
- *
- * @import { Signal, Signals, Accessor } from "./packages/solidjs-signals/wrapper";
- *
- * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, WeekIndex, SemesterIndex, YearIndex, MetricToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex, EmptyAddressIndex, LoadedAddressIndex } from "./bridge/vecs"
- *
- * @import { Pools, Pool } from "./bridge/pools"
- *
  * @import { Color, ColorName, Colors } from "./core/colors"
- *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree } from "./core/options/partial"
  *
  * @import { WebSockets } from "./core/ws"
  *
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree } from "./core/options/partial"
+ *
  * @import { Unit } from "./core/serde"
+ *
+ * @import { ChartableIndexName } from "./panes/chart/index.js";
  */
 
+// import uFuzzy = require("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts");
+
 /**
- * @typedef {typeof import("./lazy")["default"]} Packages
- * @typedef {typeof import("./core/utils")} Utilities
- * @typedef {typeof import("./core/env")["default"]} Env
- * @typedef {typeof import("./core/elements")["default"]} Elements
+ * @typedef {typeof import("./lazy")["default"]} Modules
+ * @typedef {[number, number, number, number]} OHLCTuple
  */
 
 // DO NOT CHANGE, Exact format is expected in `brk_bundler`
