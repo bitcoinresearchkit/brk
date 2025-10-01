@@ -3,6 +3,7 @@ use std::fmt;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 
 #[derive(Debug, Deref, JsonSchema)]
 pub struct MaybeIds(Vec<String>);
@@ -27,26 +28,26 @@ impl<'de> Deserialize<'de> for MaybeIds {
     where
         D: serde::Deserializer<'de>,
     {
-        match serde_json::Value::deserialize(deserializer)? {
-            serde_json::Value::String(str) => {
-                if str.len() <= MAX_STRING_SIZE {
-                    Ok(MaybeIds(sanitize_ids(
-                        str.split(",").map(|s| s.to_string()),
-                    )))
-                } else {
-                    Err(serde::de::Error::custom("Given parameter is too long"))
-                }
+        let value = Value::deserialize(deserializer)?;
+
+        if let Some(str) = value.as_str() {
+            if str.len() <= MAX_STRING_SIZE {
+                Ok(MaybeIds(sanitize_ids(
+                    str.split(",").map(|s| s.to_string()),
+                )))
+            } else {
+                Err(serde::de::Error::custom("Given parameter is too long"))
             }
-            serde_json::Value::Array(vec) => {
-                if vec.len() <= MAX_VECS {
-                    Ok(MaybeIds(sanitize_ids(
-                        vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
-                    )))
-                } else {
-                    Err(serde::de::Error::custom("Given parameter is too long"))
-                }
+        } else if let Some(vec) = value.as_array() {
+            if vec.len() <= MAX_VECS {
+                Ok(MaybeIds(sanitize_ids(
+                    vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
+                )))
+            } else {
+                Err(serde::de::Error::custom("Given parameter is too long"))
             }
-            _ => Err(serde::de::Error::custom("Bad ids format")),
+        } else {
+            Err(serde::de::Error::custom("Bad ids format"))
         }
     }
 }

@@ -3,6 +3,11 @@ import {
   COMPRESSED_METRIC_TO_INDEXES,
 } from "./generated/metrics";
 
+/**
+ * @typedef {typeof import("./generated/metrics")["COMPRESSED_METRIC_TO_INDEXES"]} MetricToIndexes
+ * @typedef {string} Metric
+ */
+
 /** @type {Record<string, number>} */
 const WORD_TO_INDEX = {};
 
@@ -13,7 +18,7 @@ INDEX_TO_WORD.forEach((word, index) => {
 /**
  * @param {Metric} metric
  */
-export function metricToIndexes(metric) {
+export function getIndexesFromMetric(metric) {
   return COMPRESSED_METRIC_TO_INDEXES[compressMetric(metric)];
 }
 

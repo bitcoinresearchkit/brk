@@ -9,7 +9,7 @@ use std::{
 };
 
 use bitcoincore_rpc::{self, RpcApi};
-use brk_bridge::Bridge;
+use brk_binder::Bridge;
 use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_error::Result;
@@ -63,19 +63,19 @@ pub fn run() -> color_eyre::Result<()> {
     let future = async move {
         let bundle_path = if website.is_some() {
             let websites_dev_path = Path::new("../../websites");
-            let packages_dev_path = Path::new("../../packages");
+            let modules_dev_path = Path::new("../../modules");
 
             let websites_path;
-            let packages_path;
+            let modules_path;
 
-            if fs::exists(websites_dev_path)? && fs::exists(packages_dev_path)? {
+            if fs::exists(websites_dev_path)? && fs::exists(modules_dev_path)? {
                 websites_path = websites_dev_path.to_path_buf();
-                packages_path = packages_dev_path.to_path_buf();
+                modules_path = modules_dev_path.to_path_buf();
             } else {
                 let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
 
                 let downloaded_websites_path = downloaded_brk_path.join("websites");
-                let downloaded_packages_path = downloaded_brk_path.join("packages");
+                let downloaded_modules_path = downloaded_brk_path.join("modules");
 
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading source from Github...");
@@ -94,14 +94,14 @@ pub fn run() -> color_eyre::Result<()> {
                 }
 
                 websites_path = downloaded_websites_path;
-                packages_path = downloaded_packages_path;
+                modules_path = downloaded_modules_path;
             }
 
-            interface.generate_js_files(&packages_path)?;
+            interface.generate_js_files(&modules_path)?;
 
             Some(
                 bundle(
-                    &packages_path,
+                    &modules_path,
                     &websites_path,
                     website.to_folder_name(),
                     true,

@@ -3,7 +3,7 @@
  * @param {number} [digits]
  * @param {Intl.NumberFormatOptions} [options]
  */
-function numberToUSFormat(value, digits, options) {
+export function numberToUSNumber(value, digits, options) {
   return value.toLocaleString("en-us", {
     ...options,
     minimumFractionDigits: digits,
@@ -11,23 +11,18 @@ function numberToUSFormat(value, digits, options) {
   });
 }
 
-export const locale = {
-  numberToUSFormat,
-};
+export const numberToDollars = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
-export const formatters = {
-  dollars: new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }),
-  percentage: new Intl.NumberFormat("en-US", {
-    style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }),
-};
+export const numberToPercentage = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 /**
  * @param {string} s

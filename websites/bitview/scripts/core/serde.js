@@ -113,59 +113,57 @@ export const serdeBool = {
 
 export const serdeChartableIndex = {
   /**
-   * @param {number} v
-   * @returns {SerializedChartableIndex | null}
+   * @param {IndexName} v
+   * @returns {ChartableIndexName | null}
    */
   serialize(v) {
     switch (v) {
-      case /** @satisfies {DateIndex} */ (0):
+      case "dateindex":
         return "date";
-      case /** @satisfies {DecadeIndex} */ (1):
+      case "decadeindex":
         return "decade";
-      case /** @satisfies {DifficultyEpoch} */ (2):
+      case "difficultyepoch":
         return "epoch";
-      // case /** @satisfies {HalvingEpoch} */ (4):
-      //   return "halving";
-      case /** @satisfies {Height} */ (5):
+      case "height":
         return "timestamp";
-      case /** @satisfies {MonthIndex} */ (7):
+      case "monthindex":
         return "month";
-      case /** @satisfies {QuarterIndex} */ (19):
+      case "quarterindex":
         return "quarter";
-      case /** @satisfies {SemesterIndex} */ (20):
+      case "semesterindex":
         return "semester";
-      case /** @satisfies {WeekIndex} */ (23):
+      case "weekindex":
         return "week";
-      case /** @satisfies {YearIndex} */ (24):
+      case "yearindex":
         return "year";
       default:
         return null;
     }
   },
   /**
-   * @param {SerializedChartableIndex} v
-   * @returns {Index}
+   * @param {ChartableIndexName} v
+   * @returns {IndexName}
    */
   deserialize(v) {
     switch (v) {
       case "timestamp":
-        return /** @satisfies {Height} */ (5);
+        return "height";
       case "date":
-        return /** @satisfies {DateIndex} */ (0);
+        return "dateindex";
       case "week":
-        return /** @satisfies {WeekIndex} */ (23);
+        return "weekindex";
       case "epoch":
-        return /** @satisfies {DifficultyEpoch} */ (2);
+        return "difficultyepoch";
       case "month":
-        return /** @satisfies {MonthIndex} */ (7);
+        return "monthindex";
       case "quarter":
-        return /** @satisfies {QuarterIndex} */ (19);
+        return "quarterindex";
       case "semester":
-        return /** @satisfies {SemesterIndex} */ (20);
+        return "semesterindex";
       case "year":
-        return /** @satisfies {YearIndex} */ (24);
+        return "yearindex";
       case "decade":
-        return /** @satisfies {DecadeIndex} */ (1);
+        return "decadeindex";
       default:
         throw Error("todo");
     }

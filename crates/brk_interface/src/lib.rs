@@ -27,7 +27,7 @@ pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginationParam};
-pub use params::{IdParam, Params, ParamsOpt};
+pub use params::{Params, ParamsOpt};
 use vecs::Vecs;
 
 use crate::vecs::{IndexToVec, MetricToVec};
@@ -222,16 +222,16 @@ impl<'a> Interface<'a> {
         &self.vecs.index_to_metric_to_vec
     }
 
-    pub fn get_metric_count(&self) -> usize {
+    pub fn distinct_metric_count(&self) -> usize {
         self.vecs.metric_count
     }
 
-    pub fn get_index_count(&self) -> usize {
-        self.vecs.index_count
+    pub fn total_metric_count(&self) -> usize {
+        self.vecs.vec_count
     }
 
-    pub fn get_vec_count(&self) -> usize {
-        self.vecs.vec_count
+    pub fn index_count(&self) -> usize {
+        self.vecs.index_count
     }
 
     pub fn get_indexes(&self) -> &[&'static str] {
@@ -250,8 +250,8 @@ impl<'a> Interface<'a> {
         self.vecs.index_to_ids(paginated_index)
     }
 
-    pub fn get_vecid_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
-        self.vecs.id_to_indexes(id)
+    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<&'static str>> {
+        self.vecs.metric_to_indexes(metric)
     }
 
     pub fn parser(&self) -> &Parser {

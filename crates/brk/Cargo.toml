@@ -11,6 +11,7 @@ build = "build.rs"
 
 [features]
 full = [
+    "binder",
     "bundler",
     "computer",
     "error",
@@ -24,6 +25,7 @@ full = [
     "store",
     "structs",
 ]
+binder = ["brk_binder"]
 bundler = ["brk_bundler"]
 computer = ["brk_computer"]
 error = ["brk_error"]
@@ -38,6 +40,7 @@ store = ["brk_store"]
 structs = ["brk_structs"]
 
 [dependencies]
+brk_binder = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
 brk_cli = { workspace = true }
 brk_computer = { workspace = true, optional = true }

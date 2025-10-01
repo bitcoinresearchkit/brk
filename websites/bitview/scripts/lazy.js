@@ -1,27 +1,27 @@
 const imports = {
   async signals() {
-    return import("./packages/solidjs-signals/index.js").then((d) => d.default);
+    return import("./modules/brk-signals/index.js").then((d) => d.default);
   },
+  async leanQr() {
+    return import("./modules/lean-qr/2.6.0/index.mjs").then((d) => d);
+  },
+  async ufuzzy() {
+    return import("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs").then(
+      ({ default: d }) => d,
+    );
+  },
+  async brkClient() {
+    return import("./modules/brk-client/index.js").then((d) => d);
+  },
+  async brkResources() {
+    return import("./modules/brk-resources/index.js").then((d) => d);
+  },
+
   async chart() {
     return window.document.fonts.ready.then(() =>
       import("./core/chart/index.js").then((d) => d.default),
     );
   },
-  async leanQr() {
-    return import("./packages/lean-qr/2.5.0/index.mjs").then((d) => d);
-  },
-  async ufuzzy() {
-    return import("./packages/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs").then(
-      ({ default: d }) => d,
-    );
-  },
-  async modernScreenshot() {
-    return import("./packages/modern-screenshot/index.js").then((d) => d);
-  },
-  async brk() {
-    return import("./packages/brk/index.js").then((d) => d);
-  },
-
   async options() {
     return import("./core/options/full.js").then((d) => d);
   },

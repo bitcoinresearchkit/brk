@@ -1,6 +1,6 @@
 [package]
-name = "brk_bridge"
-description = "A generator of bridge files for other languages"
+name = "brk_binder"
+description = "A generator of binding files for other languages"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,18 +1,25 @@
+/**
+ * @import { IndexName } from "./generated/metrics"
+ * @import { Metric } from './metrics'
+ *
+ * @typedef {ReturnType<createClient>} BRK
+ */
+
+// client.metrics.catalog.a.b.c() -> string (uncompress inside)
+
 import { runWhenIdle } from "./idle";
 
 import { POOL_ID_TO_POOL_NAME } from "./generated/pools";
-import { hasMetric, metricToIndexes } from "./metrics";
-
-/**
- * @typedef {ReturnType<createClient>} BRKClient
- */
+import { INDEXES } from "./generated/metrics";
+import { hasMetric, getIndexesFromMetric } from "./metrics";
+import { VERSION } from "./generated/version";
 
 const CACHE_NAME = "__BRK_CLIENT__";
 
 /**
- * @param {string} [origin] - defaults to /
+ * @param {string} origin
  */
-export function createClient(origin = "/") {
+export function createClient(origin) {
   /**
    * @template T
    * @param {(value: T) => void} callback
@@ -80,7 +87,7 @@ export function createClient(origin = "/") {
 
   /**
    * @param {Metric} metric
-   * @param {Index} index
+   * @param {IndexName} index
    * @param {number} [from]
    * @param {number} [to]
    */
@@ -102,7 +109,7 @@ export function createClient(origin = "/") {
   /**
    * @template T
    * @param {(v: T[]) => void} callback
-   * @param {Index} index
+   * @param {IndexName} index
    * @param {Metric} metric
    * @param {number} [from]
    * @param {number} [to]
@@ -112,9 +119,12 @@ export function createClient(origin = "/") {
   }
 
   return {
+    VERSION,
     POOL_ID_TO_POOL_NAME,
+    INDEXES,
+
     hasMetric,
-    metricToIndexes,
+    getIndexesFromMetric,
 
     genMetricURL,
     fetchMetric,

@@ -15,12 +15,12 @@ const AUTO_GENERATED_DISCLAIMER: &str = "//
 
 #[allow(clippy::upper_case_acronyms)]
 pub trait Bridge {
-    fn generate_js_files(&self, packages_path: &Path) -> io::Result<()>;
+    fn generate_js_files(&self, modules_path: &Path) -> io::Result<()>;
 }
 
 impl Bridge for Interface<'static> {
-    fn generate_js_files(&self, packages_path: &Path) -> io::Result<()> {
-        let path = packages_path.join("brk-client");
+    fn generate_js_files(&self, modules_path: &Path) -> io::Result<()> {
+        let path = modules_path.join("brk-client");
 
         if !fs::exists(&path)? {
             return Ok(());
@@ -36,7 +36,7 @@ impl Bridge for Interface<'static> {
 }
 
 fn generate_version_file(parent: &Path) -> io::Result<()> {
-    let path = parent.join(Path::new("metrics.js"));
+    let path = parent.join(Path::new("version.js"));
 
     let contents = format!(
         "{AUTO_GENERATED_DISCLAIMER}
@@ -89,28 +89,38 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
     let mut contents = format!(
         "{AUTO_GENERATED_DISCLAIMER}
 
+export const INDEXES = /** @type {{const}} */ ([
+{}
+]);
+
 /**
-"
-    );
-
-    contents += &indexes
-        .iter()
-        .map(|i| format!(" * @typedef {{\"{}\"}} {i}", i.serialize_long()))
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    contents += &format!(
-        "
- * @typedef {{{}}} Index
+ * @typedef {{typeof INDEXES[number]}} IndexName
  */
-
 ",
         indexes
             .iter()
-            .map(|i| i.to_string())
+            .map(|i| format!("  \"{}\"", i.serialize_long()))
             .collect::<Vec<_>>()
-            .join(" | ")
+            .join(",\n")
     );
+
+    // contents += &indexes
+    //     .iter()
+    //     .map(|i| format!(" * @typedef {{\"{}\"}} {i}", i.serialize_long()))
+    //     .collect::<Vec<_>>()
+    //     .join("\n");
+
+    //     contents += &format!(
+    //         "
+    //  * @typedef {{{}}} Index
+    //  */
+    // ",
+    //         indexes
+    //             .iter()
+    //             .map(|i| i.to_string())
+    //             .collect::<Vec<_>>()
+    //             .join(" | ")
+    //     );
 
     let mut unique_index_groups = BTreeMap::new();
 
@@ -131,16 +141,18 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
         .collect::<Vec<_>>();
 
     contents += &format!(
-        "export const INDEX_TO_WORD = [
+        "
+export const INDEX_TO_WORD = [
   {}
 ];
 
 ",
         words
             .iter()
-            .map(|w| format!("\"{w}\""))
+            .enumerate()
+            .map(|(index, word)| format!("\"{word}\", // {}", index_to_letters(index)))
             .collect::<Vec<_>>()
-            .join(",\n  ")
+            .join("\n  ")
     );
 
     let word_to_base62 = words
@@ -150,7 +162,7 @@ fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::R
         .collect::<HashMap<_, _>>();
 
     let mut ser_metric_to_indexes = "
-/** @type {Record<string, Index[]>} */
+/** @type {Record<string, IndexName[]>} */
 export const COMPRESSED_METRIC_TO_INDEXES = {
 "
     .to_string();
@@ -186,7 +198,7 @@ export const COMPRESSED_METRIC_TO_INDEXES = {
     sorted_groups.sort_by_key(|(_, index)| *index);
     sorted_groups.into_iter().for_each(|(group, index)| {
         let index = index_to_letters(index);
-        contents += &format!("/** @type {{Index[]}} */\nconst {index} = {group};\n");
+        contents += &format!("/** @type {{IndexName[]}} */\nconst {index} = {group};\n");
     });
 
     contents += &ser_metric_to_indexes;

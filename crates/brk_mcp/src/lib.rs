@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
+use brk_interface::{Interface, PaginatedIndexParam, PaginationParam, Params};
 use brk_rmcp::{
     ErrorData as McpError, RoleServer, ServerHandler,
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
@@ -9,6 +9,8 @@ use brk_rmcp::{
     tool, tool_handler, tool_router,
 };
 use log::info;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 pub mod route;
 
@@ -35,7 +37,7 @@ Get the count of all existing indexes.
     async fn get_index_count(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_index_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_index_count()).unwrap(),
+            Content::json(self.interface.index_count()).unwrap(),
         ]))
     }
 
@@ -45,7 +47,7 @@ Get the count of all existing metrics.
     async fn get_metric_count(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_metric_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_metric_count()).unwrap(),
+            Content::json(self.interface.distinct_metric_count()).unwrap(),
         ]))
     }
 
@@ -56,7 +58,7 @@ Equals to the sum of supported Indexes of each vec id.
     async fn get_vec_count(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vec_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_vec_count()).unwrap(),
+            Content::json(self.interface.total_metric_count()).unwrap(),
         ]))
     }
 
@@ -120,7 +122,7 @@ The list will be empty if the vec id isn't correct.
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecid_to_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_vecid_to_indexes(param.id)).unwrap(),
+            Content::json(self.interface.metric_to_indexes(param.id)).unwrap(),
         ]))
     }
 
@@ -185,4 +187,9 @@ An 'Index' (or indexes) is the timeframe of a dataset.
     ) -> Result<InitializeResult, McpError> {
         Ok(self.get_info())
     }
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct IdParam {
+    pub id: String,
 }

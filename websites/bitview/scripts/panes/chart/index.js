@@ -2,9 +2,11 @@ import {
   createShadow,
   createHorizontalChoiceField,
   createHeader,
-} from "../core/dom";
-import { serdeChartableIndex, serdeOptNumber } from "../core/serde";
-import { throttle } from "../core/timing";
+} from "../../core/dom";
+import { chartElement } from "../../core/elements";
+import { ios, canShare } from "../../core/env";
+import { serdeChartableIndex, serdeOptNumber } from "../../core/serde";
+import { throttle } from "../../core/timing";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -13,7 +15,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "epoch" | "month" | "quarter" | "semester" | "year" | "decade" } SerializedChartableIndex
+ * @typedef {"timestamp" | "date" | "week" | "epoch" | "month" | "quarter" | "semester" | "year" | "decade" } ChartableIndexName
  */
 
 /**
@@ -22,38 +24,29 @@ const CANDLE = "candle";
  * @param {CreateChartElement} args.createChartElement
  * @param {Accessor<ChartOption>} args.option
  * @param {Signals} args.signals
- * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
- * @param {Elements} args.elements
- * @param {Env} args.env
- * @param {VecsResources} args.vecsResources
- * @param {MetricToIndexes} args.metricToIndexes
- * @param {Packages} args.packages
+ * @param {Resources} args.resources
+ * @param {BRK} args.brk
  */
 export function init({
   colors,
-  elements,
   createChartElement,
   option,
   signals,
-  utils,
-  env,
   webSockets,
-  vecsResources,
-  metricToIndexes,
-  packages,
+  resources,
+  brk,
 }) {
-  elements.charts.append(createShadow("left"));
-  elements.charts.append(createShadow("right"));
+  chartElement.append(createShadow("left"));
+  chartElement.append(createShadow("right"));
 
   const { headerElement, headingElement } = createHeader();
-  elements.charts.append(headerElement);
+  chartElement.append(headerElement);
 
   const { index, fieldset } = createIndexSelector({
     option,
-    metricToIndexes,
+    brk,
     signals,
-    utils,
   });
 
   const TIMERANGE_LS_KEY = signals.createMemo(
@@ -80,13 +73,11 @@ export function init({
   });
 
   const chart = createChartElement({
-    parent: elements.charts,
+    parent: chartElement,
     signals,
     colors,
     id: "charts",
-    utils,
-    vecsResources,
-    elements,
+    resources,
     index,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
       // TODO: Although it mostly works in practice, need to make it more robust, there is no guarantee that this runs in order and wait for `from` and `to` to update when `index` and thus `TIMERANGE_LS_KEY` is updated
@@ -105,12 +96,11 @@ export function init({
     },
   });
 
-  if (!(env.ios && !("canShare" in navigator))) {
+  if (!(ios && !canShare)) {
     const chartBottomRightCanvas = Array.from(
       chart.inner.chartElement().getElementsByTagName("tr"),
     ).at(-1)?.lastChild?.firstChild?.firstChild;
     if (chartBottomRightCanvas) {
-      const charts = elements.charts;
       const domain = window.document.createElement("p");
       domain.innerText = `${window.location.host}`;
       domain.id = "domain";
@@ -121,20 +111,20 @@ export function init({
       screenshotButton.title = "Screenshot";
       chartBottomRightCanvas.replaceWith(screenshotButton);
       screenshotButton.addEventListener("click", () => {
-        packages.modernScreenshot().then(async ({ screenshot }) => {
-          charts.dataset.screenshot = "true";
-          charts.append(domain);
+        import("./screenshot").then(async ({ screenshot }) => {
+          chartElement.dataset.screenshot = "true";
+          chartElement.append(domain);
           seriesTypeField.hidden = true;
           try {
             await screenshot({
-              element: charts,
+              element: chartElement,
               name: option().path.join("-"),
               title: option().title,
             });
           } catch {}
-          charts.removeChild(domain);
+          chartElement.removeChild(domain);
           seriesTypeField.hidden = false;
-          charts.dataset.screenshot = "false";
+          chartElement.dataset.screenshot = "false";
         });
       });
     }
@@ -148,7 +138,7 @@ export function init({
     }, 250),
   );
 
-  elements.charts.append(fieldset);
+  chartElement.append(fieldset);
 
   const { field: seriesTypeField, selected: topSeriesType_ } =
     createHorizontalChoiceField({
@@ -205,7 +195,7 @@ export function init({
    * @param {Object} params
    * @param {ISeries} params.iseries
    * @param {Unit} params.unit
-   * @param {Index} params.index
+   * @param {IndexName} params.index
    */
   function printLatest({ iseries, unit, index }) {
     const _latest = webSockets.kraken1dCandle.latest();
@@ -234,9 +224,9 @@ export function init({
     const date = new Date(latest.time * 1000);
 
     switch (index) {
-      case /** @satisfies {Height} */ (5):
-      case /** @satisfies {DifficultyEpoch} */ (2):
-      case /** @satisfies {HalvingEpoch} */ (4): {
+      case "height":
+      case "difficultyepoch":
+      case "halvingepoch": {
         if ("close" in last) {
           last.low = Math.min(last.low, latest.close);
           last.high = Math.max(last.high, latest.close);
@@ -244,24 +234,24 @@ export function init({
         iseries.update(last);
         break;
       }
-      case /** @satisfies {DateIndex} */ (0): {
+      case "dateindex": {
         iseries.update(last);
         break;
       }
       default: {
-        if (index === /** @satisfies {WeekIndex} */ (23)) {
+        if (index === "weekindex") {
           date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-        } else if (index === /** @satisfies {MonthIndex} */ (7)) {
+        } else if (index === "monthindex") {
           date.setUTCDate(1);
-        } else if (index === /** @satisfies {QuarterIndex} */ (19)) {
+        } else if (index === "quarterindex") {
           const month = date.getUTCMonth();
           date.setUTCMonth(month - (month % 3), 1);
-        } else if (index === /** @satisfies {SemesterIndex} */ (20)) {
+        } else if (index === "semesterindex") {
           const month = date.getUTCMonth();
           date.setUTCMonth(month - (month % 6), 1);
-        } else if (index === /** @satisfies {YearIndex} */ (24)) {
+        } else if (index === "yearindex") {
           date.setUTCMonth(0, 1);
-        } else if (index === /** @satisfies {DecadeIndex} */ (1)) {
+        } else if (index === "decadeindex") {
           date.setUTCFullYear(
             Math.floor(date.getUTCFullYear() / 10) * 10,
             0,
@@ -446,9 +436,7 @@ export function init({
             blueprints[unit]?.forEach((blueprint, order) => {
               order += orderStart;
 
-              const indexes = /** @type {readonly number[]} */ (
-                metricToIndexes[blueprint.metric]
-              );
+              const indexes = brk.getIndexesFromMetric(blueprint.metric);
 
               if (indexes.includes(index)) {
                 switch (blueprint.type) {
@@ -519,12 +507,11 @@ export function init({
 /**
  * @param {Object} args
  * @param {Accessor<ChartOption>} args.option
- * @param {MetricToIndexes} args.metricToIndexes
+ * @param {BRK} args.brk
  * @param {Signals} args.signals
- * @param {Utilities} args.utils
  */
-function createIndexSelector({ option, metricToIndexes, signals, utils }) {
-  const choices_ = /** @satisfies {SerializedChartableIndex[]} */ ([
+function createIndexSelector({ option, brk, signals }) {
+  const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
     "timestamp",
     "date",
     "week",
@@ -548,7 +535,7 @@ function createIndexSelector({ option, metricToIndexes, signals, utils }) {
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
         .filter((blueprint) => !blueprint.metric.startsWith("constant_"))
-        .map((blueprint) => metricToIndexes[blueprint.metric])
+        .map((blueprint) => brk.getIndexesFromMetric(blueprint.metric))
         .flat(),
     );
 

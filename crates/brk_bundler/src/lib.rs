@@ -6,7 +6,10 @@ use std::{
     sync::Arc,
 };
 
-use brk_rolldown::{Bundler, BundlerOptions, RawMinifyOptions, SourceMapType};
+use brk_rolldown::{
+    Bundler, BundlerOptions, InlineConstConfig, InlineConstMode, InlineConstOption,
+    OptimizationOption, RawMinifyOptions, SourceMapType,
+};
 use log::error;
 use notify::{EventKind, RecursiveMode, Watcher};
 use sugar_path::SugarPath;
@@ -15,17 +18,17 @@ use tokio::sync::Mutex;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub async fn bundle(
-    packages_path: &Path,
+    modules_path: &Path,
     websites_path: &Path,
     source_folder: &str,
     watch: bool,
 ) -> io::Result<PathBuf> {
-    let relative_packages_path = packages_path;
+    let relative_modules_path = modules_path;
     let relative_source_path = websites_path.join(source_folder);
     let relative_dist_path = websites_path.join("dist");
 
-    let absolute_packages_path = relative_packages_path.absolutize();
-    let absolute_packages_path_clone = absolute_packages_path.clone();
+    let absolute_modules_path = relative_modules_path.absolutize();
+    let absolute_modules_path_clone = absolute_modules_path.clone();
     let absolute_websites_path = websites_path.absolutize();
     let absolute_websites_path_clone = absolute_websites_path.clone();
 
@@ -33,7 +36,7 @@ pub async fn bundle(
     let absolute_source_index_path = absolute_source_path.join("index.html");
     let absolute_source_index_path_clone = absolute_source_index_path.clone();
     let absolute_source_scripts_path = absolute_source_path.join("scripts");
-    let absolute_source_scripts_packages_path = absolute_source_scripts_path.join("packages");
+    let absolute_source_scripts_modules_path = absolute_source_scripts_path.join("modules");
     let absolute_source_sw_path = absolute_source_path.join("service-worker.js");
     let absolute_source_sw_path_clone = absolute_source_sw_path.clone();
 
@@ -45,14 +48,16 @@ pub async fn bundle(
     let absolute_dist_sw_path = absolute_dist_path.join("service-worker.js");
 
     let _ = fs::remove_dir_all(&absolute_dist_path);
-    let _ = fs::remove_dir_all(&absolute_source_scripts_packages_path);
+    let _ = fs::remove_dir_all(&absolute_source_scripts_modules_path);
     copy_dir_all(
-        &absolute_packages_path,
-        &absolute_source_scripts_packages_path,
+        &absolute_modules_path,
+        &absolute_source_scripts_modules_path,
     )?;
     copy_dir_all(&absolute_source_path, &absolute_dist_path)?;
     fs::remove_dir_all(&absolute_dist_scripts_path)?;
     fs::create_dir(&absolute_dist_scripts_path)?;
+
+    // dbg!(BundlerOptions::default());
 
     let mut bundler = Bundler::new(BundlerOptions {
         input: Some(vec![format!("./{source_folder}/scripts/entry.js").into()]),
@@ -60,6 +65,28 @@ pub async fn bundle(
         cwd: Some(absolute_websites_path),
         minify: Some(RawMinifyOptions::Bool(true)),
         sourcemap: Some(SourceMapType::File),
+        // advanced_chunks: Some(AdvancedChunksOptions {
+        //     // min_size: Some(1000.0),
+        //     min_share_count: Some(20),
+        //     // min_module_size: S
+        //     // include_dependencies_recursively: Some(true),
+        //     ..Default::default()
+        // }),
+        //
+        // inline_dynamic_imports
+        // experimental: Some(ExperimentalOptions {
+        //     strict_execution_order: Some(true),
+        //     ..Default::default()
+        // }),
+        optimization: Some(OptimizationOption {
+            inline_const: Some(InlineConstOption::Config(InlineConstConfig {
+                mode: Some(InlineConstMode::All),
+                ..Default::default()
+            })),
+            // Needs benchmarks
+            // pife_for_module_wrappers: Some(true),
+            ..Default::default()
+        }),
         ..Default::default()
     })
     .unwrap();
@@ -114,12 +141,11 @@ pub async fn bundle(
                         update_dist_index();
                     } else if path == absolute_source_sw_path_clone {
                         update_source_sw();
-                    } else if let Ok(suffix) = path.strip_prefix(&absolute_packages_path) {
-                        let source_packages_path =
-                            absolute_source_scripts_packages_path.join(suffix);
+                    } else if let Ok(suffix) = path.strip_prefix(&absolute_modules_path) {
+                        let source_modules_path = absolute_source_scripts_modules_path.join(suffix);
                         if path.is_file() {
                             let _ = fs::create_dir_all(path.parent().unwrap());
-                            let _ = fs::copy(&path, &source_packages_path);
+                            let _ = fs::copy(&path, &source_modules_path);
                         }
                     } else if let Ok(suffix) = path.strip_prefix(&absolute_source_path)
                         // scripts are handled by rolldown
@@ -141,7 +167,7 @@ pub async fn bundle(
             .watch(&absolute_websites_path_clone, RecursiveMode::Recursive)
             .unwrap();
         event_watcher
-            .watch(&absolute_packages_path_clone, RecursiveMode::Recursive)
+            .watch(&absolute_modules_path_clone, RecursiveMode::Recursive)
             .unwrap();
 
         let watcher =

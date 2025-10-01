@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
 
+#[cfg(feature = "binder")]
+#[doc(inline)]
+pub use brk_binder as binder;
+
 #[cfg(feature = "bundler")]
 #[doc(inline)]
 pub use brk_bundler as bundler;

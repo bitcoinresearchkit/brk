@@ -17,7 +17,9 @@ brk_rmcp = { version = "0.7.1", features = [
     "transport-streamable-http-server",
 ] }
 log = { workspace = true }
-serde_json = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 
 [package.metadata.cargo-machete]
 ignored = ["serde_json"]

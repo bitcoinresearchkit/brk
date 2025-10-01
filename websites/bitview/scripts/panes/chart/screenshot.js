@@ -1,9 +1,5 @@
-import { domToBlob } from "./4.6.6/dist/index.mjs";
-
-const userAgent = navigator.userAgent.toLowerCase();
-const iphone = userAgent.includes("iphone");
-const ipad = userAgent.includes("ipad");
-const ios = iphone || ipad;
+import { ios } from "../../core/env";
+import { domToBlob } from "../../modules/modern-screenshot/4.6.6/dist/index.mjs";
 
 /**
  * @param {Object} args

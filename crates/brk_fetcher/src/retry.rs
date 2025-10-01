@@ -22,6 +22,7 @@ where
         if i == retries || res.is_ok() {
             return res;
         } else {
+            let _ = dbg!(res);
             info!("Failed, waiting {sleep_in_s} seconds...");
             sleep(Duration::from_secs(sleep_in_s));
         }

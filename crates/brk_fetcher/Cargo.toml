@@ -15,4 +15,4 @@ brk_logger = { workspace = true }
 brk_structs = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-serde_json = { workspace = true }
+sonic-rs = { workspace = true }

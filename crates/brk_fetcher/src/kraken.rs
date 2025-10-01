@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use brk_error::{Error, Result};
 use brk_structs::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
-use serde_json::Value;
+use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 
 use crate::{Fetcher, default_retry};
 
@@ -36,7 +36,9 @@ impl Kraken {
         info!("Fetching 1mn prices from Kraken...");
 
         default_retry(|_| {
-            Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url(1)).send()?.json()?)
+            Self::json_to_timestamp_to_ohlc(&sonic_rs::from_str(
+                minreq::get(Self::url(1)).send()?.as_str()?,
+            )?)
         })
     }
 
@@ -55,7 +57,11 @@ impl Kraken {
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
-        default_retry(|_| Self::json_to_date_to_ohlc(&minreq::get(Self::url(1440)).send()?.json()?))
+        default_retry(|_| {
+            Self::json_to_date_to_ohlc(&sonic_rs::from_str(
+                minreq::get(Self::url(1440)).send()?.as_str()?,
+            )?)
+        })
     }
 
     fn json_to_timestamp_to_ohlc(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
@@ -73,11 +79,11 @@ impl Kraken {
     {
         json.as_object()
             .ok_or(Error::Str("Expect to be an object"))?
-            .get("result")
+            .get(&"result")
             .ok_or(Error::Str("Expect object to have result"))?
             .as_object()
             .ok_or(Error::Str("Expect to be an object"))?
-            .get("XXBTZUSD")
+            .get(&"XXBTZUSD")
             .ok_or(Error::Str("Expect to have XXBTZUSD"))?
             .as_array()
             .ok_or(Error::Str("Expect to be an array"))?
