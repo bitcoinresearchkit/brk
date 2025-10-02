@@ -38,12 +38,12 @@ pub fn main() -> Result<()> {
 
     dbg!(interface.search_and_format(Params {
         index: Index::Height,
-        ids: vec!["date"].into(),
+        metrics: vec!["date"].into(),
         rest: ParamsOpt::default().set_from(-1),
     })?);
     dbg!(interface.search_and_format(Params {
         index: Index::Height,
-        ids: vec!["date", "timestamp"].into(),
+        metrics: vec!["date", "timestamp"].into(),
         rest: ParamsOpt::default().set_from(-10).set_count(5),
     })?);
 

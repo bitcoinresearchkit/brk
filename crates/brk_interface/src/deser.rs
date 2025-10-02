@@ -1,5 +1,5 @@
 use serde::{Deserialize, Deserializer};
-use sonic_rs::{JsonValueTrait, Value};
+use serde_json::Value;
 
 pub fn de_unquote_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
 where
