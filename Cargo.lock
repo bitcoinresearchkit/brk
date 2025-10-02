@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "brk"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "brk_binder",
  "brk_bundler",
@@ -562,7 +562,7 @@ checksum = "91ff3e445e42475fba5e0cfaed51345f491e479b9f2069f29875f434a5327913"
 
 [[package]]
 name = "brk_binder"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "brk_interface",
  "brk_structs",
@@ -570,7 +570,7 @@ dependencies = [
 
 [[package]]
 name = "brk_bundler"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "brk_rolldown",
  "log",
@@ -581,7 +581,7 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "bitcoincore-rpc",
  "brk_binder",
@@ -607,7 +607,7 @@ dependencies = [
 
 [[package]]
 name = "brk_computer"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "allocative",
  "bitcoin",
@@ -631,7 +631,7 @@ dependencies = [
 
 [[package]]
 name = "brk_error"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -645,7 +645,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "brk_error",
  "brk_logger",
@@ -657,7 +657,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -674,7 +674,7 @@ dependencies = [
 
 [[package]]
 name = "brk_interface"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "bitcoincore-rpc",
  "brk_computer",
@@ -695,7 +695,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "env_logger",
  "jiff",
@@ -705,7 +705,7 @@ dependencies = [
 
 [[package]]
 name = "brk_mcp"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "axum",
  "brk_interface",
@@ -718,7 +718,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -1124,7 +1124,7 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "axum",
  "bitcoin",
@@ -1151,7 +1151,7 @@ dependencies = [
 
 [[package]]
 name = "brk_store"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "brk_error",
  "brk_structs",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "brk_structs"
-version = "0.0.109"
+version = "0.0.110"
 dependencies = [
  "allocative",
  "bitcoin",
