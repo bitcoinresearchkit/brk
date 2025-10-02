@@ -1,13 +1,15 @@
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from '../../modules/lightweight-charts/5.0.8/dist/typings' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateChart } from '../../modules/lightweight-charts/5.0.9/dist/typings' */
 
 import {
-  createChart,
+  createChart as _createChart,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
   BaselineSeries,
-  // } from "../modules/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.development.mjs";
-} from "../../modules/lightweight-charts/5.0.8/dist/lightweight-charts.standalone.production.mjs";
+  // } from "../modules/lightweight-charts/5.0.9/dist/lightweight-charts.standalone.development.mjs";
+} from "../../modules/lightweight-charts/5.0.9/dist/lightweight-charts.standalone.production.mjs";
+
+const createChart = /** @type {CreateChart} */ (_createChart);
 
 import {
   createHorizontalChoiceField,
@@ -96,7 +98,6 @@ function createChartElement({
   const legendBottom = createLegend(signals);
   div.append(legendBottom.element);
 
-  /** @type {IChartApi} */
   const ichart = createChart(
     chartDiv,
     /** @satisfies {DeepPartial<ChartOptions>} */ ({
@@ -139,7 +140,6 @@ function createChartElement({
       // ..._options,
     }),
   );
-
   // Takes a bit more space sometimes but it's better UX than having the scale being resized on option change
   ichart.priceScale("right").applyOptions({
     minimumWidth: 80,

@@ -16,8 +16,8 @@ use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod deser;
 mod format;
-mod ids;
 mod index;
+mod metrics;
 mod output;
 mod pagination;
 mod params;
@@ -27,7 +27,7 @@ pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginationParam};
-pub use params::{Params, ParamsOpt};
+pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
 use crate::vecs::{IndexToVec, MetricToVec};
@@ -65,7 +65,7 @@ impl<'a> Interface<'a> {
     }
 
     pub fn search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
-        let ids = &params.ids;
+        let metrics = &params.metrics;
         let index = params.index;
 
         let ids_to_vec = self
@@ -77,25 +77,25 @@ impl<'a> Interface<'a> {
                 index
             )))?;
 
-        ids.iter()
-            .map(|id| {
-                let vec = ids_to_vec.get(id.as_str()).ok_or_else(|| {
+        metrics.iter()
+            .map(|metric| {
+                let vec = ids_to_vec.get(metric.as_str()).ok_or_else(|| {
                     let cached_errors = cached_errors();
 
-                    if let Some(message) = cached_errors.get(id) {
+                    if let Some(message) = cached_errors.get(metric) {
                         return Error::String(message)
                     }
 
                     let mut message = format!(
                         "No vec named \"{}\" indexed by \"{}\" found.\n",
-                        id,
+                        metric,
                         index
                     );
 
                     let mut matcher = Matcher::new(Config::DEFAULT);
 
                     let matches = Pattern::new(
-                        id.as_str(),
+                        metric.as_str(),
                         CaseMatching::Ignore,
                         Normalization::Smart,
                         AtomKind::Fuzzy,
@@ -111,33 +111,35 @@ impl<'a> Interface<'a> {
                             &format!("\nMaybe you meant one of the following: {matches:#?} ?\n");
                     }
 
-                    if let Some(index_to_vec) = self.metric_to_index_to_vec().get(id.as_str()) {
-                        message += &format!("\nBut there is a vec named {id} which supports the following indexes: {:#?}\n", index_to_vec.keys());
+                    if let Some(index_to_vec) = self.metric_to_index_to_vec().get(metric.as_str()) {
+                        message += &format!("\nBut there is a vec named {metric} which supports the following indexes: {:#?}\n", index_to_vec.keys());
                     }
 
-                    cached_errors.insert(id.clone(), message.clone());
+                    cached_errors.insert(metric.clone(), message.clone());
 
                     Error::String(message)
                 });
-                vec.map(|vec| (id.clone(), vec))
+                vec.map(|vec| (metric.clone(), vec))
             })
             .collect::<Result<Vec<_>>>()
     }
 
     pub fn format(
         &self,
-        vecs: Vec<(String, &&dyn AnyCollectableVec)>,
+        metrics: Vec<(String, &&dyn AnyCollectableVec)>,
         params: &ParamsOpt,
     ) -> Result<Output> {
         let from = params.from().map(|from| {
-            vecs.iter()
+            metrics
+                .iter()
                 .map(|(_, v)| v.i64_to_usize(from))
                 .min()
                 .unwrap_or_default()
         });
 
         let to = params.to().map(|to| {
-            vecs.iter()
+            metrics
+                .iter()
                 .map(|(_, v)| v.i64_to_usize(to))
                 .min()
                 .unwrap_or_default()
@@ -147,8 +149,11 @@ impl<'a> Interface<'a> {
 
         Ok(match format {
             Format::CSV => {
-                let headers = vecs.iter().map(|(id, _)| id.as_str()).collect::<Vec<_>>();
-                let mut values = vecs
+                let headers = metrics
+                    .iter()
+                    .map(|(id, _)| id.as_str())
+                    .collect::<Vec<_>>();
+                let mut values = metrics
                     .iter()
                     .map(|(_, vec)| Ok(vec.collect_range_string(from, to)?))
                     .collect::<Result<Vec<_>>>()?;
@@ -190,7 +195,7 @@ impl<'a> Interface<'a> {
                 Output::CSV(csv)
             }
             Format::JSON => {
-                let mut values = vecs
+                let mut values = metrics
                     .iter()
                     .map(|(_, vec)| -> Result<Vec<u8>> {
                         Ok(vec.collect_range_json_bytes(from, to)?)

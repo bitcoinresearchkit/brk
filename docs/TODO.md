@@ -3,18 +3,18 @@
 - __CRATES__
   - _BUNDLER_
   - _CLI_
-    - launch
+    - UX: launch
       - if first, test read/write speed, add warning if too low (<2gb/s)
       - check available disk space
       - pull latest version and notify if out of date
-    - add custom path support for config.toml
+    - FEAT: add custom path support for config.toml
   - _COMPUTER_
-    - **add rollback of states (in stateful)**
-    - add support for per index computation
-    - fix min fee_rate which is always ZERO due to coinbase transaction
-    - before computing multiple sources check their length, panic if not equal
-    - create usd versions of vecs structs instead of having options everywhere
-    - datasets
+    - BUG: **add rollback of states (in stateful)**
+    - FEAT: add support for per index computation
+    - BUG: fix min fee_rate which is always ZERO due to coinbase transaction
+    - BUG: before computing multiple sources check their length, panic if not equal
+    - DX: create usd versions of vecs structs instead of having options everywhere
+    - FEAT: datasets
       - `sats` version of all price datasets (average and co)
       - pools
         - highest dominance
@@ -41,10 +41,10 @@
   - _ERROR_
   - _FETCHER_
   - _INDEXER_
-    - parse only the needed block number instead the last 100 blocks
+    - PERF: parse only the needed block number instead the last 100 blocks
       - maybe using https://developer.bitcoin.org/reference/rpc/getblockhash.html
   - _INTERFACE_
-    - Maybe change `json` to:
+    - DX: Maybe change `json` to:
       ```json
       {
         "price_close": {
@@ -57,97 +57,93 @@
         }
       }
       ```
-    - create pagination enum
+    - DX: create pagination enum
       - from to
       - from option<count>
       - to option<count>
       - page + option<per page> default 1000 max 1000
-    - from/to/count params don’t cap all combinations
+    - BUG: from/to/count params don’t cap all combinations
       - example: from -10,000 count 10, won’t work if underlying vec isn’t 10k or more long
   - _LOGGER_
-    - remove colors from file
+    - BUG: remove colors from file
   - _MCP_
   - _PARSER_
   - _SERVER_
     - api
-      - copy mempool's rest api
+      - FEAT: copy mempool's rest api
         - https://mempool.space/docs/api/rest
-      - add extensions support (.json .csv …) instead of only format
-      - if format instead of extension then don't download file
-      - ddos protection
+      - FEAT: add extensions support (.json .csv …) instead of only format
+      - FEAT: if format instead of extension then don't download file
+      - BUG: ddos protection
         - against API params varying in range
         - search
         - fuzzy on typo
           - https://github.com/rapidfuzz/strsim-rs or stick with current impl
           - create map of all single words
           - do some kind of score with that ?
-      - discoverability
+      - FEAT: discoverability
         - catalog (tree/groups)
         - search
-      - failover to `/api`
-      - no HTML / redirects ?
-      - change `/api/vecs/{index}-to-{metric}` to `/api/{metric}/index`
-      - change `/api/vecs/query` to `/api/bulk`
-      - support keyed version when fetching dataset: {date: value} / {date: [value]}
-    - add support for https (rustls)
+      - BUG: failover to `/api`
+      - ???: no HTML / redirects ?
+      - FEAT: support keyed version when fetching dataset: {date: value} / {date: [value]}
+    - FEAT: add support for https (rustls)
   - _STORE_
-    - save height and version in one file
+    - FEAT: save height and version in one file
   - _STRUCTS_
   - _GLOBAL_
-    - https://davidlattimore.github.io/posts/2025/09/02/rustforge-wild-performance-tricks.html
+    - PERF: https://davidlattimore.github.io/posts/2025/09/02/rustforge-wild-performance-tricks.html
 - __DOCS__
   - _README_
-    - add a comparison table with alternatives
-    - add contribution section where help is needed
-      - documentation/mcp/datasets/different front ends
-    - add faq
+    - FEAT: add a comparison table with alternatives
+    - FEAT: add faq
 - __WEBSITES__
   - _PACKAGES_
-    - move the fetching logic from `bitview` website to an independent `brk` package which could be published to npm
+    - DX: move the fetching logic from `bitview` website to an independent `brk` package which could be published to npm
       - https://www.npmjs.com/package/@mempool/mempool.js
       - auto publish with github actions
   - _BITVIEW_
-    - explorer
-      - blocks (interval as length between)
-      - transactions
-      - addresses
-      - miners
-      - maybe xpubs
-    - charts
-      - selected unit sometimes changes when going back end forth
-      - add support for custom charts
-      - price scale format depends on unit, hide digits for sats for example (if/when possible)
-      - shows certain series as [scatter plots](https://github.com/tradingview/lightweight-charts/issues/1662) with a solid sma/ema
+    - EXPLORER
+      - FEAT: blocks (interval as length between)
+      - FEAT: transactions
+      - FEAT: addresses
+      - FEAT: miners
+      - FEAT: xpubs ?
+    - CHART
+      - FEAT: Make candlesticks a bi-series with a candlestick series and a line when too zoomed out (like the auto mode)
+      - FEAT: Add min/max markers back now that they can be ignored when scaling the chart (to avoids stuttering)
+      - BUG: selected unit sometimes changes when going back end forth
+      - FEAT: add support for custom charts
+      - BUG: price scale format depends on unit, hide digits for sats for example (if/when possible)
+      - FEAT: shows certain series as [scatter plots](https://github.com/tradingview/lightweight-charts/issues/1662) with a solid sma/ema
         - mainly datasets with a big variance like raw `hash_rate`
-      - hide pane if no series on it
-      - fix (and reset) pane size (50/50) when changing charts
-      - units: add short name / long name / title
-      - verify that "compare" folders aren't missing charts/datasets
-      - legend
-        - add link to explanation for each name (to glassnode ?)
-    - table
-      - pagination
-      - exports (.json, .csv,…)
-      - improve dataset selection
-      - display 1k values (instead of 10k) but to avoid caching multiple times the same values apply everywhere
-    - search
-      - improve
-      - datasets add legend, and keywords ?
-      - support height/address/txid
-    - api
-      - add api page with interactivity
-    - glossary ?
-    - nav
-      - move share button to footer ?
-      - when clicking on already selected option, pushes to history, bad !
-    - global
-      - improve behavior when local storage is unavailable
-        - by having a global state
-      - font:
+      - BUG: hide pane if no series on it
+      - BUG: fix (and reset) pane size (50/50) when changing charts
+      - UX: units: add short name / long name / title
+      - BUG: verify that "compare" folders aren't missing charts/datasets
+      - LEGEND
+        - UX: add link to explanation for each name (to glassnode ?)
+    - TABLE
+      - FEAT: pagination
+      - FEAT: exports (.json, .csv,…)
+      - UX: improve dataset selection
+      - UX: display 1k values (instead of 10k) but to avoid caching multiple times the same values apply everywhere
+    - SEARCH
+      - UX: improve
+      - UX:datasets add legend, and keywords ?
+      - FEAT: support height/address/txid
+    - GLOSSARY
+      - FEAT: Add ?
+    - NAV
+      - UX: move share button to footer ?
+      - BUG: when clicking on already selected option, pushes to history, bad !
+    - GLOBAL
+      - BUG: improve behavior when local storage is unavailable by having a global state, otherwise the website forgets/don't save user's settings
+      - UI: font:
         - https://fonts.google.com/specimen/Space+Mono
-    - keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
-    - [No classes](https://news.ycombinator.com/item?id=45287155)
-    - [Organic animations](https://courses.joshwcomeau.com/playground/magic-wand-final)
+    - PERF: keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)
+    - DX: [No classes](https://news.ycombinator.com/item?id=45287155)
+    - UX: [Organic animations](https://courses.joshwcomeau.com/playground/magic-wand-final)
 - __GLOBAL__
   - check `TODO`s in codebase
   - rename `output` to `txout` or `vout`, `input` to `txin` or `vin`

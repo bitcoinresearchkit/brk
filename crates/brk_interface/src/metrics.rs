@@ -6,24 +6,29 @@ use serde::Deserialize;
 use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 
 #[derive(Debug, Deref, JsonSchema)]
-pub struct MaybeIds(Vec<String>);
+pub struct MaybeMetrics(Vec<String>);
 
 const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
-impl From<String> for MaybeIds {
+impl From<String> for MaybeMetrics {
     fn from(value: String) -> Self {
-        Self(vec![value])
+        Self(vec![value.replace("-", "_").to_lowercase()])
     }
 }
 
-impl<'a> From<Vec<&'a str>> for MaybeIds {
+impl<'a> From<Vec<&'a str>> for MaybeMetrics {
     fn from(value: Vec<&'a str>) -> Self {
-        Self(value.iter().map(|s| s.to_string()).collect::<Vec<_>>())
+        Self(
+            value
+                .iter()
+                .map(|s| s.replace("-", "_").to_lowercase())
+                .collect::<Vec<_>>(),
+        )
     }
 }
 
-impl<'de> Deserialize<'de> for MaybeIds {
+impl<'de> Deserialize<'de> for MaybeMetrics {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -32,7 +37,7 @@ impl<'de> Deserialize<'de> for MaybeIds {
 
         if let Some(str) = value.as_str() {
             if str.len() <= MAX_STRING_SIZE {
-                Ok(MaybeIds(sanitize_ids(
+                Ok(MaybeMetrics(sanitize_metrics(
                     str.split(",").map(|s| s.to_string()),
                 )))
             } else {
@@ -40,7 +45,7 @@ impl<'de> Deserialize<'de> for MaybeIds {
             }
         } else if let Some(vec) = value.as_array() {
             if vec.len() <= MAX_VECS {
-                Ok(MaybeIds(sanitize_ids(
+                Ok(MaybeMetrics(sanitize_metrics(
                     vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
                 )))
             } else {
@@ -52,14 +57,14 @@ impl<'de> Deserialize<'de> for MaybeIds {
     }
 }
 
-impl fmt::Display for MaybeIds {
+impl fmt::Display for MaybeMetrics {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self.0.join(",");
         write!(f, "{s}")
     }
 }
 
-fn sanitize_ids(raw_ids: impl Iterator<Item = String>) -> Vec<String> {
+fn sanitize_metrics(raw_ids: impl Iterator<Item = String>) -> Vec<String> {
     let mut results = Vec::new();
     raw_ids.for_each(|s| {
         let mut current = String::new();

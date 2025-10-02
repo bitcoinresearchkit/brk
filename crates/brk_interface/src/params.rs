@@ -6,23 +6,22 @@ use serde::Deserialize;
 use crate::{
     Format, Index,
     deser::{de_unquote_i64, de_unquote_usize},
-    ids::MaybeIds,
+    metrics::MaybeMetrics,
 };
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct Params {
-    #[serde(alias = "i")]
-    #[schemars(description = "Index of requested vecs")]
-    pub index: Index,
+    #[serde(alias = "m")]
+    #[schemars(description = "Requested metrics")]
+    pub metrics: MaybeMetrics,
 
-    #[serde(alias = "v")]
-    #[schemars(description = "Ids of requested vecs")]
-    pub ids: MaybeIds,
+    #[serde(alias = "i")]
+    #[schemars(description = "Requested index")]
+    pub index: Index,
 
     #[serde(flatten)]
     pub rest: ParamsOpt,
 }
-serde_with::flattened_maybe!(deserialize_rest, "rest");
 
 impl Deref for Params {
     type Target = ParamsOpt;
@@ -32,10 +31,10 @@ impl Deref for Params {
 }
 
 impl From<((Index, String), ParamsOpt)> for Params {
-    fn from(((index, id), rest): ((Index, String), ParamsOpt)) -> Self {
+    fn from(((index, metric), rest): ((Index, String), ParamsOpt)) -> Self {
         Self {
             index,
-            ids: MaybeIds::from(id),
+            metrics: MaybeMetrics::from(metric),
             rest,
         }
     }
@@ -104,5 +103,25 @@ impl ParamsOpt {
 
     pub fn format(&self) -> Format {
         self.format
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ParamsDeprec {
+    #[serde(alias = "i")]
+    pub index: Index,
+    #[serde(alias = "v")]
+    pub ids: MaybeMetrics,
+    #[serde(flatten)]
+    pub rest: ParamsOpt,
+}
+
+impl From<ParamsDeprec> for Params {
+    fn from(value: ParamsDeprec) -> Self {
+        Params {
+            index: value.index,
+            metrics: value.ids,
+            rest: value.rest,
+        }
     }
 }

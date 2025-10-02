@@ -21,6 +21,7 @@ derive_deref = { workspace = true }
 quick_cache = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sonic-rs = { workspace = true }
 serde_with = "3.14.1"
 nucleo-matcher = "0.3.1"
