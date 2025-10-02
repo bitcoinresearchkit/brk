@@ -1,6 +1,6 @@
 # Changelog Generation for Claude Code
 
-**TASK**: Update docs/CHANGELOG.md for ALL releases after and including v0.0.107.
+**TASK**: Update docs/CHANGELOG.md for ALL latest releases missing from the file.
 
 ## ⚠️ CRITICAL FAILURE MODE TO AVOID ⚠️
 **THE #1 FAILURE**: Ignoring most changes and only documenting a few

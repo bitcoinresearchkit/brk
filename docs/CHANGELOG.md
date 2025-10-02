@@ -4,6 +4,67 @@
 
 All notable changes to the Bitcoin Research Kit (BRK) project will be documented in this file.
 
+## [v0.0.110](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.110) - 2025-10-02
+
+### New Features
+#### `brk_binder`
+- Created new crate for generating language binding files to facilitate integration with other programming languages ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_binder/src/lib.rs))
+- Implemented JavaScript binding generator with compressed metric-to-index mappings using base62 encoding for optimized frontend bundle sizes ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_binder/src/js.rs))
+- Added automatic generation of TypeScript-compatible pool ID mappings with sorted pool names for improved developer experience
+- Implemented word frequency analysis to create compressed metric names, reducing JavaScript bundle size and improving load times
+- Added version file generation to track binding file compatibility with backend versions
+
+#### `brk_server`
+- Implemented comprehensive address lookup API endpoint supporting all Bitcoin address types including P2PK, P2PKH, P2SH, P2WPKH, P2WSH, P2TR, and P2A ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_server/src/api/explorer/mod.rs))
+- Added transaction lookup endpoint with raw transaction decoding from blk files including position-based seeking and XOR decryption
+- Created address balance and statistics API providing UTXO counts, sent/received amounts, realized value, and average cost basis
+- Implemented real-time USD balance calculation using latest price data for address endpoints
+- Reorganized API structure into dedicated `metrics/` and `explorer/` modules for better code organization and maintainability ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_server/src/api/metrics/mod.rs))
+- Added metrics count endpoint exposing both distinct and total metric counts for API discovery
+- Created bulk metrics query endpoint for efficient batch data retrieval
+
+#### `brk_interface`
+- Implemented `MaybeMetrics` type for handling multiple metric queries with automatic sanitization and validation ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_interface/src/metrics.rs))
+- Added support for both comma-separated string and array formats for metric parameters with configurable size limits (max 32 metrics, 2KB total)
+- Implemented automatic metric name normalization converting hyphens to underscores and enforcing lowercase for consistent API usage
+- Added metric-to-indexes mapping functionality for discovering available data dimensions per metric
+
+#### `brk_bundler`
+- Restructured bundler to use centralized `modules/` directory instead of website-specific packages for better code reuse ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_bundler/src/lib.rs))
+- Implemented automatic module copying from `modules/` to website source directories before bundling
+- Added inline constant optimization configuration for improved runtime performance through compile-time constant evaluation
+- Enhanced HTML generation with dynamic script path injection based on bundled entry point hashes
+
+#### Frontend Modules
+- Created `brk-client` module providing type-safe BRK API client with metrics catalog, pool mappings, and idle callback utilities
+- Implemented `brk-resources` module for managing shared resources and dependencies across frontend applications
+- Added `brk-signals` module for reactive state management with SolidJS signals compatibility
+- Centralized third-party dependencies including lightweight-charts 5.0.9, lean-qr 2.6.0, ufuzzy 1.0.19, and solidjs-signals 0.6.3
+
+### Internal Changes
+#### `brk_cli`
+- Removed legacy bridge generation code in favor of new `brk_binder` crate for cleaner separation of concerns ([source](https://github.com/bitcoinresearchkit/brk/blob/v0.0.110/crates/brk_cli/src/lib.rs))
+- Integrated `brk_binder` for automated JavaScript binding file generation during CLI operations
+
+#### `brk_computer`
+- Removed unused profit/loss metrics from stateful computations to streamline calculation pipelines
+- Cleaned up cohort analysis code removing obsolete breakeven metrics for better performance
+
+#### `brk_interface`
+- Removed legacy `MaybeIds` type in favor of `MaybeMetrics` for more accurate API parameter naming
+- Enhanced deserialization logic with better error messages for invalid metric formats
+- Restructured interface to expose metric catalog and index mappings for API documentation
+
+#### `brk_mcp`
+- Updated Model Context Protocol integration to use new metrics infrastructure with improved parameter handling
+
+#### Workspace
+- Reorganized project structure moving website packages to centralized `modules/` directory for better maintainability
+- Removed historical asset files reducing repository size and focusing on active development
+- Updated solidjs-signals from 0.4.1 to 0.6.3 with enhanced TypeScript definitions and reactive primitives
+
+[View changes](https://github.com/bitcoinresearchkit/brk/compare/v0.0.109...v0.0.110)
+
 ## [v0.0.109](https://github.com/bitcoinresearchkit/brk/releases/tag/v0.0.109) - 2025-09-20
 
 ### New Features
