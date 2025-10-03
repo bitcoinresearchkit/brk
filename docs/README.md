@@ -26,9 +26,12 @@
   <a href="https://opensats.org">
     <img src="https://img.shields.io/badge/%3E__-opensats-rgb(249,115,22)" alt="opensats" />
   </a>
+  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/changelog-docs-blue" alt="Changelog" />
+  </a>
 </p>
 
-> **The open-source alternative to expensive Bitcoin analytics platforms**  
+> **The open-source alternative to expensive Bitcoin analytics platforms**
 > Parse, index, analyze, and visualize Bitcoin blockchain data with unparalleled performance and zero restrictions.
 
 ---
@@ -151,6 +154,11 @@ Contributions from the Bitcoin community are welcome! Here's how to get involved
 | [`brk_error`](https://crates.io/crates/brk_error)         | Error handling utilities                         |
 | [`brk_logger`](https://crates.io/crates/brk_logger)       | Logging infrastructure                           |
 
+## Documentation
+
+- **[Changelog](https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md)** - Release history and version notes
+- **[TODO](https://github.com/bitcoinresearchkit/brk/blob/main/docs/TODO.md)** - Planned features and improvements
+
 ## Professional Hosting
 
 Need a managed BRK instance? We offer professional hosting services:
@@ -180,7 +188,7 @@ This project is made possible by the generous support of:
 
 Help us maintain and improve BRK:
 
-**Bitcoin Address:**  
+**Bitcoin Address:**
 [`bc1q09 8zsm89 m7kgyz e338vf ejhpdt 92ua9p 3peuve`](bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve)
 
 **Other Ways to Support:**
@@ -193,6 +201,6 @@ Help us maintain and improve BRK:
 ---
 
 <p align="center">
-  <strong>Built with for the Bitcoin community</strong><br>
+  <strong>Built for the Bitcoin community</strong><br>
   <em>Open source • Free forever • No compromises</em>
 </p>
