@@ -3,7 +3,7 @@ use std::fmt;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
+use serde_json::Value;
 
 #[derive(Debug, Deref, JsonSchema)]
 pub struct MaybeMetrics(Vec<String>);
@@ -46,7 +46,7 @@ impl<'de> Deserialize<'de> for MaybeMetrics {
         } else if let Some(vec) = value.as_array() {
             if vec.len() <= MAX_VECS {
                 Ok(MaybeMetrics(sanitize_metrics(
-                    vec.into_iter().map(|s| s.as_str().unwrap().to_string()),
+                    vec.iter().map(|s| s.as_str().unwrap().to_string()),
                 )))
             } else {
                 Err(serde::de::Error::custom("Given parameter is too long"))

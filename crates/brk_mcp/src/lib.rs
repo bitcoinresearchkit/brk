@@ -32,53 +32,32 @@ impl MCP {
     }
 
     #[tool(description = "
-Get the count of all existing indexes.
-")]
-    async fn get_index_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_index_count");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.interface.index_count()).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get the count of all existing metrics.
+Get the count of unique metrics.
 ")]
     async fn get_metric_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_metric_count");
+        info!("mcp: distinct_metric_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.distinct_metric_count()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the count of all existing vecs.
-Equals to the sum of supported Indexes of each vec id.
+Get the count of all metrics. (distinct metrics multiplied by the number of indexes supported by each one)
 ")]
     async fn get_vec_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_vec_count");
+        info!("mcp: total_metric_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.total_metric_count()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the list of all existing indexes.
+Get the list of all existing indexes and their accepted variants.
 ")]
     async fn get_indexes(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_indexes");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_indexes()).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get an object which has all existing indexes as keys and a list of their accepted variants as values.
-")]
-    async fn get_accepted_indexes(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_accepted_indexes");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_accepted_indexes()).unwrap(),
         ]))
     }
 

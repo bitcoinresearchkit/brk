@@ -234,10 +234,6 @@ export function init({
         iseries.update(last);
         break;
       }
-      case "dateindex": {
-        iseries.update(last);
-        break;
-      }
       default: {
         if (index === "weekindex") {
           date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
@@ -257,7 +253,7 @@ export function init({
             0,
             1,
           );
-        } else {
+        } else if (index !== "dateindex") {
           throw Error("Unsupported");
         }
 
@@ -270,7 +266,7 @@ export function init({
           }
           iseries.update(last);
         } else {
-          latest.time = time;
+          last.time = time;
           iseries.update(last);
         }
       }

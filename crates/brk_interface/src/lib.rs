@@ -228,23 +228,15 @@ impl<'a> Interface<'a> {
     }
 
     pub fn distinct_metric_count(&self) -> usize {
-        self.vecs.metric_count
+        self.vecs.distinct_metric_count
     }
 
     pub fn total_metric_count(&self) -> usize {
-        self.vecs.vec_count
+        self.vecs.total_metric_count
     }
 
-    pub fn index_count(&self) -> usize {
-        self.vecs.index_count
-    }
-
-    pub fn get_indexes(&self) -> &[&'static str] {
+    pub fn get_indexes(&self) -> &BTreeMap<&'static str, &'static [&'static str]> {
         &self.vecs.indexes
-    }
-
-    pub fn get_accepted_indexes(&self) -> &BTreeMap<&'static str, &'static [&'static str]> {
-        &self.vecs.accepted_indexes
     }
 
     pub fn get_metrics(&self, pagination: PaginationParam) -> &[&str] {

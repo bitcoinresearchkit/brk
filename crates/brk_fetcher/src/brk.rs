@@ -96,7 +96,7 @@ impl BRK {
                 dateindex + CHUNK_SIZE
             );
 
-            let body: Value = sonic_rs::from_str(minreq::get(url).send()?.json()?)?;
+            let body: Value = sonic_rs::from_str(minreq::get(url).send()?.as_str()?)?;
 
             body.as_array()
                 .ok_or(Error::Str("Expect to be an array"))?

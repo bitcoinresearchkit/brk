@@ -2551,37 +2551,85 @@ export function createPartialOptions({ colors, brk }) {
                 ],
               },
             ]),
-        {
-          name: "Coins Destroyed",
-          title: `Coins Destroyed ${title}`,
-          bottom: list.flatMap(({ color, name, id: _id }) => {
-            const id = fixId(_id);
-            return /** @type {const} */ ([
-              createBaseSeries({
-                metric: `${id}coinblocks_destroyed`,
-                name: useGroupName ? name : "sum",
-                color,
-              }),
-              createBaseSeries({
-                metric: `${id}coinblocks_destroyed_cumulative`,
-                name: useGroupName ? name : "cumulative",
-                color,
-                defaultActive: false,
-              }),
-              createBaseSeries({
-                metric: `${id}coindays_destroyed`,
-                name: useGroupName ? name : "sum",
-                color,
-              }),
-              createBaseSeries({
-                metric: `${id}coindays_destroyed_cumulative`,
-                name: useGroupName ? name : "cumulative",
-                color,
-                defaultActive: false,
-              }),
-            ]);
-          }),
-        },
+        ...("list" in args
+          ? [
+              {
+                name: "Coins Destroyed",
+                tree: [
+                  {
+                    name: "Sum",
+                    title: `Sum of Coins Destroyed ${title}`,
+                    bottom: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          metric: `${id}coinblocks_destroyed`,
+                          name,
+                          color,
+                        }),
+                        createBaseSeries({
+                          metric: `${id}coindays_destroyed`,
+                          name,
+                          color,
+                        }),
+                      ]);
+                    }),
+                  },
+                  {
+                    name: "Cumulative",
+                    title: `Cumulative Coins Destroyed ${title}`,
+                    bottom: list.flatMap(({ color, name, id: _id }) => {
+                      const id = fixId(_id);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          metric: `${id}coinblocks_destroyed_cumulative`,
+                          name,
+                          color,
+                        }),
+                        createBaseSeries({
+                          metric: `${id}coindays_destroyed_cumulative`,
+                          name,
+                          color,
+                        }),
+                      ]);
+                    }),
+                  },
+                ],
+              },
+            ]
+          : [
+              {
+                name: "Coins Destroyed",
+                title: `Coins Destroyed ${title}`,
+                bottom: list.flatMap(({ color, name, id: _id }) => {
+                  const id = fixId(_id);
+                  return /** @type {const} */ ([
+                    createBaseSeries({
+                      metric: `${id}coinblocks_destroyed`,
+                      name: "sum",
+                      color,
+                    }),
+                    createBaseSeries({
+                      metric: `${id}coinblocks_destroyed_cumulative`,
+                      name: "cumulative",
+                      color,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      metric: `${id}coindays_destroyed`,
+                      name: "sum",
+                      color,
+                    }),
+                    createBaseSeries({
+                      metric: `${id}coindays_destroyed_cumulative`,
+                      name: "cumulative",
+                      color,
+                      defaultActive: false,
+                    }),
+                  ]);
+                }),
+              },
+            ]),
       ],
     });
   }
@@ -2713,11 +2761,8 @@ export function createPartialOptions({ colors, brk }) {
                   bottom: [
                     /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                       metric: `${id}_price_returns`,
-                      title: "Returns",
+                      title: "total",
                       type: "Baseline",
-                    }),
-                    createPriceLine({
-                      unit: "percentage",
                     }),
                     ...(brk.hasMetric(cagr)
                       ? [
@@ -2725,12 +2770,13 @@ export function createPartialOptions({ colors, brk }) {
                             metric: cagr,
                             title: "cagr",
                             type: "Baseline",
-                          }),
-                          createPriceLine({
-                            unit: "percentage",
+                            colors: [colors.lime, colors.pink],
                           }),
                         ]
                       : []),
+                    createPriceLine({
+                      unit: "percentage",
+                    }),
                   ],
                 };
               }),
