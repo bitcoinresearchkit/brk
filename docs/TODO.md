@@ -11,6 +11,7 @@
   - _COMPUTER_
     - BUG: **add rollback of states (in stateful)**
     - FEAT: add support for per index computation
+    - FEAT: Add percentiles of cost basis weighted by amount invested compared to total invested
     - BUG: fix min fee_rate which is always ZERO due to coinbase transaction
     - BUG: before computing multiple sources check their length, panic if not equal
     - DX: create usd versions of vecs structs instead of having options everywhere
@@ -136,9 +137,11 @@
       - FEAT: Add ?
     - NAV
       - UX: move share button to footer ?
+      - FEAT: add hide sidebar button
       - BUG: when clicking on already selected option, pushes to history, bad !
     - GLOBAL
       - BUG: improve behavior when local storage is unavailable by having a global state, otherwise the website forgets/don't save user's settings
+      - FEAT: Add manual theme switcher, maybe in a smart way to avoid using real estate ?
       - UI: font:
         - https://fonts.google.com/specimen/Space+Mono
     - PERF: keep as many files as possible [under 14kb](https://endtimes.dev/why-your-website-should-be-under-14kb-in-size/)

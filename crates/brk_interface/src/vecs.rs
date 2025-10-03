@@ -14,11 +14,9 @@ pub struct Vecs<'a> {
     pub metric_to_index_to_vec: BTreeMap<&'a str, IndexToVec<'a>>,
     pub index_to_metric_to_vec: BTreeMap<Index, MetricToVec<'a>>,
     pub metrics: Vec<&'a str>,
-    pub indexes: Vec<&'static str>,
-    pub accepted_indexes: BTreeMap<&'static str, &'static [&'static str]>,
-    pub index_count: usize,
-    pub metric_count: usize,
-    pub vec_count: usize,
+    pub indexes: BTreeMap<&'static str, &'static [&'static str]>,
+    pub distinct_metric_count: usize,
+    pub total_metric_count: usize,
     metric_to_indexes: BTreeMap<&'a str, Vec<&'static str>>,
     index_to_metrics: BTreeMap<Index, Vec<&'a str>>,
 }
@@ -53,19 +51,13 @@ impl<'a> Vecs<'a> {
         sort_ids(&mut ids);
 
         this.metrics = ids;
-        this.metric_count = this.metric_to_index_to_vec.keys().count();
-        this.index_count = this.index_to_metric_to_vec.keys().count();
-        this.vec_count = this
+        this.distinct_metric_count = this.metric_to_index_to_vec.keys().count();
+        this.total_metric_count = this
             .index_to_metric_to_vec
             .values()
             .map(|tree| tree.len())
             .sum::<usize>();
         this.indexes = this
-            .index_to_metric_to_vec
-            .keys()
-            .map(|i| i.serialize_long())
-            .collect::<Vec<_>>();
-        this.accepted_indexes = this
             .index_to_metric_to_vec
             .keys()
             .map(|i| (i.serialize_long(), i.possible_values()))

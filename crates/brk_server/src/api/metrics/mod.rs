@@ -32,7 +32,7 @@ impl ApiMetricsRoutes for Router<AppState> {
         .route(
             "/api/metrics/indexes",
             get(async |State(app_state): State<AppState>| -> Response {
-                Json(app_state.interface.get_accepted_indexes()).into_response()
+                Json(app_state.interface.get_indexes()).into_response()
             }),
         )
         // .route(
