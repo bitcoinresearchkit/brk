@@ -35,7 +35,7 @@ struct TxResponse {
 impl ApiExplorerRoutes for Router<AppState> {
     fn add_api_explorer_routes(self) -> Self {
         self.route(
-            "/api/address/{address}",
+            "/api/chain/address/{address}",
             get(
                 async |Path(address): Path<String>, state: State<AppState>| -> Response {
                     let Ok(address) = Address::from_str(&address) else {
@@ -148,7 +148,7 @@ impl ApiExplorerRoutes for Router<AppState> {
             ),
         )
         .route(
-            "/api/tx/{txid}",
+            "/api/chain/tx/{txid}",
             get(
                 async |Path(txid): Path<String>, state: State<AppState>| -> Response {
                     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {

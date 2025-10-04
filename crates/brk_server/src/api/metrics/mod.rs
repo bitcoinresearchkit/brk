@@ -35,23 +35,24 @@ impl ApiMetricsRoutes for Router<AppState> {
                 Json(app_state.interface.get_indexes()).into_response()
             }),
         )
+        .route(
+            "/api/metrics/list",
+            get(
+                async |State(app_state): State<AppState>,
+                       Query(pagination): Query<PaginationParam>|
+                       -> Response {
+                    Json(app_state.interface.get_metrics(pagination)).into_response()
+                },
+            ),
+        )
+        // TODO:
         // .route(
-        //     "/api/vecs/metrics",
+        //     "/api/metrics/search",
         //     get(
         //         async |State(app_state): State<AppState>,
         //                Query(pagination): Query<PaginationParam>|
         //                -> Response {
         //             Json(app_state.interface.get_metrics(pagination)).into_response()
-        //         },
-        //     ),
-        // )
-        // .route(
-        //     "/api/vecs/index-to-metrics",
-        //     get(
-        //         async |State(app_state): State<AppState>,
-        //                Query(paginated_index): Query<PaginatedIndexParam>|
-        //                -> Response {
-        //             Json(app_state.interface.get_index_to_vecids(paginated_index)).into_response()
         //         },
         //     ),
         // )
@@ -85,7 +86,7 @@ impl ApiMetricsRoutes for Router<AppState> {
             ),
         )
         // !!!
-        // DEPRECATED
+        // DEPRECATED: Do not use
         // !!!
         .route(
             "/api/vecs/query",
@@ -100,7 +101,7 @@ impl ApiMetricsRoutes for Router<AppState> {
             ),
         )
         // !!!
-        // DEPRECATED
+        // DEPRECATED: Do not use
         // !!!
         .route(
             "/api/vecs/{variant}",

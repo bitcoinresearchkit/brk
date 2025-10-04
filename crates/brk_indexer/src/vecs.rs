@@ -9,6 +9,8 @@ use brk_structs::{
     RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion,
     Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
+use brk_vecs::{IVecs, TreeNode};
+use brk_vecs_derive::IVecs;
 use rayon::prelude::*;
 use vecdb::{
     AnyCollectableVec, AnyStoredVec, CompressedVec, Database, GenericStoredVec, PAGE_SIZE, RawVec,
@@ -17,7 +19,7 @@ use vecdb::{
 
 use crate::Indexes;
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
     pub emptyoutputindex_to_txindex: CompressedVec<EmptyOutputIndex, TxIndex>,

@@ -8,7 +8,7 @@ package.version = "0.0.111"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
-package.rust-version = "1.89"
+package.rust-version = "1.90"
 
 [profile.dev]
 lto = "thin"
@@ -59,6 +59,8 @@ brk_parser = { version = "0.0.111", path = "crates/brk_parser" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
+brk_vecs = { version = "0.0.111", path = "crates/brk_vecs" }
+brk_vecs_derive = { version = "0.0.111", path = "crates/brk_vecs_derive" }
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
@@ -76,7 +78,7 @@ serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.5"
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
-vecdb = { version = "0.2.16", features = ["derive"]}
+vecdb = { version = "0.2.16", features = ["derive"] }
 zerocopy = "0.8.27"
 zerocopy-derive = "0.8.27"
 

@@ -1,10 +1,10 @@
 use axum::{Router, response::Redirect, routing::get};
 
-use crate::api::{explorer::ApiExplorerRoutes, metrics::ApiMetricsRoutes};
+use crate::api::{chain::ApiExplorerRoutes, metrics::ApiMetricsRoutes};
 
 use super::AppState;
 
-mod explorer;
+mod chain;
 mod metrics;
 
 pub trait ApiRoutes {
