@@ -1,5 +1,8 @@
 use std::ops::{Add, AddAssign};
 
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use crate::OutputType;
 
 use super::GroupFilter;
@@ -147,5 +150,44 @@ where
         self.p2a += rhs.p2a;
         self.unknown += rhs.unknown;
         self.empty += rhs.empty;
+    }
+}
+
+impl<T: IVecs> IVecs for BySpendableType<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("p2pk65", &self.p2pk65),
+                ("p2pk33", &self.p2pk33),
+                ("p2pkh", &self.p2pkh),
+                ("p2ms", &self.p2ms),
+                ("p2sh", &self.p2sh),
+                ("p2wpkh", &self.p2wpkh),
+                ("p2wsh", &self.p2wsh),
+                ("p2tr", &self.p2tr),
+                ("p2a", &self.p2a),
+                ("unknown", &self.unknown),
+                ("empty", &self.empty),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.p2pk65.1.iter());
+        iter = Box::new(iter.chain(self.p2pk33.1.iter()));
+        iter = Box::new(iter.chain(self.p2pkh.1.iter()));
+        iter = Box::new(iter.chain(self.p2ms.1.iter()));
+        iter = Box::new(iter.chain(self.p2sh.1.iter()));
+        iter = Box::new(iter.chain(self.p2wpkh.1.iter()));
+        iter = Box::new(iter.chain(self.p2wsh.1.iter()));
+        iter = Box::new(iter.chain(self.p2tr.1.iter()));
+        iter = Box::new(iter.chain(self.p2a.1.iter()));
+        iter = Box::new(iter.chain(self.unknown.1.iter()));
+        iter = Box::new(iter.chain(self.empty.1.iter()));
+        iter
     }
 }

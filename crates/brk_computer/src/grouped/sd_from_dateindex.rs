@@ -1,15 +1,16 @@
 use brk_error::Result;
 use brk_structs::{CheckedSub, Date, DateIndex, Dollars, StoredF32, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec,
-    Database, EagerVec, Exit, GenericStoredVec, StoredIndex,
+    AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec,
+    Exit, GenericStoredVec, StoredIndex,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes};
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct ComputedStandardDeviationVecsFromDateIndex {
     days: usize,
 
@@ -803,76 +804,5 @@ impl ComputedStandardDeviationVecsFromDateIndex {
     ) -> impl Iterator<Item = &mut EagerVec<DateIndex, StoredF32>> {
         self.mut_stateful_computed()
             .map(|c| c.dateindex.as_mut().unwrap())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.sma.iter().flat_map(|v| v.iter_any_collectable()));
-
-        iter = Box::new(iter.chain(self.sd.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p0_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.p1sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.p1_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.p2sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.p2_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.p3sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m0_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m1sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m1_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m2sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m2_5sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.m3sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self._0sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.p0_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.p1sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.p1_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.p2sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.p2_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.p3sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.m0_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.m1sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.m1_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.m2sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.m2_5sd_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.m3sd_usd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.zscore.iter().flat_map(|v| v.iter_any_collectable())));
-
-        iter
     }
 }

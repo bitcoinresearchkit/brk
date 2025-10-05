@@ -9,6 +9,10 @@ repository.workspace = true
 rust-version.workspace = true
 build = "build.rs"
 
+[features]
+derive = ["brk_vecs_derive"]
+
 [dependencies]
+brk_vecs_derive = { workspace = true, optional = true }
 serde = { workspace = true }
 vecdb = { workspace = true }

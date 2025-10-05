@@ -1,3 +1,6 @@
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use crate::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
     BySpendableType, ByTerm, GroupFilter,
@@ -81,5 +84,42 @@ impl<T> From<UTXOGroups<T>> for UTXOGroups<(GroupFilter, T)> {
             ge_amount: ByGreatEqualAmount::from(value.ge_amount),
             _type: BySpendableType::from(value._type),
         }
+    }
+}
+
+impl<T: IVecs> IVecs for UTXOGroups<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("all", self.all.1.to_tree_node()),
+                ("age_range", self.age_range.to_tree_node()),
+                ("epoch", self.epoch.to_tree_node()),
+                ("min_age", self.min_age.to_tree_node()),
+                ("ge_amount", self.ge_amount.to_tree_node()),
+                ("amount_range", self.amount_range.to_tree_node()),
+                ("term", self.term.to_tree_node()),
+                ("type", self._type.to_tree_node()),
+                ("max_age", self.max_age.to_tree_node()),
+                ("lt_amount", self.lt_amount.to_tree_node()),
+            ]
+            .into_iter()
+            .map(|(name, node)| (name.to_string(), node))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.all.1.iter());
+        iter = Box::new(iter.chain(IVecs::iter(&self.age_range)));
+        iter = Box::new(iter.chain(self.epoch.iter()));
+        iter = Box::new(iter.chain(self.min_age.iter()));
+        iter = Box::new(iter.chain(IVecs::iter(&self.ge_amount)));
+        iter = Box::new(iter.chain(IVecs::iter(&self.amount_range)));
+        iter = Box::new(iter.chain(self.term.iter()));
+        iter = Box::new(iter.chain(self._type.iter()));
+        iter = Box::new(iter.chain(self.max_age.iter()));
+        iter = Box::new(iter.chain(self.lt_amount.iter()));
+        iter
     }
 }

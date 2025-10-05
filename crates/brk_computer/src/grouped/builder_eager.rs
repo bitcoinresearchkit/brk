@@ -1,6 +1,7 @@
 use allocative::Allocative;
 use brk_error::{Error, Result};
 use brk_structs::{CheckedSub, StoredU64, Version};
+use brk_vecs::IVecs;
 use vecdb::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
     GenericStoredVec, StoredIndex, StoredRaw,
@@ -10,8 +11,8 @@ use crate::utils::get_percentile;
 
 use super::ComputedType;
 
-#[derive(Clone, Debug, Allocative)]
-pub struct EagerVecBuilder<I, T>
+#[derive(Clone, Debug, IVecs, Allocative)]
+pub struct EagerVecsBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
@@ -32,7 +33,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<I, T> EagerVecBuilder<I, T>
+impl<I, T> EagerVecsBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
@@ -394,7 +395,7 @@ where
     pub fn from_aligned<I2>(
         &mut self,
         max_from: I,
-        source: &EagerVecBuilder<I2, T>,
+        source: &EagerVecsBuilder<I2, T>,
         first_indexes: &impl AnyIterableVec<I, I2>,
         count_indexes: &impl AnyIterableVec<I, StoredU64>,
         exit: &Exit,
@@ -540,9 +541,7 @@ where
     }
 
     pub fn starting_index(&self, max_from: I) -> I {
-        max_from.min(I::from(
-            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
-        ))
+        max_from.min(I::from(self.iter().map(|v| v.len()).min().unwrap()))
     }
 
     pub fn unwrap_first(&self) -> &EagerVec<I, T> {
@@ -587,98 +586,6 @@ where
     #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &EagerVec<I, T> {
         self.cumulative.as_ref().unwrap()
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(std::iter::empty());
-
-        iter = Box::new(
-            iter.chain(
-                self.first
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.last
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.min
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.max
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.median
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.average
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.sum
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.cumulative
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.pct90
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.pct75
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.pct25
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.pct10
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-
-        iter
     }
 
     pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {

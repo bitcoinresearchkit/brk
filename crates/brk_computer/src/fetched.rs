@@ -4,14 +4,15 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_structs::{DateIndex, Height, OHLCCents, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec,
-    RawVec, StoredIndex, VecIterator,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, RawVec, StoredIndex,
+    VecIterator,
 };
 
 use super::{Indexes, indexes};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
     fetcher: Fetcher,
@@ -41,11 +42,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -137,13 +135,5 @@ impl Vecs {
         self.dateindex_to_price_ohlc_in_cents.safe_flush(exit)?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [
-            &self.dateindex_to_price_ohlc_in_cents as &dyn AnyCollectableVec,
-            &self.height_to_price_ohlc_in_cents,
-        ]
-        .into_iter()
     }
 }

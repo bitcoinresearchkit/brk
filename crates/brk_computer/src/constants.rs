@@ -2,7 +2,8 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_structs::{StoredF32, StoredI16, StoredU16, Version};
-use vecdb::{AnyCollectableVec, AnyVec, Database, Exit};
+use brk_vecs::IVecs;
+use vecdb::{AnyVec, Database, Exit};
 
 use crate::grouped::Source;
 
@@ -12,7 +13,7 @@ use super::{
     indexes,
 };
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
 
@@ -159,11 +160,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -248,27 +246,5 @@ impl Vecs {
         })?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(std::iter::empty());
-
-        iter = Box::new(iter.chain(self.constant_0.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_1.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_2.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_3.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_4.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_38_2.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_50.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_61_8.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_100.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_600.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_minus_1.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_minus_2.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_minus_3.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constant_minus_4.iter_any_collectable()));
-
-        iter
     }
 }

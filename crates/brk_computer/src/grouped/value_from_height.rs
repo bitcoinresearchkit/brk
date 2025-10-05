@@ -1,7 +1,8 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
+use brk_vecs::IVecs;
+use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
     Indexes,
@@ -12,7 +13,7 @@ use crate::{
 
 use super::{ComputedVecsFromHeight, VecBuilderOptions};
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct ComputedValueVecsFromHeight {
     pub sats: ComputedVecsFromHeight<Sats>,
     pub bitcoin: ComputedVecsFromHeight<Bitcoin>,
@@ -129,12 +130,5 @@ impl ComputedValueVecsFromHeight {
         }
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::empty()
-            .chain(self.sats.iter_any_collectable())
-            .chain(self.bitcoin.iter_any_collectable())
-            .chain(self.dollars.iter().flat_map(|v| v.iter_any_collectable()))
     }
 }

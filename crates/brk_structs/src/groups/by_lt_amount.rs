@@ -1,3 +1,6 @@
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use crate::Sats;
 
 use super::GroupFilter;
@@ -84,5 +87,48 @@ impl<T> From<ByLowerThanAmount<T>> for ByLowerThanAmount<(GroupFilter, T)> {
                 value._100k_btc,
             ),
         }
+    }
+}
+
+impl<T: IVecs> IVecs for ByLowerThanAmount<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("10sats", &self._10sats),
+                ("100sats", &self._100sats),
+                ("1k_sats", &self._1k_sats),
+                ("10k_sats", &self._10k_sats),
+                ("100k_sats", &self._100k_sats),
+                ("1m_sats", &self._1m_sats),
+                ("10m_sats", &self._10m_sats),
+                ("1btc", &self._1btc),
+                ("10btc", &self._10btc),
+                ("100btc", &self._100btc),
+                ("1k_btc", &self._1k_btc),
+                ("10k_btc", &self._10k_btc),
+                ("100k_btc", &self._100k_btc),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self._10sats.1.iter());
+        iter = Box::new(iter.chain(self._100sats.1.iter()));
+        iter = Box::new(iter.chain(self._1k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._10k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._100k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._1m_sats.1.iter()));
+        iter = Box::new(iter.chain(self._10m_sats.1.iter()));
+        iter = Box::new(iter.chain(self._1btc.1.iter()));
+        iter = Box::new(iter.chain(self._10btc.1.iter()));
+        iter = Box::new(iter.chain(self._100btc.1.iter()));
+        iter = Box::new(iter.chain(self._1k_btc.1.iter()));
+        iter = Box::new(iter.chain(self._10k_btc.1.iter()));
+        iter = Box::new(iter.chain(self._100k_btc.1.iter()));
+        iter
     }
 }

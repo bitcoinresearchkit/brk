@@ -20,6 +20,7 @@ brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_store = { workspace = true }
 brk_parser = { workspace = true }
+brk_vecs = { workspace = true }
 vecdb = { workspace = true }
 derive_deref = { workspace = true }
 log = { workspace = true }

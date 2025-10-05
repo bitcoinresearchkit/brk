@@ -4,14 +4,15 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::{BlkPosition, Height, TxIndex, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CompressedVec, Database, Exit,
-    GenericStoredVec, PAGE_SIZE, VecIterator,
+    AnyIterableVec, AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec,
+    PAGE_SIZE, VecIterator,
 };
 
 use super::{Indexes, indexes};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
 
@@ -41,11 +42,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -127,15 +125,5 @@ impl Vecs {
         self.txindex_to_position.flush()?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        Box::new(
-            [
-                &self.height_to_position as &dyn AnyCollectableVec,
-                &self.txindex_to_position,
-            ]
-            .into_iter(),
-        )
     }
 }

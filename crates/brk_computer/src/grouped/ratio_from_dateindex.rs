@@ -1,8 +1,9 @@
 use brk_error::Result;
 use brk_structs::{Date, DateIndex, Dollars, StoredF32, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec,
-    Exit, GenericStoredVec, StoredIndex, VecIterator,
+    AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
+    GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -16,7 +17,7 @@ use crate::{
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct ComputedRatioVecsFromDateIndex {
     pub price: Option<ComputedVecsFromDateIndex<Dollars>>,
 
@@ -630,134 +631,5 @@ impl ComputedRatioVecsFromDateIndex {
         .into_iter()
         .flatten()
         .collect::<Vec<_>>()
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.price.iter().flat_map(|v| v.iter_any_collectable()));
-
-        iter = Box::new(iter.chain(self.ratio.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.ratio_1w_sma
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_1m_sma
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.ratio_sd.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(
-            iter.chain(
-                self.ratio_1y_sd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_2y_sd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_4y_sd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct1
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct2
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct5
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct95
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct98
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct99
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct1_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct2_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct5_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct95_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct98_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.ratio_pct99_usd
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-
-        iter
     }
 }

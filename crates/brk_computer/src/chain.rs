@@ -9,9 +9,10 @@ use brk_structs::{
     SemesterIndex, StoredBool, StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex,
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit,
-    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2,
+    LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
 use crate::grouped::{
@@ -32,7 +33,7 @@ const TARGET_BLOCKS_PER_YEAR: u64 = 2 * TARGET_BLOCKS_PER_SEMESTER;
 const TARGET_BLOCKS_PER_DECADE: u64 = 10 * TARGET_BLOCKS_PER_YEAR;
 const ONE_TERA_HASH: f64 = 1_000_000_000_000.0;
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct Vecs {
     db: Database,
 
@@ -1151,11 +1152,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -2288,141 +2286,5 @@ impl Vecs {
             })?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
-            [
-                &self.height_to_interval as &dyn AnyCollectableVec,
-                &self.height_to_vbytes,
-                &self.difficultyepoch_to_timestamp,
-                &self.halvingepoch_to_timestamp,
-                &self.inputindex_to_value,
-                &self.txindex_to_fee,
-                &self.txindex_to_fee_rate,
-                &self.txindex_to_input_value,
-                &self.txindex_to_is_coinbase,
-                &self.txindex_to_output_value,
-                &self.txindex_to_vsize,
-                &self.txindex_to_weight,
-                &self.dateindex_to_fee_dominance,
-                &self.dateindex_to_subsidy_dominance,
-                &self.dateindex_to_block_count_target,
-                &self.weekindex_to_block_count_target,
-                &self.monthindex_to_block_count_target,
-                &self.quarterindex_to_block_count_target,
-                &self.semesterindex_to_block_count_target,
-                &self.yearindex_to_block_count_target,
-                &self.decadeindex_to_block_count_target,
-                &self.height_to_24h_block_count,
-                &self.height_to_24h_coinbase_sum,
-                &self.height_to_24h_coinbase_usd_sum,
-            ]
-            .into_iter(),
-        );
-        iter = Box::new(iter.chain(self.indexes_to_hash_rate.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_rate_1w_sma.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_rate_1m_sma.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_rate_2m_sma.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_rate_1y_sma.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.timeindexes_to_timestamp.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_block_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1w_block_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1m_block_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1y_block_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_block_interval.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_block_size.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_block_vbytes.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_block_weight.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_inflation_rate.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_difficulty.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_difficulty_adjustment.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_difficultyepoch.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_halvingepoch.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_difficulty_as_hash.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_blocks_before_next_difficulty_adjustment
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_days_before_next_difficulty_adjustment
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_blocks_before_next_halving
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_days_before_next_halving
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(iter.chain(self.indexes_to_sent.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_price_ths.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_price_phs.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_value_ths.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_value_phs.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_price_ths_min.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_price_phs_min.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_value_ths_min.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_value_phs_min.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_price_rebound.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_hash_value_rebound.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_fee_rate.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_v1.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_v2.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_v3.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_vsize.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_weight.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_emptyoutput_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_input_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_opreturn_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_output_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2a_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2ms_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2pk33_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2pk65_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2pkh_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2sh_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2tr_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2wpkh_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_p2wsh_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_unknownoutput_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_subsidy.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_exact_utxo_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_unclaimed_rewards.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_annualized_volume.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_annualized_volume_btc.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_annualized_volume_usd.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_btc_velocity.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_usd_velocity.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_tx_per_sec.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_outputs_per_sec.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_inputs_per_sec.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_subsidy_usd_1y_sma
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_puell_multiple
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter
     }
 }

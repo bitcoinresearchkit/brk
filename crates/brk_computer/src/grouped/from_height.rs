@@ -5,32 +5,33 @@ use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
-use vecdb::{AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Database, EagerVec, Exit};
+use brk_vecs::IVecs;
+use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{
     Indexes,
-    grouped::{LazyVecBuilder, Source},
+    grouped::{LazyVecsBuilder, Source},
     indexes,
 };
 
-use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
+use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,
 {
     pub height: Option<EagerVec<Height, T>>,
-    pub height_extra: EagerVecBuilder<Height, T>,
-    pub dateindex: EagerVecBuilder<DateIndex, T>,
-    pub weekindex: LazyVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
-    pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
-    pub monthindex: LazyVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
-    pub quarterindex: LazyVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
-    pub semesterindex: LazyVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
-    pub yearindex: LazyVecBuilder<YearIndex, T, DateIndex, YearIndex>,
+    pub height_extra: EagerVecsBuilder<Height, T>,
+    pub dateindex: EagerVecsBuilder<DateIndex, T>,
+    pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
+    pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
+    pub monthindex: LazyVecsBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: LazyVecsBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: LazyVecsBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: LazyVecsBuilder<YearIndex, T, DateIndex, YearIndex>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: LazyVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
+    pub decadeindex: LazyVecsBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -53,14 +54,14 @@ where
             EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO).unwrap()
         });
 
-        let height_extra = EagerVecBuilder::forced_import_compressed(
+        let height_extra = EagerVecsBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
             options.copy_self_extra(),
         )?;
 
-        let dateindex = EagerVecBuilder::forced_import_compressed(
+        let dateindex = EagerVecsBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
@@ -70,7 +71,7 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            weekindex: LazyVecBuilder::forced_import(
+            weekindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -78,7 +79,7 @@ where
                 indexes.weekindex_to_weekindex.boxed_clone(),
                 options.into(),
             ),
-            monthindex: LazyVecBuilder::forced_import(
+            monthindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -86,7 +87,7 @@ where
                 indexes.monthindex_to_monthindex.boxed_clone(),
                 options.into(),
             ),
-            quarterindex: LazyVecBuilder::forced_import(
+            quarterindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -94,7 +95,7 @@ where
                 indexes.quarterindex_to_quarterindex.boxed_clone(),
                 options.into(),
             ),
-            semesterindex: LazyVecBuilder::forced_import(
+            semesterindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -102,7 +103,7 @@ where
                 indexes.semesterindex_to_semesterindex.boxed_clone(),
                 options.into(),
             ),
-            yearindex: LazyVecBuilder::forced_import(
+            yearindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -110,7 +111,7 @@ where
                 indexes.yearindex_to_yearindex.boxed_clone(),
                 options.into(),
             ),
-            decadeindex: LazyVecBuilder::forced_import(
+            decadeindex: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
                 None,
@@ -122,7 +123,7 @@ where
             height,
             height_extra,
             dateindex,
-            difficultyepoch: EagerVecBuilder::forced_import_compressed(
+            difficultyepoch: EagerVecsBuilder::forced_import_compressed(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
@@ -197,26 +198,5 @@ where
         }
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
-            self.height
-                .as_ref()
-                .map(|x| x as &dyn AnyCollectableVec)
-                .into_iter(),
-        );
-
-        iter = Box::new(iter.chain(self.height_extra.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.dateindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.weekindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.difficultyepoch.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.monthindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.quarterindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.semesterindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.yearindex.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.decadeindex.iter_any_collectable()));
-
-        iter
     }
 }

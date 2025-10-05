@@ -5,6 +5,7 @@ use brk_structs::{
     AddressGroups, Bitcoin, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, DateIndex,
     Dollars, GroupFilter, Height, Version,
 };
+use brk_vecs::IVecs;
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format};
 
@@ -18,7 +19,7 @@ use crate::{
 
 const VERSION: Version = Version::new(0);
 
-#[derive(Clone, Deref, DerefMut)]
+#[derive(Clone, Deref, DerefMut, IVecs)]
 pub struct Vecs(AddressGroups<(GroupFilter, address_cohort::Vecs)>);
 
 impl Vecs {

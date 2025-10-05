@@ -1,7 +1,8 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_structs::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{AnyCollectableVec, AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
+use brk_vecs::IVecs;
+use vecdb::{AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
 
 use crate::{
     chain,
@@ -13,7 +14,7 @@ use crate::{
     price,
 };
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct Vecs {
     id: PoolId,
 
@@ -372,26 +373,5 @@ impl Vecs {
             })?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(std::iter::empty());
-
-        iter = Box::new(iter.chain(self.indexes_to_blocks_mined.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1w_blocks_mined.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1m_blocks_mined.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1y_blocks_mined.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_subsidy.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_fee.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_coinbase.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_dominance.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1d_dominance.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1w_dominance.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1m_dominance.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_1y_dominance.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_days_since_block.iter_any_collectable()));
-
-        iter
     }
 }

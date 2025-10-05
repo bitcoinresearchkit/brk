@@ -15,12 +15,13 @@ use brk_structs::{
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
     P2WSHAddressIndex, Sats, StoredU64, Timestamp, TypeIndex, Version,
 };
+use brk_vecs::IVecs;
 use log::info;
 use rayon::prelude::*;
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, AnyStoredVec, AnyVec, CollectableVec, Database,
-    EagerVec, Exit, Format, GenericStoredVec, ImportOptions, LazyVecFrom1, PAGE_SIZE, RawVec,
-    Reader, Stamp, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
+    Format, GenericStoredVec, ImportOptions, LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp,
+    StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -49,7 +50,7 @@ use withaddressdatasource::*;
 
 const VERSION: Version = Version::new(21);
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
 
@@ -492,11 +493,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -1835,90 +1833,6 @@ impl Vecs {
             .stamped_flush_maybe_with_changes(stamp, with_changes)?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
-            [
-                &self.height_to_unspendable_supply as &dyn AnyCollectableVec,
-                &self.height_to_opreturn_supply,
-                &self.chain_state,
-                &self.p2pk33addressindex_to_anyaddressindex,
-                &self.p2pk65addressindex_to_anyaddressindex,
-                &self.p2pkhaddressindex_to_anyaddressindex,
-                &self.p2shaddressindex_to_anyaddressindex,
-                &self.p2traddressindex_to_anyaddressindex,
-                &self.p2wpkhaddressindex_to_anyaddressindex,
-                &self.p2wshaddressindex_to_anyaddressindex,
-                &self.p2aaddressindex_to_anyaddressindex,
-                &self.loadedaddressindex_to_loadedaddressdata,
-                &self.emptyaddressindex_to_emptyaddressdata,
-                &self.loadedaddressindex_to_loadedaddressindex,
-                &self.emptyaddressindex_to_emptyaddressindex,
-            ]
-            .into_iter(),
-        );
-
-        iter = Box::new(
-            iter.chain(
-                self.utxo_cohorts
-                    .iter_right()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.address_cohorts
-                    .iter_right()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(iter.chain(self.indexes_to_unspendable_supply.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_opreturn_supply.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_addr_count.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes_to_empty_addr_count.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.addresstype_to_indexes_to_addr_count
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.indexes_to_market_cap
-                    .iter()
-                    .flat_map(|v| v.iter_any_collectable()),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.addresstype_to_indexes_to_empty_addr_count
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.addresstype_to_height_to_addr_count
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.addresstype_to_height_to_empty_addr_count
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.height_to_market_cap
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            ),
-        );
-
-        iter
     }
 }
 

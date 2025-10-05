@@ -2,6 +2,7 @@ use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_vecs::IVecs;
 use vecdb::{AnyIterableVec, Database, Exit, Format};
 
 use crate::{
@@ -12,10 +13,11 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     state_starting_height: Option<Height>,
 
+    #[vecs(skip)]
     pub state: Option<UTXOCohortState>,
 
     inner: common::Vecs,

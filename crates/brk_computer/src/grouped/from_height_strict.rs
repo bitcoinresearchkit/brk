@@ -1,20 +1,21 @@
 use brk_error::Result;
 
 use brk_structs::{DifficultyEpoch, Height, Version};
-use vecdb::{AnyCollectableVec, Database, EagerVec, Exit};
+use brk_vecs::IVecs;
+use vecdb::{Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};
 
-use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
+use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
     T: ComputedType + PartialOrd,
 {
     pub height: EagerVec<Height, T>,
-    pub height_extra: EagerVecBuilder<Height, T>,
-    pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
+    pub height_extra: EagerVecsBuilder<Height, T>,
+    pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 
@@ -34,7 +35,7 @@ where
         let height =
             EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO)?;
 
-        let height_extra = EagerVecBuilder::forced_import_compressed(
+        let height_extra = EagerVecsBuilder::forced_import_compressed(
             db,
             name,
             version + VERSION + Version::ZERO,
@@ -46,7 +47,7 @@ where
         Ok(Self {
             height,
             height_extra,
-            difficultyepoch: EagerVecBuilder::forced_import_compressed(
+            difficultyepoch: EagerVecsBuilder::forced_import_compressed(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
@@ -80,12 +81,5 @@ where
         )?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [&self.height as &dyn AnyCollectableVec]
-            .into_iter()
-            .chain(self.height_extra.iter_any_collectable())
-            .chain(self.difficultyepoch.iter_any_collectable())
     }
 }

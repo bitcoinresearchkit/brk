@@ -59,7 +59,7 @@ brk_parser = { version = "0.0.111", path = "crates/brk_parser" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
-brk_vecs = { version = "0.0.111", path = "crates/brk_vecs" }
+brk_vecs = { version = "0.0.111", path = "crates/brk_vecs", features = ["derive"] }
 brk_vecs_derive = { version = "0.0.111", path = "crates/brk_vecs_derive" }
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
@@ -67,7 +67,7 @@ fjall = "2.11.2"
 jiff = "0.2.15"
 log = "0.4.28"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
-parking_lot = "0.12.4"
+parking_lot = "0.12.5"
 quick_cache = "0.6.16"
 rayon = "1.11.0"
 schemars = "1.0.4"
@@ -77,7 +77,7 @@ serde_derive = "1.0.228"
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.5"
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
-# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
 vecdb = { version = "0.2.16", features = ["derive"] }
 zerocopy = "0.8.27"
 zerocopy-derive = "0.8.27"

@@ -42,6 +42,11 @@ pub fn main() -> Result<()> {
 
             let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
+            // should be: 205937
+            dbg!(computer.iter_any_collectable().collect::<Vec<_>>().len());
+
+            std::process::exit(0);
+
             loop {
                 let i = Instant::now();
                 let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;

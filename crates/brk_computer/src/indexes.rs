@@ -10,6 +10,7 @@ use brk_structs::{
     P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64,
     Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
+use brk_vecs::IVecs;
 use vecdb::{
     AnyCloneableIterableVec, AnyCollectableVec, Database, EagerVec, Exit, LazyVecFrom1,
     LazyVecFrom2, PAGE_SIZE, StoredIndex, VecIterator,
@@ -17,7 +18,7 @@ use vecdb::{
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
 
@@ -474,11 +475,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -931,72 +929,6 @@ impl Vecs {
             difficultyepoch: starting_difficultyepoch,
             halvingepoch: starting_halvingepoch,
         })
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [
-            &self.dateindex_to_date as &dyn AnyCollectableVec,
-            &self.dateindex_to_dateindex,
-            &self.dateindex_to_first_height,
-            &self.dateindex_to_height_count,
-            &self.dateindex_to_monthindex,
-            &self.dateindex_to_weekindex,
-            &self.decadeindex_to_decadeindex,
-            &self.decadeindex_to_first_yearindex,
-            &self.decadeindex_to_yearindex_count,
-            &self.difficultyepoch_to_difficultyepoch,
-            &self.difficultyepoch_to_first_height,
-            &self.difficultyepoch_to_height_count,
-            &self.emptyoutputindex_to_emptyoutputindex,
-            &self.halvingepoch_to_first_height,
-            &self.halvingepoch_to_halvingepoch,
-            &self.height_to_date,
-            &self.height_to_date_fixed,
-            &self.height_to_dateindex,
-            &self.height_to_difficultyepoch,
-            &self.height_to_halvingepoch,
-            &self.height_to_height,
-            &self.height_to_timestamp_fixed,
-            &self.height_to_txindex_count,
-            &self.inputindex_to_inputindex,
-            &self.monthindex_to_dateindex_count,
-            &self.monthindex_to_first_dateindex,
-            &self.monthindex_to_monthindex,
-            &self.monthindex_to_quarterindex,
-            &self.monthindex_to_semesterindex,
-            &self.monthindex_to_yearindex,
-            &self.opreturnindex_to_opreturnindex,
-            &self.outputindex_to_outputindex,
-            &self.p2aaddressindex_to_p2aaddressindex,
-            &self.p2msoutputindex_to_p2msoutputindex,
-            &self.p2pk33addressindex_to_p2pk33addressindex,
-            &self.p2pk65addressindex_to_p2pk65addressindex,
-            &self.p2pkhaddressindex_to_p2pkhaddressindex,
-            &self.p2shaddressindex_to_p2shaddressindex,
-            &self.p2traddressindex_to_p2traddressindex,
-            &self.p2wpkhaddressindex_to_p2wpkhaddressindex,
-            &self.p2wshaddressindex_to_p2wshaddressindex,
-            &self.quarterindex_to_first_monthindex,
-            &self.quarterindex_to_monthindex_count,
-            &self.quarterindex_to_quarterindex,
-            &self.semesterindex_to_first_monthindex,
-            &self.semesterindex_to_monthindex_count,
-            &self.semesterindex_to_semesterindex,
-            &self.txindex_to_height,
-            &self.txindex_to_txindex,
-            &self.txindex_to_input_count,
-            &self.txindex_to_output_count,
-            &self.unknownoutputindex_to_unknownoutputindex,
-            &self.weekindex_to_dateindex_count,
-            &self.weekindex_to_first_dateindex,
-            &self.weekindex_to_weekindex,
-            &self.yearindex_to_decadeindex,
-            &self.yearindex_to_first_monthindex,
-            &self.yearindex_to_monthindex_count,
-            &self.yearindex_to_yearindex,
-            &self.outputindex_to_txindex,
-        ]
-        .into_iter()
     }
 }
 

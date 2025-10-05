@@ -1,13 +1,14 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, StoredU64};
+use brk_vecs::IVecs;
 use derive_deref::{Deref, DerefMut};
-use vecdb::{AnyCollectableVec, Exit};
+use vecdb::Exit;
 
 use crate::{Indexes, grouped::ComputedVecsFromHeight, indexes};
 
 use super::AddressTypeToHeightToAddressCount;
 
-#[derive(Clone, Deref, DerefMut)]
+#[derive(Clone, Deref, DerefMut, IVecs)]
 pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);
 
 impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToIndexesToAddressCount {
@@ -73,11 +74,5 @@ impl AddressTypeToIndexesToAddressCount {
             Some(&addresstype_to_height_to_addresscount.p2a),
         )?;
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        self.0
-            .iter_typed()
-            .flat_map(|(_, v)| v.iter_any_collectable())
     }
 }

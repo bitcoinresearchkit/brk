@@ -6,6 +6,7 @@ use brk_structs::{
     ByMinAge, BySpendableType, ByTerm, CheckedSub, DateIndex, Dollars, GroupFilter, HalvingEpoch,
     Height, Timestamp, UTXOGroups, Version,
 };
+use brk_vecs::IVecs;
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format, StoredIndex};
 
@@ -19,7 +20,7 @@ use super::{r#trait::CohortVecs, utxo_cohort};
 
 const VERSION: Version = Version::new(0);
 
-#[derive(Clone, Deref, DerefMut)]
+#[derive(Clone, Deref, DerefMut, IVecs)]
 pub struct Vecs(UTXOGroups<(GroupFilter, utxo_cohort::Vecs)>);
 
 impl Vecs {

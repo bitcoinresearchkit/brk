@@ -1,3 +1,6 @@
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use super::GroupFilter;
 
 #[derive(Default, Clone)]
@@ -130,5 +133,62 @@ impl<T> ByAgeRange<(GroupFilter, T)> {
             &self.from_15y.1,
         ]
         .into_iter()
+    }
+}
+
+impl<T: IVecs> IVecs for ByAgeRange<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("up_to_1d", &self.up_to_1d),
+                ("1d_to_1w", &self._1d_to_1w),
+                ("1w_to_1m", &self._1w_to_1m),
+                ("1m_to_2m", &self._1m_to_2m),
+                ("2m_to_3m", &self._2m_to_3m),
+                ("3m_to_4m", &self._3m_to_4m),
+                ("4m_to_5m", &self._4m_to_5m),
+                ("5m_to_6m", &self._5m_to_6m),
+                ("6m_to_1y", &self._6m_to_1y),
+                ("1y_to_2y", &self._1y_to_2y),
+                ("2y_to_3y", &self._2y_to_3y),
+                ("3y_to_4y", &self._3y_to_4y),
+                ("4y_to_5y", &self._4y_to_5y),
+                ("5y_to_6y", &self._5y_to_6y),
+                ("6y_to_7y", &self._6y_to_7y),
+                ("7y_to_8y", &self._7y_to_8y),
+                ("8y_to_10y", &self._8y_to_10y),
+                ("10y_to_12y", &self._10y_to_12y),
+                ("12y_to_15y", &self._12y_to_15y),
+                ("from_15y", &self.from_15y),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.up_to_1d.1.iter());
+        iter = Box::new(iter.chain(self._1d_to_1w.1.iter()));
+        iter = Box::new(iter.chain(self._1w_to_1m.1.iter()));
+        iter = Box::new(iter.chain(self._1m_to_2m.1.iter()));
+        iter = Box::new(iter.chain(self._2m_to_3m.1.iter()));
+        iter = Box::new(iter.chain(self._3m_to_4m.1.iter()));
+        iter = Box::new(iter.chain(self._4m_to_5m.1.iter()));
+        iter = Box::new(iter.chain(self._5m_to_6m.1.iter()));
+        iter = Box::new(iter.chain(self._6m_to_1y.1.iter()));
+        iter = Box::new(iter.chain(self._1y_to_2y.1.iter()));
+        iter = Box::new(iter.chain(self._2y_to_3y.1.iter()));
+        iter = Box::new(iter.chain(self._3y_to_4y.1.iter()));
+        iter = Box::new(iter.chain(self._4y_to_5y.1.iter()));
+        iter = Box::new(iter.chain(self._5y_to_6y.1.iter()));
+        iter = Box::new(iter.chain(self._6y_to_7y.1.iter()));
+        iter = Box::new(iter.chain(self._7y_to_8y.1.iter()));
+        iter = Box::new(iter.chain(self._8y_to_10y.1.iter()));
+        iter = Box::new(iter.chain(self._10y_to_12y.1.iter()));
+        iter = Box::new(iter.chain(self._12y_to_15y.1.iter()));
+        iter = Box::new(iter.chain(self.from_15y.1.iter()));
+        iter
     }
 }

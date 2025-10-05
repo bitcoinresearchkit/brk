@@ -1,5 +1,8 @@
 use std::ops::{Add, AddAssign};
 
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use super::GroupFilter;
 use crate::OutputType;
 
@@ -190,5 +193,72 @@ impl<T> ByAddressType<Option<T>> {
         self.iter_mut().for_each(|opt| {
             opt.take();
         });
+    }
+}
+
+impl<T: AnyCollectableVec + !IVecs> IVecs for ByAddressType<T> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("p2pk65", &self.p2pk65),
+                ("p2pk33", &self.p2pk33),
+                ("p2pkh", &self.p2pkh),
+                ("p2sh", &self.p2sh),
+                ("p2wpkh", &self.p2wpkh),
+                ("p2wsh", &self.p2wsh),
+                ("p2tr", &self.p2tr),
+                ("p2a", &self.p2a),
+            ]
+            .into_iter()
+            .map(|(name, field)| (name.to_string(), TreeNode::Leaf(field.name().to_string())))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        [
+            &self.p2pk65 as &dyn AnyCollectableVec,
+            &self.p2pk33,
+            &self.p2pkh,
+            &self.p2sh,
+            &self.p2wpkh,
+            &self.p2wsh,
+            &self.p2tr,
+            &self.p2a,
+        ]
+        .into_iter()
+    }
+}
+
+impl<T: IVecs> IVecs for ByAddressType<T> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("p2pk65", &self.p2pk65),
+                ("p2pk33", &self.p2pk33),
+                ("p2pkh", &self.p2pkh),
+                ("p2sh", &self.p2sh),
+                ("p2wpkh", &self.p2wpkh),
+                ("p2wsh", &self.p2wsh),
+                ("p2tr", &self.p2tr),
+                ("p2a", &self.p2a),
+            ]
+            .into_iter()
+            .map(|(name, field)| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self.p2pk65.iter());
+        iter = Box::new(iter.chain(self.p2pk33.iter()));
+        iter = Box::new(iter.chain(self.p2pkh.iter()));
+        iter = Box::new(iter.chain(self.p2sh.iter()));
+        iter = Box::new(iter.chain(self.p2wpkh.iter()));
+        iter = Box::new(iter.chain(self.p2wsh.iter()));
+        iter = Box::new(iter.chain(self.p2tr.iter()));
+        iter = Box::new(iter.chain(self.p2a.iter()));
+        iter
     }
 }

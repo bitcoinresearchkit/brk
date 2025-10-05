@@ -2,16 +2,17 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Database, Exit, LazyVecFrom1,
-    LazyVecFrom3, StoredIndex, StoredVec,
+    AnyCloneableIterableVec, CollectableVec, Database, Exit, LazyVecFrom1, LazyVecFrom3,
+    StoredIndex, StoredVec,
 };
 
 use crate::{Indexes, grouped::Source, indexes, price};
 
 use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct ComputedValueVecsFromTxindex {
     pub sats: ComputedVecsFromTxindex<Sats>,
     pub bitcoin_txindex: LazyVecFrom1<TxIndex, Bitcoin, TxIndex, Sats>,
@@ -200,18 +201,5 @@ impl ComputedValueVecsFromTxindex {
         }
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [&self.bitcoin_txindex as &dyn AnyCollectableVec]
-            .into_iter()
-            .chain(self.sats.iter_any_collectable())
-            .chain(self.bitcoin.iter_any_collectable())
-            .chain(
-                self.dollars_txindex
-                    .iter()
-                    .map(|v| v as &dyn AnyCollectableVec),
-            )
-            .chain(self.dollars.iter().flat_map(|v| v.iter_any_collectable()))
     }
 }
