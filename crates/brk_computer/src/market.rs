@@ -2,7 +2,7 @@ use std::{path::Path, thread};
 
 use brk_error::Result;
 use brk_structs::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{Database, EagerVec, Exit, PAGE_SIZE, StoredIndex, VecIterator};
 
 use crate::{
@@ -17,7 +17,7 @@ use super::{
     indexes,
 };
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
 
@@ -1516,8 +1516,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }

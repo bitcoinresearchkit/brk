@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 
 use super::{ComputedVecsFromHeight, VecBuilderOptions};
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct ComputedValueVecsFromHeight {
     pub sats: ComputedVecsFromHeight<Sats>,
     pub bitcoin: ComputedVecsFromHeight<Bitcoin>,

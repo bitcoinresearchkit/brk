@@ -7,7 +7,7 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::Version;
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use log::info;
 use vecdb::{Exit, Format};
 
@@ -32,7 +32,7 @@ pub use pools::*;
 pub use states::PriceToAmount;
 use states::*;
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Computer {
     pub chain: chain::Vecs,
     pub cointime: cointime::Vecs,

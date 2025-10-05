@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
 
 use super::{Source, VecBuilderOptions};
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct ComputedValueVecsFromDateIndex {
     pub sats: ComputedVecsFromDateIndex<Sats>,
     pub bitcoin: ComputedVecsFromDateIndex<Bitcoin>,

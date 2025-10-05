@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 use brk_error::Result;
 use brk_structs::{
     Bitcoin, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge,
-    ByMinAge, BySpendableType, ByTerm, CheckedSub, DateIndex, Dollars, GroupFilter, HalvingEpoch,
-    Height, Timestamp, UTXOGroups, Version,
+    ByMinAge, BySpendableType, ByTerm, CheckedSub, DateIndex, Dollars, Filter, Filtered,
+    HalvingEpoch, Height, Timestamp, UTXOGroups, Version,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format, StoredIndex};
 
@@ -20,8 +20,8 @@ use super::{r#trait::CohortVecs, utxo_cohort};
 
 const VERSION: Version = Version::new(0);
 
-#[derive(Clone, Deref, DerefMut, IVecs)]
-pub struct Vecs(UTXOGroups<(GroupFilter, utxo_cohort::Vecs)>);
+#[derive(Clone, Deref, DerefMut, Traversable)]
+pub struct Vecs(UTXOGroups<Filtered<utxo_cohort::Vecs>>);
 
 impl Vecs {
     pub fn forced_import(
@@ -1459,7 +1459,7 @@ impl Vecs {
         let mut vecs = self
             .age_range
             .iter_mut()
-            .map(|(filter, v)| (filter, &mut v.state))
+            .map(|Filtered(filter, v)| (filter, &mut v.state))
             .collect::<Vec<_>>();
 
         let _ = chain_state
@@ -1531,14 +1531,14 @@ impl Vecs {
 
             time_based_vecs
                 .iter_mut()
-                .filter(|(filter, _)| match filter {
-                    GroupFilter::GreaterOrEqual(from) => *from <= days_old,
-                    GroupFilter::LowerThan(to) => *to > days_old,
-                    GroupFilter::Range(range) => range.contains(&days_old),
-                    GroupFilter::Epoch(epoch) => *epoch == HalvingEpoch::from(height),
+                .filter(|Filtered(filter, _)| match filter {
+                    Filter::GreaterOrEqual(from) => *from <= days_old,
+                    Filter::LowerThan(to) => *to > days_old,
+                    Filter::Range(range) => range.contains(&days_old),
+                    Filter::Epoch(epoch) => *epoch == HalvingEpoch::from(height),
                     _ => unreachable!(),
                 })
-                .for_each(|(_, vecs)| {
+                .for_each(|Filtered(_, vecs)| {
                     vecs.state.as_mut().unwrap().send(
                         &sent.spendable_supply,
                         current_price,
@@ -1604,9 +1604,9 @@ impl Vecs {
             v.state.as_mut().unwrap().receive(&supply_state, price);
         });
 
-        self._type.iter_mut().for_each(|(filter, vecs)| {
+        self._type.iter_mut().for_each(|Filtered(filter, vecs)| {
             let output_type = match filter {
-                GroupFilter::Type(output_type) => *output_type,
+                Filter::Type(output_type) => *output_type,
                 _ => unreachable!(),
             };
             vecs.state
@@ -1639,56 +1639,56 @@ impl Vecs {
 
         [(
             &mut self.0.all.1,
-            by_date_range.iter().map(|(_, v)| v).collect::<Vec<_>>(),
+            by_date_range.iter().map(Filtered::t).collect::<Vec<_>>(),
         )]
         .into_iter()
-        .chain(self.0.min_age.iter_mut().map(|(filter, vecs)| {
+        .chain(self.0.min_age.iter_mut().map(|Filtered(filter, vecs)| {
             (
                 vecs,
                 by_date_range
                     .iter()
-                    .filter(|(other, _)| filter.includes(other))
-                    .map(|(_, v)| v)
+                    .filter(|other| other.includes(filter))
+                    .map(Filtered::t)
                     .collect::<Vec<_>>(),
             )
         }))
-        .chain(self.0.max_age.iter_mut().map(|(filter, vecs)| {
+        .chain(self.0.max_age.iter_mut().map(|Filtered(filter, vecs)| {
             (
                 vecs,
                 by_date_range
                     .iter()
-                    .filter(|(other, _)| filter.includes(other))
-                    .map(|(_, v)| v)
+                    .filter(|other| other.includes(filter))
+                    .map(Filtered::t)
                     .collect::<Vec<_>>(),
             )
         }))
-        .chain(self.0.term.iter_mut().map(|(filter, vecs)| {
+        .chain(self.0.term.iter_mut().map(|Filtered(filter, vecs)| {
             (
                 vecs,
                 by_date_range
                     .iter()
-                    .filter(|(other, _)| filter.includes(other))
-                    .map(|(_, v)| v)
+                    .filter(|other| other.includes(filter))
+                    .map(Filtered::t)
                     .collect::<Vec<_>>(),
             )
         }))
-        .chain(self.0.ge_amount.iter_mut().map(|(filter, vecs)| {
+        .chain(self.0.ge_amount.iter_mut().map(|Filtered(filter, vecs)| {
             (
                 vecs,
                 by_size_range
                     .iter()
-                    .filter(|(other, _)| filter.includes(other))
-                    .map(|(_, v)| v)
+                    .filter(|other| other.includes(filter))
+                    .map(Filtered::t)
                     .collect::<Vec<_>>(),
             )
         }))
-        .chain(self.0.lt_amount.iter_mut().map(|(filter, vecs)| {
+        .chain(self.0.lt_amount.iter_mut().map(|Filtered(filter, vecs)| {
             (
                 vecs,
                 by_size_range
                     .iter()
-                    .filter(|(other, _)| filter.includes(other))
-                    .map(|(_, v)| v)
+                    .filter(|other| other.includes(filter))
+                    .map(Filtered::t)
                     .collect::<Vec<_>>(),
             )
         }))
@@ -1705,8 +1705,8 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.iter_mut()
-            .into_iter()
-            .try_for_each(|(_, v)| v.compute_rest_part1(indexes, price, starting_indexes, exit))
+            .map(Filtered::mut_t)
+            .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1723,7 +1723,7 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.iter_mut().into_iter().try_for_each(|(_, v)| {
+        self.iter_mut().map(Filtered::mut_t).try_for_each(|v| {
             v.compute_rest_part2(
                 indexes,
                 price,
@@ -1741,6 +1741,7 @@ impl Vecs {
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.iter_separate_mut()
-            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
+            .map(Filtered::mut_t)
+            .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))
     }
 }

@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_structs::{AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, RawVec,
@@ -20,13 +20,13 @@ use crate::{
     price,
 };
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct Vecs {
     db: Database,
     pools: &'static Pools,
-    height_to_pool: RawVec<Height, PoolId>,
 
-    vecs: BTreeMap<PoolId, vecs::Vecs>,
+    pub height_to_pool: RawVec<Height, PoolId>,
+    pub vecs: BTreeMap<PoolId, vecs::Vecs>,
 }
 
 impl Vecs {
@@ -62,8 +62,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }

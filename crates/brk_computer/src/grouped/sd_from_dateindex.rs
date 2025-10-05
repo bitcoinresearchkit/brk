@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{CheckedSub, Date, DateIndex, Dollars, StoredF32, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec,
     Exit, GenericStoredVec, StoredIndex,
@@ -10,7 +10,7 @@ use crate::{Indexes, grouped::source::Source, indexes};
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct ComputedStandardDeviationVecsFromDateIndex {
     days: usize,
 

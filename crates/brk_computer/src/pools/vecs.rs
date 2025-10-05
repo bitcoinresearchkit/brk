@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_structs::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
 
 use crate::{
@@ -14,23 +14,23 @@ use crate::{
     price,
 };
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct Vecs {
     id: PoolId,
 
-    indexes_to_blocks_mined: ComputedVecsFromHeight<StoredU32>,
-    indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
-    indexes_to_1m_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
-    indexes_to_1y_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
-    indexes_to_subsidy: ComputedValueVecsFromHeight,
-    indexes_to_fee: ComputedValueVecsFromHeight,
-    indexes_to_coinbase: ComputedValueVecsFromHeight,
-    indexes_to_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    indexes_to_1d_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    indexes_to_1w_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    indexes_to_1m_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    indexes_to_1y_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
+    pub indexes_to_blocks_mined: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_1m_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_1y_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_subsidy: ComputedValueVecsFromHeight,
+    pub indexes_to_fee: ComputedValueVecsFromHeight,
+    pub indexes_to_coinbase: ComputedValueVecsFromHeight,
+    pub indexes_to_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_1d_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_1w_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_1m_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_1y_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
 }
 
 impl Vecs {

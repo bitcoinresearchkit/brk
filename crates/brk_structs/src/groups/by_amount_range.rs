@@ -1,13 +1,12 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
+use brk_traversable::Traversable;
 
-use crate::Sats;
+use crate::{Filtered, Sats};
 
-use super::GroupFilter;
+use super::Filter;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Traversable)]
 pub struct ByAmountRange<T> {
     pub _0sats: T,
     pub _1sat_to_10sats: T,
@@ -26,67 +25,81 @@ pub struct ByAmountRange<T> {
     pub _100k_btc_or_more: T,
 }
 
-impl<T> From<ByAmountRange<T>> for ByAmountRange<(GroupFilter, T)> {
+impl<T> From<ByAmountRange<T>> for ByAmountRange<Filtered<T>> {
     fn from(value: ByAmountRange<T>) -> Self {
         #[allow(clippy::inconsistent_digit_grouping)]
         Self {
-            _0sats: (GroupFilter::LowerThan(Sats::_1.into()), value._0sats),
+            _0sats: (Filter::LowerThan(Sats::_1.into()), value._0sats).into(),
             _1sat_to_10sats: (
-                GroupFilter::Range(Sats::_1.into()..Sats::_10.into()),
+                Filter::Range(Sats::_1.into()..Sats::_10.into()),
                 value._1sat_to_10sats,
-            ),
+            )
+                .into(),
             _10sats_to_100sats: (
-                GroupFilter::Range(Sats::_10.into()..Sats::_100.into()),
+                Filter::Range(Sats::_10.into()..Sats::_100.into()),
                 value._10sats_to_100sats,
-            ),
+            )
+                .into(),
             _100sats_to_1k_sats: (
-                GroupFilter::Range(Sats::_100.into()..Sats::_1K.into()),
+                Filter::Range(Sats::_100.into()..Sats::_1K.into()),
                 value._100sats_to_1k_sats,
-            ),
+            )
+                .into(),
             _1k_sats_to_10k_sats: (
-                GroupFilter::Range(Sats::_1K.into()..Sats::_10K.into()),
+                Filter::Range(Sats::_1K.into()..Sats::_10K.into()),
                 value._1k_sats_to_10k_sats,
-            ),
+            )
+                .into(),
             _10k_sats_to_100k_sats: (
-                GroupFilter::Range(Sats::_10K.into()..Sats::_100K.into()),
+                Filter::Range(Sats::_10K.into()..Sats::_100K.into()),
                 value._10k_sats_to_100k_sats,
-            ),
+            )
+                .into(),
             _100k_sats_to_1m_sats: (
-                GroupFilter::Range(Sats::_100K.into()..Sats::_1M.into()),
+                Filter::Range(Sats::_100K.into()..Sats::_1M.into()),
                 value._100k_sats_to_1m_sats,
-            ),
+            )
+                .into(),
             _1m_sats_to_10m_sats: (
-                GroupFilter::Range(Sats::_1M.into()..Sats::_10M.into()),
+                Filter::Range(Sats::_1M.into()..Sats::_10M.into()),
                 value._1m_sats_to_10m_sats,
-            ),
+            )
+                .into(),
             _10m_sats_to_1btc: (
-                GroupFilter::Range(Sats::_10M.into()..Sats::_1BTC.into()),
+                Filter::Range(Sats::_10M.into()..Sats::_1BTC.into()),
                 value._10m_sats_to_1btc,
-            ),
+            )
+                .into(),
             _1btc_to_10btc: (
-                GroupFilter::Range(Sats::_1BTC.into()..Sats::_10BTC.into()),
+                Filter::Range(Sats::_1BTC.into()..Sats::_10BTC.into()),
                 value._1btc_to_10btc,
-            ),
+            )
+                .into(),
             _10btc_to_100btc: (
-                GroupFilter::Range(Sats::_10BTC.into()..Sats::_100BTC.into()),
+                Filter::Range(Sats::_10BTC.into()..Sats::_100BTC.into()),
                 value._10btc_to_100btc,
-            ),
+            )
+                .into(),
             _100btc_to_1k_btc: (
-                GroupFilter::Range(Sats::_100BTC.into()..Sats::_1K_BTC.into()),
+                Filter::Range(Sats::_100BTC.into()..Sats::_1K_BTC.into()),
                 value._100btc_to_1k_btc,
-            ),
+            )
+                .into(),
             _1k_btc_to_10k_btc: (
-                GroupFilter::Range(Sats::_1K_BTC.into()..Sats::_10K_BTC.into()),
+                Filter::Range(Sats::_1K_BTC.into()..Sats::_10K_BTC.into()),
                 value._1k_btc_to_10k_btc,
-            ),
+            )
+                .into(),
             _10k_btc_to_100k_btc: (
-                GroupFilter::Range(Sats::_10K_BTC.into()..Sats::_100K_BTC.into()),
+                Filter::Range(Sats::_10K_BTC.into()..Sats::_100K_BTC.into()),
                 value._10k_btc_to_100k_btc,
-            ),
+            )
+                .into(),
             _100k_btc_or_more: (
-                GroupFilter::GreaterOrEqual(Sats::_100K_BTC.into()),
+                Filter::GreaterOrEqual(Sats::_100K_BTC.into()),
                 value._100k_btc_or_more,
-            ),
+            )
+                .into(),
         }
     }
 }
@@ -191,7 +204,7 @@ impl<T> ByAmountRange<T> {
     }
 }
 
-impl<T> ByAmountRange<(GroupFilter, T)> {
+impl<T> ByAmountRange<Filtered<T>> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._0sats.1,
@@ -260,52 +273,5 @@ where
         self._1k_btc_to_10k_btc += rhs._1k_btc_to_10k_btc;
         self._10k_btc_to_100k_btc += rhs._10k_btc_to_100k_btc;
         self._100k_btc_or_more += rhs._100k_btc_or_more;
-    }
-}
-
-impl<T: IVecs> IVecs for ByAmountRange<(GroupFilter, T)> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                ("0sats", &self._0sats),
-                ("1sat_to_10sats", &self._1sat_to_10sats),
-                ("10sats_to_100sats", &self._10sats_to_100sats),
-                ("100sats_to_1k_sats", &self._100sats_to_1k_sats),
-                ("1k_sats_to_10k_sats", &self._1k_sats_to_10k_sats),
-                ("10k_sats_to_100k_sats", &self._10k_sats_to_100k_sats),
-                ("100k_sats_to_1m_sats", &self._100k_sats_to_1m_sats),
-                ("1m_sats_to_10m_sats", &self._1m_sats_to_10m_sats),
-                ("10m_sats_to_1btc", &self._10m_sats_to_1btc),
-                ("1btc_to_10btc", &self._1btc_to_10btc),
-                ("10btc_to_100btc", &self._10btc_to_100btc),
-                ("100btc_to_1k_btc", &self._100btc_to_1k_btc),
-                ("1k_btc_to_10k_btc", &self._1k_btc_to_10k_btc),
-                ("10k_btc_to_100k_btc", &self._10k_btc_to_100k_btc),
-                ("100k_btc_or_more", &self._100k_btc_or_more),
-            ]
-            .into_iter()
-            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
-            .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self._0sats.1.iter());
-        iter = Box::new(iter.chain(self._1sat_to_10sats.1.iter()));
-        iter = Box::new(iter.chain(self._10sats_to_100sats.1.iter()));
-        iter = Box::new(iter.chain(self._100sats_to_1k_sats.1.iter()));
-        iter = Box::new(iter.chain(self._1k_sats_to_10k_sats.1.iter()));
-        iter = Box::new(iter.chain(self._10k_sats_to_100k_sats.1.iter()));
-        iter = Box::new(iter.chain(self._100k_sats_to_1m_sats.1.iter()));
-        iter = Box::new(iter.chain(self._1m_sats_to_10m_sats.1.iter()));
-        iter = Box::new(iter.chain(self._10m_sats_to_1btc.1.iter()));
-        iter = Box::new(iter.chain(self._1btc_to_10btc.1.iter()));
-        iter = Box::new(iter.chain(self._10btc_to_100btc.1.iter()));
-        iter = Box::new(iter.chain(self._100btc_to_1k_btc.1.iter()));
-        iter = Box::new(iter.chain(self._1k_btc_to_10k_btc.1.iter()));
-        iter = Box::new(iter.chain(self._10k_btc_to_100k_btc.1.iter()));
-        iter = Box::new(iter.chain(self._100k_btc_or_more.1.iter()));
-        iter
     }
 }

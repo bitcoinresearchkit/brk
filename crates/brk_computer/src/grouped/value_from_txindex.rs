@@ -2,7 +2,7 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, CollectableVec, Database, Exit, LazyVecFrom1, LazyVecFrom3,
     StoredIndex, StoredVec,
@@ -12,7 +12,7 @@ use crate::{Indexes, grouped::Source, indexes, price};
 
 use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct ComputedValueVecsFromTxindex {
     pub sats: ComputedVecsFromTxindex<Sats>,
     pub bitcoin_txindex: LazyVecFrom1<TxIndex, Bitcoin, TxIndex, Sats>,

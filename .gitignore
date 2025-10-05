@@ -26,3 +26,6 @@ flamegraph.svg
 
 # AI
 .claude/settings*
+
+# Expand
+expand.rs

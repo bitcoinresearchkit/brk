@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
+use brk_traversable::{Traversable, TreeNode};
 use derive_deref::{Deref, DerefMut};
 use vecdb::AnyCollectableVec;
 
@@ -17,6 +18,7 @@ pub struct Vecs<'a> {
     pub indexes: BTreeMap<&'static str, &'static [&'static str]>,
     pub distinct_metric_count: usize,
     pub total_metric_count: usize,
+    pub catalog: Option<TreeNode>,
     metric_to_indexes: BTreeMap<&'a str, Vec<&'static str>>,
     index_to_metrics: BTreeMap<Index, Vec<&'a str>>,
 }
@@ -25,7 +27,10 @@ impl<'a> Vecs<'a> {
     pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
         let mut this = Vecs::default();
 
-        indexer.vecs.iter().for_each(|vec| this.insert(vec));
+        indexer
+            .vecs
+            .iter_any_collectable()
+            .for_each(|vec| this.insert(vec));
 
         computer
             .iter_any_collectable()
@@ -83,6 +88,14 @@ impl<'a> Vecs<'a> {
         this.index_to_metrics
             .values_mut()
             .for_each(|ids| sort_ids(ids));
+        this.catalog.replace(TreeNode::Branch(
+            [
+                ("indexer".to_string(), indexer.vecs.to_tree_node()),
+                ("computer".to_string(), computer.to_tree_node()),
+            ]
+            .into_iter()
+            .collect(),
+        ));
 
         this
     }

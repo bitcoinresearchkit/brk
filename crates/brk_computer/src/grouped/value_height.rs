@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
     traits::{ComputeFromBitcoin, ComputeFromSats},
 };
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct ComputedHeightValueVecs {
     pub sats: Option<EagerVec<Height, Sats>>,
     pub bitcoin: EagerVec<Height, Bitcoin>,

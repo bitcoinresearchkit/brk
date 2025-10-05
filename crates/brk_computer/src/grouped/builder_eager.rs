@@ -1,17 +1,17 @@
 use allocative::Allocative;
 use brk_error::{Error, Result};
 use brk_structs::{CheckedSub, StoredU64, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
-    GenericStoredVec, StoredIndex, StoredRaw,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
+    StoredIndex, StoredRaw,
 };
 
 use crate::utils::get_percentile;
 
 use super::ComputedType;
 
-#[derive(Clone, Debug, IVecs, Allocative)]
+#[derive(Clone, Debug, Traversable, Allocative)]
 pub struct EagerVecsBuilder<I, T>
 where
     I: StoredIndex,
@@ -541,7 +541,9 @@ where
     }
 
     pub fn starting_index(&self, max_from: I) -> I {
-        max_from.min(I::from(self.iter().map(|v| v.len()).min().unwrap()))
+        max_from.min(I::from(
+            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
+        ))
     }
 
     pub fn unwrap_first(&self) -> &EagerVec<I, T> {

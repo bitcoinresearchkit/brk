@@ -1,12 +1,12 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, Height, StoredU64};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};
 use vecdb::{EagerVec, Exit, GenericStoredVec};
 
 use super::AddressTypeToAddressCount;
 
-#[derive(Debug, Clone, Deref, DerefMut, IVecs)]
+#[derive(Debug, Clone, Deref, DerefMut, Traversable)]
 pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<Height, StoredU64>>);
 
 impl From<ByAddressType<EagerVec<Height, StoredU64>>> for AddressTypeToHeightToAddressCount {

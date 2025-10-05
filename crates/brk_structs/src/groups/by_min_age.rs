@@ -1,9 +1,10 @@
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
+use brk_traversable::Traversable;
 
-use super::GroupFilter;
+use crate::Filtered;
 
-#[derive(Default, Clone)]
+use super::Filter;
+
+#[derive(Default, Clone, Traversable)]
 pub struct ByMinAge<T> {
     pub _1d: T,
     pub _1w: T,
@@ -51,7 +52,7 @@ impl<T> ByMinAge<T> {
     }
 }
 
-impl<T> ByMinAge<(GroupFilter, T)> {
+impl<T> ByMinAge<Filtered<T>> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self._1d.1,
@@ -77,80 +78,27 @@ impl<T> ByMinAge<(GroupFilter, T)> {
     }
 }
 
-impl<T> From<ByMinAge<T>> for ByMinAge<(GroupFilter, T)> {
+impl<T> From<ByMinAge<T>> for ByMinAge<Filtered<T>> {
     fn from(value: ByMinAge<T>) -> Self {
         Self {
-            _1d: (GroupFilter::GreaterOrEqual(1), value._1d),
-            _1w: (GroupFilter::GreaterOrEqual(7), value._1w),
-            _1m: (GroupFilter::GreaterOrEqual(30), value._1m),
-            _2m: (GroupFilter::GreaterOrEqual(2 * 30), value._2m),
-            _3m: (GroupFilter::GreaterOrEqual(3 * 30), value._3m),
-            _4m: (GroupFilter::GreaterOrEqual(4 * 30), value._4m),
-            _5m: (GroupFilter::GreaterOrEqual(5 * 30), value._5m),
-            _6m: (GroupFilter::GreaterOrEqual(6 * 30), value._6m),
-            _1y: (GroupFilter::GreaterOrEqual(365), value._1y),
-            _2y: (GroupFilter::GreaterOrEqual(2 * 365), value._2y),
-            _3y: (GroupFilter::GreaterOrEqual(3 * 365), value._3y),
-            _4y: (GroupFilter::GreaterOrEqual(4 * 365), value._4y),
-            _5y: (GroupFilter::GreaterOrEqual(5 * 365), value._5y),
-            _6y: (GroupFilter::GreaterOrEqual(6 * 365), value._6y),
-            _7y: (GroupFilter::GreaterOrEqual(7 * 365), value._7y),
-            _8y: (GroupFilter::GreaterOrEqual(8 * 365), value._8y),
-            _10y: (GroupFilter::GreaterOrEqual(10 * 365), value._10y),
-            _12y: (GroupFilter::GreaterOrEqual(12 * 365), value._12y),
+            _1d: (Filter::GreaterOrEqual(1), value._1d).into(),
+            _1w: (Filter::GreaterOrEqual(7), value._1w).into(),
+            _1m: (Filter::GreaterOrEqual(30), value._1m).into(),
+            _2m: (Filter::GreaterOrEqual(2 * 30), value._2m).into(),
+            _3m: (Filter::GreaterOrEqual(3 * 30), value._3m).into(),
+            _4m: (Filter::GreaterOrEqual(4 * 30), value._4m).into(),
+            _5m: (Filter::GreaterOrEqual(5 * 30), value._5m).into(),
+            _6m: (Filter::GreaterOrEqual(6 * 30), value._6m).into(),
+            _1y: (Filter::GreaterOrEqual(365), value._1y).into(),
+            _2y: (Filter::GreaterOrEqual(2 * 365), value._2y).into(),
+            _3y: (Filter::GreaterOrEqual(3 * 365), value._3y).into(),
+            _4y: (Filter::GreaterOrEqual(4 * 365), value._4y).into(),
+            _5y: (Filter::GreaterOrEqual(5 * 365), value._5y).into(),
+            _6y: (Filter::GreaterOrEqual(6 * 365), value._6y).into(),
+            _7y: (Filter::GreaterOrEqual(7 * 365), value._7y).into(),
+            _8y: (Filter::GreaterOrEqual(8 * 365), value._8y).into(),
+            _10y: (Filter::GreaterOrEqual(10 * 365), value._10y).into(),
+            _12y: (Filter::GreaterOrEqual(12 * 365), value._12y).into(),
         }
-    }
-}
-
-impl<T: IVecs> IVecs for ByMinAge<(GroupFilter, T)> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                ("1d", &self._1d),
-                ("1w", &self._1w),
-                ("1m", &self._1m),
-                ("2m", &self._2m),
-                ("3m", &self._3m),
-                ("4m", &self._4m),
-                ("5m", &self._5m),
-                ("6m", &self._6m),
-                ("1y", &self._1y),
-                ("2y", &self._2y),
-                ("3y", &self._3y),
-                ("4y", &self._4y),
-                ("5y", &self._5y),
-                ("6y", &self._6y),
-                ("7y", &self._7y),
-                ("8y", &self._8y),
-                ("10y", &self._10y),
-                ("12y", &self._12y),
-            ]
-            .into_iter()
-            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
-            .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self._1d.1.iter());
-        iter = Box::new(iter.chain(self._1w.1.iter()));
-        iter = Box::new(iter.chain(self._1m.1.iter()));
-        iter = Box::new(iter.chain(self._2m.1.iter()));
-        iter = Box::new(iter.chain(self._3m.1.iter()));
-        iter = Box::new(iter.chain(self._4m.1.iter()));
-        iter = Box::new(iter.chain(self._5m.1.iter()));
-        iter = Box::new(iter.chain(self._6m.1.iter()));
-        iter = Box::new(iter.chain(self._1y.1.iter()));
-        iter = Box::new(iter.chain(self._2y.1.iter()));
-        iter = Box::new(iter.chain(self._3y.1.iter()));
-        iter = Box::new(iter.chain(self._4y.1.iter()));
-        iter = Box::new(iter.chain(self._5y.1.iter()));
-        iter = Box::new(iter.chain(self._6y.1.iter()));
-        iter = Box::new(iter.chain(self._7y.1.iter()));
-        iter = Box::new(iter.chain(self._8y.1.iter()));
-        iter = Box::new(iter.chain(self._10y.1.iter()));
-        iter = Box::new(iter.chain(self._12y.1.iter()));
-        iter
     }
 }

@@ -9,7 +9,7 @@ use brk_structs::{
     SemesterIndex, StoredBool, StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex,
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2,
     LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
@@ -33,7 +33,7 @@ const TARGET_BLOCKS_PER_YEAR: u64 = 2 * TARGET_BLOCKS_PER_SEMESTER;
 const TARGET_BLOCKS_PER_DECADE: u64 = 10 * TARGET_BLOCKS_PER_YEAR;
 const ONE_TERA_HASH: f64 = 1_000_000_000_000.0;
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct Vecs {
     db: Database,
 
@@ -1152,8 +1152,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }

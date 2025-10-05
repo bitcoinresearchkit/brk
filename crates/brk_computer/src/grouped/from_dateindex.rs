@@ -4,14 +4,14 @@ use brk_error::Result;
 use brk_structs::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
 use super::{ComputedType, EagerVecsBuilder, Source, VecBuilderOptions};
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + PartialOrd,

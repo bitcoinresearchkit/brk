@@ -1,9 +1,8 @@
 use allocative::Allocative;
 use brk_structs::Version;
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
-    AnyBoxedIterableVec, AnyCloneableIterableVec, AnyCollectableVec, FromCoarserIndex,
-    LazyVecFrom2, StoredIndex,
+    AnyBoxedIterableVec, AnyCloneableIterableVec, FromCoarserIndex, LazyVecFrom2, StoredIndex,
 };
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
@@ -11,7 +10,7 @@ use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
 use super::ComputedType;
 
 #[allow(clippy::type_complexity)]
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,
@@ -218,7 +217,9 @@ where
     }
 
     pub fn starting_index(&self, max_from: I) -> I {
-        max_from.min(I::from(self.iter().map(|v| v.len()).min().unwrap()))
+        max_from.min(I::from(
+            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
+        ))
     }
 
     pub fn unwrap_first(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
