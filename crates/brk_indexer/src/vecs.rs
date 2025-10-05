@@ -9,8 +9,7 @@ use brk_structs::{
     RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion,
     Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
-use brk_vecs::{IVecs, TreeNode};
-use brk_vecs_derive::IVecs;
+use brk_vecs::IVecs;
 use rayon::prelude::*;
 use vecdb::{
     AnyCollectableVec, AnyStoredVec, CompressedVec, Database, GenericStoredVec, PAGE_SIZE, RawVec,
@@ -370,55 +369,55 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [
-            &self.emptyoutputindex_to_txindex as &dyn AnyCollectableVec,
-            &self.height_to_blockhash,
-            &self.height_to_difficulty,
-            &self.height_to_first_emptyoutputindex,
-            &self.height_to_first_inputindex,
-            &self.height_to_first_opreturnindex,
-            &self.height_to_first_outputindex,
-            &self.height_to_first_p2aaddressindex,
-            &self.height_to_first_p2msoutputindex,
-            &self.height_to_first_p2pk33addressindex,
-            &self.height_to_first_p2pk65addressindex,
-            &self.height_to_first_p2pkhaddressindex,
-            &self.height_to_first_p2shaddressindex,
-            &self.height_to_first_p2traddressindex,
-            &self.height_to_first_p2wpkhaddressindex,
-            &self.height_to_first_p2wshaddressindex,
-            &self.height_to_first_txindex,
-            &self.height_to_first_unknownoutputindex,
-            &self.height_to_timestamp,
-            &self.height_to_total_size,
-            &self.height_to_weight,
-            &self.inputindex_to_outputindex,
-            &self.opreturnindex_to_txindex,
-            &self.outputindex_to_outputtype,
-            &self.outputindex_to_typeindex,
-            &self.outputindex_to_value,
-            &self.p2aaddressindex_to_p2abytes,
-            &self.p2msoutputindex_to_txindex,
-            &self.p2pk33addressindex_to_p2pk33bytes,
-            &self.p2pk65addressindex_to_p2pk65bytes,
-            &self.p2pkhaddressindex_to_p2pkhbytes,
-            &self.p2shaddressindex_to_p2shbytes,
-            &self.p2traddressindex_to_p2trbytes,
-            &self.p2wpkhaddressindex_to_p2wpkhbytes,
-            &self.p2wshaddressindex_to_p2wshbytes,
-            &self.txindex_to_base_size,
-            &self.txindex_to_first_inputindex,
-            &self.txindex_to_first_outputindex,
-            &self.txindex_to_is_explicitly_rbf,
-            &self.txindex_to_rawlocktime,
-            &self.txindex_to_total_size,
-            &self.txindex_to_txid,
-            &self.txindex_to_txversion,
-            &self.unknownoutputindex_to_txindex,
-        ]
-        .into_iter()
-    }
+    // pub fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+    //     [
+    //         &self.emptyoutputindex_to_txindex as &dyn AnyCollectableVec,
+    //         &self.height_to_blockhash,
+    //         &self.height_to_difficulty,
+    //         &self.height_to_first_emptyoutputindex,
+    //         &self.height_to_first_inputindex,
+    //         &self.height_to_first_opreturnindex,
+    //         &self.height_to_first_outputindex,
+    //         &self.height_to_first_p2aaddressindex,
+    //         &self.height_to_first_p2msoutputindex,
+    //         &self.height_to_first_p2pk33addressindex,
+    //         &self.height_to_first_p2pk65addressindex,
+    //         &self.height_to_first_p2pkhaddressindex,
+    //         &self.height_to_first_p2shaddressindex,
+    //         &self.height_to_first_p2traddressindex,
+    //         &self.height_to_first_p2wpkhaddressindex,
+    //         &self.height_to_first_p2wshaddressindex,
+    //         &self.height_to_first_txindex,
+    //         &self.height_to_first_unknownoutputindex,
+    //         &self.height_to_timestamp,
+    //         &self.height_to_total_size,
+    //         &self.height_to_weight,
+    //         &self.inputindex_to_outputindex,
+    //         &self.opreturnindex_to_txindex,
+    //         &self.outputindex_to_outputtype,
+    //         &self.outputindex_to_typeindex,
+    //         &self.outputindex_to_value,
+    //         &self.p2aaddressindex_to_p2abytes,
+    //         &self.p2msoutputindex_to_txindex,
+    //         &self.p2pk33addressindex_to_p2pk33bytes,
+    //         &self.p2pk65addressindex_to_p2pk65bytes,
+    //         &self.p2pkhaddressindex_to_p2pkhbytes,
+    //         &self.p2shaddressindex_to_p2shbytes,
+    //         &self.p2traddressindex_to_p2trbytes,
+    //         &self.p2wpkhaddressindex_to_p2wpkhbytes,
+    //         &self.p2wshaddressindex_to_p2wshbytes,
+    //         &self.txindex_to_base_size,
+    //         &self.txindex_to_first_inputindex,
+    //         &self.txindex_to_first_outputindex,
+    //         &self.txindex_to_is_explicitly_rbf,
+    //         &self.txindex_to_rawlocktime,
+    //         &self.txindex_to_total_size,
+    //         &self.txindex_to_txid,
+    //         &self.txindex_to_txversion,
+    //         &self.unknownoutputindex_to_txindex,
+    //     ]
+    //     .into_iter()
+    // }
 
     fn iter_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
         [

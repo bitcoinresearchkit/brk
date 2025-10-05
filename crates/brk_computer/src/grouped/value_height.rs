@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
+use brk_vecs::IVecs;
+use vecdb::{CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
 
 use crate::{
     Indexes,
@@ -9,7 +10,7 @@ use crate::{
     traits::{ComputeFromBitcoin, ComputeFromSats},
 };
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct ComputedHeightValueVecs {
     pub sats: Option<EagerVec<Height, Sats>>,
     pub bitcoin: EagerVec<Height, Bitcoin>,
@@ -99,12 +100,5 @@ impl ComputedHeightValueVecs {
         }
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [&self.bitcoin as &dyn AnyCollectableVec]
-            .into_iter()
-            .chain(self.sats.iter().map(|v| v as &dyn AnyCollectableVec))
-            .chain(self.dollars.iter().map(|v| v as &dyn AnyCollectableVec))
     }
 }

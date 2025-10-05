@@ -1,20 +1,22 @@
 use allocative::Allocative;
 use brk_structs::Version;
+use brk_vecs::IVecs;
 use vecdb::{
     AnyBoxedIterableVec, AnyCloneableIterableVec, AnyCollectableVec, FromCoarserIndex,
     LazyVecFrom2, StoredIndex,
 };
 
-use crate::grouped::{EagerVecBuilder, VecBuilderOptions};
+use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
 
 use super::ComputedType;
 
 #[allow(clippy::type_complexity)]
-#[derive(Clone, Allocative)]
-pub struct LazyVecBuilder<I, T, S1I, S2T>
+#[derive(Clone, IVecs, Allocative)]
+pub struct LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,
     T: ComputedType,
+    S1I: StoredIndex,
     S2T: ComputedType,
 {
     pub first: Option<Box<LazyVecFrom2<I, T, S1I, T, I, S2T>>>,
@@ -28,7 +30,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<I, T, S1I, S2T> LazyVecBuilder<I, T, S1I, S2T>
+impl<I, T, S1I, S2T> LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,
     T: ComputedType + 'static,
@@ -40,7 +42,7 @@ where
         name: &str,
         version: Version,
         source: Option<AnyBoxedIterableVec<S1I, T>>,
-        source_extra: &EagerVecBuilder<S1I, T>,
+        source_extra: &EagerVecsBuilder<S1I, T>,
         len_source: AnyBoxedIterableVec<I, S2T>,
         options: LazyVecBuilderOptions,
     ) -> Self {
@@ -216,9 +218,7 @@ where
     }
 
     pub fn starting_index(&self, max_from: I) -> I {
-        max_from.min(I::from(
-            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
-        ))
+        max_from.min(I::from(self.iter().map(|v| v.len()).min().unwrap()))
     }
 
     pub fn unwrap_first(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
@@ -243,63 +243,6 @@ where
     #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
         self.cumulative.as_ref().unwrap()
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(std::iter::empty());
-
-        iter = Box::new(
-            iter.chain(
-                self.first
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.last
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.min
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.max
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.average
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.sum
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.cumulative
-                    .as_ref()
-                    .map(|x| x.as_ref() as &dyn AnyCollectableVec),
-            ),
-        );
-
-        iter
     }
 }
 

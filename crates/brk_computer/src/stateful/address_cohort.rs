@@ -2,9 +2,10 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format,
-    GenericStoredVec, VecIterator,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
+    VecIterator,
 };
 
 use crate::{
@@ -20,10 +21,11 @@ use crate::{
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     starting_height: Option<Height>,
 
+    #[vecs(skip)]
     pub state: Option<AddressCohortState>,
 
     pub inner: common::Vecs,
@@ -83,13 +85,6 @@ impl Vecs {
                 false,
             )?,
         })
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        self.inner
-            .iter_any_collectable()
-            .chain([&self.height_to_addr_count as &dyn AnyCollectableVec])
-            .chain(self.indexes_to_addr_count.iter_any_collectable())
     }
 }
 

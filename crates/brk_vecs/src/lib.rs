@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "derive")]
+pub use brk_vecs_derive::IVecs;
 use serde::Serialize;
 use vecdb::AnyCollectableVec;
 
 pub trait IVecs {
     fn to_tree_node(&self) -> TreeNode;
-    fn iter_any_collectable<'a>(
-        &'a self,
-    ) -> Box<dyn Iterator<Item = &'a dyn AnyCollectableVec> + 'a>;
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec>;
 }
 
 // Terminal implementation for any type that implements AnyCollectableVec
@@ -16,7 +16,7 @@ pub trait IVecs {
 //         TreeNode::Leaf(self.name().to_string())
 //     }
 
-//     fn iter_any_collectable<'a>(
+//     fn iter<'a>(
 //         &'a self,
 //     ) -> Box<dyn Iterator<Item = &'a dyn AnyCollectableVec> + 'a> {
 //         Box::new(std::iter::once(self as &dyn AnyCollectableVec))
@@ -32,11 +32,11 @@ pub trait IVecs {
 //         }
 //     }
 
-//     fn iter_any_collectable<'a>(
+//     fn iter<'a>(
 //         &'a self,
 //     ) -> Box<dyn Iterator<Item = &'a dyn AnyCollectableVec> + 'a> {
 //         match self {
-//             Some(inner) => inner.iter_any_collectable(),
+//             Some(inner) => inner.iter(),
 //             None => Box::new(std::iter::empty()),
 //         }
 //     }
@@ -48,10 +48,10 @@ pub trait IVecs {
 //         (**self).to_tree_node()
 //     }
 
-//     fn iter_any_collectable<'a>(
+//     fn iter<'a>(
 //         &'a self,
 //     ) -> Box<dyn Iterator<Item = &'a dyn AnyCollectableVec> + 'a> {
-//         (**self).iter_any_collectable()
+//         (**self).iter()
 //     }
 // }
 

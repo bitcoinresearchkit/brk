@@ -1,5 +1,8 @@
 use std::ops::{Add, AddAssign};
 
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use crate::Sats;
 
 use super::GroupFilter;
@@ -257,5 +260,52 @@ where
         self._1k_btc_to_10k_btc += rhs._1k_btc_to_10k_btc;
         self._10k_btc_to_100k_btc += rhs._10k_btc_to_100k_btc;
         self._100k_btc_or_more += rhs._100k_btc_or_more;
+    }
+}
+
+impl<T: IVecs> IVecs for ByAmountRange<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("0sats", &self._0sats),
+                ("1sat_to_10sats", &self._1sat_to_10sats),
+                ("10sats_to_100sats", &self._10sats_to_100sats),
+                ("100sats_to_1k_sats", &self._100sats_to_1k_sats),
+                ("1k_sats_to_10k_sats", &self._1k_sats_to_10k_sats),
+                ("10k_sats_to_100k_sats", &self._10k_sats_to_100k_sats),
+                ("100k_sats_to_1m_sats", &self._100k_sats_to_1m_sats),
+                ("1m_sats_to_10m_sats", &self._1m_sats_to_10m_sats),
+                ("10m_sats_to_1btc", &self._10m_sats_to_1btc),
+                ("1btc_to_10btc", &self._1btc_to_10btc),
+                ("10btc_to_100btc", &self._10btc_to_100btc),
+                ("100btc_to_1k_btc", &self._100btc_to_1k_btc),
+                ("1k_btc_to_10k_btc", &self._1k_btc_to_10k_btc),
+                ("10k_btc_to_100k_btc", &self._10k_btc_to_100k_btc),
+                ("100k_btc_or_more", &self._100k_btc_or_more),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self._0sats.1.iter());
+        iter = Box::new(iter.chain(self._1sat_to_10sats.1.iter()));
+        iter = Box::new(iter.chain(self._10sats_to_100sats.1.iter()));
+        iter = Box::new(iter.chain(self._100sats_to_1k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._1k_sats_to_10k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._10k_sats_to_100k_sats.1.iter()));
+        iter = Box::new(iter.chain(self._100k_sats_to_1m_sats.1.iter()));
+        iter = Box::new(iter.chain(self._1m_sats_to_10m_sats.1.iter()));
+        iter = Box::new(iter.chain(self._10m_sats_to_1btc.1.iter()));
+        iter = Box::new(iter.chain(self._1btc_to_10btc.1.iter()));
+        iter = Box::new(iter.chain(self._10btc_to_100btc.1.iter()));
+        iter = Box::new(iter.chain(self._100btc_to_1k_btc.1.iter()));
+        iter = Box::new(iter.chain(self._1k_btc_to_10k_btc.1.iter()));
+        iter = Box::new(iter.chain(self._10k_btc_to_100k_btc.1.iter()));
+        iter = Box::new(iter.chain(self._100k_btc_or_more.1.iter()));
+        iter
     }
 }

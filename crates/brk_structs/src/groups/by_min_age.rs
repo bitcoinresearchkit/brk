@@ -1,3 +1,6 @@
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use super::GroupFilter;
 
 #[derive(Default, Clone)]
@@ -96,5 +99,58 @@ impl<T> From<ByMinAge<T>> for ByMinAge<(GroupFilter, T)> {
             _10y: (GroupFilter::GreaterOrEqual(10 * 365), value._10y),
             _12y: (GroupFilter::GreaterOrEqual(12 * 365), value._12y),
         }
+    }
+}
+
+impl<T: IVecs> IVecs for ByMinAge<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("1d", &self._1d),
+                ("1w", &self._1w),
+                ("1m", &self._1m),
+                ("2m", &self._2m),
+                ("3m", &self._3m),
+                ("4m", &self._4m),
+                ("5m", &self._5m),
+                ("6m", &self._6m),
+                ("1y", &self._1y),
+                ("2y", &self._2y),
+                ("3y", &self._3y),
+                ("4y", &self._4y),
+                ("5y", &self._5y),
+                ("6y", &self._6y),
+                ("7y", &self._7y),
+                ("8y", &self._8y),
+                ("10y", &self._10y),
+                ("12y", &self._12y),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
+            Box::new(self._1d.1.iter());
+        iter = Box::new(iter.chain(self._1w.1.iter()));
+        iter = Box::new(iter.chain(self._1m.1.iter()));
+        iter = Box::new(iter.chain(self._2m.1.iter()));
+        iter = Box::new(iter.chain(self._3m.1.iter()));
+        iter = Box::new(iter.chain(self._4m.1.iter()));
+        iter = Box::new(iter.chain(self._5m.1.iter()));
+        iter = Box::new(iter.chain(self._6m.1.iter()));
+        iter = Box::new(iter.chain(self._1y.1.iter()));
+        iter = Box::new(iter.chain(self._2y.1.iter()));
+        iter = Box::new(iter.chain(self._3y.1.iter()));
+        iter = Box::new(iter.chain(self._4y.1.iter()));
+        iter = Box::new(iter.chain(self._5y.1.iter()));
+        iter = Box::new(iter.chain(self._6y.1.iter()));
+        iter = Box::new(iter.chain(self._7y.1.iter()));
+        iter = Box::new(iter.chain(self._8y.1.iter()));
+        iter = Box::new(iter.chain(self._10y.1.iter()));
+        iter = Box::new(iter.chain(self._12y.1.iter()));
+        iter
     }
 }

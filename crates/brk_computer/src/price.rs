@@ -5,9 +5,10 @@ use brk_structs::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
+use brk_vecs::IVecs;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
-    GenericStoredVec, PAGE_SIZE, RawVec,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE,
+    RawVec,
 };
 
 use crate::{fetched, grouped::Source};
@@ -18,7 +19,7 @@ use super::{
     indexes,
 };
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Vecs {
     db: Database,
 
@@ -325,11 +326,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -1225,93 +1223,5 @@ impl Vecs {
         self.decadeindex_to_price_ohlc_in_sats.safe_flush(exit)?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(
-            [
-                &self.dateindex_to_price_close_in_cents as &dyn AnyCollectableVec,
-                &self.dateindex_to_price_high_in_cents,
-                &self.dateindex_to_price_low_in_cents,
-                &self.dateindex_to_price_ohlc,
-                &self.dateindex_to_price_open_in_cents,
-                &self.height_to_price_close_in_cents,
-                &self.height_to_price_high_in_cents,
-                &self.height_to_price_low_in_cents,
-                &self.height_to_price_ohlc,
-                &self.height_to_price_open_in_cents,
-                &self.weekindex_to_price_ohlc,
-                &self.difficultyepoch_to_price_ohlc,
-                &self.monthindex_to_price_ohlc,
-                &self.quarterindex_to_price_ohlc,
-                &self.semesterindex_to_price_ohlc,
-                &self.yearindex_to_price_ohlc,
-                &self.decadeindex_to_price_ohlc,
-                &self.height_to_price_ohlc_in_sats,
-                &self.dateindex_to_price_ohlc_in_sats,
-                &self.weekindex_to_price_ohlc_in_sats,
-                &self.difficultyepoch_to_price_ohlc_in_sats,
-                &self.monthindex_to_price_ohlc_in_sats,
-                &self.quarterindex_to_price_ohlc_in_sats,
-                &self.semesterindex_to_price_ohlc_in_sats,
-                &self.yearindex_to_price_ohlc_in_sats,
-                &self.decadeindex_to_price_ohlc_in_sats,
-            ]
-            .into_iter(),
-        );
-
-        iter = Box::new(iter.chain(self.timeindexes_to_price_close.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.timeindexes_to_price_high.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.timeindexes_to_price_low.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.timeindexes_to_price_open.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.chainindexes_to_price_close.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.chainindexes_to_price_high.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.chainindexes_to_price_low.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.chainindexes_to_price_open.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.timeindexes_to_price_close_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.timeindexes_to_price_high_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(iter.chain(self.timeindexes_to_price_low_in_sats.iter_any_collectable()));
-        iter = Box::new(
-            iter.chain(
-                self.timeindexes_to_price_open_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.chainindexes_to_price_close_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.chainindexes_to_price_high_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.chainindexes_to_price_low_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-        iter = Box::new(
-            iter.chain(
-                self.chainindexes_to_price_open_in_sats
-                    .iter_any_collectable(),
-            ),
-        );
-
-        iter
     }
 }

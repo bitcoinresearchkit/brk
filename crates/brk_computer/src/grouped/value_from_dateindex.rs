@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use vecdb::{AnyCollectableVec, CollectableVec, Database, EagerVec, Exit, StoredVec};
+use brk_vecs::IVecs;
+use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{
     Indexes,
@@ -11,7 +12,7 @@ use crate::{
 
 use super::{Source, VecBuilderOptions};
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct ComputedValueVecsFromDateIndex {
     pub sats: ComputedVecsFromDateIndex<Sats>,
     pub bitcoin: ComputedVecsFromDateIndex<Bitcoin>,
@@ -129,12 +130,5 @@ impl ComputedValueVecsFromDateIndex {
         }
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::empty()
-            .chain(self.sats.iter_any_collectable())
-            .chain(self.bitcoin.iter_any_collectable())
-            .chain(self.dollars.iter().flat_map(|v| v.iter_any_collectable()))
     }
 }

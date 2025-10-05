@@ -7,8 +7,9 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::Version;
+use brk_vecs::IVecs;
 use log::info;
-use vecdb::{AnyCollectableVec, Exit, Format};
+use vecdb::{Exit, Format};
 
 mod blks;
 mod chain;
@@ -31,7 +32,7 @@ pub use pools::*;
 pub use states::PriceToAmount;
 use states::*;
 
-#[derive(Clone)]
+#[derive(Clone, IVecs)]
 pub struct Computer {
     pub chain: chain::Vecs,
     pub cointime: cointime::Vecs,
@@ -204,23 +205,6 @@ impl Computer {
         )?;
 
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.fetched.iter().flat_map(|v| v.iter_any_collectable()));
-
-        iter = Box::new(iter.chain(self.chain.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.cointime.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.constants.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.indexes.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.market.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.pools.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.blks.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.price.iter().flat_map(|v| v.iter_any_collectable())));
-        iter = Box::new(iter.chain(self.stateful.iter_any_collectable()));
-
-        iter
     }
 
     pub fn static_clone(&self) -> &'static Self {

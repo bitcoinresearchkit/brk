@@ -5,10 +5,11 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_structs::{AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
+use brk_vecs::IVecs;
 use rayon::prelude::*;
 use vecdb::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec,
-    PAGE_SIZE, RawVec, StoredIndex, VecIterator, Version,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, RawVec,
+    StoredIndex, VecIterator, Version,
 };
 
 mod vecs;
@@ -19,7 +20,7 @@ use crate::{
     price,
 };
 
-#[derive(Clone, Allocative)]
+#[derive(Clone, IVecs, Allocative)]
 pub struct Vecs {
     db: Database,
     pools: &'static Pools,
@@ -61,11 +62,8 @@ impl Vecs {
             db,
         };
 
-        this.db.retain_regions(
-            this.iter_any_collectable()
-                .flat_map(|v| v.region_names())
-                .collect(),
-        )?;
+        this.db
+            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
 
         Ok(this)
     }
@@ -213,15 +211,5 @@ impl Vecs {
 
         self.height_to_pool.safe_flush(exit)?;
         Ok(())
-    }
-
-    pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [&self.height_to_pool as &dyn AnyCollectableVec]
-            .into_iter()
-            .chain(
-                self.vecs
-                    .iter()
-                    .flat_map(|(_, vecs)| vecs.iter_any_collectable()),
-            )
     }
 }

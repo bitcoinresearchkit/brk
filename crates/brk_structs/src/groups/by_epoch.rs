@@ -1,3 +1,6 @@
+use brk_vecs::{IVecs, TreeNode};
+use vecdb::AnyCollectableVec;
+
 use crate::{HalvingEpoch, Height};
 
 use super::GroupFilter;
@@ -56,5 +59,31 @@ impl<T> ByEpoch<T> {
 impl<T> ByEpoch<(GroupFilter, T)> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1].into_iter()
+    }
+}
+
+impl<T: IVecs> IVecs for ByEpoch<(GroupFilter, T)> {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                ("0", &self._0),
+                ("1", &self._1),
+                ("2", &self._2),
+                ("3", &self._3),
+                ("4", &self._4),
+            ]
+            .into_iter()
+            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
+            .collect(),
+        )
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(self._0.1.iter());
+        iter = Box::new(iter.chain(self._1.1.iter()));
+        iter = Box::new(iter.chain(self._2.1.iter()));
+        iter = Box::new(iter.chain(self._3.1.iter()));
+        iter = Box::new(iter.chain(self._4.1.iter()));
+        iter
     }
 }
