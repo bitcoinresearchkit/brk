@@ -10,15 +10,15 @@ use brk_structs::{
     P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64,
     Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
-    AnyCloneableIterableVec, AnyCollectableVec, Database, EagerVec, Exit, LazyVecFrom1,
-    LazyVecFrom2, PAGE_SIZE, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
+    StoredIndex, VecIterator,
 };
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
 
@@ -475,8 +475,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }

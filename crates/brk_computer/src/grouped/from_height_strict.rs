@@ -1,14 +1,14 @@
 use brk_error::Result;
 
 use brk_structs::{DifficultyEpoch, Height, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};
 
 use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
     T: ComputedType + PartialOrd,

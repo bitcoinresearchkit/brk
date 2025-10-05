@@ -619,7 +619,7 @@ dependencies = [
  "brk_parser",
  "brk_store",
  "brk_structs",
- "brk_vecs",
+ "brk_traversable",
  "derive_deref",
  "log",
  "pco",
@@ -667,7 +667,7 @@ dependencies = [
  "brk_parser",
  "brk_store",
  "brk_structs",
- "brk_vecs",
+ "brk_traversable",
  "fjall",
  "log",
  "rayon",
@@ -684,6 +684,7 @@ dependencies = [
  "brk_indexer",
  "brk_parser",
  "brk_structs",
+ "brk_traversable",
  "derive_deref",
  "nucleo-matcher",
  "quick_cache",
@@ -1184,7 +1185,7 @@ dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
  "brk_error",
- "brk_vecs",
+ "brk_traversable",
  "byteview",
  "derive_deref",
  "itoa",
@@ -1201,16 +1202,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_vecs"
+name = "brk_traversable"
 version = "0.0.111"
 dependencies = [
- "brk_vecs_derive",
+ "brk_traversable_derive",
  "serde",
  "vecdb",
 ]
 
 [[package]]
-name = "brk_vecs_derive"
+name = "brk_traversable_derive"
 version = "0.0.111"
 dependencies = [
  "proc-macro2",

@@ -5,7 +5,7 @@ use brk_structs::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE,
     RawVec,
@@ -19,7 +19,7 @@ use super::{
     indexes,
 };
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
 
@@ -326,8 +326,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }

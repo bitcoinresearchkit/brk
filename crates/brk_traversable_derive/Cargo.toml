@@ -1,5 +1,5 @@
 [package]
-name = "brk_vecs_derive"
+name = "brk_traversable_derive"
 description = "Derive for brk_vec's used in BRK"
 version.workspace = true
 edition.workspace = true

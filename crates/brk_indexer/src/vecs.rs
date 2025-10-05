@@ -9,16 +9,13 @@ use brk_structs::{
     RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex, TxVersion,
     Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use rayon::prelude::*;
-use vecdb::{
-    AnyCollectableVec, AnyStoredVec, CompressedVec, Database, GenericStoredVec, PAGE_SIZE, RawVec,
-    Stamp,
-};
+use vecdb::{AnyStoredVec, CompressedVec, Database, GenericStoredVec, PAGE_SIZE, RawVec, Stamp};
 
 use crate::Indexes;
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
     pub emptyoutputindex_to_txindex: CompressedVec<EmptyOutputIndex, TxIndex>,
@@ -194,8 +191,11 @@ impl Vecs {
             db,
         };
 
-        this.db
-            .retain_regions(this.iter().flat_map(|v| v.region_names()).collect())?;
+        this.db.retain_regions(
+            this.iter_any_collectable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
 
         Ok(this)
     }
@@ -369,7 +369,7 @@ impl Vecs {
         Ok(())
     }
 
-    // pub fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+    // pub fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
     //     [
     //         &self.emptyoutputindex_to_txindex as &dyn AnyCollectableVec,
     //         &self.height_to_blockhash,

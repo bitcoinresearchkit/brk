@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
     VecIterator,
@@ -21,7 +21,7 @@ use crate::{
 
 const VERSION: Version = Version::ZERO;
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     starting_height: Option<Height>,
 

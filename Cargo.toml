@@ -59,8 +59,8 @@ brk_parser = { version = "0.0.111", path = "crates/brk_parser" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
-brk_vecs = { version = "0.0.111", path = "crates/brk_vecs", features = ["derive"] }
-brk_vecs_derive = { version = "0.0.111", path = "crates/brk_vecs_derive" }
+brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
+brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
 fjall = "2.11.2"

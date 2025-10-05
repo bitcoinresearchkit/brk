@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
-use brk_interface::{Index, PaginatedIndexParam, PaginationParam, Params, ParamsDeprec, ParamsOpt};
+use brk_interface::{Index, PaginationParam, Params, ParamsDeprec, ParamsOpt};
 
 use super::AppState;
 
@@ -33,6 +33,12 @@ impl ApiMetricsRoutes for Router<AppState> {
             "/api/metrics/indexes",
             get(async |State(app_state): State<AppState>| -> Response {
                 Json(app_state.interface.get_indexes()).into_response()
+            }),
+        )
+        .route(
+            "/api/metrics/catalog",
+            get(async |State(app_state): State<AppState>| -> Response {
+                Json(app_state.interface.get_metrics_catalog()).into_response()
             }),
         )
         .route(

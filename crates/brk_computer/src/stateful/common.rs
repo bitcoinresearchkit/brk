@@ -2,7 +2,7 @@ use brk_error::{Error, Result};
 use brk_structs::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
     Format, GenericStoredVec, VecIterator,
@@ -18,7 +18,7 @@ use crate::{
     states::CohortState,
 };
 
-#[derive(Clone, IVecs)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     // Cumulative
     pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,

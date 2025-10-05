@@ -1,13 +1,12 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
+use brk_traversable::Traversable;
 
-use crate::OutputType;
+use crate::{Filtered, OutputType};
 
-use super::GroupFilter;
+use super::Filter;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Traversable)]
 pub struct BySpendableType<T> {
     pub p2pk65: T,
     pub p2pk33: T,
@@ -75,7 +74,7 @@ impl<T> BySpendableType<T> {
     }
 }
 
-impl<T> BySpendableType<(GroupFilter, T)> {
+impl<T> BySpendableType<Filtered<T>> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65.1,
@@ -94,20 +93,20 @@ impl<T> BySpendableType<(GroupFilter, T)> {
     }
 }
 
-impl<T> From<BySpendableType<T>> for BySpendableType<(GroupFilter, T)> {
+impl<T> From<BySpendableType<T>> for BySpendableType<Filtered<T>> {
     fn from(value: BySpendableType<T>) -> Self {
         Self {
-            p2pk65: (GroupFilter::Type(OutputType::P2PK65), value.p2pk65),
-            p2pk33: (GroupFilter::Type(OutputType::P2PK33), value.p2pk33),
-            p2pkh: (GroupFilter::Type(OutputType::P2PKH), value.p2pkh),
-            p2ms: (GroupFilter::Type(OutputType::P2MS), value.p2ms),
-            p2sh: (GroupFilter::Type(OutputType::P2SH), value.p2sh),
-            p2wpkh: (GroupFilter::Type(OutputType::P2WPKH), value.p2wpkh),
-            p2wsh: (GroupFilter::Type(OutputType::P2WSH), value.p2wsh),
-            p2tr: (GroupFilter::Type(OutputType::P2TR), value.p2tr),
-            p2a: (GroupFilter::Type(OutputType::P2A), value.p2a),
-            unknown: (GroupFilter::Type(OutputType::Unknown), value.unknown),
-            empty: (GroupFilter::Type(OutputType::Empty), value.empty),
+            p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),
+            p2pk33: (Filter::Type(OutputType::P2PK33), value.p2pk33).into(),
+            p2pkh: (Filter::Type(OutputType::P2PKH), value.p2pkh).into(),
+            p2ms: (Filter::Type(OutputType::P2MS), value.p2ms).into(),
+            p2sh: (Filter::Type(OutputType::P2SH), value.p2sh).into(),
+            p2wpkh: (Filter::Type(OutputType::P2WPKH), value.p2wpkh).into(),
+            p2wsh: (Filter::Type(OutputType::P2WSH), value.p2wsh).into(),
+            p2tr: (Filter::Type(OutputType::P2TR), value.p2tr).into(),
+            p2a: (Filter::Type(OutputType::P2A), value.p2a).into(),
+            unknown: (Filter::Type(OutputType::Unknown), value.unknown).into(),
+            empty: (Filter::Type(OutputType::Empty), value.empty).into(),
         }
     }
 }
@@ -150,44 +149,5 @@ where
         self.p2a += rhs.p2a;
         self.unknown += rhs.unknown;
         self.empty += rhs.empty;
-    }
-}
-
-impl<T: IVecs> IVecs for BySpendableType<(GroupFilter, T)> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                ("p2pk65", &self.p2pk65),
-                ("p2pk33", &self.p2pk33),
-                ("p2pkh", &self.p2pkh),
-                ("p2ms", &self.p2ms),
-                ("p2sh", &self.p2sh),
-                ("p2wpkh", &self.p2wpkh),
-                ("p2wsh", &self.p2wsh),
-                ("p2tr", &self.p2tr),
-                ("p2a", &self.p2a),
-                ("unknown", &self.unknown),
-                ("empty", &self.empty),
-            ]
-            .into_iter()
-            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
-            .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.p2pk65.1.iter());
-        iter = Box::new(iter.chain(self.p2pk33.1.iter()));
-        iter = Box::new(iter.chain(self.p2pkh.1.iter()));
-        iter = Box::new(iter.chain(self.p2ms.1.iter()));
-        iter = Box::new(iter.chain(self.p2sh.1.iter()));
-        iter = Box::new(iter.chain(self.p2wpkh.1.iter()));
-        iter = Box::new(iter.chain(self.p2wsh.1.iter()));
-        iter = Box::new(iter.chain(self.p2tr.1.iter()));
-        iter = Box::new(iter.chain(self.p2a.1.iter()));
-        iter = Box::new(iter.chain(self.unknown.1.iter()));
-        iter = Box::new(iter.chain(self.empty.1.iter()));
-        iter
     }
 }

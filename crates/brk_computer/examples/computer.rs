@@ -9,6 +9,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
+use brk_traversable::Traversable;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -41,11 +42,6 @@ pub fn main() -> Result<()> {
             let fetcher = Fetcher::import(true, None)?;
 
             let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
-
-            // should be: 205937
-            dbg!(computer.iter_any_collectable().collect::<Vec<_>>().len());
-
-            std::process::exit(0);
 
             loop {
                 let i = Instant::now();

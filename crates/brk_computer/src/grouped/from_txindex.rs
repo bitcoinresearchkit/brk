@@ -5,7 +5,7 @@ use brk_structs::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
     StoredIndex, VecIterator,
@@ -19,7 +19,7 @@ use crate::{
 
 use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedType + PartialOrd,

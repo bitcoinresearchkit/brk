@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, StoredU64};
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};
 use vecdb::Exit;
 
@@ -8,7 +8,7 @@ use crate::{Indexes, grouped::ComputedVecsFromHeight, indexes};
 
 use super::AddressTypeToHeightToAddressCount;
 
-#[derive(Clone, Deref, DerefMut, IVecs)]
+#[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);
 
 impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToIndexesToAddressCount {

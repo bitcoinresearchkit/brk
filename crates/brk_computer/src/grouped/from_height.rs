@@ -5,7 +5,7 @@ use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
-use brk_vecs::IVecs;
+use brk_traversable::Traversable;
 use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
 
 use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, IVecs, Allocative)]
+#[derive(Clone, Traversable, Allocative)]
 pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,

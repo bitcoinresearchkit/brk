@@ -1,10 +1,10 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{IVecs, TreeNode};
+use brk_traversable::{Traversable, TreeNode};
 use vecdb::AnyCollectableVec;
 
-use super::GroupFilter;
-use crate::OutputType;
+use super::Filter;
+use crate::{Filtered, OutputType};
 
 #[derive(Default, Clone, Debug)]
 pub struct ByAddressType<T> {
@@ -122,7 +122,7 @@ impl<T> ByAddressType<T> {
     }
 }
 
-impl<T> ByAddressType<(GroupFilter, T)> {
+impl<T> ByAddressType<Filtered<T>> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65.1,
@@ -138,17 +138,17 @@ impl<T> ByAddressType<(GroupFilter, T)> {
     }
 }
 
-impl<T> From<ByAddressType<T>> for ByAddressType<(GroupFilter, T)> {
+impl<T> From<ByAddressType<T>> for ByAddressType<Filtered<T>> {
     fn from(value: ByAddressType<T>) -> Self {
         Self {
-            p2pk65: (GroupFilter::Type(OutputType::P2PK65), value.p2pk65),
-            p2pk33: (GroupFilter::Type(OutputType::P2PK33), value.p2pk33),
-            p2pkh: (GroupFilter::Type(OutputType::P2PKH), value.p2pkh),
-            p2sh: (GroupFilter::Type(OutputType::P2SH), value.p2sh),
-            p2wpkh: (GroupFilter::Type(OutputType::P2WPKH), value.p2wpkh),
-            p2wsh: (GroupFilter::Type(OutputType::P2WSH), value.p2wsh),
-            p2tr: (GroupFilter::Type(OutputType::P2TR), value.p2tr),
-            p2a: (GroupFilter::Type(OutputType::P2A), value.p2a),
+            p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),
+            p2pk33: (Filter::Type(OutputType::P2PK33), value.p2pk33).into(),
+            p2pkh: (Filter::Type(OutputType::P2PKH), value.p2pkh).into(),
+            p2sh: (Filter::Type(OutputType::P2SH), value.p2sh).into(),
+            p2wpkh: (Filter::Type(OutputType::P2WPKH), value.p2wpkh).into(),
+            p2wsh: (Filter::Type(OutputType::P2WSH), value.p2wsh).into(),
+            p2tr: (Filter::Type(OutputType::P2TR), value.p2tr).into(),
+            p2a: (Filter::Type(OutputType::P2A), value.p2a).into(),
         }
     }
 }
@@ -196,41 +196,7 @@ impl<T> ByAddressType<Option<T>> {
     }
 }
 
-impl<T: AnyCollectableVec + !IVecs> IVecs for ByAddressType<T> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                ("p2pk65", &self.p2pk65),
-                ("p2pk33", &self.p2pk33),
-                ("p2pkh", &self.p2pkh),
-                ("p2sh", &self.p2sh),
-                ("p2wpkh", &self.p2wpkh),
-                ("p2wsh", &self.p2wsh),
-                ("p2tr", &self.p2tr),
-                ("p2a", &self.p2a),
-            ]
-            .into_iter()
-            .map(|(name, field)| (name.to_string(), TreeNode::Leaf(field.name().to_string())))
-            .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        [
-            &self.p2pk65 as &dyn AnyCollectableVec,
-            &self.p2pk33,
-            &self.p2pkh,
-            &self.p2sh,
-            &self.p2wpkh,
-            &self.p2wsh,
-            &self.p2tr,
-            &self.p2a,
-        ]
-        .into_iter()
-    }
-}
-
-impl<T: IVecs> IVecs for ByAddressType<T> {
+impl<T: Traversable> Traversable for ByAddressType<T> {
     fn to_tree_node(&self) -> TreeNode {
         TreeNode::Branch(
             [
@@ -249,16 +215,16 @@ impl<T: IVecs> IVecs for ByAddressType<T> {
         )
     }
 
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
         let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.p2pk65.iter());
-        iter = Box::new(iter.chain(self.p2pk33.iter()));
-        iter = Box::new(iter.chain(self.p2pkh.iter()));
-        iter = Box::new(iter.chain(self.p2sh.iter()));
-        iter = Box::new(iter.chain(self.p2wpkh.iter()));
-        iter = Box::new(iter.chain(self.p2wsh.iter()));
-        iter = Box::new(iter.chain(self.p2tr.iter()));
-        iter = Box::new(iter.chain(self.p2a.iter()));
+            Box::new(self.p2pk65.iter_any_collectable());
+        iter = Box::new(iter.chain(self.p2pk33.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2pkh.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2sh.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2wpkh.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2wsh.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2tr.iter_any_collectable()));
+        iter = Box::new(iter.chain(self.p2a.iter_any_collectable()));
         iter
     }
 }

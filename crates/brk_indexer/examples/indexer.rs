@@ -8,7 +8,6 @@ use std::{
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-// use brk_vecs::IVecs;
 use vecdb::Exit;
 
 fn main() -> Result<()> {
@@ -40,7 +39,8 @@ fn main() -> Result<()> {
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-    // let vecs = indexer.vecs.iter().collect::<Vec<_>>();
+    // 44
+    // let vecs = indexer.vecs.iter_any_collectable().collect::<Vec<_>>();
     // dbg!(indexer.vecs.to_tree_node());
     // dbg!(vecs.len());
     // std::process::exit(0);

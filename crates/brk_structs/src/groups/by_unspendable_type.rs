@@ -1,9 +1,8 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
+use brk_traversable::Traversable;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Traversable)]
 pub struct ByUnspendableType<T> {
     pub opreturn: T,
 }
@@ -32,20 +31,5 @@ where
 {
     fn add_assign(&mut self, rhs: Self) {
         self.opreturn += rhs.opreturn;
-    }
-}
-
-impl<T: IVecs> IVecs for ByUnspendableType<T> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [("opreturn", &self.opreturn)]
-                .into_iter()
-                .map(|(name, field)| (name.to_string(), field.to_tree_node()))
-                .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        self.opreturn.iter()
     }
 }

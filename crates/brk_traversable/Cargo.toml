@@ -1,5 +1,5 @@
 [package]
-name = "brk_vecs"
+name = "brk_traversable"
 description = "Traits for Vecs structs throughout BRK"
 version.workspace = true
 edition.workspace = true
@@ -10,9 +10,9 @@ rust-version.workspace = true
 build = "build.rs"
 
 [features]
-derive = ["brk_vecs_derive"]
+derive = ["brk_traversable_derive"]
 
 [dependencies]
-brk_vecs_derive = { workspace = true, optional = true }
+brk_traversable_derive = { workspace = true, optional = true }
 serde = { workspace = true }
 vecdb = { workspace = true }

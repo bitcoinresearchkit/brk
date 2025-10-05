@@ -7,6 +7,7 @@ use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::Height;
+use brk_traversable::TreeNode;
 use nucleo_matcher::{
     Config, Matcher,
     pattern::{AtomKind, CaseMatching, Normalization, Pattern},
@@ -241,6 +242,10 @@ impl<'a> Interface<'a> {
 
     pub fn get_metrics(&self, pagination: PaginationParam) -> &[&str] {
         self.vecs.metrics(pagination)
+    }
+
+    pub fn get_metrics_catalog(&self) -> &TreeNode {
+        self.vecs.catalog.as_ref().unwrap()
     }
 
     pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {

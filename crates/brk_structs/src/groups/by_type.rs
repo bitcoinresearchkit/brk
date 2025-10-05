@@ -1,9 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
-
-use crate::{GroupFilter, OutputType};
+use crate::OutputType;
 
 use super::{BySpendableType, ByUnspendableType};
 
@@ -73,24 +70,3 @@ where
         self.unspendable += rhs.unspendable;
     }
 }
-
-// impl<T: IVecs> IVecs for GroupedByType<(GroupFilter, T)> {
-//     fn to_tree_node(&self) -> TreeNode {
-//         TreeNode::Branch(
-//             [
-//                 ("spendable", self.spendable.to_tree_node()),
-//                 ("unspendable", self.unspendable.to_tree_node()),
-//             ]
-//             .into_iter()
-//             .map(|(name, node)| (name.to_string(), node))
-//             .collect(),
-//         )
-//     }
-
-//     fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-//         let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-//             Box::new(self.spendable.iter());
-//         iter = Box::new(iter.chain(self.unspendable.iter()));
-//         iter
-//     }
-// }

@@ -1,11 +1,10 @@
-use brk_vecs::{IVecs, TreeNode};
-use vecdb::AnyCollectableVec;
+use brk_traversable::Traversable;
 
-use crate::{HalvingEpoch, Height};
+use crate::{Filtered, HalvingEpoch, Height};
 
-use super::GroupFilter;
+use super::Filter;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Traversable)]
 pub struct ByEpoch<T> {
     pub _0: T,
     pub _1: T,
@@ -14,14 +13,14 @@ pub struct ByEpoch<T> {
     pub _4: T,
 }
 
-impl<T> From<ByEpoch<T>> for ByEpoch<(GroupFilter, T)> {
+impl<T> From<ByEpoch<T>> for ByEpoch<Filtered<T>> {
     fn from(value: ByEpoch<T>) -> Self {
         Self {
-            _0: (GroupFilter::Epoch(HalvingEpoch::new(0)), value._0),
-            _1: (GroupFilter::Epoch(HalvingEpoch::new(1)), value._1),
-            _2: (GroupFilter::Epoch(HalvingEpoch::new(2)), value._2),
-            _3: (GroupFilter::Epoch(HalvingEpoch::new(3)), value._3),
-            _4: (GroupFilter::Epoch(HalvingEpoch::new(4)), value._4),
+            _0: (Filter::Epoch(HalvingEpoch::new(0)), value._0).into(),
+            _1: (Filter::Epoch(HalvingEpoch::new(1)), value._1).into(),
+            _2: (Filter::Epoch(HalvingEpoch::new(2)), value._2).into(),
+            _3: (Filter::Epoch(HalvingEpoch::new(3)), value._3).into(),
+            _4: (Filter::Epoch(HalvingEpoch::new(4)), value._4).into(),
         }
     }
 }
@@ -56,34 +55,8 @@ impl<T> ByEpoch<T> {
     }
 }
 
-impl<T> ByEpoch<(GroupFilter, T)> {
+impl<T> ByEpoch<Filtered<T>> {
     pub fn iter_right(&self) -> impl Iterator<Item = &T> {
         [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1].into_iter()
-    }
-}
-
-impl<T: IVecs> IVecs for ByEpoch<(GroupFilter, T)> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                ("0", &self._0),
-                ("1", &self._1),
-                ("2", &self._2),
-                ("3", &self._3),
-                ("4", &self._4),
-            ]
-            .into_iter()
-            .map(|(name, (_, field))| (name.to_string(), field.to_tree_node()))
-            .collect(),
-        )
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> = Box::new(self._0.1.iter());
-        iter = Box::new(iter.chain(self._1.1.iter()));
-        iter = Box::new(iter.chain(self._2.1.iter()));
-        iter = Box::new(iter.chain(self._3.1.iter()));
-        iter = Box::new(iter.chain(self._4.1.iter()));
-        iter
     }
 }
