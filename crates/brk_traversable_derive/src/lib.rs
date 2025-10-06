@@ -14,12 +14,12 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
             match &data.fields {
                 Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
                     // Special case for single-field tuple structs - just delegate
-                    let generic_params = generics.type_params().map(|p| &p.ident);
+                    let generic_params: Vec<_> = generics.type_params().map(|p| &p.ident).collect();
                     let original_predicates =
                         &generics.where_clause.as_ref().map(|w| &w.predicates);
 
                     let where_clause =
-                        if original_predicates.is_some() || generics.type_params().count() > 0 {
+                        if original_predicates.is_some() || !generic_params.is_empty() {
                             quote! {
                                 where
                                     #(#generic_params: Send + Sync,)*
@@ -29,7 +29,7 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
                             quote! {}
                         };
 
-                    quote! {
+                    return TokenStream::from(quote! {
                         impl #impl_generics Traversable for #name #ty_generics
                         #where_clause
                         {
@@ -41,37 +41,49 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
                                 self.0.iter_any_collectable()
                             }
                         }
-                    }
+                    });
                 }
                 _ => {
                     // Normal struct with named fields
                     let field_traversals = generate_field_traversals(&data.fields);
                     let iterator_impl = generate_iterator_impl(&data.fields);
 
-                    // Collect field types that need to implement Traversable
-                    let field_types = if let Fields::Named(named_fields) = &data.fields {
-                        named_fields
-                            .named
-                            .iter()
-                            .filter(|f| matches!(f.vis, syn::Visibility::Public(_)))
-                            .filter(|f| !has_skip_attribute(f))
-                            .map(|f| &f.ty)
-                            .collect::<Vec<_>>()
-                    } else {
-                        Vec::new()
-                    };
+                    let generic_params: Vec<_> = generics.type_params().map(|p| &p.ident).collect();
 
-                    let generic_params = generics.type_params().map(|p| &p.ident);
+                    let generics_needing_traversable =
+                        if let Fields::Named(named_fields) = &data.fields {
+                            let mut used = std::collections::BTreeSet::new();
+
+                            for field in named_fields.named.iter() {
+                                if !should_process_field(field) {
+                                    continue;
+                                }
+
+                                if let Type::Path(type_path) = &field.ty
+                                    && type_path.path.segments.len() == 1
+                                    && let Some(seg) = type_path.path.segments.first()
+                                    && seg.arguments.is_empty()
+                                    && let Some(pos) =
+                                        generic_params.iter().position(|g| g == &&seg.ident)
+                                {
+                                    used.insert(generic_params[pos]);
+                                }
+                            }
+                            used.into_iter().collect::<Vec<_>>()
+                        } else {
+                            Vec::new()
+                        };
+
                     let original_predicates =
                         &generics.where_clause.as_ref().map(|w| &w.predicates);
 
-                    let where_clause = if !field_types.is_empty()
+                    let where_clause = if !generics_needing_traversable.is_empty()
                         || original_predicates.is_some()
-                        || generics.type_params().count() > 0
+                        || !generic_params.is_empty()
                     {
                         quote! {
                             where
-                                #(#field_types: brk_traversable::Traversable,)*
+                                #(#generics_needing_traversable: brk_traversable::Traversable,)*
                                 #(#generic_params: Send + Sync,)*
                                 #original_predicates
                         }
@@ -93,10 +105,21 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
                 }
             }
         }
-        _ => panic!("Traversable can only be derived for structs"),
+        _ => {
+            return syn::Error::new_spanned(
+                &input.ident,
+                "Traversable can only be derived for structs",
+            )
+            .to_compile_error()
+            .into();
+        }
     };
 
     TokenStream::from(traverse_impl)
+}
+
+fn should_process_field(field: &syn::Field) -> bool {
+    matches!(field.vis, syn::Visibility::Public(_)) && !has_skip_attribute(field)
 }
 
 fn generate_field_traversals(fields: &Fields) -> proc_macro2::TokenStream {
@@ -106,7 +129,7 @@ fn generate_field_traversals(fields: &Fields) -> proc_macro2::TokenStream {
                 let field_name = f.ident.as_ref()?;
                 let field_name_str = field_name.to_string();
 
-                if has_skip_attribute(f) || !matches!(f.vis, syn::Visibility::Public(_)) {
+                if !should_process_field(f) {
                     return None;
                 }
 
@@ -122,12 +145,16 @@ fn generate_field_traversals(fields: &Fields) -> proc_macro2::TokenStream {
             });
 
             quote! {
-                return brk_traversable::TreeNode::Branch(
-                    [#(#entries,)*]
-                        .into_iter()
-                        .flatten()
-                        .collect()
-                );
+                let collected: std::collections::BTreeMap<_, _> = [#(#entries,)*]
+                    .into_iter()
+                    .flatten()
+                    .collect();
+
+                return if collected.len() == 1 {
+                    collected.into_values().next().unwrap()
+                } else {
+                    brk_traversable::TreeNode::Branch(collected)
+                };
             }
         }
         _ => quote! {},
@@ -152,11 +179,7 @@ fn generate_iterator_impl(fields: &Fields) -> proc_macro2::TokenStream {
 
             for field in fields.named.iter() {
                 if let Some(field_name) = &field.ident {
-                    if !matches!(field.vis, syn::Visibility::Public(_)) {
-                        continue;
-                    }
-
-                    if has_skip_attribute(field) {
+                    if !should_process_field(field) {
                         continue;
                     }
 
@@ -175,41 +198,47 @@ fn generate_iterator_impl(fields: &Fields) -> proc_macro2::TokenStream {
                     }
                 }
             } else {
-                let regular_part = if !regular_fields.is_empty() {
+                let (init_part, chain_part) = if !regular_fields.is_empty() {
                     let first = regular_fields.first().unwrap();
                     let rest = &regular_fields[1..];
-
-                    quote! {
-                        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
-                            Box::new(self.#first.iter_any_collectable());
-                        #(regular_iter = Box::new(regular_iter.chain(self.#rest.iter_any_collectable()));)*
-                    }
+                    (
+                        quote! {
+                            let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+                                Box::new(self.#first.iter_any_collectable());
+                        },
+                        quote! {
+                            #(regular_iter = Box::new(regular_iter.chain(self.#rest.iter_any_collectable()));)*
+                        },
+                    )
                 } else {
-                    quote! {
-                        let regular_iter = std::iter::empty();
-                    }
+                    (
+                        quote! {
+                            let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+                                Box::new(std::iter::empty());
+                        },
+                        quote! {},
+                    )
                 };
 
                 let option_part = if !option_fields.is_empty() {
-                    quote! {
-                        let option_iter = [
-                            #(self.#option_fields.as_ref().map(|x| Box::new(x.iter_any_collectable()) as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>),)*
-                        ]
-                        .into_iter()
-                        .flatten()
-                        .flatten();
-                    }
+                    let chains = option_fields.iter().map(|f| {
+                        quote! {
+                            if let Some(ref x) = self.#f {
+                                regular_iter = Box::new(regular_iter.chain(x.iter_any_collectable()));
+                            }
+                        }
+                    });
+                    quote! { #(#chains)* }
                 } else {
-                    quote! {
-                        let option_iter = std::iter::empty();
-                    }
+                    quote! {}
                 };
 
                 quote! {
                     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
-                        #regular_part
+                        #init_part
+                        #chain_part
                         #option_part
-                        regular_iter.chain(option_iter)
+                        regular_iter
                     }
                 }
             }

@@ -7,6 +7,11 @@ use axum::{
 };
 use brk_interface::{Index, PaginationParam, Params, ParamsDeprec, ParamsOpt};
 
+use crate::{
+    VERSION,
+    extended::{HeaderMapExtended, ResponseExtended},
+};
+
 use super::AppState;
 
 mod data;
@@ -37,9 +42,27 @@ impl ApiMetricsRoutes for Router<AppState> {
         )
         .route(
             "/api/metrics/catalog",
-            get(async |State(app_state): State<AppState>| -> Response {
-                Json(app_state.interface.get_metrics_catalog()).into_response()
-            }),
+            get(
+                async |headers: HeaderMap, State(app_state): State<AppState>| -> Response {
+                    let etag = VERSION;
+
+                    if headers
+                        .get_if_none_match()
+                        .is_some_and(|prev_etag| etag == prev_etag)
+                    {
+                        return Response::new_not_modified();
+                    }
+
+                    let mut response =
+                        Json(app_state.interface.get_metrics_catalog()).into_response();
+
+                    let headers = response.headers_mut();
+                    headers.insert_cors();
+                    headers.insert_etag(etag);
+
+                    response
+                },
+            ),
         )
         .route(
             "/api/metrics/list",

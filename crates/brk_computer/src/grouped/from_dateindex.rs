@@ -11,7 +11,7 @@ use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
 use super::{ComputedType, EagerVecsBuilder, Source, VecBuilderOptions};
 
-#[derive(Clone, Traversable, Allocative)]
+#[derive(Clone, Allocative)]
 pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + PartialOrd,
@@ -142,5 +142,44 @@ where
         }
 
         Ok(())
+    }
+}
+
+impl<T> Traversable for ComputedVecsFromDateIndex<T>
+where
+    T: ComputedType,
+{
+    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+        brk_traversable::TreeNode::List(
+            [
+                self.dateindex.as_ref().map(|nested| nested.to_tree_node()),
+                Some(self.dateindex_extra.to_tree_node()),
+                Some(self.weekindex.to_tree_node()),
+                Some(self.monthindex.to_tree_node()),
+                Some(self.quarterindex.to_tree_node()),
+                Some(self.semesterindex.to_tree_node()),
+                Some(self.yearindex.to_tree_node()),
+                Some(self.decadeindex.to_tree_node()),
+            ]
+            .into_iter()
+            .flatten()
+            .collect(),
+        )
+        .collect_unique_leaves()
+    }
+
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+            Box::new(self.dateindex_extra.iter_any_collectable());
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_collectable()));
+        if let Some(ref x) = self.dateindex {
+            regular_iter = Box::new(regular_iter.chain(x.iter_any_collectable()));
+        }
+        regular_iter
     }
 }
