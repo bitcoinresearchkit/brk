@@ -6,6 +6,7 @@ use std::{
 use allocative::Allocative;
 use bitcoin::Amount;
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -32,6 +33,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Deserialize,
     StoredCompressed,
     Allocative,
+    JsonSchema,
 )]
 pub struct Sats(u64);
 

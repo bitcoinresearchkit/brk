@@ -7,6 +7,7 @@ use std::{
 
 use allocative::Allocative;
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -29,6 +30,7 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
     Deserialize,
     StoredCompressed,
     Allocative,
+    JsonSchema,
 )]
 pub struct Dollars(f64);
 

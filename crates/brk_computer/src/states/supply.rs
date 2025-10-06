@@ -6,7 +6,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
 pub struct SupplyState {
-    pub utxos: u64,
+    pub utxo_count: u64,
     pub value: Sats,
 }
 
@@ -14,7 +14,7 @@ impl Add<SupplyState> for SupplyState {
     type Output = Self;
     fn add(self, rhs: SupplyState) -> Self::Output {
         Self {
-            utxos: self.utxos + rhs.utxos,
+            utxo_count: self.utxo_count + rhs.utxo_count,
             value: self.value + rhs.value,
         }
     }
@@ -28,14 +28,14 @@ impl AddAssign<SupplyState> for SupplyState {
 
 impl AddAssign<&SupplyState> for SupplyState {
     fn add_assign(&mut self, rhs: &Self) {
-        self.utxos += rhs.utxos;
+        self.utxo_count += rhs.utxo_count;
         self.value += rhs.value;
     }
 }
 
 impl SubAssign<&SupplyState> for SupplyState {
     fn sub_assign(&mut self, rhs: &Self) {
-        self.utxos = self.utxos.checked_sub(rhs.utxos).unwrap();
+        self.utxo_count = self.utxo_count.checked_sub(rhs.utxo_count).unwrap();
         self.value = self.value.checked_sub(rhs.value).unwrap();
     }
 }
@@ -43,14 +43,14 @@ impl SubAssign<&SupplyState> for SupplyState {
 impl From<&LoadedAddressData> for SupplyState {
     fn from(value: &LoadedAddressData) -> Self {
         Self {
-            utxos: value.utxos as u64,
-            value: value.amount(),
+            utxo_count: value.utxo_count as u64,
+            value: value.balance(),
         }
     }
 }
 
 impl std::fmt::Display for SupplyState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "utxos: {}, value: {}", self.utxos, self.value)
+        write!(f, "utxos: {}, value: {}", self.utxo_count, self.value)
     }
 }

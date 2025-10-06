@@ -1,5 +1,6 @@
+use aide::axum::ApiRouter;
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, Uri},
     response::{IntoResponse, Response},
@@ -22,7 +23,7 @@ pub trait ApiMetricsRoutes {
 
 const TO_SEPARATOR: &str = "_to_";
 
-impl ApiMetricsRoutes for Router<AppState> {
+impl ApiMetricsRoutes for ApiRouter<AppState> {
     fn add_api_metrics_routes(self) -> Self {
         self.route(
             "/api/metrics/count",

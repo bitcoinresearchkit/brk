@@ -1899,7 +1899,7 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                 let addressdata = addressdata_withsource.deref_mut();
 
-                let prev_amount = addressdata.amount();
+                let prev_amount = addressdata.balance();
 
                 let amount = prev_amount + value;
 
@@ -2000,11 +2000,11 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
                     let addressdata = addressdata_withsource.deref_mut();
 
-                    let prev_amount = addressdata.amount();
+                    let prev_amount = addressdata.balance();
 
                     let amount = prev_amount.checked_sub(value).unwrap();
 
-                    let will_be_empty = addressdata.utxos - 1 == 0;
+                    let will_be_empty = addressdata.utxo_count - 1 == 0;
 
                     if will_be_empty
                         || vecs.amount_range.get_mut(amount).0.clone()

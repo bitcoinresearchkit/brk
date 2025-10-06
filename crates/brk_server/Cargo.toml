@@ -10,6 +10,7 @@ rust-version.workspace = true
 build = "build.rs"
 
 [dependencies]
+aide = { workspace = true }
 axum = { workspace = true }
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
@@ -26,7 +27,9 @@ vecdb = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 quick_cache = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true }
+# serde_json = { workspace = true }
 sonic-rs = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }

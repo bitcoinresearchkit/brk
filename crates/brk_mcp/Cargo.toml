@@ -10,7 +10,7 @@ rust-version.workspace = true
 build = "build.rs"
 
 [dependencies]
-axum = { workspace = true }
+aide = { workspace = true }
 brk_interface = { workspace = true }
 brk_rmcp = { version = "0.8.0", features = [
     "transport-worker",

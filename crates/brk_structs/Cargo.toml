@@ -22,6 +22,7 @@ jiff = { workspace = true }
 num_enum = "0.7.4"
 rapidhash = "4.1.0"
 ryu = "1.0.20"
+schemars = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 strum = { version = "0.27", features = ["derive"] }

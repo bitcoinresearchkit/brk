@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use axum::{Router, routing::get};
+use aide::axum::ApiRouter;
+use axum::routing::get;
 
 use super::AppState;
 
@@ -12,7 +13,7 @@ pub trait FilesRoutes {
     fn add_files_routes(self, path: Option<&PathBuf>) -> Self;
 }
 
-impl FilesRoutes for Router<AppState> {
+impl FilesRoutes for ApiRouter<AppState> {
     fn add_files_routes(self, path: Option<&PathBuf>) -> Self {
         if path.is_some() {
             self.route("/{*path}", get(file_handler))

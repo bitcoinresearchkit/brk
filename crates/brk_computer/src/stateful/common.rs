@@ -1342,7 +1342,7 @@ impl Vecs {
                 .height_to_supply
                 .into_iter()
                 .unwrap_get_inner(prev_height);
-            state.supply.utxos = *self
+            state.supply.utxo_count = *self
                 .height_to_utxo_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
@@ -1579,7 +1579,7 @@ impl Vecs {
 
         self.height_to_utxo_count.forced_push_at(
             height,
-            StoredU64::from(state.supply.utxos),
+            StoredU64::from(state.supply.utxo_count),
             exit,
         )?;
 

@@ -1,4 +1,4 @@
-use axum::Router;
+use aide::axum::ApiRouter;
 use brk_interface::Interface;
 use brk_rmcp::transport::{
     StreamableHttpServerConfig,
@@ -13,7 +13,7 @@ pub trait MCPRoutes {
     fn add_mcp_routes(self, interface: &'static Interface<'static>, mcp: bool) -> Self;
 }
 
-impl<T> MCPRoutes for Router<T>
+impl<T> MCPRoutes for ApiRouter<T>
 where
     T: Clone + Send + Sync + 'static,
 {
