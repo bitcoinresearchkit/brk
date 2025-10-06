@@ -204,7 +204,7 @@ impl CohortState {
         price_to_amount_increment: Option<(Dollars, &SupplyState)>,
         price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
     ) {
-        if supply_state.utxos == 0 {
+        if supply_state.utxo_count == 0 {
             return;
         }
 

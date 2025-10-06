@@ -11,23 +11,23 @@ pub struct LoadedAddressData {
     pub sent: Sats,
     pub received: Sats,
     pub realized_cap: Dollars,
-    pub utxos: u32,
+    pub utxo_count: u32,
     #[serde(skip)]
     padding: u32,
 }
 
 impl LoadedAddressData {
-    pub fn amount(&self) -> Sats {
+    pub fn balance(&self) -> Sats {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
 
     pub fn realized_price(&self) -> Dollars {
-        let p = (self.realized_cap / Bitcoin::from(self.amount())).round_to(4);
+        let p = (self.realized_cap / Bitcoin::from(self.balance())).round_to(4);
         if p.is_negative() {
             dbg!((
                 self.realized_cap,
-                self.amount(),
-                Bitcoin::from(self.amount()),
+                self.balance(),
+                Bitcoin::from(self.balance()),
                 p
             ));
             panic!("");
@@ -37,17 +37,17 @@ impl LoadedAddressData {
 
     #[inline]
     pub fn has_0_sats(&self) -> bool {
-        self.amount() == Sats::ZERO
+        self.balance() == Sats::ZERO
     }
 
     #[inline]
     pub fn has_0_utxos(&self) -> bool {
-        self.utxos == 0
+        self.utxo_count == 0
     }
 
     pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
         self.received += amount;
-        self.utxos += 1;
+        self.utxo_count += 1;
         if let Some(price) = price {
             let added = price * amount;
             self.realized_cap += added;
@@ -59,11 +59,11 @@ impl LoadedAddressData {
     }
 
     pub fn send(&mut self, amount: Sats, previous_price: Option<Dollars>) -> Result<()> {
-        if self.amount() < amount {
+        if self.balance() < amount {
             return Err(Error::Str("Previous_amount smaller than sent amount"));
         }
         self.sent += amount;
-        self.utxos -= 1;
+        self.utxo_count -= 1;
         if let Some(previous_price) = previous_price {
             let subtracted = previous_price * amount;
             let realized_cap = self.realized_cap.checked_sub(subtracted).unwrap();
@@ -96,7 +96,7 @@ impl From<&EmptyAddressData> for LoadedAddressData {
             sent: value.transfered,
             received: value.transfered,
             realized_cap: Dollars::ZERO,
-            utxos: 0,
+            utxo_count: 0,
             padding: 0,
         }
     }
@@ -107,7 +107,7 @@ impl std::fmt::Display for LoadedAddressData {
         write!(
             f,
             "sent: {}, received: {}, realized_cap: {}, utxos: {}",
-            self.sent, self.received, self.realized_cap, self.utxos
+            self.sent, self.received, self.realized_cap, self.utxo_count
         )
     }
 }

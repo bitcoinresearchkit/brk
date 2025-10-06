@@ -14,7 +14,10 @@ pub struct Transacted {
 impl Transacted {
     #[allow(clippy::inconsistent_digit_grouping)]
     pub fn iterate(&mut self, value: Sats, _type: OutputType) {
-        let supply = SupplyState { utxos: 1, value };
+        let supply = SupplyState {
+            utxo_count: 1,
+            value,
+        };
 
         *self.by_type.get_mut(_type) += &supply;
 

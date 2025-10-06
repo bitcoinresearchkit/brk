@@ -1,13 +1,15 @@
 use std::ops::Add;
 
 use byteview::ByteView;
-use serde::Serialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy::IntoBytes;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
 
+/// Index within its type (e.g., 0 for first P2WPKH address)
 #[derive(
     Debug,
     PartialEq,
@@ -22,11 +24,17 @@ use crate::copy_first_4bytes;
     IntoBytes,
     KnownLayout,
     Serialize,
+    Deserialize,
     StoredCompressed,
+    JsonSchema,
 )]
 pub struct TypeIndex(u32);
 
 impl TypeIndex {
+    pub fn new(i: u32) -> Self {
+        Self(i)
+    }
+
     pub fn increment(&mut self) {
         self.0 += 1;
     }

@@ -44,19 +44,22 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| addressdata.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: addressdata.utxos as u64,
-            value: addressdata.amount(),
+            utxo_count: addressdata.utxo_count as u64,
+            value: addressdata.balance(),
         };
 
         addressdata.send(value, prev_price)?;
 
         let supply_state = SupplyState {
-            utxos: addressdata.utxos as u64,
-            value: addressdata.amount(),
+            utxo_count: addressdata.utxo_count as u64,
+            value: addressdata.balance(),
         };
 
         self.inner.send_(
-            &SupplyState { utxos: 1, value },
+            &SupplyState {
+                utxo_count: 1,
+                value,
+            },
             current_price,
             prev_price,
             blocks_old,
@@ -79,19 +82,22 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: address_data.utxos as u64,
-            value: address_data.amount(),
+            utxo_count: address_data.utxo_count as u64,
+            value: address_data.balance(),
         };
 
         address_data.receive(value, price);
 
         let supply_state = SupplyState {
-            utxos: address_data.utxos as u64,
-            value: address_data.amount(),
+            utxo_count: address_data.utxo_count as u64,
+            value: address_data.balance(),
         };
 
         self.inner.receive_(
-            &SupplyState { utxos: 1, value },
+            &SupplyState {
+                utxo_count: 1,
+                value,
+            },
             price,
             compute_price.then(|| (address_data.realized_price(), &supply_state)),
             prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
