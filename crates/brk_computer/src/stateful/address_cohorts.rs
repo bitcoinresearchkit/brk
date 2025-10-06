@@ -470,7 +470,7 @@ impl Vecs {
                         vecs,
                         by_size_range
                             .iter()
-                            .filter(|other| other.includes(filter))
+                            .filter(|Filtered(other, _)| filter.includes(other))
                             .map(Filtered::t)
                             .collect::<Vec<_>>(),
                     )
@@ -484,7 +484,7 @@ impl Vecs {
                         vecs,
                         by_size_range
                             .iter()
-                            .filter(|other| other.includes(filter))
+                            .filter(|Filtered(other, _)| filter.includes(other))
                             .map(Filtered::t)
                             .collect::<Vec<_>>(),
                     )

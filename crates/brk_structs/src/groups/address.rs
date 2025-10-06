@@ -4,7 +4,7 @@ use crate::Filtered;
 
 use super::{ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount};
 
-#[derive(Default, Clone, Traversable)]
+#[derive(Default, Clone)]
 pub struct AddressGroups<T> {
     pub ge_amount: ByGreatEqualAmount<T>,
     pub amount_range: ByAmountRange<T>,
@@ -44,5 +44,40 @@ impl<T> From<AddressGroups<T>> for AddressGroups<Filtered<T>> {
             lt_amount: ByLowerThanAmount::from(value.lt_amount),
             ge_amount: ByGreatEqualAmount::from(value.ge_amount),
         }
+    }
+}
+
+impl<T> Traversable for AddressGroups<T>
+where
+    ByGreatEqualAmount<T>: brk_traversable::Traversable,
+    ByAmountRange<T>: brk_traversable::Traversable,
+    ByLowerThanAmount<T>: brk_traversable::Traversable,
+    T: Send + Sync,
+{
+    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+        brk_traversable::TreeNode::Branch(
+            [
+                (String::from("ge_amount"), self.ge_amount.to_tree_node()),
+                (
+                    String::from("amount_range"),
+                    self.amount_range.to_tree_node(),
+                ),
+                (String::from("lt_amount"), self.lt_amount.to_tree_node()),
+            ]
+            .into(),
+        )
+    }
+
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
+        [
+            Box::new(self.ge_amount.iter_any_collectable())
+                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+            Box::new(self.amount_range.iter_any_collectable())
+                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+            Box::new(self.lt_amount.iter_any_collectable())
+                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+        ]
+        .into_iter()
+        .flatten()
     }
 }

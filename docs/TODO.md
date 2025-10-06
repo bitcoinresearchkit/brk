@@ -92,6 +92,8 @@
   - _STORE_
     - FEAT: save height and version in one file
   - _STRUCTS_
+  - _TRAVERSABLE_
+    - UX: Improve `tree_node`, it's too verbose at the moment
   - _GLOBAL_
     - PERF: https://davidlattimore.github.io/posts/2025/09/02/rustforge-wild-performance-tricks.html
 - __DOCS__

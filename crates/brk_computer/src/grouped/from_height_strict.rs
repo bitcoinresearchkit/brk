@@ -8,7 +8,7 @@ use crate::{Indexes, indexes};
 
 use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, Traversable)]
+#[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
     T: ComputedType + PartialOrd,
@@ -81,5 +81,31 @@ where
         )?;
 
         Ok(())
+    }
+}
+
+impl<T> Traversable for ComputedVecsFromHeightStrict<T>
+where
+    T: ComputedType,
+{
+    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+        brk_traversable::TreeNode::List(
+            [
+                Some(self.height.to_tree_node()),
+                Some(self.height_extra.to_tree_node()),
+                Some(self.difficultyepoch.to_tree_node()),
+            ]
+            .into_iter()
+            .flatten()
+            .collect(),
+        )
+        .collect_unique_leaves()
+    }
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+            Box::new(self.height.iter_any_collectable());
+        regular_iter = Box::new(regular_iter.chain(self.height_extra.iter_any_collectable()));
+        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_collectable()));
+        regular_iter
     }
 }

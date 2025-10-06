@@ -9,7 +9,6 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_traversable::Traversable;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
