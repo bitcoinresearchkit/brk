@@ -1,4 +1,3 @@
-use bitcoin::Address;
 use byteview::ByteView;
 use derive_deref::Deref;
 use zerocopy::{FromBytes, IntoBytes};
@@ -21,12 +20,6 @@ use super::{AddressBytes, OutputType};
     KnownLayout,
 )]
 pub struct AddressBytesHash([u8; 8]);
-
-impl From<&Address> for AddressBytesHash {
-    fn from(value: &Address) -> Self {
-        Self::from((&AddressBytes::from(value), OutputType::from(value)))
-    }
-}
 
 impl From<(&AddressBytes, OutputType)> for AddressBytesHash {
     fn from((address_bytes, outputtype): (&AddressBytes, OutputType)) -> Self {

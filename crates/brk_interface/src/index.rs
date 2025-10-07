@@ -1,4 +1,7 @@
-use std::fmt::{self, Debug};
+use std::{
+    collections::BTreeMap,
+    fmt::{self, Debug},
+};
 
 use brk_error::Error;
 use brk_structs::{
@@ -9,9 +12,19 @@ use brk_structs::{
     QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[derive(Default, Serialize, JsonSchema)]
+/// Indexes and their accepted variants
+pub struct Indexes(BTreeMap<Index, &'static [&'static str]>);
+
+impl Indexes {
+    pub fn new(tree: BTreeMap<Index, &'static [&'static str]>) -> Self {
+        Self(tree)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Index {
     #[schemars(description = "Date/day index")]

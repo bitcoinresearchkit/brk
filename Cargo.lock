@@ -1168,6 +1168,7 @@ dependencies = [
  "quick_cache",
  "schemars 1.0.4",
  "serde",
+ "serde_json",
  "sonic-rs 0.5.5",
  "tokio",
  "tower-http",

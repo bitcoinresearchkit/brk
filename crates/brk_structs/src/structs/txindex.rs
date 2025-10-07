@@ -3,6 +3,7 @@ use std::ops::{Add, AddAssign};
 use allocative::Allocative;
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -29,6 +30,7 @@ use super::StoredU32;
     Serialize,
     StoredCompressed,
     Allocative,
+    JsonSchema,
 )]
 pub struct TxIndex(u32);
 
