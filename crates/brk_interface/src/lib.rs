@@ -25,10 +25,11 @@ mod params;
 mod vecs;
 
 pub use format::Format;
-pub use index::Index;
+pub use index::*;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};
+pub use vecs::PaginatedMetrics;
 use vecs::Vecs;
 
 use crate::vecs::{IndexToVec, MetricToVec};
@@ -236,11 +237,11 @@ impl<'a> Interface<'a> {
         self.vecs.total_metric_count
     }
 
-    pub fn get_indexes(&self) -> &BTreeMap<&'static str, &'static [&'static str]> {
+    pub fn get_indexes(&self) -> &Indexes {
         &self.vecs.indexes
     }
 
-    pub fn get_metrics(&self, pagination: PaginationParam) -> &[&str] {
+    pub fn get_metrics(&'static self, pagination: PaginationParam) -> PaginatedMetrics {
         self.vecs.metrics(pagination)
     }
 

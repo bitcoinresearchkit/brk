@@ -1,7 +1,11 @@
 <!doctype html>
 <html>
   <head>
-    <title>Scalar API Reference</title>
+    <title>BRK API</title>
+    <meta
+      name="description"
+      content="Bitcoin Research Kit's API documentation via Scalar"
+    />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
@@ -15,11 +19,9 @@
     <script>
       Scalar.createApiReference("#app", {
         url: "/api.json",
-        metaData: {
-          title: "BRK API",
-          description: "Bitcoin Research Kit's API documentation via Scalar",
-          hideClientButton: true,
-        },
+        hideClientButton: true,
+        telemetry: false,
+        // showToolbar: "never",
       });
     </script>
   </body>

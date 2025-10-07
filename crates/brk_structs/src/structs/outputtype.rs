@@ -1,7 +1,7 @@
-use bitcoin::{Address, AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
+use bitcoin::{AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
 use brk_error::Error;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use strum::Display;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -629,12 +629,6 @@ impl From<&ScriptBuf> for OutputType {
         } else {
             Self::Unknown
         }
-    }
-}
-
-impl From<&Address> for OutputType {
-    fn from(value: &Address) -> Self {
-        Self::from(&value.script_pubkey())
     }
 }
 

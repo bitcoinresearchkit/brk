@@ -4,9 +4,14 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
+use serde::Serialize;
 use vecdb::AnyCollectableVec;
 
-use crate::pagination::{PaginatedIndexParam, PaginationParam};
+use crate::{
+    index::Indexes,
+    pagination::{PaginatedIndexParam, PaginationParam},
+};
 
 use super::index::Index;
 
@@ -15,7 +20,7 @@ pub struct Vecs<'a> {
     pub metric_to_index_to_vec: BTreeMap<&'a str, IndexToVec<'a>>,
     pub index_to_metric_to_vec: BTreeMap<Index, MetricToVec<'a>>,
     pub metrics: Vec<&'a str>,
-    pub indexes: BTreeMap<&'static str, &'static [&'static str]>,
+    pub indexes: Indexes,
     pub distinct_metric_count: usize,
     pub total_metric_count: usize,
     pub catalog: Option<TreeNode>,
@@ -62,11 +67,12 @@ impl<'a> Vecs<'a> {
             .values()
             .map(|tree| tree.len())
             .sum::<usize>();
-        this.indexes = this
-            .index_to_metric_to_vec
-            .keys()
-            .map(|i| (i.serialize_long(), i.possible_values()))
-            .collect::<BTreeMap<_, _>>();
+        this.indexes = Indexes::new(
+            this.index_to_metric_to_vec
+                .keys()
+                .map(|i| (*i, i.possible_values()))
+                .collect::<BTreeMap<_, _>>(),
+        );
         this.metric_to_indexes = this
             .metric_to_index_to_vec
             .iter()
@@ -129,11 +135,16 @@ impl<'a> Vecs<'a> {
         }
     }
 
-    pub fn metrics(&self, pagination: PaginationParam) -> &[&'_ str] {
+    pub fn metrics(&'static self, pagination: PaginationParam) -> PaginatedMetrics {
         let len = self.metrics.len();
         let start = pagination.start(len);
         let end = pagination.end(len);
-        &self.metrics[start..end]
+
+        PaginatedMetrics {
+            current_page: pagination.page.unwrap_or_default(),
+            total_pages: len / PaginationParam::PER_PAGE,
+            metrics: &self.metrics[start..end],
+        }
     }
 
     pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<&'static str>> {
@@ -160,3 +171,17 @@ pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyCollectableVec>);
 
 #[derive(Default, Deref, DerefMut)]
 pub struct MetricToVec<'a>(BTreeMap<&'a str, &'a dyn AnyCollectableVec>);
+
+/// A paginated list of available metric names (1000 per page)
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct PaginatedMetrics {
+    /// Current page number (0-indexed)
+    #[schemars(example = 0)]
+    current_page: usize,
+    /// Total number of pages available
+    #[schemars(example = 21000)]
+    total_pages: usize,
+    /// List of metric names (max 1000 per page)
+    #[schemars(example = ["price_open", "price_close", "realized_price", "..."])]
+    metrics: &'static [&'static str],
+}

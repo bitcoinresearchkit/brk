@@ -5,13 +5,10 @@
 
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
-use aide::{
-    axum::{ApiRouter, IntoApiResponse},
-    openapi::{Info, OpenApi},
-};
+use aide::axum::ApiRouter;
 use api::ApiRoutes;
 use axum::{
-    Extension, Json,
+    Extension,
     body::{Body, Bytes},
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
@@ -35,6 +32,8 @@ mod extended;
 mod files;
 
 use extended::*;
+
+use crate::api::create_openapi;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -102,15 +101,6 @@ impl Server {
             .add_api_routes()
             .add_files_routes(state.path.as_ref())
             .add_mcp_routes(state.interface, mcp)
-            .api_route("/version", aide::axum::routing::get(version))
-            .route(
-                "/health",
-                get(Json(sonic_rs::json!({
-                    "status": "healthy",
-                    "service": "brk-server",
-                    "timestamp": jiff::Timestamp::now().to_string()
-                }))),
-            )
             .route(
                 "/discord",
                 get(Redirect::temporary("https://discord.gg/WACpShCB7M")),
@@ -130,7 +120,6 @@ impl Server {
                 get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service")),
             )
             .route("/nostr", get(Redirect::temporary("https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44")))
-            .route("/api.json", get(serve_api))
             .with_state(state)
             .layer(compression_layer)
             .layer(response_uri_layer)
@@ -147,36 +136,20 @@ impl Server {
             port += 1;
         }
 
-        let mut api = OpenApi {
-            info: Info {
-                title: "Bitcoin Research Kit API".to_string(),
-                description: Some("A documentation for using BRK's API".to_string()),
-                ..Info::default()
-            },
-            ..OpenApi::default()
-        };
-
         info!("Starting server on port {port}...");
 
         let listener = listener.unwrap();
 
+        let mut openapi = create_openapi();
         serve(
             listener,
             router
-                .finish_api(&mut api)
-                .layer(Extension(Arc::new(api)))
+                .finish_api(&mut openapi)
+                .layer(Extension(Arc::new(openapi)))
                 .into_make_service(),
         )
         .await?;
 
         Ok(())
     }
-}
-
-async fn serve_api(Extension(api): Extension<Arc<OpenApi>>) -> impl IntoApiResponse {
-    Json(api)
-}
-
-async fn version() -> impl IntoApiResponse {
-    Json(VERSION)
 }

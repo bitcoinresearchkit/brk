@@ -2,10 +2,13 @@ use std::{fmt, mem};
 
 use bitcoin::hashes::Hash;
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
+#[derive(
+    Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
+)]
 pub struct Txid([u8; 32]);
 
 impl From<bitcoin::Txid> for Txid {

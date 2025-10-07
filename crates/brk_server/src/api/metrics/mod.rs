@@ -1,4 +1,4 @@
-use aide::axum::ApiRouter;
+use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     Json,
     extract::{Path, Query, State},
@@ -6,7 +6,11 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
-use brk_interface::{Index, PaginationParam, Params, ParamsDeprec, ParamsOpt};
+use brk_interface::{
+    Index, Indexes, PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt,
+};
+use schemars::JsonSchema;
+use serde::Serialize;
 
 use crate::{
     VERSION,
@@ -23,23 +27,62 @@ pub trait ApiMetricsRoutes {
 
 const TO_SEPARATOR: &str = "_to_";
 
+#[derive(Debug, Serialize, JsonSchema)]
+/// Metric count statistics - distinct metrics and total metric-index combinations
+struct MetricCount {
+    #[schemars(example = 3141)]
+    /// Number of unique metrics available (e.g., realized_price, market_cap)
+    distinct_metrics: usize,
+    #[schemars(example = 21000)]
+    /// Total number of metric-index combinations across all timeframes
+    total_endpoints: usize,
+}
+
 impl ApiMetricsRoutes for ApiRouter<AppState> {
     fn add_api_metrics_routes(self) -> Self {
-        self.route(
+        self.api_route(
             "/api/metrics/count",
-            get(async |State(app_state): State<AppState>| -> Response {
-                Json(sonic_rs::json!({
-                    "distinct": app_state.interface.distinct_metric_count(),
-                    "total": app_state.interface.total_metric_count(),
-                }))
-                .into_response()
-            }),
+            get_with(
+                async |State(app_state): State<AppState>| -> Json<MetricCount> {
+                    Json(MetricCount {
+                        distinct_metrics: app_state.interface.distinct_metric_count(),
+                        total_endpoints: app_state.interface.total_metric_count(),
+                    })
+                },
+                |op| {
+                    op.tag("Metrics")
+                        .summary("Metric count")
+                        .description("Current metric count")
+                },
+            ),
         )
-        .route(
+        .api_route(
             "/api/metrics/indexes",
-            get(async |State(app_state): State<AppState>| -> Response {
-                Json(app_state.interface.get_indexes()).into_response()
-            }),
+            get_with(
+                async |State(app_state): State<AppState>| -> Json<&Indexes> {
+                    Json(app_state.interface.get_indexes())
+                },
+                |op| {
+                    op.tag("Metrics")
+                        .summary("Metric indexes")
+                        .description("Available metric indexes and their accepted variants")
+                },
+            ),
+        )
+        .api_route(
+            "/api/metrics/list",
+            get_with(
+                async |State(app_state): State<AppState>,
+                       Query(pagination): Query<PaginationParam>|
+                       -> Json<PaginatedMetrics> {
+                    Json(app_state.interface.get_metrics(pagination))
+                },
+                |op| {
+                    op.tag("Metrics")
+                        .summary("Metrics list")
+                        .description("Paginated list of available metrics")
+                },
+            ),
         )
         .route(
             "/api/metrics/catalog",
@@ -62,16 +105,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     headers.insert_etag(etag);
 
                     response
-                },
-            ),
-        )
-        .route(
-            "/api/metrics/list",
-            get(
-                async |State(app_state): State<AppState>,
-                       Query(pagination): Query<PaginationParam>|
-                       -> Response {
-                    Json(app_state.interface.get_metrics(pagination)).into_response()
                 },
             ),
         )
