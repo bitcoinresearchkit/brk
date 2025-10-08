@@ -1,10 +1,9 @@
 use std::ops::{Add, AddAssign};
 
+use brk_structs::Sats;
 use brk_traversable::Traversable;
 
-use crate::{Filtered, Sats};
-
-use super::Filter;
+use super::{Filter, Filtered};
 
 #[derive(Debug, Default, Clone, Traversable)]
 pub struct ByAmountRange<T> {

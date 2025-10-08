@@ -1,3 +1,10 @@
+use std::{collections::BTreeMap, sync::LazyLock};
+
+use schemars::JsonSchema;
+use serde::Serialize;
+
+use super::Index;
+
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
 #[serde(untagged)]
 /// Hierarchical tree node for organizing metrics into categories
@@ -9,6 +16,17 @@ pub enum TreeNode {
     Leaf(String),
 }
 
+const BASE: &str = "base";
+
+/// List of prefixes to remove during simplification
+static PREFIXES: LazyLock<Vec<String>> = LazyLock::new(|| {
+    ["indexes", "timeindexes", "chainindexes"]
+        .into_iter()
+        .chain(Index::all().iter().map(|i| i.serialize_long()))
+        .map(|s| format!("{s}_to_"))
+        .collect()
+});
+
 impl TreeNode {
     pub fn is_empty(&self) -> bool {
         if let Self::Branch(tree) = self {
@@ -18,8 +36,15 @@ impl TreeNode {
         }
     }
 
+    pub fn as_mut_branch(&mut self) -> &mut BTreeMap<String, TreeNode> {
+        match self {
+            Self::Branch(b) => b,
+            _ => panic!(),
+        }
+    }
+
     /// Merges all first-level branches into a single flattened structure.
-    /// Root-level leaves are placed under "default" key.
+    /// Root-level leaves are placed under BASE key.
     /// Returns None if conflicts are found (same key with incompatible values).
     pub fn merge_branches(&self) -> Option<Self> {
         let Self::Branch(tree) = self else {
@@ -31,7 +56,7 @@ impl TreeNode {
         for node in tree.values() {
             match node {
                 Self::Leaf(value) => {
-                    Self::merge_node(&mut merged, "base", &Self::Leaf(value.clone()))?;
+                    Self::merge_node(&mut merged, BASE, &Self::Leaf(value.clone()))?;
                 }
                 Self::Branch(inner) => {
                     for (key, inner_node) in inner {
@@ -86,40 +111,41 @@ impl TreeNode {
                 target.insert(key.to_string(), node.clone());
                 Some(())
             }
-            Some(existing) => match (existing, node) {
+            Some(existing) => match (&existing, node) {
                 // Same leaf values: ok
                 (Self::Leaf(a), Self::Leaf(b)) if a == b => Some(()),
                 // Different leaf values: conflict
-                (Self::Leaf(_), Self::Leaf(_)) => None,
-                // Leaf vs branch: conflict
-                (Self::Leaf(_), Self::Branch(_)) | (Self::Branch(_), Self::Leaf(_)) => {
-                    // dbg!((&existing, &node));
+                (Self::Leaf(a), Self::Leaf(b)) => {
+                    eprintln!("Conflict: Different leaf values for key '{key}'");
+                    eprintln!("  Existing: {a:?}");
+                    eprintln!("  New: {b:?}");
                     None
                 }
+                (Self::Leaf(leaf), Self::Branch(branch)) => {
+                    let mut new_branch = BTreeMap::new();
+                    new_branch.insert(BASE.to_string(), Self::Leaf(leaf.clone()));
+
+                    for (k, v) in branch {
+                        Self::merge_node(&mut new_branch, k, v)?;
+                    }
+
+                    *existing = Self::Branch(new_branch);
+                    Some(())
+                }
+                (Self::Branch(_), Self::Leaf(leaf)) => {
+                    Self::merge_node(existing.as_mut_branch(), BASE, &Self::Leaf(leaf.clone()))?;
+                    Some(())
+                }
                 // Both branches: merge recursively
-                (Self::Branch(existing_inner), Self::Branch(new_inner)) => {
+                (Self::Branch(_), Self::Branch(new_inner)) => {
                     for (k, v) in new_inner {
-                        Self::merge_node(existing_inner, k, v)?;
+                        Self::merge_node(existing.as_mut_branch(), k, v)?;
                     }
                     Some(())
                 }
             },
         }
     }
-
-    /// List of prefixes to remove during simplification
-    const PREFIXES: &'static [&'static str] = &[
-        "indexes_to_",
-        "chainindexes_to_",
-        "timeindexes_to_",
-        "txindex_to_",
-        "height_to_",
-        "dateindex_to_",
-        "weekindex_to_",
-        "difficultyepoch_to_",
-        "halvingepoch_to_",
-        // Add more prefixes here
-    ];
 
     /// Recursively simplifies the tree by removing known prefixes from keys.
     /// If multiple keys map to the same simplified name, checks for conflicts.
@@ -135,7 +161,7 @@ impl TreeNode {
                     let simplified_node = node.simplify()?;
 
                     // Remove prefixes from the key
-                    let simplified_key = Self::PREFIXES
+                    let simplified_key = PREFIXES
                         .iter()
                         .find_map(|prefix| key.strip_prefix(prefix))
                         .map(String::from)

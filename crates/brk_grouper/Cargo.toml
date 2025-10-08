@@ -1,6 +1,6 @@
 [package]
-name = "brk_traversable"
-description = "Traits for Vecs structs throughout BRK"
+name = "brk_grouper"
+description = "Groups used throughout BRK"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,10 +9,7 @@ repository.workspace = true
 rust-version.workspace = true
 build = "build.rs"
 
-[features]
-derive = ["brk_traversable_derive"]
-
 [dependencies]
 brk_structs = { workspace = true }
-brk_traversable_derive = { workspace = true, optional = true }
+brk_traversable = { workspace = true }
 vecdb = { workspace = true }

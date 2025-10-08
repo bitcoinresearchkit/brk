@@ -1,10 +1,9 @@
 use std::ops::{Add, AddAssign};
 
+use brk_structs::OutputType;
 use brk_traversable::Traversable;
 
-use crate::{Filtered, OutputType};
-
-use super::Filter;
+use super::{Filter, Filtered};
 
 #[derive(Default, Clone, Debug, Traversable)]
 pub struct BySpendableType<T> {

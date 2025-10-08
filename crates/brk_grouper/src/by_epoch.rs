@@ -1,8 +1,7 @@
+use brk_structs::{HalvingEpoch, Height};
 use brk_traversable::Traversable;
 
-use crate::{Filtered, HalvingEpoch, Height};
-
-use super::Filter;
+use super::{Filter, Filtered};
 
 #[derive(Default, Clone, Traversable)]
 pub struct ByEpoch<T> {

@@ -23,6 +23,4 @@ quick_cache = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sonic-rs = { workspace = true }
-serde_with = "3.15.0"
 nucleo-matcher = "0.3.1"

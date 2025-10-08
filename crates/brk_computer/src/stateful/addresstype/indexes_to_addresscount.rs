@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_structs::{ByAddressType, StoredU64};
+use brk_grouper::ByAddressType;
+use brk_structs::StoredU64;
 use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};
 use vecdb::Exit;

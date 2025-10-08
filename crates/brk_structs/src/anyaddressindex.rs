@@ -1,10 +1,7 @@
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{
-    TypeIndex,
-    structs::{EmptyAddressIndex, LoadedAddressIndex},
-};
+use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 

@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use crate::OutputType;
+use brk_structs::OutputType;
 
 use super::{BySpendableType, ByUnspendableType};
 

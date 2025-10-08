@@ -1,8 +1,7 @@
+use brk_structs::Sats;
 use brk_traversable::Traversable;
 
-use crate::{Filtered, Sats};
-
-use super::Filter;
+use super::{Filter, Filtered};
 
 #[derive(Default, Clone, Traversable)]
 pub struct ByGreatEqualAmount<T> {

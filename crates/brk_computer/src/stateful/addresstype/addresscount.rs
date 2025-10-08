@@ -1,4 +1,5 @@
-use brk_structs::{ByAddressType, Height};
+use brk_grouper::ByAddressType;
+use brk_structs::Height;
 use derive_deref::{Deref, DerefMut};
 use vecdb::VecIterator;
 
