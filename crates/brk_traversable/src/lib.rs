@@ -1,10 +1,8 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fmt::Debug,
-};
+use std::{collections::BTreeMap, fmt::Debug};
 
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyCollectableVec, AnyVec, CompressedVec, ComputedVec, EagerVec, LazyVecFrom1, LazyVecFrom2,
@@ -14,42 +12,6 @@ use vecdb::{
 pub trait Traversable {
     fn to_tree_node(&self) -> TreeNode;
     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec>;
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum TreeNode {
-    Branch(BTreeMap<String, TreeNode>),
-    List(Vec<TreeNode>),
-    Leaf(String),
-}
-
-impl TreeNode {
-    pub fn collect_unique_leaves(self) -> TreeNode {
-        let mut out = BTreeSet::new();
-
-        fn recurse(n: TreeNode, out: &mut BTreeSet<String>) {
-            match n {
-                TreeNode::Leaf(s) => {
-                    out.insert(s);
-                }
-                TreeNode::Branch(map) => {
-                    map.into_values().for_each(|n| recurse(n, out));
-                }
-                TreeNode::List(vec) => {
-                    vec.into_iter().for_each(|n| recurse(n, out));
-                }
-            }
-        }
-
-        recurse(self, &mut out);
-
-        match out.len() {
-            0 => TreeNode::List(vec![]),
-            1 => TreeNode::Leaf(out.into_iter().next().unwrap()),
-            _ => TreeNode::List(out.into_iter().map(TreeNode::Leaf).collect()),
-        }
-    }
 }
 
 impl<I, T> Traversable for RawVec<I, T>

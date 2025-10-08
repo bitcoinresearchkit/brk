@@ -1,22 +1,23 @@
 use std::ops::Deref;
 
+use brk_structs::Index;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    Format, Index,
+    Format,
     deser::{de_unquote_i64, de_unquote_usize},
     metrics::MaybeMetrics,
 };
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct Params {
+    /// Requested metrics
     #[serde(alias = "m")]
-    #[schemars(description = "Requested metrics")]
     pub metrics: MaybeMetrics,
 
+    /// Requested index
     #[serde(alias = "i")]
-    #[schemars(description = "Requested index")]
     pub index: Index,
 
     #[serde(flatten)]
@@ -42,26 +43,20 @@ impl From<((Index, String), ParamsOpt)> for Params {
 
 #[derive(Default, Debug, Deserialize, JsonSchema)]
 pub struct ParamsOpt {
-    #[serde(default, alias = "f", deserialize_with = "de_unquote_i64")]
     /// Inclusive starting index, if negative will be from the end
-    #[schemars(description = "Inclusive starting index, if negative will be from the end")]
+    #[serde(default, alias = "f", deserialize_with = "de_unquote_i64")]
     from: Option<i64>,
 
-    #[serde(default, alias = "t", deserialize_with = "de_unquote_i64")]
     /// Exclusive ending index, if negative will be from the end, overrides 'count'
-    #[schemars(
-        description = "Exclusive ending index, if negative will be from the end, overrides 'count'"
-    )]
+    #[serde(default, alias = "t", deserialize_with = "de_unquote_i64")]
     to: Option<i64>,
 
-    #[serde(default, alias = "c", deserialize_with = "de_unquote_usize")]
     /// Number of values requested
-    #[schemars(description = "Number of values requested")]
+    #[serde(default, alias = "c", deserialize_with = "de_unquote_usize")]
     count: Option<usize>,
 
-    #[serde(default)]
     /// Format of the output
-    #[schemars(description = "Format of the output")]
+    #[serde(default)]
     format: Format,
 }
 

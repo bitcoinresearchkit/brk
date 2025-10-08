@@ -206,24 +206,38 @@ where
     T: ComputedType,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::List(
+        let height_extra_node = self.height_extra.to_tree_node();
+        brk_traversable::TreeNode::Branch(
             [
-                self.height.as_ref().map(|nested| nested.to_tree_node()),
-                Some(self.height_extra.to_tree_node()),
-                Some(self.dateindex.to_tree_node()),
-                Some(self.weekindex.to_tree_node()),
-                Some(self.difficultyepoch.to_tree_node()),
-                Some(self.monthindex.to_tree_node()),
-                Some(self.quarterindex.to_tree_node()),
-                Some(self.semesterindex.to_tree_node()),
-                Some(self.yearindex.to_tree_node()),
-                Some(self.decadeindex.to_tree_node()),
+                self.height
+                    .as_ref()
+                    .map(|nested| ("height".to_string(), nested.to_tree_node())),
+                if height_extra_node.is_empty() {
+                    None
+                } else {
+                    Some(("height_extra".to_string(), height_extra_node))
+                },
+                Some(("dateindex".to_string(), self.dateindex.to_tree_node())),
+                Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
+                Some((
+                    "difficultyepoch".to_string(),
+                    self.difficultyepoch.to_tree_node(),
+                )),
+                Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
+                Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
+                Some((
+                    "semesterindex".to_string(),
+                    self.semesterindex.to_tree_node(),
+                )),
+                Some(("yearindex".to_string(), self.yearindex.to_tree_node())),
+                Some(("decadeindex".to_string(), self.decadeindex.to_tree_node())),
             ]
             .into_iter()
             .flatten()
             .collect(),
         )
-        .collect_unique_leaves()
+        .merge_branches()
+        .unwrap()
     }
 
     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {

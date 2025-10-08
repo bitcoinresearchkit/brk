@@ -89,17 +89,26 @@ where
     T: ComputedType,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::List(
+        let height_extra_node = self.height_extra.to_tree_node();
+        brk_traversable::TreeNode::Branch(
             [
-                Some(self.height.to_tree_node()),
-                Some(self.height_extra.to_tree_node()),
-                Some(self.difficultyepoch.to_tree_node()),
+                Some(("height".to_string(), self.height.to_tree_node())),
+                if height_extra_node.is_empty() {
+                    None
+                } else {
+                    Some(("height_extra".to_string(), height_extra_node))
+                },
+                Some((
+                    "difficultyepoch".to_string(),
+                    self.difficultyepoch.to_tree_node(),
+                )),
             ]
             .into_iter()
             .flatten()
             .collect(),
         )
-        .collect_unique_leaves()
+        .merge_branches()
+        .unwrap()
     }
     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
         let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =

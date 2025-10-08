@@ -150,11 +150,11 @@ fn generate_field_traversals(fields: &Fields) -> proc_macro2::TokenStream {
                     .flatten()
                     .collect();
 
-                return if collected.len() == 1 {
-                    collected.into_values().next().unwrap()
-                } else {
-                    brk_traversable::TreeNode::Branch(collected)
-                };
+                // return if collected.len() == 1 {
+                //     collected.into_values().next().unwrap()
+                // } else {
+                brk_traversable::TreeNode::Branch(collected)
+                // };
             }
         }
         _ => quote! {},

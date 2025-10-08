@@ -1163,6 +1163,7 @@ dependencies = [
  "brk_mcp",
  "brk_parser",
  "brk_structs",
+ "brk_traversable",
  "jiff",
  "log",
  "quick_cache",
@@ -1231,6 +1232,7 @@ name = "brk_traversable"
 version = "0.0.111"
 dependencies = [
  "brk_traversable_derive",
+ "schemars 1.0.4",
  "serde",
  "vecdb",
 ]

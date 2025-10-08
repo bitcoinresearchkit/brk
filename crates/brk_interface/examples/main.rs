@@ -3,8 +3,9 @@ use std::{fs, path::Path};
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_interface::{Index, Interface, Params, ParamsOpt};
+use brk_interface::{Interface, Params, ParamsOpt};
 use brk_parser::Parser;
+use brk_structs::Index;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {

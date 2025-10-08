@@ -150,22 +150,33 @@ where
     T: ComputedType,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::List(
+        let dateindex_extra_node = self.dateindex_extra.to_tree_node();
+        brk_traversable::TreeNode::Branch(
             [
-                self.dateindex.as_ref().map(|nested| nested.to_tree_node()),
-                Some(self.dateindex_extra.to_tree_node()),
-                Some(self.weekindex.to_tree_node()),
-                Some(self.monthindex.to_tree_node()),
-                Some(self.quarterindex.to_tree_node()),
-                Some(self.semesterindex.to_tree_node()),
-                Some(self.yearindex.to_tree_node()),
-                Some(self.decadeindex.to_tree_node()),
+                self.dateindex
+                    .as_ref()
+                    .map(|nested| ("dateindex".to_string(), nested.to_tree_node())),
+                if dateindex_extra_node.is_empty() {
+                    None
+                } else {
+                    Some(("dateindex_extra".to_string(), dateindex_extra_node))
+                },
+                Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
+                Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
+                Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
+                Some((
+                    "semesterindex".to_string(),
+                    self.semesterindex.to_tree_node(),
+                )),
+                Some(("yearindex".to_string(), self.yearindex.to_tree_node())),
+                Some(("decadeindex".to_string(), self.decadeindex.to_tree_node())),
             ]
             .into_iter()
             .flatten()
             .collect(),
         )
-        .collect_unique_leaves()
+        .merge_branches()
+        .unwrap()
     }
 
     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {

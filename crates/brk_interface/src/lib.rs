@@ -6,7 +6,7 @@ use brk_computer::Computer;
 use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_structs::Height;
+use brk_structs::{Height, Index, IndexInfo};
 use brk_traversable::TreeNode;
 use nucleo_matcher::{
     Config, Matcher,
@@ -15,21 +15,20 @@ use nucleo_matcher::{
 use quick_cache::sync::Cache;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
+mod count;
 mod deser;
 mod format;
-mod index;
 mod metrics;
 mod output;
 mod pagination;
 mod params;
 mod vecs;
 
+pub use count::*;
 pub use format::Format;
-pub use index::*;
 pub use output::{Output, Value};
-pub use pagination::{PaginatedIndexParam, PaginationParam};
+pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};
-pub use vecs::PaginatedMetrics;
 use vecs::Vecs;
 
 use crate::vecs::{IndexToVec, MetricToVec};
@@ -229,6 +228,13 @@ impl<'a> Interface<'a> {
         &self.vecs.index_to_metric_to_vec
     }
 
+    pub fn metric_count(&self) -> MetricCount {
+        MetricCount {
+            distinct_metrics: self.distinct_metric_count(),
+            total_endpoints: self.total_metric_count(),
+        }
+    }
+
     pub fn distinct_metric_count(&self) -> usize {
         self.vecs.distinct_metric_count
     }
@@ -237,7 +243,7 @@ impl<'a> Interface<'a> {
         self.vecs.total_metric_count
     }
 
-    pub fn get_indexes(&self) -> &Indexes {
+    pub fn get_indexes(&self) -> &[IndexInfo] {
         &self.vecs.indexes
     }
 
@@ -253,7 +259,7 @@ impl<'a> Interface<'a> {
         self.vecs.index_to_ids(paginated_index)
     }
 
-    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<&'static str>> {
+    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<Index>> {
         self.vecs.metric_to_indexes(metric)
     }
 

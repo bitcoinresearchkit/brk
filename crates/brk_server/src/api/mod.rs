@@ -2,21 +2,29 @@ use std::sync::Arc;
 
 use aide::{
     axum::{ApiRouter, routing::get_with},
-    openapi::{Info, OpenApi, Tag},
+    openapi::OpenApi,
 };
-use axum::{Extension, Json, response::Html, routing::get};
+use axum::{
+    Extension, Json,
+    response::{Html, Redirect},
+    routing::get,
+};
 use schemars::JsonSchema;
 use serde::Serialize;
 
 use crate::{
     VERSION,
     api::{chain::ChainRoutes, metrics::ApiMetricsRoutes},
+    extended::TransformResponseExtended,
 };
 
 use super::AppState;
 
 mod chain;
 mod metrics;
+mod openapi;
+
+pub use openapi::*;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
@@ -33,7 +41,8 @@ struct Health {
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
         self.add_chain_routes()
-            .add_api_metrics_routes()
+            .add_metrics_routes()
+            .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
                 "/version",
                 get_with(
@@ -42,6 +51,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                         op.tag("Server")
                             .summary("API version")
                             .description("Returns the current version of the API server")
+                            .with_ok_response::<String, _>(|res| res)
                     },
                 ),
             )
@@ -59,6 +69,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                         op.tag("Server")
                             .summary("Health check")
                             .description("Returns the health status of the API server")
+                            .with_ok_response::<Health, _>(|res| res)
                     },
                 ),
             )
@@ -71,50 +82,5 @@ impl ApiRoutes for ApiRouter<AppState> {
                 ),
             )
             .route("/api", get(Html::from(include_str!("./scalar.html"))))
-    }
-}
-
-pub fn create_openapi() -> OpenApi {
-    let tags = vec![
-        Tag {
-            name: "Chain".to_string(),
-            description: Some(
-                "Explore Bitcoin blockchain data: addresses, transactions, blocks, balances, and UTXOs."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Metrics".to_string(),
-            description: Some(
-                "Access Bitcoin network metrics and time-series data. Query historical and real-time \
-                statistics across various blockchain dimensions and aggregation levels."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Server".to_string(),
-            description: Some(
-                "Metadata and utility endpoints for API status, health checks, and system information."
-                    .to_string()
-            ),
-                ..Default::default()
-            },
-    ];
-
-    OpenApi {
-        info: Info {
-            title: "Bitcoin Research Kit API".to_string(),
-            description: Some(
-                "API for querying Bitcoin blockchain data including addresses, transactions, and chain statistics. This API provides low-level access to indexed blockchain data with advanced analytics capabilities.\n\n\
-                ⚠️ **Early Development**: This API is in very early stages of development. Breaking changes may occur without notice. For a more stable experience, self-host or use the hosting service."
-                    .to_string(),
-            ),
-            version: format!("v{VERSION}"),
-            ..Info::default()
-        },
-        tags,
-        ..OpenApi::default()
     }
 }

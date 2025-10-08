@@ -1,90 +1,81 @@
-use std::{
-    collections::BTreeMap,
-    fmt::{self, Debug},
-};
+use std::fmt::{self, Debug};
 
 use brk_error::Error;
-use brk_structs::{
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use vecdb::PrintableIndex;
+
+use super::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
     Height, InputIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, OutputIndex,
     P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, PrintableIndex,
-    QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
+    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex,
+    SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-#[derive(Default, Serialize, JsonSchema)]
-/// Indexes and their accepted variants
-pub struct Indexes(BTreeMap<Index, &'static [&'static str]>);
-
-impl Indexes {
-    pub fn new(tree: BTreeMap<Index, &'static [&'static str]>) -> Self {
-        Self(tree)
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[schemars(example = Index::DateIndex)]
+/// Aggregation dimension for querying Bitcoin blockchain data
 pub enum Index {
-    #[schemars(description = "Date/day index")]
+    /// Date/day index
     DateIndex,
-    #[schemars(description = "Decade index")]
+    /// Decade index
     DecadeIndex,
-    #[schemars(description = "Difficulty epoch index (equivalent to ~2 weeks)")]
+    /// Difficulty epoch index (equivalent to ~2 weeks)
     DifficultyEpoch,
-    #[schemars(description = "Empty output index")]
+    /// Empty output index
     EmptyOutputIndex,
-    #[schemars(description = "Halving epoch index (equivalent to ~4 years)")]
+    /// Halving epoch index (equivalent to ~4 years)
     HalvingEpoch,
-    #[schemars(description = "Height/block index")]
+    /// Height/block index
     Height,
-    #[schemars(description = "Transaction input index (based on total)")]
+    /// Transaction input index (based on total)
     InputIndex,
-    #[schemars(description = "Month index")]
+    /// Month index
     MonthIndex,
-    #[schemars(description = "Op return index")]
+    /// Op return index
     OpReturnIndex,
-    #[schemars(description = "Transaction output index (based on total)")]
+    /// Transaction output index (based on total)
     OutputIndex,
-    #[schemars(description = "Index of P2A address")]
+    /// Index of P2A address
     P2AAddressIndex,
-    #[schemars(description = "Index of P2MS output")]
+    /// Index of P2MS output
     P2MSOutputIndex,
-    #[schemars(description = "Index of P2PK (33 bytes) address")]
+    /// Index of P2PK (33 bytes) address
     P2PK33AddressIndex,
-    #[schemars(description = "Index of P2PK (65 bytes) address")]
+    /// Index of P2PK (65 bytes) address
     P2PK65AddressIndex,
-    #[schemars(description = "Index of P2PKH address")]
+    /// Index of P2PKH address
     P2PKHAddressIndex,
-    #[schemars(description = "Index of P2SH address")]
+    /// Index of P2SH address
     P2SHAddressIndex,
-    #[schemars(description = "Index of P2TR address")]
+    /// Index of P2TR address
     P2TRAddressIndex,
-    #[schemars(description = "Index of P2WPKH address")]
+    /// Index of P2WPKH address
     P2WPKHAddressIndex,
-    #[schemars(description = "Index of P2WSH address")]
+    /// Index of P2WSH address
     P2WSHAddressIndex,
-    #[schemars(description = "Quarter index")]
+    /// Quarter index
     QuarterIndex,
-    #[schemars(description = "Semester index")]
+    /// Semester index
     SemesterIndex,
-    #[schemars(description = "Transaction index")]
+    /// Transaction index
     TxIndex,
-    #[schemars(description = "Unknown output index")]
+    /// Unknown output index
     UnknownOutputIndex,
-    #[schemars(description = "Week index")]
+    /// Week index
     WeekIndex,
-    #[schemars(description = "Year index")]
+    /// Year index
     YearIndex,
-    #[schemars(description = "Loaded Address Index")]
+    /// Loaded Address Index
     LoadedAddressIndex,
-    #[schemars(description = "Empty Address Index")]
+    /// Empty Address Index
     EmptyAddressIndex,
 }
 
 impl Index {
-    pub fn all() -> [Self; 27] {
+    pub const fn all() -> [Self; 27] {
         [
             Self::DateIndex,
             Self::DecadeIndex,

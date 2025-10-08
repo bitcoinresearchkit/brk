@@ -1,7 +1,8 @@
+use brk_structs::Index;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Index, deser::de_unquote_usize};
+use crate::deser::de_unquote_usize;
 
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 pub struct PaginationParam {
@@ -27,4 +28,18 @@ pub struct PaginatedIndexParam {
     pub index: Index,
     #[serde(flatten)]
     pub pagination: PaginationParam,
+}
+
+/// A paginated list of available metric names (1000 per page)
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct PaginatedMetrics {
+    /// Current page number (0-indexed)
+    #[schemars(example = 0)]
+    pub current_page: usize,
+    /// Maximum valid page index (0-indexed)
+    #[schemars(example = 21000)]
+    pub max_page: usize,
+    /// List of metric names (max 1000 per page)
+    #[schemars(example = ["price_open", "price_close", "realized_price", "..."])]
+    pub metrics: &'static [&'static str],
 }
