@@ -17,9 +17,10 @@ use crate::{
 pub struct Vecs {
     state_starting_height: Option<Height>,
 
-    #[vecs(skip)]
+    #[traversable(skip)]
     pub state: Option<UTXOCohortState>,
 
+    #[traversable(flatten)]
     pub inner: common::Vecs,
 }
 

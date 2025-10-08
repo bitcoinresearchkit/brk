@@ -91,16 +91,14 @@ fn req_to_response_res(
         match interface.format(vecs, &params.rest)? {
             Output::CSV(s) => {
                 if let GuardResult::Guard(g) = guard_res {
-                    g.insert(s.clone().into())
-                        .map_err(|_| Error::QuickCacheError)?;
+                    let _ = g.insert(s.clone().into());
                 }
                 s.into_response()
             }
             Output::Json(v) => {
                 let json = v.to_vec();
                 if let GuardResult::Guard(g) = guard_res {
-                    g.insert(json.clone().into())
-                        .map_err(|_| Error::QuickCacheError)?;
+                    let _ = g.insert(json.clone().into());
                 }
                 json.into_response()
             }

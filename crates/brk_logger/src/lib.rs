@@ -23,7 +23,7 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
     });
 
     Builder::from_env(Env::default().default_filter_or(
-        "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,lsm_tree=off,rolldown=off,brk_rolldown=off,rmcp=off,brk_rmcp=off,tracing=off",
+        "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,lsm_tree=off,rolldown=off,brk_rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,brk_aide=off",
     ))
     .format(move |buf, record| {
         let date_time = Timestamp::now()
