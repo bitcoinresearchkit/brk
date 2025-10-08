@@ -41,7 +41,7 @@ panic = "abort"
 debug-assertions = false
 
 [workspace.dependencies]
-aide = { version = "0.15.1", features = ["axum-json"], package = "brk-aide" }
+aide = { version = "0.15.1", features = ["axum-json", "axum-query"], package = "brk-aide" }
 allocative = { version = "0.3.4", features = ["parking_lot"] }
 axum = "0.8.6"
 bitcoin = { version = "0.32.7", features = ["serde"] }

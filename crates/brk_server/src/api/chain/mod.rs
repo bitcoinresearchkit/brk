@@ -1,4 +1,5 @@
 use aide::axum::ApiRouter;
+use axum::{response::Redirect, routing::get};
 
 use crate::api::chain::{addresses::AddressesRoutes, transactions::TransactionsRoutes};
 
@@ -13,6 +14,8 @@ pub trait ChainRoutes {
 
 impl ChainRoutes for ApiRouter<AppState> {
     fn add_chain_routes(self) -> Self {
-        self.add_addresses_routes().add_transactions_routes()
+        self.route("/api/chain", get(Redirect::temporary("/api#tag/chain")))
+            .add_addresses_routes()
+            .add_transactions_routes()
     }
 }

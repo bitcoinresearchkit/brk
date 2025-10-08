@@ -593,24 +593,33 @@ where
     T: ComputedType,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::List(
+        brk_traversable::TreeNode::Branch(
             [
-                self.txindex.as_ref().map(|nested| nested.to_tree_node()),
-                Some(self.height.to_tree_node()),
-                Some(self.dateindex.to_tree_node()),
-                Some(self.weekindex.to_tree_node()),
-                Some(self.difficultyepoch.to_tree_node()),
-                Some(self.monthindex.to_tree_node()),
-                Some(self.quarterindex.to_tree_node()),
-                Some(self.semesterindex.to_tree_node()),
-                Some(self.yearindex.to_tree_node()),
-                Some(self.decadeindex.to_tree_node()),
+                self.txindex
+                    .as_ref()
+                    .map(|nested| ("txindex".to_string(), nested.to_tree_node())),
+                Some(("height".to_string(), self.height.to_tree_node())),
+                Some(("dateindex".to_string(), self.dateindex.to_tree_node())),
+                Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
+                Some((
+                    "difficultyepoch".to_string(),
+                    self.difficultyepoch.to_tree_node(),
+                )),
+                Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
+                Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
+                Some((
+                    "semesterindex".to_string(),
+                    self.semesterindex.to_tree_node(),
+                )),
+                Some(("yearindex".to_string(), self.yearindex.to_tree_node())),
+                Some(("decadeindex".to_string(), self.decadeindex.to_tree_node())),
             ]
             .into_iter()
             .flatten()
             .collect(),
         )
-        .collect_unique_leaves()
+        .merge_branches()
+        .unwrap()
     }
 
     fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {

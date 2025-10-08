@@ -4,8 +4,8 @@ use std::{
     path::Path,
 };
 
-use brk_interface::{Index, Interface};
-use brk_structs::pools;
+use brk_interface::Interface;
+use brk_structs::{Index, pools};
 
 use super::VERSION;
 
