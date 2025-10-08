@@ -11,6 +11,7 @@ where
     Self: Sized,
 {
     fn new_not_modified() -> Self;
+    fn new_json_from_bytes(bytes: Vec<u8>) -> Self;
 }
 
 impl ResponseExtended for Response<Body> {
@@ -19,5 +20,12 @@ impl ResponseExtended for Response<Body> {
         let headers = response.headers_mut();
         headers.insert_cors();
         response
+    }
+
+    fn new_json_from_bytes(bytes: Vec<u8>) -> Self {
+        Response::builder()
+            .header("content-type", "application/json")
+            .body(bytes.into())
+            .unwrap()
     }
 }

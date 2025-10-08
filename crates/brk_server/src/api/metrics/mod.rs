@@ -103,10 +103,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
 
                     let bytes = sonic_rs::to_vec(&app_state.interface.get_metrics_catalog()).unwrap();
 
-                    let mut response = Response::builder()
-                        .header("content-type", "application/json")
-                        .body(bytes.into())
-                        .unwrap();
+                    let mut response = Response::new_json_from_bytes(bytes);
 
                     let headers = response.headers_mut();
                     headers.insert_cors();

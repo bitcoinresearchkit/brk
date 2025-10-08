@@ -21,7 +21,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::VecIterator;
 
-use crate::extended::TransformResponseExtended;
+use crate::extended::{ResponseExtended, TransformResponseExtended};
 
 use super::AppState;
 
@@ -140,10 +140,7 @@ async fn get_transaction_info(
 
     let bytes = sonic_rs::to_vec(&tx_info).unwrap();
 
-    Ok(Response::builder()
-        .header("content-type", "application/json")
-        .body(bytes.into())
-        .unwrap())
+    Ok(Response::new_json_from_bytes(bytes))
 }
 
 fn get_transaction_info_docs(op: TransformOperation) -> TransformOperation {

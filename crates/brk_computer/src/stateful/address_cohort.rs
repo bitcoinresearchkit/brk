@@ -25,9 +25,10 @@ const VERSION: Version = Version::ZERO;
 pub struct Vecs {
     starting_height: Option<Height>,
 
-    #[vecs(skip)]
+    #[traversable(skip)]
     pub state: Option<AddressCohortState>,
 
+    #[traversable(flatten)]
     pub inner: common::Vecs,
 
     pub height_to_addr_count: EagerVec<Height, StoredU64>,

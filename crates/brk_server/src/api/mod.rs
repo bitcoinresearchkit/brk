@@ -6,7 +6,8 @@ use aide::{
 };
 use axum::{
     Extension, Json,
-    response::{Html, Redirect},
+    http::HeaderMap,
+    response::{Html, Redirect, Response},
     routing::get,
 };
 use schemars::JsonSchema;
@@ -15,7 +16,7 @@ use serde::Serialize;
 use crate::{
     VERSION,
     api::{chain::ChainRoutes, metrics::ApiMetricsRoutes},
-    extended::TransformResponseExtended,
+    extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
 };
 
 use super::AppState;
@@ -76,8 +77,26 @@ impl ApiRoutes for ApiRouter<AppState> {
             .route(
                 "/api.json",
                 get(
-                    async |Extension(api): Extension<Arc<OpenApi>>| -> Json<Arc<OpenApi>> {
-                        Json(api)
+                    async |headers: HeaderMap,
+                           Extension(api): Extension<Arc<OpenApi>>|
+                           -> Response {
+                        let etag = VERSION;
+
+                        if headers
+                            .get_if_none_match()
+                            .is_some_and(|prev_etag| etag == prev_etag)
+                        {
+                            return Response::new_not_modified();
+                        }
+
+                        let mut response =
+                            Response::new_json_from_bytes(sonic_rs::to_vec(&api).unwrap());
+
+                        let headers = response.headers_mut();
+                        headers.insert_cors();
+                        headers.insert_etag(etag);
+
+                        response
                     },
                 ),
             )
