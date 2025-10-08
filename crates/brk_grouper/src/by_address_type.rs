@@ -1,10 +1,10 @@
 use std::ops::{Add, AddAssign};
 
+use brk_structs::OutputType;
 use brk_traversable::{Traversable, TreeNode};
 use vecdb::AnyCollectableVec;
 
-use super::Filter;
-use crate::{Filtered, OutputType};
+use super::{Filter, Filtered};
 
 #[derive(Default, Clone, Debug)]
 pub struct ByAddressType<T> {

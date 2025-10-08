@@ -1,10 +1,12 @@
 use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 
 use brk_error::Result;
+use brk_grouper::{
+    ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
+    BySpendableType, ByTerm, Filter, Filtered, UTXOGroups,
+};
 use brk_structs::{
-    Bitcoin, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge,
-    ByMinAge, BySpendableType, ByTerm, CheckedSub, DateIndex, Dollars, Filter, Filtered,
-    HalvingEpoch, Height, Timestamp, UTXOGroups, Version,
+    Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, Timestamp, Version,
 };
 use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};

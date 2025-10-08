@@ -1,6 +1,6 @@
 use std::mem;
 
-use brk_structs::ByAddressType;
+use brk_grouper::ByAddressType;
 use derive_deref::{Deref, DerefMut};
 
 #[derive(Debug, Deref, DerefMut)]

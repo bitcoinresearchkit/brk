@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod address;
 mod by_address_type;
 mod by_age_range;

@@ -7,13 +7,14 @@ use std::{
 };
 
 use brk_error::Result;
+use brk_grouper::{ByAddressType, ByAnyAddress, Filtered};
 use brk_indexer::Indexer;
 use brk_structs::{
-    AnyAddressDataIndexEnum, AnyAddressIndex, ByAddressType, ByAnyAddress, CheckedSub, DateIndex,
-    Dollars, EmptyAddressData, EmptyAddressIndex, Filtered, Height, InputIndex, LoadedAddressData,
-    LoadedAddressIndex, OutputIndex, OutputType, P2AAddressIndex, P2PK33AddressIndex,
-    P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, Sats, StoredU64, Timestamp, TypeIndex, Version,
+    AnyAddressDataIndexEnum, AnyAddressIndex, CheckedSub, DateIndex, Dollars, EmptyAddressData,
+    EmptyAddressIndex, Height, InputIndex, LoadedAddressData, LoadedAddressIndex, OutputIndex,
+    OutputType, P2AAddressIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
+    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64,
+    Timestamp, TypeIndex, Version,
 };
 use brk_traversable::Traversable;
 use log::info;

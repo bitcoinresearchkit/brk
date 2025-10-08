@@ -1,9 +1,9 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
+pub use brk_structs::TreeNode;
+
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
-use schemars::JsonSchema;
-use serde::Serialize;
 use vecdb::{
     AnyCollectableVec, AnyVec, CompressedVec, ComputedVec, EagerVec, LazyVecFrom1, LazyVecFrom2,
     LazyVecFrom3, RawVec, StoredCompressed, StoredIndex, StoredRaw, StoredVec,

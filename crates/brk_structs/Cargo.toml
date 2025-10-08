@@ -14,7 +14,6 @@ allocative = { workspace = true }
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 brk_error = { workspace = true }
-brk_traversable = { workspace = true }
 byteview = { workspace = true }
 derive_deref = { workspace = true }
 itoa = "1.0.15"

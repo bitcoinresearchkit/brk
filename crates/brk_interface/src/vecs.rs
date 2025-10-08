@@ -83,14 +83,18 @@ impl<'a> Vecs<'a> {
         this.index_to_metrics
             .values_mut()
             .for_each(|ids| sort_ids(ids));
-        this.catalog.replace(TreeNode::Branch(
-            [
-                ("indexer".to_string(), indexer.vecs.to_tree_node()),
-                ("computer".to_string(), computer.to_tree_node()),
-            ]
-            .into_iter()
-            .collect(),
-        ));
+        this.catalog.replace(
+            TreeNode::Branch(
+                [
+                    ("indexer".to_string(), indexer.vecs.to_tree_node()),
+                    ("computer".to_string(), computer.to_tree_node()),
+                ]
+                .into_iter()
+                .collect(),
+            )
+            .simplify()
+            .unwrap(),
+        );
 
         this
     }

@@ -1,11 +1,11 @@
 use std::{borrow::Cow, fs, path::Path, thread};
 
 use brk_error::Result;
+use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Store};
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
-    OutputType, StoredString, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit,
-    Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputIndex, OutputType, StoredString,
+    TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;

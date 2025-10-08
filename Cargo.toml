@@ -52,6 +52,7 @@ brk_cli = { version = "0.0.111", path = "crates/brk_cli" }
 brk_computer = { version = "0.0.111", path = "crates/brk_computer" }
 brk_error = { version = "0.0.111", path = "crates/brk_error" }
 brk_fetcher = { version = "0.0.111", path = "crates/brk_fetcher" }
+brk_grouper = { version = "0.0.111", path = "crates/brk_grouper" }
 brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.111", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }

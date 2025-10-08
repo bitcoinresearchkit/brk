@@ -4,7 +4,7 @@ use allocative::Allocative;
 
 use crate::{JSONPool, PoolId};
 
-use super::super::Pool;
+use super::Pool;
 
 const POOL_COUNT: usize = 158;
 

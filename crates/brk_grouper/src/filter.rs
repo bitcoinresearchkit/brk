@@ -1,9 +1,8 @@
 use std::ops::Range;
 
+use brk_structs::{HalvingEpoch, OutputType};
 use brk_traversable::{Traversable, TreeNode};
 use vecdb::AnyCollectableVec;
-
-use crate::{HalvingEpoch, OutputType};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
