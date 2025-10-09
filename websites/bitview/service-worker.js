@@ -53,16 +53,16 @@ sw.addEventListener("fetch", (event) => {
   if (
     req.method !== "GET" ||
     url.pathname.startsWith("/api") ||
-    url.pathname === "/mcp" ||
-    url.pathname === "/crates" ||
-    url.pathname === "/github" ||
-    url.pathname === "/status" ||
-    url.pathname === "/cli" ||
-    url.pathname === "/hosting" ||
-    url.pathname === "/nostr" ||
+    url.pathname === "/changelog" ||
+    url.pathname === "/crate" ||
     url.pathname === "/discord" ||
-    url.pathname === "/nostr" ||
+    url.pathname === "/github" ||
     url.pathname === "/health" ||
+    url.pathname === "/install" ||
+    url.pathname === "/mcp" ||
+    url.pathname === "/nostr" ||
+    url.pathname === "/service" ||
+    url.pathname === "/status" ||
     url.pathname === "/version"
   ) {
     return; // let the browser handle it

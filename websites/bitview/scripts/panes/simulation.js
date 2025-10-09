@@ -386,7 +386,7 @@ export function init({ colors, createChartElement, signals, resources }) {
       }),
     },
     fees: {
-      percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
+      percentage: signals.createSignal(/** @type {number | null} */ (1), {
         save: {
           ...serdeOptNumber,
           keyPrefix,
@@ -606,8 +606,6 @@ export function init({ colors, createChartElement, signals, resources }) {
   resultsElement.append(p2);
   const p3 = window.document.createElement("p");
   resultsElement.append(p3);
-  const p4 = window.document.createElement("p");
-  resultsElement.append(p4);
 
   const owner = signals.getOwner();
 

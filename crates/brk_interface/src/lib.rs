@@ -6,7 +6,10 @@ use brk_computer::Computer;
 use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_structs::{Height, Index, IndexInfo};
+use brk_structs::{
+    AddressInfo, AddressPath, Format, Height, Index, IndexInfo, MetricCount, TransactionInfo,
+    TxidPath,
+};
 use brk_traversable::TreeNode;
 use nucleo_matcher::{
     Config, Matcher,
@@ -15,23 +18,22 @@ use nucleo_matcher::{
 use quick_cache::sync::Cache;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
-mod count;
+mod chain;
 mod deser;
-mod format;
 mod metrics;
-mod output;
 mod pagination;
 mod params;
 mod vecs;
 
-pub use count::*;
-pub use format::Format;
-pub use output::{Output, Value};
+pub use metrics::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
-use crate::vecs::{IndexToVec, MetricToVec};
+use crate::{
+    chain::{get_address_info, get_transaction_info},
+    vecs::{IndexToVec, MetricToVec},
+};
 
 pub fn cached_errors() -> &'static Cache<String, String> {
     static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
@@ -63,6 +65,14 @@ impl<'a> Interface<'a> {
 
     pub fn get_height(&self) -> Height {
         Height::from(self.indexer.vecs.height_to_blockhash.stamp())
+    }
+
+    pub fn get_address_info(&self, address: AddressPath) -> Result<AddressInfo> {
+        get_address_info(address, self)
+    }
+
+    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<TransactionInfo> {
+        get_transaction_info(txid, self)
     }
 
     pub fn search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {

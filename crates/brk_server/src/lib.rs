@@ -99,25 +99,26 @@ impl Server {
 
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_files_routes(state.path.as_ref())
             .add_mcp_routes(state.interface, mcp)
+            .add_files_routes(state.path.as_ref())
             .route(
                 "/discord",
                 get(Redirect::temporary("https://discord.gg/WACpShCB7M")),
             )
-            .route("/crates", get(Redirect::temporary("https://crates.io/crates/brk")))
+            .route("/crate", get(Redirect::temporary("https://crates.io/crates/brk")))
             .route(
                 "/status",
                 get(Redirect::temporary("https://status.bitview.space")),
             )
             .route("/github", get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk")))
+            .route("/changelog", get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md")))
             .route(
-                "/cli",
-                get(Redirect::temporary("https://crates.io/crates/brk_cli")),
+                "/install",
+                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/README.md#brk_cli")),
             )
             .route(
-                "/hosting",
-                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service")),
+                "/service",
+                get(Redirect::temporary("https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#professional-hosting")),
             )
             .route("/nostr", get(Redirect::temporary("https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44")))
             .with_state(state)

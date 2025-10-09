@@ -86,8 +86,8 @@ impl<'a> Vecs<'a> {
         this.catalog.replace(
             TreeNode::Branch(
                 [
-                    ("indexer".to_string(), indexer.vecs.to_tree_node()),
-                    ("computer".to_string(), computer.to_tree_node()),
+                    ("indexed".to_string(), indexer.vecs.to_tree_node()),
+                    ("computed".to_string(), computer.to_tree_node()),
                 ]
                 .into_iter()
                 .collect(),

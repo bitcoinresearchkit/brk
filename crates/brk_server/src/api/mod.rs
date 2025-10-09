@@ -10,8 +10,7 @@ use axum::{
     response::{Html, Redirect, Response},
     routing::get,
 };
-use schemars::JsonSchema;
-use serde::Serialize;
+use brk_structs::Health;
 
 use crate::{
     VERSION,
@@ -29,14 +28,6 @@ pub use openapi::*;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
-}
-
-#[derive(Debug, Serialize, JsonSchema)]
-/// Server health status
-struct Health {
-    status: String,
-    service: String,
-    timestamp: String,
 }
 
 impl ApiRoutes for ApiRouter<AppState> {
@@ -62,7 +53,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                     async || -> Json<Health> {
                         Json(Health {
                             status: "healthy".to_string(),
-                            service: "brk-server".to_string(),
+                            service: "brk".to_string(),
                             timestamp: jiff::Timestamp::now().to_string(),
                         })
                     },
@@ -101,5 +92,9 @@ impl ApiRoutes for ApiRouter<AppState> {
                 ),
             )
             .route("/api", get(Html::from(include_str!("./scalar.html"))))
+            .route(
+                "/api/{*path}",
+                get(|| async { Redirect::permanent("/api") }),
+            )
     }
 }

@@ -19,7 +19,7 @@ impl AnyAddressIndex {
 impl From<LoadedAddressIndex> for AnyAddressIndex {
     fn from(value: LoadedAddressIndex) -> Self {
         if u32::from(value) >= MIN_EMPTY_INDEX {
-            panic!("")
+            panic!("{value} is higher than MIN_EMPTY_INDEX ({MIN_EMPTY_INDEX})")
         }
         Self(*value)
     }

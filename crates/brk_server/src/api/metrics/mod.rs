@@ -6,13 +6,9 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use brk_interface::{
-    MetricCount, PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt,
-};
-use brk_structs::{Index, IndexInfo};
+use brk_interface::{PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt};
+use brk_structs::{Index, IndexInfo, MetricCount, MetricPath};
 use brk_traversable::TreeNode;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     VERSION,
@@ -25,13 +21,6 @@ mod data;
 
 pub trait ApiMetricsRoutes {
     fn add_metrics_routes(self) -> Self;
-}
-
-#[derive(Deserialize, JsonSchema)]
-struct MetricPath {
-    /// Metric name
-    #[schemars(example = &"price_close", example = &"market_cap", example = &"realized_price")]
-    metric: String,
 }
 
 const TO_SEPARATOR: &str = "_to_";

@@ -15,6 +15,17 @@ use aide::openapi::{Info, OpenApi, Tag};
 use crate::VERSION;
 
 pub fn create_openapi() -> OpenApi {
+    let info = Info {
+        title: "Bitcoin Research Kit".to_string(),
+        description: Some(
+            "API for querying Bitcoin blockchain data including addresses, transactions, and chain statistics. This API provides low-level access to indexed blockchain data with advanced analytics capabilities.\n\n\
+            ⚠️ **Early Development**: This API is in very early stages of development. Breaking changes may occur without notice. For a more stable experience, [self-host](/install) or use the [hosting service](/service)."
+                .to_string(),
+        ),
+        version: format!("v{VERSION}"),
+        ..Info::default()
+    };
+
     let tags = vec![
         Tag {
             name: "Chain".to_string(),
@@ -44,16 +55,7 @@ pub fn create_openapi() -> OpenApi {
     ];
 
     OpenApi {
-        info: Info {
-            title: "Bitcoin Research Kit API".to_string(),
-            description: Some(
-                "API for querying Bitcoin blockchain data including addresses, transactions, and chain statistics. This API provides low-level access to indexed blockchain data with advanced analytics capabilities.\n\n\
-                ⚠️ **Early Development**: This API is in very early stages of development. Breaking changes may occur without notice. For a more stable experience, self-host or use the hosting service."
-                    .to_string(),
-            ),
-            version: format!("v{VERSION}"),
-            ..Info::default()
-        },
+        info,
         tags,
         ..OpenApi::default()
     }

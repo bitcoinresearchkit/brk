@@ -8,7 +8,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_error::{Error, Result};
-use brk_interface::{Format, Output, Params};
+use brk_interface::{Output, Params};
+use brk_structs::Format;
 use quick_cache::sync::GuardResult;
 use vecdb::Stamp;
 

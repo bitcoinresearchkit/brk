@@ -504,6 +504,7 @@ dependencies = [
  "brk_computer",
  "brk_error",
  "brk_fetcher",
+ "brk_grouper",
  "brk_indexer",
  "brk_interface",
  "brk_logger",
@@ -512,6 +513,7 @@ dependencies = [
  "brk_server",
  "brk_store",
  "brk_structs",
+ "brk_traversable",
 ]
 
 [[package]]
@@ -710,6 +712,7 @@ dependencies = [
 name = "brk_interface"
 version = "0.0.111"
 dependencies = [
+ "bitcoin",
  "bitcoincore-rpc",
  "brk_computer",
  "brk_error",
@@ -1178,7 +1181,6 @@ dependencies = [
  "quick_cache",
  "schemars",
  "serde",
- "serde_json",
  "sonic-rs 0.5.5",
  "tokio",
  "tower-http",

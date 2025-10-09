@@ -3,7 +3,10 @@ use std::fmt;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use serde_json::Value;
+
+mod output;
+
+pub use output::*;
 
 #[derive(Debug, Deref, JsonSchema)]
 pub struct MaybeMetrics(Vec<String>);
@@ -33,7 +36,7 @@ impl<'de> Deserialize<'de> for MaybeMetrics {
     where
         D: serde::Deserializer<'de>,
     {
-        let value = Value::deserialize(deserializer)?;
+        let value = serde_json::Value::deserialize(deserializer)?;
 
         if let Some(str) = value.as_str() {
             if str.len() <= MAX_STRING_SIZE {

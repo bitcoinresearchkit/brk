@@ -1,4 +1,4 @@
-use crate::Format;
+use brk_structs::Format;
 
 #[derive(Debug)]
 pub enum Output {
