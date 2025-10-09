@@ -27,6 +27,14 @@ pub enum Error {
     WrongAddressType,
     UnindexableDate,
     QuickCacheError,
+
+    InvalidAddress,
+    InvalidNetwork,
+    InvalidTxid,
+    UnknownAddress,
+    UnknownTxid,
+    UnsupportedType(String),
+
     Str(&'static str),
     String(String),
 }
@@ -139,6 +147,16 @@ impl fmt::Display for Error {
                 f,
                 "Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater"
             ),
+
+            Error::InvalidTxid => write!(f, "The provided TXID appears to be invalid"),
+            Error::InvalidNetwork => write!(f, "Invalid network"),
+            Error::InvalidAddress => write!(f, "The provided address appears to be invalid"),
+            Error::UnknownAddress => write!(
+                f,
+                "Address not found in the blockchain (no transaction history)"
+            ),
+            Error::UnknownTxid => write!(f, "Failed to find the TXID in the blockchain"),
+            Error::UnsupportedType(t) => write!(f, "Unsupported type ({t})"),
 
             Error::Str(s) => write!(f, "{s}"),
             Error::String(s) => write!(f, "{s}"),

@@ -1,11 +1,10 @@
 use std::ops::Deref;
 
-use brk_structs::Index;
+use brk_structs::{Format, Index};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    Format,
     deser::{de_unquote_i64, de_unquote_usize},
     metrics::MaybeMetrics,
 };

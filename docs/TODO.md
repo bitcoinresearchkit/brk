@@ -83,11 +83,8 @@
           - create map of all single words
           - do some kind of score with that ?
       - FEAT: discoverability
-        - catalog (tree/groups)
         - search
-      - BUG: failover to `/api`
-      - ???: no HTML / redirects ?
-      - FEAT: support keyed version when fetching dataset: {date: value} / {date: [value]}
+      - ???: remove redirects ?
     - FEAT: add support for https (rustls)
   - _STORE_
     - FEAT: save height and version in one file

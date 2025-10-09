@@ -4214,29 +4214,28 @@ export function createPartialOptions({ colors, brk }) {
         {
           name: "API",
           url: () => "/api",
-          title: "Link to API documentation",
+          title: "API documentation",
         },
         {
           name: "MCP",
           url: () =>
-            "https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_mcp#brk-mcp",
-          title: "Link to MCP documentation",
+            "https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_mcp/README.md#brk_mcp",
+          title: "Model Context Protocol documentation",
         },
         {
-          name: "Crates",
-          url: () => "/crates",
-          title: "Link to BRK on crates.io",
+          name: "Crate",
+          url: () => "/crate",
+          title: "View on crates.io",
         },
         {
           name: "Source",
           url: () => "/github",
-          title: "Link to BRK's repository",
+          title: "Source code and issues",
         },
         {
           name: "Changelog",
-          url: () =>
-            "https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md#changelog",
-          title: "BRK's changelog",
+          url: () => "/changelog",
+          title: "Release notes and changelog",
         },
       ],
     },
@@ -4246,37 +4245,37 @@ export function createPartialOptions({ colors, brk }) {
         {
           name: "Status",
           url: () => "/status",
-          title: "Link to servers status",
+          title: "Service status and uptime",
         },
         {
-          name: "Self",
-          url: () => "/cli",
-          title: "Link to self-hosting documentation",
+          name: "Self-host",
+          url: () => "/install",
+          title: "Install and run yourself",
         },
         {
-          name: "As a service",
-          url: () => "/hosting",
-          title: "Link to hosting service",
+          name: "Service",
+          url: () => "/service",
+          title: "Hosted service offering",
         },
       ],
     },
     {
-      name: "Social",
+      name: "Community",
       tree: [
+        {
+          name: "Discord",
+          url: () => "/discord",
+          title: "Join the Discord server",
+        },
         {
           name: "GitHub",
           url: () => "/github",
-          title: "Link to Github",
+          title: "Source code and issues",
         },
         {
           name: "Nostr",
           url: () => "/nostr",
-          title: "Link to BRK's nostr account",
-        },
-        {
-          name: "Discord",
-          url: () => "/discord",
-          title: "Link to BRK's discord server",
+          title: "Follow on Nostr",
         },
       ],
     },

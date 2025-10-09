@@ -10,12 +10,15 @@ rust-version.workspace = true
 build = "build.rs"
 
 [features]
+default = ["cli"]
 full = [
     "binder",
     "bundler",
+    "cli",
     "computer",
     "error",
     "fetcher",
+    "grouper",
     "indexer",
     "interface",
     "logger",
@@ -24,12 +27,15 @@ full = [
     "server",
     "store",
     "structs",
+    "traversable",
 ]
 binder = ["brk_binder"]
 bundler = ["brk_bundler"]
+cli = ["brk_cli"]
 computer = ["brk_computer"]
 error = ["brk_error"]
 fetcher = ["brk_fetcher"]
+grouper = ["brk_grouper"]
 indexer = ["brk_indexer"]
 interface = ["brk_interface"]
 logger = ["brk_logger"]
@@ -38,14 +44,16 @@ parser = ["brk_parser"]
 server = ["brk_server"]
 store = ["brk_store"]
 structs = ["brk_structs"]
+traversable = ["brk_traversable"]
 
 [dependencies]
 brk_binder = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
-brk_cli = { workspace = true }
+brk_cli = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_error = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
+brk_grouper = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_interface = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
@@ -54,6 +62,7 @@ brk_parser = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
 brk_structs = { workspace = true, optional = true }
+brk_traversable = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
