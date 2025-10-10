@@ -1,7 +1,7 @@
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
 use vecdb::StoredCompressed;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::ONE_DAY_IN_SEC_F64;
 

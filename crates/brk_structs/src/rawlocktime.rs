@@ -1,7 +1,7 @@
 use bitcoin::{absolute::LockTime, locktime::absolute::LOCK_TIME_THRESHOLD};
 use serde::Serialize;
 use vecdb::StoredCompressed;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
     Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, FromBytes, Serialize, StoredCompressed,

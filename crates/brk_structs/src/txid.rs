@@ -4,7 +4,7 @@ use bitcoin::hashes::Hash;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
     Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,

@@ -1,9 +1,9 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::BTreeMap, sync::OnceLock};
+use std::collections::BTreeMap;
 
 use brk_computer::Computer;
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::{
@@ -11,11 +11,6 @@ use brk_structs::{
     TxidPath,
 };
 use brk_traversable::TreeNode;
-use nucleo_matcher::{
-    Config, Matcher,
-    pattern::{AtomKind, CaseMatching, Normalization, Pattern},
-};
-use quick_cache::sync::Cache;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod chain;
@@ -23,6 +18,7 @@ mod deser;
 mod metrics;
 mod pagination;
 mod params;
+mod searcher;
 mod vecs;
 
 pub use metrics::{Output, Value};
@@ -35,10 +31,10 @@ use crate::{
     vecs::{IndexToVec, MetricToVec},
 };
 
-pub fn cached_errors() -> &'static Cache<String, String> {
-    static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
-    CACHE.get_or_init(|| Cache::new(1000))
-}
+// pub fn cached_errors() -> &'static Cache<String, String> {
+//     static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
+//     CACHE.get_or_init(|| Cache::new(1000))
+// }
 
 #[allow(dead_code)]
 pub struct Interface<'a> {
@@ -75,64 +71,56 @@ impl<'a> Interface<'a> {
         get_transaction_info(txid, self)
     }
 
-    pub fn search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
-        let metrics = &params.metrics;
-        let index = params.index;
+    pub fn search_metric(&self, metric: &str, limit: usize) -> Vec<&str> {
+        self.vecs.search(metric, limit)
+    }
 
-        let ids_to_vec = self
-            .vecs
-            .index_to_metric_to_vec
-            .get(&index)
-            .ok_or(Error::String(format!(
-                "Index \"{}\" isn't a valid index",
-                index
-            )))?;
+    pub fn search_metric_with_index(
+        &self,
+        metric: &str,
+        index: Index,
+        // params: &Params,
+    ) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
+        todo!();
 
-        metrics.iter()
-            .map(|metric| {
-                let vec = ids_to_vec.get(metric.as_str()).ok_or_else(|| {
-                    let cached_errors = cached_errors();
+        // let all_metrics = &self.vecs.metrics;
+        // let metrics = &params.metrics;
+        // let index = params.index;
 
-                    if let Some(message) = cached_errors.get(metric) {
-                        return Error::String(message)
-                    }
+        // let ids_to_vec = self
+        //     .vecs
+        //     .index_to_metric_to_vec
+        //     .get(&index)
+        //     .ok_or(Error::String(format!(
+        //         "Index \"{}\" isn't a valid index",
+        //         index
+        //     )))?;
 
-                    let mut message = format!(
-                        "No vec named \"{}\" indexed by \"{}\" found.\n",
-                        metric,
-                        index
-                    );
+        // metrics
+        //     .iter()
+        //     .map(|metric| {
+        //         let vec = ids_to_vec.get(metric.as_str()).ok_or_else(|| {
+        //             let matches: Vec<&str> = MATCHER.with(|matcher| {
+        //                 let matcher = matcher.borrow();
+        //                 let mut scored: Vec<(&str, i64)> = all_metrics
+        //                     .iter()
+        //                     .filter_map(|m| matcher.fuzzy_match(m, metric).map(|s| (*m, s)))
+        //                     .collect();
 
-                    let mut matcher = Matcher::new(Config::DEFAULT);
+        //                 scored.sort_unstable_by_key(|&(_, s)| std::cmp::Reverse(s));
+        //                 scored.into_iter().take(5).map(|(m, _)| m).collect()
+        //             });
 
-                    let matches = Pattern::new(
-                        metric.as_str(),
-                        CaseMatching::Ignore,
-                        Normalization::Smart,
-                        AtomKind::Fuzzy,
-                    )
-                    .match_list(ids_to_vec.keys(), &mut matcher)
-                    .into_iter()
-                    .take(10)
-                    .map(|(s, _)| s)
-                    .collect::<Vec<_>>();
+        //             let mut message = format!("No vec \"{metric}\" for index \"{index}\".\n");
+        //             if !matches.is_empty() {
+        //                 message += &format!("\nDid you mean: {matches:?}\n");
+        //             }
 
-                    if !matches.is_empty() {
-                        message +=
-                            &format!("\nMaybe you meant one of the following: {matches:#?} ?\n");
-                    }
-
-                    if let Some(index_to_vec) = self.metric_to_index_to_vec().get(metric.as_str()) {
-                        message += &format!("\nBut there is a vec named {metric} which supports the following indexes: {:#?}\n", index_to_vec.keys());
-                    }
-
-                    cached_errors.insert(metric.clone(), message.clone());
-
-                    Error::String(message)
-                });
-                vec.map(|vec| (metric.clone(), vec))
-            })
-            .collect::<Result<Vec<_>>>()
+        //             Error::String(message)
+        //         });
+        //         vec.map(|vec| (metric.clone(), vec))
+        //     })
+        //     .collect::<Result<Vec<_>>>()
     }
 
     pub fn format(
@@ -227,7 +215,8 @@ impl<'a> Interface<'a> {
     }
 
     pub fn search_and_format(&self, params: Params) -> Result<Output> {
-        self.format(self.search(&params)?, &params.rest)
+        todo!()
+        // self.format(self.search(&params)?, &params.rest)
     }
 
     pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
@@ -262,7 +251,7 @@ impl<'a> Interface<'a> {
     }
 
     pub fn get_metrics_catalog(&self) -> &TreeNode {
-        self.vecs.catalog.as_ref().unwrap()
+        self.vecs.catalog()
     }
 
     pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {

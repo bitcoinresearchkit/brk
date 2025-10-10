@@ -80,9 +80,8 @@ serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.5"
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
-vecdb = { version = "0.2.16", features = ["derive"] }
-zerocopy = "0.8.27"
-zerocopy-derive = "0.8.27"
+vecdb = { version = "0.2.17", features = ["derive"] }
+zerocopy = { version = "0.8.27", features = ["derive"] }
 
 [workspace.metadata.release]
 shared-version = true

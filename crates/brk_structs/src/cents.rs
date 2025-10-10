@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul};
 
 use serde::Serialize;
 use vecdb::{CheckedSub, StoredCompressed};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Dollars;
 

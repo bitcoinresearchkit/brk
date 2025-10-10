@@ -34,6 +34,3 @@ sonic-rs = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
 tracing = "0.1.41"
-
-[package.metadata.cargo-machete]
-ignored = ["clap"]

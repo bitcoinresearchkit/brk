@@ -9,7 +9,7 @@ use bitcoin::{
 use brk_error::Error;
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::OutputType;
 

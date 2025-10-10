@@ -6,7 +6,7 @@ use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
 

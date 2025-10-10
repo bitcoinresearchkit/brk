@@ -44,82 +44,84 @@ fn req_to_response_res(
         interface, cache, ..
     }: AppState,
 ) -> Result<Response> {
-    let vecs = interface.search(&params)?;
+    todo!();
 
-    if vecs.is_empty() {
-        return Ok(Json(vec![] as Vec<usize>).into_response());
-    }
+    // let vecs = interface.search(&params)?;
 
-    let from = params.from();
-    let to = params.to();
-    let format = params.format();
+    // if vecs.is_empty() {
+    //     return Ok(Json(vec![] as Vec<usize>).into_response());
+    // }
 
-    // TODO: From and to should be capped here
+    // let from = params.from();
+    // let to = params.to();
+    // let format = params.format();
 
-    let weight = vecs
-        .iter()
-        .map(|(_, v)| v.range_weight(from, to))
-        .sum::<usize>();
+    // // TODO: From and to should be capped here
 
-    if weight > MAX_WEIGHT {
-        return Err(Error::String(format!(
-            "Request is too heavy, max weight is {MAX_WEIGHT} bytes"
-        )));
-    }
+    // let weight = vecs
+    //     .iter()
+    //     .map(|(_, v)| v.range_weight(from, to))
+    //     .sum::<usize>();
 
-    // TODO: height should be from vec, but good enough for now
-    let etag = vecs
-        .first()
-        .unwrap()
-        .1
-        .etag(Stamp::from(interface.get_height()), to);
+    // if weight > MAX_WEIGHT {
+    //     return Err(Error::String(format!(
+    //         "Request is too heavy, max weight is {MAX_WEIGHT} bytes"
+    //     )));
+    // }
 
-    if headers
-        .get_if_none_match()
-        .is_some_and(|prev_etag| etag == prev_etag)
-    {
-        return Ok(Response::new_not_modified());
-    }
+    // // TODO: height should be from vec, but good enough for now
+    // let etag = vecs
+    //     .first()
+    //     .unwrap()
+    //     .1
+    //     .etag(Stamp::from(interface.get_height()), to);
 
-    let guard_res = cache.get_value_or_guard(
-        &format!("{}{}{etag}", uri.path(), uri.query().unwrap_or("")),
-        Some(Duration::from_millis(50)),
-    );
+    // if headers
+    //     .get_if_none_match()
+    //     .is_some_and(|prev_etag| etag == prev_etag)
+    // {
+    //     return Ok(Response::new_not_modified());
+    // }
 
-    let mut response = if let GuardResult::Value(v) = guard_res {
-        Response::new(Body::from(v))
-    } else {
-        match interface.format(vecs, &params.rest)? {
-            Output::CSV(s) => {
-                if let GuardResult::Guard(g) = guard_res {
-                    let _ = g.insert(s.clone().into());
-                }
-                s.into_response()
-            }
-            Output::Json(v) => {
-                let json = v.to_vec();
-                if let GuardResult::Guard(g) = guard_res {
-                    let _ = g.insert(json.clone().into());
-                }
-                json.into_response()
-            }
-        }
-    };
+    // let guard_res = cache.get_value_or_guard(
+    //     &format!("{}{}{etag}", uri.path(), uri.query().unwrap_or("")),
+    //     Some(Duration::from_millis(50)),
+    // );
 
-    let headers = response.headers_mut();
+    // let mut response = if let GuardResult::Value(v) = guard_res {
+    //     Response::new(Body::from(v))
+    // } else {
+    //     match interface.format(vecs, &params.rest)? {
+    //         Output::CSV(s) => {
+    //             if let GuardResult::Guard(g) = guard_res {
+    //                 let _ = g.insert(s.clone().into());
+    //             }
+    //             s.into_response()
+    //         }
+    //         Output::Json(v) => {
+    //             let json = v.to_vec();
+    //             if let GuardResult::Guard(g) = guard_res {
+    //                 let _ = g.insert(json.clone().into());
+    //             }
+    //             json.into_response()
+    //         }
+    //     }
+    // };
 
-    headers.insert_cors();
+    // let headers = response.headers_mut();
 
-    headers.insert_etag(&etag);
-    headers.insert_cache_control_must_revalidate();
+    // headers.insert_cors();
 
-    match format {
-        Format::CSV => {
-            headers.insert_content_disposition_attachment();
-            headers.insert_content_type_text_csv()
-        }
-        Format::JSON => headers.insert_content_type_application_json(),
-    }
+    // headers.insert_etag(&etag);
+    // headers.insert_cache_control_must_revalidate();
 
-    Ok(response)
+    // match format {
+    //     Format::CSV => {
+    //         headers.insert_content_disposition_attachment();
+    //         headers.insert_content_type_text_csv()
+    //     }
+    //     Format::JSON => headers.insert_content_type_application_json(),
+    // }
+
+    // Ok(response)
 }

@@ -9,8 +9,7 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, PrintableIndex, Stamp, StoredCompressed};
-use zerocopy::{FromBytes, IntoBytes};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, copy_first_4bytes};
 
