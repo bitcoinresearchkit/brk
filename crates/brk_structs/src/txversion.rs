@@ -1,7 +1,7 @@
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::StoredCompressed;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::StoredU16;
 

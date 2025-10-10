@@ -111,17 +111,44 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
             ),
         )
-        // TODO:
-        // .route(
-        //     "/api/metrics/search",
-        //     get(
-        //         async |State(app_state): State<AppState>,
-        //                Query(pagination): Query<PaginationParam>|
-        //                -> Response {
-        //             Json(app_state.interface.get_metrics(pagination)).into_response()
-        //         },
-        //     ),
-        // )
+        .api_route(
+            "/api/search/{metric}",
+            get_with(
+                async |
+                    headers: HeaderMap,
+                    State(app_state): State<AppState>,
+                    Path(MetricPath { metric }): Path<MetricPath>
+                | {
+                    let etag = VERSION;
+
+                    if headers
+                        .get_if_none_match()
+                        .is_some_and(|prev_etag| etag == prev_etag)
+                    {
+                        return Response::new_not_modified();
+                    }
+
+                    let bytes = sonic_rs::to_vec(&app_state.interface.search_metric(&metric, usize::MAX)).unwrap();
+
+                    let mut response = Response::new_json_from_bytes(bytes);
+
+                    let headers = response.headers_mut();
+                    headers.insert_cors();
+                    headers.insert_etag(etag);
+
+                    response
+                },
+                |op| {
+                    op.tag("Metrics")
+                        .summary("Metric search")
+                        .description(
+                            "Search metrics based on a query"
+                        )
+                        .with_ok_response::<Vec<String>, _>(|res| res)
+                        .with_not_modified()
+                },
+            ),
+        )
         .api_route(
             "/api/metrics/{metric}",
             get_with(

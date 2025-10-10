@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_structs::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
 pub struct SupplyState {

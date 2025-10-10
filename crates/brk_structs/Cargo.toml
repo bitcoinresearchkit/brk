@@ -27,7 +27,6 @@ serde_bytes = { workspace = true }
 strum = { version = "0.27", features = ["derive"] }
 vecdb = { workspace = true }
 zerocopy = { workspace = true }
-zerocopy-derive = { workspace = true }
 
 [package.metadata.cargo-machete]
 ignored = ["serde_bytes"]

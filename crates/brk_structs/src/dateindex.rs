@@ -5,7 +5,7 @@ use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
 use vecdb::{CheckedSub, FromCoarserIndex, PrintableIndex, StoredCompressed};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
 

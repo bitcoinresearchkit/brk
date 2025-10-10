@@ -3,7 +3,7 @@ use brk_error::Error;
 use schemars::JsonSchema;
 use serde::Serialize;
 use strum::Display;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
     Debug,

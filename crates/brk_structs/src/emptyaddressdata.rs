@@ -1,5 +1,5 @@
 use serde::Serialize;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{LoadedAddressData, Sats};
 

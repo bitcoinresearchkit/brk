@@ -29,4 +29,3 @@ rayon = { workspace = true }
 serde = { workspace = true }
 vecdb = { workspace = true }
 zerocopy = { workspace = true }
-zerocopy-derive = { workspace = true }

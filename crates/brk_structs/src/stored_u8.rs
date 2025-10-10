@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, PrintableIndex};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 pub type StoredPhantom = StoredU8;
 

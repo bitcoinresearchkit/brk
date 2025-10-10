@@ -7,7 +7,10 @@ use brk_traversable::{Traversable, TreeNode};
 use derive_deref::{Deref, DerefMut};
 use vecdb::AnyCollectableVec;
 
-use crate::pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
+use crate::{
+    pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam},
+    searcher::NgramSearcher,
+};
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -17,7 +20,9 @@ pub struct Vecs<'a> {
     pub indexes: Vec<IndexInfo>,
     pub distinct_metric_count: usize,
     pub total_metric_count: usize,
-    pub catalog: Option<TreeNode>,
+    pub longest_metric_len: usize,
+    catalog: Option<TreeNode>,
+    searcher: Option<NgramSearcher<'a>>,
     metric_to_indexes: BTreeMap<&'a str, Vec<Index>>,
     index_to_metrics: BTreeMap<Index, Vec<&'a str>>,
 }
@@ -55,6 +60,12 @@ impl<'a> Vecs<'a> {
         sort_ids(&mut ids);
 
         this.metrics = ids;
+        this.longest_metric_len = this
+            .metrics
+            .iter()
+            .map(|s| s.len())
+            .max()
+            .unwrap_or_default();
         this.distinct_metric_count = this.metric_to_index_to_vec.keys().count();
         this.total_metric_count = this
             .index_to_metric_to_vec
@@ -95,6 +106,7 @@ impl<'a> Vecs<'a> {
             .simplify()
             .unwrap(),
         );
+        this.searcher = Some(NgramSearcher::new(&this.metrics));
 
         this
     }
@@ -156,6 +168,18 @@ impl<'a> Vecs<'a> {
         let end = pagination.end(len);
 
         vec.iter().skip(start).take(end).cloned().collect()
+    }
+
+    pub fn catalog(&self) -> &TreeNode {
+        self.catalog.as_ref().unwrap()
+    }
+
+    pub fn search(&self, metric: &str, limit: usize) -> Vec<&'_ str> {
+        self.searcher().search(metric, limit)
+    }
+
+    fn searcher(&self) -> &NgramSearcher<'_> {
+        self.searcher.as_ref().unwrap()
     }
 }
 

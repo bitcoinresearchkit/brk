@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use serde::Serialize;
 use vecdb::CheckedSub;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
