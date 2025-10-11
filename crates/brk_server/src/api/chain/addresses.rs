@@ -1,13 +1,15 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    Json,
     extract::{Path, State},
-    http::StatusCode,
+    http::HeaderMap,
     response::Response,
 };
 use brk_structs::{AddressInfo, AddressPath};
 
-use crate::extended::{ResponseExtended, ResultExtended, TransformResponseExtended};
+use crate::{
+    VERSION,
+    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
+};
 
 use super::AppState;
 
@@ -19,14 +21,19 @@ impl AddressesRoutes for ApiRouter<AppState> {
     fn add_addresses_routes(self) -> Self {
         self.api_route(
             "/api/chain/address/{address}",
-            get_with(async |Path(address): Path<AddressPath>,
-                   State(app_state): State<AppState>|
-                   -> Result<Response, (StatusCode, Json<String>)> {
-                let address_info = app_state.interface.get_address_info(address).to_server_result()?;
-
-                let bytes = sonic_rs::to_vec(&address_info).unwrap();
-
-                Ok(Response::new_json_from_bytes(bytes))
+            get_with(async |
+                headers: HeaderMap,
+                Path(address): Path<AddressPath>,
+                State(state): State<AppState>
+            | {
+                let etag = format!("{VERSION}-{}", state.get_height());
+                if headers.has_etag(&etag) {
+                    return Response::new_not_modified();
+                }
+                match state.get_address_info(address).with_status() {
+                    Ok(value) => Response::new_json(&value, &etag),
+                    Err((status, message)) => Response::new_json_with(status, &message, &etag)
+                }
             }, |op| op
                 .tag("Chain")
                 .summary("Address information")

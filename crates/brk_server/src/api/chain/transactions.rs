@@ -1,13 +1,15 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    Json,
     extract::{Path, State},
-    http::StatusCode,
+    http::HeaderMap,
     response::Response,
 };
 use brk_structs::{TransactionInfo, TxidPath};
 
-use crate::extended::{ResponseExtended, ResultExtended, TransformResponseExtended};
+use crate::{
+    VERSION,
+    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
+};
 
 use super::AppState;
 
@@ -20,14 +22,19 @@ impl TransactionsRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/chain/tx/{txid}",
             get_with(
-                async |Path(txid): Path<TxidPath>,
-                       State(app_state): State<AppState>|
-                       -> Result<Response, (StatusCode, Json<String>)> {
-                    let tx_info = app_state.interface.get_transaction_info(txid).to_server_result()?;
-
-                    let bytes = sonic_rs::to_vec(&tx_info).unwrap();
-
-                    Ok(Response::new_json_from_bytes(bytes))
+                async |
+                    headers: HeaderMap,
+                    Path(txid): Path<TxidPath>,
+                    State(state): State<AppState>
+                | {
+                    let etag = format!("{VERSION}-{}", state.get_height());
+                    if headers.has_etag(&etag) {
+                        return Response::new_not_modified();
+                    }
+                    match state.get_transaction_info(txid).with_status() {
+                        Ok(value) => Response::new_json(&value, &etag),
+                        Err((status, message)) => Response::new_json_with(status, &message, &etag)
+                    }
                 },
                 |op| op
                     .tag("Chain")

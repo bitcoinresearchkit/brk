@@ -23,9 +23,9 @@ pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
     query: Query<Params>,
-    State(app_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Response {
-    match req_to_response_res(uri, headers, query, app_state) {
+    match req_to_response_res(uri, headers, query, state) {
         Ok(response) => response,
         Err(error) => {
             let mut response =

@@ -52,8 +52,8 @@ impl ApiRoutes for ApiRouter<AppState> {
                 get_with(
                     async || -> Json<Health> {
                         Json(Health {
-                            status: "healthy".to_string(),
-                            service: "brk".to_string(),
+                            status: "healthy",
+                            service: "brk",
                             timestamp: jiff::Timestamp::now().to_string(),
                         })
                     },
@@ -73,21 +73,11 @@ impl ApiRoutes for ApiRouter<AppState> {
                            -> Response {
                         let etag = VERSION;
 
-                        if headers
-                            .get_if_none_match()
-                            .is_some_and(|prev_etag| etag == prev_etag)
-                        {
+                        if headers.has_etag(etag) {
                             return Response::new_not_modified();
                         }
 
-                        let mut response =
-                            Response::new_json_from_bytes(sonic_rs::to_vec(&api).unwrap());
-
-                        let headers = response.headers_mut();
-                        headers.insert_cors();
-                        headers.insert_etag(etag);
-
-                        response
+                        Response::new_json(&api, etag)
                     },
                 ),
             )

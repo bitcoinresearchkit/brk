@@ -1,12 +1,12 @@
-use axum::{Json, http::StatusCode};
+use axum::http::StatusCode;
 use brk_error::{Error, Result};
 
 pub trait ResultExtended<T> {
-    fn to_server_result(self) -> Result<T, (StatusCode, Json<String>)>;
+    fn with_status(self) -> Result<T, (StatusCode, String)>;
 }
 
 impl<T> ResultExtended<T> for Result<T> {
-    fn to_server_result(self) -> Result<T, (StatusCode, Json<String>)> {
+    fn with_status(self) -> Result<T, (StatusCode, String)> {
         self.map_err(|e| {
             (
                 match e {
@@ -17,7 +17,7 @@ impl<T> ResultExtended<T> for Result<T> {
                     Error::UnknownAddress | Error::UnknownTxid => StatusCode::NOT_FOUND,
                     _ => StatusCode::INTERNAL_SERVER_ERROR,
                 },
-                Json(e.to_string()),
+                e.to_string(),
             )
         })
     }

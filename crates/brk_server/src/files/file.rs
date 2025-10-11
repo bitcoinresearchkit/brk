@@ -14,22 +14,22 @@ use crate::{AppState, HeaderMapExtended, ModifiedState, ResponseExtended};
 
 pub async fn file_handler(
     headers: HeaderMap,
-    State(app_state): State<AppState>,
+    State(state): State<AppState>,
     path: extract::Path<String>,
 ) -> Response {
-    any_handler(headers, app_state, Some(path))
+    any_handler(headers, state, Some(path))
 }
 
-pub async fn index_handler(headers: HeaderMap, State(app_state): State<AppState>) -> Response {
-    any_handler(headers, app_state, None)
+pub async fn index_handler(headers: HeaderMap, State(state): State<AppState>) -> Response {
+    any_handler(headers, state, None)
 }
 
 fn any_handler(
     headers: HeaderMap,
-    app_state: AppState,
+    state: AppState,
     path: Option<extract::Path<String>>,
 ) -> Response {
-    let files_path = app_state.path.as_ref().unwrap();
+    let files_path = state.path.as_ref().unwrap();
 
     if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
@@ -52,14 +52,14 @@ fn any_handler(
             }
         }
 
-        path_to_response(&headers, &app_state, &path)
+        path_to_response(&headers, &state, &path)
     } else {
-        path_to_response(&headers, &app_state, &files_path.join("index.html"))
+        path_to_response(&headers, &state, &files_path.join("index.html"))
     }
 }
 
-fn path_to_response(headers: &HeaderMap, app_state: &AppState, path: &Path) -> Response {
-    match path_to_response_(headers, app_state, path) {
+fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Response {
+    match path_to_response_(headers, state, path) {
         Ok(response) => response,
         Err(error) => {
             let mut response =
@@ -72,7 +72,7 @@ fn path_to_response(headers: &HeaderMap, app_state: &AppState, path: &Path) -> R
     }
 }
 
-fn path_to_response_(headers: &HeaderMap, app_state: &AppState, path: &Path) -> Result<Response> {
+fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Result<Response> {
     let (modified, date) = headers.check_if_modified_since(path)?;
     if modified == ModifiedState::NotModifiedSince {
         return Ok(Response::new_not_modified());
@@ -86,7 +86,7 @@ fn path_to_response_(headers: &HeaderMap, app_state: &AppState, path: &Path) -> 
         || serialized_path.ends_with("service-worker.js");
 
     let guard_res = if !must_revalidate {
-        Some(app_state.cache.get_value_or_guard(
+        Some(state.cache.get_value_or_guard(
             &path.to_str().unwrap().to_owned(),
             Some(Duration::from_millis(50)),
         ))

@@ -21,7 +21,7 @@ pub enum ModifiedState {
 pub trait HeaderMapExtended {
     fn insert_cors(&mut self);
 
-    fn get_if_none_match(&self) -> Option<&str>;
+    fn has_etag(&self, etag: &str) -> bool;
 
     fn get_if_modified_since(&self) -> Option<DateTime>;
     fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)>;
@@ -123,8 +123,9 @@ impl HeaderMapExtended for HeaderMap {
         None
     }
 
-    fn get_if_none_match(&self) -> Option<&str> {
-        self.get(IF_NONE_MATCH).and_then(|v| v.to_str().ok())
+    fn has_etag(&self, etag: &str) -> bool {
+        self.get(IF_NONE_MATCH)
+            .is_some_and(|prev_etag| etag == prev_etag)
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

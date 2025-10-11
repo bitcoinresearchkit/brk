@@ -3,7 +3,7 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{ops::Deref, path::PathBuf, sync::Arc, time::Duration};
 
 use aide::axum::ApiRouter;
 use api::ApiRoutes;
@@ -40,6 +40,13 @@ pub struct AppState {
     interface: &'static Interface<'static>,
     path: Option<PathBuf>,
     cache: Arc<Cache<String, Bytes>>,
+}
+
+impl Deref for AppState {
+    type Target = &'static Interface<'static>;
+    fn deref(&self) -> &Self::Target {
+        &self.interface
+    }
 }
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

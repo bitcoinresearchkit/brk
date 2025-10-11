@@ -70,7 +70,6 @@ jiff = "0.2.15"
 log = "0.4.28"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
-quick_cache = "0.6.17"
 rayon = "1.11.0"
 schemars = "1.0.4"
 serde = "1.0.228"

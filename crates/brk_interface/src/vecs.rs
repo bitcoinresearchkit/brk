@@ -2,15 +2,13 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_structs::{Index, IndexInfo};
+use brk_structs::{Index, IndexInfo, MetricSearchQuery};
 use brk_traversable::{Traversable, TreeNode};
 use derive_deref::{Deref, DerefMut};
+use quickmatch::{QuickMatch, QuickMatchConfig};
 use vecdb::AnyCollectableVec;
 
-use crate::{
-    pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam},
-    searcher::NgramSearcher,
-};
+use crate::pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -22,7 +20,7 @@ pub struct Vecs<'a> {
     pub total_metric_count: usize,
     pub longest_metric_len: usize,
     catalog: Option<TreeNode>,
-    searcher: Option<NgramSearcher<'a>>,
+    matcher: Option<QuickMatch<'a>>,
     metric_to_indexes: BTreeMap<&'a str, Vec<Index>>,
     index_to_metrics: BTreeMap<Index, Vec<&'a str>>,
 }
@@ -106,7 +104,7 @@ impl<'a> Vecs<'a> {
             .simplify()
             .unwrap(),
         );
-        this.searcher = Some(NgramSearcher::new(&this.metrics));
+        this.matcher = Some(QuickMatch::new(&this.metrics));
 
         this
     }
@@ -174,12 +172,13 @@ impl<'a> Vecs<'a> {
         self.catalog.as_ref().unwrap()
     }
 
-    pub fn search(&self, metric: &str, limit: usize) -> Vec<&'_ str> {
-        self.searcher().search(metric, limit)
+    pub fn matches(&self, query: MetricSearchQuery) -> Vec<&'_ str> {
+        self.matcher()
+            .matches_with(&query.q, &QuickMatchConfig::new().with_limit(query.limit))
     }
 
-    fn searcher(&self) -> &NgramSearcher<'_> {
-        self.searcher.as_ref().unwrap()
+    fn matcher(&self) -> &QuickMatch<'_> {
+        self.matcher.as_ref().unwrap()
     }
 }
 
