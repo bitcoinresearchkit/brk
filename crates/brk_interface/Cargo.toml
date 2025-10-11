@@ -18,10 +18,10 @@ brk_indexer = { workspace = true }
 brk_parser = { workspace = true }
 brk_structs = { workspace = true }
 brk_traversable = { workspace = true }
-vecdb = { workspace = true }
 derive_deref = { workspace = true }
-quick_cache = { workspace = true }
+# quickmatch = { path = "../../../quickmatch" }
+quickmatch = "0.1.8"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-rustc-hash = "2.1.1"
+vecdb = { workspace = true }

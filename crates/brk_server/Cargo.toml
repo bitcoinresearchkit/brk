@@ -27,7 +27,7 @@ brk_traversable = { workspace = true }
 vecdb = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
-quick_cache = { workspace = true }
+quick_cache = "0.6.17"
 schemars = { workspace = true }
 serde = { workspace = true }
 sonic-rs = { workspace = true }

@@ -7,8 +7,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::{
-    AddressInfo, AddressPath, Format, Height, Index, IndexInfo, MetricCount, TransactionInfo,
-    TxidPath,
+    AddressInfo, AddressPath, Format, Height, Index, IndexInfo, MetricCount, MetricSearchQuery,
+    TransactionInfo, TxidPath,
 };
 use brk_traversable::TreeNode;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
@@ -18,7 +18,6 @@ mod deser;
 mod metrics;
 mod pagination;
 mod params;
-mod searcher;
 mod vecs;
 
 pub use metrics::{Output, Value};
@@ -71,8 +70,8 @@ impl<'a> Interface<'a> {
         get_transaction_info(txid, self)
     }
 
-    pub fn search_metric(&self, metric: &str, limit: usize) -> Vec<&str> {
-        self.vecs.search(metric, limit)
+    pub fn match_metric(&self, query: MetricSearchQuery) -> Vec<&str> {
+        self.vecs.matches(query)
     }
 
     pub fn search_metric_with_index(
