@@ -14,15 +14,16 @@ use brk_structs::Health;
 
 use crate::{
     VERSION,
-    api::{chain::ChainRoutes, metrics::ApiMetricsRoutes},
+    api::{addresses::AddressRoutes, metrics::ApiMetricsRoutes, transactions::TxRoutes},
     extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
 };
 
 use super::AppState;
 
-mod chain;
+mod addresses;
 mod metrics;
 mod openapi;
+mod transactions;
 
 pub use openapi::*;
 
@@ -32,7 +33,8 @@ pub trait ApiRoutes {
 
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
-        self.add_chain_routes()
+        self.add_addresses_routes()
+            .add_tx_routes()
             .add_metrics_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
@@ -40,10 +42,10 @@ impl ApiRoutes for ApiRouter<AppState> {
                 get_with(
                     async || -> Json<&'static str> { Json(VERSION) },
                     |op| {
-                        op.tag("Server")
+                        op.server_tag()
                             .summary("API version")
                             .description("Returns the current version of the API server")
-                            .with_ok_response::<String, _>(|res| res)
+                            .ok_response::<String>()
                     },
                 ),
             )
@@ -58,10 +60,10 @@ impl ApiRoutes for ApiRouter<AppState> {
                         })
                     },
                     |op| {
-                        op.tag("Server")
+                        op.server_tag()
                             .summary("Health check")
                             .description("Returns the health status of the API server")
-                            .with_ok_response::<Health, _>(|res| res)
+                            .ok_response::<Health>()
                     },
                 ),
             )

@@ -751,6 +751,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "brk_mempool"
+version = "0.0.111"
+dependencies = [
+ "bitcoin",
+ "bitcoincore-rpc",
+ "brk_structs",
+ "log",
+ "parking_lot 0.12.5",
+ "rustc-hash",
+]
+
+[[package]]
 name = "brk_parser"
 version = "0.0.111"
 dependencies = [
@@ -4214,8 +4226,6 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 [[package]]
 name = "seqdb"
 version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1f2a11472b8979fde0e6c181fef50e36633491ff154ee19f481d8135fb9dd6a"
 dependencies = [
  "allocative",
  "libc",
@@ -5084,8 +5094,6 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 [[package]]
 name = "vecdb"
 version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4bc53cae8d59e2201d5553b351b124feeed236b6bd31645b6dda8f8dcf95e9a"
 dependencies = [
  "allocative",
  "ctrlc",
@@ -5104,8 +5112,6 @@ dependencies = [
 [[package]]
 name = "vecdb_derive"
 version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0e16806c42dff3018dfeec2920f701975dd35ff7f6d31f3dde3ea7d91860960"
 dependencies = [
  "quote",
  "syn 2.0.106",

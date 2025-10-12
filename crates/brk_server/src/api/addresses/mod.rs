@@ -2,7 +2,8 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::Response,
+    response::{Redirect, Response},
+    routing::get,
 };
 use brk_structs::{AddressInfo, AddressPath};
 
@@ -13,14 +14,17 @@ use crate::{
 
 use super::AppState;
 
-pub trait AddressesRoutes {
+pub trait AddressRoutes {
     fn add_addresses_routes(self) -> Self;
 }
 
-impl AddressesRoutes for ApiRouter<AppState> {
+impl AddressRoutes for ApiRouter<AppState> {
     fn add_addresses_routes(self) -> Self {
-        self.api_route(
-            "/api/chain/address/{address}",
+        self
+            .route("/api/address", get(Redirect::temporary("/api/addresses")))
+            .route("/api/addresses", get(Redirect::temporary("/api#tag/addresses")))
+            .api_route(
+            "/api/address/{address}",
             get_with(async |
                 headers: HeaderMap,
                 Path(address): Path<AddressPath>,
@@ -35,14 +39,14 @@ impl AddressesRoutes for ApiRouter<AppState> {
                     Err((status, message)) => Response::new_json_with(status, &message, &etag)
                 }
             }, |op| op
-                .tag("Chain")
+                .addresses_tag()
                 .summary("Address information")
                 .description("Retrieve comprehensive information about a Bitcoin address including balance, transaction history, UTXOs, and estimated investment metrics. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR, etc.).")
-                .with_ok_response::<AddressInfo, _>(|res| res)
-                .with_not_modified()
-                .with_bad_request()
-                .with_not_found()
-                .with_server_error()
+                .ok_response::<AddressInfo>()
+                .not_modified()
+                .bad_request()
+                .not_found()
+                .server_error()
             ),
         )
     }

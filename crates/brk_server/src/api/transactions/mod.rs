@@ -2,7 +2,8 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::Response,
+    response::{Redirect, Response},
+    routing::get,
 };
 use brk_structs::{TransactionInfo, TxidPath};
 
@@ -13,14 +14,17 @@ use crate::{
 
 use super::AppState;
 
-pub trait TransactionsRoutes {
-    fn add_transactions_routes(self) -> Self;
+pub trait TxRoutes {
+    fn add_tx_routes(self) -> Self;
 }
 
-impl TransactionsRoutes for ApiRouter<AppState> {
-    fn add_transactions_routes(self) -> Self {
-        self.api_route(
-            "/api/chain/tx/{txid}",
+impl TxRoutes for ApiRouter<AppState> {
+    fn add_tx_routes(self) -> Self {
+        self
+            .route("/api/tx", get(Redirect::temporary("/api/transactions")))
+            .route("/api/transactions", get(Redirect::temporary("/api#tag/transactions")))
+            .api_route(
+            "/api/tx/{txid}",
             get_with(
                 async |
                     headers: HeaderMap,
@@ -37,16 +41,16 @@ impl TransactionsRoutes for ApiRouter<AppState> {
                     }
                 },
                 |op| op
-                    .tag("Chain")
+                    .transactions_tag()
                     .summary("Transaction information")
                     .description(
                         "Retrieve complete transaction data by transaction ID (txid). Returns the full transaction details including inputs, outputs, and metadata. The transaction data is read directly from the blockchain data files.",
                     )
-                    .with_ok_response::<TransactionInfo, _>(|res| res)
-                    .with_not_modified()
-                    .with_bad_request()
-                    .with_not_found()
-                    .with_server_error(),
+                    .ok_response::<TransactionInfo>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
             ),
         )
     }

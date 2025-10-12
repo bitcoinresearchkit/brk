@@ -25,6 +25,7 @@ pub trait ApiMetricsRoutes {
 impl ApiMetricsRoutes for ApiRouter<AppState> {
     fn add_metrics_routes(self) -> Self {
         self
+            .route("/api/metric", get(Redirect::temporary("/api/metrics")))
             .route("/api/metrics", get(Redirect::temporary("/api#tag/metrics")))
             .api_route(
             "/api/metrics/count",
@@ -39,11 +40,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }
                     Response::new_json(state.metric_count(), etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("Metric count")
                     .description("Current metric count")
-                    .with_ok_response::<Vec<MetricCount>, _>(|res| res)
-                    .with_not_modified(),
+                    .ok_response::<Vec<MetricCount>>()
+                    .not_modified(),
             ),
         )
         .api_route(
@@ -59,13 +61,14 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }
                     Response::new_json(state.get_indexes(), etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("List available indexes")
                     .description(
                         "Returns all available indexes with their accepted query aliases. Use any alias when querying metrics."
                     )
-                    .with_ok_response::<Vec<IndexInfo>, _>(|res| res)
-                    .with_not_modified(),
+                    .ok_response::<Vec<IndexInfo>>()
+                    .not_modified(),
             ),
         )
         .api_route(
@@ -82,11 +85,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }
                     Response::new_json(state.get_metrics(pagination), etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("Metrics list")
                     .description("Paginated list of available metrics")
-                    .with_ok_response::<PaginatedMetrics, _>(|res| res)
-                    .with_not_modified(),
+                    .ok_response::<PaginatedMetrics>()
+                    .not_modified(),
             ),
         )
         .api_route(
@@ -99,13 +103,14 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }
                     Response::new_json(state.get_metrics_catalog(), etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("Metrics catalog")
                     .description(
                         "Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure."
                     )
-                    .with_ok_response::<TreeNode, _>(|res| res)
-                    .with_not_modified(),
+                    .ok_response::<TreeNode>()
+                    .not_modified(),
             ),
         )
         .api_route(
@@ -122,15 +127,16 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }
                     Response::new_json(state.match_metric(query), etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("Search metrics")
                     .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
-                    .with_ok_response::<Vec<String>, _>(|res| res)
-                    .with_not_modified(),
+                    .ok_response::<Vec<String>>()
+                    .not_modified(),
             ),
         )
         .api_route(
-            "/api/metrics/{metric}",
+            "/api/metric/{metric}",
             get_with(
                 async |
                     headers: HeaderMap,
@@ -154,36 +160,38 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     };
                     Response::new_json_with(StatusCode::NOT_FOUND, value, etag)
                 },
-                |op| op.tag("Metrics")
+                |op| op
+                    .metrics_tag()
                     .summary("Get supported indexes for a metric")
                     .description(
                         "Returns the list of indexes are supported by the specified metric. \
                         For example, `realized_price` might be available on dateindex, weekindex, and monthindex."
                     )
-                    .with_ok_response::<Vec<Index>, _>(|res| res)
-                    .with_not_modified()
-                    .with_not_found(),
+                    .ok_response::<Vec<Index>>()
+                    .not_modified()
+                    .not_found(),
             ),
         )
         // WIP
         .route("/api/metrics/bulk", get(data::handler))
         // WIP
         .route(
-            "/api/metrics/{metric}/{index}",
+            "/api/metric/{metric}/{index}",
             get(
                 async |uri: Uri,
                        headers: HeaderMap,
                        state: State<AppState>,
-                       Path((metric, index)): Path<(String, Index)>,
+                       Path((metric, index)): Path<(MetricPath, Index)>,
                        Query(params_opt): Query<ParamsOpt>|
                        -> Response {
-                    data::handler(
-                        uri,
-                        headers,
-                        Query(Params::from(((index, metric), params_opt))),
-                        state,
-                    )
-                    .await
+                           todo!();
+                    // data::handler(
+                    //     uri,
+                    //     headers,
+                    //     Query(Params::from(((index, metric), params_opt))),
+                    //     state,
+                    // )
+                    // .await
                 },
             ),
         )

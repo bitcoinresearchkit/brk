@@ -57,6 +57,7 @@ brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.111", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.111", path = "crates/brk_mcp" }
+brk_mempool = { version = "0.0.111", path = "crates/brk_mempool" }
 brk_parser = { version = "0.0.111", path = "crates/brk_parser" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
@@ -78,8 +79,8 @@ serde_derive = "1.0.228"
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.5"
 tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
-# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
-vecdb = { version = "0.2.17", features = ["derive"] }
+vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
+# vecdb = { version = "0.2.17", features = ["derive"] }
 zerocopy = { version = "0.8.27", features = ["derive"] }
 
 [workspace.metadata.release]

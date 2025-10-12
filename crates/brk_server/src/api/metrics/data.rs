@@ -76,10 +76,7 @@ fn req_to_response_res(
     //     .1
     //     .etag(Stamp::from(interface.get_height()), to);
 
-    // if headers
-    //     .get_if_none_match()
-    //     .is_some_and(|prev_etag| etag == prev_etag)
-    // {
+    // if headers.has_etag(etag) {
     //     return Ok(Response::new_not_modified());
     // }
 
