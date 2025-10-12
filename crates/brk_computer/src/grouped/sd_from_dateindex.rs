@@ -479,7 +479,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let mut sorted = source.collect_range(
             Some(min_date.unwrap_to_usize()),
             Some(starting_dateindex.unwrap_to_usize()),
-        )?;
+        );
 
         sorted.sort_unstable();
 

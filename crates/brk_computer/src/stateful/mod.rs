@@ -737,7 +737,7 @@ impl Vecs {
             if starting_height.is_not_zero() {
                 chain_state = self
                     .chain_state
-                    .collect_range(None, None)?
+                    .collect_range(None, None)
                     .into_iter()
                     .enumerate()
                     .map(|(height, supply)| {
@@ -822,10 +822,10 @@ impl Vecs {
             let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
             let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
 
-            let height_to_price_close_vec = height_to_price_close
-                .map(|height_to_price_close| height_to_price_close.collect().unwrap());
+            let height_to_price_close_vec =
+                height_to_price_close.map(|height_to_price_close| height_to_price_close.collect());
 
-            let height_to_timestamp_fixed_vec = height_to_timestamp_fixed.collect().unwrap();
+            let height_to_timestamp_fixed_vec = height_to_timestamp_fixed.collect();
             let outputindex_range_to_height = RangeMap::from(height_to_first_outputindex);
 
             let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {

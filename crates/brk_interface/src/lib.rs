@@ -30,11 +30,6 @@ use crate::{
     vecs::{IndexToVec, MetricToVec},
 };
 
-// pub fn cached_errors() -> &'static Cache<String, String> {
-//     static CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
-//     CACHE.get_or_init(|| Cache::new(1000))
-// }
-
 #[allow(dead_code)]
 pub struct Interface<'a> {
     vecs: Vecs<'a>,
@@ -153,8 +148,8 @@ impl<'a> Interface<'a> {
                     .collect::<Vec<_>>();
                 let mut values = metrics
                     .iter()
-                    .map(|(_, vec)| Ok(vec.collect_range_string(from, to)?))
-                    .collect::<Result<Vec<_>>>()?;
+                    .map(|(_, vec)| vec.collect_range_string(from, to))
+                    .collect::<Vec<_>>();
 
                 if values.is_empty() {
                     return Ok(Output::CSV(headers.join(",")));
@@ -195,10 +190,8 @@ impl<'a> Interface<'a> {
             Format::JSON => {
                 let mut values = metrics
                     .iter()
-                    .map(|(_, vec)| -> Result<Vec<u8>> {
-                        Ok(vec.collect_range_json_bytes(from, to)?)
-                    })
-                    .collect::<Result<Vec<_>>>()?;
+                    .map(|(_, vec)| vec.collect_range_json_bytes(from, to))
+                    .collect::<Vec<_>>();
 
                 if values.is_empty() {
                     return Ok(Output::default(format));

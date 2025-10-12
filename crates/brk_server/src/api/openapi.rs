@@ -18,8 +18,7 @@ pub fn create_openapi() -> OpenApi {
     let info = Info {
         title: "Bitcoin Research Kit".to_string(),
         description: Some(
-            "API for querying Bitcoin blockchain data including addresses, transactions, and chain statistics. This API provides low-level access to indexed blockchain data with advanced analytics capabilities.\n\n\
-            ⚠️ **Early Development**: This API is in very early stages of development. Breaking changes may occur without notice. For a more stable experience, [self-host](/install) or use the [hosting service](/service)."
+            "API for querying Bitcoin blockchain data including addresses, transactions, and chain statistics. This API provides low-level access to indexed blockchain data with advanced analytics capabilities."
                 .to_string(),
         ),
         version: format!("v{VERSION}"),
@@ -28,9 +27,17 @@ pub fn create_openapi() -> OpenApi {
 
     let tags = vec![
         Tag {
-            name: "Chain".to_string(),
+            name: "Addresses".to_string(),
             description: Some(
-                "Explore Bitcoin blockchain data: addresses, transactions, blocks, balances, and UTXOs."
+                "Explore Bitcoin addresses."
+                    .to_string()
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Blocks".to_string(),
+            description: Some(
+                "Explore Bitcoin blocks."
                     .to_string()
             ),
             ..Default::default()
@@ -45,13 +52,29 @@ pub fn create_openapi() -> OpenApi {
             ..Default::default()
         },
         Tag {
+            name: "Mining".to_string(),
+            description: Some(
+                "Explore mining related endpoints."
+                    .to_string()
+            ),
+            ..Default::default()
+        },
+        Tag {
             name: "Server".to_string(),
             description: Some(
                 "Metadata and utility endpoints for API status, health checks, and system information."
                     .to_string()
             ),
                 ..Default::default()
-            },
+        },
+        Tag {
+            name: "Transactions".to_string(),
+            description: Some(
+                "Explore Bitcoin transactions."
+                    .to_string()
+            ),
+            ..Default::default()
+        },
     ];
 
     OpenApi {
