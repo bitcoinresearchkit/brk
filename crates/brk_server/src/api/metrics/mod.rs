@@ -6,7 +6,7 @@ use axum::{
     routing::get,
 };
 use brk_interface::{PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt};
-use brk_structs::{Index, IndexInfo, MetricCount, MetricPath, MetricSearchQuery};
+use brk_structs::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
 use brk_traversable::TreeNode;
 
 use crate::{
@@ -114,18 +114,19 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metrics/search",
+            "/api/metrics/search/{metric}",
             get_with(
                 async |
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Query(query): Query<MetricSearchQuery>
+                    Path(metric): Path<Metric>,
+                    Query(limit): Query<Limit>
                 | {
                     let etag = VERSION;
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.match_metric(query), etag)
+                    Response::new_json(state.match_metric(&metric, limit), etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -141,7 +142,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Path(MetricPath { metric }): Path<MetricPath>
+                    Path(metric): Path<Metric>
                 | {
                     let etag = VERSION;
                     if headers.has_etag(etag) {
@@ -150,10 +151,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if let Some(indexes) = state.metric_to_indexes(metric.clone()) {
                         return Response::new_json(indexes, etag)
                     }
-                    let value  = if let Some(first) = state.match_metric(MetricSearchQuery {
-                        q: metric.clone(),
-                        limit: 1,
-                    }).first() {
+                    let value  = if let Some(first) = state.match_metric(&metric, Limit::MIN).first() {
                         format!("Could not find '{metric}', did you mean '{first}' ?")
                     } else {
                         format!("Could not find '{metric}'.")
@@ -181,7 +179,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        state: State<AppState>,
-                       Path((metric, index)): Path<(MetricPath, Index)>,
+                       Path((metric, index)): Path<(Metric, Index)>,
                        Query(params_opt): Query<ParamsOpt>|
                        -> Response {
                            todo!();
@@ -232,7 +230,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     };
 
                     let params = Params::from((
-                        (index, split.collect::<Vec<_>>().join(separator)),
+                        index,
+                        Metrics::from(split.collect::<Vec<_>>().join(separator)),
                         params_opt,
                     ));
                     data::handler(uri, headers, Query(params), state).await

@@ -1,13 +1,9 @@
+use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, JsonSchema)]
-/// Search query parameters for finding metrics by name
-pub struct MetricSearchQuery {
-    /// Search query string. Supports fuzzy matching, partial matches, and typos.
-    #[schemars(example = &"price", example = &"low", example = &"sth", example = &"realized", example = &"pric")]
-    pub q: String,
-
+#[derive(Debug, Deref, Deserialize, JsonSchema)]
+pub struct Limit {
     /// Maximum number of results to return. Defaults to 100 if not specified.
     #[serde(default = "default_search_limit")]
     #[schemars(
@@ -18,7 +14,11 @@ pub struct MetricSearchQuery {
         example = "10000",
         example = "100000"
     )]
-    pub limit: usize,
+    limit: usize,
+}
+
+impl Limit {
+    pub const MIN: Self = Self { limit: 1 };
 }
 
 fn default_search_limit() -> usize {

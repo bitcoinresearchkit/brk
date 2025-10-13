@@ -3,12 +3,14 @@ use std::ops::{Add, AddAssign, Div};
 use allocative::Allocative;
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Date;
 
+/// Timestamp
 #[derive(
     Debug,
     Deref,
@@ -25,6 +27,7 @@ use super::Date;
     Serialize,
     StoredCompressed,
     Allocative,
+    JsonSchema,
 )]
 pub struct Timestamp(u32);
 

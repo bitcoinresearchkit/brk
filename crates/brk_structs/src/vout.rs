@@ -1,6 +1,9 @@
 use derive_deref::Deref;
+use schemars::JsonSchema;
+use serde::Serialize;
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// Index of the output being spent in the previous transaction
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct Vout(u32);
 
 impl Vout {

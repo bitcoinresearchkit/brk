@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_structs::{Index, IndexInfo, MetricSearchQuery};
+use brk_structs::{Index, IndexInfo, Limit, Metric};
 use brk_traversable::{Traversable, TreeNode};
 use derive_deref::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
@@ -172,9 +172,9 @@ impl<'a> Vecs<'a> {
         self.catalog.as_ref().unwrap()
     }
 
-    pub fn matches(&self, query: MetricSearchQuery) -> Vec<&'_ str> {
+    pub fn matches(&self, metric: &Metric, limit: Limit) -> Vec<&'_ str> {
         self.matcher()
-            .matches_with(&query.q, &QuickMatchConfig::new().with_limit(query.limit))
+            .matches_with(metric, &QuickMatchConfig::new().with_limit(*limit))
     }
 
     fn matcher(&self) -> &QuickMatch<'_> {

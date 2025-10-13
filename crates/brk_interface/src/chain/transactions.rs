@@ -7,15 +7,12 @@ use std::{
 use bitcoin::{Transaction, consensus::Decodable};
 use brk_error::{Error, Result};
 use brk_parser::XORIndex;
-use brk_structs::{TransactionInfo, Txid, TxidPath, TxidPrefix};
+use brk_structs::{Tx, Txid, TxidPath, TxidPrefix};
 use vecdb::VecIterator;
 
 use crate::Interface;
 
-pub fn get_transaction_info(
-    TxidPath { txid }: TxidPath,
-    interface: &Interface,
-) -> Result<TransactionInfo> {
+pub fn get_transaction_info(TxidPath { txid }: TxidPath, interface: &Interface) -> Result<Tx> {
     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
         return Err(Error::InvalidTxid);
     };
@@ -79,9 +76,11 @@ pub fn get_transaction_info(
         return Err(Error::Str("Failed decode the transaction"));
     };
 
-    Ok(TransactionInfo {
-        txid,
-        index,
-        // tx
-    })
+    todo!();
+
+    // Ok(TxInfo {
+    //     txid,
+    //     index,
+    //     // tx
+    // })
 }

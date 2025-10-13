@@ -13,10 +13,10 @@ use super::{
     SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 
+/// Aggregation dimension for querying Bitcoin blockchain data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[schemars(example = Index::DateIndex)]
-/// Aggregation dimension for querying Bitcoin blockchain data
 pub enum Index {
     /// Date/day index
     DateIndex,

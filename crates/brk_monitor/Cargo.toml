@@ -1,6 +1,6 @@
 [package]
-name = "brk_mempool"
-description = "A Bitcoin mempool reader"
+name = "brk_monitor"
+description = "A Bitcoin mempool monitor with real-time synchronization"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,8 +10,8 @@ rust-version.workspace = true
 build = "build.rs"
 
 [dependencies]
-bitcoin = { version = "0.32.7", features = ["serde"] }
-bitcoincore-rpc = "0.19.0"
+bitcoin = { workspace = true }
+bitcoincore-rpc = { workspace = true }
 brk_structs = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }

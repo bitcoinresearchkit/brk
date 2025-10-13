@@ -57,7 +57,7 @@ brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.111", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.111", path = "crates/brk_mcp" }
-brk_mempool = { version = "0.0.111", path = "crates/brk_mempool" }
+brk_monitor = { version = "0.0.111", path = "crates/brk_monitor" }
 brk_parser = { version = "0.0.111", path = "crates/brk_parser" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }

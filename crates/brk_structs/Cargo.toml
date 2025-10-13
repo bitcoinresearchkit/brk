@@ -23,6 +23,7 @@ rapidhash = "4.1.0"
 ryu = "1.0.20"
 schemars = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 serde_bytes = { workspace = true }
 strum = { version = "0.27", features = ["derive"] }
 vecdb = { workspace = true }

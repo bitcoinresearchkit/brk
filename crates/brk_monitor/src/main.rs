@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc, thread, time::Duration};
 
-use brk_mempool::Mempool;
+use brk_monitor::Mempool;
 
 fn main() {
     // Connect to Bitcoin Core

@@ -15,6 +15,7 @@ use crate::StoredF64;
 
 use super::{Bitcoin, Cents, Dollars, Height};
 
+/// Satoshis
 #[derive(
     Debug,
     PartialEq,

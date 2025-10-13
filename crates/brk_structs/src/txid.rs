@@ -6,8 +6,14 @@ use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+/// Transaction ID (hash)
 #[derive(
     Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
+)]
+#[schemars(
+    example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+    example = "2bb85f4b004be6da54f766c17c1e855187327112c231ef2ff35ebad0ea67c69e",
+    example = "9a0b3b8305bb30cacf9e8443a90d53a76379fb3305047fdeaa4e4b0934a2a1ba"
 )]
 pub struct Txid([u8; 32]);
 

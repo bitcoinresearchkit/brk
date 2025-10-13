@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_structs::{TransactionInfo, TxidPath};
+use brk_structs::{Tx, TxidPath};
 
 use crate::{
     VERSION,
@@ -46,7 +46,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve complete transaction data by transaction ID (txid). Returns the full transaction details including inputs, outputs, and metadata. The transaction data is read directly from the blockchain data files.",
                     )
-                    .ok_response::<TransactionInfo>()
+                    .ok_response::<Tx>()
                     .not_modified()
                     .bad_request()
                     .not_found()

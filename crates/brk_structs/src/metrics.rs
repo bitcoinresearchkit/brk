@@ -4,34 +4,43 @@ use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-mod output;
-
-pub use output::*;
+use super::Metric;
 
 #[derive(Debug, Deref, JsonSchema)]
-pub struct MaybeMetrics(Vec<String>);
+pub struct Metrics {
+    /// A list of metrics
+    metrics: Vec<Metric>,
+}
 
 const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
-impl From<String> for MaybeMetrics {
+impl From<Metric> for Metrics {
+    fn from(metric: Metric) -> Self {
+        Self {
+            metrics: vec![metric],
+        }
+    }
+}
+
+impl From<String> for Metrics {
     fn from(value: String) -> Self {
-        Self(vec![value.replace("-", "_").to_lowercase()])
+        Self::from(Metric::from(value.replace("-", "_").to_lowercase()))
     }
 }
 
-impl<'a> From<Vec<&'a str>> for MaybeMetrics {
+impl<'a> From<Vec<&'a str>> for Metrics {
     fn from(value: Vec<&'a str>) -> Self {
-        Self(
-            value
+        Self {
+            metrics: value
                 .iter()
-                .map(|s| s.replace("-", "_").to_lowercase())
+                .map(|s| Metric::from(s.replace("-", "_").to_lowercase()))
                 .collect::<Vec<_>>(),
-        )
+        }
     }
 }
 
-impl<'de> Deserialize<'de> for MaybeMetrics {
+impl<'de> Deserialize<'de> for Metrics {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -40,17 +49,23 @@ impl<'de> Deserialize<'de> for MaybeMetrics {
 
         if let Some(str) = value.as_str() {
             if str.len() <= MAX_STRING_SIZE {
-                Ok(MaybeMetrics(sanitize_metrics(
-                    str.split(",").map(|s| s.to_string()),
-                )))
+                Ok(Self {
+                    metrics: sanitize(str.split(",").map(|s| s.to_string()))
+                        .into_iter()
+                        .map(Metric::from)
+                        .collect(),
+                })
             } else {
                 Err(serde::de::Error::custom("Given parameter is too long"))
             }
         } else if let Some(vec) = value.as_array() {
             if vec.len() <= MAX_VECS {
-                Ok(MaybeMetrics(sanitize_metrics(
-                    vec.iter().map(|s| s.as_str().unwrap().to_string()),
-                )))
+                Ok(Self {
+                    metrics: sanitize(vec.iter().map(|s| s.as_str().unwrap().to_string()))
+                        .into_iter()
+                        .map(Metric::from)
+                        .collect(),
+                })
             } else {
                 Err(serde::de::Error::custom("Given parameter is too long"))
             }
@@ -60,22 +75,27 @@ impl<'de> Deserialize<'de> for MaybeMetrics {
     }
 }
 
-impl fmt::Display for MaybeMetrics {
+impl fmt::Display for Metrics {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self.0.join(",");
+        let s = self
+            .metrics
+            .iter()
+            .map(|m| m.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
         write!(f, "{s}")
     }
 }
 
-fn sanitize_metrics(raw_ids: impl Iterator<Item = String>) -> Vec<String> {
-    let mut results = Vec::new();
-    raw_ids.for_each(|s| {
+fn sanitize(dirty: impl Iterator<Item = String>) -> Vec<String> {
+    let mut clean = Vec::new();
+    dirty.for_each(|s| {
         let mut current = String::new();
         for c in s.to_lowercase().chars() {
             match c {
                 ' ' | ',' | '+' => {
                     if !current.is_empty() {
-                        results.push(std::mem::take(&mut current));
+                        clean.push(std::mem::take(&mut current));
                     }
                 }
                 '-' => current.push('_'),
@@ -84,8 +104,8 @@ fn sanitize_metrics(raw_ids: impl Iterator<Item = String>) -> Vec<String> {
             }
         }
         if !current.is_empty() {
-            results.push(current);
+            clean.push(current);
         }
     });
-    results
+    clean
 }
