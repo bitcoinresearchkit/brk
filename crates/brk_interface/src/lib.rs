@@ -7,26 +7,26 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_structs::{
-    AddressInfo, AddressPath, Format, Height, Index, IndexInfo, MetricCount, MetricSearchQuery,
-    TransactionInfo, TxidPath,
+    Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount, Tx,
+    TxidPath,
 };
 use brk_traversable::TreeNode;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod chain;
 mod deser;
-mod metrics;
+mod output;
 mod pagination;
 mod params;
 mod vecs;
 
-pub use metrics::{Output, Value};
+pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
 use crate::{
-    chain::{get_address_info, get_transaction_info},
+    chain::{get_address, get_transaction_info},
     vecs::{IndexToVec, MetricToVec},
 };
 
@@ -57,16 +57,16 @@ impl<'a> Interface<'a> {
         Height::from(self.indexer.vecs.height_to_blockhash.stamp())
     }
 
-    pub fn get_address_info(&self, address: AddressPath) -> Result<AddressInfo> {
-        get_address_info(address, self)
+    pub fn get_address(&self, address: Address) -> Result<AddressStats> {
+        get_address(address, self)
     }
 
-    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<TransactionInfo> {
+    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<Tx> {
         get_transaction_info(txid, self)
     }
 
-    pub fn match_metric(&self, query: MetricSearchQuery) -> Vec<&str> {
-        self.vecs.matches(query)
+    pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&str> {
+        self.vecs.matches(metric, limit)
     }
 
     pub fn search_metric_with_index(

@@ -4,7 +4,7 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
-use brk_structs::{AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
+use brk_structs::{Address, AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
 use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::{
@@ -167,7 +167,7 @@ impl Vecs {
                             outputindex_to_outputtype_iter.unwrap_get_inner(outputindex);
                         let typeindex = outputindex_to_typeindex_iter.unwrap_get_inner(outputindex);
 
-                        let address = match outputtype {
+                        match outputtype {
                             OutputType::P2PK65 => Some(AddressBytes::from(
                                 p2pk65addressindex_to_p2pk65bytes_iter
                                     .unwrap_get_inner(typeindex.into()),
@@ -200,10 +200,9 @@ impl Vecs {
                                 p2aaddressindex_to_p2abytes_iter.unwrap_get_inner(typeindex.into()),
                             )),
                             _ => None,
-                        };
-
-                        address
-                            .and_then(|address| self.pools.find_from_address(&address.to_string()))
+                        }
+                        .map(|bytes| Address::try_from(bytes).unwrap())
+                        .and_then(|address| self.pools.find_from_address(&address))
                     })
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);

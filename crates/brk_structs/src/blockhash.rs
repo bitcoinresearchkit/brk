@@ -3,12 +3,16 @@ use std::{fmt, mem};
 use bitcoin::hashes::Hash;
 use bitcoincore_rpc::{Client, RpcApi};
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
+/// Block hash
+#[derive(
+    Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
+)]
 pub struct BlockHash([u8; 32]);
 
 impl From<bitcoin::BlockHash> for BlockHash {

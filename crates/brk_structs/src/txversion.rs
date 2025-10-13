@@ -1,10 +1,12 @@
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::StoredCompressed;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::StoredU16;
 
+/// Transaction version number
 #[derive(
     Debug,
     Deref,
@@ -20,6 +22,7 @@ use super::StoredU16;
     FromBytes,
     Serialize,
     StoredCompressed,
+    JsonSchema,
 )]
 pub struct TxVersion(u16);
 

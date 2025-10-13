@@ -19,6 +19,7 @@ pub enum Error {
     SystemTimeError(time::SystemTimeError),
     BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
     BitcoinBip34Error(bitcoin::block::Bip34Error),
+    BitcoinFromScriptError(bitcoin::address::FromScriptError),
     SonicRS(sonic_rs::Error),
     ZeroCopyError,
     Vecs(vecdb::Error),
@@ -48,6 +49,12 @@ impl From<bitcoin::block::Bip34Error> for Error {
 impl From<bitcoin::consensus::encode::Error> for Error {
     fn from(value: bitcoin::consensus::encode::Error) -> Self {
         Self::BitcoinConsensusEncode(value)
+    }
+}
+
+impl From<bitcoin::address::FromScriptError> for Error {
+    fn from(value: bitcoin::address::FromScriptError) -> Self {
+        Self::BitcoinFromScriptError(value)
     }
 }
 
@@ -128,6 +135,7 @@ impl fmt::Display for Error {
         match self {
             Error::BitcoinConsensusEncode(error) => Display::fmt(&error, f),
             Error::BitcoinBip34Error(error) => Display::fmt(&error, f),
+            Error::BitcoinFromScriptError(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
             Error::Fjall(error) => Display::fmt(&error, f),
             Error::IO(error) => Display::fmt(&error, f),

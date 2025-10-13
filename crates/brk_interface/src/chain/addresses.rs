@@ -1,24 +1,21 @@
 use std::str::FromStr;
 
-use bitcoin::{Address, Network, PublicKey, ScriptBuf};
+use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_structs::{
-    AddressBytes, AddressBytesHash, AddressInfo, AddressPath, AnyAddressDataIndexEnum, Bitcoin,
+    Address, AddressBytes, AddressBytesHash, AddressStats, AnyAddressDataIndexEnum, Bitcoin,
     OutputType,
 };
 use vecdb::{AnyIterableVec, VecIterator};
 
 use crate::Interface;
 
-pub fn get_address_info(
-    AddressPath { address }: AddressPath,
-    interface: &Interface,
-) -> Result<AddressInfo> {
+pub fn get_address(Address { address }: Address, interface: &Interface) -> Result<AddressStats> {
     let indexer = interface.indexer();
     let computer = interface.computer();
     let stores = &indexer.stores;
 
-    let script = if let Ok(address) = Address::from_str(&address) {
+    let script = if let Ok(address) = bitcoin::Address::from_str(&address) {
         if !address.is_valid_for_network(Network::Bitcoin) {
             return Err(Error::InvalidNetwork);
         }
@@ -109,16 +106,18 @@ pub fn get_address_info(
 
     let balance = address_data.balance();
 
-    Ok(AddressInfo {
-        address: address.to_string(),
-        r#type: type_,
-        type_index,
-        utxo_count: address_data.utxo_count,
-        total_sent: address_data.sent,
-        total_received: address_data.received,
-        balance,
-        balance_usd: price.map(|p| p * Bitcoin::from(balance)),
-        estimated_total_invested: price.map(|_| address_data.realized_cap),
-        estimated_avg_entry_price: price.map(|_| address_data.realized_price()),
-    })
+    todo!();
+
+    // Ok(Address {
+    //     address: address.to_string(),
+    //     r#type: type_,
+    //     type_index,
+    //     utxo_count: address_data.utxo_count,
+    //     total_sent: address_data.sent,
+    //     total_received: address_data.received,
+    //     balance,
+    //     balance_usd: price.map(|p| p * Bitcoin::from(balance)),
+    //     estimated_total_invested: price.map(|_| address_data.realized_cap),
+    //     estimated_avg_entry_price: price.map(|_| address_data.realized_price()),
+    // })
 }

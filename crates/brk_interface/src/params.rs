@@ -1,21 +1,18 @@
 use std::ops::Deref;
 
-use brk_structs::{Format, Index};
+use brk_structs::{Format, Index, Metric, Metrics};
+use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{
-    deser::{de_unquote_i64, de_unquote_usize},
-    metrics::MaybeMetrics,
-};
+use crate::deser::{de_unquote_i64, de_unquote_usize};
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct Params {
     /// Requested metrics
     #[serde(alias = "m")]
-    pub metrics: MaybeMetrics,
+    pub metrics: Metrics,
 
-    /// Requested index
     #[serde(alias = "i")]
     pub index: Index,
 
@@ -30,11 +27,21 @@ impl Deref for Params {
     }
 }
 
-impl From<((Index, String), ParamsOpt)> for Params {
-    fn from(((index, metric), rest): ((Index, String), ParamsOpt)) -> Self {
+impl From<(Index, Metric, ParamsOpt)> for Params {
+    fn from((index, metric, rest): (Index, Metric, ParamsOpt)) -> Self {
         Self {
             index,
-            metrics: MaybeMetrics::from(metric),
+            metrics: Metrics::from(metric),
+            rest,
+        }
+    }
+}
+
+impl From<(Index, Metrics, ParamsOpt)> for Params {
+    fn from((index, metrics, rest): (Index, Metrics, ParamsOpt)) -> Self {
+        Self {
+            index,
+            metrics,
             rest,
         }
     }
@@ -105,7 +112,7 @@ pub struct ParamsDeprec {
     #[serde(alias = "i")]
     pub index: Index,
     #[serde(alias = "v")]
-    pub ids: MaybeMetrics,
+    pub ids: Metrics,
     #[serde(flatten)]
     pub rest: ParamsOpt,
 }

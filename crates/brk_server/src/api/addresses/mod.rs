@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_structs::{AddressInfo, AddressPath};
+use brk_structs::{Address, AddressStats};
 
 use crate::{
     VERSION,
@@ -27,14 +27,14 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<AddressPath>,
+                Path(address): Path<Address>,
                 State(state): State<AppState>
             | {
                 let etag = format!("{VERSION}-{}", state.get_height());
                 if headers.has_etag(&etag) {
                     return Response::new_not_modified();
                 }
-                match state.get_address_info(address).with_status() {
+                match state.get_address(address).with_status() {
                     Ok(value) => Response::new_json(&value, &etag),
                     Err((status, message)) => Response::new_json_with(status, &message, &etag)
                 }
@@ -42,7 +42,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 .addresses_tag()
                 .summary("Address information")
                 .description("Retrieve comprehensive information about a Bitcoin address including balance, transaction history, UTXOs, and estimated investment metrics. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR, etc.).")
-                .ok_response::<AddressInfo>()
+                .ok_response::<AddressStats>()
                 .not_modified()
                 .bad_request()
                 .not_found()

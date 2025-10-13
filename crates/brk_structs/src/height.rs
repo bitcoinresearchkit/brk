@@ -7,6 +7,7 @@ use allocative::Allocative;
 use bitcoincore_rpc::{Client, RpcApi};
 use byteview::ByteView;
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, PrintableIndex, Stamp, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -15,6 +16,7 @@ use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, copy_first_4bytes};
 
 use super::StoredU64;
 
+/// Block height
 #[derive(
     Debug,
     Clone,
@@ -33,6 +35,7 @@ use super::StoredU64;
     KnownLayout,
     StoredCompressed,
     Allocative,
+    JsonSchema,
 )]
 pub struct Height(u32);
 

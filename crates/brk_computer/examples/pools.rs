@@ -4,7 +4,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_structs::{AddressBytes, OutputIndex, OutputType, pools};
+use brk_structs::{Address, AddressBytes, OutputIndex, OutputType, pools};
 use vecdb::{AnyIterableVec, Exit, VecIterator};
 
 fn main() -> Result<()> {
@@ -68,7 +68,7 @@ fn main() -> Result<()> {
                             let typeindex =
                                 outputindex_to_typeindex_iter.unwrap_get_inner(outputindex);
 
-                            let address = match outputtype {
+                            match outputtype {
                                 OutputType::P2PK65 => Some(AddressBytes::from(
                                     p2pk65addressindex_to_p2pk65bytes_iter
                                         .unwrap_get_inner(typeindex.into()),
@@ -102,10 +102,9 @@ fn main() -> Result<()> {
                                         .unwrap_get_inner(typeindex.into()),
                                 )),
                                 _ => None,
-                            };
-
-                            address
-                                .and_then(|address| pools.find_from_address(&address.to_string()))
+                            }
+                            .map(|bytes| Address::try_from(bytes).unwrap())
+                            .and_then(|address| pools.find_from_address(&address))
                         })
                         .or_else(|| pools.find_from_coinbase_tag(&coinbase_tag))
                         .unwrap_or(unknown);
