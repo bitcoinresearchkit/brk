@@ -15,7 +15,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_server::{Server, VERSION};
 use log::info;
 use vecdb::Exit;
@@ -48,7 +48,7 @@ pub fn run() -> color_eyre::Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(config.blocksdir(), rpc);
+    let parser = Reader::new(config.blocksdir(), rpc);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 

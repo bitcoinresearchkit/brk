@@ -4,15 +4,18 @@ use std::{
     str::FromStr,
 };
 
-use bitcoin::{Transaction, consensus::Decodable};
+use bitcoin::consensus::Decodable;
 use brk_error::{Error, Result};
-use brk_parser::XORIndex;
-use brk_structs::{Tx, Txid, TxidPath, TxidPrefix};
+use brk_reader::XORIndex;
+use brk_structs::{Transaction, Txid, TxidPath, TxidPrefix};
 use vecdb::VecIterator;
 
 use crate::Interface;
 
-pub fn get_transaction_info(TxidPath { txid }: TxidPath, interface: &Interface) -> Result<Tx> {
+pub fn get_transaction_info(
+    TxidPath { txid }: TxidPath,
+    interface: &Interface,
+) -> Result<Transaction> {
     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
         return Err(Error::InvalidTxid);
     };
@@ -72,7 +75,7 @@ pub fn get_transaction_info(TxidPath { txid }: TxidPath, interface: &Interface) 
     xori.bytes(&mut buffer, parser.xor_bytes());
 
     let mut reader = Cursor::new(buffer);
-    let Ok(_) = Transaction::consensus_decode(&mut reader) else {
+    let Ok(_) = bitcoin::Transaction::consensus_decode(&mut reader) else {
         return Err(Error::Str("Failed decode the transaction"));
     };
 

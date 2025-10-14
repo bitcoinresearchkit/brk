@@ -5,7 +5,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_structs::Version;
 use brk_traversable::Traversable;
 use log::info;
@@ -114,7 +114,7 @@ impl Computer {
         &mut self,
         indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
-        parser: &Parser,
+        parser: &Reader,
         exit: &Exit,
     ) -> Result<()> {
         info!("Computing indexes...");

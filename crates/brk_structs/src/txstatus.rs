@@ -22,3 +22,12 @@ pub struct TxStatus {
     #[schemars(example = Some(1759000868))]
     pub block_time: Option<Timestamp>,
 }
+
+impl TxStatus {
+    pub const UNCOMFIRMED: Self = Self {
+        confirmed: false,
+        block_hash: None,
+        block_height: None,
+        block_time: None,
+    };
+}

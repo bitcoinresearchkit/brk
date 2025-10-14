@@ -1,5 +1,5 @@
 [package]
-name = "brk_parser"
+name = "brk_reader"
 description = "A very fast Bitcoin block parser and iterator built on top of bitcoin-rust"
 keywords = ["bitcoin", "block", "iterator"]
 categories = ["cryptography::cryptocurrencies", "encoding"]

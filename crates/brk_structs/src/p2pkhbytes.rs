@@ -7,7 +7,19 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 use crate::U8x20;
 
 #[derive(
-    Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, Serialize,
+    Debug,
+    Clone,
+    Deref,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    FromBytes,
+    Serialize,
+    Hash,
 )]
 pub struct P2PKHBytes(U8x20);
 

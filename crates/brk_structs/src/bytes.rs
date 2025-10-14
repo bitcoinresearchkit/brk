@@ -9,11 +9,14 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     DerefMut,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Immutable,
     IntoBytes,
     KnownLayout,
     FromBytes,
     Serialize,
+    Hash,
 )]
 pub struct U8x2([u8; 2]);
 impl From<&[u8]> for U8x2 {
@@ -31,11 +34,14 @@ impl From<&[u8]> for U8x2 {
     DerefMut,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Immutable,
     IntoBytes,
     KnownLayout,
     FromBytes,
     Serialize,
+    Hash,
 )]
 pub struct U8x20([u8; 20]);
 impl From<&[u8]> for U8x20 {
@@ -53,11 +59,14 @@ impl From<&[u8]> for U8x20 {
     DerefMut,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Immutable,
     IntoBytes,
     KnownLayout,
     FromBytes,
     Serialize,
+    Hash,
 )]
 pub struct U8x32([u8; 32]);
 impl From<&[u8]> for U8x32 {
@@ -75,11 +84,14 @@ impl From<&[u8]> for U8x32 {
     DerefMut,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Immutable,
     IntoBytes,
     KnownLayout,
     FromBytes,
     Serialize,
+    Hash,
 )]
 pub struct U8x33(#[serde(with = "serde_bytes")] [u8; 33]);
 impl From<&[u8]> for U8x33 {
@@ -97,11 +109,14 @@ impl From<&[u8]> for U8x33 {
     DerefMut,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Immutable,
     IntoBytes,
     KnownLayout,
     FromBytes,
     Serialize,
+    Hash,
 )]
 pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
 impl From<&[u8]> for U8x65 {

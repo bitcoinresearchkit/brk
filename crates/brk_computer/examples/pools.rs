@@ -103,7 +103,7 @@ fn main() -> Result<()> {
                                 )),
                                 _ => None,
                             }
-                            .map(|bytes| Address::try_from(bytes).unwrap())
+                            .map(|bytes| Address::try_from(&bytes).unwrap())
                             .and_then(|address| pools.find_from_address(&address))
                         })
                         .or_else(|| pools.find_from_coinbase_tag(&coinbase_tag))

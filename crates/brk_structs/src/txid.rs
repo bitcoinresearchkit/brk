@@ -8,7 +8,17 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 /// Transaction ID (hash)
 #[derive(
-    Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
+    Debug,
+    Deref,
+    Clone,
+    PartialEq,
+    Eq,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    FromBytes,
+    JsonSchema,
+    Hash,
 )]
 #[schemars(
     example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",

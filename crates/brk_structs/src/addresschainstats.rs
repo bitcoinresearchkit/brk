@@ -5,7 +5,7 @@ use serde::Serialize;
 /// Address statistics on the blockchain (confirmed transactions only)
 ///
 /// Based on mempool.space's format with type_index extension.
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Default, Serialize, JsonSchema)]
 pub struct AddressChainStats {
     /// Total number of transaction outputs that funded this address
     #[schemars(example = 5)]

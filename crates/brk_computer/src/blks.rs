@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_structs::{BlkPosition, Height, TxIndex, Version};
 use brk_traversable::Traversable;
 use vecdb::{
@@ -56,10 +56,10 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        parser: &Parser,
+        reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, parser, exit)?;
+        self.compute_(indexer, indexes, starting_indexes, reader, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
@@ -69,7 +69,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        parser: &Parser,
+        parser: &Reader,
         exit: &Exit,
     ) -> Result<()> {
         let min_txindex =
@@ -87,7 +87,7 @@ impl Vecs {
         let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter();
 
         parser
-            .parse(
+            .read(
                 Some(min_height),
                 Some((indexer.vecs.height_to_first_txindex.len() - 1).into()),
             )

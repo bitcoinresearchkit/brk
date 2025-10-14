@@ -5,10 +5,10 @@ use std::collections::BTreeMap;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_structs::{
-    Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount, Tx,
-    TxidPath,
+    Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount,
+    Transaction, TxidPath,
 };
 use brk_traversable::TreeNode;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
@@ -33,13 +33,13 @@ use crate::{
 #[allow(dead_code)]
 pub struct Interface<'a> {
     vecs: Vecs<'a>,
-    parser: &'a Parser,
+    parser: &'a Reader,
     indexer: &'a Indexer,
     computer: &'a Computer,
 }
 
 impl<'a> Interface<'a> {
-    pub fn build(parser: &Parser, indexer: &Indexer, computer: &Computer) -> Self {
+    pub fn build(parser: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
         let parser = parser.static_clone();
         let indexer = indexer.static_clone();
         let computer = computer.static_clone();
@@ -61,7 +61,7 @@ impl<'a> Interface<'a> {
         get_address(address, self)
     }
 
-    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<Tx> {
+    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<Transaction> {
         get_transaction_info(txid, self)
     }
 
@@ -254,7 +254,7 @@ impl<'a> Interface<'a> {
         self.vecs.metric_to_indexes(metric)
     }
 
-    pub fn parser(&self) -> &Parser {
+    pub fn parser(&self) -> &Reader {
         self.parser
     }
 
