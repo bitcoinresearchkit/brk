@@ -31,5 +31,7 @@ fn main() {
         thread::sleep(Duration::from_secs(5));
         let txs = mempool.get_txs();
         println!("mempool_tx_count: {}", txs.len());
+        let addresses = mempool.get_addresses();
+        println!("mempool_address_count: {}", addresses.len());
     }
 }

@@ -143,7 +143,7 @@ Contributions from the Bitcoin community are welcome! Here's how to get involved
 | [`brk_cli`](https://crates.io/crates/brk_cli)             | Command line interface for running BRK instances |
 | [`brk_server`](https://crates.io/crates/brk_server)       | REST API server for data access                  |
 | [`brk_mcp`](https://crates.io/crates/brk_mcp)             | Model Context Protocol bridge for AI integration |
-| [`brk_parser`](https://crates.io/crates/brk_parser)       | High-performance Bitcoin block parser            |
+| [`brk_reader`](https://crates.io/crates/brk_reader)       | High-performance Bitcoin block parser            |
 | [`brk_indexer`](https://crates.io/crates/brk_indexer)     | Blockchain data indexing engine                  |
 | [`brk_computer`](https://crates.io/crates/brk_computer)   | Bitcoin metrics and dataset computation          |
 | [`brk_interface`](https://crates.io/crates/brk_interface) | Data formatting and query interface              |

@@ -1,9 +1,9 @@
-# brk_parser
+# brk_reader
 
 High-performance Bitcoin block parser for raw Bitcoin Core block files with XOR encryption support.
 
-[![Crates.io](https://img.shields.io/crates/v/brk_parser.svg)](https://crates.io/crates/brk_parser)
-[![Documentation](https://docs.rs/brk_parser/badge.svg)](https://docs.rs/brk_parser)
+[![Crates.io](https://img.shields.io/crates/v/brk_reader.svg)](https://crates.io/crates/brk_reader)
+[![Documentation](https://docs.rs/brk_reader/badge.svg)](https://docs.rs/brk_reader)
 
 ## Overview
 
@@ -29,13 +29,13 @@ This crate provides a multi-threaded Bitcoin block parser that processes raw Bit
 ## Installation
 
 ```bash
-cargo add brk_parser
+cargo add brk_reader
 ```
 
 ## Quick Start
 
 ```rust
-use brk_parser::Parser;
+use brk_reader::Parser;
 use bitcoincore_rpc::{Client, Auth, RpcApi};
 use brk_structs::Height;
 use std::path::PathBuf;
@@ -94,7 +94,7 @@ The parser implements a three-stage pipeline:
 ### Basic Block Iteration
 
 ```rust
-use brk_parser::Parser;
+use brk_reader::Parser;
 
 let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
 
@@ -115,7 +115,7 @@ for (height, block, hash) in receiver.iter() {
 ### Range-Based Processing
 
 ```rust
-use brk_parser::Parser;
+use brk_reader::Parser;
 
 let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
 
@@ -139,7 +139,7 @@ println!("Processed 1000 blocks with {} total transactions", total_tx_count);
 ### Incremental Processing with Metadata
 
 ```rust
-use brk_parser::Parser;
+use brk_reader::Parser;
 
 let parser = Parser::new(blocks_dir, Some(output_dir), rpc);
 

@@ -3,8 +3,8 @@ use std::str::FromStr;
 use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_structs::{
-    Address, AddressBytes, AddressBytesHash, AddressStats, AnyAddressDataIndexEnum, Bitcoin,
-    OutputType,
+    Address, AddressBytes, AddressBytesHash, AddressChainStats, AddressMempoolStats, AddressStats,
+    AnyAddressDataIndexEnum, Bitcoin, OutputType,
 };
 use vecdb::{AnyIterableVec, VecIterator};
 
@@ -104,9 +104,11 @@ pub fn get_address(Address { address }: Address, interface: &Interface) -> Resul
             .into(),
     };
 
-    let balance = address_data.balance();
-
-    todo!();
+    Ok(AddressStats {
+        address: address.into(),
+        chain_stats: AddressChainStats::default(),
+        mempool_stats: AddressMempoolStats::default(),
+    })
 
     // Ok(Address {
     //     address: address.to_string(),

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use bitcoin::ScriptBuf;
 use brk_error::Error;
 
@@ -6,16 +8,16 @@ use super::{
     P2WSHBytes,
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AddressBytes {
-    P2PK65(P2PK65Bytes),
-    P2PK33(P2PK33Bytes),
-    P2PKH(P2PKHBytes),
-    P2SH(P2SHBytes),
-    P2WPKH(P2WPKHBytes),
-    P2WSH(P2WSHBytes),
-    P2TR(P2TRBytes),
-    P2A(P2ABytes),
+    P2PK65(Box<P2PK65Bytes>), // 65
+    P2PK33(Box<P2PK33Bytes>), // 33
+    P2PKH(Box<P2PKHBytes>),   // 20
+    P2SH(Box<P2SHBytes>),     // 20
+    P2WPKH(Box<P2WPKHBytes>), // 20
+    P2WSH(Box<P2WSHBytes>),   // 32
+    P2TR(Box<P2TRBytes>),     // 32
+    P2A(Box<P2ABytes>),       // 2
 }
 
 impl AddressBytes {
@@ -30,6 +32,19 @@ impl AddressBytes {
             AddressBytes::P2TR(bytes) => &bytes[..],
             AddressBytes::P2A(bytes) => &bytes[..],
         }
+    }
+}
+
+impl fmt::Display for AddressBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&super::Address::try_from(self).unwrap().to_string())
+    }
+}
+
+impl TryFrom<&ScriptBuf> for AddressBytes {
+    type Error = Error;
+    fn try_from(script: &ScriptBuf) -> Result<Self, Self::Error> {
+        Self::try_from((script, OutputType::from(script)))
     }
 }
 
@@ -48,7 +63,7 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                         return Err(Error::WrongLength);
                     }
                 };
-                Ok(Self::P2PK65(P2PK65Bytes::from(bytes)))
+                Ok(Self::P2PK65(Box::new(P2PK65Bytes::from(bytes))))
             }
             OutputType::P2PK33 => {
                 let bytes = script.as_bytes();
@@ -59,31 +74,31 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                         return Err(Error::WrongLength);
                     }
                 };
-                Ok(Self::P2PK33(P2PK33Bytes::from(bytes)))
+                Ok(Self::P2PK33(Box::new(P2PK33Bytes::from(bytes))))
             }
             OutputType::P2PKH => {
                 let bytes = &script.as_bytes()[3..23];
-                Ok(Self::P2PKH(P2PKHBytes::from(bytes)))
+                Ok(Self::P2PKH(Box::new(P2PKHBytes::from(bytes))))
             }
             OutputType::P2SH => {
                 let bytes = &script.as_bytes()[2..22];
-                Ok(Self::P2SH(P2SHBytes::from(bytes)))
+                Ok(Self::P2SH(Box::new(P2SHBytes::from(bytes))))
             }
             OutputType::P2WPKH => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2WPKH(P2WPKHBytes::from(bytes)))
+                Ok(Self::P2WPKH(Box::new(P2WPKHBytes::from(bytes))))
             }
             OutputType::P2WSH => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2WSH(P2WSHBytes::from(bytes)))
+                Ok(Self::P2WSH(Box::new(P2WSHBytes::from(bytes))))
             }
             OutputType::P2TR => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2TR(P2TRBytes::from(bytes)))
+                Ok(Self::P2TR(Box::new(P2TRBytes::from(bytes))))
             }
             OutputType::P2A => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2A(P2ABytes::from(bytes)))
+                Ok(Self::P2A(Box::new(P2ABytes::from(bytes))))
             }
             OutputType::P2MS => Err(Error::WrongAddressType),
             OutputType::Unknown => Err(Error::WrongAddressType),
@@ -96,48 +111,48 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
 
 impl From<P2PK65Bytes> for AddressBytes {
     fn from(value: P2PK65Bytes) -> Self {
-        Self::P2PK65(value)
+        Self::P2PK65(Box::new(value))
     }
 }
 
 impl From<P2PK33Bytes> for AddressBytes {
     fn from(value: P2PK33Bytes) -> Self {
-        Self::P2PK33(value)
+        Self::P2PK33(Box::new(value))
     }
 }
 
 impl From<P2PKHBytes> for AddressBytes {
     fn from(value: P2PKHBytes) -> Self {
-        Self::P2PKH(value)
+        Self::P2PKH(Box::new(value))
     }
 }
 
 impl From<P2SHBytes> for AddressBytes {
     fn from(value: P2SHBytes) -> Self {
-        Self::P2SH(value)
+        Self::P2SH(Box::new(value))
     }
 }
 
 impl From<P2WPKHBytes> for AddressBytes {
     fn from(value: P2WPKHBytes) -> Self {
-        Self::P2WPKH(value)
+        Self::P2WPKH(Box::new(value))
     }
 }
 
 impl From<P2WSHBytes> for AddressBytes {
     fn from(value: P2WSHBytes) -> Self {
-        Self::P2WSH(value)
+        Self::P2WSH(Box::new(value))
     }
 }
 
 impl From<P2TRBytes> for AddressBytes {
     fn from(value: P2TRBytes) -> Self {
-        Self::P2TR(value)
+        Self::P2TR(Box::new(value))
     }
 }
 
 impl From<P2ABytes> for AddressBytes {
     fn from(value: P2ABytes) -> Self {
-        Self::P2A(value)
+        Self::P2A(Box::new(value))
     }
 }

@@ -201,7 +201,7 @@ impl Vecs {
                             )),
                             _ => None,
                         }
-                        .map(|bytes| Address::try_from(bytes).unwrap())
+                        .map(|bytes| Address::try_from(&bytes).unwrap())
                         .and_then(|address| self.pools.find_from_address(&address))
                     })
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))

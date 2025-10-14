@@ -7,7 +7,7 @@ High-performance Bitcoin blockchain indexer with parallel processing and dual st
 
 ## Overview
 
-This crate provides a comprehensive Bitcoin blockchain indexer built on top of `brk_parser`. It processes raw Bitcoin blocks in parallel, extracting and indexing transactions, addresses, inputs, outputs, and metadata into optimized storage structures. The indexer maintains two complementary storage systems: columnar vectors for analytics and key-value stores for fast lookups.
+This crate provides a comprehensive Bitcoin blockchain indexer built on top of `brk_reader`. It processes raw Bitcoin blocks in parallel, extracting and indexing transactions, addresses, inputs, outputs, and metadata into optimized storage structures. The indexer maintains two complementary storage systems: columnar vectors for analytics and key-value stores for fast lookups.
 
 **Key Features:**
 
@@ -36,7 +36,7 @@ cargo add brk_indexer
 
 ```rust
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Parser;
 use bitcoincore_rpc::{Client, Auth};
 use vecdb::Exit;
 use std::path::Path;
@@ -114,7 +114,7 @@ Complete coverage of Bitcoin script types:
 
 ```rust
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Parser;
 use std::path::Path;
 
 // Initialize components

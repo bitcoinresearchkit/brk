@@ -2,7 +2,7 @@ use std::path::Path;
 
 use bitcoincore_rpc::{Auth, Client};
 use brk_error::Result;
-use brk_parser::Parser;
+use brk_reader::Reader;
 
 #[allow(clippy::needless_doctest_main)]
 fn main() -> Result<()> {
@@ -18,12 +18,12 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+    let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
     let start = None;
     // let start = Some(916037_u32.into());
     let end = None;
-    parser.parse(start, end).iter().for_each(|block| {
+    reader.read(start, end).iter().for_each(|block| {
         println!("{}: {}", block.height(), block.hash());
     });
 

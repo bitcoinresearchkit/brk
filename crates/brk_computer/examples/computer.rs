@@ -8,7 +8,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -34,7 +34,7 @@ pub fn main() -> Result<()> {
             let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
             // let outputs_dir = Path::new("../../_outputs");
 
-            let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+            let parser = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
             let mut indexer = Indexer::forced_import(&outputs_dir)?;
 

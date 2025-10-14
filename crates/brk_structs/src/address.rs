@@ -1,6 +1,6 @@
 use std::fmt;
 
-use bitcoin::{Network, ScriptBuf, opcodes, script::Builder};
+use bitcoin::{ScriptBuf, opcodes, script::Builder};
 use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -29,64 +29,53 @@ impl From<String> for Address {
     }
 }
 
-impl TryFrom<ScriptBuf> for Address {
+impl TryFrom<&ScriptBuf> for Address {
     type Error = Error;
-    fn try_from(script: ScriptBuf) -> Result<Self, Self::Error> {
-        Ok(Self::from(bitcoin::Address::from_script(
-            &script,
-            Network::Bitcoin,
-        )?))
-    }
-}
-
-impl From<bitcoin::Address> for Address {
-    fn from(address: bitcoin::Address) -> Self {
-        Self {
-            address: address.to_string(),
-        }
+    fn try_from(script: &ScriptBuf) -> Result<Self, Self::Error> {
+        Self::try_from(&AddressBytes::try_from(script)?)
     }
 }
 
 impl TryFrom<(&ScriptBuf, OutputType)> for Address {
     type Error = Error;
     fn try_from(tuple: (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
-        Self::try_from(AddressBytes::try_from(tuple)?)
+        Self::try_from(&AddressBytes::try_from(tuple)?)
     }
 }
 
-impl TryFrom<AddressBytes> for Address {
+impl TryFrom<&AddressBytes> for Address {
     type Error = Error;
-    fn try_from(bytes: AddressBytes) -> Result<Self, Self::Error> {
+    fn try_from(bytes: &AddressBytes) -> Result<Self, Self::Error> {
         let address = match bytes {
-            AddressBytes::P2PK65(b) => Self::from(bytes_to_hex(&**b)),
-            AddressBytes::P2PK33(b) => Self::from(bytes_to_hex(&**b)),
+            AddressBytes::P2PK65(_) => Self::from(bytes_to_hex(bytes.as_slice())),
+            AddressBytes::P2PK33(_) => Self::from(bytes_to_hex(bytes.as_slice())),
             AddressBytes::P2PKH(b) => Self::try_from(
-                Builder::new()
+                &Builder::new()
                     .push_opcode(opcodes::all::OP_DUP)
                     .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(**b)
+                    .push_slice(****b)
                     .push_opcode(opcodes::all::OP_EQUALVERIFY)
                     .push_opcode(opcodes::all::OP_CHECKSIG)
                     .into_script(),
             )?,
             AddressBytes::P2SH(b) => Self::try_from(
-                Builder::new()
+                &Builder::new()
                     .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(**b)
+                    .push_slice(****b)
                     .push_opcode(opcodes::all::OP_EQUAL)
                     .into_script(),
             )?,
             AddressBytes::P2WPKH(b) => {
-                Self::try_from(Builder::new().push_int(0).push_slice(**b).into_script())?
+                Self::try_from(&Builder::new().push_int(0).push_slice(****b).into_script())?
             }
             AddressBytes::P2WSH(b) => {
-                Self::try_from(Builder::new().push_int(0).push_slice(**b).into_script())?
+                Self::try_from(&Builder::new().push_int(0).push_slice(****b).into_script())?
             }
             AddressBytes::P2TR(b) => {
-                Self::try_from(Builder::new().push_int(1).push_slice(**b).into_script())?
+                Self::try_from(&Builder::new().push_int(1).push_slice(****b).into_script())?
             }
             AddressBytes::P2A(b) => {
-                Self::try_from(Builder::new().push_int(1).push_slice(**b).into_script())?
+                Self::try_from(&Builder::new().push_int(1).push_slice(****b).into_script())?
             }
         };
         Ok(address)

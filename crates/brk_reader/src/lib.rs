@@ -34,14 +34,14 @@ const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
 
 #[derive(Debug, Clone)]
-pub struct Parser {
+pub struct Reader {
     blk_index_to_blk_path: Arc<RwLock<BlkIndexToBlkPath>>,
     xor_bytes: XORBytes,
     blocks_dir: PathBuf,
     rpc: &'static bitcoincore_rpc::Client,
 }
 
-impl Parser {
+impl Reader {
     pub fn new(blocks_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
         Self {
             xor_bytes: XORBytes::from(blocks_dir.as_path()),
@@ -75,7 +75,7 @@ impl Parser {
     ///
     /// For an example checkout `./main.rs`
     ///
-    pub fn parse(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ParsedBlock> {
+    pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ParsedBlock> {
         let rpc = self.rpc;
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP / 2);

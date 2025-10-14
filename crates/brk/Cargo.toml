@@ -40,7 +40,7 @@ indexer = ["brk_indexer"]
 interface = ["brk_interface"]
 logger = ["brk_logger"]
 mcp = ["brk_mcp"]
-parser = ["brk_parser"]
+parser = ["brk_reader"]
 server = ["brk_server"]
 store = ["brk_store"]
 structs = ["brk_structs"]
@@ -58,7 +58,7 @@ brk_indexer = { workspace = true, optional = true }
 brk_interface = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_mcp = { workspace = true, optional = true }
-brk_parser = { workspace = true, optional = true }
+brk_reader = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
 brk_structs = { workspace = true, optional = true }

@@ -7,7 +7,7 @@ use std::{
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use vecdb::Exit;
 
 fn main() -> Result<()> {
@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(blocks_dir, rpc);
+    let parser = Reader::new(blocks_dir, rpc);
 
     fs::create_dir_all(&outputs_dir)?;
 

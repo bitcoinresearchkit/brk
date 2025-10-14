@@ -4,7 +4,6 @@ use std::{collections::BTreeMap, path::Path, str::FromStr, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
-use brk_parser::Parser;
 use brk_store::AnyStore;
 use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, InputIndex, OutputIndex, OutputType,
@@ -51,7 +50,7 @@ impl Indexer {
 
     pub fn index(
         &mut self,
-        parser: &Parser,
+        reader: &brk_reader::Reader,
         rpc: &'static bitcoincore_rpc::Client,
         exit: &Exit,
         check_collisions: bool,
@@ -163,7 +162,7 @@ impl Indexer {
             &mut p2aaddressindex_to_p2abytes_reader_opt,
         );
 
-        parser.parse(start, end).iter().try_for_each(
+        reader.read(start, end).iter().try_for_each(
             |block| -> Result<()> {
                 let height = block.height();
                 let blockhash = block.hash();

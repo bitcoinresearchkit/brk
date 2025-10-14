@@ -4,7 +4,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_interface::{Interface, Params, ParamsOpt};
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_structs::Index;
 use vecdb::Exit;
 
@@ -29,7 +29,7 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(blocks_dir, rpc);
+    let parser = Reader::new(blocks_dir, rpc);
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 

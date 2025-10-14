@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use bitcoincore_rpc::{Auth, Client};
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_structs::{Height, OutputType};
 
 fn main() {
@@ -20,7 +20,7 @@ fn main() {
     // let start = None;
     // let end = None;
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+    let parser = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
     // parser
     //     .parse(start, end)

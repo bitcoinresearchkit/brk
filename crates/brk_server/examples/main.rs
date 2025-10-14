@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
-use brk_parser::Parser;
+use brk_reader::Reader;
 use brk_server::Server;
 use vecdb::Exit;
 
@@ -25,7 +25,7 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+    let parser = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 

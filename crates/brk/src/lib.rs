@@ -46,7 +46,7 @@ pub use brk_mcp as mcp;
 
 #[cfg(feature = "parser")]
 #[doc(inline)]
-pub use brk_parser as parser;
+pub use brk_reader as parser;
 
 #[cfg(feature = "server")]
 #[doc(inline)]

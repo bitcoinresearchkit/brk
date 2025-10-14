@@ -248,7 +248,7 @@ This pattern ensures:
 | `interface` | `brk_interface` | Data query interface |
 | `logger` | `brk_logger` | Enhanced logging |
 | `mcp` | `brk_mcp` | Model Context Protocol |
-| `parser` | `brk_parser` | Block parsing |
+| `parser` | `brk_reader` | Block parsing |
 | `server` | `brk_server` | HTTP server |
 | `store` | `brk_store` | Key-value storage |
 | `structs` | `brk_structs` | Data structures |
