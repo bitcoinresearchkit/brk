@@ -7,7 +7,7 @@ use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
-    DateIndex, EmptyOutputIndex, Height, InputIndex, MonthIndex, OpReturnIndex, OutputIndex,
+    DateIndex, EmptyOutputIndex, Height, TxInIndex, MonthIndex, OpReturnIndex, TxOutIndex,
     P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
     P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex,
     UnknownOutputIndex, YearIndex,
@@ -112,8 +112,8 @@ impl From<TxIndex> for StoredU64 {
     }
 }
 
-impl From<InputIndex> for StoredU64 {
-    fn from(value: InputIndex) -> Self {
+impl From<TxInIndex> for StoredU64 {
+    fn from(value: TxInIndex) -> Self {
         Self(*value)
     }
 }
@@ -124,8 +124,8 @@ impl From<Height> for StoredU64 {
     }
 }
 
-impl From<OutputIndex> for StoredU64 {
-    fn from(value: OutputIndex) -> Self {
+impl From<TxOutIndex> for StoredU64 {
+    fn from(value: TxOutIndex) -> Self {
         Self(*value)
     }
 }

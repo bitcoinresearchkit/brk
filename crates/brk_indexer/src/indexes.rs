@@ -1,7 +1,7 @@
 use bitcoincore_rpc::Client;
 use brk_error::{Error, Result};
 use brk_structs::{
-    BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
+    BlockHash, CheckedSub, EmptyOutputIndex, Height, TxInIndex, OpReturnIndex, TxOutIndex,
     OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
     TxIndex, TypeIndex, UnknownOutputIndex,
@@ -29,8 +29,8 @@ pub struct Indexes {
     pub p2wshaddressindex: P2WSHAddressIndex,
     pub p2aaddressindex: P2AAddressIndex,
     pub txindex: TxIndex,
-    pub inputindex: InputIndex,
-    pub outputindex: OutputIndex,
+    pub txinindex: TxInIndex,
+    pub txoutindex: TxOutIndex,
     pub unknownoutputindex: UnknownOutputIndex,
 }
 
@@ -57,10 +57,10 @@ impl Indexes {
         let height = self.height;
         vecs.height_to_first_txindex
             .push_if_needed(height, self.txindex)?;
-        vecs.height_to_first_inputindex
-            .push_if_needed(height, self.inputindex)?;
-        vecs.height_to_first_outputindex
-            .push_if_needed(height, self.outputindex)?;
+        vecs.height_to_first_txinindex
+            .push_if_needed(height, self.txinindex)?;
+        vecs.height_to_first_txoutindex
+            .push_if_needed(height, self.txoutindex)?;
         vecs.height_to_first_emptyoutputindex
             .push_if_needed(height, self.emptyoutputindex)?;
         vecs.height_to_first_p2msoutputindex
@@ -232,23 +232,23 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
 
         // dbg!(txindex);
 
-        let inputindex = starting_index(
-            &vecs.height_to_first_inputindex,
-            &vecs.inputindex_to_outputindex,
+        let txinindex = starting_index(
+            &vecs.height_to_first_txinindex,
+            &vecs.txinindex_to_txoutindex,
             height,
         )
         .ok_or(Error::Str(""))?;
 
-        // dbg!(inputindex);
+        // dbg!(txinindex);
 
-        let outputindex = starting_index(
-            &vecs.height_to_first_outputindex,
-            &vecs.outputindex_to_value,
+        let txoutindex = starting_index(
+            &vecs.height_to_first_txoutindex,
+            &vecs.txoutindex_to_value,
             height,
         )
         .ok_or(Error::Str(""))?;
 
-        // dbg!(outputindex);
+        // dbg!(txoutindex);
 
         let unknownoutputindex = starting_index(
             &vecs.height_to_first_unknownoutputindex,
@@ -273,8 +273,8 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             p2wshaddressindex,
             p2aaddressindex,
             txindex,
-            inputindex,
-            outputindex,
+            txinindex,
+            txoutindex,
             unknownoutputindex,
         })
     }

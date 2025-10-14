@@ -7,7 +7,7 @@ use vecdb::PrintableIndex;
 
 use super::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, HalvingEpoch,
-    Height, InputIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, OutputIndex,
+    Height, TxInIndex, LoadedAddressIndex, MonthIndex, OpReturnIndex, TxOutIndex,
     P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
     P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, QuarterIndex,
     SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
@@ -31,13 +31,13 @@ pub enum Index {
     /// Height/block index
     Height,
     /// Transaction input index (based on total)
-    InputIndex,
+    TxInIndex,
     /// Month index
     MonthIndex,
     /// Op return index
     OpReturnIndex,
     /// Transaction output index (based on total)
-    OutputIndex,
+    TxOutIndex,
     /// Index of P2A address
     P2AAddressIndex,
     /// Index of P2MS output
@@ -83,10 +83,10 @@ impl Index {
             Self::EmptyOutputIndex,
             Self::HalvingEpoch,
             Self::Height,
-            Self::InputIndex,
+            Self::TxInIndex,
             Self::MonthIndex,
             Self::OpReturnIndex,
-            Self::OutputIndex,
+            Self::TxOutIndex,
             Self::P2AAddressIndex,
             Self::P2MSOutputIndex,
             Self::P2PK33AddressIndex,
@@ -115,10 +115,10 @@ impl Index {
             Self::EmptyOutputIndex => EmptyOutputIndex::to_possible_strings(),
             Self::HalvingEpoch => HalvingEpoch::to_possible_strings(),
             Self::Height => Height::to_possible_strings(),
-            Self::InputIndex => InputIndex::to_possible_strings(),
+            Self::TxInIndex => TxInIndex::to_possible_strings(),
             Self::MonthIndex => MonthIndex::to_possible_strings(),
             Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
-            Self::OutputIndex => OutputIndex::to_possible_strings(),
+            Self::TxOutIndex => TxOutIndex::to_possible_strings(),
             Self::P2AAddressIndex => P2AAddressIndex::to_possible_strings(),
             Self::P2MSOutputIndex => P2MSOutputIndex::to_possible_strings(),
             Self::P2PK33AddressIndex => P2PK33AddressIndex::to_possible_strings(),
@@ -168,10 +168,10 @@ impl TryFrom<&str> for Index {
             v if (Self::EmptyOutputIndex).possible_values().contains(&v) => Self::EmptyOutputIndex,
             v if (Self::HalvingEpoch).possible_values().contains(&v) => Self::HalvingEpoch,
             v if (Self::Height).possible_values().contains(&v) => Self::Height,
-            v if (Self::InputIndex).possible_values().contains(&v) => Self::InputIndex,
+            v if (Self::TxInIndex).possible_values().contains(&v) => Self::TxInIndex,
             v if (Self::MonthIndex).possible_values().contains(&v) => Self::MonthIndex,
             v if (Self::OpReturnIndex).possible_values().contains(&v) => Self::OpReturnIndex,
-            v if (Self::OutputIndex).possible_values().contains(&v) => Self::OutputIndex,
+            v if (Self::TxOutIndex).possible_values().contains(&v) => Self::TxOutIndex,
             v if (Self::P2AAddressIndex).possible_values().contains(&v) => Self::P2AAddressIndex,
             v if (Self::P2MSOutputIndex).possible_values().contains(&v) => Self::P2MSOutputIndex,
             v if (Self::P2PK33AddressIndex).possible_values().contains(&v) => {

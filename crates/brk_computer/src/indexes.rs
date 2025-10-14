@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
-    InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
+    TxInIndex, MonthIndex, OpReturnIndex, TxOutIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex,
     P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
     P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64,
@@ -46,7 +46,7 @@ pub struct Vecs {
     pub height_to_height: EagerVec<Height, Height>,
     pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
     pub height_to_txindex_count: EagerVec<Height, StoredU64>,
-    pub inputindex_to_inputindex: LazyVecFrom1<InputIndex, InputIndex, InputIndex, OutputIndex>,
+    pub txinindex_to_txinindex: LazyVecFrom1<TxInIndex, TxInIndex, TxInIndex, TxOutIndex>,
     pub monthindex_to_dateindex_count: EagerVec<MonthIndex, StoredU64>,
     pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
@@ -55,8 +55,8 @@ pub struct Vecs {
     pub monthindex_to_yearindex: EagerVec<MonthIndex, YearIndex>,
     pub opreturnindex_to_opreturnindex:
         LazyVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
-    pub outputindex_to_outputindex: LazyVecFrom1<OutputIndex, OutputIndex, OutputIndex, Sats>,
-    pub outputindex_to_txindex: EagerVec<OutputIndex, TxIndex>,
+    pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
+    pub txoutindex_to_txindex: EagerVec<TxOutIndex, TxIndex>,
     pub p2aaddressindex_to_p2aaddressindex:
         LazyVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
     pub p2msoutputindex_to_p2msoutputindex:
@@ -83,9 +83,9 @@ pub struct Vecs {
     pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
     pub txindex_to_input_count:
-        LazyVecFrom2<TxIndex, StoredU64, TxIndex, InputIndex, InputIndex, OutputIndex>,
+        LazyVecFrom2<TxIndex, StoredU64, TxIndex, TxInIndex, TxInIndex, TxOutIndex>,
     pub txindex_to_output_count:
-        LazyVecFrom2<TxIndex, StoredU64, TxIndex, OutputIndex, OutputIndex, Sats>,
+        LazyVecFrom2<TxIndex, StoredU64, TxIndex, TxOutIndex, TxOutIndex, Sats>,
     pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub unknownoutputindex_to_unknownoutputindex:
         LazyVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
@@ -103,17 +103,17 @@ impl Vecs {
         let db = Database::open(&parent.join("indexes"))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
-        let outputindex_to_outputindex = LazyVecFrom1::init(
-            "outputindex",
+        let txoutindex_to_txoutindex = LazyVecFrom1::init(
+            "txoutindex",
             version + VERSION + Version::ZERO,
-            indexer.vecs.outputindex_to_value.boxed_clone(),
+            indexer.vecs.txoutindex_to_value.boxed_clone(),
             |index, _| Some(index),
         );
 
-        let inputindex_to_inputindex = LazyVecFrom1::init(
-            "inputindex",
+        let txinindex_to_txinindex = LazyVecFrom1::init(
+            "txinindex",
             version + VERSION + Version::ZERO,
-            indexer.vecs.inputindex_to_outputindex.boxed_clone(),
+            indexer.vecs.txinindex_to_txoutindex.boxed_clone(),
             |index, _| Some(index),
         );
 
@@ -127,18 +127,18 @@ impl Vecs {
         let txindex_to_input_count = LazyVecFrom2::init(
             "input_count",
             version + VERSION + Version::ZERO,
-            indexer.vecs.txindex_to_first_inputindex.boxed_clone(),
-            indexer.vecs.inputindex_to_outputindex.boxed_clone(),
-            |index: TxIndex, txindex_to_first_inputindex_iter, inputindex_to_outputindex_iter| {
+            indexer.vecs.txindex_to_first_txinindex.boxed_clone(),
+            indexer.vecs.txinindex_to_txoutindex.boxed_clone(),
+            |index: TxIndex, txindex_to_first_txinindex_iter, txinindex_to_txoutindex_iter| {
                 let txindex = index.unwrap_to_usize();
-                txindex_to_first_inputindex_iter
+                txindex_to_first_txinindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
                         let start = usize::from(start.into_owned());
-                        let end = txindex_to_first_inputindex_iter
+                        let end = txindex_to_first_txinindex_iter
                             .next_at(txindex + 1)
                             .map(|(_, v)| usize::from(v.into_owned()))
-                            .unwrap_or_else(|| inputindex_to_outputindex_iter.len());
+                            .unwrap_or_else(|| txinindex_to_txoutindex_iter.len());
                         StoredU64::from((start..end).count())
                     })
             },
@@ -147,18 +147,18 @@ impl Vecs {
         let txindex_to_output_count = LazyVecFrom2::init(
             "output_count",
             version + VERSION + Version::ZERO,
-            indexer.vecs.txindex_to_first_outputindex.boxed_clone(),
-            indexer.vecs.outputindex_to_value.boxed_clone(),
-            |index: TxIndex, txindex_to_first_outputindex_iter, outputindex_to_value_iter| {
+            indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
+            indexer.vecs.txoutindex_to_value.boxed_clone(),
+            |index: TxIndex, txindex_to_first_txoutindex_iter, txoutindex_to_value_iter| {
                 let txindex = index.unwrap_to_usize();
-                txindex_to_first_outputindex_iter
+                txindex_to_first_txoutindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
                         let start = usize::from(start.into_owned());
-                        let end = txindex_to_first_outputindex_iter
+                        let end = txindex_to_first_txoutindex_iter
                             .next_at(txindex + 1)
                             .map(|(_, v)| usize::from(v.into_owned()))
-                            .unwrap_or_else(|| outputindex_to_value_iter.len());
+                            .unwrap_or_else(|| txoutindex_to_value_iter.len());
                         StoredU64::from((start..end).count())
                     })
             },
@@ -239,9 +239,9 @@ impl Vecs {
 
         let this = Self {
             emptyoutputindex_to_emptyoutputindex,
-            inputindex_to_inputindex,
+            txinindex_to_txinindex,
             opreturnindex_to_opreturnindex,
-            outputindex_to_outputindex,
+            txoutindex_to_txoutindex,
             p2aaddressindex_to_p2aaddressindex,
             p2msoutputindex_to_p2msoutputindex,
             p2pk33addressindex_to_p2pk33addressindex,
@@ -466,7 +466,7 @@ impl Vecs {
                 "yearindex_count",
                 version + VERSION + Version::ZERO,
             )?,
-            outputindex_to_txindex: EagerVec::forced_import_compressed(
+            txoutindex_to_txindex: EagerVec::forced_import_compressed(
                 &db,
                 "txindex",
                 version + VERSION + Version::ZERO,
@@ -502,12 +502,12 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         // ---
-        // OutputIndex
+        // TxOutIndex
         // ---
 
-        self.outputindex_to_txindex.compute_inverse_less_to_more(
+        self.txoutindex_to_txindex.compute_inverse_less_to_more(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_outputindex,
+            &indexer.vecs.txindex_to_first_txoutindex,
             &self.txindex_to_output_count,
             exit,
         )?;

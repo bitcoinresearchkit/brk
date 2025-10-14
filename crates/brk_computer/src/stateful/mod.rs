@@ -11,7 +11,7 @@ use brk_grouper::{ByAddressType, ByAnyAddress, Filtered};
 use brk_indexer::Indexer;
 use brk_structs::{
     AnyAddressDataIndexEnum, AnyAddressIndex, CheckedSub, DateIndex, Dollars, EmptyAddressData,
-    EmptyAddressIndex, Height, InputIndex, LoadedAddressData, LoadedAddressIndex, OutputIndex,
+    EmptyAddressIndex, Height, TxInIndex, LoadedAddressData, LoadedAddressIndex, TxOutIndex,
     OutputType, P2AAddressIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
     P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64,
     Timestamp, TypeIndex, Version,
@@ -530,8 +530,8 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
-        let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
+        let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
+        let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
         let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
         let height_to_first_p2pk33addressindex = &indexer.vecs.height_to_first_p2pk33addressindex;
         let height_to_first_p2pk65addressindex = &indexer.vecs.height_to_first_p2pk65addressindex;
@@ -542,13 +542,13 @@ impl Vecs {
         let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
         let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
-        let inputindex_to_outputindex = &indexer.vecs.inputindex_to_outputindex;
-        let outputindex_to_value = &indexer.vecs.outputindex_to_value;
+        let txinindex_to_txoutindex = &indexer.vecs.txinindex_to_txoutindex;
+        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
         let txindex_to_height = &indexes.txindex_to_height;
         let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
-        let outputindex_to_txindex = &indexes.outputindex_to_txindex;
-        let outputindex_to_outputtype = &indexer.vecs.outputindex_to_outputtype;
-        let outputindex_to_typeindex = &indexer.vecs.outputindex_to_typeindex;
+        let txoutindex_to_txindex = &indexes.txoutindex_to_txindex;
+        let txoutindex_to_outputtype = &indexer.vecs.txoutindex_to_outputtype;
+        let txoutindex_to_typeindex = &indexer.vecs.txoutindex_to_typeindex;
         let height_to_unclaimed_rewards = chain
             .indexes_to_unclaimed_rewards
             .sats
@@ -569,8 +569,8 @@ impl Vecs {
         let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
 
         let base_version = Version::ZERO
-            + height_to_first_outputindex.version()
-            + height_to_first_inputindex.version()
+            + height_to_first_txoutindex.version()
+            + height_to_first_txinindex.version()
             + height_to_first_p2aaddressindex.version()
             + height_to_first_p2pk33addressindex.version()
             + height_to_first_p2pk65addressindex.version()
@@ -582,12 +582,12 @@ impl Vecs {
             + height_to_timestamp_fixed.version()
             + height_to_output_count.version()
             + height_to_input_count.version()
-            + inputindex_to_outputindex.version()
-            + outputindex_to_value.version()
+            + txinindex_to_txoutindex.version()
+            + txoutindex_to_value.version()
             + txindex_to_height.version()
-            + outputindex_to_txindex.version()
-            + outputindex_to_outputtype.version()
-            + outputindex_to_typeindex.version()
+            + txoutindex_to_txindex.version()
+            + txoutindex_to_outputtype.version()
+            + txoutindex_to_typeindex.version()
             + height_to_unclaimed_rewards.version()
             + height_to_price_close
                 .as_ref()
@@ -790,13 +790,13 @@ impl Vecs {
 
             starting_indexes.update_from_height(starting_height, indexes);
 
-            let inputindex_to_outputindex_reader = inputindex_to_outputindex.create_reader();
-            let outputindex_to_value_reader = outputindex_to_value.create_reader();
-            let outputindex_to_outputtype_reader = outputindex_to_outputtype.create_reader();
-            let outputindex_to_typeindex_reader = outputindex_to_typeindex.create_reader();
+            let txinindex_to_txoutindex_reader = txinindex_to_txoutindex.create_reader();
+            let txoutindex_to_value_reader = txoutindex_to_value.create_reader();
+            let txoutindex_to_outputtype_reader = txoutindex_to_outputtype.create_reader();
+            let txoutindex_to_typeindex_reader = txoutindex_to_typeindex.create_reader();
 
-            let mut height_to_first_outputindex_iter = height_to_first_outputindex.into_iter();
-            let mut height_to_first_inputindex_iter = height_to_first_inputindex.into_iter();
+            let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
+            let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
             let mut height_to_first_p2aaddressindex_iter =
                 height_to_first_p2aaddressindex.into_iter();
             let mut height_to_first_p2pk33addressindex_iter =
@@ -826,7 +826,7 @@ impl Vecs {
                 height_to_price_close.map(|height_to_price_close| height_to_price_close.collect());
 
             let height_to_timestamp_fixed_vec = height_to_timestamp_fixed.collect();
-            let outputindex_range_to_height = RangeMap::from(height_to_first_outputindex);
+            let txoutindex_range_to_height = RangeMap::from(height_to_first_txoutindex);
 
             let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_unspendable_supply
@@ -893,10 +893,10 @@ impl Vecs {
                     let price = height_to_price_close_iter
                         .as_mut()
                         .map(|i| *i.unwrap_get_inner(height));
-                    let first_outputindex = height_to_first_outputindex_iter
+                    let first_txoutindex = height_to_first_txoutindex_iter
                         .unwrap_get_inner(height)
                         .unwrap_to_usize();
-                    let first_inputindex = height_to_first_inputindex_iter
+                    let first_txinindex = height_to_first_txinindex_iter
                         .unwrap_get_inner(height)
                         .unwrap_to_usize();
                     let output_count = height_to_output_count_iter.unwrap_get_inner(height);
@@ -941,22 +941,22 @@ impl Vecs {
                                 .tick_tock_next_block(&chain_state, timestamp);
                         });
 
-                        let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_outputindex..first_outputindex + usize::from(output_count))
+                        let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_txoutindex..first_txoutindex + usize::from(output_count))
                             .into_par_iter()
-                            .map(OutputIndex::from)
-                            .map(|outputindex| {
-                                let value = outputindex_to_value
-                                    .unwrap_read(outputindex, &outputindex_to_value_reader);
+                            .map(TxOutIndex::from)
+                            .map(|txoutindex| {
+                                let value = txoutindex_to_value
+                                    .unwrap_read(txoutindex, &txoutindex_to_value_reader);
 
-                                let output_type = outputindex_to_outputtype
-                                    .unwrap_read(outputindex, &outputindex_to_outputtype_reader);
+                                let output_type = txoutindex_to_outputtype
+                                    .unwrap_read(txoutindex, &txoutindex_to_outputtype_reader);
 
                                 if output_type.is_not_address() {
                                     return (value, output_type, None);
                                 }
 
-                                let typeindex = outputindex_to_typeindex
-                                    .unwrap_read(outputindex, &outputindex_to_typeindex_reader);
+                                let typeindex = txoutindex_to_typeindex
+                                    .unwrap_read(txoutindex, &txoutindex_to_typeindex_reader);
 
                                 let addressdata_opt = Self::get_addressdatawithsource(
                                     output_type,
@@ -1025,28 +1025,28 @@ impl Vecs {
                             );
 
                         // Skip coinbase
-                        let (height_to_sent, addresstype_to_typedindex_to_sent_data, sending_addresstype_to_typeindex_to_addressdatawithsource) = (first_inputindex + 1..first_inputindex + usize::from(input_count))
+                        let (height_to_sent, addresstype_to_typedindex_to_sent_data, sending_addresstype_to_typeindex_to_addressdatawithsource) = (first_txinindex + 1..first_txinindex + usize::from(input_count))
                             .into_par_iter()
-                            .map(InputIndex::from)
-                            .map(|inputindex| {
-                                let outputindex =
-                                    inputindex_to_outputindex.unwrap_read(inputindex, &inputindex_to_outputindex_reader);
+                            .map(TxInIndex::from)
+                            .map(|txinindex| {
+                                let txoutindex =
+                                    txinindex_to_txoutindex.unwrap_read(txinindex, &txinindex_to_txoutindex_reader);
 
-                                let value = outputindex_to_value
-                                    .unwrap_read(outputindex, &outputindex_to_value_reader);
+                                let value = txoutindex_to_value
+                                    .unwrap_read(txoutindex, &txoutindex_to_value_reader);
 
-                                let input_type = outputindex_to_outputtype
-                                    .unwrap_read(outputindex, &outputindex_to_outputtype_reader);
+                                let input_type = txoutindex_to_outputtype
+                                    .unwrap_read(txoutindex, &txoutindex_to_outputtype_reader);
 
                                 let prev_height =
-                                    *outputindex_range_to_height.get(outputindex).unwrap();
+                                    *txoutindex_range_to_height.get(txoutindex).unwrap();
 
                                 if input_type.is_not_address() {
                                     return (prev_height, value, input_type, None);
                                 }
 
-                                let typeindex = outputindex_to_typeindex
-                                    .unwrap_read(outputindex, &outputindex_to_typeindex_reader);
+                                let typeindex = txoutindex_to_typeindex
+                                    .unwrap_read(txoutindex, &txoutindex_to_typeindex_reader);
 
                                 let addressdata_opt = Self::get_addressdatawithsource(
                                     input_type,

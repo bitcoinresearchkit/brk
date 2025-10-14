@@ -4,7 +4,7 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
-use brk_structs::{Address, AddressBytes, Height, OutputIndex, OutputType, PoolId, Pools, pools};
+use brk_structs::{Address, AddressBytes, Height, TxOutIndex, OutputType, PoolId, Pools, pools};
 use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::{
@@ -122,11 +122,11 @@ impl Vecs {
         )?;
 
         let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter();
-        let mut txindex_to_first_outputindex_iter =
-            indexer.vecs.txindex_to_first_outputindex.iter();
+        let mut txindex_to_first_txoutindex_iter =
+            indexer.vecs.txindex_to_first_txoutindex.iter();
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-        let mut outputindex_to_outputtype_iter = indexer.vecs.outputindex_to_outputtype.iter();
-        let mut outputindex_to_typeindex_iter = indexer.vecs.outputindex_to_typeindex.iter();
+        let mut txoutindex_to_outputtype_iter = indexer.vecs.txoutindex_to_outputtype.iter();
+        let mut txoutindex_to_typeindex_iter = indexer.vecs.txoutindex_to_typeindex.iter();
         let mut p2pk65addressindex_to_p2pk65bytes_iter =
             indexer.vecs.p2pk65addressindex_to_p2pk65bytes.iter();
         let mut p2pk33addressindex_to_p2pk33bytes_iter =
@@ -157,15 +157,15 @@ impl Vecs {
             .skip(min)
             .try_for_each(|(height, coinbase_tag)| -> Result<()> {
                 let txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
-                let outputindex = txindex_to_first_outputindex_iter.unwrap_get_inner(txindex);
+                let txoutindex = txindex_to_first_txoutindex_iter.unwrap_get_inner(txindex);
                 let outputcount = txindex_to_output_count_iter.unwrap_get_inner(txindex);
 
-                let pool = (*outputindex..(*outputindex + *outputcount))
-                    .map(OutputIndex::from)
-                    .find_map(|outputindex| {
+                let pool = (*txoutindex..(*txoutindex + *outputcount))
+                    .map(TxOutIndex::from)
+                    .find_map(|txoutindex| {
                         let outputtype =
-                            outputindex_to_outputtype_iter.unwrap_get_inner(outputindex);
-                        let typeindex = outputindex_to_typeindex_iter.unwrap_get_inner(outputindex);
+                            txoutindex_to_outputtype_iter.unwrap_get_inner(txoutindex);
+                        let typeindex = txoutindex_to_typeindex_iter.unwrap_get_inner(txoutindex);
 
                         match outputtype {
                             OutputType::P2PK65 => Some(AddressBytes::from(
