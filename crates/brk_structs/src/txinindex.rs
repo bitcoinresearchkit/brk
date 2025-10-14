@@ -27,49 +27,49 @@ use super::Vin;
     StoredCompressed,
     Allocative,
 )]
-pub struct InputIndex(u64);
+pub struct TxInIndex(u64);
 
-impl InputIndex {
+impl TxInIndex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
 }
 
-impl Add<InputIndex> for InputIndex {
+impl Add<TxInIndex> for TxInIndex {
     type Output = Self;
-    fn add(self, rhs: InputIndex) -> Self::Output {
+    fn add(self, rhs: TxInIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<Vin> for InputIndex {
+impl Add<Vin> for TxInIndex {
     type Output = Self;
     fn add(self, rhs: Vin) -> Self::Output {
         Self(self.0 + u64::from(rhs))
     }
 }
 
-impl Add<usize> for InputIndex {
+impl Add<usize> for TxInIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u64)
     }
 }
 
-impl AddAssign<InputIndex> for InputIndex {
-    fn add_assign(&mut self, rhs: InputIndex) {
+impl AddAssign<TxInIndex> for TxInIndex {
+    fn add_assign(&mut self, rhs: TxInIndex) {
         self.0 += rhs.0
     }
 }
 
-impl CheckedSub<InputIndex> for InputIndex {
+impl CheckedSub<TxInIndex> for TxInIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
-impl From<InputIndex> for u32 {
-    fn from(value: InputIndex) -> Self {
+impl From<TxInIndex> for u32 {
+    fn from(value: TxInIndex) -> Self {
         if value.0 > u32::MAX as u64 {
             panic!()
         }
@@ -77,39 +77,39 @@ impl From<InputIndex> for u32 {
     }
 }
 
-impl From<u64> for InputIndex {
+impl From<u64> for TxInIndex {
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
-impl From<InputIndex> for u64 {
-    fn from(value: InputIndex) -> Self {
+impl From<TxInIndex> for u64 {
+    fn from(value: TxInIndex) -> Self {
         value.0
     }
 }
 
-impl From<usize> for InputIndex {
+impl From<usize> for TxInIndex {
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
-impl From<InputIndex> for usize {
-    fn from(value: InputIndex) -> Self {
+impl From<TxInIndex> for usize {
+    fn from(value: TxInIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl PrintableIndex for InputIndex {
+impl PrintableIndex for TxInIndex {
     fn to_string() -> &'static str {
-        "inputindex"
+        "txinindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["in", "inputindex"]
+        &["in", "txinindex"]
     }
 }
 
-impl std::fmt::Display for InputIndex {
+impl std::fmt::Display for TxInIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);

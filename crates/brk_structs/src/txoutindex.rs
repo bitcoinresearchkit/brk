@@ -29,9 +29,9 @@ use super::Vout;
     StoredCompressed,
     Allocative,
 )]
-pub struct OutputIndex(u64);
+pub struct TxOutIndex(u64);
 
-impl OutputIndex {
+impl TxOutIndex {
     pub const ZERO: Self = Self(0);
 
     pub const COINBASE: Self = Self(u64::MAX);
@@ -45,41 +45,41 @@ impl OutputIndex {
     }
 }
 
-impl Add<OutputIndex> for OutputIndex {
+impl Add<TxOutIndex> for TxOutIndex {
     type Output = Self;
-    fn add(self, rhs: OutputIndex) -> Self::Output {
+    fn add(self, rhs: TxOutIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<Vout> for OutputIndex {
+impl Add<Vout> for TxOutIndex {
     type Output = Self;
     fn add(self, rhs: Vout) -> Self::Output {
         Self(self.0 + u64::from(rhs))
     }
 }
 
-impl Add<usize> for OutputIndex {
+impl Add<usize> for TxOutIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u64)
     }
 }
 
-impl AddAssign<OutputIndex> for OutputIndex {
-    fn add_assign(&mut self, rhs: OutputIndex) {
+impl AddAssign<TxOutIndex> for TxOutIndex {
+    fn add_assign(&mut self, rhs: TxOutIndex) {
         self.0 += rhs.0
     }
 }
 
-impl CheckedSub<OutputIndex> for OutputIndex {
+impl CheckedSub<TxOutIndex> for TxOutIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
-impl From<OutputIndex> for u32 {
-    fn from(value: OutputIndex) -> Self {
+impl From<TxOutIndex> for u32 {
+    fn from(value: TxOutIndex) -> Self {
         if value.0 > u32::MAX as u64 {
             panic!()
         }
@@ -87,45 +87,45 @@ impl From<OutputIndex> for u32 {
     }
 }
 
-impl From<u64> for OutputIndex {
+impl From<u64> for TxOutIndex {
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
-impl From<OutputIndex> for u64 {
-    fn from(value: OutputIndex) -> Self {
+impl From<TxOutIndex> for u64 {
+    fn from(value: TxOutIndex) -> Self {
         value.0
     }
 }
 
-impl From<usize> for OutputIndex {
+impl From<usize> for TxOutIndex {
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
-impl From<OutputIndex> for usize {
-    fn from(value: OutputIndex) -> Self {
+impl From<TxOutIndex> for usize {
+    fn from(value: TxOutIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl From<&[u8]> for OutputIndex {
+impl From<&[u8]> for TxOutIndex {
     fn from(value: &[u8]) -> Self {
         Self(u64::from_be_bytes(copy_first_8bytes(value).unwrap()))
     }
 }
 
-impl PrintableIndex for OutputIndex {
+impl PrintableIndex for TxOutIndex {
     fn to_string() -> &'static str {
-        "outputindex"
+        "txoutindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["out", "outputindex"]
+        &["out", "txoutindex"]
     }
 }
 
-impl std::fmt::Display for OutputIndex {
+impl std::fmt::Display for TxOutIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);

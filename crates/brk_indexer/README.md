@@ -83,15 +83,15 @@ Main indexing function processing blocks from parser with collision detection.
 
 - `height_to_*`: Block-level data (hash, timestamp, difficulty, size, weight)
 - `txindex_to_*`: Transaction data (ID, version, locktime, size, RBF flag)
-- `outputindex_to_*`: Output data (value, type, address mapping)
-- `inputindex_to_outputindex`: Input-to-output relationship mapping
+- `txoutindex_to_*`: Output data (value, type, address mapping)
+- `txinindex_to_txoutindex`: Input-to-output relationship mapping
 
 **Key-Value Stores:**
 
 - `addressbyteshash_to_typeindex`: Address hash to internal index mapping
 - `blockhashprefix_to_height`: Block hash prefix to height lookup
 - `txidprefix_to_txindex`: Transaction ID prefix to internal index
-- `addresstype_to_typeindex_with_outputindex`: Address type to output mappings
+- `addresstype_to_typeindex_with_txoutindex`: Address type to output mappings
 
 ### Address Type Support
 
@@ -189,7 +189,7 @@ let indexer = Indexer::forced_import("./blockchain_index")?;
 
 // Analyze address distribution by type
 for output_type in OutputType::as_vec() {
-    let count = indexer.vecs.outputindex_to_outputtype
+    let count = indexer.vecs.txoutindex_to_outputtype
         .iter()
         .filter(|&ot| ot == output_type)
         .count();
@@ -198,7 +198,7 @@ for output_type in OutputType::as_vec() {
 }
 
 // Query specific address type data
-let p2pkh_store = &indexer.stores.addresstype_to_typeindex_with_outputindex
+let p2pkh_store = &indexer.stores.addresstype_to_typeindex_with_txoutindex
     .p2pkh;
 
 println!("P2PKH addresses: {}", p2pkh_store.len());

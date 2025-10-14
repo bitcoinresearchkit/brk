@@ -6,9 +6,9 @@ use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
 use brk_store::AnyStore;
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, InputIndex, OutputIndex, OutputType,
-    Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, TypeIndexWithOutputindex,
-    Unit, Version, Vin, Vout,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, Sats, StoredBool,
+    Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex,
+    TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
 };
 use log::{error, info};
 use rayon::prelude::*;
@@ -23,7 +23,7 @@ pub use vecs::*;
 
 // One version for all data sources
 // Increment on **change _OR_ addition**
-const VERSION: Version = Version::new(21);
+const VERSION: Version = Version::new(22);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 const COLLISIONS_CHECKED_UP_TO: Height = Height::new(909_150);
 
@@ -102,7 +102,7 @@ impl Indexer {
                 Ok(())
             };
 
-        let mut txindex_to_first_outputindex_reader_opt = None;
+        let mut txindex_to_first_txoutindex_reader_opt = None;
         let mut p2pk65addressindex_to_p2pk65bytes_reader_opt = None;
         let mut p2pk33addressindex_to_p2pk33bytes_reader_opt = None;
         let mut p2pkhaddressindex_to_p2pkhbytes_reader_opt = None;
@@ -114,7 +114,7 @@ impl Indexer {
 
         let reset_readers =
             |vecs: &mut Vecs,
-             txindex_to_first_outputindex_reader_opt: &mut Option<Reader<'static>>,
+             txindex_to_first_txoutindex_reader_opt: &mut Option<Reader<'static>>,
              p2pk65addressindex_to_p2pk65bytes_reader_opt: &mut Option<Reader<'static>>,
              p2pk33addressindex_to_p2pk33bytes_reader_opt: &mut Option<Reader<'static>>,
              p2pkhaddressindex_to_p2pkhbytes_reader_opt: &mut Option<Reader<'static>>,
@@ -123,8 +123,8 @@ impl Indexer {
              p2wshaddressindex_to_p2wshbytes_reader_opt: &mut Option<Reader<'static>>,
              p2traddressindex_to_p2trbytes_reader_opt: &mut Option<Reader<'static>>,
              p2aaddressindex_to_p2abytes_reader_opt: &mut Option<Reader<'static>>| {
-                txindex_to_first_outputindex_reader_opt
-                    .replace(vecs.txindex_to_first_outputindex.create_static_reader());
+                txindex_to_first_txoutindex_reader_opt
+                    .replace(vecs.txindex_to_first_txoutindex.create_static_reader());
                 p2pk65addressindex_to_p2pk65bytes_reader_opt.replace(
                     vecs.p2pk65addressindex_to_p2pk65bytes
                         .create_static_reader(),
@@ -151,7 +151,7 @@ impl Indexer {
 
         reset_readers(
             vecs,
-            &mut txindex_to_first_outputindex_reader_opt,
+            &mut txindex_to_first_txoutindex_reader_opt,
             &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
             &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
             &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
@@ -171,7 +171,7 @@ impl Indexer {
 
                 idxs.height = height;
 
-                let txindex_to_first_outputindex_reader = txindex_to_first_outputindex_reader_opt.as_ref().unwrap();
+                let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex_reader_opt.as_ref().unwrap();
                 let p2pk65addressindex_to_p2pk65bytes_reader = p2pk65addressindex_to_p2pk65bytes_reader_opt.as_ref().unwrap();
                 let p2pk33addressindex_to_p2pk33bytes_reader = p2pk33addressindex_to_p2pk33bytes_reader_opt.as_ref().unwrap();
                 let p2pkhaddressindex_to_p2pkhbytes_reader = p2pkhaddressindex_to_p2pkhbytes_reader_opt.as_ref().unwrap();
@@ -249,15 +249,15 @@ impl Indexer {
                 let input_source_vec = inputs
                     .into_par_iter()
                     .enumerate()
-                    .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> Result<(InputIndex, InputSource)> {
+                    .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
                         let txindex = idxs.txindex + block_txindex;
-                        let inputindex = idxs.inputindex + InputIndex::from(block_inputindex);
+                        let txinindex = idxs.txinindex + TxInIndex::from(block_txinindex);
 
                         let outpoint = txin.previous_output;
                         let txid = Txid::from(outpoint.txid);
 
                         if tx.is_coinbase() {
-                            return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                            return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                         }
 
                         let prev_txindex = if let Some(txindex) = stores
@@ -271,22 +271,22 @@ impl Indexer {
                             txindex
                         } else {
                             // dbg!(indexes.txindex + block_txindex, txindex, txin, vin);
-                            return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                            return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                         };
 
                         let vout = Vout::from(outpoint.vout);
 
-                        let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_reader)?
-                            .ok_or(Error::Str("Expect outputindex to not be none"))
+                        let txoutindex = vecs.txindex_to_first_txoutindex.get_or_read(prev_txindex, txindex_to_first_txoutindex_reader)?
+                            .ok_or(Error::Str("Expect txoutindex to not be none"))
                             .inspect_err(|_| {
                                 dbg!(outpoint.txid, prev_txindex, vout);
                             })?.into_owned()
                             + vout;
 
-                        Ok((inputindex, InputSource::PreviousBlock((
+                        Ok((txinindex, InputSource::PreviousBlock((
                             vin,
                             txindex,
-                            outputindex,
+                            txoutindex,
                         ))))
                     })
                     .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
@@ -315,12 +315,12 @@ impl Indexer {
                             .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
                     }).collect::<Vec<_>>();
 
-                let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt = outputs.into_par_iter()
+                let txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt = outputs.into_par_iter()
                     .enumerate()
                     .map(
                         #[allow(clippy::type_complexity)]
-                        |(block_outputindex, (block_txindex, vout, txout, tx))| -> Result<(
-                            OutputIndex,
+                        |(block_txoutindex, (block_txindex, vout, txout, tx))| -> Result<(
+                            TxOutIndex,
                             (
                                 &TxOut,
                                 TxIndex,
@@ -332,7 +332,7 @@ impl Indexer {
                             ),
                         )> {
                             let txindex = idxs.txindex + block_txindex;
-                            let outputindex = idxs.outputindex + OutputIndex::from(block_outputindex);
+                            let txoutindex = idxs.txoutindex + TxOutIndex::from(block_txoutindex);
 
                             let script = &txout.script_pubkey;
 
@@ -421,7 +421,7 @@ impl Indexer {
                             }
 
                             Ok((
-                                outputindex,
+                                txoutindex,
                                 (
                                     txout,
                                     txindex,
@@ -449,35 +449,35 @@ impl Indexer {
                         }
                     })?;
 
-                let outputs_len = outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt.len();
+                let outputs_len = txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt.len();
                 let inputs_len = input_source_vec.len();
                 let tx_len = block.txdata.len();
 
-                let mut new_txindexvout_to_outputindex: BTreeMap<
+                let mut new_txindexvout_to_txoutindex: BTreeMap<
                     (TxIndex, Vout),
-                    OutputIndex,
+                    TxOutIndex,
                 > = BTreeMap::new();
 
                 let mut already_added_addressbyteshash: BTreeMap<AddressBytesHash, TypeIndex> = BTreeMap::new();
 
-                outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt
+                txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt
                 .into_iter()
                 .try_for_each(
                     |(
-                        outputindex,
+                        txoutindex,
                         (txout, txindex, vout, outputtype, addressbytes_res, typeindex_opt, _tx),
                     )|
                      -> Result<()> {
                         let sats = Sats::from(txout.value);
 
                         if vout.is_zero() {
-                            vecs.txindex_to_first_outputindex.push_if_needed(txindex, outputindex)?;
+                            vecs.txindex_to_first_txoutindex.push_if_needed(txindex, txoutindex)?;
                         }
 
-                        vecs.outputindex_to_value.push_if_needed(outputindex, sats)?;
+                        vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
-                        vecs.outputindex_to_outputtype
-                            .push_if_needed(outputindex, outputtype)?;
+                        vecs.txoutindex_to_outputtype
+                            .push_if_needed(txoutindex, outputtype)?;
 
                         let mut addressbyteshash = None;
 
@@ -556,14 +556,14 @@ impl Indexer {
                             }
                         }
 
-                        vecs.outputindex_to_typeindex
-                            .push_if_needed(outputindex, typeindex)?;
+                        vecs.txoutindex_to_typeindex
+                            .push_if_needed(txoutindex, typeindex)?;
 
-                        new_txindexvout_to_outputindex
-                            .insert((txindex, vout), outputindex);
+                        new_txindexvout_to_txoutindex
+                            .insert((txindex, vout), txoutindex);
 
                         if outputtype.is_address() {
-                            stores.addresstype_to_typeindex_with_outputindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexWithOutputindex::from((typeindex, outputindex)), Unit, height);
+                            stores.addresstype_to_typeindex_with_txoutindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexWithOutputindex::from((typeindex, txoutindex)), Unit, height);
                         }
 
                         Ok(())
@@ -576,14 +576,14 @@ impl Indexer {
                     .into_iter()
                     .map(
                         #[allow(clippy::type_complexity)]
-                        |(inputindex, input_source)| -> Result<(
-                            InputIndex, Vin, TxIndex, OutputIndex
+                        |(txinindex, input_source)| -> Result<(
+                            TxInIndex, Vin, TxIndex, TxOutIndex
                         )> {
                             match input_source {
-                                InputSource::PreviousBlock((vin, txindex, outputindex)) => Ok((inputindex, vin, txindex, outputindex)),
+                                InputSource::PreviousBlock((vin, txindex, txoutindex)) => Ok((txinindex, vin, txindex, txoutindex)),
                                 InputSource::SameBlock((tx, txindex, txin, vin)) => {
                                     if tx.is_coinbase() {
-                                        return Ok((inputindex, vin, txindex, OutputIndex::COINBASE));
+                                        return Ok((txinindex, vin, txindex, TxOutIndex::COINBASE));
                                     }
 
                                     let outpoint = txin.previous_output;
@@ -599,31 +599,31 @@ impl Indexer {
                                         .2;
                                     let prev_txindex = idxs.txindex + block_txindex;
 
-                                    let prev_outputindex = new_txindexvout_to_outputindex
+                                    let prev_txoutindex = new_txindexvout_to_txoutindex
                                         .remove(&(prev_txindex, vout))
                                         .ok_or(Error::Str("should have found addressindex from same block"))
                                         .inspect_err(|_| {
-                                            dbg!(&new_txindexvout_to_outputindex, txin, prev_txindex, vout, txid);
+                                            dbg!(&new_txindexvout_to_txoutindex, txin, prev_txindex, vout, txid);
                                         })?;
 
-                                    Ok((inputindex, vin, txindex, prev_outputindex))
+                                    Ok((txinindex, vin, txindex, prev_txoutindex))
                                 }
                             }
                         },
                     )
                     .try_for_each(|res| -> Result<()> {
-                        let (inputindex, vin, txindex, outputindex) = res?;
+                        let (txinindex, vin, txindex, txoutindex) = res?;
 
                         if vin.is_zero() {
-                            vecs.txindex_to_first_inputindex.push_if_needed(txindex, inputindex)?;
+                            vecs.txindex_to_first_txinindex.push_if_needed(txindex, txinindex)?;
                         }
 
-                        vecs.inputindex_to_outputindex.push_if_needed(inputindex, outputindex)?;
+                        vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
 
                         Ok(())
                     })?;
 
-                drop(new_txindexvout_to_outputindex);
+                drop(new_txindexvout_to_txoutindex);
 
                 let mut txindex_to_tx_and_txid: BTreeMap<TxIndex, (&Transaction, Txid)> = BTreeMap::default();
 
@@ -708,11 +708,11 @@ impl Indexer {
                     })?;
 
                 idxs.txindex += TxIndex::from(tx_len);
-                idxs.inputindex += InputIndex::from(inputs_len);
-                idxs.outputindex += OutputIndex::from(outputs_len);
+                idxs.txinindex += TxInIndex::from(inputs_len);
+                idxs.txoutindex += TxOutIndex::from(outputs_len);
 
                 if should_export(height, false) {
-                    txindex_to_first_outputindex_reader_opt.take();
+                    txindex_to_first_txoutindex_reader_opt.take();
                     p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
                     p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
                     p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
@@ -726,7 +726,7 @@ impl Indexer {
 
                     reset_readers(
                         vecs,
-                        &mut txindex_to_first_outputindex_reader_opt,
+                        &mut txindex_to_first_txoutindex_reader_opt,
                         &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
                         &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
                         &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
@@ -742,7 +742,7 @@ impl Indexer {
             },
         )?;
 
-        txindex_to_first_outputindex_reader_opt.take();
+        txindex_to_first_txoutindex_reader_opt.take();
         p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
         p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
         p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
@@ -770,6 +770,6 @@ impl Indexer {
 
 #[derive(Debug)]
 enum InputSource<'a> {
-    PreviousBlock((Vin, TxIndex, OutputIndex)),
+    PreviousBlock((Vin, TxIndex, TxOutIndex)),
     SameBlock((&'a Transaction, TxIndex, &'a TxIn, Vin)),
 }
