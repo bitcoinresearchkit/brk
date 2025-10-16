@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_structs::{Height, Version};
 
-pub trait AnyStore {
+pub trait AnyStore: Send + Sync {
     fn commit(&mut self, height: Height) -> Result<()>;
     fn persist(&self) -> Result<()>;
     fn reset(&mut self) -> Result<()>;

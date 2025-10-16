@@ -121,7 +121,7 @@ impl PrintableIndex for TxOutIndex {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["out", "txoutindex"]
+        &["txo", "txout", "txoutindex"]
     }
 }
 

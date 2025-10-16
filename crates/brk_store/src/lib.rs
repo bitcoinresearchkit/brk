@@ -46,11 +46,11 @@ pub fn open_keyspace(path: &Path) -> fjall::Result<TransactionalKeyspace> {
         .open_transactional()
 }
 
-impl<'a, K, V> Store<K, V>
+impl<K, V> Store<K, V>
 where
-    K: Debug + Clone + From<ByteView> + Ord + 'a,
+    K: Debug + Clone + From<ByteView> + Ord,
     V: Debug + Clone + From<ByteView>,
-    ByteView: From<K> + From<&'a K> + From<V>,
+    ByteView: From<K> + From<V>,
 {
     pub fn import(
         keyspace: &TransactionalKeyspace,
@@ -87,7 +87,10 @@ where
         })
     }
 
-    pub fn get(&'_ self, key: &'a K) -> Result<Option<Cow<'_, V>>> {
+    pub fn get<'a>(&'a self, key: &'a K) -> Result<Option<Cow<'a, V>>>
+    where
+        ByteView: From<&'a K>,
+    {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self
@@ -159,16 +162,22 @@ where
         //     return Ok(());
         // }
 
-        if !self.puts.is_empty() {
-            unreachable!("Shouldn't reach this");
-        }
+        // if !self.puts.is_empty() {
+        //     unreachable!("Shouldn't reach this");
+        // }
 
-        if !self.dels.insert(key.clone()) {
-            dbg!(key, &self.meta.path());
+        if (self.puts.is_empty() || self.puts.remove(&key).is_none()) && !self.dels.insert(key) {
+            dbg!(&self.meta.path());
             unreachable!();
         }
 
         // Ok(())
+    }
+
+    pub fn remove_if_needed(&mut self, key: K, height: Height) {
+        if self.needs(height) {
+            self.remove(key)
+        }
     }
 
     // pub fn retain_or_del<F>(&mut self, retain: F)
@@ -245,13 +254,22 @@ where
 
         Ok(())
     }
+
+    fn has(&self, height: Height) -> bool {
+        self.meta.has(height)
+    }
+
+    fn needs(&self, height: Height) -> bool {
+        self.meta.needs(height)
+    }
 }
 
-impl<'a, K, V> AnyStore for Store<K, V>
+impl<K, V> AnyStore for Store<K, V>
 where
-    K: Debug + Clone + From<ByteView> + Ord + 'a,
+    K: Debug + Clone + From<ByteView> + Ord,
     V: Debug + Clone + From<ByteView>,
-    ByteView: From<K> + From<&'a K> + From<V>,
+    ByteView: From<K> + From<V>,
+    Self: Send + Sync,
 {
     fn commit(&mut self, height: Height) -> Result<()> {
         if self.puts.is_empty() && self.dels.is_empty() {
@@ -298,10 +316,11 @@ where
     }
 
     fn has(&self, height: Height) -> bool {
-        self.meta.has(height)
+        self.has(height)
     }
+
     fn needs(&self, height: Height) -> bool {
-        self.meta.needs(height)
+        self.needs(height)
     }
 
     fn version(&self) -> Version {

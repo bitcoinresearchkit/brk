@@ -36,6 +36,7 @@ pub struct TxIndex(u32);
 
 impl TxIndex {
     pub const ZERO: Self = Self(0);
+    pub const COINBASE: Self = Self(u32::MAX);
 
     pub fn new(txindex: u32) -> Self {
         Self(txindex)
@@ -43,6 +44,10 @@ impl TxIndex {
 
     pub fn incremented(self) -> Self {
         Self(*self + 1)
+    }
+
+    pub fn to_be_bytes(&self) -> [u8; 4] {
+        self.0.to_be_bytes()
     }
 }
 
@@ -75,6 +80,12 @@ impl CheckedSub<TxIndex> for TxIndex {
 impl From<u32> for TxIndex {
     fn from(value: u32) -> Self {
         Self(value)
+    }
+}
+
+impl From<TxIndex> for u32 {
+    fn from(value: TxIndex) -> Self {
+        value.0
     }
 }
 
@@ -114,6 +125,12 @@ impl From<TxIndex> for ByteView {
 impl From<TxIndex> for StoredU32 {
     fn from(value: TxIndex) -> Self {
         Self::from(value.0)
+    }
+}
+
+impl From<&[u8]> for TxIndex {
+    fn from(value: &[u8]) -> Self {
+        Self(u32::from_be_bytes(copy_first_4bytes(value).unwrap()))
     }
 }
 
