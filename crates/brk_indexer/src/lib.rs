@@ -1,14 +1,14 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, time::Instant};
+use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
 use brk_store::AnyStore;
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, Sats, StoredBool,
-    Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex,
-    TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, OutputType, Sats,
+    StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex,
+    TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version, Vin, Vout,
 };
 use log::{error, info};
 use rayon::prelude::*;
@@ -39,11 +39,18 @@ impl Indexer {
 
         let path = outputs_dir.join("indexed");
 
-        let vecs = Vecs::forced_import(&path, VERSION)?;
-        info!("Imported vecs");
+        let (vecs, stores) = thread::scope(|s| -> Result<_> {
+            let vecs = s.spawn(|| -> Result<_> {
+                let vecs = Vecs::forced_import(&path, VERSION)?;
+                info!("Imported vecs");
+                Ok(vecs)
+            });
 
-        let stores = Stores::forced_import(&path, VERSION)?;
-        info!("Imported stores");
+            let stores = Stores::forced_import(&path, VERSION)?;
+            info!("Imported stores");
+
+            Ok((vecs.join().unwrap()?, stores))
+        })?;
 
         Ok(Self { vecs, stores })
     }
@@ -103,6 +110,8 @@ impl Indexer {
             };
 
         let mut txindex_to_first_txoutindex_reader_opt = None;
+        let mut txoutindex_to_outputtype_reader_opt = None;
+        let mut txoutindex_to_typeindex_reader_opt = None;
         let mut p2pk65addressindex_to_p2pk65bytes_reader_opt = None;
         let mut p2pk33addressindex_to_p2pk33bytes_reader_opt = None;
         let mut p2pkhaddressindex_to_p2pkhbytes_reader_opt = None;
@@ -115,6 +124,8 @@ impl Indexer {
         let reset_readers =
             |vecs: &mut Vecs,
              txindex_to_first_txoutindex_reader_opt: &mut Option<Reader<'static>>,
+             txoutindex_to_outputtype_reader_opt: &mut Option<Reader<'static>>,
+             txoutindex_to_typeindex_reader_opt: &mut Option<Reader<'static>>,
              p2pk65addressindex_to_p2pk65bytes_reader_opt: &mut Option<Reader<'static>>,
              p2pk33addressindex_to_p2pk33bytes_reader_opt: &mut Option<Reader<'static>>,
              p2pkhaddressindex_to_p2pkhbytes_reader_opt: &mut Option<Reader<'static>>,
@@ -125,6 +136,10 @@ impl Indexer {
              p2aaddressindex_to_p2abytes_reader_opt: &mut Option<Reader<'static>>| {
                 txindex_to_first_txoutindex_reader_opt
                     .replace(vecs.txindex_to_first_txoutindex.create_static_reader());
+                txoutindex_to_outputtype_reader_opt
+                    .replace(vecs.txoutindex_to_outputtype.create_static_reader());
+                txoutindex_to_typeindex_reader_opt
+                    .replace(vecs.txoutindex_to_value.create_static_reader());
                 p2pk65addressindex_to_p2pk65bytes_reader_opt.replace(
                     vecs.p2pk65addressindex_to_p2pk65bytes
                         .create_static_reader(),
@@ -152,6 +167,8 @@ impl Indexer {
         reset_readers(
             vecs,
             &mut txindex_to_first_txoutindex_reader_opt,
+            &mut txoutindex_to_outputtype_reader_opt,
+            &mut txoutindex_to_typeindex_reader_opt,
             &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
             &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
             &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
@@ -172,6 +189,8 @@ impl Indexer {
                 idxs.height = height;
 
                 let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex_reader_opt.as_ref().unwrap();
+                let txoutindex_to_outputtype_reader = txoutindex_to_outputtype_reader_opt.as_ref().unwrap();
+                let txoutindex_to_typeindex_reader = txoutindex_to_typeindex_reader_opt.as_ref().unwrap();
                 let p2pk65addressindex_to_p2pk65bytes_reader = p2pk65addressindex_to_p2pk65bytes_reader_opt.as_ref().unwrap();
                 let p2pk33addressindex_to_p2pk33bytes_reader = p2pk33addressindex_to_p2pk33bytes_reader_opt.as_ref().unwrap();
                 let p2pkhaddressindex_to_p2pkhbytes_reader = p2pkhaddressindex_to_p2pkhbytes_reader_opt.as_ref().unwrap();
@@ -246,7 +265,7 @@ impl Indexer {
                     })
                     .collect::<Vec<_>>();
 
-                let input_source_vec = inputs
+                let txinindex_to_txindata = inputs
                     .into_par_iter()
                     .enumerate()
                     .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
@@ -283,11 +302,30 @@ impl Indexer {
                             })?.into_owned()
                             + vout;
 
-                        Ok((txinindex, InputSource::PreviousBlock((
+                        let outpoint = OutPoint::new(prev_txindex, vout);
+
+                        let outputtype = vecs.txoutindex_to_outputtype.get_or_read(txoutindex, txoutindex_to_outputtype_reader)?
+                            .ok_or(Error::Str("Expect outputtype to not be none"))?.into_owned();
+
+                        let mut tuple = (
                             vin,
                             txindex,
-                            txoutindex,
-                        ))))
+                            outpoint,
+                            None
+                        );
+
+                        // Rare but happens
+                        // https://mempool.space/tx/8ebe1df6ebf008f7ec42ccd022478c9afaec3ca0444322243b745aa2e317c272#flow=&vin=89
+                        if outputtype.is_not_address() {
+                            return Ok((txinindex, InputSource::PreviousBlock(tuple)));
+                        }
+
+                        let typeindex = vecs.txoutindex_to_typeindex.get_or_read(txoutindex, txoutindex_to_typeindex_reader)?
+                                .ok_or(Error::Str("Expect typeindex to not be none"))?.into_owned();
+
+                        tuple.3 = Some((outputtype, typeindex));
+
+                        Ok((txinindex, InputSource::PreviousBlock(tuple)))
                     })
                     .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
                         let (key, value) = tuple?;
@@ -315,7 +353,7 @@ impl Indexer {
                             .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
                     }).collect::<Vec<_>>();
 
-                let txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt = outputs.into_par_iter()
+                let txoutindex_to_txoutdata = outputs.into_par_iter()
                     .enumerate()
                     .map(
                         #[allow(clippy::type_complexity)]
@@ -349,7 +387,7 @@ impl Indexer {
                                     .get(&AddressBytesHash::from((addressbytes, outputtype)))
                                     .unwrap()
                                     .map(|v| *v)
-                                    // Checking if not in the future
+                                    // Checking if not in the future (in case we started before the last processed block)
                                     .and_then(|typeindex_local| {
                                         (typeindex_local < idxs.to_typeindex(outputtype)).then_some(typeindex_local)
                                     })
@@ -449,141 +487,142 @@ impl Indexer {
                         }
                     })?;
 
-                let outputs_len = txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt.len();
-                let inputs_len = input_source_vec.len();
+                let outputs_len = txoutindex_to_txoutdata.len();
+                let inputs_len = txinindex_to_txindata.len();
                 let tx_len = block.txdata.len();
-
-                let mut new_txindexvout_to_txoutindex: BTreeMap<
-                    (TxIndex, Vout),
-                    TxOutIndex,
-                > = BTreeMap::new();
 
                 let mut already_added_addressbyteshash: BTreeMap<AddressBytesHash, TypeIndex> = BTreeMap::new();
 
-                txoutindex_to_txout_outputtype_addressbytes_res_addressindex_opt
-                .into_iter()
-                .try_for_each(
-                    |(
-                        txoutindex,
-                        (txout, txindex, vout, outputtype, addressbytes_res, typeindex_opt, _tx),
-                    )|
-                     -> Result<()> {
-                        let sats = Sats::from(txout.value);
+                let mut outpoint_to_outputtype_and_addressindex: BTreeMap<OutPoint, (OutputType, TypeIndex)> =
+                    txoutindex_to_txoutdata
+                        .into_iter()
+                        .flat_map(|(
+                            txoutindex,
+                            (txout, txindex, vout, outputtype, addressbytes_res, typeindex_opt, _tx),
+                        )| {
+                            let result: Result<Option<(OutPoint, (OutputType, TypeIndex))>> = (|| {
+                                let sats = Sats::from(txout.value);
 
-                        if vout.is_zero() {
-                            vecs.txindex_to_first_txoutindex.push_if_needed(txindex, txoutindex)?;
-                        }
+                                if vout.is_zero() {
+                                    vecs.txindex_to_first_txoutindex.push_if_needed(txindex, txoutindex)?;
+                                }
 
-                        vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
+                                vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
-                        vecs.txoutindex_to_outputtype
-                            .push_if_needed(txoutindex, outputtype)?;
+                                vecs.txoutindex_to_outputtype
+                                    .push_if_needed(txoutindex, outputtype)?;
 
-                        let mut addressbyteshash = None;
+                                let mut addressbyteshash = None;
 
-                        let typeindex;
+                                let typeindex;
 
-                        if let Some(typeindex_local) = typeindex_opt.or_else(|| {
-                            addressbytes_res.as_ref().ok().and_then(|addressbytes| {
-                                // Check if address was first seen before in this iterator
-                                // Example: https://mempool.space/address/046a0765b5865641ce08dd39690aade26dfbf5511430ca428a3089261361cef170e3929a68aee3d8d4848b0c5111b0a37b82b86ad559fd2a745b44d8e8d9dfdc0c
-                                addressbyteshash.replace(AddressBytesHash::from((addressbytes, outputtype)));
-                                already_added_addressbyteshash
-                                    .get(addressbyteshash.as_ref().unwrap())
-                                    .cloned()
-                            })
-                        }) {
-                            typeindex = typeindex_local;
-                        } else {
-                            typeindex = match outputtype {
-                                OutputType::P2PK65 => {
-                                    idxs.p2pk65addressindex.copy_then_increment()
-                                },
-                                OutputType::P2PK33 => {
-                                    idxs.p2pk33addressindex.copy_then_increment()
-                                },
-                                OutputType::P2PKH => {
-                                    idxs.p2pkhaddressindex.copy_then_increment()
-                                },
-                                OutputType::P2MS => {
-                                    vecs.p2msoutputindex_to_txindex.push_if_needed(idxs.p2msoutputindex, txindex)?;
-                                    idxs.p2msoutputindex.copy_then_increment()
-                                },
-                                OutputType::P2SH => {
-                                    idxs.p2shaddressindex.copy_then_increment()
-                                },
-                                OutputType::OpReturn => {
-                                    vecs.opreturnindex_to_txindex.push_if_needed(idxs.opreturnindex, txindex)?;
-                                    idxs.opreturnindex.copy_then_increment()
-                                },
-                                OutputType::P2WPKH => {
-                                    idxs.p2wpkhaddressindex.copy_then_increment()
-                                },
-                                OutputType::P2WSH => {
-                                    idxs.p2wshaddressindex.copy_then_increment()
-                                },
-                                OutputType::P2TR => {
-                                    idxs.p2traddressindex.copy_then_increment()
-                                },
-                                OutputType::P2A => {
-                                    idxs.p2aaddressindex.copy_then_increment()
-                                },
-                                OutputType::Empty => {
-                                    vecs.emptyoutputindex_to_txindex
-                                        .push_if_needed(idxs.emptyoutputindex, txindex)?;
-                                    idxs.emptyoutputindex.copy_then_increment()
-                                },
-                                OutputType::Unknown => {
-                                    vecs.unknownoutputindex_to_txindex.push_if_needed(idxs.unknownoutputindex, txindex)?;
-                                    idxs.unknownoutputindex.copy_then_increment()
-                                },
-                                _ => unreachable!()
-                            };
+                                if let Some(typeindex_local) = typeindex_opt.or_else(|| {
+                                    addressbytes_res.as_ref().ok().and_then(|addressbytes| {
+                                        // Check if address was first seen before in this iterator
+                                        // Example: https://mempool.space/address/046a0765b5865641ce08dd39690aade26dfbf5511430ca428a3089261361cef170e3929a68aee3d8d4848b0c5111b0a37b82b86ad559fd2a745b44d8e8d9dfdc0c
+                                        addressbyteshash.replace(AddressBytesHash::from((addressbytes, outputtype)));
+                                        already_added_addressbyteshash
+                                            .get(addressbyteshash.as_ref().unwrap())
+                                            .cloned()
+                                    })
+                                }) {
+                                    typeindex = typeindex_local;
+                                } else {
+                                    typeindex = match outputtype {
+                                        OutputType::P2PK65 => {
+                                            idxs.p2pk65addressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2PK33 => {
+                                            idxs.p2pk33addressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2PKH => {
+                                            idxs.p2pkhaddressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2MS => {
+                                            vecs.p2msoutputindex_to_txindex.push_if_needed(idxs.p2msoutputindex, txindex)?;
+                                            idxs.p2msoutputindex.copy_then_increment()
+                                        },
+                                        OutputType::P2SH => {
+                                            idxs.p2shaddressindex.copy_then_increment()
+                                        },
+                                        OutputType::OpReturn => {
+                                            vecs.opreturnindex_to_txindex.push_if_needed(idxs.opreturnindex, txindex)?;
+                                            idxs.opreturnindex.copy_then_increment()
+                                        },
+                                        OutputType::P2WPKH => {
+                                            idxs.p2wpkhaddressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2WSH => {
+                                            idxs.p2wshaddressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2TR => {
+                                            idxs.p2traddressindex.copy_then_increment()
+                                        },
+                                        OutputType::P2A => {
+                                            idxs.p2aaddressindex.copy_then_increment()
+                                        },
+                                        OutputType::Empty => {
+                                            vecs.emptyoutputindex_to_txindex
+                                                .push_if_needed(idxs.emptyoutputindex, txindex)?;
+                                            idxs.emptyoutputindex.copy_then_increment()
+                                        },
+                                        OutputType::Unknown => {
+                                            vecs.unknownoutputindex_to_txindex.push_if_needed(idxs.unknownoutputindex, txindex)?;
+                                            idxs.unknownoutputindex.copy_then_increment()
+                                        },
+                                        _ => unreachable!()
+                                    };
 
-                            if let Ok(addressbytes) = addressbytes_res {
-                                let addressbyteshash = addressbyteshash.unwrap();
+                                    if let Ok(addressbytes) = addressbytes_res {
+                                        let addressbyteshash = addressbyteshash.unwrap();
 
-                                already_added_addressbyteshash
-                                    .insert(addressbyteshash, typeindex);
+                                        already_added_addressbyteshash
+                                            .insert(addressbyteshash, typeindex);
 
-                                stores.addressbyteshash_to_typeindex.insert_if_needed(
-                                    addressbyteshash,
-                                    typeindex,
-                                    height,
-                                );
+                                        stores.addressbyteshash_to_typeindex.insert_if_needed(
+                                            addressbyteshash,
+                                            typeindex,
+                                            height,
+                                        );
 
-                                vecs.push_bytes_if_needed(typeindex, addressbytes)?;
+                                        vecs.push_bytes_if_needed(typeindex, addressbytes)?;
+                                    }
+                                }
+
+                                vecs.txoutindex_to_typeindex
+                                    .push_if_needed(txoutindex, typeindex)?;
+
+                                if outputtype.is_unspendable() {
+                                    return Ok(None)
+                                } else if outputtype.is_address() {
+                                    stores.addresstype_to_typeindex_and_txindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexAndTxIndex::from((typeindex, txindex)), Unit, height);
+                                }
+
+                                Ok(Some((OutPoint::new(txindex, vout), (outputtype, typeindex))))
+                            })();
+
+                            match result {
+                                Ok(Some(item)) => Some(Ok(item)),
+                                Ok(None) => None,
+                                Err(e) => Some(Err(e)),
                             }
-                        }
-
-                        vecs.txoutindex_to_typeindex
-                            .push_if_needed(txoutindex, typeindex)?;
-
-                        new_txindexvout_to_txoutindex
-                            .insert((txindex, vout), txoutindex);
-
-                        if outputtype.is_address() {
-                            stores.addresstype_to_typeindex_with_txoutindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexWithOutputindex::from((typeindex, txoutindex)), Unit, height);
-                        }
-
-                        Ok(())
-                    },
-                )?;
+                        })
+                        .collect::<Result<BTreeMap<_, _>>>()?;
 
                 drop(already_added_addressbyteshash);
 
-                input_source_vec
+                txinindex_to_txindata
                     .into_iter()
                     .map(
                         #[allow(clippy::type_complexity)]
                         |(txinindex, input_source)| -> Result<(
-                            TxInIndex, Vin, TxIndex, TxOutIndex
+                            TxInIndex, Vin, TxIndex, OutPoint, Option<(OutputType, TypeIndex)>
                         )> {
                             match input_source {
-                                InputSource::PreviousBlock((vin, txindex, txoutindex)) => Ok((txinindex, vin, txindex, txoutindex)),
+                                InputSource::PreviousBlock((vin, txindex, outpoint, outputtype_typeindex_opt)) => Ok((txinindex, vin, txindex, outpoint, outputtype_typeindex_opt)),
                                 InputSource::SameBlock((tx, txindex, txin, vin)) => {
                                     if tx.is_coinbase() {
-                                        return Ok((txinindex, vin, txindex, TxOutIndex::COINBASE));
+                                        return Ok((txinindex, vin, txindex, OutPoint::COINBASE, None));
                                     }
 
                                     let outpoint = txin.previous_output;
@@ -599,44 +638,68 @@ impl Indexer {
                                         .2;
                                     let prev_txindex = idxs.txindex + block_txindex;
 
-                                    let prev_txoutindex = new_txindexvout_to_txoutindex
-                                        .remove(&(prev_txindex, vout))
+                                    let outpoint = OutPoint::new(prev_txindex, vout);
+
+                                    let mut tuple = (txinindex, vin, txindex, outpoint, None);
+
+                                    let outputtype_typeindex = outpoint_to_outputtype_and_addressindex
+                                        .remove(&outpoint)
                                         .ok_or(Error::Str("should have found addressindex from same block"))
                                         .inspect_err(|_| {
-                                            dbg!(&new_txindexvout_to_txoutindex, txin, prev_txindex, vout, txid);
+                                            dbg!(&outpoint_to_outputtype_and_addressindex, txin, prev_txindex, vout, txid);
                                         })?;
 
-                                    Ok((txinindex, vin, txindex, prev_txoutindex))
+                                    if outputtype_typeindex.0.is_not_address() {
+                                        return Ok(tuple)
+                                    }
+
+                                    tuple.4 = Some(outputtype_typeindex);
+
+                                    Ok(tuple)
                                 }
                             }
                         },
                     )
                     .try_for_each(|res| -> Result<()> {
-                        let (txinindex, vin, txindex, txoutindex) = res?;
+                        let (txinindex, vin, txindex, outpoint, outputtype_typeindex_opt) = res?;
 
                         if vin.is_zero() {
                             vecs.txindex_to_first_txinindex.push_if_needed(txindex, txinindex)?;
                         }
 
-                        vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
+                        vecs.txinindex_to_outpoint.push_if_needed(txinindex, outpoint)?;
+
+                        let Some((outputtype, typeindex)) = outputtype_typeindex_opt else {
+                            return Ok(())
+                        };
+
+                        stores.addresstype_to_typeindex_and_txindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexAndTxIndex::from((typeindex, txindex)), Unit, height);
+
+                        stores.addresstype_to_typeindex_and_unspentoutpoint.get_mut(outputtype).unwrap().remove_if_needed(TypeIndexAndOutPoint::from((typeindex, outpoint)), height);
 
                         Ok(())
                     })?;
 
-                drop(new_txindexvout_to_txoutindex);
-
-                let mut txindex_to_tx_and_txid: BTreeMap<TxIndex, (&Transaction, Txid)> = BTreeMap::default();
+                outpoint_to_outputtype_and_addressindex
+                    .into_iter()
+                    .filter(|(_, (outputtype,_))| outputtype.is_address())
+                    .for_each(|(outpoint, (outputtype, typeindex))| {
+                        stores.addresstype_to_typeindex_and_unspentoutpoint
+                            .get_mut(outputtype)
+                            .unwrap()
+                            .insert_if_needed(TypeIndexAndOutPoint::from((typeindex, outpoint)), Unit, height);
+                    });
 
                 let mut txindex_to_txid_iter = vecs
                     .txindex_to_txid.into_iter();
 
-                txid_prefix_to_txid_and_block_txindex_and_prev_txindex
+                let txindex_to_tx_and_txid = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                     .into_iter()
-                    .try_for_each(
-                        |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> Result<()> {
+                    .map(
+                        |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> Result<(TxIndex, (&Transaction, Txid))> {
                             let txindex = idxs.txindex + index;
 
-                            txindex_to_tx_and_txid.insert(txindex, (tx, txid));
+                            let tuple = (txindex, (tx, txid));
 
                             match prev_txindex_opt {
                                 None => {
@@ -647,11 +710,11 @@ impl Indexer {
                                 Some(prev_txindex) => {
                                     // In case if we start at an already parsed height
                                     if txindex == prev_txindex {
-                                        return Ok(());
+                                        return Ok(tuple);
                                     }
 
                                     if !check_collisions {
-                                        return Ok(());
+                                        return Ok(tuple);
                                     }
 
                                     let len = vecs.txindex_to_txid.len();
@@ -689,9 +752,9 @@ impl Indexer {
                                 }
                             }
 
-                            Ok(())
+                            Ok(tuple)
                         },
-                    )?;
+                    ).collect::<Result<BTreeMap<_, _>>>()?;
 
                 drop(txindex_to_txid_iter);
 
@@ -713,6 +776,8 @@ impl Indexer {
 
                 if should_export(height, false) {
                     txindex_to_first_txoutindex_reader_opt.take();
+                    txoutindex_to_outputtype_reader_opt.take();
+                    txoutindex_to_typeindex_reader_opt.take();
                     p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
                     p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
                     p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
@@ -727,6 +792,8 @@ impl Indexer {
                     reset_readers(
                         vecs,
                         &mut txindex_to_first_txoutindex_reader_opt,
+                        &mut txoutindex_to_outputtype_reader_opt,
+                        &mut txoutindex_to_typeindex_reader_opt,
                         &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
                         &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
                         &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
@@ -770,6 +837,6 @@ impl Indexer {
 
 #[derive(Debug)]
 enum InputSource<'a> {
-    PreviousBlock((Vin, TxIndex, TxOutIndex)),
+    PreviousBlock((Vin, TxIndex, OutPoint, Option<(OutputType, TypeIndex)>)),
     SameBlock((&'a Transaction, TxIndex, &'a TxIn, Vin)),
 }

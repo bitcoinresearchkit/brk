@@ -1,7 +1,7 @@
 use derive_deref::Deref;
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Vin(u32);
+pub struct Vin(u16);
 
 impl Vin {
     pub const ZERO: Self = Vin(0);
@@ -12,15 +12,23 @@ impl Vin {
     }
 }
 
+const U16_MAX_AS_U32: u32 = u16::MAX as u32;
 impl From<u32> for Vin {
     fn from(value: u32) -> Self {
-        Self(value)
+        if value > U16_MAX_AS_U32 {
+            panic!()
+        }
+        Self(value as u16)
     }
 }
 
+const U16_MAX_AS_USIZE: usize = u16::MAX as usize;
 impl From<usize> for Vin {
     fn from(value: usize) -> Self {
-        Self(value as u32)
+        if value > U16_MAX_AS_USIZE {
+            panic!()
+        }
+        Self(value as u16)
     }
 }
 

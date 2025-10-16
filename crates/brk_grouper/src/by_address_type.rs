@@ -1,10 +1,20 @@
 use std::ops::{Add, AddAssign};
 
+use brk_error::Result;
 use brk_structs::OutputType;
 use brk_traversable::{Traversable, TreeNode};
 use vecdb::AnyCollectableVec;
 
 use super::{Filter, Filtered};
+
+pub const P2PK65: &str = "p2pk65";
+pub const P2PK33: &str = "p2pk33";
+pub const P2PKH: &str = "p2pkh";
+pub const P2SH: &str = "p2sh";
+pub const P2WPKH: &str = "p2wpkh";
+pub const P2WSH: &str = "p2wsh";
+pub const P2TR: &str = "p2tr";
+pub const P2A: &str = "p2a";
 
 #[derive(Default, Clone, Debug)]
 pub struct ByAddressType<T> {
@@ -19,6 +29,22 @@ pub struct ByAddressType<T> {
 }
 
 impl<T> ByAddressType<T> {
+    pub fn new<F>(f: F) -> Result<Self>
+    where
+        F: Fn(&'static str) -> Result<T>,
+    {
+        Ok(Self {
+            p2pk65: f(P2PK65)?,
+            p2pk33: f(P2PK33)?,
+            p2pkh: f(P2PKH)?,
+            p2sh: f(P2SH)?,
+            p2wpkh: f(P2WPKH)?,
+            p2wsh: f(P2WSH)?,
+            p2tr: f(P2TR)?,
+            p2a: f(P2A)?,
+        })
+    }
+
     pub fn get_unwrap(&self, address_type: OutputType) -> &T {
         self.get(address_type).unwrap()
     }
@@ -200,14 +226,14 @@ impl<T: Traversable> Traversable for ByAddressType<T> {
     fn to_tree_node(&self) -> TreeNode {
         TreeNode::Branch(
             [
-                ("p2pk65", &self.p2pk65),
-                ("p2pk33", &self.p2pk33),
-                ("p2pkh", &self.p2pkh),
-                ("p2sh", &self.p2sh),
-                ("p2wpkh", &self.p2wpkh),
-                ("p2wsh", &self.p2wsh),
-                ("p2tr", &self.p2tr),
-                ("p2a", &self.p2a),
+                (P2PK65, &self.p2pk65),
+                (P2PK33, &self.p2pk33),
+                (P2PKH, &self.p2pkh),
+                (P2SH, &self.p2sh),
+                (P2WPKH, &self.p2wpkh),
+                (P2WSH, &self.p2wsh),
+                (P2TR, &self.p2tr),
+                (P2A, &self.p2a),
             ]
             .into_iter()
             .map(|(name, field)| (name.to_string(), field.to_tree_node()))

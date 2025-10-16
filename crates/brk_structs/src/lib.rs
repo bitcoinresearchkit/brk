@@ -43,6 +43,7 @@ mod metrics;
 mod monthindex;
 mod ohlc;
 mod opreturnindex;
+mod outpoint;
 mod outputtype;
 mod p2aaddressindex;
 mod p2abytes;
@@ -91,7 +92,8 @@ mod txoutindex;
 mod txstatus;
 mod txversion;
 mod typeindex;
-mod typeindex_with_txoutindex;
+mod typeindexandoutpoint;
+mod typeindexandtxindex;
 mod unit;
 mod unknownoutputindex;
 mod vin;
@@ -139,6 +141,7 @@ pub use metrics::*;
 pub use monthindex::*;
 pub use ohlc::*;
 pub use opreturnindex::*;
+pub use outpoint::*;
 pub use outputtype::*;
 pub use p2aaddressindex::*;
 pub use p2abytes::*;
@@ -187,7 +190,8 @@ pub use txoutindex::*;
 pub use txstatus::*;
 pub use txversion::*;
 pub use typeindex::*;
-pub use typeindex_with_txoutindex::*;
+pub use typeindexandoutpoint::*;
+pub use typeindexandtxindex::*;
 pub use unit::*;
 pub use unknownoutputindex::*;
 pub use vin::*;
@@ -195,6 +199,19 @@ pub use vout::*;
 pub use weekindex::*;
 pub use weight::*;
 pub use yearindex::*;
+
+#[allow(clippy::result_unit_err)]
+pub fn copy_first_2bytes(slice: &[u8]) -> Result<[u8; 2]> {
+    let mut buf: [u8; 2] = [0; 2];
+    let buf_len = buf.len();
+    if slice.len() < buf_len {
+        return Err(Error::Str("Buffer is too small to convert to 8 bytes"));
+    }
+    slice.iter().take(buf_len).enumerate().for_each(|(i, r)| {
+        buf[i] = *r;
+    });
+    Ok(buf)
+}
 
 #[allow(clippy::result_unit_err)]
 pub fn copy_first_4bytes(slice: &[u8]) -> Result<[u8; 4]> {

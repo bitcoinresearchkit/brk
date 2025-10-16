@@ -1,10 +1,10 @@
 use bitcoincore_rpc::Client;
 use brk_error::{Error, Result};
 use brk_structs::{
-    BlockHash, CheckedSub, EmptyOutputIndex, Height, TxInIndex, OpReturnIndex, TxOutIndex,
-    OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
-    P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
-    TxIndex, TypeIndex, UnknownOutputIndex,
+    BlockHash, CheckedSub, EmptyOutputIndex, Height, OpReturnIndex, OutputType, P2AAddressIndex,
+    P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex,
+    P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex,
+    TypeIndex, UnknownOutputIndex,
 };
 use vecdb::{
     AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw, VecIterator,
@@ -234,7 +234,7 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
 
         let txinindex = starting_index(
             &vecs.height_to_first_txinindex,
-            &vecs.txinindex_to_txoutindex,
+            &vecs.txinindex_to_outpoint,
             height,
         )
         .ok_or(Error::Str(""))?;

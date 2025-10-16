@@ -50,6 +50,6 @@ fn main() -> Result<()> {
         indexer.index(&parser, rpc, &exit, true)?;
         dbg!(i.elapsed());
 
-        sleep(Duration::from_secs(5 * 60));
+        sleep(Duration::from_secs(60));
     }
 }

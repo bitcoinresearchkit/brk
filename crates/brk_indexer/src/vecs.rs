@@ -2,12 +2,12 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_structs::{
-    AddressBytes, BlockHash, EmptyOutputIndex, Height, OpReturnIndex, OutputType, P2AAddressIndex,
-    P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes,
-    P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes,
-    P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, RawLockTime, Sats, StoredBool,
-    StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex, TxOutIndex, TxVersion, Txid,
-    TypeIndex, UnknownOutputIndex, Version, Weight,
+    AddressBytes, BlockHash, EmptyOutputIndex, Height, OpReturnIndex, OutPoint, OutputType,
+    P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes,
+    P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
+    P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes,
+    RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex,
+    TxOutIndex, TxVersion, Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
 use brk_traversable::Traversable;
 use rayon::prelude::*;
@@ -40,8 +40,7 @@ pub struct Vecs {
     pub height_to_timestamp: CompressedVec<Height, Timestamp>,
     pub height_to_total_size: CompressedVec<Height, StoredU64>,
     pub height_to_weight: CompressedVec<Height, Weight>,
-    /// If txoutindex == TxOutIndex::MAX then it's coinbase
-    pub txinindex_to_txoutindex: RawVec<TxInIndex, TxOutIndex>,
+    pub txinindex_to_outpoint: RawVec<TxInIndex, OutPoint>,
     pub opreturnindex_to_txindex: CompressedVec<OpReturnIndex, TxIndex>,
     pub txoutindex_to_outputtype: RawVec<TxOutIndex, OutputType>,
     pub txoutindex_to_typeindex: RawVec<TxOutIndex, TypeIndex>,
@@ -152,7 +151,7 @@ impl Vecs {
             height_to_timestamp: CompressedVec::forced_import(&db, "timestamp", version)?,
             height_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
             height_to_weight: CompressedVec::forced_import(&db, "weight", version)?,
-            txinindex_to_txoutindex: RawVec::forced_import(&db, "txoutindex", version)?,
+            txinindex_to_outpoint: RawVec::forced_import(&db, "outpoint", version)?,
             opreturnindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
             txoutindex_to_outputtype: RawVec::forced_import(&db, "outputtype", version)?,
             txoutindex_to_typeindex: RawVec::forced_import(&db, "typeindex", version)?,
@@ -266,7 +265,7 @@ impl Vecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.height_to_weight
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.txinindex_to_txoutindex
+        self.txinindex_to_outpoint
             .truncate_if_needed_with_stamp(txinindex, stamp)?;
         self.opreturnindex_to_txindex
             .truncate_if_needed_with_stamp(opreturnindex, stamp)?;
@@ -347,7 +346,7 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.iter_mut()
+        self.iter_mut_any_stored_vec()
             .par_bridge()
             .try_for_each(|vec| vec.stamped_flush(Stamp::from(height)))?;
         self.db.flush()?;
@@ -355,7 +354,7 @@ impl Vecs {
     }
 
     pub fn starting_height(&mut self) -> Height {
-        self.iter_mut()
+        self.iter_mut_any_stored_vec()
             .map(|vec| {
                 let h = Height::from(vec.stamp());
                 if h > Height::ZERO { h.incremented() } else { h }
@@ -419,7 +418,7 @@ impl Vecs {
     //     .into_iter()
     // }
 
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    fn iter_mut_any_stored_vec(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.emptyoutputindex_to_txindex as &mut dyn AnyStoredVec,
             &mut self.height_to_blockhash,
@@ -442,7 +441,7 @@ impl Vecs {
             &mut self.height_to_timestamp,
             &mut self.height_to_total_size,
             &mut self.height_to_weight,
-            &mut self.txinindex_to_txoutindex,
+            &mut self.txinindex_to_outpoint,
             &mut self.opreturnindex_to_txindex,
             &mut self.txoutindex_to_outputtype,
             &mut self.txoutindex_to_typeindex,

@@ -105,7 +105,7 @@ impl PrintableIndex for TxInIndex {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["in", "txinindex"]
+        &["txi", "txin", "txinindex"]
     }
 }
 

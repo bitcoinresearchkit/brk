@@ -36,492 +36,736 @@ pub enum OutputType {
     P2WSH,
     P2TR,
     P2A,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy10,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy11,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy12,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy13,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy14,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy15,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy16,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy17,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy18,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy19,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy20,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy21,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy22,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy23,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy24,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy25,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy26,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy27,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy28,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy29,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy30,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy31,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy32,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy33,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy34,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy35,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy36,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy37,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy38,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy39,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy40,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy41,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy42,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy43,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy44,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy45,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy46,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy47,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy48,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy49,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy50,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy51,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy52,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy53,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy54,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy55,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy56,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy57,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy58,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy59,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy60,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy61,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy62,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy63,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy64,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy65,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy66,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy67,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy68,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy69,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy70,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy71,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy72,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy73,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy74,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy75,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy76,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy77,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy78,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy79,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy80,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy81,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy82,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy83,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy84,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy85,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy86,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy87,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy88,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy89,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy90,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy91,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy92,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy93,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy94,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy95,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy96,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy97,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy98,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy99,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy100,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy101,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy102,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy103,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy104,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy105,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy106,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy107,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy108,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy109,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy110,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy111,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy112,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy113,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy114,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy115,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy116,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy117,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy118,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy119,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy120,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy121,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy122,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy123,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy124,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy125,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy126,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy127,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy128,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy129,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy130,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy131,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy132,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy133,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy134,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy135,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy136,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy137,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy138,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy139,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy140,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy141,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy142,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy143,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy144,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy145,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy146,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy147,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy148,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy149,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy150,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy151,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy152,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy153,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy154,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy155,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy156,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy157,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy158,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy159,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy160,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy161,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy162,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy163,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy164,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy165,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy166,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy167,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy168,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy169,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy170,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy171,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy172,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy173,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy174,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy175,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy176,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy177,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy178,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy179,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy180,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy181,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy182,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy183,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy184,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy185,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy186,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy187,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy188,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy189,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy190,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy191,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy192,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy193,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy194,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy195,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy196,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy197,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy198,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy199,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy200,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy201,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy202,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy203,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy204,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy205,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy206,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy207,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy208,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy209,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy210,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy211,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy212,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy213,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy214,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy215,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy216,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy217,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy218,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy219,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy220,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy221,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy222,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy223,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy224,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy225,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy226,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy227,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy228,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy229,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy230,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy231,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy232,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy233,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy234,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy235,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy236,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy237,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy238,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy239,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy240,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy241,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy242,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy243,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy244,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy245,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy246,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy247,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy248,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy249,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy250,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy251,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy252,
+    #[doc(hidden)]
     #[schemars(skip)]
     Dummy253,
     Empty = 254,

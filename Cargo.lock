@@ -683,6 +683,7 @@ dependencies = [
 name = "brk_grouper"
 version = "0.0.111"
 dependencies = [
+ "brk_error",
  "brk_structs",
  "brk_traversable",
  "vecdb",
