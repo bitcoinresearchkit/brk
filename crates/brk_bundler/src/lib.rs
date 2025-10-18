@@ -6,12 +6,12 @@ use std::{
     sync::Arc,
 };
 
-use brk_rolldown::{
+use log::error;
+use notify::{EventKind, RecursiveMode, Watcher};
+use rolldown::{
     Bundler, BundlerOptions, InlineConstConfig, InlineConstMode, InlineConstOption,
     OptimizationOption, RawMinifyOptions, SourceMapType,
 };
-use log::error;
-use notify::{EventKind, RecursiveMode, Watcher};
 use sugar_path::SugarPath;
 use tokio::sync::Mutex;
 
@@ -170,8 +170,7 @@ pub async fn bundle(
             .watch(&absolute_modules_path_clone, RecursiveMode::Recursive)
             .unwrap();
 
-        let watcher =
-            brk_rolldown::Watcher::new(vec![Arc::new(Mutex::new(bundler))], None).unwrap();
+        let watcher = rolldown::Watcher::new(vec![Arc::new(Mutex::new(bundler))], None).unwrap();
 
         watcher.start().await;
     });

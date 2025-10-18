@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_structs::Version;
-use fjall::{PersistMode, TransactionalKeyspace, TransactionalPartitionHandle};
+use fjall_v3::{PersistMode, TxDatabase, TxKeyspace};
 
 use super::Height;
 
@@ -18,29 +18,27 @@ pub struct StoreMeta {
 
 impl StoreMeta {
     pub fn checked_open<F>(
-        keyspace: &TransactionalKeyspace,
+        database: &TxDatabase,
         path: &Path,
         version: Version,
         open_partition_handle: F,
-    ) -> Result<(Self, TransactionalPartitionHandle)>
+    ) -> Result<(Self, TxKeyspace)>
     where
-        F: Fn() -> Result<TransactionalPartitionHandle>,
+        F: Fn() -> Result<TxKeyspace>,
     {
         fs::create_dir_all(path)?;
 
-        let read_version = Version::try_from(Self::path_version_(path).as_path());
-
-        let is_same_version = read_version
-            .as_ref()
-            .is_ok_and(|prev_version| &version == prev_version);
-
         let mut partition = open_partition_handle()?;
 
-        if !is_same_version {
+        if Version::try_from(Self::path_version_(path).as_path())
+            .is_ok_and(|prev_version| version != prev_version)
+        {
+            todo!();
             fs::remove_dir_all(path)?;
+            // Doesn't exist
+            // database.delete_partition(partition)?;
             fs::create_dir(path)?;
-            keyspace.delete_partition(partition)?;
-            keyspace.persist(PersistMode::SyncAll)?;
+            database.persist(PersistMode::SyncAll)?;
             partition = open_partition_handle()?;
         }
 

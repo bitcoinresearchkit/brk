@@ -2,7 +2,7 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::{AddressBytes, OutputType};
+use super::AddressBytes;
 
 #[derive(
     Debug,
@@ -17,20 +17,13 @@ use super::{AddressBytes, OutputType};
     Immutable,
     IntoBytes,
     KnownLayout,
+    Hash,
 )]
-pub struct AddressBytesHash([u8; 8]);
+pub struct AddressBytesHash(u64);
 
-impl From<(&AddressBytes, OutputType)> for AddressBytesHash {
-    fn from((address_bytes, outputtype): (&AddressBytes, OutputType)) -> Self {
-        let mut slice = rapidhash::v3::rapidhash_v3(address_bytes.as_slice()).to_le_bytes();
-        slice[0] = slice[0].wrapping_add(outputtype as u8);
-        Self(slice)
-    }
-}
-
-impl From<[u8; 8]> for AddressBytesHash {
-    fn from(value: [u8; 8]) -> Self {
-        Self(value)
+impl From<&AddressBytes> for AddressBytesHash {
+    fn from(address_bytes: &AddressBytes) -> Self {
+        Self(address_bytes.hash())
     }
 }
 
@@ -40,14 +33,14 @@ impl From<ByteView> for AddressBytesHash {
     }
 }
 
-impl From<&AddressBytesHash> for ByteView {
-    fn from(value: &AddressBytesHash) -> Self {
-        Self::new(value.as_bytes())
-    }
-}
-
 impl From<AddressBytesHash> for ByteView {
     fn from(value: AddressBytesHash) -> Self {
         Self::from(&value)
+    }
+}
+
+impl From<&AddressBytesHash> for ByteView {
+    fn from(value: &AddressBytesHash) -> Self {
+        Self::new(value.as_bytes())
     }
 }

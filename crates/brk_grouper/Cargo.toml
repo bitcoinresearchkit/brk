@@ -14,3 +14,4 @@ brk_error = { workspace = true }
 brk_structs = { workspace = true }
 brk_traversable = { workspace = true }
 vecdb = { workspace = true }
+rayon = { workspace = true }

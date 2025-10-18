@@ -24,6 +24,7 @@ use crate::copy_first_2bytes;
     Serialize,
     Allocative,
     JsonSchema,
+    Hash,
 )]
 pub struct Vout(u16);
 
@@ -37,6 +38,10 @@ impl Vout {
 
     pub fn to_be_bytes(&self) -> [u8; 2] {
         self.0.to_be_bytes()
+    }
+
+    pub fn to_ne_bytes(&self) -> [u8; 2] {
+        self.0.to_ne_bytes()
     }
 }
 
@@ -57,6 +62,18 @@ impl From<usize> for Vout {
             panic!()
         }
         Self(value as u16)
+    }
+}
+
+impl From<Vout> for u16 {
+    fn from(value: Vout) -> Self {
+        value.0
+    }
+}
+
+impl From<Vout> for u32 {
+    fn from(value: Vout) -> Self {
+        value.0 as u32
     }
 }
 

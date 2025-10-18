@@ -36,6 +36,7 @@ use super::StoredU64;
     StoredCompressed,
     Allocative,
     JsonSchema,
+    Hash,
 )]
 pub struct Height(u32);
 
@@ -240,12 +241,6 @@ impl From<ByteView> for Height {
 
 impl From<Height> for ByteView {
     fn from(value: Height) -> Self {
-        Self::from(&value)
-    }
-}
-
-impl From<&Height> for ByteView {
-    fn from(value: &Height) -> Self {
         Self::new(&value.0.to_be_bytes())
     }
 }

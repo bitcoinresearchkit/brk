@@ -21,59 +21,34 @@ use crate::{TxIndex, Vout};
     Serialize,
     Allocative,
     JsonSchema,
+    Hash,
 )]
-pub struct OutPoint {
-    txindex: TxIndex,
-    vout: Vout,
-    _padding: u16,
-}
+pub struct OutPoint(pub u64);
 
 impl OutPoint {
-    pub const COINBASE: Self = Self {
-        txindex: TxIndex::COINBASE,
-        vout: Vout::MAX,
-        _padding: 0,
-    };
+    pub const COINBASE: Self = Self(u64::MAX);
 
     pub fn new(txindex: TxIndex, vout: Vout) -> Self {
-        Self {
-            txindex,
-            vout,
-            _padding: 0,
-        }
+        let txindex_bits = u64::from(txindex) << 32;
+        let vout_bits = u64::from(vout);
+        Self(txindex_bits | vout_bits)
     }
 
-    pub fn txindex(&self) -> TxIndex {
-        self.txindex
+    pub fn txindex(self) -> TxIndex {
+        TxIndex::from((self.0 >> 32) as u32)
     }
 
-    pub fn vout(&self) -> Vout {
-        self.vout
+    pub fn vout(self) -> Vout {
+        Vout::from(self.0 as u32)
     }
 
     pub fn is_coinbase(self) -> bool {
         self == Self::COINBASE
     }
-
-    pub fn to_be_bytes(&self) -> [u8; 6] {
-        let txindex = self.txindex.to_be_bytes();
-        let vout = self.vout.to_be_bytes();
-        [
-            txindex[0], txindex[1], txindex[2], txindex[3], vout[0], vout[1],
-        ]
-    }
-}
-
-impl From<&[u8]> for OutPoint {
-    fn from(value: &[u8]) -> Self {
-        let txindex = TxIndex::from(&value[4..8]);
-        let vout = Vout::from(&value[8..10]);
-        Self::new(txindex, vout)
-    }
 }
 
 impl std::fmt::Display for OutPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "txindex: {}, vout: {}", self.txindex, self.vout)
+        write!(f, "txindex: {}, vout: {}", self.txindex(), self.vout())
     }
 }
