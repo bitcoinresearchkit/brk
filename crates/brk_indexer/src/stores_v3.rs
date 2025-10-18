@@ -2,12 +2,12 @@ use std::{borrow::Cow, fs, path::Path};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
-use brk_store::{AnyStore, Store};
+use brk_store::{AnyStore, StoreV3 as Store};
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, StoredString, TxIndex,
-    TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
+    TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
 };
-use fjall::{PersistMode, TransactionalKeyspace};
+use fjall_v3::{PersistMode, TxDatabase};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -17,7 +17,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: TransactionalKeyspace,
+    pub database: TxDatabase,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -35,19 +35,19 @@ impl Stores {
 
         fs::create_dir_all(&pathbuf)?;
 
-        let keyspace = match brk_store::open_keyspace(path) {
-            Ok(keyspace) => keyspace,
+        let database = match brk_store::open_database(path) {
+            Ok(database) => database,
             Err(_) => {
                 fs::remove_dir_all(path)?;
                 return Self::forced_import(path, version);
             }
         };
 
-        let keyspace_ref = &keyspace;
+        let database_ref = &database;
 
         let create_addressindex_and_txindex_store = |cohort| {
             Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 &format!("{}addressindex_and_txindex", cohort),
                 version,
@@ -57,40 +57,40 @@ impl Stores {
 
         let create_addressindex_and_unspentoutpoint_store = |cohort| {
             Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 &format!("{}addressindex_and_unspentoutpoint", cohort),
                 version,
-                Some(false),
+                None,
             )
         };
 
         Ok(Self {
-            keyspace: keyspace.clone(),
+            database: database.clone(),
 
             height_to_coinbase_tag: Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 "height_to_coinbase_tag",
                 version,
                 None,
             )?,
             addressbyteshash_to_typeindex: Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 "addressbyteshash_to_typeindex",
                 version,
                 None,
             )?,
             blockhashprefix_to_height: Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 "blockhashprefix_to_height",
                 version,
                 None,
             )?,
             txidprefix_to_txindex: Store::import(
-                keyspace_ref,
+                database_ref,
                 path,
                 "txidprefix_to_txindex",
                 version,
@@ -117,11 +117,26 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        self.iter_mut_any_store()
-            .par_bridge()
-            .try_for_each(|store| store.commit(height))?;
+        [
+            &mut self.addressbyteshash_to_typeindex as &mut dyn AnyStore,
+            &mut self.blockhashprefix_to_height,
+            &mut self.height_to_coinbase_tag,
+            &mut self.txidprefix_to_txindex,
+        ]
+        .into_par_iter() // Changed from par_iter_mut()
+        .chain(
+            self.addresstype_to_typeindex_and_txindex
+                .par_iter_mut()
+                .map(|s| s as &mut dyn AnyStore),
+        )
+        .chain(
+            self.addresstype_to_typeindex_and_unspentoutpoint
+                .par_iter_mut()
+                .map(|s| s as &mut dyn AnyStore),
+        )
+        .try_for_each(|store| store.commit(height))?;
 
-        self.keyspace
+        self.database
             .persist(PersistMode::SyncAll)
             .map_err(|e| e.into())
     }
@@ -143,26 +158,6 @@ impl Stores {
             self.addresstype_to_typeindex_and_unspentoutpoint
                 .iter()
                 .map(|s| s as &dyn AnyStore),
-        )
-    }
-
-    fn iter_mut_any_store(&mut self) -> impl Iterator<Item = &mut dyn AnyStore> {
-        [
-            &mut self.addressbyteshash_to_typeindex as &mut dyn AnyStore,
-            &mut self.blockhashprefix_to_height,
-            &mut self.height_to_coinbase_tag,
-            &mut self.txidprefix_to_txindex,
-        ]
-        .into_iter()
-        .chain(
-            self.addresstype_to_typeindex_and_txindex
-                .iter_mut()
-                .map(|s| s as &mut dyn AnyStore),
-        )
-        .chain(
-            self.addresstype_to_typeindex_and_unspentoutpoint
-                .iter_mut()
-                .map(|s| s as &mut dyn AnyStore),
         )
     }
 
@@ -221,7 +216,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2PK65));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -241,7 +236,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2PK33));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -261,7 +256,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2PKH));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -281,7 +276,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2SH));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -301,7 +296,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2TR));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -321,7 +316,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2WPKH));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -341,7 +336,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2WSH));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -360,7 +355,7 @@ impl Stores {
                     .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from((&bytes, OutputType::P2A));
+                    let hash = AddressBytesHash::from(&bytes);
                     self.addressbyteshash_to_typeindex.remove(hash);
                     index.increment();
                 }
@@ -393,7 +388,7 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            todo!();
+            // todo!();
             // let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.into_iter();
             // vecs.txoutindex_to_outputtype
             //     .iter_at(starting_indexes.txoutindex)

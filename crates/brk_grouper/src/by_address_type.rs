@@ -3,6 +3,7 @@ use std::ops::{Add, AddAssign};
 use brk_error::Result;
 use brk_structs::OutputType;
 use brk_traversable::{Traversable, TreeNode};
+use rayon::prelude::*;
 use vecdb::AnyCollectableVec;
 
 use super::{Filter, Filtered};
@@ -63,6 +64,10 @@ impl<T> ByAddressType<T> {
         }
     }
 
+    pub fn get_mut_unwrap(&mut self, address_type: OutputType) -> &mut T {
+        self.get_mut(address_type).unwrap()
+    }
+
     pub fn get_mut(&mut self, address_type: OutputType) -> Option<&mut T> {
         match address_type {
             OutputType::P2PK65 => Some(&mut self.p2pk65),
@@ -103,6 +108,40 @@ impl<T> ByAddressType<T> {
             &mut self.p2a,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter(&mut self) -> impl ParallelIterator<Item = &T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &self.p2pk65,
+            &self.p2pk33,
+            &self.p2pkh,
+            &self.p2sh,
+            &self.p2wpkh,
+            &self.p2wsh,
+            &self.p2tr,
+            &self.p2a,
+        ]
+        .into_par_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self.p2pk65,
+            &mut self.p2pk33,
+            &mut self.p2pkh,
+            &mut self.p2sh,
+            &mut self.p2wpkh,
+            &mut self.p2wsh,
+            &mut self.p2tr,
+            &mut self.p2a,
+        ]
+        .into_par_iter()
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {

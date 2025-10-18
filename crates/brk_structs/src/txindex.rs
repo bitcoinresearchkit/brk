@@ -31,6 +31,7 @@ use super::StoredU32;
     StoredCompressed,
     Allocative,
     JsonSchema,
+    Hash,
 )]
 pub struct TxIndex(u32);
 
@@ -48,6 +49,10 @@ impl TxIndex {
 
     pub fn to_be_bytes(&self) -> [u8; 4] {
         self.0.to_be_bytes()
+    }
+
+    pub fn to_ne_bytes(&self) -> [u8; 4] {
+        self.0.to_ne_bytes()
     }
 }
 

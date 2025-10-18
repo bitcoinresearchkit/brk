@@ -15,4 +15,4 @@ bitcoincore-rpc = { workspace = true }
 brk_structs = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
-rustc-hash = "2.1.1"
+rustc-hash = { workspace = true }

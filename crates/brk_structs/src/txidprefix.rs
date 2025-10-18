@@ -19,8 +19,9 @@ use super::Txid;
     Immutable,
     IntoBytes,
     KnownLayout,
+    Hash,
 )]
-pub struct TxidPrefix([u8; 8]);
+pub struct TxidPrefix(u64);
 
 impl From<Txid> for TxidPrefix {
     fn from(value: Txid) -> Self {
@@ -30,7 +31,7 @@ impl From<Txid> for TxidPrefix {
 
 impl From<&Txid> for TxidPrefix {
     fn from(value: &Txid) -> Self {
-        Self(copy_first_8bytes(&value[..]).unwrap())
+        Self(u64::from_ne_bytes(copy_first_8bytes(&value[..]).unwrap()))
     }
 }
 
@@ -54,6 +55,6 @@ impl From<TxidPrefix> for ByteView {
 
 impl From<[u8; 8]> for TxidPrefix {
     fn from(value: [u8; 8]) -> Self {
-        Self(value)
+        Self(u64::from_ne_bytes(value))
     }
 }

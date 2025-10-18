@@ -65,13 +65,18 @@ brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
 brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
 byteview = "=0.6.1"
+# byteview = "~0.8.0"
 derive_deref = "1.1.1"
-fjall = "2.11.2"
+fjall_v2 = { version = "2.11.2", package = "fjall" }
+# fjall_v3 = { version = "=3.0.0-pre.0", package = "fjall" }
+fjall_v3 = { path = "../fjall", package = "fjall" }
+# fjall_v3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "bb15057500dce3115d7644d268b9deeaa895b431", package = "fjall" }
 jiff = "0.2.15"
 log = "0.4.28"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"
+rustc-hash = "2.1.1"
 schemars = "1.0.4"
 serde = "1.0.228"
 serde_bytes = "0.11.19"

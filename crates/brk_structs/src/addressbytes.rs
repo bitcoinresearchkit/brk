@@ -33,6 +33,26 @@ impl AddressBytes {
             AddressBytes::P2A(bytes) => &bytes[..],
         }
     }
+
+    pub fn hash(&self) -> u64 {
+        let mut slice = rapidhash::v3::rapidhash_v3(self.as_slice()).to_le_bytes();
+        slice[0] = slice[0].wrapping_add(self.index());
+        u64::from_ne_bytes(slice)
+    }
+
+    fn index(&self) -> u8 {
+        // DO NOT CHANGE !!!
+        match self {
+            AddressBytes::P2PK65(_) => 0,
+            AddressBytes::P2PK33(_) => 1,
+            AddressBytes::P2PKH(_) => 2,
+            AddressBytes::P2SH(_) => 3,
+            AddressBytes::P2WPKH(_) => 4,
+            AddressBytes::P2WSH(_) => 5,
+            AddressBytes::P2TR(_) => 6,
+            AddressBytes::P2A(_) => 7,
+        }
+    }
 }
 
 impl fmt::Display for AddressBytes {

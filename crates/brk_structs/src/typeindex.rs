@@ -26,6 +26,7 @@ use crate::copy_first_4bytes;
     Deserialize,
     StoredCompressed,
     JsonSchema,
+    Hash,
 )]
 pub struct TypeIndex(u32);
 
@@ -46,6 +47,14 @@ impl TypeIndex {
         let i = *self;
         self.increment();
         i
+    }
+
+    pub fn to_be_bytes(&self) -> [u8; 4] {
+        self.0.to_be_bytes()
+    }
+
+    pub fn to_ne_bytes(&self) -> [u8; 4] {
+        self.0.to_ne_bytes()
     }
 }
 

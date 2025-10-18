@@ -19,8 +19,9 @@ use super::BlockHash;
     Immutable,
     IntoBytes,
     KnownLayout,
+    Hash,
 )]
-pub struct BlockHashPrefix([u8; 8]);
+pub struct BlockHashPrefix(u64);
 
 impl From<BlockHash> for BlockHashPrefix {
     fn from(value: BlockHash) -> Self {
@@ -30,7 +31,7 @@ impl From<BlockHash> for BlockHashPrefix {
 
 impl From<&BlockHash> for BlockHashPrefix {
     fn from(value: &BlockHash) -> Self {
-        Self(copy_first_8bytes(&value[..]).unwrap())
+        Self(u64::from_ne_bytes(copy_first_8bytes(&value[..]).unwrap()))
     }
 }
 

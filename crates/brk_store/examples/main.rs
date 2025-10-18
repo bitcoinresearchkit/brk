@@ -5,7 +5,7 @@ use brk_error::Result;
 fn main() -> Result<()> {
     let p = Path::new("./examples/_fjall");
 
-    let _keyspace = brk_store::open_keyspace(p)?;
+    // let _keyspace = brk_store::open_keyspace(p)?;
 
     // let mut store: Store<usize, usize> =
     //     brk_store::Store::import(&keyspace, p, "n", Version::ZERO, None)?;
