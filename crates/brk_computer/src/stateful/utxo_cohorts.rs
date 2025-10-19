@@ -1514,13 +1514,13 @@ impl Vecs {
         let chain_state_len = chain_state.len();
 
         height_to_sent.into_iter().for_each(|(height, sent)| {
-            chain_state[height.unwrap_to_usize()].supply -= &sent.spendable_supply;
+            chain_state[height.to_usize()].supply -= &sent.spendable_supply;
 
-            let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
+            let block_state = chain_state.get(height.to_usize()).unwrap();
 
             let prev_price = block_state.price;
 
-            let blocks_old = chain_state_len - 1 - height.unwrap_to_usize();
+            let blocks_old = chain_state_len - 1 - height.to_usize();
 
             let days_old = last_timestamp.difference_in_days_between(block_state.timestamp);
             let days_old_float =

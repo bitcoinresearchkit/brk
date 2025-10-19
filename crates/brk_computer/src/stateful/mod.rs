@@ -11,10 +11,10 @@ use brk_grouper::{ByAddressType, ByAnyAddress, Filtered};
 use brk_indexer::Indexer;
 use brk_structs::{
     AnyAddressDataIndexEnum, AnyAddressIndex, CheckedSub, DateIndex, Dollars, EmptyAddressData,
-    EmptyAddressIndex, Height, TxInIndex, LoadedAddressData, LoadedAddressIndex, TxOutIndex,
-    OutputType, P2AAddressIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64,
-    Timestamp, TypeIndex, Version,
+    EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, OutputType, P2AAddressIndex,
+    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64, Timestamp, TxInIndex, TxOutIndex,
+    TypeIndex, Version,
 };
 use brk_traversable::Traversable;
 use log::info;
@@ -201,7 +201,7 @@ impl Vecs {
                         .unwrap()
                         .boxed_clone(),
                     |height: Height, iter| {
-                        iter.next_at(height.unwrap_to_usize()).map(|(_, value)| {
+                        iter.next_at(height.to_usize()).map(|(_, value)| {
                             let d: Dollars = value.into_owned();
                             d
                         })
@@ -874,7 +874,7 @@ impl Vecs {
                     .unwrap_or_default(),
             );
 
-            (height.unwrap_to_usize()..height_to_date_fixed.len())
+            (height.to_usize()..height_to_date_fixed.len())
                 .map(Height::from)
                 .try_for_each(|_height| -> Result<()> {
                     height = _height;
@@ -895,10 +895,10 @@ impl Vecs {
                         .map(|i| *i.unwrap_get_inner(height));
                     let first_txoutindex = height_to_first_txoutindex_iter
                         .unwrap_get_inner(height)
-                        .unwrap_to_usize();
+                        .to_usize();
                     let first_txinindex = height_to_first_txinindex_iter
                         .unwrap_get_inner(height)
-                        .unwrap_to_usize();
+                        .to_usize();
                     let output_count = height_to_output_count_iter.unwrap_get_inner(height);
                     let input_count = height_to_input_count_iter.unwrap_get_inner(height);
 
@@ -1268,7 +1268,7 @@ impl Vecs {
                             )
                         })?;
 
-                    if height != last_height && height != Height::ZERO && height.unwrap_to_usize() % 10_000 == 0 {
+                    if height != last_height && height != Height::ZERO && height.to_usize() % 10_000 == 0 {
                         let _lock = exit.lock();
 
                         addresstypeindex_to_anyaddressindex_reader_opt.take();
@@ -1967,13 +1967,13 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
         self.0.into_iter().try_for_each(|(prev_height, v)| {
             let prev_price = height_to_price_close_vec
                 .as_ref()
-                .map(|v| **v.get(prev_height.unwrap_to_usize()).unwrap());
+                .map(|v| **v.get(prev_height.to_usize()).unwrap());
 
             let prev_timestamp = *height_to_timestamp_fixed_vec
-                .get(prev_height.unwrap_to_usize())
+                .get(prev_height.to_usize())
                 .unwrap();
 
-            let blocks_old = height.unwrap_to_usize() - prev_height.unwrap_to_usize();
+            let blocks_old = height.to_usize() - prev_height.to_usize();
 
             let days_old = timestamp.difference_in_days_between_float(prev_timestamp);
 

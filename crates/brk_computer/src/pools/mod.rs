@@ -4,7 +4,7 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
-use brk_structs::{Address, AddressBytes, Height, TxOutIndex, OutputType, PoolId, Pools, pools};
+use brk_structs::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
 use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::{
@@ -122,8 +122,7 @@ impl Vecs {
         )?;
 
         let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter();
-        let mut txindex_to_first_txoutindex_iter =
-            indexer.vecs.txindex_to_first_txoutindex.iter();
+        let mut txindex_to_first_txoutindex_iter = indexer.vecs.txindex_to_first_txoutindex.iter();
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
         let mut txoutindex_to_outputtype_iter = indexer.vecs.txoutindex_to_outputtype.iter();
         let mut txoutindex_to_typeindex_iter = indexer.vecs.txoutindex_to_typeindex.iter();
@@ -147,7 +146,7 @@ impl Vecs {
 
         let min = starting_indexes
             .height
-            .unwrap_to_usize()
+            .to_usize()
             .min(self.height_to_pool.len());
 
         indexer
@@ -163,8 +162,7 @@ impl Vecs {
                 let pool = (*txoutindex..(*txoutindex + *outputcount))
                     .map(TxOutIndex::from)
                     .find_map(|txoutindex| {
-                        let outputtype =
-                            txoutindex_to_outputtype_iter.unwrap_get_inner(txoutindex);
+                        let outputtype = txoutindex_to_outputtype_iter.unwrap_get_inner(txoutindex);
                         let typeindex = txoutindex_to_typeindex_iter.unwrap_get_inner(txoutindex);
 
                         match outputtype {

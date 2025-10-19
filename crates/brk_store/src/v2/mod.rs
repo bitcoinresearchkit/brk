@@ -1,21 +1,21 @@
-use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, path::Path, sync::Arc};
+use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, mem, path::Path, sync::Arc};
 
 use brk_error::Result;
 use brk_structs::{Height, Version};
-use byteview_v6::ByteView;
-use fjall_v2::{
+use byteview6::ByteView;
+use fjall2::{
     PartitionCreateOptions, PersistMode, ReadTransaction, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
+use parking_lot::RwLock;
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use crate::any::AnyStore;
 
 mod meta;
 
 use log::info;
 use meta::*;
-use parking_lot::RwLock;
-use rustc_hash::{FxHashMap, FxHashSet};
-
-use crate::any::AnyStore;
 
 #[derive(Clone)]
 pub struct StoreV2<Key, Value> {
@@ -32,8 +32,8 @@ pub struct StoreV2<Key, Value> {
 // const CHECK_COLLISIONS: bool = true;
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
-pub fn open_keyspace(path: &Path) -> fjall_v2::Result<TransactionalKeyspace> {
-    fjall_v2::Config::new(path.join("fjall"))
+pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
+    fjall2::Config::new(path.join("fjall"))
         // .cache_size(1024 * 1024 * 1024) // for tests only
         .max_write_buffer_size(32 * 1024 * 1024)
         .open_transactional()
@@ -97,6 +97,7 @@ where
         })
     }
 
+    #[inline]
     pub fn get<'a>(&'a self, key: &'a K) -> Result<Option<Cow<'a, V>>>
     where
         ByteView: From<&'a K>,
@@ -135,33 +136,26 @@ where
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
 
+    #[inline]
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
-            if !self.dels.is_empty() {
-                self.dels.remove(&key);
-                // unreachable!("Shouldn't reach this");
-            }
+            let _ = self.dels.is_empty() || self.dels.remove(&key);
             self.puts.insert(key, value);
         }
     }
 
+    #[inline]
     pub fn remove(&mut self, key: K) {
-        // if self.is_empty()? {
-        //     return Ok(());
-        // }
-
-        // if !self.puts.is_empty() {
-        //     unreachable!("Shouldn't reach this");
-        // }
-
-        if (self.puts.is_empty() || self.puts.remove(&key).is_none()) && !self.dels.insert(key) {
-            dbg!(&self.meta.path());
-            unreachable!();
+        // Hot path: key was recently inserted
+        if self.puts.remove(&key).is_some() {
+            return;
         }
 
-        // Ok(())
+        let newly_inserted = self.dels.insert(key);
+        debug_assert!(newly_inserted, "Double deletion at {:?}", self.meta.path());
     }
 
+    #[inline]
     pub fn remove_if_needed(&mut self, key: K, height: Height) {
         if self.needs(height) {
             self.remove(key)
@@ -181,10 +175,12 @@ where
     //     });
     // }
 
+    #[inline]
     fn has(&self, height: Height) -> bool {
         self.meta.has(height)
     }
 
+    #[inline]
     fn needs(&self, height: Height) -> bool {
         self.meta.needs(height)
     }
@@ -217,16 +213,14 @@ where
 
         let partition = partition.as_ref().unwrap();
 
-        let mut dels = self.dels.drain().collect::<Vec<_>>();
-        dels.sort_unstable();
-        dels.into_iter()
-            .for_each(|key| wtx.remove(partition, ByteView::from(key)));
+        wtx.remove_batch(partition, self.dels.drain().map(ByteView::from));
 
-        let mut puts = self.puts.drain().collect::<Vec<_>>();
-        puts.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-        puts.into_iter().for_each(|(key, value)| {
-            wtx.insert(partition, ByteView::from(key), ByteView::from(value))
-        });
+        wtx.insert_batch(
+            partition,
+            self.puts
+                .drain()
+                .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
+        );
 
         wtx.commit()?;
 

@@ -613,7 +613,7 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "fjall 2.11.2",
+ "fjall 2.11.3",
  "fjall 3.0.0-pre.1",
  "jiff",
  "minreq",
@@ -658,7 +658,7 @@ dependencies = [
  "brk_store",
  "brk_structs",
  "brk_traversable",
- "fjall 2.11.2",
+ "fjall 2.11.3",
  "fjall 3.0.0-pre.1",
  "log",
  "rayon",
@@ -816,7 +816,7 @@ dependencies = [
  "brk_structs",
  "byteview 0.6.1",
  "byteview 0.8.0",
- "fjall 2.11.2",
+ "fjall 2.11.3",
  "fjall 3.0.0-pre.1",
  "log",
  "parking_lot 0.12.5",
@@ -1579,9 +1579,7 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "fjall"
-version = "2.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b25ad44cd4360a0448a9b5a0a6f1c7a621101cca4578706d43c9a821418aebc"
+version = "2.11.3"
 dependencies = [
  "byteorder",
  "byteview 0.6.1",
@@ -3216,9 +3214,9 @@ checksum = "df94ce210e5bc13cb6651479fa48d14f601d9858cfe0467f43ae157023b938d3"
 
 [[package]]
 name = "pco"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab068b64f2c6f074cbdcafc80ebd83a27da92a3848deba2fabc21eba6691fc65"
+checksum = "daea1197f2969fab4d5c6620eade5d46c98a8e9b04ad2bc3725fc5dfc4eb8a49"
 dependencies = [
  "better_io",
  "dtype_dispatch",

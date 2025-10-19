@@ -1589,7 +1589,7 @@ impl Vecs {
                     self.indexes_to_price_ath.dateindex.as_ref().unwrap(),
                     |(i, ath, slf)| {
                         if prev.is_none() {
-                            let i = i.unwrap_to_usize();
+                            let i = i.to_usize();
                             prev.replace(if i > 0 {
                                 slf.into_iter().unwrap_get_inner_(i - 1)
                             } else {
@@ -1620,7 +1620,7 @@ impl Vecs {
                         .unwrap(),
                     |(i, days, slf)| {
                         if prev.is_none() {
-                            let i = i.unwrap_to_usize();
+                            let i = i.to_usize();
                             prev.replace(if i > 0 {
                                 slf.into_iter().unwrap_get_inner_(i - 1)
                             } else {

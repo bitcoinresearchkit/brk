@@ -7,7 +7,7 @@ use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
     TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
 };
-use fjall_v2::{PersistMode, TransactionalKeyspace};
+use fjall2::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -196,7 +196,7 @@ impl Stores {
                     self.blockhashprefix_to_height.remove(blockhashprefix);
                 });
 
-            (starting_indexes.height.unwrap_to_usize()..vecs.height_to_blockhash.len())
+            (starting_indexes.height.to_usize()..vecs.height_to_blockhash.len())
                 .map(Height::from)
                 .for_each(|h| {
                     self.height_to_coinbase_tag.remove(h);

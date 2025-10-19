@@ -477,8 +477,8 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             .min(starting_indexes.dateindex);
 
         let mut sorted = source.collect_range(
-            Some(min_date.unwrap_to_usize()),
-            Some(starting_dateindex.unwrap_to_usize()),
+            Some(min_date.to_usize()),
+            Some(starting_dateindex.to_usize()),
         );
 
         sorted.sort_unstable();
@@ -551,8 +551,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
                     let avg = sma_iter.unwrap_get_inner(index);
 
-                    let population =
-                        index.checked_sub(min_date).unwrap().unwrap_to_usize() as f32 + 1.0;
+                    let population = index.checked_sub(min_date).unwrap().to_usize() as f32 + 1.0;
 
                     let sd = StoredF32::from(
                         (sorted.iter().map(|v| (**v - *avg).powi(2)).sum::<f32>() / population)

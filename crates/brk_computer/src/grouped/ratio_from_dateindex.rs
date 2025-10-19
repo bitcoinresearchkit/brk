@@ -384,8 +384,8 @@ impl ComputedRatioVecsFromDateIndex {
             .min(starting_indexes.dateindex);
 
         let mut sorted = self.ratio.dateindex.as_ref().unwrap().collect_range(
-            Some(min_ratio_date.unwrap_to_usize()),
-            Some(starting_dateindex.unwrap_to_usize()),
+            Some(min_ratio_date.to_usize()),
+            Some(starting_dateindex.to_usize()),
         );
 
         sorted.sort_unstable();

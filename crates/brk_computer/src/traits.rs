@@ -42,7 +42,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
             let price = *closes.into_owned();
-            let i_usize = i.unwrap_to_usize();
+            let i_usize = i.to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
                     prev.replace(Sats::ZERO);
@@ -92,7 +92,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
             let price = *closes.into_owned();
-            let i_usize = i.unwrap_to_usize();
+            let i_usize = i.to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
                     prev.replace(Sats::ZERO);
@@ -157,8 +157,8 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
             if i > first_price_date {
                 avg_price = DCA_AMOUNT
                     * len
-                        .min(i.unwrap_to_usize() + 1)
-                        .min(i.checked_sub(first_price_date).unwrap().unwrap_to_usize() + 1)
+                        .min(i.to_usize() + 1)
+                        .min(i.checked_sub(first_price_date).unwrap().to_usize() + 1)
                     / Bitcoin::from(stack);
             }
             self.forced_push_at(i, avg_price, exit)
@@ -182,14 +182,13 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         let index = max_from.min(DateIndex::from(self.len()));
 
-        let from_usize = from.unwrap_to_usize();
+        let from_usize = from.to_usize();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
             let stack = stack.into_owned();
             let mut avg_price = Dollars::from(f64::NAN);
             if i >= from {
-                avg_price =
-                    DCA_AMOUNT * (i.unwrap_to_usize() + 1 - from_usize) / Bitcoin::from(stack);
+                avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from_usize) / Bitcoin::from(stack);
             }
             self.forced_push_at(i, avg_price, exit)
         })?;

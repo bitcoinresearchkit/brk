@@ -7,7 +7,7 @@ use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
     TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
 };
-use fjall_v3::{PersistMode, TxDatabase};
+use fjall3::{PersistMode, TxDatabase};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -136,9 +136,11 @@ impl Stores {
         )
         .try_for_each(|store| store.commit(height))?;
 
-        self.database
-            .persist(PersistMode::SyncAll)
-            .map_err(|e| e.into())
+        Ok(())
+
+        // self.database
+        //     .persist(PersistMode::SyncAll)
+        //     .map_err(|e| e.into())
     }
 
     fn iter_any_store(&self) -> impl Iterator<Item = &dyn AnyStore> {
@@ -196,7 +198,7 @@ impl Stores {
                     self.blockhashprefix_to_height.remove(blockhashprefix);
                 });
 
-            (starting_indexes.height.unwrap_to_usize()..vecs.height_to_blockhash.len())
+            (starting_indexes.height.to_usize()..vecs.height_to_blockhash.len())
                 .map(Height::from)
                 .for_each(|h| {
                     self.height_to_coinbase_tag.remove(h);

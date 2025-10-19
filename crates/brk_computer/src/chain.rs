@@ -5,8 +5,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
     Bitcoin, CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
-    Height, TxInIndex, MonthIndex, ONE_DAY_IN_SEC_F64, TxOutIndex, QuarterIndex, Sats,
-    SemesterIndex, StoredBool, StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxIndex,
+    Height, MonthIndex, ONE_DAY_IN_SEC_F64, QuarterIndex, Sats, SemesterIndex, StoredBool,
+    StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex, TxOutIndex,
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use brk_traversable::Traversable;
@@ -98,8 +98,7 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredU64>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
-    pub txinindex_to_value:
-        LazyVecFrom2<TxInIndex, Sats, TxInIndex, TxOutIndex, TxOutIndex, Sats>,
+    pub txinindex_to_value: LazyVecFrom2<TxInIndex, Sats, TxInIndex, TxOutIndex, TxOutIndex, Sats>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,
@@ -165,21 +164,21 @@ impl Vecs {
             indexer.vecs.txinindex_to_txoutindex.boxed_clone(),
             indexer.vecs.txoutindex_to_value.boxed_clone(),
             |index: TxInIndex, txinindex_to_txoutindex_iter, txoutindex_to_value_iter| {
-                txinindex_to_txoutindex_iter
-                    .next_at(index.unwrap_to_usize())
-                    .map(|(txinindex, txoutindex)| {
+                txinindex_to_txoutindex_iter.next_at(index.to_usize()).map(
+                    |(txinindex, txoutindex)| {
                         let txoutindex = txoutindex.into_owned();
                         if txoutindex == TxOutIndex::COINBASE {
                             Sats::ZERO
                         } else if let Some((_, value)) =
-                            txoutindex_to_value_iter.next_at(txoutindex.unwrap_to_usize())
+                            txoutindex_to_value_iter.next_at(txoutindex.to_usize())
                         {
                             value.into_owned()
                         } else {
                             dbg!(txinindex, txoutindex);
                             panic!()
                         }
-                    })
+                    },
+                )
             },
         );
 
@@ -189,7 +188,7 @@ impl Vecs {
             indexer.vecs.txindex_to_base_size.boxed_clone(),
             indexer.vecs.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
-                let index = index.unwrap_to_usize();
+                let index = index.to_usize();
                 txindex_to_base_size_iter
                     .next_at(index)
                     .map(|(_, base_size)| {
@@ -213,7 +212,7 @@ impl Vecs {
             version + Version::ZERO,
             txindex_to_weight.boxed_clone(),
             |index: TxIndex, iter| {
-                let index = index.unwrap_to_usize();
+                let index = index.to_usize();
                 iter.next_at(index).map(|(_, weight)| {
                     StoredU64::from(
                         bitcoin::Weight::from(weight.into_owned()).to_vbytes_ceil() as usize
@@ -229,11 +228,11 @@ impl Vecs {
             indexer.vecs.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
                 txindex_to_height_iter
-                    .next_at(index.unwrap_to_usize())
+                    .next_at(index.to_usize())
                     .map(|(_, height)| {
                         let height = height.into_owned();
                         let txindex = height_to_first_txindex_iter
-                            .next_at(height.unwrap_to_usize())
+                            .next_at(height.to_usize())
                             .unwrap()
                             .1
                             .into_owned();
@@ -252,7 +251,7 @@ impl Vecs {
              txindex_to_first_txinindex_iter,
              txindex_to_input_count_iter,
              txinindex_to_value_iter| {
-                let txindex = index.unwrap_to_usize();
+                let txindex = index.to_usize();
                 txindex_to_first_txinindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
@@ -299,7 +298,7 @@ impl Vecs {
              txindex_to_first_txoutindex_iter,
              txindex_to_output_count_iter,
              txoutindex_to_value_iter| {
-                let txindex = index.unwrap_to_usize();
+                let txindex = index.to_usize();
                 txindex_to_first_txoutindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
@@ -1539,14 +1538,15 @@ impl Vecs {
                     |(height, txindex, ..)| {
                         let first_txoutindex = txindex_to_first_txoutindex_iter
                             .unwrap_get_inner(txindex)
-                            .unwrap_to_usize();
+                            .to_usize();
                         let output_count = txindex_to_output_count_iter.unwrap_get_inner(txindex);
                         let mut sats = Sats::ZERO;
-                        (first_txoutindex..first_txoutindex + usize::from(output_count))
-                            .for_each(|txoutindex| {
+                        (first_txoutindex..first_txoutindex + usize::from(output_count)).for_each(
+                            |txoutindex| {
                                 sats += txoutindex_to_value_iter
                                     .unwrap_get_inner(TxOutIndex::from(txoutindex));
-                            });
+                            },
+                        );
                         (height, sats)
                     },
                     exit,
@@ -1624,8 +1624,7 @@ impl Vecs {
                     self.indexes_to_subsidy.sats.height.as_ref().unwrap(),
                     |(height, subsidy, ..)| {
                         let halving = HalvingEpoch::from(height);
-                        let expected =
-                            Sats::FIFTY_BTC / 2_usize.pow(halving.unwrap_to_usize() as u32);
+                        let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
                         (height, expected.checked_sub(subsidy).unwrap())
                     },
                     exit,
