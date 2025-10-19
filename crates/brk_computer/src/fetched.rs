@@ -105,7 +105,7 @@ impl Vecs {
             .try_for_each(|(i, v)| -> Result<()> {
                 let d = v.into_owned();
                 if prev.is_none() {
-                    let i = i.unwrap_to_usize();
+                    let i = i.to_usize();
                     prev.replace(if i > 0 {
                         self.dateindex_to_price_ohlc_in_cents
                             .into_iter()
@@ -115,8 +115,7 @@ impl Vecs {
                     });
                 }
 
-                let ohlc = if i.unwrap_to_usize() + 100
-                    >= self.dateindex_to_price_ohlc_in_cents.len()
+                let ohlc = if i.to_usize() + 100 >= self.dateindex_to_price_ohlc_in_cents.len()
                     && let Ok(mut ohlc) = self.fetcher.get_date(d)
                 {
                     let prev_open = *prev.as_ref().unwrap().close;

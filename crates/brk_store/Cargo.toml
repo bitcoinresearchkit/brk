@@ -14,10 +14,10 @@ build = "build.rs"
 [dependencies]
 brk_error = { workspace = true }
 brk_structs = { workspace = true }
-byteview_v6 = { version = "=0.6.1", package = "byteview" }
-byteview_v8 = { version = "~0.8.0", package = "byteview" }
-fjall_v2 = { workspace = true }
-fjall_v3 = { workspace = true }
+byteview6 = { version = "=0.6.1", package = "byteview" }
+byteview8 = { version = "~0.8.0", package = "byteview" }
+fjall2 = { workspace = true }
+fjall3 = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
 rustc-hash = { workspace = true }

@@ -12,8 +12,8 @@ pub enum Error {
     IO(io::Error),
     BitcoinRPC(bitcoincore_rpc::Error),
     Jiff(jiff::Error),
-    FjallV2(fjall_v2::Error),
-    FjallV3(fjall_v3::Error),
+    FjallV2(fjall2::Error),
+    FjallV3(fjall3::Error),
     VecDB(vecdb::Error),
     SeqDB(vecdb::SeqDBError),
     Minreq(minreq::Error),
@@ -107,14 +107,14 @@ impl From<jiff::Error> for Error {
     }
 }
 
-impl From<fjall_v3::Error> for Error {
-    fn from(value: fjall_v3::Error) -> Self {
+impl From<fjall3::Error> for Error {
+    fn from(value: fjall3::Error) -> Self {
         Self::FjallV3(value)
     }
 }
 
-impl From<fjall_v2::Error> for Error {
-    fn from(value: fjall_v2::Error) -> Self {
+impl From<fjall2::Error> for Error {
+    fn from(value: fjall2::Error) -> Self {
         Self::FjallV2(value)
     }
 }

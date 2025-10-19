@@ -4,11 +4,11 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
-    TxInIndex, MonthIndex, OpReturnIndex, TxOutIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
-    P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex,
-    P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
-    P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64,
-    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
+    MonthIndex, OpReturnIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex,
+    P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex,
+    P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex,
+    P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredU64, Timestamp, TxInIndex, TxIndex,
+    TxOutIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use brk_traversable::Traversable;
 use vecdb::{
@@ -130,7 +130,7 @@ impl Vecs {
             indexer.vecs.txindex_to_first_txinindex.boxed_clone(),
             indexer.vecs.txinindex_to_txoutindex.boxed_clone(),
             |index: TxIndex, txindex_to_first_txinindex_iter, txinindex_to_txoutindex_iter| {
-                let txindex = index.unwrap_to_usize();
+                let txindex = index.to_usize();
                 txindex_to_first_txinindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
@@ -150,7 +150,7 @@ impl Vecs {
             indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
             indexer.vecs.txoutindex_to_value.boxed_clone(),
             |index: TxIndex, txindex_to_first_txoutindex_iter, txoutindex_to_value_iter| {
-                let txindex = index.unwrap_to_usize();
+                let txindex = index.to_usize();
                 txindex_to_first_txoutindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {

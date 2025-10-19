@@ -352,7 +352,7 @@ impl Vecs {
                     self.indexes_to_blocks_mined.dateindex.unwrap_cumulative(),
                     |(i, sum, cumulative, slf)| {
                         if prev.is_none() {
-                            let i = i.unwrap_to_usize();
+                            let i = i.to_usize();
                             prev.replace(if i > 0 {
                                 slf.into_iter().unwrap_get_inner_(i - 1)
                             } else {

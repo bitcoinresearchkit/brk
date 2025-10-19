@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_structs::Version;
-use fjall_v3::{PersistMode, TxDatabase, TxKeyspace};
+use fjall3::{PersistMode, TxDatabase, TxKeyspace};
 
 use super::Height;
 
@@ -77,12 +77,15 @@ impl StoreMeta {
         path.join("version")
     }
 
+    #[inline]
     pub fn height(&self) -> Option<Height> {
         self.height
     }
+    #[inline]
     pub fn needs(&self, height: Height) -> bool {
         self.height.is_none_or(|self_height| height > self_height)
     }
+    #[inline]
     pub fn has(&self, height: Height) -> bool {
         !self.needs(height)
     }

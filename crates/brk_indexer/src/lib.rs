@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, thread, time::Instant};
+use std::{path::Path, str::FromStr, thread, time::Instant};
 
-use bitcoin::{Transaction, TxIn, TxOut};
+use bitcoin::{TxIn, TxOut};
 use brk_error::{Error, Result};
 use brk_store::AnyStore;
 use brk_structs::{
@@ -170,7 +170,7 @@ impl Indexer {
                 .push_if_needed(height, block.weight().into())?;
 
             // let i = Instant::now();
-            let txid_prefix_and_txid_and_block_txindex_and_prev_txindex = block
+            let txs = block
                 .txdata
                 .par_iter()
                 .enumerate()
@@ -189,12 +189,20 @@ impl Indexer {
                         };
 
                     Ok((
+                        idxs.txindex + TxIndex::from(index),
+                        tx,
+                        txid,
                         txid_prefix,
-                        (tx, txid, TxIndex::from(index), prev_txindex_opt),
+                        prev_txindex_opt,
                     ))
                 })
-                .collect::<Result<FxHashMap<_, _>>>()?;
+                .collect::<Result<Vec<_>>>()?;
             // println!("txid_prefix_and_txid_and_... = : {:?}", i.elapsed());
+
+            let txid_prefix_to_txindex = txs
+                .iter()
+                .map(|(txindex, _, _, prefix, _)| (*prefix, txindex))
+                .collect::<FxHashMap<_, _>>();
 
             // let i = Instant::now();
             let inputs = block
@@ -238,15 +246,12 @@ impl Indexer {
                     } else {
                         let vout = Vout::from(outpoint.vout);
 
-                        let block_txindex = txid_prefix_and_txid_and_block_txindex_and_prev_txindex
+                        let prev_txindex = **txid_prefix_to_txindex
                             .get(&txid_prefix)
                             .ok_or(Error::Str("txid should be in same block")).inspect_err(|_| {
-                                dbg!(&txid_prefix_and_txid_and_block_txindex_and_prev_txindex);
+                                dbg!(&txs);
                                 // panic!();
-                            })?
-                            .2;
-
-                        let prev_txindex = idxs.txindex + block_txindex;
+                            })?;
 
                         let outpoint = OutPoint::new(prev_txindex, vout);
 
@@ -255,7 +260,7 @@ impl Indexer {
 
                     let vout = Vout::from(outpoint.vout);
 
-                    let txoutindex = vecs.txindex_to_first_txoutindex.get_or_read(prev_txindex, &readers.txindex_to_first_txoutindex)?
+                    let txoutindex = vecs.txindex_to_first_txoutindex.get_pushed_or_read(prev_txindex, &readers.txindex_to_first_txoutindex)?
                         .ok_or(Error::Str("Expect txoutindex to not be none"))
                         .inspect_err(|_| {
                             dbg!(outpoint.txid, prev_txindex, vout);
@@ -264,7 +269,7 @@ impl Indexer {
 
                     let outpoint = OutPoint::new(prev_txindex, vout);
 
-                    let outputtype = vecs.txoutindex_to_outputtype.get_or_read(txoutindex, &readers.txoutindex_to_outputtype)?
+                    let outputtype = vecs.txoutindex_to_outputtype.get_pushed_or_read(txoutindex, &readers.txoutindex_to_outputtype)?
                         .ok_or(Error::Str("Expect outputtype to not be none"))?.into_owned();
 
                     let mut tuple = (
@@ -279,7 +284,7 @@ impl Indexer {
                     if outputtype.is_address() {
                         let typeindex = vecs
                             .txoutindex_to_typeindex
-                            .get_or_read(txoutindex, &readers.txoutindex_to_typeindex)?
+                            .get_pushed_or_read(txoutindex, &readers.txoutindex_to_typeindex)?
                             .ok_or(Error::Str("Expect typeindex to not be none"))?.into_owned();
                         tuple.3 = Some((outputtype, typeindex));
                     }
@@ -369,56 +374,56 @@ impl Indexer {
                             let prev_addressbytes_opt = match outputtype {
                                 OutputType::P2PK65 => vecs
                                     .p2pk65addressindex_to_p2pk65bytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pk65addressindex_to_p2pk65bytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2PK33 => vecs
                                     .p2pk33addressindex_to_p2pk33bytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pk33addressindex_to_p2pk33bytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2PKH => vecs
                                     .p2pkhaddressindex_to_p2pkhbytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pkhaddressindex_to_p2pkhbytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2SH => vecs
                                     .p2shaddressindex_to_p2shbytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2shaddressindex_to_p2shbytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2WPKH => vecs
                                     .p2wpkhaddressindex_to_p2wpkhbytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wpkhaddressindex_to_p2wpkhbytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2WSH => vecs
                                     .p2wshaddressindex_to_p2wshbytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wshaddressindex_to_p2wshbytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2TR => vecs
                                     .p2traddressindex_to_p2trbytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2traddressindex_to_p2trbytes,
                                     )?
                                     .map(|v| AddressBytes::from(v.into_owned())),
                                 OutputType::P2A => vecs
                                     .p2aaddressindex_to_p2abytes
-                                    .get_or_read(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2aaddressindex_to_p2abytes,
                                     )?
@@ -696,78 +701,67 @@ impl Indexer {
                 })?;
             // println!("txinindex_and_txindata.into_iter(): {:?}", i.elapsed());
 
-            let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
-
             // let i = Instant::now();
-            let txindex_to_tx_and_txid = txid_prefix_and_txid_and_block_txindex_and_prev_txindex
-                .into_iter()
-                .map(
-                    |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> Result<(TxIndex, (&Transaction, Txid))> {
-                        let txindex = idxs.txindex + index;
+            if check_collisions {
+                let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
+                txs.iter()
+                    .try_for_each(|(txindex, _, _, _, prev_txindex_opt)| -> Result<()> {
+                        let Some(prev_txindex) = prev_txindex_opt else {
+                            return Ok(());
+                        };
 
-                        let tuple = (txindex, (tx, txid));
-
-                        match prev_txindex_opt {
-                            None => {
-                                stores
-                                    .txidprefix_to_txindex
-                                    .insert_if_needed(txid_prefix, txindex, height);
-                            }
-                            Some(prev_txindex) => {
-                                // In case if we start at an already parsed height
-                                if txindex == prev_txindex {
-                                    return Ok(tuple);
-                                }
-
-                                if !check_collisions {
-                                    return Ok(tuple);
-                                }
-
-                                let len = vecs.txindex_to_txid.len();
-                                // Ok if `get` is not par as should happen only twice
-                                let prev_txid = txindex_to_txid_iter
-                                    .get(prev_txindex)
-                                    .ok_or(Error::Str("To have txid for txindex"))
-                                    .inspect_err(|_| {
-                                        dbg!(txindex, len);
-                                    })?;
-
-                                let prev_txid = prev_txid.as_ref();
-
-                                // If another Txid needs to be added to the list
-                                // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
-                                let only_known_dup_txids = [
-                                    bitcoin::Txid::from_str(
-                                        "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                                    )
-                                    .unwrap()
-                                    .into(),
-                                    bitcoin::Txid::from_str(
-                                        "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                                    )
-                                    .unwrap()
-                                    .into(),
-                                ];
-
-                                let is_dup = only_known_dup_txids.contains(prev_txid);
-
-                                if !is_dup {
-                                    dbg!(height, txindex, prev_txid, prev_txindex);
-                                    return Err(Error::Str("Expect none"));
-                                }
-                            }
+                        // In case if we start at an already parsed height
+                        if txindex == prev_txindex {
+                            return Ok(());
                         }
 
-                        Ok(tuple)
-                    },
-                ).collect::<Result<BTreeMap<_, _>>>()?;
+                        let len = vecs.txindex_to_txid.len();
+                        // Ok if `get` is not par as should happen only twice
+                        let prev_txid = txindex_to_txid_iter
+                            .get(*prev_txindex)
+                            .ok_or(Error::Str("To have txid for txindex"))
+                            .inspect_err(|_| {
+                                dbg!(txindex, len);
+                            })?;
+
+                        let prev_txid = prev_txid.as_ref();
+
+                        // If another Txid needs to be added to the list
+                        // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
+                        let only_known_dup_txids = [
+                            bitcoin::Txid::from_str(
+                                "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
+                            )
+                            .unwrap()
+                            .into(),
+                            bitcoin::Txid::from_str(
+                                "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
+                            )
+                            .unwrap()
+                            .into(),
+                        ];
+
+                        let is_dup = only_known_dup_txids.contains(prev_txid);
+
+                        if !is_dup {
+                            dbg!(height, txindex, prev_txid, prev_txindex);
+                            return Err(Error::Str("Expect none"));
+                        }
+
+                        Ok(())
+                    })?;
+            }
             // println!("txindex_to_tx_and_txid = : {:?}", i.elapsed());
 
-            drop(txindex_to_txid_iter);
-
             // let i = Instant::now();
-            txindex_to_tx_and_txid.into_iter().try_for_each(
-                |(txindex, (tx, txid))| -> Result<()> {
+            txs.into_iter().try_for_each(
+                |(txindex, tx, txid, txid_prefix, prev_txindex_opt)| -> Result<()> {
+                    if prev_txindex_opt.is_none() {
+                        stores
+                            .txidprefix_to_txindex
+                            .insert_if_needed(txid_prefix, txindex, height);
+                    }
+
                     vecs.txindex_to_txversion
                         .push_if_needed(txindex, tx.version.into())?;
                     vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
@@ -779,6 +773,7 @@ impl Indexer {
                         .push_if_needed(txindex, tx.total_size().into())?;
                     vecs.txindex_to_is_explicitly_rbf
                         .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
+
                     Ok(())
                 },
             )?;

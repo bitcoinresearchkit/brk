@@ -2,8 +2,8 @@ use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, path::Path, sync::Arc};
 
 use brk_error::Result;
 use brk_structs::{Height, Version};
-use byteview_v8::ByteView;
-use fjall_v3::{KeyspaceCreateOptions, PersistMode, ReadTransaction, TxDatabase, TxKeyspace};
+use byteview8::ByteView;
+use fjall3::{KeyspaceCreateOptions, PersistMode, TxDatabase, TxKeyspace};
 
 mod meta;
 
@@ -20,16 +20,16 @@ pub struct StoreV3<Key, Value> {
     name: &'static str,
     database: TxDatabase,
     keyspace: Arc<RwLock<Option<TxKeyspace>>>,
-    rtx: Arc<RwLock<Option<ReadTransaction>>>,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::new(3);
 
-pub fn open_database(path: &Path) -> fjall_v3::Result<TxDatabase> {
+pub fn open_database(path: &Path) -> fjall3::Result<TxDatabase> {
     TxDatabase::builder(path.join("fjall"))
         .cache_size(4 * 1024 * 1024 * 1024)
+        // .max_write_buffer_size(bytes)
         .open()
 }
 
@@ -43,7 +43,7 @@ where
         database
             .keyspace(
                 name,
-                KeyspaceCreateOptions::default().manual_journal_persist(true),
+                KeyspaceCreateOptions::default().max_memtable_size(8 * 1024 * 1024), // .manual_journal_persist(true),
             )
             .map_err(|e| e.into())
     }
@@ -69,19 +69,17 @@ where
             },
         )?;
 
-        let rtx = database.read_tx();
-
         Ok(Self {
             meta,
             name: Box::leak(Box::new(name.to_string())),
             database: database.clone(),
             keyspace: Arc::new(RwLock::new(Some(keyspace))),
-            rtx: Arc::new(RwLock::new(Some(rtx))),
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
         })
     }
 
+    #[inline]
     pub fn get<'a>(&'a self, key: &'a K) -> Result<Option<Cow<'a, V>>>
     where
         ByteView: From<&'a K>,
@@ -89,10 +87,8 @@ where
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self
-            .rtx
-            .read()
-            .as_ref()
-            .unwrap()
+            .database
+            .read_tx()
             .get(self.keyspace.read().as_ref().unwrap(), ByteView::from(key))?
         {
             Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
@@ -101,11 +97,10 @@ where
         }
     }
 
+    #[inline]
     pub fn is_empty(&self) -> Result<bool> {
-        self.rtx
-            .read()
-            .as_ref()
-            .unwrap()
+        self.database
+            .read_tx()
             .is_empty(self.keyspace.read().as_ref().unwrap())
             .map_err(|e| e.into())
     }
@@ -122,33 +117,26 @@ where
     //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
     // }
 
+    #[inline]
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
-            if !self.dels.is_empty() {
-                self.dels.remove(&key);
-                // unreachable!("Shouldn't reach this");
-            }
+            let _ = self.dels.is_empty() || self.dels.remove(&key);
             self.puts.insert(key, value);
         }
     }
 
+    #[inline]
     pub fn remove(&mut self, key: K) {
-        // if self.is_empty()? {
-        //     return Ok(());
-        // }
-
-        // if !self.puts.is_empty() {
-        //     unreachable!("Shouldn't reach this");
-        // }
-
-        if (self.puts.is_empty() || self.puts.remove(&key).is_none()) && !self.dels.insert(key) {
-            dbg!(&self.meta.path());
-            unreachable!();
+        // Hot path: key was recently inserted
+        if self.puts.remove(&key).is_some() {
+            return;
         }
 
-        // Ok(())
+        let newly_inserted = self.dels.insert(key);
+        debug_assert!(newly_inserted, "Double deletion at {:?}", self.meta.path());
     }
 
+    #[inline]
     pub fn remove_if_needed(&mut self, key: K, height: Height) {
         if self.needs(height) {
             self.remove(key)
@@ -168,10 +156,12 @@ where
     //     });
     // }
 
+    #[inline]
     fn has(&self, height: Height) -> bool {
         self.meta.has(height)
     }
 
+    #[inline]
     fn needs(&self, height: Height) -> bool {
         self.meta.needs(height)
     }
@@ -195,10 +185,6 @@ where
             return Ok(());
         }
 
-        let mut rtx = self.rtx.write();
-        let bad_rtx = rtx.take();
-        drop(bad_rtx);
-
         let mut wtx = self.database.write_tx();
 
         let keyspace = self.keyspace.read();
@@ -217,8 +203,6 @@ where
         });
 
         wtx.commit()?;
-
-        rtx.replace(self.database.read_tx());
 
         Ok(())
     }

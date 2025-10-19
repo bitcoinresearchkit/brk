@@ -68,7 +68,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         source
@@ -95,7 +95,7 @@ where
                     ),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         source
@@ -114,7 +114,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         S1I::inclusive_range_from(i, source.len())
@@ -133,7 +133,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         S1I::inclusive_range_from(i, source.len())
@@ -152,7 +152,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         let vec = S1I::inclusive_range_from(i, source.len())
@@ -182,7 +182,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         let vec = S1I::inclusive_range_from(i, source.len())
@@ -204,7 +204,7 @@ where
                     source_extra.cumulative.as_ref().unwrap().boxed_clone(),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.unwrap_to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.len() {
                             return None;
                         }
                         source

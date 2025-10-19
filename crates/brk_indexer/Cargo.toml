@@ -19,8 +19,8 @@ brk_reader = { workspace = true }
 brk_store = { workspace = true }
 brk_structs = { workspace = true }
 brk_traversable = { workspace = true }
-fjall_v2 = { workspace = true }
-fjall_v3 = { workspace = true }
+fjall2 = { workspace = true }
+fjall3 = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
