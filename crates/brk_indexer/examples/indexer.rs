@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Reader::new(blocks_dir, rpc);
+    let reader = Reader::new(blocks_dir, rpc);
 
     fs::create_dir_all(&outputs_dir)?;
 
@@ -47,7 +47,7 @@ fn main() -> Result<()> {
 
     loop {
         let i = Instant::now();
-        indexer.index(&parser, rpc, &exit, true)?;
+        indexer.index(&reader, rpc, &exit, true)?;
         dbg!(i.elapsed());
 
         sleep(Duration::from_secs(60));

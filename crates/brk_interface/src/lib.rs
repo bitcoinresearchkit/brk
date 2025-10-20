@@ -40,14 +40,14 @@ pub struct Interface<'a> {
 
 impl<'a> Interface<'a> {
     pub fn build(parser: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
-        let parser = parser.static_clone();
+        let reader = parser.static_clone();
         let indexer = indexer.static_clone();
         let computer = computer.static_clone();
         let vecs = Vecs::build(indexer, computer);
 
         Self {
             vecs,
-            parser,
+            parser: reader,
             indexer,
             computer,
         }

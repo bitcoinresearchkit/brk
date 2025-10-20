@@ -41,10 +41,12 @@ brk_fetcher = { version = "0.0.111", path = "crates/brk_fetcher" }
 brk_grouper = { version = "0.0.111", path = "crates/brk_grouper" }
 brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.111", path = "crates/brk_interface" }
+brk_iterator = { version = "0.0.111", path = "crates/brk_iterator" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.111", path = "crates/brk_mcp" }
 brk_monitor = { version = "0.0.111", path = "crates/brk_monitor" }
 brk_reader = { version = "0.0.111", path = "crates/brk_reader" }
+brk_rpc = { version = "0.0.111", path = "crates/brk_rpc" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
@@ -53,10 +55,11 @@ brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_d
 byteview = "=0.6.1"
 # byteview = "~0.8.0"
 derive_deref = "1.1.1"
-fjall2 = { path = "../fjall2", package = "fjall" }
+fjall2 = { version = "2.11.5", package = "brk_fjall" }
+# fjall2 = { path = "../fjall2", package = "brk_fjall" }
 # fjall2 = { version = "2.11.2", package = "fjall" }
 # fjall3 = { version = "=3.0.0-pre.0", package = "fjall" }
-fjall3 = { path = "../fjall3", package = "fjall" }
+# fjall3 = { path = "../fjall3", package = "fjall" }
 # fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "bb15057500dce3115d7644d268b9deeaa895b431", package = "fjall" }
 jiff = "0.2.15"
 log = "0.4.28"

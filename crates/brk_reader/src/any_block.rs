@@ -1,13 +1,13 @@
 use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable, io::Cursor};
 use bitcoincore_rpc::RpcApi;
 use brk_error::Result;
-use brk_structs::{BlkMetadata, Block, Height, ParsedBlock};
+use brk_structs::{BlkMetadata, Block, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex};
 
 pub enum AnyBlock {
     Raw(Vec<u8>),
-    Decoded(ParsedBlock),
+    Decoded(ReadBlock),
     Skipped,
 }
 
@@ -67,7 +67,7 @@ impl AnyBlock {
 
         let block = bitcoin::Block { header, txdata };
         let block = Block::from((height, hash, block));
-        let block = ParsedBlock::from((block, metadata, tx_metadata));
+        let block = ReadBlock::from((block, metadata, tx_metadata));
 
         Ok(Self::Decoded(block))
     }

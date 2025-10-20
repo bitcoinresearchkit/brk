@@ -1,9 +1,11 @@
-use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, path::Path};
+use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, path::Path};
 
 use brk_error::Result;
 use brk_structs::{Height, Version};
 use byteview6::ByteView;
-use fjall2::{InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, PersistMode};
+use fjall2::{
+    InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, PersistMode, ValueType,
+};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::any::AnyStore;
@@ -170,14 +172,15 @@ where
         let mut items = self
             .puts
             .drain()
-            .map(|(key, value)| InnerItem::Value { key, value })
-            .chain(self.dels.drain().map(|key| InnerItem::WeakTombstone(key)))
+            .map(|(key, value)| Item::Value { key, value })
+            .chain(self.dels.drain().map(|key| Item::Tomb(key)))
             .collect::<Vec<_>>();
         items.sort_unstable();
 
-        self.keyspace
-            .batch()
-            .commit_single_partition(&self.partition, items)?;
+        self.keyspace.batch().commit_partition(
+            &self.partition,
+            items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
+        )?;
 
         Ok(())
     }
@@ -206,5 +209,59 @@ where
 
     fn version(&self) -> Version {
         self.meta.version()
+    }
+}
+
+pub enum Item<K, V> {
+    Value { key: K, value: V },
+    Tomb(K),
+}
+
+impl<K: Ord, V> Ord for Item<K, V> {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.key().cmp(other.key())
+    }
+}
+
+impl<K: Ord, V> PartialOrd for Item<K, V> {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<K: Eq, V> PartialEq for Item<K, V> {
+    fn eq(&self, other: &Self) -> bool {
+        self.key() == other.key()
+    }
+}
+
+impl<K: Eq, V> Eq for Item<K, V> {}
+
+impl<K, V> Item<K, V> {
+    fn key(&self) -> &K {
+        match self {
+            Self::Value { key, .. } | Self::Tomb(key) => key,
+        }
+    }
+}
+
+impl<K, V> From<Item<K, V>> for InnerItem
+where
+    K: Into<ByteView>,
+    V: Into<ByteView>,
+{
+    fn from(value: Item<K, V>) -> Self {
+        match value {
+            Item::Value { key, value } => Self {
+                key: key.into().into(),
+                value: value.into().into(),
+                value_type: ValueType::Value,
+            },
+            Item::Tomb(key) => Self {
+                key: key.into().into(),
+                value: [].into(),
+                value_type: ValueType::WeakTombstone,
+            },
+        }
     }
 }

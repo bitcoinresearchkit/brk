@@ -70,6 +70,8 @@ impl Computer {
             price::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes).unwrap()
         });
 
+        import in theads
+
         Ok(Self {
             constants: constants::Vecs::forced_import(
                 &computed_path,
