@@ -217,26 +217,26 @@ where
         self.name
     }
 
-    fn reset(&mut self) -> Result<()> {
-        info!("Resetting {}...", self.name);
+    // fn reset(&mut self) -> Result<()> {
+    //     info!("Resetting {}...", self.name);
 
-        todo!();
+    //     todo!();
 
-        let mut opt = self.keyspace.write();
+    //     let mut opt = self.keyspace.write();
 
-        let keyspace = opt.take().unwrap();
+    //     let keyspace = opt.take().unwrap();
 
-        // Doesn't exist yet
-        // self.database.remove_keyspace(keyspace)?;
+    //     // Doesn't exist yet
+    //     // self.database.remove_keyspace(keyspace)?;
 
-        self.meta.reset();
+    //     self.meta.reset();
 
-        let keyspace = Self::open_keyspace(&self.database, self.name)?;
+    //     let keyspace = Self::open_keyspace(&self.database, self.name)?;
 
-        opt.replace(keyspace);
+    //     opt.replace(keyspace);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     fn height(&self) -> Option<Height> {
         self.meta.height()
