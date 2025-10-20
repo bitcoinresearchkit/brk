@@ -1,9 +1,9 @@
-use std::path::Path;
+// use std::path::Path;
 
 use brk_error::Result;
 
 fn main() -> Result<()> {
-    let p = Path::new("./examples/_fjall");
+    // let p = Path::new("./examples/_fjall");
 
     // let _keyspace = brk_store::open_keyspace(p)?;
 

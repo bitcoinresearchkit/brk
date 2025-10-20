@@ -7,7 +7,7 @@ use brk_structs::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
     TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
 };
-use fjall2::{PersistMode, TransactionalKeyspace};
+use fjall2::{Keyspace, PersistMode};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -17,7 +17,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: TransactionalKeyspace,
+    pub keyspace: Keyspace,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -361,8 +361,9 @@ impl Stores {
                 }
             }
         } else {
-            self.blockhashprefix_to_height.reset()?;
-            self.addressbyteshash_to_typeindex.reset()?;
+            unreachable!();
+            // self.blockhashprefix_to_height.reset()?;
+            // self.addressbyteshash_to_typeindex.reset()?;
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
@@ -384,11 +385,12 @@ impl Stores {
                     }
                 });
         } else {
-            self.txidprefix_to_txindex.reset()?;
+            unreachable!();
+            // self.txidprefix_to_txindex.reset()?;
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            // todo!();
+            todo!();
             // let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.into_iter();
             // vecs.txoutindex_to_outputtype
             //     .iter_at(starting_indexes.txoutindex)
@@ -404,12 +406,13 @@ impl Stores {
             //             .remove(TypeIndexAndTxIndex::from((typeindex, txoutindex)));
             //     });
         } else {
-            self.addresstype_to_typeindex_and_txindex
-                .iter_mut()
-                .try_for_each(|s| s.reset())?;
-            self.addresstype_to_typeindex_and_unspentoutpoint
-                .iter_mut()
-                .try_for_each(|s| s.reset())?;
+            unreachable!();
+            // self.addresstype_to_typeindex_and_txindex
+            //     .iter_mut()
+            //     .try_for_each(|s| s.reset())?;
+            // self.addresstype_to_typeindex_and_unspentoutpoint
+            //     .iter_mut()
+            //     .try_for_each(|s| s.reset())?;
         }
 
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
