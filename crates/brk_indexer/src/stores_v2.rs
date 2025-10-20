@@ -4,10 +4,11 @@ use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, StoreV2 as Store};
 use brk_structs::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
-    TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
+    TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
+    Vout,
 };
-use fjall2::{Keyspace, PersistMode, TransactionalKeyspace};
+use fjall2::{Keyspace, PersistMode};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -17,7 +18,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: TransactionalKeyspace,
+    pub keyspace: Keyspace,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -390,21 +391,88 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            todo!();
-            // let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.into_iter();
-            // vecs.txoutindex_to_outputtype
-            //     .iter_at(starting_indexes.txoutindex)
-            //     .filter(|(_, outputtype)| outputtype.is_address())
-            //     .for_each(|(txoutindex, outputtype)| {
-            //         let outputtype = outputtype.into_owned();
+            vecs.txoutindex_to_outputtype
+                .iter_at(starting_indexes.txoutindex)
+                .zip(
+                    vecs.txoutindex_to_typeindex
+                        .iter_at(starting_indexes.txoutindex),
+                )
+                .filter(|((_, outputtype), _)| outputtype.is_address())
+                .for_each(|((txoutindex, outputtype), (_, typeindex))| {
+                    let outputtype = outputtype.into_owned();
+                    let typeindex = typeindex.into_owned();
 
-            //         let typeindex = txoutindex_to_typeindex_iter.unwrap_get_inner(txoutindex);
+                    let txindex = vecs
+                        .txoutindex_to_txindex
+                        .iter()
+                        .get(txoutindex)
+                        .unwrap()
+                        .into_owned();
 
-            //         self.addresstype_to_typeindex_and_unspentoutpoint
-            //             .get_mut(outputtype)
-            //             .unwrap()
-            //             .remove(TypeIndexAndTxIndex::from((typeindex, txoutindex)));
-            //     });
+                    let vout = Vout::from(
+                        txoutindex.to_usize()
+                            - vecs
+                                .txindex_to_first_txoutindex
+                                .iter()
+                                .get(txindex)
+                                .unwrap()
+                                .into_owned()
+                                .to_usize(),
+                    );
+                    let outpoint = OutPoint::new(txindex, vout);
+
+                    self.addresstype_to_typeindex_and_unspentoutpoint
+                        .get_mut(outputtype)
+                        .unwrap()
+                        .remove(TypeIndexAndOutPoint::from((typeindex, outpoint)));
+                });
+
+            // Add back outputs that were spent after the rollback point
+            vecs.txinindex_to_outpoint
+                .iter_at(starting_indexes.txinindex)
+                .for_each(|(_, outpoint)| {
+                    let outpoint = outpoint.into_owned();
+
+                    if outpoint.is_coinbase() {
+                        return;
+                    }
+
+                    let txindex = outpoint.txindex();
+                    let vout = outpoint.vout();
+
+                    // Calculate txoutindex from txindex and vout
+                    let txoutindex = vecs
+                        .txindex_to_first_txoutindex
+                        .iter()
+                        .get(txindex)
+                        .unwrap()
+                        .into_owned()
+                        + vout;
+
+                    // Only process if this output was created before the rollback point
+                    if txoutindex < starting_indexes.txoutindex {
+                        let outputtype = vecs
+                            .txoutindex_to_outputtype
+                            .iter()
+                            .get(txoutindex)
+                            .unwrap()
+                            .into_owned();
+
+                        if outputtype.is_address() {
+                            let typeindex = vecs
+                                .txoutindex_to_typeindex
+                                .iter()
+                                .get(txoutindex)
+                                .unwrap()
+                                .into_owned();
+
+                            self.addresstype_to_typeindex_and_unspentoutpoint
+                                .get_mut(outputtype)
+                                .unwrap()
+                                .insert(TypeIndexAndOutPoint::from((typeindex, outpoint)), Unit);
+                        }
+                    }
+                });
         } else {
             unreachable!();
             // self.addresstype_to_typeindex_and_txindex

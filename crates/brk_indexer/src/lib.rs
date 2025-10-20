@@ -197,29 +197,24 @@ impl Indexer {
                     ))
                 })
                 .collect::<Result<Vec<_>>>()?;
-            // println!("txid_prefix_and_txid_and_... = : {:?}", i.elapsed());
+            // println!("txs = : {:?}", i.elapsed());
 
+            // let i = Instant::now();
             let txid_prefix_to_txindex = txs
                 .iter()
                 .map(|(txindex, _, _, prefix, _)| (*prefix, txindex))
                 .collect::<FxHashMap<_, _>>();
-
-            // let i = Instant::now();
-            let inputs = block
+            let txins = block
                 .txdata
                 .iter()
                 .enumerate()
-                .flat_map(|(index, tx)| {
-                    tx.input
-                        .iter()
-                        .enumerate()
-                        .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
-                })
-                .collect::<Vec<_>>();
-            // println!("inputs = : {:?}", i.elapsed());
-
-            // let i = Instant::now();
-            let txinindex_and_txindata = inputs
+                .flat_map(|(index, tx)| tx
+                    .input
+                    .iter()
+                    .enumerate()
+                    .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
+                )
+                .collect::<Vec<_>>()
                 .into_par_iter()
                 .enumerate()
                 .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
@@ -292,25 +287,24 @@ impl Indexer {
                     Ok((txinindex, InputSource::PreviousBlock(tuple)))
                 })
                 .collect::<Result<Vec<_>>>()?;
+            drop(txid_prefix_to_txindex);
             // println!("txinindex_and_txindata = : {:?}", i.elapsed());
 
             // let i = Instant::now();
-            same_block_spent_outpoints.extend(txinindex_and_txindata.iter().filter_map(
-                |(_, input_source)| {
-                    let InputSource::SameBlock((_, _, _, outpoint)) = input_source else {
-                        return None;
-                    };
-                    if !outpoint.is_coinbase() {
-                        Some(*outpoint)
-                    } else {
-                        None
-                    }
-                },
-            ));
+            same_block_spent_outpoints.extend(txins.iter().filter_map(|(_, input_source)| {
+                let InputSource::SameBlock((_, _, _, outpoint)) = input_source else {
+                    return None;
+                };
+                if !outpoint.is_coinbase() {
+                    Some(*outpoint)
+                } else {
+                    None
+                }
+            }));
             // println!("same_block_spent_outpoints = : {:?}", i.elapsed());
 
             // let i = Instant::now();
-            let outputs = block
+            let txouts = block
                 .txdata
                 .iter()
                 .enumerate()
@@ -319,11 +313,7 @@ impl Indexer {
                         (TxIndex::from(index), Vout::from(vout), txout, tx)
                     })
                 })
-                .collect::<Vec<_>>();
-            // println!("outputs = : {:?}", i.elapsed());
-
-            // let i = Instant::now();
-            let txoutindex_to_txoutdata = outputs
+                .collect::<Vec<_>>()
                 .into_par_iter()
                 .enumerate()
                 .map(
@@ -464,14 +454,14 @@ impl Indexer {
                     },
                 )
                 .collect::<Result<Vec<_>>>()?;
-            // println!("txoutindex_to_txoutdata = : {:?}", i.elapsed());
+            // println!("txouts = : {:?}", i.elapsed());
 
-            let outputs_len = txoutindex_to_txoutdata.len();
-            let inputs_len = txinindex_and_txindata.len();
+            let outputs_len = txouts.len();
+            let inputs_len = txins.len();
             let tx_len = block.txdata.len();
 
             // let i = Instant::now();
-            txoutindex_to_txoutdata
+            txouts
                 .into_iter()
                 .try_for_each(|data| -> Result<()> {
                     let (
@@ -492,6 +482,9 @@ impl Indexer {
                     }
 
                     vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
+
+                    vecs.txoutindex_to_txindex
+                        .push_if_needed(txoutindex, txindex)?;
 
                     vecs.txoutindex_to_outputtype
                         .push_if_needed(txoutindex, outputtype)?;
@@ -608,12 +601,12 @@ impl Indexer {
                     Ok(())
                 })?;
             // println!(
-            //     "outpoint_to_outputtype_and_addressindex = : {:?}",
+            //     "txouts.into_iter() = : {:?}",
             // i.elapsed()
             // );
 
             // let i = Instant::now();
-            txinindex_and_txindata
+            txins
                 .into_iter()
                 .map(
                     #[allow(clippy::type_complexity)]
@@ -699,7 +692,7 @@ impl Indexer {
 
                     Ok(())
                 })?;
-            // println!("txinindex_and_txindata.into_iter(): {:?}", i.elapsed());
+            // println!("txins.into_iter(): {:?}", i.elapsed());
 
             // let i = Instant::now();
             if check_collisions {
@@ -762,6 +755,7 @@ impl Indexer {
                             .insert_if_needed(txid_prefix, txindex, height);
                     }
 
+                    vecs.txindex_to_height.push_if_needed(txindex, height)?;
                     vecs.txindex_to_txversion
                         .push_if_needed(txindex, tx.version.into())?;
                     vecs.txindex_to_txid.push_if_needed(txindex, txid)?;

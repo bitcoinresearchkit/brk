@@ -56,7 +56,6 @@ pub struct Vecs {
     pub opreturnindex_to_opreturnindex:
         LazyVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
     pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
-    pub txoutindex_to_txindex: EagerVec<TxOutIndex, TxIndex>,
     pub p2aaddressindex_to_p2aaddressindex:
         LazyVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
     pub p2msoutputindex_to_p2msoutputindex:
@@ -81,7 +80,6 @@ pub struct Vecs {
     pub semesterindex_to_first_monthindex: EagerVec<SemesterIndex, MonthIndex>,
     pub semesterindex_to_monthindex_count: EagerVec<SemesterIndex, StoredU64>,
     pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
-    pub txindex_to_height: EagerVec<TxIndex, Height>,
     pub txindex_to_input_count:
         LazyVecFrom2<TxIndex, StoredU64, TxIndex, TxInIndex, TxInIndex, TxOutIndex>,
     pub txindex_to_output_count:
@@ -411,11 +409,6 @@ impl Vecs {
                 "dateindex",
                 version + VERSION + Version::ZERO,
             )?,
-            txindex_to_height: EagerVec::forced_import_compressed(
-                &db,
-                "height",
-                version + VERSION + Version::ZERO,
-            )?,
             height_to_timestamp_fixed: EagerVec::forced_import_compressed(
                 &db,
                 "timestamp_fixed",
@@ -466,12 +459,6 @@ impl Vecs {
                 "yearindex_count",
                 version + VERSION + Version::ZERO,
             )?,
-            txoutindex_to_txindex: EagerVec::forced_import_compressed(
-                &db,
-                "txindex",
-                version + VERSION + Version::ZERO,
-            )?,
-
             db,
         };
 
@@ -502,17 +489,6 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         // ---
-        // TxOutIndex
-        // ---
-
-        self.txoutindex_to_txindex.compute_inverse_less_to_more(
-            starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_txoutindex,
-            &self.txindex_to_output_count,
-            exit,
-        )?;
-
-        // ---
         // TxIndex
         // ---
 
@@ -520,13 +496,6 @@ impl Vecs {
             starting_indexes.height,
             &indexer.vecs.height_to_first_txindex,
             &indexer.vecs.txindex_to_txid,
-            exit,
-        )?;
-
-        self.txindex_to_height.compute_inverse_less_to_more(
-            starting_indexes.height,
-            &indexer.vecs.height_to_first_txindex,
-            &self.height_to_txindex_count,
             exit,
         )?;
 
