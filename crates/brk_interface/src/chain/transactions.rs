@@ -34,7 +34,7 @@ pub fn get_transaction_info(
 
     let txid = indexer.vecs.txindex_to_txid.iter().unwrap_get_inner(index);
 
-    let parser = interface.parser();
+    let reader = interface.parser();
     let computer = interface.computer();
 
     let position = computer
@@ -48,7 +48,7 @@ pub fn get_transaction_info(
         .iter()
         .unwrap_get_inner(index);
 
-    let blk_index_to_blk_path = parser.blk_index_to_blk_path();
+    let blk_index_to_blk_path = reader.blk_index_to_blk_path();
 
     let Some(blk_path) = blk_index_to_blk_path.get(&position.blk_index()) else {
         return Err(Error::Str("Failed to get the correct blk file"));
@@ -72,7 +72,7 @@ pub fn get_transaction_info(
     if file.read_exact(&mut buffer).is_err() {
         return Err(Error::Str("Failed to read the transaction (read exact)"));
     }
-    xori.bytes(&mut buffer, parser.xor_bytes());
+    xori.bytes(&mut buffer, reader.xor_bytes());
 
     let mut reader = Cursor::new(buffer);
     let Ok(_) = bitcoin::Transaction::consensus_decode(&mut reader) else {

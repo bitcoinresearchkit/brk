@@ -48,13 +48,13 @@ pub fn run() -> color_eyre::Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Reader::new(config.blocksdir(), rpc);
+    let reader = Reader::new(config.blocksdir(), rpc);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
     let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
-    let interface = Interface::build(&parser, &indexer, &computer);
+    let interface = Interface::build(&reader, &indexer, &computer);
 
     let website = config.website();
 
@@ -135,11 +135,11 @@ pub fn run() -> color_eyre::Result<()> {
         info!("{} blocks found.", block_count + 1);
 
         let starting_indexes = indexer
-            .index(&parser, rpc, &exit, config.check_collisions())
+            .index(&reader, rpc, &exit, config.check_collisions())
             .unwrap();
 
         computer
-            .compute(&indexer, starting_indexes, &parser, &exit)
+            .compute(&indexer, starting_indexes, &reader, &exit)
             .unwrap();
 
         info!("Waiting for new blocks...");

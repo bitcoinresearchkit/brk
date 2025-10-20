@@ -34,7 +34,7 @@ pub fn main() -> Result<()> {
             let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
             // let outputs_dir = Path::new("../../_outputs");
 
-            let parser = Reader::new(bitcoin_dir.join("blocks"), rpc);
+            let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
             let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
@@ -44,8 +44,8 @@ pub fn main() -> Result<()> {
 
             loop {
                 let i = Instant::now();
-                let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
-                computer.compute(&indexer, starting_indexes, &parser, &exit)?;
+                let starting_indexes = indexer.index(&reader, rpc, &exit, true)?;
+                computer.compute(&indexer, starting_indexes, &reader, &exit)?;
                 dbg!(i.elapsed());
                 sleep(Duration::from_secs(10));
             }

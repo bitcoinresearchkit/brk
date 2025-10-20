@@ -56,13 +56,13 @@ impl Deref for Block {
 }
 
 #[derive(Debug)]
-pub struct ParsedBlock {
+pub struct ReadBlock {
     block: Block,
     metadata: BlkMetadata,
     tx_metadata: Vec<BlkMetadata>,
 }
 
-impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ParsedBlock {
+impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ReadBlock {
     fn from((block, metadata, tx_metadata): (Block, BlkMetadata, Vec<BlkMetadata>)) -> Self {
         Self {
             block,
@@ -72,7 +72,7 @@ impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ParsedBlock {
     }
 }
 
-impl ParsedBlock {
+impl ReadBlock {
     pub fn metadata(&self) -> &BlkMetadata {
         &self.metadata
     }
@@ -82,7 +82,7 @@ impl ParsedBlock {
     }
 }
 
-impl Deref for ParsedBlock {
+impl Deref for ReadBlock {
     type Target = Block;
     fn deref(&self) -> &Self::Target {
         &self.block

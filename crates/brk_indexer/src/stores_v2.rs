@@ -46,61 +46,30 @@ impl Stores {
 
         let keyspace_ref = &keyspace;
 
-        let create_addressindex_and_txindex_store = |cohort| {
+        let create_addressindex_and_txindex_store = |index| {
             Store::import(
                 keyspace_ref,
                 path,
-                &format!("{}addressindex_and_txindex", cohort),
+                &format!("a2t{}", index),
                 version,
                 Some(false),
             )
         };
 
-        let create_addressindex_and_unspentoutpoint_store = |cohort| {
-            Store::import(
-                keyspace_ref,
-                path,
-                &format!("{}addressindex_and_unspentoutpoint", cohort),
-                version,
-                None,
-            )
-        };
+        let create_addressindex_and_unspentoutpoint_store =
+            |index| Store::import(keyspace_ref, path, &format!("a2u{}", index), version, None);
 
         Ok(Self {
             keyspace: keyspace.clone(),
 
-            height_to_coinbase_tag: Store::import(
-                keyspace_ref,
-                path,
-                "height_to_coinbase_tag",
-                version,
-                None,
-            )?,
-            addressbyteshash_to_typeindex: Store::import(
-                keyspace_ref,
-                path,
-                "addressbyteshash_to_typeindex",
-                version,
-                None,
-            )?,
-            blockhashprefix_to_height: Store::import(
-                keyspace_ref,
-                path,
-                "blockhashprefix_to_height",
-                version,
-                None,
-            )?,
-            txidprefix_to_txindex: Store::import(
-                keyspace_ref,
-                path,
-                "txidprefix_to_txindex",
-                version,
-                None,
-            )?,
-            addresstype_to_typeindex_and_txindex: ByAddressType::new(
+            height_to_coinbase_tag: Store::import(keyspace_ref, path, "h2c", version, None)?,
+            addressbyteshash_to_typeindex: Store::import(keyspace_ref, path, "a2t", version, None)?,
+            blockhashprefix_to_height: Store::import(keyspace_ref, path, "b2h", version, None)?,
+            txidprefix_to_txindex: Store::import(keyspace_ref, path, "t2t", version, None)?,
+            addresstype_to_typeindex_and_txindex: ByAddressType::new_with_index(
                 create_addressindex_and_txindex_store,
             )?,
-            addresstype_to_typeindex_and_unspentoutpoint: ByAddressType::new(
+            addresstype_to_typeindex_and_unspentoutpoint: ByAddressType::new_with_index(
                 create_addressindex_and_unspentoutpoint_store,
             )?,
         })

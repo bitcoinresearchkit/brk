@@ -30,7 +30,7 @@ pub struct ByAddressType<T> {
 }
 
 impl<T> ByAddressType<T> {
-    pub fn new<F>(f: F) -> Result<Self>
+    pub fn new_with_name<F>(f: F) -> Result<Self>
     where
         F: Fn(&'static str) -> Result<T>,
     {
@@ -43,6 +43,22 @@ impl<T> ByAddressType<T> {
             p2wsh: f(P2WSH)?,
             p2tr: f(P2TR)?,
             p2a: f(P2A)?,
+        })
+    }
+
+    pub fn new_with_index<F>(f: F) -> Result<Self>
+    where
+        F: Fn(usize) -> Result<T>,
+    {
+        Ok(Self {
+            p2pk65: f(0)?,
+            p2pk33: f(1)?,
+            p2pkh: f(2)?,
+            p2sh: f(3)?,
+            p2wpkh: f(4)?,
+            p2wsh: f(5)?,
+            p2tr: f(6)?,
+            p2a: f(7)?,
         })
     }
 

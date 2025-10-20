@@ -16,7 +16,7 @@ use bitcoin::{block::Header, consensus::Decodable};
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use brk_error::Result;
-use brk_structs::{BlkMetadata, BlkPosition, Block, Height, ParsedBlock};
+use brk_structs::{BlkMetadata, BlkPosition, Block, Height, ReadBlock};
 use crossbeam::channel::{Receiver, bounded};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
@@ -75,7 +75,7 @@ impl Reader {
     ///
     /// For an example checkout `./main.rs`
     ///
-    pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ParsedBlock> {
+    pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ReadBlock> {
         let rpc = self.rpc;
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP / 2);

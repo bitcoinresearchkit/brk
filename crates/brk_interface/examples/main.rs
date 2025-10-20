@@ -29,13 +29,13 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Reader::new(blocks_dir, rpc);
+    let reader = Reader::new(blocks_dir, rpc);
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 
     let computer = Computer::forced_import(&outputs_dir, &indexer, None)?;
 
-    let interface = Interface::build(&parser, &indexer, &computer);
+    let interface = Interface::build(&reader, &indexer, &computer);
 
     dbg!(interface.search_and_format(Params {
         index: Index::Height,

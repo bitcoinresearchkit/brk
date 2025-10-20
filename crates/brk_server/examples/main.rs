@@ -25,7 +25,7 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let parser = Reader::new(bitcoin_dir.join("blocks"), rpc);
+    let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 
@@ -39,7 +39,7 @@ pub fn main() -> Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let interface = Interface::build(&parser, &indexer, &computer);
+            let interface = Interface::build(&reader, &indexer, &computer);
 
             let server = Server::new(interface, None);
 
@@ -51,9 +51,9 @@ pub fn main() -> Result<()> {
                 loop {
                     let block_count = rpc.get_block_count()?;
 
-                    let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
+                    let starting_indexes = indexer.index(&reader, rpc, &exit, true)?;
 
-                    computer.compute(&indexer, starting_indexes, &parser, &exit)?;
+                    computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
                     while block_count == rpc.get_block_count()? {
                         sleep(Duration::from_secs(1))

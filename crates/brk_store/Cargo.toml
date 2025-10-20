@@ -17,7 +17,7 @@ brk_structs = { workspace = true }
 byteview6 = { version = "=0.6.1", package = "byteview" }
 byteview8 = { version = "~0.8.0", package = "byteview" }
 fjall2 = { workspace = true }
-fjall3 = { workspace = true }
+# fjall3 = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
 rustc-hash = { workspace = true }

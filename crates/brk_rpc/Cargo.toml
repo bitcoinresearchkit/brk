@@ -1,0 +1,18 @@
+[package]
+name = "brk_rpc"
+description = "A thin wrapper around bitcoincore-rpc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[dependencies]
+bitcoin = { workspace = true }
+bitcoincore-rpc = "0.19.0"
+brk_error = { workspace = true }
+brk_logger = { workspace = true }
+log = { workspace = true }
+parking_lot = { workspace = true }
