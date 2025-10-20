@@ -3,10 +3,7 @@ use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, path::Path};
 use brk_error::Result;
 use brk_structs::{Height, Version};
 use byteview6::ByteView;
-use fjall2::{
-    InnerItem, PartitionCreateOptions, PersistMode, TransactionalKeyspace,
-    TransactionalPartitionHandle,
-};
+use fjall2::{InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, PersistMode};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::any::AnyStore;
@@ -19,18 +16,18 @@ use meta::*;
 pub struct StoreV2<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    keyspace: TransactionalKeyspace,
-    partition: TransactionalPartitionHandle,
+    keyspace: Keyspace,
+    partition: PartitionHandle,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
-pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
+pub fn open_keyspace(path: &Path) -> fjall2::Result<Keyspace> {
     fjall2::Config::new(path.join("fjall"))
         .max_write_buffer_size(32 * 1024 * 1024)
-        .open_transactional()
+        .open()
 }
 
 impl<K, V> StoreV2<K, V>
@@ -40,10 +37,10 @@ where
     ByteView: From<K> + From<V>,
 {
     fn open_partition_handle(
-        keyspace: &TransactionalKeyspace,
+        keyspace: &Keyspace,
         name: &str,
         bloom_filters: Option<bool>,
-    ) -> Result<TransactionalPartitionHandle> {
+    ) -> Result<PartitionHandle> {
         let mut options = PartitionCreateOptions::default()
             .max_memtable_size(8 * 1024 * 1024)
             .manual_journal_persist(true);
@@ -56,7 +53,7 @@ where
     }
 
     pub fn import(
-        keyspace: &TransactionalKeyspace,
+        keyspace: &Keyspace,
         path: &Path,
         name: &str,
         version: Version,
@@ -101,16 +98,12 @@ where
     }
 
     pub fn is_empty(&self) -> Result<bool> {
-        self.keyspace
-            .read_tx()
-            .is_empty(&self.partition)
-            .map_err(|e| e.into())
+        self.partition.is_empty().map_err(|e| e.into())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.keyspace
-            .read_tx()
-            .iter(&self.partition)
+        self.partition
+            .iter()
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
@@ -118,9 +111,14 @@ where
     #[inline]
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
-            let _ = self.dels.is_empty() || self.dels.remove(&key);
-            self.puts.insert(key, value);
+            self.insert(key, value);
         }
+    }
+
+    #[inline]
+    pub fn insert(&mut self, key: K, value: V) {
+        let _ = self.dels.is_empty() || self.dels.remove(&key);
+        self.puts.insert(key, value);
     }
 
     #[inline]
@@ -179,7 +177,7 @@ where
 
         self.keyspace
             .batch()
-            .commit_single_partition(self.partition.inner(), items)?;
+            .commit_single_partition(&self.partition, items)?;
 
         Ok(())
     }
