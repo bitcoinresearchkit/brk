@@ -1,6 +1,5 @@
 use crate::{TxOut, Txid, Vout};
 use bitcoin::{Script, ScriptBuf};
-use bitcoincore_rpc::{Client, RpcApi};
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
 
@@ -27,13 +26,12 @@ pub struct TxIn {
     pub script_sig: ScriptBuf,
 
     /// Signature script in assembly format
-    #[allow(dead_code)]
     #[schemars(
         rename = "scriptsig_asm",
         with = "String",
         example = "OP_PUSHBYTES_4 ffff001d OP_PUSHBYTES_1 04 OP_PUSHBYTES_69 5468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"
     )]
-    script_sig_asm: (),
+    pub script_sig_asm: (),
 
     // /// Witness data (for SegWit inputs)
     // #[schemars(example = vec!["3045022100d0c9936990bf00bdba15f425f0f360a223d5cbf81f4bf8477fe6c6d838fb5fae02207e42a8325a4dd41702bf065aa6e0a1b7b0b8ee92a5e6c182da018b0afc82c40601".to_string()])]
@@ -54,7 +52,7 @@ pub struct TxIn {
         with = "Option<String>",
         example = Some("OP_0 OP_PUSHBYTES_20 992a1f7420fc5285070d19c71ff2efb1e356ad2f".to_string())
     )]
-    inner_redeem_script_asm: (),
+    pub inner_redeem_script_asm: (),
 }
 
 impl TxIn {
@@ -64,36 +62,6 @@ impl TxIn {
 
     pub fn redeem_script(&self) -> Option<&Script> {
         self.script_sig.redeem_script()
-    }
-}
-
-impl From<(bitcoin::TxIn, &Client)> for TxIn {
-    fn from((txin, rpc): (bitcoin::TxIn, &Client)) -> Self {
-        let txout_result = rpc
-            .get_tx_out(
-                &txin.previous_output.txid,
-                txin.previous_output.vout,
-                Some(true),
-            )
-            .unwrap();
-
-        let is_coinbase = txout_result.as_ref().is_none_or(|r| r.coinbase);
-
-        // txin.witness
-
-        // txin.script_sig.redeem_script()
-
-        Self {
-            is_coinbase,
-            prevout: txout_result.map(TxOut::from),
-            txid: txin.previous_output.txid.into(),
-            vout: txin.previous_output.vout.into(),
-            script_sig: txin.script_sig,
-            script_sig_asm: (),
-            sequence: txin.sequence.into(),
-            // witness:
-            inner_redeem_script_asm: (),
-        }
     }
 }
 

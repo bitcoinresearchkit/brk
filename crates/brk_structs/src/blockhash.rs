@@ -1,22 +1,26 @@
 use std::{fmt, mem};
 
 use bitcoin::hashes::Hash;
-use bitcoincore_rpc::{Client, RpcApi};
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::Height;
-
 /// Block hash
 #[derive(
     Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
 )]
+#[repr(C)]
 pub struct BlockHash([u8; 32]);
 
 impl From<bitcoin::BlockHash> for BlockHash {
     fn from(value: bitcoin::BlockHash) -> Self {
+        unsafe { mem::transmute(value) }
+    }
+}
+
+impl From<&bitcoin::BlockHash> for &BlockHash {
+    fn from(value: &bitcoin::BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
@@ -27,16 +31,15 @@ impl From<BlockHash> for bitcoin::BlockHash {
     }
 }
 
-impl From<&BlockHash> for bitcoin::BlockHash {
+impl From<&BlockHash> for &bitcoin::BlockHash {
     fn from(value: &BlockHash) -> Self {
-        bitcoin::BlockHash::from_slice(&value.0).unwrap()
+        unsafe { mem::transmute(value) }
     }
 }
 
-impl TryFrom<(&Client, Height)> for BlockHash {
-    type Error = bitcoincore_rpc::Error;
-    fn try_from((rpc, height): (&Client, Height)) -> Result<Self, Self::Error> {
-        Ok(Self::from(rpc.get_block_hash(u64::from(height))?))
+impl From<&BlockHash> for bitcoin::BlockHash {
+    fn from(value: &BlockHash) -> Self {
+        bitcoin::BlockHash::from_slice(&value.0).unwrap()
     }
 }
 

@@ -11,7 +11,7 @@ build = "build.rs"
 
 [dependencies]
 bitcoin = { workspace = true }
-bitcoincore-rpc = { workspace = true }
+brk_rpc = { workspace = true }
 brk_structs = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }

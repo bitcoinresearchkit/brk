@@ -1,6 +1,5 @@
 use crate::{Address, AddressBytes, OutputType, Sats};
 use bitcoin::ScriptBuf;
-use bitcoincore_rpc::json::GetTxOutResult;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
 
@@ -74,14 +73,14 @@ impl From<bitcoin::TxOut> for TxOut {
     }
 }
 
-impl From<GetTxOutResult> for TxOut {
-    fn from(value: GetTxOutResult) -> Self {
+impl From<(ScriptBuf, Sats)> for TxOut {
+    fn from((script, value): (ScriptBuf, Sats)) -> Self {
         Self {
-            script_pubkey: value.script_pub_key.script().unwrap(),
+            script_pubkey: script,
             script_pubkey_address: (),
             script_pubkey_asm: (),
             script_pubkey_type: (),
-            value: value.value.into(),
+            value,
         }
     }
 }

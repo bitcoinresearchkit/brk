@@ -4,7 +4,6 @@ use std::{
 };
 
 use allocative::Allocative;
-use bitcoincore_rpc::{Client, RpcApi};
 use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -210,13 +209,6 @@ impl From<Height> for u32 {
 impl From<Height> for u64 {
     fn from(value: Height) -> Self {
         value.0 as u64
-    }
-}
-
-impl TryFrom<&Client> for Height {
-    type Error = bitcoincore_rpc::Error;
-    fn try_from(value: &Client) -> Result<Self, Self::Error> {
-        Ok((value.get_block_count()? as usize).into())
     }
 }
 

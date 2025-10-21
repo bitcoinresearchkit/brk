@@ -12,14 +12,13 @@ build = "build.rs"
 [dependencies]
 allocative = { workspace = true }
 bitcoin = { workspace = true }
-bitcoincore-rpc = { workspace = true }
 brk_error = { workspace = true }
 byteview = { workspace = true }
 derive_deref = { workspace = true }
 itoa = "1.0.15"
 jiff = { workspace = true }
 num_enum = "0.7.5"
-rapidhash = "4.1.0"
+rapidhash = "4.1.1"
 ryu = "1.0.20"
 schemars = { workspace = true }
 serde = { workspace = true }

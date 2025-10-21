@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use bitcoincore_rpc::{Auth, Client};
 use brk_error::Result;
 use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
 
 #[allow(clippy::needless_doctest_main)]
 fn main() -> Result<()> {
@@ -13,12 +13,14 @@ fn main() -> Result<()> {
         .join("Application Support")
         .join("Bitcoin");
 
-    let rpc = Box::leak(Box::new(Client::new(
+    let client = Client::new(
         "http://localhost:8332",
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
+    )?;
 
-    let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
+    let blocks_dir = bitcoin_dir.join("blocks");
+
+    let reader = Reader::new(blocks_dir, client);
 
     let start = None;
     // let start = Some(916037_u32.into());
