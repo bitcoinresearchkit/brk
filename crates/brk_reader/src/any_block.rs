@@ -1,6 +1,6 @@
 use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable, io::Cursor};
-use bitcoincore_rpc::RpcApi;
 use brk_error::Result;
+use brk_rpc::Client;
 use brk_structs::{BlkMetadata, Block, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex};
@@ -15,7 +15,7 @@ impl AnyBlock {
     pub fn decode(
         self,
         metadata: BlkMetadata,
-        rpc: &'static bitcoincore_rpc::Client,
+        client: &Client,
         mut xor_i: XORIndex,
         xor_bytes: XORBytes,
         start: Option<Height>,
@@ -32,11 +32,11 @@ impl AnyBlock {
 
         let header = Header::consensus_decode(&mut cursor)?;
 
-        let hash = header.block_hash();
+        let hash = header.block_hash().into();
 
         let tx_count = VarInt::consensus_decode(&mut cursor)?.0;
 
-        let Ok(block_header_result) = rpc.get_block_header_info(&hash) else {
+        let Ok(block_header_result) = client.get_block_header_info(&hash) else {
             return Ok(Self::Skipped);
         };
 

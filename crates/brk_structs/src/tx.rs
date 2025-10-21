@@ -1,5 +1,4 @@
 use crate::{RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, Weight};
-use bitcoincore_rpc::Client;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::CheckedSub;
@@ -50,37 +49,17 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn fee(&self) -> Option<Sats> {
-        let in_ = self
+    pub fn fee(tx: &Transaction) -> Option<Sats> {
+        let in_ = tx
             .input
             .iter()
             .map(|txin| txin.prevout.as_ref().map(|txout| txout.value))
             .sum::<Option<Sats>>()?;
-        let out = self.output.iter().map(|txout| txout.value).sum::<Sats>();
+        let out = tx.output.iter().map(|txout| txout.value).sum::<Sats>();
         Some(in_.checked_sub(out).unwrap())
     }
-}
 
-impl Transaction {
-    pub fn from_mempool(tx: bitcoin::Transaction, rpc: &Client) -> Self {
-        let mut this = Self {
-            index: None,
-            txid: tx.compute_txid().into(),
-            version: tx.version.into(),
-            total_sigop_cost: tx.total_sigop_cost(|_| None),
-            weight: tx.weight().into(),
-            lock_time: tx.lock_time.into(),
-            total_size: tx.total_size(),
-            fee: Sats::default(),
-            input: tx
-                .input
-                .into_iter()
-                .map(|txin| TxIn::from((txin, rpc)))
-                .collect(),
-            output: tx.output.into_iter().map(TxOut::from).collect(),
-            status: TxStatus::UNCOMFIRMED,
-        };
-        this.fee = this.fee().unwrap_or_default();
-        this
+    pub fn compute_fee(&mut self) {
+        self.fee = Self::fee(self).unwrap_or_default();
     }
 }

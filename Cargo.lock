@@ -606,7 +606,6 @@ dependencies = [
 name = "brk_cli"
 version = "0.0.111"
 dependencies = [
- "bitcoincore-rpc",
  "brk_binder",
  "brk_bundler",
  "brk_computer",
@@ -634,7 +633,6 @@ version = "0.0.111"
 dependencies = [
  "allocative",
  "bitcoin",
- "bitcoincore-rpc",
  "brk_error",
  "brk_fetcher",
  "brk_grouper",
@@ -712,7 +710,6 @@ name = "brk_indexer"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
- "bitcoincore-rpc",
  "brk_error",
  "brk_fjall",
  "brk_grouper",
@@ -732,7 +729,6 @@ name = "brk_interface"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
- "bitcoincore-rpc",
  "brk_computer",
  "brk_error",
  "brk_indexer",
@@ -752,8 +748,10 @@ name = "brk_iterator"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
+ "brk_error",
  "brk_reader",
  "brk_rpc",
+ "brk_structs",
 ]
 
 [[package]]
@@ -784,7 +782,7 @@ name = "brk_monitor"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
- "bitcoincore-rpc",
+ "brk_rpc",
  "brk_structs",
  "log",
  "parking_lot 0.12.5",
@@ -796,11 +794,12 @@ name = "brk_reader"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
- "bitcoincore-rpc",
  "brk_error",
+ "brk_rpc",
  "brk_structs",
  "crossbeam",
  "derive_deref",
+ "log",
  "parking_lot 0.12.5",
  "rayon",
 ]
@@ -1205,6 +1204,7 @@ dependencies = [
  "bitcoincore-rpc",
  "brk_error",
  "brk_logger",
+ "brk_structs",
  "log",
  "parking_lot 0.12.5",
 ]
@@ -1215,7 +1215,6 @@ version = "0.0.111"
 dependencies = [
  "axum",
  "bitcoin",
- "bitcoincore-rpc",
  "brk-aide",
  "brk_computer",
  "brk_error",
@@ -1272,7 +1271,6 @@ version = "0.0.111"
 dependencies = [
  "allocative",
  "bitcoin",
- "bitcoincore-rpc",
  "brk_error",
  "byteview 0.6.1",
  "derive_deref",
@@ -2767,9 +2765,9 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "memmap2"
-version = "0.9.8"
+version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843a98750cd611cc2965a8213b53b43e715f13c37a9e096c6408e69990961db7"
+checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
 dependencies = [
  "libc",
 ]
@@ -2977,9 +2975,9 @@ checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
 name = "once_cell_polyfill"
-version = "1.70.1"
+version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4895175b425cb1f87721b59f0f286c2092bd4af812243672510e1ac53e2e0ad"
+checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "option-ext"
@@ -3907,9 +3905,9 @@ dependencies = [
 
 [[package]]
 name = "rapidhash"
-version = "4.1.0"
+version = "4.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "164772177ee16e3b074e6019c63cd92cb3cecf38e8c40d097675958b86dd8084"
+checksum = "d8e65c75143ce5d47c55b510297eeb1182f3c739b6043c537670e9fc18612dae"
 dependencies = [
  "rustversion",
 ]
@@ -4545,9 +4543,12 @@ dependencies = [
 
 [[package]]
 name = "sugar_path"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8230d5b8a65a6d4d4a7e5ee8dbdd9312ba447a8b8329689a390a0945d69b57ce"
+checksum = "48abcb2199ce37819c20dc7a72dc09e3263a00e598ff5089fe5fda92e0f63c37"
+dependencies = [
+ "smallvec",
+]
 
 [[package]]
 name = "syn"
@@ -5000,9 +5001,9 @@ checksum = "81b79ad29b5e19de4260020f8919b443b2ef0277d242ce532ec7b7a2cc8b6007"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.19"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f63a545481291138910575129486daeaf8ac54aee4387fe7906919f7830c7d9d"
+checksum = "462eeb75aeb73aea900253ce739c8e18a67423fadf006037cd3ff27e82748a06"
 
 [[package]]
 name = "unicode-linebreak"

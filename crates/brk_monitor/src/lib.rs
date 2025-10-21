@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 
 use bitcoin::consensus::encode;
-use bitcoincore_rpc::{Client, RpcApi};
+use brk_rpc::Client;
 use brk_structs::{AddressBytes, AddressMempoolStats, Transaction, Txid};
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -10,15 +10,15 @@ use rustc_hash::{FxHashMap, FxHashSet};
 const MAX_FETCHES_PER_CYCLE: usize = 10_000;
 
 pub struct Mempool {
-    rpc: &'static Client,
+    client: Client,
     txs: RwLock<FxHashMap<Txid, Transaction>>,
     addresses: RwLock<FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>>,
 }
 
 impl Mempool {
-    pub fn new(rpc: &'static Client) -> Self {
+    pub fn new(client: Client) -> Self {
         Self {
-            rpc,
+            client,
             txs: RwLock::new(FxHashMap::default()),
             addresses: RwLock::new(FxHashMap::default()),
         }
@@ -45,7 +45,7 @@ impl Mempool {
 
     pub fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
         let txids = self
-            .rpc
+            .client
             .get_raw_mempool()?
             .into_iter()
             .map(Txid::from)
@@ -62,11 +62,11 @@ impl Mempool {
         }
         .into_iter()
         .filter_map(|txid| {
-            self.rpc
+            self.client
                 .get_raw_transaction_hex(&bitcoin::Txid::from(&txid), None)
                 .ok()
                 .and_then(|hex| encode::deserialize_hex::<bitcoin::Transaction>(&hex).ok())
-                .map(|tx| Transaction::from_mempool(tx, self.rpc))
+                .map(|tx| Transaction::from_mempool(tx, self.client))
                 .map(|tx| (txid, tx))
         })
         .collect::<FxHashMap<_, _>>();

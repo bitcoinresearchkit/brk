@@ -1,9 +1,10 @@
-use bitcoin::BlockHash;
-use bitcoincore_rpc::json::GetBlockResult;
+use std::{mem, sync::Arc, time::Duration};
+
+use bitcoin::consensus::encode;
+use bitcoincore_rpc::json::{GetBlockHeaderResult, GetBlockResult, GetTxOutResult};
 use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, RpcApi};
 use brk_error::Result;
-use std::sync::Arc;
-use std::time::Duration;
+use brk_structs::{BlockHash, Height, Sats, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 
 pub use bitcoincore_rpc::Auth;
 
@@ -16,7 +17,7 @@ use inner::ClientInner;
 ///
 /// Free to clone (Arc)
 ///
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Client(Arc<ClientInner>);
 
 impl Client {
@@ -38,8 +39,126 @@ impl Client {
         )?)))
     }
 
-    pub fn get_block_info(&self, hash: &BlockHash) -> Result<GetBlockResult> {
-        self.call(|c| c.get_block_info(hash)).map_err(Into::into)
+    pub fn get_block(&self, hash: &BlockHash) -> Result<bitcoin::Block> {
+        self.call(|c| c.get_block(hash.into())).map_err(Into::into)
+    }
+
+    /// Returns the numbers of block in the longest chain.
+    pub fn get_last_height(&self) -> Result<Height> {
+        self.call(|c| c.get_block_count())
+            .map(Height::from)
+            .map_err(Into::into)
+    }
+
+    /// Get block hash at a given height
+    pub fn get_block_hash(&self, height: Height) -> Result<BlockHash> {
+        self.call(|c| c.get_block_hash(height.into()))
+            .map(BlockHash::from)
+            .map_err(Into::into)
+    }
+
+    pub fn get_block_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockResult>
+    where
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
+        self.call(move |c| c.get_block_info(hash.into()))
+            .map_err(Into::into)
+    }
+
+    pub fn get_block_header_info(&self, hash: &BlockHash) -> Result<GetBlockHeaderResult> {
+        self.call(|c| c.get_block_header_info(hash.into()))
+            .map_err(Into::into)
+    }
+
+    pub fn get_transaction(&self, txid: Txid) -> Result<Transaction> {
+        let mut tx = self.get_raw_transaction(&txid, None)?;
+
+        let input = mem::take(&mut tx.input)
+            .into_iter()
+            .map(|txin| -> Result<TxIn> {
+                let txout_result = self.get_tx_out(
+                    (&txin.previous_output.txid).into(),
+                    txin.previous_output.vout.into(),
+                    Some(true),
+                )?;
+
+                let is_coinbase = txout_result.as_ref().is_none_or(|r| r.coinbase);
+
+                let txout = if let Some(txout_result) = txout_result {
+                    Some(TxOut::from((
+                        txout_result.script_pub_key.script()?,
+                        Sats::from(txout_result.value.to_sat()),
+                    )))
+                } else {
+                    None
+                };
+
+                Ok(TxIn {
+                    is_coinbase,
+                    prevout: txout,
+                    txid: txin.previous_output.txid.into(),
+                    vout: txin.previous_output.vout.into(),
+                    script_sig: txin.script_sig,
+                    script_sig_asm: (),
+                    sequence: txin.sequence.into(),
+                    inner_redeem_script_asm: (),
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let mut tx = Transaction {
+            index: None,
+            txid: tx.compute_txid().into(),
+            version: tx.version.into(),
+            total_sigop_cost: tx.total_sigop_cost(|_| None),
+            weight: tx.weight().into(),
+            lock_time: tx.lock_time.into(),
+            total_size: tx.total_size(),
+            fee: Sats::default(),
+            input,
+            output: tx.output.into_iter().map(TxOut::from).collect(),
+            status: TxStatus::UNCOMFIRMED,
+        };
+
+        tx.compute_fee();
+
+        Ok(tx)
+    }
+
+    pub fn get_tx_out(
+        &self,
+        txid: &Txid,
+        vout: Vout,
+        include_mempool: Option<bool>,
+    ) -> Result<Option<GetTxOutResult>> {
+        self.call(|c| c.get_tx_out(txid.into(), vout.into(), include_mempool))
+            .map_err(Into::into)
+    }
+
+    /// Get txids of all transactions in a memory pool
+    pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
+        self.call(|c| c.get_raw_mempool())
+            .map(|v| unsafe { mem::transmute(v) })
+            .map_err(Into::into)
+    }
+
+    pub fn get_raw_transaction(
+        &self,
+        txid: &Txid,
+        block_hash: Option<&BlockHash>,
+    ) -> brk_error::Result<bitcoin::Transaction> {
+        let hex = self.get_raw_transaction_hex(txid, block_hash)?;
+        let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
+        Ok(tx)
+    }
+
+    pub fn get_raw_transaction_hex(
+        &self,
+        txid: &Txid,
+        block_hash: Option<&BlockHash>,
+    ) -> Result<String> {
+        self.call(|c| c.get_raw_transaction_hex(txid.into(), block_hash.map(|h| h.into())))
+            .map_err(Into::into)
     }
 
     /// Checks if a block is in the main chain (has positive confirmations)
@@ -63,19 +182,21 @@ impl Client {
                     // Get the previous block hash and walk backwards
                     let mut current_hash = block_info
                         .previousblockhash
+                        .map(BlockHash::from)
                         .ok_or("Genesis block has no previous block")?;
 
                     loop {
                         if self.is_in_main_chain(&current_hash)? {
                             // Found a block in the main chain
-                            let current_info = self.get_block_info(&current_hash)?;
+                            let current_info = self.get_block_header_info(&current_hash)?;
                             return Ok(current_info.height as u64);
                         }
 
                         // Continue walking backwards
-                        let current_info = self.get_block_info(&current_hash)?;
+                        let current_info = self.get_block_header_info(&current_hash)?;
                         current_hash = current_info
-                            .previousblockhash
+                            .previous_block_hash
+                            .map(BlockHash::from)
                             .ok_or("Reached genesis without finding main chain")?;
                     }
                 }

@@ -6,6 +6,7 @@ use std::time::Duration;
 
 pub use bitcoincore_rpc::Auth;
 
+#[derive(Debug)]
 pub struct ClientInner {
     url: String,
     auth: Auth,

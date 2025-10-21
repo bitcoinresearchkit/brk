@@ -13,11 +13,13 @@ use std::{
 };
 
 use bitcoin::{block::Header, consensus::Decodable};
-use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use brk_error::Result;
-use brk_structs::{BlkMetadata, BlkPosition, Block, Height, ReadBlock};
-use crossbeam::channel::{Receiver, bounded};
+use brk_rpc::Client;
+use brk_structs::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
+pub use crossbeam::channel::Receiver;
+use crossbeam::channel::bounded;
+use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
 
@@ -38,18 +40,18 @@ pub struct Reader {
     blk_index_to_blk_path: Arc<RwLock<BlkIndexToBlkPath>>,
     xor_bytes: XORBytes,
     blocks_dir: PathBuf,
-    rpc: &'static bitcoincore_rpc::Client,
+    client: Client,
 }
 
 impl Reader {
-    pub fn new(blocks_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
+    pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
         Self {
             xor_bytes: XORBytes::from(blocks_dir.as_path()),
             blk_index_to_blk_path: Arc::new(RwLock::new(BlkIndexToBlkPath::scan(
                 blocks_dir.as_path(),
             ))),
             blocks_dir,
-            rpc,
+            client,
         }
     }
 
@@ -61,22 +63,13 @@ impl Reader {
         self.xor_bytes
     }
 
-    pub fn get(&self, height: Height) -> Result<Block> {
-        Ok((
-            height,
-            self.rpc
-                .get_block(&self.rpc.get_block_hash(height.into())?)?,
-        )
-            .into())
-    }
-
     ///
     /// Returns a crossbeam channel receiver that receives `Block` from an **inclusive** range (`start` and `end`)
     ///
     /// For an example checkout `./main.rs`
     ///
     pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ReadBlock> {
-        let rpc = self.rpc;
+        let client = self.client.clone();
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP / 2);
         let (send_block, recv_block) = bounded(BOUND_CAP);
@@ -169,7 +162,7 @@ impl Reader {
                         .into_par_iter()
                         .try_for_each(|(metdata, any_block, xor_i)| {
                             if let Ok(AnyBlock::Decoded(block)) =
-                                any_block.decode(metdata, rpc, xor_i, xor_bytes, start, end)
+                                any_block.decode(metdata, &client, xor_i, xor_bytes, start, end)
                                 && send_block.send(block).is_err()
                             {
                                 return ControlFlow::Break(());
@@ -197,7 +190,7 @@ impl Reader {
 
         thread::spawn(move || {
             let mut current_height = start.unwrap_or_default();
-
+            let mut prev_hash: Option<BlockHash> = None;
             let mut future_blocks = BTreeMap::default();
 
             let _ = recv_block
@@ -217,7 +210,21 @@ impl Reader {
                             None
                         }
                     }) {
-                        send_ordered.send(block).unwrap();
+                        if let Some(expected_prev) = prev_hash.as_ref() && block.header.prev_blockhash != expected_prev.into() {
+                            error!(
+                                "Chain discontinuity detected at height {}: expected prev_hash {}, got {}. Stopping iteration.",
+                                *block.height(),
+                                expected_prev,
+                                block.hash()
+                            );
+                            return ControlFlow::Break(());
+                        }
+
+                        prev_hash = Some(block.hash().clone());
+
+                        if send_ordered.send(block).is_err() {
+                            return ControlFlow::Break(());
+                        }
 
                         current_height.increment();
                     }
@@ -240,8 +247,8 @@ impl Reader {
         };
 
         // If start is a very recent block we only look back X blk file before the last
-        if let Ok(count) = self.rpc.get_block_count()
-            && (count as u32).saturating_sub(*target_start) <= 3
+        if let Ok(height) = self.client.get_last_height()
+            && (*height).saturating_sub(*target_start) <= 3
         {
             return Ok(blk_index_to_blk_path
                 .keys()
@@ -332,7 +339,7 @@ impl Reader {
 
         let header = Header::consensus_decode(&mut std::io::Cursor::new(&header_bytes))?;
 
-        let height = self.rpc.get_block_info(&header.block_hash())?.height as u32;
+        let height = self.client.get_block_info(&header.block_hash())?.height as u32;
 
         Ok(Height::new(height))
     }

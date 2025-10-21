@@ -39,10 +39,18 @@ impl From<(Height, bitcoin::Block)> for Block {
 }
 
 impl From<(Height, bitcoin::BlockHash, bitcoin::Block)> for Block {
+    #[inline]
     fn from((height, hash, block): (Height, bitcoin::BlockHash, bitcoin::Block)) -> Self {
+        Self::from((height, BlockHash::from(hash), block))
+    }
+}
+
+impl From<(Height, BlockHash, bitcoin::Block)> for Block {
+    #[inline]
+    fn from((height, hash, block): (Height, BlockHash, bitcoin::Block)) -> Self {
         Self {
             height,
-            hash: hash.into(),
+            hash,
             block,
         }
     }
@@ -79,6 +87,10 @@ impl ReadBlock {
 
     pub fn tx_metadata(&self) -> &Vec<BlkMetadata> {
         &self.tx_metadata
+    }
+
+    pub fn unwrap(self) -> Block {
+        self.block
     }
 }
 
