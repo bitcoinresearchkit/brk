@@ -1,6 +1,7 @@
-use std::{fmt, mem};
+use std::{fmt, mem, str::FromStr};
 
 use bitcoin::hashes::Hash;
+use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
@@ -12,6 +13,13 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 )]
 #[repr(C)]
 pub struct BlockHash([u8; 32]);
+
+impl TryFrom<&str> for BlockHash {
+    type Error = Error;
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Ok(Self::from(bitcoin::BlockHash::from_str(s)?))
+    }
+}
 
 impl From<bitcoin::BlockHash> for BlockHash {
     fn from(value: bitcoin::BlockHash) -> Self {

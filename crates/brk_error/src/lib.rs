@@ -22,6 +22,7 @@ pub enum Error {
     BitcoinBip34Error(bitcoin::block::Bip34Error),
     BitcoinHexError(bitcoin::consensus::encode::FromHexError),
     BitcoinFromScriptError(bitcoin::address::FromScriptError),
+    BitcoinHexToArrayError(bitcoin::hex::HexToArrayError),
     SonicRS(sonic_rs::Error),
     ZeroCopyError,
     Vecs(vecdb::Error),
@@ -57,6 +58,12 @@ impl From<bitcoin::consensus::encode::Error> for Error {
 impl From<bitcoin::consensus::encode::FromHexError> for Error {
     fn from(value: bitcoin::consensus::encode::FromHexError) -> Self {
         Self::BitcoinHexError(value)
+    }
+}
+
+impl From<bitcoin::hex::HexToArrayError> for Error {
+    fn from(value: bitcoin::hex::HexToArrayError) -> Self {
+        Self::BitcoinHexToArrayError(value)
     }
 }
 
@@ -151,6 +158,7 @@ impl fmt::Display for Error {
             Error::BitcoinBip34Error(error) => Display::fmt(&error, f),
             Error::BitcoinFromScriptError(error) => Display::fmt(&error, f),
             Error::BitcoinHexError(error) => Display::fmt(&error, f),
+            Error::BitcoinHexToArrayError(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
             Error::FjallV2(error) => Display::fmt(&error, f),
             // Error::FjallV3(error) => Display::fmt(&error, f),

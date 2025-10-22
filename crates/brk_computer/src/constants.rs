@@ -40,6 +40,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join("constants"))?;
+        db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let version = parent_version + Version::ZERO;
 

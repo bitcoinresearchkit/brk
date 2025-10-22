@@ -1,21 +1,36 @@
-use std::{thread, time::Duration};
+use std::{sync::Arc, thread, time::Duration};
 
-use bitcoin::consensus::encode;
+use brk_error::Result;
 use brk_rpc::Client;
 use brk_structs::{AddressBytes, AddressMempoolStats, Transaction, Txid};
+use derive_deref::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 const MAX_FETCHES_PER_CYCLE: usize = 10_000;
 
-pub struct Mempool {
+///
+/// Mempool monitor
+///
+/// Thread safe and free to clone
+///
+#[derive(Clone, Deref)]
+pub struct Mempool(Arc<MempoolInner>);
+
+impl Mempool {
+    pub fn new(client: Client) -> Self {
+        Self(Arc::new(MempoolInner::new(client)))
+    }
+}
+
+pub struct MempoolInner {
     client: Client,
     txs: RwLock<FxHashMap<Txid, Transaction>>,
     addresses: RwLock<FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>>,
 }
 
-impl Mempool {
+impl MempoolInner {
     pub fn new(client: Client) -> Self {
         Self {
             client,
@@ -34,6 +49,7 @@ impl Mempool {
         self.addresses.read()
     }
 
+    /// Start an infinite update loop with a 1 second interval
     pub fn start(&self) {
         loop {
             if let Err(e) = self.update() {
@@ -43,12 +59,11 @@ impl Mempool {
         }
     }
 
-    pub fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn update(&self) -> Result<()> {
         let txids = self
             .client
             .get_raw_mempool()?
             .into_iter()
-            .map(Txid::from)
             .collect::<FxHashSet<_>>();
 
         let new_txs = {
@@ -61,18 +76,12 @@ impl Mempool {
                 .collect::<Vec<_>>()
         }
         .into_iter()
-        .filter_map(|txid| {
-            self.client
-                .get_raw_transaction_hex(&bitcoin::Txid::from(&txid), None)
-                .ok()
-                .and_then(|hex| encode::deserialize_hex::<bitcoin::Transaction>(&hex).ok())
-                .map(|tx| Transaction::from_mempool(tx, self.client))
-                .map(|tx| (txid, tx))
-        })
+        .filter_map(|txid| self.client.get_transaction(&txid).ok().map(|tx| (txid, tx)))
         .collect::<FxHashMap<_, _>>();
 
         let mut txs = self.txs.write();
         let mut addresses = self.addresses.write();
+
         txs.retain(|txid, tx| {
             if txids.contains(txid) {
                 return true;
@@ -98,6 +107,7 @@ impl Mempool {
                 });
             false
         });
+
         new_txs.iter().for_each(|(txid, tx)| {
             tx.input
                 .iter()

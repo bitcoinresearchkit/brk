@@ -119,6 +119,8 @@ impl Indexer {
         let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
             FxHashMap::default();
 
+        // TODO: CHECK PREV HASH
+
         for block in reader.read(start, end).iter() {
             // let i_tot = Instant::now();
             already_added_addressbyteshash.clear();

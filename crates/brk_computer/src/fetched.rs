@@ -24,6 +24,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(parent: &Path, fetcher: Fetcher, version: Version) -> Result<Self> {
         let db = Database::open(&parent.join("fetched"))?;
+        db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let this = Self {
             fetcher,

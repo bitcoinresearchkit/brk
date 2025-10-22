@@ -782,8 +782,10 @@ name = "brk_monitor"
 version = "0.0.111"
 dependencies = [
  "bitcoin",
+ "brk_error",
  "brk_rpc",
  "brk_structs",
+ "derive_deref",
  "log",
  "parking_lot 0.12.5",
  "rustc-hash",

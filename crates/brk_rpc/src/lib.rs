@@ -15,7 +15,7 @@ use inner::ClientInner;
 ///
 /// Bitcoin Core RPC Client
 ///
-/// Free to clone (Arc)
+/// Thread safe and free to clone
 ///
 #[derive(Debug, Clone)]
 pub struct Client(Arc<ClientInner>);
@@ -39,7 +39,10 @@ impl Client {
         )?)))
     }
 
-    pub fn get_block(&self, hash: &BlockHash) -> Result<bitcoin::Block> {
+    pub fn get_block<'a, H>(&self, hash: &'a H) -> Result<bitcoin::Block>
+    where
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
         self.call(|c| c.get_block(hash.into())).map_err(Into::into)
     }
 
@@ -51,7 +54,10 @@ impl Client {
     }
 
     /// Get block hash at a given height
-    pub fn get_block_hash(&self, height: Height) -> Result<BlockHash> {
+    pub fn get_block_hash<H>(&self, height: H) -> Result<BlockHash>
+    where
+        H: Into<u64> + Copy,
+    {
         self.call(|c| c.get_block_hash(height.into()))
             .map(BlockHash::from)
             .map_err(Into::into)
@@ -65,13 +71,19 @@ impl Client {
             .map_err(Into::into)
     }
 
-    pub fn get_block_header_info(&self, hash: &BlockHash) -> Result<GetBlockHeaderResult> {
+    pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockHeaderResult>
+    where
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
         self.call(|c| c.get_block_header_info(hash.into()))
             .map_err(Into::into)
     }
 
-    pub fn get_transaction(&self, txid: Txid) -> Result<Transaction> {
-        let mut tx = self.get_raw_transaction(&txid, None)?;
+    pub fn get_transaction<'a, T>(&self, txid: &'a T) -> Result<Transaction>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+    {
+        let mut tx = self.get_raw_transaction(txid, None as Option<&'a BlockHash>)?;
 
         let input = mem::take(&mut tx.input)
             .into_iter()
@@ -142,21 +154,29 @@ impl Client {
             .map_err(Into::into)
     }
 
-    pub fn get_raw_transaction(
+    pub fn get_raw_transaction<'a, T, H>(
         &self,
-        txid: &Txid,
-        block_hash: Option<&BlockHash>,
-    ) -> brk_error::Result<bitcoin::Transaction> {
+        txid: &'a T,
+        block_hash: Option<&'a H>,
+    ) -> brk_error::Result<bitcoin::Transaction>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
         let hex = self.get_raw_transaction_hex(txid, block_hash)?;
         let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
         Ok(tx)
     }
 
-    pub fn get_raw_transaction_hex(
+    pub fn get_raw_transaction_hex<'a, T, H>(
         &self,
-        txid: &Txid,
-        block_hash: Option<&BlockHash>,
-    ) -> Result<String> {
+        txid: &'a T,
+        block_hash: Option<&'a H>,
+    ) -> Result<String>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
         self.call(|c| c.get_raw_transaction_hex(txid.into(), block_hash.map(|h| h.into())))
             .map_err(Into::into)
     }
