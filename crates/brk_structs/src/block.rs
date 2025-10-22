@@ -56,6 +56,12 @@ impl From<(Height, BlockHash, bitcoin::Block)> for Block {
     }
 }
 
+impl From<ReadBlock> for Block {
+    fn from(value: ReadBlock) -> Self {
+        value.block
+    }
+}
+
 impl Deref for Block {
     type Target = bitcoin::Block;
     fn deref(&self) -> &Self::Target {
@@ -89,7 +95,7 @@ impl ReadBlock {
         &self.tx_metadata
     }
 
-    pub fn unwrap(self) -> Block {
+    pub fn inner(self) -> Block {
         self.block
     }
 }

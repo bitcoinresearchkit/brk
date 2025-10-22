@@ -1,8 +1,10 @@
-use std::{path::Path, sync::Arc, thread, time::Duration};
+use std::{path::Path, thread, time::Duration};
 
+use brk_error::Result;
 use brk_monitor::Mempool;
+use brk_rpc::{Auth, Client};
 
-fn main() {
+fn main() -> Result<()> {
     // Connect to Bitcoin Core
     let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
         .join("Library")
@@ -10,18 +12,14 @@ fn main() {
         .join("Bitcoin");
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
-    let rpc = Box::leak(Box::new(
-        bitcoincore_rpc::Client::new(
-            "http://localhost:8332",
-            bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
-        )
-        .unwrap(),
-    ));
+    let client = Client::new(
+        "http://localhost:8332",
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
 
-    let mempool = Arc::new(Mempool::new(rpc));
+    let mempool = Mempool::new(client);
 
-    // Spawn monitoring thread
-    let mempool_clone = Arc::clone(&mempool);
+    let mempool_clone = mempool.clone();
     thread::spawn(move || {
         mempool_clone.start();
     });
@@ -34,4 +32,6 @@ fn main() {
         let addresses = mempool.get_addresses();
         println!("mempool_address_count: {}", addresses.len());
     }
+
+    // Ok(())
 }

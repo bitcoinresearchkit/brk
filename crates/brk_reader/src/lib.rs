@@ -19,6 +19,7 @@ use brk_rpc::Client;
 use brk_structs::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
 use crossbeam::channel::bounded;
+use derive_deref::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
@@ -35,15 +36,30 @@ pub use xor_index::*;
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
 
-#[derive(Debug, Clone)]
-pub struct Reader {
+///
+/// Bitcoin BLK file reader
+///
+/// Thread safe and free to clone
+///
+///
+#[derive(Debug, Clone, Deref)]
+pub struct Reader(Arc<ReaderInner>);
+
+impl Reader {
+    pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
+        Self(Arc::new(ReaderInner::new(blocks_dir, client)))
+    }
+}
+
+#[derive(Debug)]
+pub struct ReaderInner {
     blk_index_to_blk_path: Arc<RwLock<BlkIndexToBlkPath>>,
     xor_bytes: XORBytes,
     blocks_dir: PathBuf,
     client: Client,
 }
 
-impl Reader {
+impl ReaderInner {
     pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
         Self {
             xor_bytes: XORBytes::from(blocks_dir.as_path()),
@@ -53,6 +69,10 @@ impl Reader {
             blocks_dir,
             client,
         }
+    }
+
+    pub fn client(&self) -> &Client {
+        &self.client
     }
 
     pub fn blk_index_to_blk_path(&self) -> RwLockReadGuard<'_, BlkIndexToBlkPath> {
@@ -227,6 +247,10 @@ impl Reader {
                         }
 
                         current_height.increment();
+
+                        if end.is_some_and(|end| end == current_height) {
+                            return ControlFlow::Break(());
+                        }
                     }
 
                     ControlFlow::Continue(())
@@ -342,9 +366,5 @@ impl Reader {
         let height = self.client.get_block_info(&header.block_hash())?.height as u32;
 
         Ok(Height::new(height))
-    }
-
-    pub fn static_clone(&self) -> &'static Self {
-        Box::leak(Box::new(self.clone()))
     }
 }

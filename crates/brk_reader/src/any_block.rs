@@ -32,7 +32,7 @@ impl AnyBlock {
 
         let header = Header::consensus_decode(&mut cursor)?;
 
-        let hash = header.block_hash().into();
+        let hash = header.block_hash();
 
         let tx_count = VarInt::consensus_decode(&mut cursor)?.0;
 

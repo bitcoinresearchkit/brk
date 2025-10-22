@@ -1,44 +1,22 @@
-use std::vec;
-
-use brk_reader::Receiver;
+use brk_reader::Reader;
 use brk_rpc::Client;
-use brk_structs::{BlockHash, Height, ReadBlock};
 
+/// Source configuration for block iteration
 pub enum Source {
-    Rpc {
-        client: Client,
-        heights: vec::IntoIter<Height>,
-        prev_hash: Option<BlockHash>,
-    },
-    Reader {
-        receiver: Receiver<ReadBlock>,
-    },
+    /// Automatic selection based on range
+    Smart { client: Client, reader: Reader },
+    /// Always use RPC
+    Rpc { client: Client },
+    /// Always use Reader
+    Reader { reader: Reader },
 }
 
 impl Source {
-    pub fn new_rpc(client: Client, start: Height, end: Height) -> Self {
-        let heights = (*start..=*end)
-            .map(Height::new)
-            .collect::<Vec<_>>()
-            .into_iter();
-
-        Self::Rpc {
-            client,
-            heights,
-            prev_hash: None,
-        }
-    }
-
-    pub fn new_reader(client: Client, start: Height, end: Height) -> Self {
-        let heights = (*start..=*end)
-            .map(Height::new)
-            .collect::<Vec<_>>()
-            .into_iter();
-
-        Self::Rpc {
-            client,
-            heights,
-            prev_hash: None,
+    pub fn client(&self) -> &Client {
+        match self {
+            Source::Smart { client, .. } => client,
+            Source::Rpc { client } => client,
+            Source::Reader { reader } => reader.client(),
         }
     }
 }
