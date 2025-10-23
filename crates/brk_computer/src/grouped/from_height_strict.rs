@@ -1,7 +1,7 @@
 use brk_error::Result;
 
-use brk_structs::{DifficultyEpoch, Height, Version};
 use brk_traversable::Traversable;
+use brk_types::{DifficultyEpoch, Height, Version};
 use vecdb::{Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};

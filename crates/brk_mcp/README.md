@@ -46,7 +46,7 @@ cargo add brk_mcp
 
 ```rust
 use brk_mcp::MCP;
-use brk_interface::Interface;
+use brk_query::Interface;
 use brk_rmcp::{ServerHandler, RoleServer};
 
 // Initialize with static interface reference
@@ -112,7 +112,7 @@ let version = mcp.get_version().await?;
 
 ```rust
 use brk_mcp::MCP;
-use brk_interface::{Params, PaginationParam};
+use brk_query::{Params, PaginationParam};
 
 let mcp = MCP::new(interface);
 
@@ -133,7 +133,7 @@ let vecids = mcp.get_vecids(pagination).await?;
 
 ```rust
 use brk_mcp::MCP;
-use brk_interface::Params;
+use brk_query::Params;
 
 // Query latest Bitcoin price
 let params = Params {
@@ -155,7 +155,7 @@ match result {
 ### Multi-Vector Analysis
 
 ```rust
-use brk_interface::Params;
+use brk_query::Params;
 
 // Get OHLC data for last 30 days
 let params = Params {
@@ -177,7 +177,7 @@ let ohlc_data = mcp.get_vecs(params).await?;
 ### Vector Discovery Workflow
 
 ```rust
-use brk_interface::{PaginatedIndexParam, IdParam};
+use brk_query::{PaginatedIndexParam, IdParam};
 
 // 1. Get available indexes
 let indexes = mcp.get_indexes().await?;
@@ -232,7 +232,7 @@ let supported_indexes = mcp.get_vecid_to_indexes(id_param).await?;
 
 **Interface Layer Access:**
 
-- Direct access to `brk_interface::Interface` for data queries
+- Direct access to `brk_query::Interface` for data queries
 - Static lifetime requirements for server operation
 - Unified access to indexer and computer data sources
 - Consistent parameter types across tool boundaries
@@ -273,7 +273,7 @@ Built-in instructions explain Bitcoin data concepts:
 **Main Structure**: `MCP` struct implementing `ServerHandler` with embedded `ToolRouter` for automatic tool discovery \
 **Tool Implementation**: 10 specialized tools using `#[tool]` attribute with structured parameters and JSON responses \
 **HTTP Integration**: `MCPRoutes` trait extending Axum routers with conditional MCP endpoint mounting \
-**Parameter Types**: Type-safe parameter structs from `brk_interface` with automatic validation \
+**Parameter Types**: Type-safe parameter structs from `brk_query` with automatic validation \
 **Error Handling**: Consistent `McpError` responses with proper MCP protocol compliance \
 **Transport Layer**: `StreamableHttpService` with stateless configuration for scalable deployment \
 **Architecture**: Standards-compliant MCP bridge providing LLM access to comprehensive Bitcoin analytics

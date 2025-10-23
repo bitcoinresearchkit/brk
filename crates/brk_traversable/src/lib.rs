@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
-pub use brk_structs::TreeNode;
+pub use brk_types::TreeNode;
 
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;

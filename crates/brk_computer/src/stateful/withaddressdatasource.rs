@@ -1,4 +1,4 @@
-use brk_structs::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex};
+use brk_types::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex};
 
 #[derive(Debug)]
 pub enum WithAddressDataSource<T> {

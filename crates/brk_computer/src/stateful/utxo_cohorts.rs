@@ -5,10 +5,10 @@ use brk_grouper::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
     BySpendableType, ByTerm, Filter, Filtered, UTXOGroups,
 };
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, Timestamp, Version,
 };
-use brk_traversable::Traversable;
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format, StoredIndex};
 

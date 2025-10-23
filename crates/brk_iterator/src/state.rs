@@ -2,7 +2,7 @@ use std::vec;
 
 use brk_reader::{Reader, Receiver};
 use brk_rpc::Client;
-use brk_structs::{BlockHash, Height, ReadBlock};
+use brk_types::{BlockHash, Height, ReadBlock};
 
 pub enum State {
     Rpc {

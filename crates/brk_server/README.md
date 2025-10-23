@@ -37,7 +37,7 @@ cargo add brk_server
 
 ```rust
 use brk_server::Server;
-use brk_interface::Interface;
+use brk_query::Interface;
 use std::path::PathBuf;
 
 // Initialize interface with your data sources
@@ -109,7 +109,7 @@ server.serve(true).await?;
 
 ```rust
 use brk_server::Server;
-use brk_interface::Interface;
+use brk_query::Interface;
 
 // Initialize with BRK interface
 let interface = Interface::builder()

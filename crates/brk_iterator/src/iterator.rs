@@ -1,4 +1,4 @@
-use brk_structs::Block;
+use brk_types::Block;
 
 use crate::State;
 

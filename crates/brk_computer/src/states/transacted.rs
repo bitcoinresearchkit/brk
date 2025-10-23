@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign};
 
 use brk_grouper::{ByAmountRange, GroupedByType};
-use brk_structs::{OutputType, Sats};
+use brk_types::{OutputType, Sats};
 
 use super::SupplyState;
 

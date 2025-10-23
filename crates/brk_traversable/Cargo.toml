@@ -13,6 +13,6 @@ build = "build.rs"
 derive = ["brk_traversable_derive"]
 
 [dependencies]
-brk_structs = { workspace = true }
+brk_types = { workspace = true }
 brk_traversable_derive = { workspace = true, optional = true }
 vecdb = { workspace = true }

@@ -245,13 +245,13 @@ This pattern ensures:
 | `error` | `brk_error` | Error handling |
 | `fetcher` | `brk_fetcher` | Price data fetching |
 | `indexer` | `brk_indexer` | Blockchain indexing |
-| `interface` | `brk_interface` | Data query interface |
+| `interface` | `brk_query` | Data query interface |
 | `logger` | `brk_logger` | Enhanced logging |
 | `mcp` | `brk_mcp` | Model Context Protocol |
 | `parser` | `brk_reader` | Block parsing |
 | `server` | `brk_server` | HTTP server |
 | `store` | `brk_store` | Key-value storage |
-| `structs` | `brk_structs` | Data structures |
+| `structs` | `brk_types` | Data structures |
 | `full` | All components | Complete functionality |
 
 ### Documentation

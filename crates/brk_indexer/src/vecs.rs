@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     AddressBytes, BlockHash, EmptyOutputIndex, Height, OpReturnIndex, OutPoint, OutputType,
     P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes,
     P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
@@ -9,7 +10,6 @@ use brk_structs::{
     RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex,
     TxOutIndex, TxVersion, Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
-use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, CompressedVec, Database, GenericStoredVec, PAGE_SIZE, RawVec, Stamp};
 

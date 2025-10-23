@@ -1,9 +1,9 @@
-# brk_interface
+# brk_query
 
 Unified data query and formatting interface for Bitcoin datasets with intelligent search and multi-format output.
 
-[![Crates.io](https://img.shields.io/crates/v/brk_interface.svg)](https://crates.io/crates/brk_interface)
-[![Documentation](https://docs.rs/brk_interface/badge.svg)](https://docs.rs/brk_interface)
+[![Crates.io](https://img.shields.io/crates/v/brk_query.svg)](https://crates.io/crates/brk_query)
+[![Documentation](https://docs.rs/brk_query/badge.svg)](https://docs.rs/brk_query)
 
 ## Overview
 
@@ -29,13 +29,13 @@ This crate provides a high-level interface for querying and formatting data from
 ## Installation
 
 ```bash
-cargo add brk_interface
+cargo add brk_query
 ```
 
 ## Quick Start
 
 ```rust
-use brk_interface::{Interface, Params, Index};
+use brk_query::{Interface, Params, Index};
 use brk_indexer::Indexer;
 use brk_computer::Computer;
 
@@ -102,7 +102,7 @@ Combined search and formatting operation for single-call data retrieval.
 ### Basic Data Query
 
 ```rust
-use brk_interface::{Interface, Params, Index, Format};
+use brk_query::{Interface, Params, Index, Format};
 
 let interface = Interface::build(&indexer, &computer);
 
@@ -125,7 +125,7 @@ match interface.search_and_format(params)? {
 ### CSV Export with Range Query
 
 ```rust
-use brk_interface::{Interface, Params, Index, Format};
+use brk_query::{Interface, Params, Index, Format};
 
 // Export price data as CSV
 let params = Params {
@@ -149,7 +149,7 @@ match interface.search_and_format(params)? {
 ### Intelligent Error Handling
 
 ```rust
-use brk_interface::{Interface, Params, Index};
+use brk_query::{Interface, Params, Index};
 
 // Query with typo in vector ID
 let params = Params {

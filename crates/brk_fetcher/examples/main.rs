@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_fetcher::{BRK, Binance, Fetcher, Kraken};
-use brk_structs::{Date, Height};
+use brk_types::{Date, Height};
 
 fn main() -> Result<()> {
     brk_logger::init(None)?;

@@ -3,7 +3,7 @@
 use std::{collections::BTreeMap, path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
-use brk_structs::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
+use brk_types::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
 
 mod binance;

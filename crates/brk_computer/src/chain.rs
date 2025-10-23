@@ -3,13 +3,13 @@ use std::path::Path;
 use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     Bitcoin, CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
     Height, MonthIndex, ONE_DAY_IN_SEC_F64, QuarterIndex, Sats, SemesterIndex, StoredBool,
     StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex, TxOutIndex,
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
-use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2,
     LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
@@ -627,6 +627,7 @@ impl Vecs {
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
                 &db,
                 "fee",
+                indexer,
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
                 version + Version::ZERO,

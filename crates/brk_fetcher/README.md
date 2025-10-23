@@ -34,7 +34,7 @@ cargo add brk_fetcher
 
 ```rust
 use brk_fetcher::Fetcher;
-use brk_structs::{Date, Height, Timestamp};
+use brk_types::{Date, Height, Timestamp};
 
 // Initialize fetcher with exchange APIs enabled
 let mut fetcher = Fetcher::import(true, None)?;
@@ -88,7 +88,7 @@ The fetcher implements aggressive retry logic with exponential backoff, attempti
 
 ```rust
 use brk_fetcher::Fetcher;
-use brk_structs::Date;
+use brk_types::Date;
 
 let mut fetcher = Fetcher::import(true, None)?;
 
@@ -162,7 +162,7 @@ Binance integration supports HTTP Archive (HAR) files for extended historical da
 **Caching**: BTreeMap-based caching for both timestamp and date-indexed price data \
 **Network Layer**: Built on `minreq` HTTP client with automatic JSON parsing \
 **Error Handling**: Comprehensive retry logic with source rotation and cache management \
-**Dependencies**: Integrates `brk_structs` for type definitions and `brk_error` for unified error handling \
+**Dependencies**: Integrates `brk_types` for type definitions and `brk_error` for unified error handling \
 **Architecture**: Multi-source aggregation pattern with hierarchical fallback and intelligent caching
 
 ---

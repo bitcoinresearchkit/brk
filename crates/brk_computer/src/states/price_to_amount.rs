@@ -5,7 +5,7 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_structs::{Dollars, Height, Sats};
+use brk_types::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};

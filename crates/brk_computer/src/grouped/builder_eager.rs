@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use brk_error::{Error, Result};
-use brk_structs::{CheckedSub, StoredU64, Version};
 use brk_traversable::Traversable;
+use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
     StoredIndex, StoredRaw,

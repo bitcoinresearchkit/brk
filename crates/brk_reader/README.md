@@ -37,7 +37,7 @@ cargo add brk_reader
 ```rust
 use brk_reader::Parser;
 use bitcoincore_rpc::{Client, Auth, RpcApi};
-use brk_structs::Height;
+use brk_types::Height;
 use std::path::PathBuf;
 
 // Initialize Bitcoin Core RPC client

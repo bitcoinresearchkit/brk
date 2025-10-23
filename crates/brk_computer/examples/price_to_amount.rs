@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_computer::PriceToAmount;
 use brk_error::Result;
-use brk_structs::Height;
+use brk_types::Height;
 
 pub fn main() -> Result<()> {
     let path = Path::new(&std::env::var("HOME").unwrap())

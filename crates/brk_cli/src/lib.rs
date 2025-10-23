@@ -14,7 +14,7 @@ use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_interface::Interface;
+use brk_query::Query;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
 use log::info;
@@ -54,7 +54,7 @@ pub fn run() -> color_eyre::Result<()> {
 
     let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
-    let interface = Interface::build(&reader, &indexer, &computer);
+    let query = Query::build(&reader, &indexer, &computer);
 
     let website = config.website();
 
@@ -97,7 +97,7 @@ pub fn run() -> color_eyre::Result<()> {
                 modules_path = downloaded_modules_path;
             }
 
-            interface.generate_js_files(&modules_path)?;
+            query.generate_js_files(&modules_path)?;
 
             Some(
                 bundle(
@@ -112,7 +112,7 @@ pub fn run() -> color_eyre::Result<()> {
             None
         };
 
-        let server = Server::new(interface, bundle_path);
+        let server = Server::new(query, bundle_path);
 
         tokio::spawn(async move {
             server.serve(true).await.unwrap();

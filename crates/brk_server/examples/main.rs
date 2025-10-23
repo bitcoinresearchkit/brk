@@ -6,7 +6,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_interface::Interface;
+use brk_query::Query;
 use brk_reader::Reader;
 use brk_server::Server;
 use vecdb::Exit;
@@ -39,9 +39,9 @@ pub fn main() -> Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let interface = Interface::build(&reader, &indexer, &computer);
+            let query = Query::build(&reader, &indexer, &computer);
 
-            let server = Server::new(interface, None);
+            let server = Server::new(query, None);
 
             let server = tokio::spawn(async move {
                 server.serve(true).await.unwrap();
@@ -51,7 +51,7 @@ pub fn main() -> Result<()> {
                 loop {
                     let block_count = rpc.get_block_count()?;
 
-                    let starting_indexes = indexer.index(&reader, rpc, &exit, true)?;
+                    let starting_indexes = indexer.checked_index(&reader, rpc, &exit)?;
 
                     computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 

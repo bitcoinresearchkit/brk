@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_structs::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
+use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, StoredIndex,
     VecIterator, Version,

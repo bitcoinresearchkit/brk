@@ -1,7 +1,7 @@
 use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable, io::Cursor};
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_structs::{BlkMetadata, Block, Height, ReadBlock};
+use brk_types::{BlkMetadata, Block, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex};
 

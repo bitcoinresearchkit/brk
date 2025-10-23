@@ -11,7 +11,7 @@ build = "build.rs"
 
 [dependencies]
 aide = { workspace = true }
-brk_interface = { workspace = true }
+brk_query = { workspace = true }
 brk_rmcp = { version = "0.8.0", features = [
     "transport-worker",
     "transport-streamable-http-server",

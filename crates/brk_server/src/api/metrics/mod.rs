@@ -5,9 +5,9 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use brk_interface::{PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt};
-use brk_structs::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
+use brk_query::{PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt};
 use brk_traversable::TreeNode;
+use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
 
 use crate::{
     VERSION,

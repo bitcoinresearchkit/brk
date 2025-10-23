@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{Dollars, Height, LoadedAddressData, Sats};
+use brk_types::{Dollars, Height, LoadedAddressData, Sats};
 
 use crate::SupplyState;
 

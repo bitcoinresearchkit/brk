@@ -13,10 +13,12 @@ build = "build.rs"
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 brk_grouper = { workspace = true }
+brk_iterator = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }
+brk_rpc = { workspace = true }
 brk_store = { workspace = true }
-brk_structs = { workspace = true }
+brk_types = { workspace = true }
 brk_traversable = { workspace = true }
 fjall2 = { workspace = true }
 # fjall3 = { workspace = true }

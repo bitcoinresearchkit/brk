@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use brk_traversable::Traversable;
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
     VecIterator,

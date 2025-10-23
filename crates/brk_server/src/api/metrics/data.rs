@@ -8,8 +8,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_error::{Error, Result};
-use brk_interface::{Output, Params};
-use brk_structs::Format;
+use brk_query::{Output, Params};
+use brk_types::Format;
 use quick_cache::sync::GuardResult;
 use vecdb::Stamp;
 
@@ -41,7 +41,9 @@ fn req_to_response_res(
     headers: HeaderMap,
     Query(params): Query<Params>,
     AppState {
-        interface, cache, ..
+        query: interface,
+        cache,
+        ..
     }: AppState,
 ) -> Result<Response> {
     todo!();

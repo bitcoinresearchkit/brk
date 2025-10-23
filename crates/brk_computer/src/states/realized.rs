@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use brk_structs::{CheckedSub, Dollars};
+use brk_types::{CheckedSub, Dollars};
 
 use super::SupplyState;
 

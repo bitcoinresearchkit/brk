@@ -1,11 +1,11 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
-use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
     StoredIndex, VecIterator,

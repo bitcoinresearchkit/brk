@@ -1,5 +1,5 @@
-use brk_structs::Sats;
 use brk_traversable::Traversable;
+use brk_types::Sats;
 
 use super::{Filter, Filtered};
 

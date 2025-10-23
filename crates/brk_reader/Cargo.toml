@@ -15,7 +15,7 @@ build = "build.rs"
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 brk_rpc = { workspace = true }
-brk_structs = { workspace = true }
+brk_types = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 derive_deref = { workspace = true }
 log = { workspace = true }

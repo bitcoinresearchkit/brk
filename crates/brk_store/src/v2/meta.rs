@@ -4,7 +4,7 @@ use std::{
 };
 
 use brk_error::Result;
-use brk_structs::Version;
+use brk_types::Version;
 use fjall2::{Keyspace, PartitionHandle, PersistMode};
 
 use super::Height;

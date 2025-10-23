@@ -16,7 +16,7 @@ use bitcoin::{block::Header, consensus::Decodable};
 use blk_index_to_blk_path::*;
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_structs::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
+use brk_types::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
 use crossbeam::channel::bounded;
 use derive_deref::Deref;

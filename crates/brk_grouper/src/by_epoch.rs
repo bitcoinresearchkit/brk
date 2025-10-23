@@ -1,5 +1,5 @@
-use brk_structs::{HalvingEpoch, Height};
 use brk_traversable::Traversable;
+use brk_types::{HalvingEpoch, Height};
 
 use super::{Filter, Filtered};
 

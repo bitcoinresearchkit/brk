@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_structs::{Index, IndexInfo, Limit, Metric};
 use brk_traversable::{Traversable, TreeNode};
+use brk_types::{Index, IndexInfo, Limit, Metric};
 use derive_deref::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
 use vecdb::AnyCollectableVec;

@@ -5,15 +5,24 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
+/// Data for a loaded (non-empty) address with current balance
 #[derive(Debug, Default, Clone, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct LoadedAddressData {
-    pub sent: Sats,
-    pub received: Sats,
-    pub realized_cap: Dollars,
-    pub utxo_count: u32,
+    /// Total transaction count
+    pub tx_count: u32,
+    /// Number of transaction outputs funded to this address
+    pub funded_txo_count: u32,
+    /// Number of transaction outputs spent by this address
+    pub spent_txo_count: u32,
     #[serde(skip)]
     padding: u32,
+    /// Satoshis received by this address
+    pub received: Sats,
+    /// Satoshis sent by this address
+    pub sent: Sats,
+    /// The realized capitalization of this address
+    pub realized_cap: Dollars,
 }
 
 impl LoadedAddressData {
@@ -42,12 +51,12 @@ impl LoadedAddressData {
 
     #[inline]
     pub fn has_0_utxos(&self) -> bool {
-        self.utxo_count == 0
+        self.funded_txo_count == self.spent_txo_count
     }
 
     pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
         self.received += amount;
-        self.utxo_count += 1;
+        self.funded_txo_count += 1;
         if let Some(price) = price {
             let added = price * amount;
             self.realized_cap += added;
@@ -63,7 +72,7 @@ impl LoadedAddressData {
             return Err(Error::Str("Previous_amount smaller than sent amount"));
         }
         self.sent += amount;
-        self.utxo_count -= 1;
+        self.spent_txo_count += 1;
         if let Some(previous_price) = previous_price {
             let subtracted = previous_price * amount;
             let realized_cap = self.realized_cap.checked_sub(subtracted).unwrap();
@@ -93,11 +102,13 @@ impl From<EmptyAddressData> for LoadedAddressData {
 impl From<&EmptyAddressData> for LoadedAddressData {
     fn from(value: &EmptyAddressData) -> Self {
         Self {
-            sent: value.transfered,
-            received: value.transfered,
-            realized_cap: Dollars::ZERO,
-            utxo_count: 0,
+            tx_count: value.tx_count,
+            funded_txo_count: value.funded_txo_count,
+            spent_txo_count: value.funded_txo_count,
             padding: 0,
+            received: value.transfered,
+            sent: value.transfered,
+            realized_cap: Dollars::ZERO,
         }
     }
 }
@@ -106,8 +117,13 @@ impl std::fmt::Display for LoadedAddressData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "sent: {}, received: {}, realized_cap: {}, utxos: {}",
-            self.sent, self.received, self.realized_cap, self.utxo_count
+            "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap: {}",
+            self.tx_count,
+            self.funded_txo_count,
+            self.spent_txo_count,
+            self.received,
+            self.sent,
+            self.realized_cap,
         )
     }
 }

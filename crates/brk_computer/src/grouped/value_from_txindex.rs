@@ -1,8 +1,8 @@
 use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_traversable::Traversable;
+use brk_types::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use vecdb::{
     AnyCloneableIterableVec, CollectableVec, Database, Exit, LazyVecFrom1, LazyVecFrom3,
     StoredIndex, StoredVec,
@@ -31,6 +31,7 @@ impl ComputedValueVecsFromTxindex {
     pub fn forced_import(
         db: &Database,
         name: &str,
+        indexer: &Indexer,
         indexes: &indexes::Vecs,
         source: Source<TxIndex, Sats>,
         version: Version,
@@ -79,7 +80,7 @@ impl ComputedValueVecsFromTxindex {
                 &name_usd,
                 version + VERSION,
                 bitcoin_txindex.boxed_clone(),
-                indexes.txindex_to_height.boxed_clone(),
+                indexer.vecs.txindex_to_height.boxed_clone(),
                 price.chainindexes_to_price_close.height.boxed_clone(),
                 |txindex: TxIndex,
                  txindex_to_btc_iter,

@@ -1,9 +1,9 @@
-# brk_structs
+# brk_types
 
 Bitcoin-aware type system and zero-copy data structures for blockchain analysis.
 
-[![Crates.io](https://img.shields.io/crates/v/brk_structs.svg)](https://crates.io/crates/brk_structs)
-[![Documentation](https://docs.rs/brk_structs/badge.svg)](https://docs.rs/brk_structs)
+[![Crates.io](https://img.shields.io/crates/v/brk_types.svg)](https://crates.io/crates/brk_types)
+[![Documentation](https://docs.rs/brk_types/badge.svg)](https://docs.rs/brk_types)
 
 ## Overview
 
@@ -29,13 +29,13 @@ This crate provides a comprehensive type system for Bitcoin blockchain analysis,
 ## Installation
 
 ```bash
-cargo add brk_structs
+cargo add brk_types
 ```
 
 ## Quick Start
 
 ```rust
-use brk_structs::*;
+use brk_types::*;
 
 // Bitcoin-specific types
 let height = Height::new(800000);
@@ -127,7 +127,7 @@ let week_index = WeekIndex::from(date);
 ### Block Height Operations
 
 ```rust
-use brk_structs::Height;
+use brk_types::Height;
 
 let current_height = Height::new(800000);
 let next_height = current_height.incremented();
@@ -143,7 +143,7 @@ let blocks_until_adjustment = current_height.left_before_next_diff_adj();
 ### Price Data Processing
 
 ```rust
-use brk_structs::*;
+use brk_types::*;
 
 // Create OHLC data from individual price points
 let daily_ohlc = OHLCDollars::from((
@@ -168,7 +168,7 @@ let weekly_close = vec![
 ### Address Type Classification
 
 ```rust
-use brk_structs::OutputType;
+use brk_types::OutputType;
 use bitcoin::{Address, Network};
 
 let address_str = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
@@ -192,7 +192,7 @@ if output_type.is_spendable() && output_type.is_address() {
 ### Time-Based Indexing
 
 ```rust
-use brk_structs::*;
+use brk_types::*;
 
 let date = Date::new(2023, 6, 15);
 let date_index = DateIndex::try_from(date)?;

@@ -1,10 +1,10 @@
 use allocative::Allocative;
 use brk_error::Result;
 
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use brk_traversable::Traversable;
 use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, grouped::LazyVecsBuilder, indexes};

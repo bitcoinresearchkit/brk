@@ -4,8 +4,8 @@ use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
-use brk_structs::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
 use brk_traversable::Traversable;
+use brk_types::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, RawVec,

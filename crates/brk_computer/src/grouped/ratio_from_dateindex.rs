@@ -1,6 +1,6 @@
 use brk_error::Result;
-use brk_structs::{Date, DateIndex, Dollars, StoredF32, Version};
 use brk_traversable::Traversable;
+use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
     GenericStoredVec, StoredIndex, VecIterator,

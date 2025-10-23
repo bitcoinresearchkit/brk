@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, path::Path};
 
 use brk_error::Result;
-use brk_structs::{Height, Version};
+use brk_types::{Height, Version};
 use byteview6::ByteView;
 use fjall2::{
     InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, PersistMode, ValueType,

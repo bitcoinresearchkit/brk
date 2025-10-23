@@ -4,7 +4,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_structs::{Address, AddressBytes, TxOutIndex, OutputType, pools};
+use brk_types::{Address, AddressBytes, OutputType, TxOutIndex, pools};
 use vecdb::{AnyIterableVec, Exit, VecIterator};
 
 fn main() -> Result<()> {

@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, path::Path};
 
 use brk_error::Result;
-use brk_structs::{CheckedSub, Dollars, Height, Sats};
+use brk_types::{CheckedSub, Dollars, Height, Sats};
 
 use crate::{PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 

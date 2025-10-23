@@ -1,6 +1,6 @@
 use allocative::Allocative;
-use brk_structs::Version;
 use brk_traversable::Traversable;
+use brk_types::Version;
 use vecdb::{
     AnyBoxedIterableVec, AnyCloneableIterableVec, FromCoarserIndex, LazyVecFrom2, StoredIndex,
 };

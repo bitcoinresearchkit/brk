@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_structs::{Transaction, TxidPath};
+use brk_types::{Transaction, TxidPath};
 
 use crate::{
     VERSION,
