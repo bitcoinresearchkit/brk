@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_structs::{Address, AddressStats};
+use brk_types::{Address, AddressStats};
 
 use crate::{
     VERSION,

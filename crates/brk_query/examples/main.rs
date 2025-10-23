@@ -3,9 +3,9 @@ use std::{fs, path::Path};
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_interface::{Interface, Params, ParamsOpt};
+use brk_query::{Params, ParamsOpt, Query};
 use brk_reader::Reader;
-use brk_structs::Index;
+use brk_types::Index;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -35,14 +35,14 @@ pub fn main() -> Result<()> {
 
     let computer = Computer::forced_import(&outputs_dir, &indexer, None)?;
 
-    let interface = Interface::build(&reader, &indexer, &computer);
+    let query = Query::build(&reader, &indexer, &computer);
 
-    dbg!(interface.search_and_format(Params {
+    dbg!(query.search_and_format(Params {
         index: Index::Height,
         metrics: vec!["date"].into(),
         rest: ParamsOpt::default().set_from(-1),
     })?);
-    dbg!(interface.search_and_format(Params {
+    dbg!(query.search_and_format(Params {
         index: Index::Height,
         metrics: vec!["date", "timestamp"].into(),
         rest: ParamsOpt::default().set_from(-10).set_count(5),

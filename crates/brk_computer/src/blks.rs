@@ -3,14 +3,13 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_reader::Reader;
-use brk_structs::{BlkPosition, Height, TxIndex, Version};
 use brk_traversable::Traversable;
+use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec,
-    PAGE_SIZE, VecIterator,
+    AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec, PAGE_SIZE, VecIterator,
 };
 
-use super::{Indexes, indexes};
+use super::Indexes;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -54,12 +53,11 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, reader, exit)?;
+        self.compute_(indexer, starting_indexes, reader, exit)?;
         self.db.flush_then_punch()?;
         Ok(())
     }
@@ -67,7 +65,6 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         parser: &Reader,
         exit: &Exit,
@@ -75,7 +72,8 @@ impl Vecs {
         let min_txindex =
             TxIndex::from(self.txindex_to_position.len()).min(starting_indexes.txindex);
 
-        let Some(min_height) = indexes
+        let Some(min_height) = indexer
+            .vecs
             .txindex_to_height
             .iter()
             .get_inner(min_txindex)

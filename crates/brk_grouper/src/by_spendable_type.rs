@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign};
 
-use brk_structs::OutputType;
 use brk_traversable::Traversable;
+use brk_types::OutputType;
 
 use super::{Filter, Filtered};
 

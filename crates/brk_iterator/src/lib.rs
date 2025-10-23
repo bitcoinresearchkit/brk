@@ -3,7 +3,7 @@ use std::sync::Arc;
 use brk_error::Result;
 use brk_reader::Reader;
 use brk_rpc::Client;
-use brk_structs::{BlockHash, Height};
+use brk_types::{BlockHash, Height};
 
 mod iterator;
 mod range;
@@ -67,7 +67,7 @@ impl Blocks {
     }
 
     /// Iterate after hash
-    pub fn after(&self, hash: BlockHash) -> Result<BlockIterator> {
+    pub fn after(&self, hash: Option<BlockHash>) -> Result<BlockIterator> {
         self.iter(BlockRange::After { hash })
     }
 
@@ -109,10 +109,14 @@ impl Blocks {
                 Ok((start, end, None))
             }
             BlockRange::After { hash } => {
-                let block_info = client.get_block_header_info(&hash)?;
-                let start = (block_info.height + 1).into();
+                let start = if let Some(hash) = hash.as_ref() {
+                    let block_info = client.get_block_header_info(hash)?;
+                    (block_info.height + 1).into()
+                } else {
+                    Height::ZERO
+                };
                 let end = client.get_last_height()?;
-                Ok((start, end, Some(hash)))
+                Ok((start, end, hash))
             }
         }
     }

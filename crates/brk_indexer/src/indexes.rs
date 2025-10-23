@@ -1,18 +1,13 @@
-use bitcoincore_rpc::Client;
-use brk_error::{Error, Result};
-use brk_structs::{
-    BlockHash, CheckedSub, EmptyOutputIndex, Height, OpReturnIndex, OutputType, P2AAddressIndex,
-    P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex,
-    P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex,
-    TypeIndex, UnknownOutputIndex,
+use brk_error::Result;
+use brk_types::{
+    EmptyOutputIndex, Height, OpReturnIndex, OutputType, P2AAddressIndex, P2MSOutputIndex,
+    P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
+    P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
+    UnknownOutputIndex,
 };
-use vecdb::{
-    AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw, VecIterator,
-};
+use vecdb::{AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw};
 
 use crate::{Stores, Vecs};
-
-const NUMBER_OF_UNSAFE_BLOCKS: usize = 100;
 
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {
@@ -90,176 +85,118 @@ impl Indexes {
     }
 }
 
-impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
-    type Error = Error;
-    fn try_from((vecs, stores, rpc): (&mut Vecs, &Stores, &Client)) -> Result<Self> {
+impl From<(Height, &mut Vecs, &Stores)> for Indexes {
+    fn from((min_height, vecs, stores): (Height, &mut Vecs, &Stores)) -> Self {
         // Height at which we want to start: min last saved + 1 or 0
         let vecs_starting_height = vecs.starting_height();
         let stores_starting_height = stores.starting_height();
-        let starting_height = vecs_starting_height.min(stores_starting_height);
-
-        // dbg!(
-        //     vecs_starting_height,
-        //     stores_starting_height,
-        //     starting_height
-        // );
-
-        let range = u32::from(
-            starting_height
-                .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
-                .unwrap_or_default(),
-        )..u32::from(starting_height);
-
-        let mut height_to_blockhash_iter = vecs.height_to_blockhash.iter();
-
-        // But we also need to check the chain and start earlier in case of a reorg
-        let height = range // ..= because of last saved + 1
-            .map(Height::from)
-            .find(|height| {
-                let rpc_blockhash = BlockHash::try_from((rpc, *height))
-                    .inspect_err(|e| {
-                        dbg!(e, height);
-                    })
-                    .unwrap();
-
-                height_to_blockhash_iter
-                    .get(*height)
-                    .is_none_or(|saved_blockhash| &rpc_blockhash != saved_blockhash.as_ref())
-            })
-            .unwrap_or(starting_height);
+        let height = vecs_starting_height.min(stores_starting_height);
+        if height < min_height {
+            unreachable!()
+        }
 
         let emptyoutputindex = starting_index(
             &vecs.height_to_first_emptyoutputindex,
             &vecs.emptyoutputindex_to_txindex,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(emptyoutputindex);
+        .unwrap();
 
         let p2msoutputindex = starting_index(
             &vecs.height_to_first_p2msoutputindex,
             &vecs.p2msoutputindex_to_txindex,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2msoutputindex);
+        .unwrap();
 
         let opreturnindex = starting_index(
             &vecs.height_to_first_opreturnindex,
             &vecs.opreturnindex_to_txindex,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(opreturnindex);
+        .unwrap();
 
         let p2pk33addressindex = starting_index(
             &vecs.height_to_first_p2pk33addressindex,
             &vecs.p2pk33addressindex_to_p2pk33bytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2pk33addressindex);
+        .unwrap();
 
         let p2pk65addressindex = starting_index(
             &vecs.height_to_first_p2pk65addressindex,
             &vecs.p2pk65addressindex_to_p2pk65bytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2pk65addressindex);
+        .unwrap();
 
         let p2pkhaddressindex = starting_index(
             &vecs.height_to_first_p2pkhaddressindex,
             &vecs.p2pkhaddressindex_to_p2pkhbytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2pkhaddressindex);
+        .unwrap();
 
         let p2shaddressindex = starting_index(
             &vecs.height_to_first_p2shaddressindex,
             &vecs.p2shaddressindex_to_p2shbytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2shaddressindex);
+        .unwrap();
 
         let p2traddressindex = starting_index(
             &vecs.height_to_first_p2traddressindex,
             &vecs.p2traddressindex_to_p2trbytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2traddressindex);
+        .unwrap();
 
         let p2wpkhaddressindex = starting_index(
             &vecs.height_to_first_p2wpkhaddressindex,
             &vecs.p2wpkhaddressindex_to_p2wpkhbytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2wpkhaddressindex);
+        .unwrap();
 
         let p2wshaddressindex = starting_index(
             &vecs.height_to_first_p2wshaddressindex,
             &vecs.p2wshaddressindex_to_p2wshbytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(p2wshaddressindex);
+        .unwrap();
 
         let p2aaddressindex = starting_index(
             &vecs.height_to_first_p2aaddressindex,
             &vecs.p2aaddressindex_to_p2abytes,
             height,
         )
-        .ok_or(Error::Str(""))?;
+        .unwrap();
 
-        // dbg!(p2aaddressindex);
-
-        let txindex = starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)
-            .ok_or(Error::Str(""))?;
-
-        // dbg!(txindex);
+        let txindex =
+            starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height).unwrap();
 
         let txinindex = starting_index(
             &vecs.height_to_first_txinindex,
             &vecs.txinindex_to_outpoint,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(txinindex);
+        .unwrap();
 
         let txoutindex = starting_index(
             &vecs.height_to_first_txoutindex,
             &vecs.txoutindex_to_value,
             height,
         )
-        .ok_or(Error::Str(""))?;
-
-        // dbg!(txoutindex);
+        .unwrap();
 
         let unknownoutputindex = starting_index(
             &vecs.height_to_first_unknownoutputindex,
             &vecs.unknownoutputindex_to_txindex,
             height,
         )
-        .ok_or(Error::Str(""))?;
+        .unwrap();
 
-        // dbg!(unknownoutputindex);
-
-        Ok(Self {
+        Self {
             emptyoutputindex,
             height,
             p2msoutputindex,
@@ -276,7 +213,7 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             txinindex,
             txoutindex,
             unknownoutputindex,
-        })
+        }
     }
 }
 

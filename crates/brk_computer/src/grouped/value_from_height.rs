@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use brk_error::Result;
-use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
 use brk_traversable::Traversable;
+use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
 use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
 
 use crate::{

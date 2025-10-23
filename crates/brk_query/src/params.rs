@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use brk_structs::{Format, Index, Metric, Metrics};
+use brk_types::{Format, Index, Metric, Metrics};
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;

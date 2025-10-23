@@ -137,7 +137,7 @@ println!("Total addresses: {}", final_indexes.total_address_count());
 
 ```rust
 use brk_indexer::Indexer;
-use brk_structs::{Height, TxidPrefix, AddressBytesHash};
+use brk_types::{Height, TxidPrefix, AddressBytesHash};
 
 let indexer = Indexer::forced_import("./blockchain_index")?;
 
@@ -183,7 +183,7 @@ println!("Processed {} new blocks",
 
 ```rust
 use brk_indexer::Indexer;
-use brk_structs::OutputType;
+use brk_types::OutputType;
 
 let indexer = Indexer::forced_import("./blockchain_index")?;
 

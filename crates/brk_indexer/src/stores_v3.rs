@@ -3,7 +3,7 @@ use std::{borrow::Cow, fs, path::Path};
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, StoreV3 as Store};
-use brk_structs::{
+use brk_types::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, StoredString, TxIndex, TxOutIndex,
     TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
 };

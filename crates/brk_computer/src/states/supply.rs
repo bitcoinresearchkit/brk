@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_structs::{CheckedSub, LoadedAddressData, Sats};
+use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 

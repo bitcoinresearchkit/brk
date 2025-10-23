@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_structs::{Dollars, Timestamp};
+use brk_types::{Dollars, Timestamp};
 use serde::Serialize;
 
 use super::SupplyState;

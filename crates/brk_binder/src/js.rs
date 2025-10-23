@@ -4,8 +4,8 @@ use std::{
     path::Path,
 };
 
-use brk_interface::Interface;
-use brk_structs::{Index, pools};
+use brk_query::Query;
+use brk_types::{Index, pools};
 
 use super::VERSION;
 
@@ -18,7 +18,7 @@ pub trait Bridge {
     fn generate_js_files(&self, modules_path: &Path) -> io::Result<()>;
 }
 
-impl Bridge for Interface<'static> {
+impl Bridge for Query<'static> {
     fn generate_js_files(&self, modules_path: &Path) -> io::Result<()> {
         let path = modules_path.join("brk-client");
 
@@ -81,7 +81,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
     fs::write(path, contents)
 }
 
-fn generate_metrics_file(interface: &Interface<'static>, parent: &Path) -> io::Result<()> {
+fn generate_metrics_file(query: &Query<'static>, parent: &Path) -> io::Result<()> {
     let path = parent.join(Path::new("metrics.js"));
 
     let indexes = Index::all();
@@ -125,14 +125,11 @@ export const INDEXES = /** @type {{const}} */ ([
     let mut unique_index_groups = BTreeMap::new();
 
     let mut word_to_freq: BTreeMap<_, usize> = BTreeMap::new();
-    interface
-        .metric_to_index_to_vec()
-        .keys()
-        .for_each(|metric| {
-            metric.split("_").for_each(|word| {
-                *word_to_freq.entry(word).or_default() += 1;
-            });
+    query.metric_to_index_to_vec().keys().for_each(|metric| {
+        metric.split("_").for_each(|word| {
+            *word_to_freq.entry(word).or_default() += 1;
         });
+    });
     let mut word_to_freq = word_to_freq.into_iter().collect::<Vec<_>>();
     word_to_freq.sort_unstable_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
     let words = word_to_freq
@@ -167,7 +164,7 @@ export const COMPRESSED_METRIC_TO_INDEXES = {
 "
     .to_string();
 
-    interface
+    query
         .metric_to_index_to_vec()
         .iter()
         .for_each(|(metric, index_to_vec)| {

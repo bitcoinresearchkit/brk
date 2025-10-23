@@ -1,13 +1,13 @@
 #![doc = include_str!("../README.md")]
 
-use std::path::Path;
+use std::{path::Path, thread};
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_reader::Reader;
-use brk_structs::Version;
 use brk_traversable::Traversable;
+use brk_types::Version;
 use log::info;
 use vecdb::{Exit, Format};
 
@@ -59,53 +59,78 @@ impl Computer {
 
         let computed_path = outputs_path.join("computed");
 
-        let indexes =
-            indexes::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, indexer)?;
+        let (indexes, fetched, blks) = thread::scope(|s| -> Result<_> {
+            let fetched_handle = fetcher.map(|fetcher| {
+                s.spawn(move || fetched::Vecs::forced_import(outputs_path, fetcher, VERSION))
+            });
 
-        let fetched = fetcher.map(|fetcher| {
-            fetched::Vecs::forced_import(outputs_path, fetcher, VERSION + Version::ZERO).unwrap()
-        });
+            let blks_handle = s.spawn(|| blks::Vecs::forced_import(&computed_path, VERSION));
 
-        let price = fetched.is_some().then(|| {
-            price::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes).unwrap()
-        });
+            let indexes = indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?;
+            let fetched = fetched_handle.map(|h| h.join().unwrap()).transpose()?;
+            let blks = blks_handle.join().unwrap()?;
 
-        import in theads
+            Ok((indexes, fetched, blks))
+        })?;
+
+        let (price, constants, market) = thread::scope(|s| -> Result<_> {
+            let constants_handle =
+                s.spawn(|| constants::Vecs::forced_import(&computed_path, VERSION, &indexes));
+
+            let market_handle =
+                s.spawn(|| market::Vecs::forced_import(&computed_path, VERSION, &indexes));
+
+            let price = fetched
+                .is_some()
+                .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
+
+            let constants = constants_handle.join().unwrap()?;
+            let market = market_handle.join().unwrap()?;
+
+            Ok((price, constants, market))
+        })?;
+
+        let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
+            let chain_handle = s.spawn(|| {
+                chain::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    indexer,
+                    &indexes,
+                    price.as_ref(),
+                )
+            });
+
+            let pools_handle = s.spawn(|| {
+                pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())
+            });
+
+            let cointime =
+                cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
+
+            let chain = chain_handle.join().unwrap()?;
+            let pools = pools_handle.join().unwrap()?;
+
+            Ok((chain, pools, cointime))
+        })?;
+
+        // Threads inside
+        let stateful = stateful::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            Format::Compressed,
+            &indexes,
+            price.as_ref(),
+        )?;
 
         Ok(Self {
-            constants: constants::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                &indexes,
-            )?,
-            market: market::Vecs::forced_import(&computed_path, VERSION + Version::ZERO, &indexes)?,
-            stateful: stateful::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                Format::Compressed,
-                &indexes,
-                price.as_ref(),
-            )?,
-            chain: chain::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                indexer,
-                &indexes,
-                price.as_ref(),
-            )?,
-            blks: blks::Vecs::forced_import(&computed_path, VERSION + Version::ZERO)?,
-            pools: pools::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                &indexes,
-                price.as_ref(),
-            )?,
-            cointime: cointime::Vecs::forced_import(
-                &computed_path,
-                VERSION + Version::ZERO,
-                &indexes,
-                price.as_ref(),
-            )?,
+            constants,
+            market,
+            stateful,
+            chain,
+            blks,
+            pools,
+            cointime,
             indexes,
             fetched,
             price,
@@ -137,7 +162,7 @@ impl Computer {
 
         info!("Computing BLKs metadata...");
         self.blks
-            .compute(indexer, &self.indexes, &starting_indexes, parser, exit)?;
+            .compute(indexer, &starting_indexes, parser, exit)?;
 
         std::thread::scope(|scope| -> Result<()> {
             let constants = scope.spawn(|| -> Result<()> {

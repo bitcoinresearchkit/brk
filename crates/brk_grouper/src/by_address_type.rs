@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign};
 
 use brk_error::Result;
-use brk_structs::OutputType;
 use brk_traversable::{Traversable, TreeNode};
+use brk_types::OutputType;
 use rayon::prelude::*;
 use vecdb::AnyCollectableVec;
 

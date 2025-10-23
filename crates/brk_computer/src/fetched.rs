@@ -3,11 +3,11 @@ use std::path::Path;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_structs::{DateIndex, Height, OHLCCents, Version};
 use brk_traversable::Traversable;
+use brk_types::{DateIndex, Height, OHLCCents, Version};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, RawVec, StoredIndex,
-    VecIterator,
+    AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, RawVec,
+    StoredIndex, VecIterator,
 };
 
 use super::{Indexes, indexes};

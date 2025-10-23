@@ -2,7 +2,7 @@ use std::{sync::Arc, thread, time::Duration};
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_structs::{AddressBytes, AddressMempoolStats, Transaction, Txid};
+use brk_types::{AddressBytes, AddressMempoolStats, Transaction, Txid};
 use derive_deref::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};

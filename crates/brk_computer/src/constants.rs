@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{StoredF32, StoredI16, StoredU16, Version};
 use brk_traversable::Traversable;
-use vecdb::{AnyVec, Database, Exit};
+use brk_types::{StoredF32, StoredI16, StoredU16, Version};
+use vecdb::{AnyVec, Database, Exit, PAGE_SIZE};
 
 use crate::grouped::Source;
 
@@ -40,7 +40,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join("constants"))?;
-        db.set_min_len(PAGE_SIZE * 10_000_000)?;
+        db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let version = parent_version + Version::ZERO;
 

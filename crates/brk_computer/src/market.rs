@@ -1,8 +1,8 @@
 use std::{path::Path, thread};
 
 use brk_error::Result;
-use brk_structs::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
 use brk_traversable::Traversable;
+use brk_types::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
 use vecdb::{Database, EagerVec, Exit, PAGE_SIZE, StoredIndex, VecIterator};
 
 use crate::{

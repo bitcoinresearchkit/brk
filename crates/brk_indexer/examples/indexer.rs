@@ -7,7 +7,9 @@ use std::{
 
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_iterator::Blocks;
 use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
 use vecdb::Exit;
 
 fn main() -> Result<()> {
@@ -19,21 +21,18 @@ fn main() -> Result<()> {
         .join("Bitcoin");
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
-    let blocks_dir = bitcoin_dir.join("blocks");
-
     let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
     fs::create_dir_all(&outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 
-    let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
+    let client = Client::new(
         "http://localhost:8332",
-        bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
 
-    let exit = Exit::new();
-    exit.set_ctrlc_handler();
+    let reader = Reader::new(bitcoin_dir.join("blocks"), client.clone());
 
-    let reader = Reader::new(blocks_dir, rpc);
+    let blocks = Blocks::new(client.clone(), reader);
 
     fs::create_dir_all(&outputs_dir)?;
 
@@ -45,9 +44,12 @@ fn main() -> Result<()> {
     // dbg!(vecs.len());
     // std::process::exit(0);
 
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
+
     loop {
         let i = Instant::now();
-        indexer.index(&reader, rpc, &exit, true)?;
+        indexer.checked_index(&blocks, &client, &exit)?;
         dbg!(i.elapsed());
 
         sleep(Duration::from_secs(60));

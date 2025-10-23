@@ -6,11 +6,11 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_reader::Reader;
-use brk_structs::{
+use brk_traversable::TreeNode;
+use brk_types::{
     Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount,
     Transaction, TxidPath,
 };
-use brk_traversable::TreeNode;
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
 mod chain;
@@ -31,14 +31,14 @@ use crate::{
 };
 
 #[allow(dead_code)]
-pub struct Interface<'a> {
+pub struct Query<'a> {
     vecs: Vecs<'a>,
     parser: &'a Reader,
     indexer: &'a Indexer,
     computer: &'a Computer,
 }
 
-impl<'a> Interface<'a> {
+impl<'a> Query<'a> {
     pub fn build(parser: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
         let reader = parser.static_clone();
         let indexer = indexer.static_clone();

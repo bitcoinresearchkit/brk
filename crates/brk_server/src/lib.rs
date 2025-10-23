@@ -17,9 +17,9 @@ use axum::{
     serve,
 };
 use brk_error::Result;
-use brk_interface::Interface;
 use brk_logger::OwoColorize;
 use brk_mcp::route::MCPRoutes;
+use brk_query::Query;
 use files::FilesRoutes;
 use log::{error, info};
 use quick_cache::sync::Cache;
@@ -37,15 +37,15 @@ use crate::api::create_openapi;
 
 #[derive(Clone)]
 pub struct AppState {
-    interface: &'static Interface<'static>,
+    query: &'static Query<'static>,
     path: Option<PathBuf>,
     cache: Arc<Cache<String, Bytes>>,
 }
 
 impl Deref for AppState {
-    type Target = &'static Interface<'static>;
+    type Target = &'static Query<'static>;
     fn deref(&self) -> &Self::Target {
-        &self.interface
+        &self.query
     }
 }
 
@@ -54,9 +54,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(interface: Interface<'static>, files_path: Option<PathBuf>) -> Self {
+    pub fn new(query: Query<'static>, files_path: Option<PathBuf>) -> Self {
         Self(AppState {
-            interface: Box::leak(Box::new(interface)),
+            query: Box::leak(Box::new(query)),
             path: files_path,
             cache: Arc::new(Cache::new(5_000)),
         })
@@ -106,7 +106,7 @@ impl Server {
 
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_mcp_routes(state.interface, mcp)
+            .add_mcp_routes(state.query, mcp)
             .add_files_routes(state.path.as_ref())
             .route(
                 "/discord",

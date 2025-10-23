@@ -7,22 +7,19 @@ use std::{
 use bitcoin::consensus::Decodable;
 use brk_error::{Error, Result};
 use brk_reader::XORIndex;
-use brk_structs::{Transaction, Txid, TxidPath, TxidPrefix};
+use brk_types::{Transaction, Txid, TxidPath, TxidPrefix};
 use vecdb::VecIterator;
 
-use crate::Interface;
+use crate::Query;
 
-pub fn get_transaction_info(
-    TxidPath { txid }: TxidPath,
-    interface: &Interface,
-) -> Result<Transaction> {
+pub fn get_transaction_info(TxidPath { txid }: TxidPath, query: &Query) -> Result<Transaction> {
     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
         return Err(Error::InvalidTxid);
     };
 
     let txid = Txid::from(txid);
     let prefix = TxidPrefix::from(&txid);
-    let indexer = interface.indexer();
+    let indexer = query.indexer();
     let Ok(Some(index)) = indexer
         .stores
         .txidprefix_to_txindex
@@ -34,8 +31,8 @@ pub fn get_transaction_info(
 
     let txid = indexer.vecs.txindex_to_txid.iter().unwrap_get_inner(index);
 
-    let reader = interface.parser();
-    let computer = interface.computer();
+    let reader = query.parser();
+    let computer = query.computer();
 
     let position = computer
         .blks

@@ -1,4 +1,4 @@
-use brk_structs::Format;
+use brk_types::Format;
 
 #[derive(Debug)]
 pub enum Output {

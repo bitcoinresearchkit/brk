@@ -10,7 +10,7 @@ use axum::{
     response::{Html, Redirect, Response},
     routing::get,
 };
-use brk_structs::Health;
+use brk_types::Health;
 
 use crate::{
     VERSION,

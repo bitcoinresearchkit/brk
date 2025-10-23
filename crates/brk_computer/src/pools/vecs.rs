@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use brk_error::Result;
-use brk_structs::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
 use brk_traversable::Traversable;
+use brk_types::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
 
 use crate::{

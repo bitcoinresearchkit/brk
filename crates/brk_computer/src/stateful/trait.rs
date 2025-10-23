@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{AnyIterableVec, Exit};
 
 use crate::{Indexes, indexes, price};

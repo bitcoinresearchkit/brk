@@ -12,7 +12,7 @@ build = "build.rs"
 [dependencies]
 brk_error = { workspace = true }
 brk_logger = { workspace = true }
-brk_structs = { workspace = true }
+brk_types = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
 sonic-rs = { workspace = true }

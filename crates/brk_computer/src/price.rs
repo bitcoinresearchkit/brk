@@ -1,11 +1,11 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use brk_traversable::Traversable;
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE,
     RawVec,

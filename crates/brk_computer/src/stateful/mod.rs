@@ -9,14 +9,14 @@ use std::{
 use brk_error::Result;
 use brk_grouper::{ByAddressType, ByAnyAddress, Filtered};
 use brk_indexer::Indexer;
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     AnyAddressDataIndexEnum, AnyAddressIndex, CheckedSub, DateIndex, Dollars, EmptyAddressData,
     EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, OutputType, P2AAddressIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
     P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64, Timestamp, TxInIndex, TxOutIndex,
     TypeIndex, Version,
 };
-use brk_traversable::Traversable;
 use log::info;
 use rayon::prelude::*;
 use vecdb::{
@@ -544,9 +544,9 @@ impl Vecs {
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
         let txinindex_to_txoutindex = &indexer.vecs.txinindex_to_txoutindex;
         let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
-        let txindex_to_height = &indexes.txindex_to_height;
+        let txindex_to_height = &indexer.vecs.txindex_to_height;
         let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
-        let txoutindex_to_txindex = &indexes.txoutindex_to_txindex;
+        let txoutindex_to_txindex = &indexer.vecs.txoutindex_to_txindex;
         let txoutindex_to_outputtype = &indexer.vecs.txoutindex_to_outputtype;
         let txoutindex_to_typeindex = &indexer.vecs.txoutindex_to_typeindex;
         let height_to_unclaimed_rewards = chain
@@ -1506,28 +1506,28 @@ impl Vecs {
 
         let anyaddressindex = match address_type {
             OutputType::P2PK33 => {
-                p2pk33addressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2pk33addressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2PK65 => {
-                p2pk65addressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2pk65addressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2PKH => {
-                p2pkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2pkhaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2SH => {
-                p2shaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2shaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2TR => {
-                p2traddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2traddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2WPKH => {
-                p2wpkhaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2wpkhaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2WSH => {
-                p2wshaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2wshaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             OutputType::P2A => {
-                p2aaddressindex_to_anyaddressindex.get_or_read(typeindex.into(), reader)
+                p2aaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
             }
             _ => unreachable!(),
         }
@@ -1543,7 +1543,7 @@ impl Vecs {
                     .unwrap();
 
                 let loadedaddressdata = loadedaddressindex_to_loadedaddressdata
-                    .get_or_read(loadedaddressindex, mmap)
+                    .get_any_or_read(loadedaddressindex, mmap)
                     .unwrap()
                     .unwrap()
                     .into_owned();
@@ -1560,7 +1560,7 @@ impl Vecs {
                     .unwrap();
 
                 let emptyaddressdata = emptyaddressindex_to_emptyaddressdata
-                    .get_or_read(emtpyaddressindex, mmap)
+                    .get_any_or_read(emtpyaddressindex, mmap)
                     .unwrap()
                     .unwrap()
                     .into_owned();
@@ -1956,7 +1956,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
         price: Option<Dollars>,
         addresstype_to_addr_count: &mut ByAddressType<u64>,
         addresstype_to_empty_addr_count: &mut ByAddressType<u64>,
-        height_to_price_close_vec: Option<&Vec<brk_structs::Close<Dollars>>>,
+        height_to_price_close_vec: Option<&Vec<brk_types::Close<Dollars>>>,
         height_to_timestamp_fixed_vec: &[Timestamp],
         height: Height,
         timestamp: Timestamp,

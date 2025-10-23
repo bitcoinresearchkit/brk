@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_grouper::ByAddressType;
-use brk_structs::{Height, StoredU64};
 use brk_traversable::Traversable;
+use brk_types::{Height, StoredU64};
 use derive_deref::{Deref, DerefMut};
 use vecdb::{EagerVec, Exit, GenericStoredVec};
 

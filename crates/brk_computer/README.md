@@ -131,7 +131,7 @@ println!("Stateful analysis completed: {}", computer.stateful.len());
 
 ```rust
 use brk_computer::Computer;
-use brk_structs::{DateIndex, Height};
+use brk_types::{DateIndex, Height};
 
 let computer = Computer::forced_import(/* ... */)?;
 
@@ -160,7 +160,7 @@ if let Some(difficulty) = computer.chain.height_to_difficulty.get(height)? {
 
 ```rust
 use brk_computer::Computer;
-use brk_structs::{DateIndex, CohortId};
+use brk_types::{DateIndex, CohortId};
 
 let computer = Computer::forced_import(/* ... */)?;
 
@@ -190,7 +190,7 @@ if let Some(utxo_cohorts) = &computer.stateful.utxo_cohorts {
 
 ```rust
 use brk_computer::Computer;
-use brk_structs::{Height, DateIndex};
+use brk_types::{Height, DateIndex};
 
 let computer = Computer::forced_import(/* ... */)?;
 
@@ -267,7 +267,7 @@ Each computation module operates independently:
 **Required Dependencies:**
 
 - `brk_indexer`: Raw blockchain data access
-- `brk_structs`: Type definitions and conversions
+- `brk_types`: Type definitions and conversions
 
 **Optional Dependencies:**
 

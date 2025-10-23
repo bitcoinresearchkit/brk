@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, path::Path, sync::Arc};
 
 use brk_error::Result;
-use brk_structs::{Height, Version};
+use brk_types::{Height, Version};
 use byteview8::ByteView;
 use fjall3::{KeyspaceCreateOptions, PersistMode, TxDatabase, TxKeyspace};
 

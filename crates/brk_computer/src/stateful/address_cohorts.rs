@@ -2,8 +2,8 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_grouper::{AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, Filtered};
-use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
 use brk_traversable::Traversable;
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyIterableVec, Database, Exit, Format};
 

@@ -26,7 +26,7 @@ full = [
     "parser",
     "server",
     "store",
-    "structs",
+    "types",
     "traversable",
 ]
 binder = ["brk_binder"]
@@ -37,13 +37,13 @@ error = ["brk_error"]
 fetcher = ["brk_fetcher"]
 grouper = ["brk_grouper"]
 indexer = ["brk_indexer"]
-interface = ["brk_interface"]
+interface = ["brk_query"]
 logger = ["brk_logger"]
 mcp = ["brk_mcp"]
 parser = ["brk_reader"]
 server = ["brk_server"]
 store = ["brk_store"]
-structs = ["brk_structs"]
+types = ["brk_types"]
 traversable = ["brk_traversable"]
 
 [dependencies]
@@ -55,13 +55,13 @@ brk_error = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
 brk_grouper = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
-brk_interface = { workspace = true, optional = true }
+brk_query = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_mcp = { workspace = true, optional = true }
 brk_reader = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
-brk_structs = { workspace = true, optional = true }
+brk_types = { workspace = true, optional = true }
 brk_traversable = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]

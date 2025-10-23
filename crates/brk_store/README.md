@@ -36,7 +36,7 @@ cargo add brk_store
 
 ```rust
 use brk_store::{Store, open_keyspace};
-use brk_structs::{Height, Version};
+use brk_types::{Height, Version};
 use std::path::Path;
 
 // Open keyspace (database instance)
@@ -104,7 +104,7 @@ The store implements blockchain-aware synchronization:
 
 ```rust
 use brk_store::{Store, open_keyspace};
-use brk_structs::{Height, TxId, Version};
+use brk_types::{Height, TxId, Version};
 
 let keyspace = open_keyspace(Path::new("./blockchain_data"))?;
 
@@ -165,7 +165,7 @@ store.persist()?;
 
 ```rust
 use brk_store::{Store, AnyStore};
-use brk_structs::Version;
+use brk_types::Version;
 
 // Open store with new version
 let mut store: Store<Height, Data> = Store::import(

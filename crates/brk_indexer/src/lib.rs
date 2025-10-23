@@ -4,8 +4,10 @@ use std::{path::Path, str::FromStr, thread, time::Instant};
 
 use bitcoin::{TxIn, TxOut};
 use brk_error::{Error, Result};
+use brk_iterator::Blocks;
+use brk_rpc::Client;
 use brk_store::AnyStore;
-use brk_structs::{
+use brk_types::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, OutputType, Sats,
     StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex,
     TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version, Vin, Vout,
@@ -58,15 +60,40 @@ impl Indexer {
         Ok(Self { vecs, stores })
     }
 
-    pub fn index(
+    pub fn index(&mut self, blocks: &Blocks, client: &Client, exit: &Exit) -> Result<Indexes> {
+        self.index_(blocks, client, exit, false)
+    }
+
+    pub fn checked_index(
         &mut self,
-        reader: &brk_reader::Reader,
-        rpc: &'static bitcoincore_rpc::Client,
+        blocks: &Blocks,
+        client: &Client,
+        exit: &Exit,
+    ) -> Result<Indexes> {
+        self.index_(blocks, client, exit, true)
+    }
+
+    fn index_(
+        &mut self,
+        blocks: &Blocks,
+        client: &Client,
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
-        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
-            .unwrap_or_else(|_report| Indexes::default());
+        let (starting_indexes, prev_hash) = if let Some(hash) =
+            VecIterator::last(self.vecs.height_to_blockhash.iter()).map(|(_, v)| v.into_owned())
+        {
+            let (height, hash) = client.get_closest_valid_height(hash)?;
+            let starting_indexes =
+                Indexes::from((height.incremented(), &mut self.vecs, &self.stores));
+            if starting_indexes.height > client.get_last_height()? {
+                info!("Up to date, nothing to index.");
+                return Ok(starting_indexes);
+            }
+            (starting_indexes, Some(hash))
+        } else {
+            (Indexes::default(), None)
+        };
 
         let lock = exit.lock();
         self.stores
@@ -74,54 +101,39 @@ impl Indexer {
         self.vecs.rollback_if_needed(&starting_indexes)?;
         drop(lock);
 
-        let vecs = &mut self.vecs;
-        let stores = &mut self.stores;
-
         // Cloned because we want to return starting indexes for the computer
-        let mut idxs = starting_indexes.clone();
-
-        let start = Some(idxs.height);
-        let end = None;
-
-        if starting_indexes.height > Height::try_from(rpc)?
-            || end.is_some_and(|end| starting_indexes.height > end)
-        {
-            info!("Up to date, nothing to index.");
-            return Ok(starting_indexes);
-        }
-
-        info!("Started indexing...");
+        let mut indexes = starting_indexes.clone();
 
         let should_export = |height: Height, rem: bool| -> bool {
             height != 0 && (height % SNAPSHOT_BLOCK_RANGE == 0) != rem
         };
 
-        let export =
-            |stores: &mut Stores, vecs: &mut Vecs, height: Height, exit: &Exit| -> Result<()> {
-                info!("Exporting...");
-                // std::process::exit(0);
-                let _lock = exit.lock();
-                let i = Instant::now();
-                stores.commit(height).unwrap();
-                info!("Commited stores in {}s", i.elapsed().as_secs());
-                let i = Instant::now();
-                vecs.flush(height)?;
-                info!("Flushed vecs in {}s", i.elapsed().as_secs());
-                let i = Instant::now();
-                info!("Flushed db in {}s", i.elapsed().as_secs());
-                Ok(())
-            };
+        let export = move |stores: &mut Stores, vecs: &mut Vecs, height: Height| -> Result<()> {
+            info!("Exporting...");
+            // std::process::exit(0);
+            let _lock = exit.lock();
+            let i = Instant::now();
+            stores.commit(height).unwrap();
+            info!("Commited stores in {}s", i.elapsed().as_secs());
+            let i = Instant::now();
+            vecs.flush(height)?;
+            info!("Flushed vecs in {}s", i.elapsed().as_secs());
+            let i = Instant::now();
+            info!("Flushed db in {}s", i.elapsed().as_secs());
+            Ok(())
+        };
 
-        let mut readers = Readers::new(vecs);
+        let mut readers = Readers::new(&self.vecs);
         let mut already_added_addressbyteshash: FxHashMap<AddressBytesHash, TypeIndex> =
             FxHashMap::default();
         let mut same_block_spent_outpoints: FxHashSet<OutPoint> = FxHashSet::default();
         let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
             FxHashMap::default();
 
-        // TODO: CHECK PREV HASH
+        let vecs = &mut self.vecs;
+        let stores = &mut self.stores;
 
-        for block in reader.read(start, end).iter() {
+        for block in blocks.after(prev_hash)? {
             // let i_tot = Instant::now();
             already_added_addressbyteshash.clear();
             same_block_spent_outpoints.clear();
@@ -132,7 +144,7 @@ impl Indexer {
 
             info!("Indexing block {height}...");
 
-            idxs.height = height;
+            indexes.height = height;
 
             // Used to check rapidhash collisions
             let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO;
@@ -148,7 +160,7 @@ impl Indexer {
                 return Err(Error::Str("Collision, expect prefix to need be set yet"));
             }
 
-            idxs.push_if_needed(vecs)?;
+            indexes.push_if_needed(vecs)?;
 
             stores
                 .blockhashprefix_to_height
@@ -191,7 +203,7 @@ impl Indexer {
                         };
 
                     Ok((
-                        idxs.txindex + TxIndex::from(index),
+                        indexes.txindex + TxIndex::from(index),
                         tx,
                         txid,
                         txid_prefix,
@@ -220,8 +232,8 @@ impl Indexer {
                 .into_par_iter()
                 .enumerate()
                 .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
-                    let txindex = idxs.txindex + block_txindex;
-                    let txinindex = idxs.txinindex + TxInIndex::from(block_txinindex);
+                    let txindex = indexes.txindex + block_txindex;
+                    let txinindex = indexes.txinindex + TxInIndex::from(block_txinindex);
 
                     if tx.is_coinbase() {
                         return Ok((txinindex, InputSource::SameBlock((txindex, txin, vin, OutPoint::COINBASE))));
@@ -237,7 +249,7 @@ impl Indexer {
                         .map(|v| *v)
                         .and_then(|txindex| {
                             // Checking if not finding txindex from the future
-                            (txindex < idxs.txindex).then_some(txindex)
+                            (txindex < indexes.txindex).then_some(txindex)
                         }) {
                         txindex
                     } else {
@@ -329,8 +341,8 @@ impl Indexer {
                         Option<(AddressBytes, AddressBytesHash)>,
                         Option<TypeIndex>,
                     )> {
-                        let txindex = idxs.txindex + block_txindex;
-                        let txoutindex = idxs.txoutindex + TxOutIndex::from(block_txoutindex);
+                        let txindex = indexes.txindex + block_txindex;
+                        let txoutindex = indexes.txoutindex + TxOutIndex::from(block_txoutindex);
 
                         let script = &txout.script_pubkey;
 
@@ -353,7 +365,7 @@ impl Indexer {
                             .map(|v| *v)
                             // Checking if not in the future (in case we started before the last processed block)
                             .and_then(|typeindex_local| {
-                                (typeindex_local < idxs.to_typeindex(outputtype))
+                                (typeindex_local < indexes.to_typeindex(outputtype))
                                     .then_some(typeindex_local)
                             });
 
@@ -442,7 +454,7 @@ impl Indexer {
                                     outputtype,
                                     prev_addressbytes,
                                     address_bytes,
-                                    &idxs,
+                                    &indexes,
                                     typeindex,
                                     typeindex,
                                     txout,
@@ -498,33 +510,33 @@ impl Indexer {
                             ti
                         } else {
                             let ti = match outputtype {
-                                OutputType::P2PK65 => idxs.p2pk65addressindex.copy_then_increment(),
-                                OutputType::P2PK33 => idxs.p2pk33addressindex.copy_then_increment(),
-                                OutputType::P2PKH => idxs.p2pkhaddressindex.copy_then_increment(),
+                                OutputType::P2PK65 => indexes.p2pk65addressindex.copy_then_increment(),
+                                OutputType::P2PK33 => indexes.p2pk33addressindex.copy_then_increment(),
+                                OutputType::P2PKH => indexes.p2pkhaddressindex.copy_then_increment(),
                                 OutputType::P2MS => {
                                     vecs.p2msoutputindex_to_txindex
-                                        .push_if_needed(idxs.p2msoutputindex, txindex)?;
-                                    idxs.p2msoutputindex.copy_then_increment()
+                                        .push_if_needed(indexes.p2msoutputindex, txindex)?;
+                                    indexes.p2msoutputindex.copy_then_increment()
                                 }
-                                OutputType::P2SH => idxs.p2shaddressindex.copy_then_increment(),
+                                OutputType::P2SH => indexes.p2shaddressindex.copy_then_increment(),
                                 OutputType::OpReturn => {
                                     vecs.opreturnindex_to_txindex
-                                        .push_if_needed(idxs.opreturnindex, txindex)?;
-                                    idxs.opreturnindex.copy_then_increment()
+                                        .push_if_needed(indexes.opreturnindex, txindex)?;
+                                    indexes.opreturnindex.copy_then_increment()
                                 }
-                                OutputType::P2WPKH => idxs.p2wpkhaddressindex.copy_then_increment(),
-                                OutputType::P2WSH => idxs.p2wshaddressindex.copy_then_increment(),
-                                OutputType::P2TR => idxs.p2traddressindex.copy_then_increment(),
-                                OutputType::P2A => idxs.p2aaddressindex.copy_then_increment(),
+                                OutputType::P2WPKH => indexes.p2wpkhaddressindex.copy_then_increment(),
+                                OutputType::P2WSH => indexes.p2wshaddressindex.copy_then_increment(),
+                                OutputType::P2TR => indexes.p2traddressindex.copy_then_increment(),
+                                OutputType::P2A => indexes.p2aaddressindex.copy_then_increment(),
                                 OutputType::Empty => {
                                     vecs.emptyoutputindex_to_txindex
-                                        .push_if_needed(idxs.emptyoutputindex, txindex)?;
-                                    idxs.emptyoutputindex.copy_then_increment()
+                                        .push_if_needed(indexes.emptyoutputindex, txindex)?;
+                                    indexes.emptyoutputindex.copy_then_increment()
                                 }
                                 OutputType::Unknown => {
                                     vecs.unknownoutputindex_to_txindex
-                                        .push_if_needed(idxs.unknownoutputindex, txindex)?;
-                                    idxs.unknownoutputindex.copy_then_increment()
+                                        .push_if_needed(indexes.unknownoutputindex, txindex)?;
+                                    indexes.unknownoutputindex.copy_then_increment()
                                 }
                                 _ => unreachable!(),
                             };
@@ -543,23 +555,23 @@ impl Indexer {
                         match outputtype {
                             OutputType::P2MS => {
                                 vecs.p2msoutputindex_to_txindex
-                                    .push_if_needed(idxs.p2msoutputindex, txindex)?;
-                                idxs.p2msoutputindex.copy_then_increment()
+                                    .push_if_needed(indexes.p2msoutputindex, txindex)?;
+                                indexes.p2msoutputindex.copy_then_increment()
                             }
                             OutputType::OpReturn => {
                                 vecs.opreturnindex_to_txindex
-                                    .push_if_needed(idxs.opreturnindex, txindex)?;
-                                idxs.opreturnindex.copy_then_increment()
+                                    .push_if_needed(indexes.opreturnindex, txindex)?;
+                                indexes.opreturnindex.copy_then_increment()
                             }
                             OutputType::Empty => {
                                 vecs.emptyoutputindex_to_txindex
-                                    .push_if_needed(idxs.emptyoutputindex, txindex)?;
-                                idxs.emptyoutputindex.copy_then_increment()
+                                    .push_if_needed(indexes.emptyoutputindex, txindex)?;
+                                indexes.emptyoutputindex.copy_then_increment()
                             }
                             OutputType::Unknown => {
                                 vecs.unknownoutputindex_to_txindex
-                                    .push_if_needed(idxs.unknownoutputindex, txindex)?;
-                                idxs.unknownoutputindex.copy_then_increment()
+                                    .push_if_needed(indexes.unknownoutputindex, txindex)?;
+                                indexes.unknownoutputindex.copy_then_increment()
                             }
                             _ => unreachable!(),
                         }
@@ -775,23 +787,23 @@ impl Indexer {
             )?;
             // println!("txindex_to_tx_and_txid.into_iter(): {:?}", i.elapsed());
 
-            idxs.txindex += TxIndex::from(tx_len);
-            idxs.txinindex += TxInIndex::from(inputs_len);
-            idxs.txoutindex += TxOutIndex::from(outputs_len);
+            indexes.txindex += TxIndex::from(tx_len);
+            indexes.txinindex += TxInIndex::from(inputs_len);
+            indexes.txoutindex += TxOutIndex::from(outputs_len);
 
             // println!("full block: {:?}", i_tot.elapsed());
 
             if should_export(height, false) {
                 drop(readers);
-                export(stores, vecs, height, exit)?;
+                export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
             }
         }
 
         drop(readers);
 
-        if should_export(idxs.height, true) {
-            export(stores, vecs, idxs.height, exit)?;
+        if should_export(indexes.height, true) {
+            export(stores, vecs, indexes.height)?;
         }
 
         // let i = Instant::now();
@@ -827,7 +839,7 @@ struct Readers {
 }
 
 impl Readers {
-    fn new(vecs: &mut Vecs) -> Self {
+    fn new(vecs: &Vecs) -> Self {
         Self {
             txindex_to_first_txoutindex: vecs.txindex_to_first_txoutindex.create_static_reader(),
             txoutindex_to_outputtype: vecs.txoutindex_to_outputtype.create_static_reader(),

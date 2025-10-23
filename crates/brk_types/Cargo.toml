@@ -1,5 +1,5 @@
 [package]
-name = "brk_structs"
+name = "brk_types"
 description = "Structs used throughout BRK"
 version.workspace = true
 edition.workspace = true

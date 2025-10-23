@@ -1,4 +1,4 @@
-use brk_structs::Index;
+use brk_types::Index;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

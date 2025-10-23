@@ -1,7 +1,7 @@
 use std::ops::Range;
 
-use brk_structs::{HalvingEpoch, OutputType};
 use brk_traversable::{Traversable, TreeNode};
+use brk_types::{HalvingEpoch, OutputType};
 use vecdb::AnyCollectableVec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

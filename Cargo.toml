@@ -40,7 +40,7 @@ brk_error = { version = "0.0.111", path = "crates/brk_error" }
 brk_fetcher = { version = "0.0.111", path = "crates/brk_fetcher" }
 brk_grouper = { version = "0.0.111", path = "crates/brk_grouper" }
 brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
-brk_interface = { version = "0.0.111", path = "crates/brk_interface" }
+brk_query = { version = "0.0.111", path = "crates/brk_query" }
 brk_iterator = { version = "0.0.111", path = "crates/brk_iterator" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.111", path = "crates/brk_mcp" }
@@ -49,7 +49,7 @@ brk_reader = { version = "0.0.111", path = "crates/brk_reader" }
 brk_rpc = { version = "0.0.111", path = "crates/brk_rpc" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
-brk_structs = { version = "0.0.111", path = "crates/brk_structs" }
+brk_types = { version = "0.0.111", path = "crates/brk_types" }
 brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
 byteview = "=0.6.1"

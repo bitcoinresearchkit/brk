@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_structs::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
+use brk_types::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
 use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 

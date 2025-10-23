@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, mem};
 
 use brk_grouper::ByAddressType;
-use brk_structs::TypeIndex;
+use brk_types::TypeIndex;
 use derive_deref::{Deref, DerefMut};
 
 #[derive(Debug, Deref, DerefMut)]

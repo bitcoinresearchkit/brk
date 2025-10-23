@@ -6,7 +6,7 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_structs::{Cents, OHLCCents, Timestamp};
+use brk_types::{Cents, OHLCCents, Timestamp};
 use log::info;
 use sonic_rs::{JsonContainerTrait, JsonValueTrait, Value};
 

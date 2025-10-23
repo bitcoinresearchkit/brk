@@ -1,5 +1,5 @@
 use brk_grouper::ByAddressType;
-use brk_structs::Height;
+use brk_types::Height;
 use derive_deref::{Deref, DerefMut};
 use vecdb::VecIterator;
 

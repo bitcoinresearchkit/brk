@@ -1,8 +1,8 @@
 use brk_error::{Error, Result};
-use brk_structs::{
+use brk_traversable::Traversable;
+use brk_types::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
-use brk_traversable::Traversable;
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
     Format, GenericStoredVec, VecIterator,

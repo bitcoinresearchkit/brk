@@ -34,7 +34,7 @@ pub use brk_indexer as indexer;
 
 #[cfg(feature = "interface")]
 #[doc(inline)]
-pub use brk_interface as interface;
+pub use brk_query as interface;
 
 #[cfg(feature = "logger")]
 #[doc(inline)]
@@ -56,9 +56,9 @@ pub use brk_server as server;
 #[doc(inline)]
 pub use brk_store as store;
 
-#[cfg(feature = "structs")]
+#[cfg(feature = "types")]
 #[doc(inline)]
-pub use brk_structs as structs;
+pub use brk_types as types;
 
 #[cfg(feature = "traversable")]
 #[doc(inline)]

@@ -2,17 +2,17 @@ use std::str::FromStr;
 
 use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
-use brk_structs::{
+use brk_types::{
     Address, AddressBytes, AddressBytesHash, AddressChainStats, AddressMempoolStats, AddressStats,
     AnyAddressDataIndexEnum, Bitcoin, OutputType,
 };
 use vecdb::{AnyIterableVec, VecIterator};
 
-use crate::Interface;
+use crate::Query;
 
-pub fn get_address(Address { address }: Address, interface: &Interface) -> Result<AddressStats> {
-    let indexer = interface.indexer();
-    let computer = interface.computer();
+pub fn get_address(Address { address }: Address, query: &Query) -> Result<AddressStats> {
+    let indexer = query.indexer();
+    let computer = query.computer();
     let stores = &indexer.stores;
 
     let script = if let Ok(address) = bitcoin::Address::from_str(&address) {

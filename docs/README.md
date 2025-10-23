@@ -140,19 +140,19 @@ Contributions from the Bitcoin community are welcome! Here's how to get involved
 | Crate                                                     | Purpose                                          |
 | --------------------------------------------------------- | ------------------------------------------------ |
 | [`brk`](https://crates.io/crates/brk)                     | Umbrella crate containing all BRK functionality  |
-| [`brk_cli`](https://crates.io/crates/brk_cli)             | Command line interface for running BRK instances |
-| [`brk_server`](https://crates.io/crates/brk_server)       | REST API server for data access                  |
-| [`brk_mcp`](https://crates.io/crates/brk_mcp)             | Model Context Protocol bridge for AI integration |
-| [`brk_reader`](https://crates.io/crates/brk_reader)       | High-performance Bitcoin block parser            |
-| [`brk_indexer`](https://crates.io/crates/brk_indexer)     | Blockchain data indexing engine                  |
-| [`brk_computer`](https://crates.io/crates/brk_computer)   | Bitcoin metrics and dataset computation          |
-| [`brk_interface`](https://crates.io/crates/brk_interface) | Data formatting and query interface              |
-| [`brk_fetcher`](https://crates.io/crates/brk_fetcher)     | Bitcoin price and market data fetcher            |
-| [`brk_store`](https://crates.io/crates/brk_store)         | Database storage abstraction (fjall wrapper)     |
 | [`brk_bundler`](https://crates.io/crates/brk_bundler)     | Web asset bundling (rolldown wrapper)            |
-| [`brk_structs`](https://crates.io/crates/brk_structs)     | Shared data structures                           |
+| [`brk_cli`](https://crates.io/crates/brk_cli)             | Command line interface for running BRK instances |
+| [`brk_computer`](https://crates.io/crates/brk_computer)   | Bitcoin metrics and dataset computation          |
 | [`brk_error`](https://crates.io/crates/brk_error)         | Error handling utilities                         |
+| [`brk_fetcher`](https://crates.io/crates/brk_fetcher)     | Bitcoin price and market data fetcher            |
+| [`brk_indexer`](https://crates.io/crates/brk_indexer)     | Blockchain data indexing engine                  |
 | [`brk_logger`](https://crates.io/crates/brk_logger)       | Logging infrastructure                           |
+| [`brk_mcp`](https://crates.io/crates/brk_mcp)             | Model Context Protocol bridge for AI integration |
+| [`brk_query`](https://crates.io/crates/brk_query) | Data formatting and query interface              |
+| [`brk_reader`](https://crates.io/crates/brk_reader)       | High-performance Bitcoin block parser            |
+| [`brk_server`](https://crates.io/crates/brk_server)       | REST API server for data access                  |
+| [`brk_store`](https://crates.io/crates/brk_store)         | Database storage abstraction (fjall wrapper)     |
+| [`brk_types`](https://crates.io/crates/brk_types)     | Shared data structures                           |
 
 ## Documentation
 

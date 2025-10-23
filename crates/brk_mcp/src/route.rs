@@ -1,5 +1,5 @@
 use aide::axum::ApiRouter;
-use brk_interface::Interface;
+use brk_query::Query;
 use brk_rmcp::transport::{
     StreamableHttpServerConfig,
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
@@ -10,20 +10,20 @@ use log::info;
 use crate::MCP;
 
 pub trait MCPRoutes {
-    fn add_mcp_routes(self, interface: &'static Interface<'static>, mcp: bool) -> Self;
+    fn add_mcp_routes(self, query: &'static Query<'static>, mcp: bool) -> Self;
 }
 
 impl<T> MCPRoutes for ApiRouter<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    fn add_mcp_routes(self, interface: &'static Interface<'static>, mcp: bool) -> Self {
+    fn add_mcp_routes(self, query: &'static Query<'static>, mcp: bool) -> Self {
         if !mcp {
             return self;
         }
 
         let service = StreamableHttpService::new(
-            move || Ok(MCP::new(interface)),
+            move || Ok(MCP::new(query)),
             LocalSessionManager::default().into(),
             StreamableHttpServerConfig {
                 stateful_mode: false,
