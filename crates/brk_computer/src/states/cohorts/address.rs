@@ -44,14 +44,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| addressdata.realized_price());
         let prev_supply_state = SupplyState {
-            utxo_count: addressdata.utxo_count as u64,
+            utxo_count: addressdata.utxo_count() as u64,
             value: addressdata.balance(),
         };
 
         addressdata.send(value, prev_price)?;
 
         let supply_state = SupplyState {
-            utxo_count: addressdata.utxo_count as u64,
+            utxo_count: addressdata.utxo_count() as u64,
             value: addressdata.balance(),
         };
 
@@ -82,14 +82,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
         let prev_supply_state = SupplyState {
-            utxo_count: address_data.utxo_count as u64,
+            utxo_count: address_data.utxo_count() as u64,
             value: address_data.balance(),
         };
 
         address_data.receive(value, price);
 
         let supply_state = SupplyState {
-            utxo_count: address_data.utxo_count as u64,
+            utxo_count: address_data.utxo_count() as u64,
             value: address_data.balance(),
         };
 

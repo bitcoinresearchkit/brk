@@ -37,13 +37,13 @@ use crate::api::create_openapi;
 
 #[derive(Clone)]
 pub struct AppState {
-    query: &'static Query<'static>,
+    query: Query,
     path: Option<PathBuf>,
     cache: Arc<Cache<String, Bytes>>,
 }
 
 impl Deref for AppState {
-    type Target = &'static Query<'static>;
+    type Target = Query;
     fn deref(&self) -> &Self::Target {
         &self.query
     }
@@ -54,9 +54,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: Query<'static>, files_path: Option<PathBuf>) -> Self {
+    pub fn new(query: &Query, files_path: Option<PathBuf>) -> Self {
         Self(AppState {
-            query: Box::leak(Box::new(query)),
+            query: query.clone(),
             path: files_path,
             cache: Arc::new(Cache::new(5_000)),
         })
@@ -106,7 +106,7 @@ impl Server {
 
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_mcp_routes(state.query, mcp)
+            .add_mcp_routes(&state.query, mcp)
             .add_files_routes(state.path.as_ref())
             .route(
                 "/discord",

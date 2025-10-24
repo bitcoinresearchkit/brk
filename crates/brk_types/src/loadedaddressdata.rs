@@ -50,6 +50,16 @@ impl LoadedAddressData {
     }
 
     #[inline]
+    pub fn utxo_count(&self) -> u32 {
+        self.funded_txo_count - self.spent_txo_count
+    }
+
+    #[inline]
+    pub fn has_1_utxos(&self) -> bool {
+        self.utxo_count() == 1
+    }
+
+    #[inline]
     pub fn has_0_utxos(&self) -> bool {
         self.funded_txo_count == self.spent_txo_count
     }

@@ -17,9 +17,9 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 
-    let reader = Reader::new(bitcoin_dir.join("blocks"), client.clone());
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(client, reader);
+    let blocks = Blocks::new(&client, &reader);
 
     let i = Instant::now();
     blocks

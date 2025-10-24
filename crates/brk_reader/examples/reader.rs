@@ -20,7 +20,7 @@ fn main() -> Result<()> {
 
     let blocks_dir = bitcoin_dir.join("blocks");
 
-    let reader = Reader::new(blocks_dir, client);
+    let reader = Reader::new(blocks_dir, &client);
 
     let start = None;
     // let start = Some(916037_u32.into());

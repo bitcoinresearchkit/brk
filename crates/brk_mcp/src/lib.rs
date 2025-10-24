@@ -16,7 +16,7 @@ pub mod route;
 
 #[derive(Clone)]
 pub struct MCP {
-    query: &'static Query<'static>,
+    query: Query,
     tool_router: ToolRouter<MCP>,
 }
 
@@ -24,9 +24,9 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tool_router]
 impl MCP {
-    pub fn new(query: &'static Query<'static>) -> Self {
+    pub fn new(query: &Query) -> Self {
         Self {
-            query,
+            query: query.clone(),
             tool_router: Self::tool_router(),
         }
     }

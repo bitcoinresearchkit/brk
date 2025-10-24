@@ -5,6 +5,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_query::{Params, ParamsOpt, Query};
 use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
 use brk_types::Index;
 use vecdb::Exit;
 
@@ -21,15 +22,18 @@ pub fn main() -> Result<()> {
     fs::create_dir_all(&outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 
-    let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
+    let client = Client::new(
         "http://localhost:8332",
-        bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
+
+    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    // let outputs_dir = Path::new("../../_outputs");
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let reader = Reader::new(blocks_dir, rpc);
+    let reader = Reader::new(blocks_dir, &client);
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 

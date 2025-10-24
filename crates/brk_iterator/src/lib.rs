@@ -28,18 +28,25 @@ pub struct Blocks(Arc<Source>);
 
 impl Blocks {
     /// Create with smart mode (auto-select source based on range size)
-    pub fn new(client: Client, reader: Reader) -> Self {
-        Self::new_inner(Source::Smart { client, reader })
+    pub fn new(client: &Client, reader: &Reader) -> Self {
+        Self::new_inner(Source::Smart {
+            client: client.clone(),
+            reader: reader.clone(),
+        })
     }
 
     /// Create with RPC-only mode
-    pub fn new_rpc(client: Client) -> Self {
-        Self::new_inner(Source::Rpc { client })
+    pub fn new_rpc(client: &Client) -> Self {
+        Self::new_inner(Source::Rpc {
+            client: client.clone(),
+        })
     }
 
     /// Create with Reader-only mode
-    pub fn new_reader(reader: Reader) -> Self {
-        Self::new_inner(Source::Reader { reader })
+    pub fn new_reader(reader: &Reader) -> Self {
+        Self::new_inner(Source::Reader {
+            reader: reader.clone(),
+        })
     }
 
     fn new_inner(source: Source) -> Self {

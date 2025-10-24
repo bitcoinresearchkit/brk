@@ -31,7 +31,7 @@ pub fn get_transaction_info(TxidPath { txid }: TxidPath, query: &Query) -> Resul
 
     let txid = indexer.vecs.txindex_to_txid.iter().unwrap_get_inner(index);
 
-    let reader = query.parser();
+    let reader = query.reader();
     let computer = query.computer();
 
     let position = computer

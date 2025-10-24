@@ -23,7 +23,7 @@ use crate::{TxIndex, Vout};
     JsonSchema,
     Hash,
 )]
-pub struct OutPoint(pub u64);
+pub struct OutPoint(u64);
 
 impl OutPoint {
     pub const COINBASE: Self = Self(u64::MAX);

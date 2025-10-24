@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 use brk_computer::Computer;
 use brk_error::Result;
@@ -30,31 +30,32 @@ use crate::{
     vecs::{IndexToVec, MetricToVec},
 };
 
-#[allow(dead_code)]
-pub struct Query<'a> {
-    vecs: Vecs<'a>,
-    parser: &'a Reader,
+#[derive(Clone)]
+pub struct Query(Arc<QueryInner<'static>>);
+struct QueryInner<'a> {
+    vecs: &'a Vecs<'a>,
+    reader: Reader,
     indexer: &'a Indexer,
     computer: &'a Computer,
 }
 
-impl<'a> Query<'a> {
-    pub fn build(parser: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
-        let reader = parser.static_clone();
-        let indexer = indexer.static_clone();
-        let computer = computer.static_clone();
-        let vecs = Vecs::build(indexer, computer);
+impl Query {
+    pub fn build(reader: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
+        let reader = reader.clone();
+        let indexer = Box::leak(Box::new(indexer.clone()));
+        let computer = Box::leak(Box::new(computer.clone()));
+        let vecs = Box::leak(Box::new(Vecs::build(indexer, computer)));
 
-        Self {
+        Self(Arc::new(QueryInner {
             vecs,
-            parser: reader,
+            reader,
             indexer,
             computer,
-        }
+        }))
     }
 
     pub fn get_height(&self) -> Height {
-        Height::from(self.indexer.vecs.height_to_blockhash.stamp())
+        Height::from(self.indexer().vecs.height_to_blockhash.stamp())
     }
 
     pub fn get_address(&self, address: Address) -> Result<AddressStats> {
@@ -66,7 +67,7 @@ impl<'a> Query<'a> {
     }
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&str> {
-        self.vecs.matches(metric, limit)
+        self.vecs().matches(metric, limit)
     }
 
     pub fn search_metric_with_index(
@@ -212,11 +213,11 @@ impl<'a> Query<'a> {
     }
 
     pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
-        &self.vecs.metric_to_index_to_vec
+        &self.vecs().metric_to_index_to_vec
     }
 
     pub fn index_to_metric_to_vec(&self) -> &BTreeMap<Index, MetricToVec<'_>> {
-        &self.vecs.index_to_metric_to_vec
+        &self.vecs().index_to_metric_to_vec
     }
 
     pub fn metric_count(&self) -> MetricCount {
@@ -227,42 +228,50 @@ impl<'a> Query<'a> {
     }
 
     pub fn distinct_metric_count(&self) -> usize {
-        self.vecs.distinct_metric_count
+        self.vecs().distinct_metric_count
     }
 
     pub fn total_metric_count(&self) -> usize {
-        self.vecs.total_metric_count
+        self.vecs().total_metric_count
     }
 
     pub fn get_indexes(&self) -> &[IndexInfo] {
-        &self.vecs.indexes
+        &self.vecs().indexes
     }
 
-    pub fn get_metrics(&'static self, pagination: PaginationParam) -> PaginatedMetrics {
-        self.vecs.metrics(pagination)
+    pub fn get_metrics(&self, pagination: PaginationParam) -> PaginatedMetrics {
+        self.vecs().metrics(pagination)
     }
 
     pub fn get_metrics_catalog(&self) -> &TreeNode {
-        self.vecs.catalog()
+        self.vecs().catalog()
     }
 
     pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {
-        self.vecs.index_to_ids(paginated_index)
+        self.vecs().index_to_ids(paginated_index)
     }
 
     pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<Index>> {
-        self.vecs.metric_to_indexes(metric)
+        self.vecs().metric_to_indexes(metric)
     }
 
-    pub fn parser(&self) -> &Reader {
-        self.parser
+    #[inline]
+    pub fn reader(&self) -> &Reader {
+        &self.0.reader
     }
 
+    #[inline]
     pub fn indexer(&self) -> &Indexer {
-        self.indexer
+        self.0.indexer
     }
 
+    #[inline]
     pub fn computer(&self) -> &Computer {
-        self.computer
+        self.0.computer
+    }
+
+    #[inline]
+    pub fn vecs(&self) -> &'static Vecs<'static> {
+        self.0.vecs
     }
 }

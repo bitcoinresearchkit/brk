@@ -1,13 +1,14 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
-use bitcoincore_rpc::RpcApi;
 use brk_computer::Computer;
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
+use brk_iterator::Blocks;
 use brk_query::Query;
 use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
 use brk_server::Server;
 use vecdb::Exit;
 
@@ -18,14 +19,14 @@ pub fn main() -> Result<()> {
 
     let bitcoin_dir = Path::new("");
 
-    let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
+    let client = Client::new(
         "http://localhost:8332",
-        bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
-    let exit = Exit::new();
-    exit.set_ctrlc_handler();
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
 
-    let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
+
+    let blocks = Blocks::new(&client, &reader);
 
     let outputs_dir = Path::new("../../_outputs");
 
@@ -35,13 +36,16 @@ pub fn main() -> Result<()> {
 
     let mut computer = Computer::forced_import(outputs_dir, &indexer, fetcher)?;
 
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
+
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?
         .block_on(async {
             let query = Query::build(&reader, &indexer, &computer);
 
-            let server = Server::new(query, None);
+            let server = Server::new(&query, None);
 
             let server = tokio::spawn(async move {
                 server.serve(true).await.unwrap();
@@ -49,13 +53,13 @@ pub fn main() -> Result<()> {
 
             if process {
                 loop {
-                    let block_count = rpc.get_block_count()?;
+                    let last_height = client.get_last_height()?;
 
-                    let starting_indexes = indexer.checked_index(&reader, rpc, &exit)?;
+                    let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
 
                     computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
-                    while block_count == rpc.get_block_count()? {
+                    while last_height == client.get_last_height()? {
                         sleep(Duration::from_secs(1))
                     }
                 }

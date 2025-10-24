@@ -233,10 +233,6 @@ impl Computer {
 
         Ok(())
     }
-
-    pub fn static_clone(&self) -> &'static Self {
-        Box::leak(Box::new(self.clone()))
-    }
 }
 
 // pub fn generate_allocation_files(monitored: &pools::Vecs) -> Result<()> {
