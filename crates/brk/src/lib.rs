@@ -32,9 +32,9 @@ pub use brk_grouper as grouper;
 #[doc(inline)]
 pub use brk_indexer as indexer;
 
-#[cfg(feature = "interface")]
+#[cfg(feature = "iterator")]
 #[doc(inline)]
-pub use brk_query as interface;
+pub use brk_query as iterator;
 
 #[cfg(feature = "logger")]
 #[doc(inline)]
@@ -44,9 +44,21 @@ pub use brk_logger as logger;
 #[doc(inline)]
 pub use brk_mcp as mcp;
 
-#[cfg(feature = "parser")]
+#[cfg(feature = "monitor")]
 #[doc(inline)]
-pub use brk_reader as parser;
+pub use brk_monitor as monitor;
+
+#[cfg(feature = "query")]
+#[doc(inline)]
+pub use brk_query as query;
+
+#[cfg(feature = "reader")]
+#[doc(inline)]
+pub use brk_reader as reader;
+
+#[cfg(feature = "rpc")]
+#[doc(inline)]
+pub use brk_rpc as reader;
 
 #[cfg(feature = "server")]
 #[doc(inline)]
@@ -56,10 +68,10 @@ pub use brk_server as server;
 #[doc(inline)]
 pub use brk_store as store;
 
-#[cfg(feature = "types")]
-#[doc(inline)]
-pub use brk_types as types;
-
 #[cfg(feature = "traversable")]
 #[doc(inline)]
 pub use brk_traversable as traversable;
+
+#[cfg(feature = "types")]
+#[doc(inline)]
+pub use brk_types as types;

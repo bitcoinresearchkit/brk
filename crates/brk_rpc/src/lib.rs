@@ -48,6 +48,11 @@ impl Client {
     }
 
     /// Returns the numbers of block in the longest chain.
+    pub fn get_block_count(&self) -> Result<u64> {
+        self.call(|c| c.get_block_count()).map_err(Into::into)
+    }
+
+    /// Returns the numbers of block in the longest chain.
     pub fn get_last_height(&self) -> Result<Height> {
         self.call(|c| c.get_block_count())
             .map(Height::from)

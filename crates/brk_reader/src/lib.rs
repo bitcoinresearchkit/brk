@@ -46,8 +46,8 @@ const BOUND_CAP: usize = 50;
 pub struct Reader(Arc<ReaderInner>);
 
 impl Reader {
-    pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
-        Self(Arc::new(ReaderInner::new(blocks_dir, client)))
+    pub fn new(blocks_dir: PathBuf, client: &Client) -> Self {
+        Self(Arc::new(ReaderInner::new(blocks_dir, client.clone())))
     }
 }
 

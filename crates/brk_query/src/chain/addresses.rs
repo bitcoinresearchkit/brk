@@ -4,7 +4,7 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
     Address, AddressBytes, AddressBytesHash, AddressChainStats, AddressMempoolStats, AddressStats,
-    AnyAddressDataIndexEnum, Bitcoin, OutputType,
+    AnyAddressDataIndexEnum, OutputType,
 };
 use vecdb::{AnyIterableVec, VecIterator};
 
@@ -31,7 +31,7 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
     let Ok(bytes) = AddressBytes::try_from((&script, type_)) else {
         return Err(Error::Str("Failed to convert the address to bytes"));
     };
-    let hash = AddressBytesHash::from((&bytes, type_));
+    let hash = AddressBytesHash::from(&bytes);
 
     let Ok(Some(type_index)) = stores
         .addressbyteshash_to_typeindex

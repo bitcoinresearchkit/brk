@@ -134,13 +134,13 @@ pub fn run() -> color_eyre::Result<()> {
 
         info!("{} blocks found.", block_count + 1);
 
-        let starting_indexes = indexer
-            .index(&reader, rpc, &exit, config.check_collisions())
-            .unwrap();
+        let starting_indexes = if config.check_collisions() {
+            indexer.checked_index(&reader, rpc, &exit)?;
+        } else {
+            indexer.index(&reader, rpc, &exit)?;
+        };
 
-        computer
-            .compute(&indexer, starting_indexes, &reader, &exit)
-            .unwrap();
+        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
         info!("Waiting for new blocks...");
 

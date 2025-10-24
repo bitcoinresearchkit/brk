@@ -8,7 +8,9 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
+use brk_iterator::Blocks;
 use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -20,10 +22,22 @@ pub fn main() -> Result<()> {
         .join("Bitcoin");
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
-    let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
+    let client = Client::new(
         "http://localhost:8332",
-        bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?));
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
+
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
+
+    let blocks = Blocks::new(&client, &reader);
+
+    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    // let outputs_dir = Path::new("../../_outputs");
+
+    let mut indexer = Indexer::forced_import(&outputs_dir)?;
+
+    let fetcher = Fetcher::import(true, None)?;
+
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
@@ -31,20 +45,11 @@ pub fn main() -> Result<()> {
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
         .spawn(move || -> Result<()> {
-            let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
-            // let outputs_dir = Path::new("../../_outputs");
-
-            let reader = Reader::new(bitcoin_dir.join("blocks"), rpc);
-
-            let mut indexer = Indexer::forced_import(&outputs_dir)?;
-
-            let fetcher = Fetcher::import(true, None)?;
-
             let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
             loop {
                 let i = Instant::now();
-                let starting_indexes = indexer.index(&reader, rpc, &exit, true)?;
+                let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
                 computer.compute(&indexer, starting_indexes, &reader, &exit)?;
                 dbg!(i.elapsed());
                 sleep(Duration::from_secs(10));

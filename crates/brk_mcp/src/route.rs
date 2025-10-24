@@ -10,20 +10,21 @@ use log::info;
 use crate::MCP;
 
 pub trait MCPRoutes {
-    fn add_mcp_routes(self, query: &'static Query<'static>, mcp: bool) -> Self;
+    fn add_mcp_routes(self, query: &Query, mcp: bool) -> Self;
 }
 
 impl<T> MCPRoutes for ApiRouter<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    fn add_mcp_routes(self, query: &'static Query<'static>, mcp: bool) -> Self {
+    fn add_mcp_routes(self, query: &Query, mcp: bool) -> Self {
         if !mcp {
             return self;
         }
 
+        let query = query.clone();
         let service = StreamableHttpService::new(
-            move || Ok(MCP::new(query)),
+            move || Ok(MCP::new(&query)),
             LocalSessionManager::default().into(),
             StreamableHttpServerConfig {
                 stateful_mode: false,

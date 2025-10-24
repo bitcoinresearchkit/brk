@@ -161,7 +161,7 @@ impl Vecs {
         let txinindex_to_value = LazyVecFrom2::init(
             "value",
             version + Version::ZERO,
-            indexer.vecs.txinindex_to_txoutindex.boxed_clone(),
+            indexes.txinindex_to_txoutindex.boxed_clone(),
             indexer.vecs.txoutindex_to_value.boxed_clone(),
             |index: TxInIndex, txinindex_to_txoutindex_iter, txoutindex_to_value_iter| {
                 txinindex_to_txoutindex_iter.next_at(index.to_usize()).map(
@@ -224,7 +224,7 @@ impl Vecs {
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version + Version::ZERO,
-            indexes.txindex_to_height.boxed_clone(),
+            indexer.vecs.txindex_to_height.boxed_clone(),
             indexer.vecs.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
                 txindex_to_height_iter

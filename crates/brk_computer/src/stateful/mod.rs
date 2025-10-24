@@ -542,7 +542,8 @@ impl Vecs {
         let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
         let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
-        let txinindex_to_txoutindex = &indexer.vecs.txinindex_to_txoutindex;
+        let txinindex_to_outpoint = &indexer.vecs.txinindex_to_outpoint;
+        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
         let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
         let txindex_to_height = &indexer.vecs.txindex_to_height;
         let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
@@ -582,9 +583,10 @@ impl Vecs {
             + height_to_timestamp_fixed.version()
             + height_to_output_count.version()
             + height_to_input_count.version()
-            + txinindex_to_txoutindex.version()
+            + txinindex_to_outpoint.version()
             + txoutindex_to_value.version()
             + txindex_to_height.version()
+            + txindex_to_first_txoutindex.version()
             + txoutindex_to_txindex.version()
             + txoutindex_to_outputtype.version()
             + txoutindex_to_typeindex.version()
@@ -790,7 +792,8 @@ impl Vecs {
 
             starting_indexes.update_from_height(starting_height, indexes);
 
-            let txinindex_to_txoutindex_reader = txinindex_to_txoutindex.create_reader();
+            let txinindex_to_outpoint_reader = txinindex_to_outpoint.create_reader();
+            let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
             let txoutindex_to_value_reader = txoutindex_to_value.create_reader();
             let txoutindex_to_outputtype_reader = txoutindex_to_outputtype.create_reader();
             let txoutindex_to_typeindex_reader = txoutindex_to_typeindex.create_reader();
@@ -1029,8 +1032,9 @@ impl Vecs {
                             .into_par_iter()
                             .map(TxInIndex::from)
                             .map(|txinindex| {
-                                let txoutindex =
-                                    txinindex_to_txoutindex.unwrap_read(txinindex, &txinindex_to_txoutindex_reader);
+                                let outpoint = txinindex_to_outpoint.unwrap_read(txinindex, &txinindex_to_outpoint_reader);
+
+                                let txoutindex = txindex_to_first_txoutindex.unwrap_read(outpoint.txindex(), &txindex_to_first_txoutindex_reader) + outpoint.vout();
 
                                 let value = txoutindex_to_value
                                     .unwrap_read(txoutindex, &txoutindex_to_value_reader);
@@ -2005,7 +2009,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
                     let amount = prev_amount.checked_sub(value).unwrap();
 
-                    let will_be_empty = addressdata.utxo_count - 1 == 0;
+                    let will_be_empty = addressdata.has_1_utxos();
 
                     if will_be_empty
                         || vecs.amount_range.get_mut(amount).0.clone()

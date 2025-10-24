@@ -812,10 +812,6 @@ impl Indexer {
 
         Ok(starting_indexes)
     }
-
-    pub fn static_clone(&self) -> &'static Self {
-        Box::leak(Box::new(self.clone()))
-    }
 }
 
 #[derive(Debug)]

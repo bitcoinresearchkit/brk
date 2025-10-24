@@ -30,19 +30,13 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 
-    let reader = Reader::new(bitcoin_dir.join("blocks"), client.clone());
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(client.clone(), reader);
+    let blocks = Blocks::new(&client, &reader);
 
     fs::create_dir_all(&outputs_dir)?;
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
-
-    // 44
-    // let vecs = indexer.vecs.iter_any_collectable().collect::<Vec<_>>();
-    // dbg!(indexer.vecs.to_tree_node());
-    // dbg!(vecs.len());
-    // std::process::exit(0);
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
