@@ -506,10 +506,13 @@ dependencies = [
  "brk_fetcher",
  "brk_grouper",
  "brk_indexer",
+ "brk_iterator",
  "brk_logger",
  "brk_mcp",
+ "brk_monitor",
  "brk_query",
  "brk_reader",
+ "brk_rpc",
  "brk_server",
  "brk_store",
  "brk_traversable",
@@ -612,9 +615,11 @@ dependencies = [
  "brk_error",
  "brk_fetcher",
  "brk_indexer",
+ "brk_iterator",
  "brk_logger",
  "brk_query",
  "brk_reader",
+ "brk_rpc",
  "brk_server",
  "clap",
  "color-eyre",
@@ -637,8 +642,10 @@ dependencies = [
  "brk_fetcher",
  "brk_grouper",
  "brk_indexer",
+ "brk_iterator",
  "brk_logger",
  "brk_reader",
+ "brk_rpc",
  "brk_store",
  "brk_traversable",
  "brk_types",
@@ -783,6 +790,7 @@ dependencies = [
  "brk_error",
  "brk_indexer",
  "brk_reader",
+ "brk_rpc",
  "brk_traversable",
  "brk_types",
  "derive_deref",
@@ -1224,10 +1232,12 @@ dependencies = [
  "brk_error",
  "brk_fetcher",
  "brk_indexer",
+ "brk_iterator",
  "brk_logger",
  "brk_mcp",
  "brk_query",
  "brk_reader",
+ "brk_rpc",
  "brk_traversable",
  "brk_types",
  "jiff",
@@ -1375,9 +1385,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.41"
+version = "1.2.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac9fe6cdbb24b6ade63616c0a0688e45bb56732262c158df3c0c4bea4ca47cb7"
+checksum = "81bbf3b3619004ad9bd139f62a9ab5cfe467f307455a0d307b0cf58bf070feaa"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -2018,9 +2028,9 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "flate2"
-version = "1.1.4"
+version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc5a4e564e38c699f2880d3fda590bedc2e69f3f84cd48b457bd892ce61d0aa9"
+checksum = "bfe33edd8e85a12a67454e37f8c75e730830d83e313556ab9ebf9ee7fbeb3bfb"
 dependencies = [
  "crc32fast",
  "libz-rs-sys",
@@ -3757,9 +3767,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.102"
+version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e0f6df8eaa422d97d72edcd152e1451618fed47fabbdbd5a8864167b1d4aff7"
+checksum = "5ee95bc4ef87b8d5ba32e8b7714ccc834865276eab0aed5c9958d00ec45f49e8"
 dependencies = [
  "unicode-ident",
 ]

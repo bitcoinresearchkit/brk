@@ -8,7 +8,7 @@ use brk_types::{
     TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
     Vout,
 };
-use fjall2::{Keyspace, PersistMode};
+use fjall2::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 use vecdb::{AnyVec, StoredIndex, VecIterator};
 
@@ -18,7 +18,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: Keyspace,
+    pub keyspace: TransactionalKeyspace,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,

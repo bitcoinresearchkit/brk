@@ -8,12 +8,12 @@ use std::{
     time::Duration,
 };
 
-use bitcoincore_rpc::{self, RpcApi};
 use brk_binder::Bridge;
 use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_iterator::Blocks;
 use brk_query::Query;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
@@ -27,12 +27,7 @@ mod website;
 use crate::{config::Config, paths::*};
 
 pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
-
-    fs::create_dir_all(dot_brk_path())?;
-
-    brk_logger::init(Some(&dot_brk_log_path()))?;
-
+    // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
         .stack_size(512 * 1024 * 1024)
         .spawn(run)?
@@ -41,14 +36,22 @@ pub fn main() -> color_eyre::Result<()> {
 }
 
 pub fn run() -> color_eyre::Result<()> {
+    color_eyre::install()?;
+
+    fs::create_dir_all(dot_brk_path())?;
+
+    brk_logger::init(Some(&dot_brk_log_path()))?;
+
     let config = Config::import()?;
 
-    let rpc = config.rpc()?;
+    let client = config.rpc()?;
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let reader = Reader::new(config.blocksdir(), rpc);
+    let reader = Reader::new(config.blocksdir(), &client);
+
+    let blocks = Blocks::new(&client, &reader);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
@@ -112,7 +115,7 @@ pub fn run() -> color_eyre::Result<()> {
             None
         };
 
-        let server = Server::new(query, bundle_path);
+        let server = Server::new(&query, bundle_path);
 
         tokio::spawn(async move {
             server.serve(true).await.unwrap();
@@ -128,40 +131,24 @@ pub fn run() -> color_eyre::Result<()> {
     let _handle = runtime.spawn(future);
 
     loop {
-        wait_for_synced_node(rpc)?;
+        client.wait_for_synced_node()?;
 
-        let block_count = rpc.get_block_count()?;
+        let last_height = client.get_last_height()?;
 
-        info!("{} blocks found.", block_count + 1);
+        info!("{} blocks found.", u32::from(last_height) + 1);
 
         let starting_indexes = if config.check_collisions() {
-            indexer.checked_index(&reader, rpc, &exit)?;
+            indexer.checked_index(&blocks, &client, &exit)?
         } else {
-            indexer.index(&reader, rpc, &exit)?;
+            indexer.index(&blocks, &client, &exit)?
         };
 
         computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
         info!("Waiting for new blocks...");
 
-        while block_count == rpc.get_block_count()? {
+        while last_height == client.get_last_height()? {
             sleep(Duration::from_secs(1))
         }
     }
-}
-
-fn wait_for_synced_node(rpc_client: &bitcoincore_rpc::Client) -> color_eyre::Result<()> {
-    let is_synced = || -> color_eyre::Result<bool> {
-        let info = rpc_client.get_blockchain_info()?;
-        Ok(info.headers == info.blocks)
-    };
-
-    if !is_synced()? {
-        info!("Waiting for node to sync...");
-        while !is_synced()? {
-            sleep(Duration::from_secs(1))
-        }
-    }
-
-    Ok(())
 }

@@ -18,7 +18,7 @@ pub trait Bridge {
     fn generate_js_files(&self, modules_path: &Path) -> io::Result<()>;
 }
 
-impl Bridge for Query<'static> {
+impl Bridge for Query {
     fn generate_js_files(&self, modules_path: &Path) -> io::Result<()> {
         let path = modules_path.join("brk-client");
 
@@ -81,7 +81,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
     fs::write(path, contents)
 }
 
-fn generate_metrics_file(query: &Query<'static>, parent: &Path) -> io::Result<()> {
+fn generate_metrics_file(query: &Query, parent: &Path) -> io::Result<()> {
     let path = parent.join(Path::new("metrics.js"));
 
     let indexes = Index::all();

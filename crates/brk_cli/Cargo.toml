@@ -16,9 +16,11 @@ brk_computer = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
+brk_iterator = { workspace = true }
 brk_query = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }
+brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 vecdb = { workspace = true }
 clap = { version = "4.5.50", features = ["derive", "string"] }

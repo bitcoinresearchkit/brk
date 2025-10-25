@@ -1,10 +1,11 @@
-use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, path::Path};
+use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, mem, path::Path};
 
 use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview6::ByteView;
 use fjall2::{
-    InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, PersistMode, ValueType,
+    InnerItem, PartitionCreateOptions, PersistMode, TransactionalKeyspace,
+    TransactionalPartitionHandle, ValueType,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -18,18 +19,18 @@ use meta::*;
 pub struct StoreV2<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    keyspace: Keyspace,
-    partition: PartitionHandle,
+    keyspace: TransactionalKeyspace,
+    partition: TransactionalPartitionHandle,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
-pub fn open_keyspace(path: &Path) -> fjall2::Result<Keyspace> {
+pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
     fjall2::Config::new(path.join("fjall"))
         .max_write_buffer_size(32 * 1024 * 1024)
-        .open()
+        .open_transactional()
 }
 
 impl<K, V> StoreV2<K, V>
@@ -39,23 +40,25 @@ where
     ByteView: From<K> + From<V>,
 {
     fn open_partition_handle(
-        keyspace: &Keyspace,
+        keyspace: &TransactionalKeyspace,
         name: &str,
         bloom_filters: Option<bool>,
-    ) -> Result<PartitionHandle> {
+    ) -> Result<TransactionalPartitionHandle> {
         let mut options = PartitionCreateOptions::default()
             .max_memtable_size(8 * 1024 * 1024)
             .manual_journal_persist(true);
 
         if bloom_filters.is_some_and(|b| !b) {
             options = options.bloom_filter_bits(None);
+        } else {
+            options = options.bloom_filter_bits(Some(5));
         }
 
         keyspace.open_partition(name, options).map_err(|e| e.into())
     }
 
     pub fn import(
-        keyspace: &Keyspace,
+        keyspace: &TransactionalKeyspace,
         path: &Path,
         name: &str,
         version: Version,
@@ -100,12 +103,16 @@ where
     }
 
     pub fn is_empty(&self) -> Result<bool> {
-        self.partition.is_empty().map_err(|e| e.into())
+        self.keyspace
+            .read_tx()
+            .is_empty(&self.partition)
+            .map_err(|e| e.into())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.partition
-            .iter()
+        self.keyspace
+            .read_tx()
+            .iter(&self.partition)
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
@@ -141,6 +148,11 @@ where
     }
 
     #[inline]
+    pub fn approximate_len(&self) -> usize {
+        self.partition.approximate_len()
+    }
+
+    #[inline]
     fn has(&self, height: Height) -> bool {
         self.meta.has(height)
     }
@@ -169,16 +181,19 @@ where
             return Ok(());
         }
 
-        let mut items = self
-            .puts
-            .drain()
+        let mut items = mem::take(&mut self.puts)
+            .into_iter()
             .map(|(key, value)| Item::Value { key, value })
-            .chain(self.dels.drain().map(|key| Item::Tomb(key)))
+            .chain(
+                mem::take(&mut self.dels)
+                    .into_iter()
+                    .map(|key| Item::Tomb(key)),
+            )
             .collect::<Vec<_>>();
         items.sort_unstable();
 
-        self.keyspace.batch().commit_partition(
-            &self.partition,
+        self.keyspace.inner().batch().commit_partition(
+            self.partition.inner(),
             items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
         )?;
 
