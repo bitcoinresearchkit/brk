@@ -14,6 +14,15 @@ use brk_rpc::{Auth, Client};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
+    // Can't increase main thread's stack size, thus we need to use another thread
+    thread::Builder::new()
+        .stack_size(512 * 1024 * 1024)
+        .spawn(run)?
+        .join()
+        .unwrap()
+}
+
+fn run() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
@@ -21,6 +30,9 @@ pub fn main() -> Result<()> {
         .join("Application Support")
         .join("Bitcoin");
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
+
+    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    // let outputs_dir = Path::new("../../_outputs");
 
     let client = Client::new(
         "http://localhost:8332",
@@ -31,9 +43,6 @@ pub fn main() -> Result<()> {
 
     let blocks = Blocks::new(&client, &reader);
 
-    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
-    // let outputs_dir = Path::new("../../_outputs");
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let fetcher = Fetcher::import(true, None)?;
@@ -41,20 +50,13 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    // Can't increase main thread's stack size, thus we need to use another thread
-    thread::Builder::new()
-        .stack_size(256 * 1024 * 1024)
-        .spawn(move || -> Result<()> {
-            let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
+    let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
-            loop {
-                let i = Instant::now();
-                let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
-                computer.compute(&indexer, starting_indexes, &reader, &exit)?;
-                dbg!(i.elapsed());
-                sleep(Duration::from_secs(10));
-            }
-        })?
-        .join()
-        .unwrap()
+    loop {
+        let i = Instant::now();
+        let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
+        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+        dbg!(i.elapsed());
+        sleep(Duration::from_secs(10));
+    }
 }

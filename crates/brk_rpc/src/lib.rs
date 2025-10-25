@@ -1,8 +1,11 @@
+use std::thread::sleep;
 use std::{mem, sync::Arc, time::Duration};
 
 use bitcoin::block::Header;
 use bitcoin::consensus::encode;
-use bitcoincore_rpc::json::{GetBlockHeaderResult, GetBlockResult, GetTxOutResult};
+use bitcoincore_rpc::json::{
+    GetBlockHeaderResult, GetBlockResult, GetBlockchainInfoResult, GetTxOutResult,
+};
 use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, RpcApi};
 use brk_error::Result;
 use brk_types::{BlockHash, Height, Sats, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
@@ -12,6 +15,7 @@ pub use bitcoincore_rpc::Auth;
 mod inner;
 
 use inner::ClientInner;
+use log::info;
 
 ///
 /// Bitcoin Core RPC Client
@@ -38,6 +42,13 @@ impl Client {
             max_retries,
             retry_delay,
         )?)))
+    }
+
+    /// Returns a data structure containing various state info regarding
+    /// blockchain processing.
+    pub fn get_blockchain_info(&self) -> Result<GetBlockchainInfoResult> {
+        self.call(move |c| c.get_blockchain_info())
+            .map_err(Into::into)
     }
 
     pub fn get_block<'a, H>(&self, hash: &'a H) -> Result<bitcoin::Block>
@@ -228,6 +239,22 @@ impl Client {
             }
             Err(_) => Err("Block hash not found in blockchain".into()),
         }
+    }
+
+    pub fn wait_for_synced_node(&self) -> Result<()> {
+        let is_synced = || -> Result<bool> {
+            let info = self.get_blockchain_info()?;
+            Ok(info.headers == info.blocks)
+        };
+
+        if !is_synced()? {
+            info!("Waiting for node to sync...");
+            while !is_synced()? {
+                sleep(Duration::from_secs(1))
+            }
+        }
+
+        Ok(())
     }
 
     pub fn call<F, T>(&self, f: F) -> Result<T, RpcError>

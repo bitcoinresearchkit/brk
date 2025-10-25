@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bitcoincore_rpc::{self, Auth, Client};
+use brk_error::{Error, Result};
 use brk_fetcher::Fetcher;
+use brk_rpc::{Auth, Client};
 use clap::Parser;
-use color_eyre::eyre::eyre;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{default_bitcoin_path, default_brk_path, dot_brk_path, website::Website};
@@ -78,7 +78,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn import() -> color_eyre::Result<Self> {
+    pub fn import() -> Result<Self> {
         let config_args = Some(Config::parse());
 
         let path = dot_brk_path();
@@ -196,18 +196,18 @@ Finally, you can run the program with '-h' for help."
         fs::write(path, toml::to_string(self).unwrap())
     }
 
-    pub fn rpc(&self) -> color_eyre::Result<&'static Client> {
-        Ok(Box::leak(Box::new(Client::new(
+    pub fn rpc(&self) -> Result<Client> {
+        Ok(Client::new(
             &format!(
                 "http://{}:{}",
                 self.rpcconnect().unwrap_or(&"localhost".to_string()),
                 self.rpcport().unwrap_or(8332)
             ),
             self.rpc_auth().unwrap(),
-        )?)))
+        )?)
     }
 
-    fn rpc_auth(&self) -> color_eyre::Result<Auth> {
+    fn rpc_auth(&self) -> Result<Auth> {
         let cookie = self.path_cookiefile();
 
         if cookie.is_file() {
@@ -218,7 +218,7 @@ Finally, you can run the program with '-h' for help."
                 self.rpcpassword.clone().unwrap(),
             ))
         } else {
-            Err(eyre!("Failed to find correct auth"))
+            Err(Error::Str("Failed to find correct auth"))
         }
     }
 

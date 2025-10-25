@@ -1,4 +1,8 @@
-use std::{path::Path, thread::sleep, time::Duration};
+use std::{
+    path::Path,
+    thread::{self, sleep},
+    time::Duration,
+};
 
 use brk_computer::Computer;
 
@@ -10,14 +14,29 @@ use brk_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_server::Server;
+use log::info;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
+    // Can't increase main thread's stack size, thus we need to use another thread
+    thread::Builder::new()
+        .stack_size(512 * 1024 * 1024)
+        .spawn(run)?
+        .join()
+        .unwrap()
+}
+
+fn run() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 
-    let process = true;
+    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
+        .join("Library")
+        .join("Application Support")
+        .join("Bitcoin");
+    // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
-    let bitcoin_dir = Path::new("");
+    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    // let outputs_dir = Path::new("../../_outputs");
 
     let client = Client::new(
         "http://localhost:8332",
@@ -28,46 +47,48 @@ pub fn main() -> Result<()> {
 
     let blocks = Blocks::new(&client, &reader);
 
-    let outputs_dir = Path::new("../../_outputs");
-
-    let mut indexer = Indexer::forced_import(outputs_dir)?;
+    let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let fetcher = Some(Fetcher::import(true, None)?);
 
-    let mut computer = Computer::forced_import(outputs_dir, &indexer, fetcher)?;
+    let mut computer = Computer::forced_import(&outputs_dir, &indexer, fetcher)?;
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    tokio::runtime::Builder::new_multi_thread()
+    let query = Query::build(&reader, &indexer, &computer);
+
+    let future = async move {
+        let server = Server::new(&query, None);
+
+        tokio::spawn(async move {
+            server.serve(true).await.unwrap();
+        });
+
+        Ok(()) as Result<()>
+    };
+
+    let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .build()?
-        .block_on(async {
-            let query = Query::build(&reader, &indexer, &computer);
+        .build()?;
 
-            let server = Server::new(&query, None);
+    let _handle = runtime.spawn(future);
 
-            let server = tokio::spawn(async move {
-                server.serve(true).await.unwrap();
-            });
+    loop {
+        client.wait_for_synced_node()?;
 
-            if process {
-                loop {
-                    let last_height = client.get_last_height()?;
+        let last_height = client.get_last_height()?;
 
-                    let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
+        info!("{} blocks found.", u32::from(last_height) + 1);
 
-                    computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+        let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
 
-                    while last_height == client.get_last_height()? {
-                        sleep(Duration::from_secs(1))
-                    }
-                }
-            }
+        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
-            #[allow(unreachable_code)]
-            server.await.unwrap();
+        info!("Waiting for new blocks...");
 
-            Ok(())
-        })
+        while last_height == client.get_last_height()? {
+            sleep(Duration::from_secs(1))
+        }
+    }
 }

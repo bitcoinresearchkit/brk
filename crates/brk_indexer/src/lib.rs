@@ -124,20 +124,12 @@ impl Indexer {
         };
 
         let mut readers = Readers::new(&self.vecs);
-        let mut already_added_addressbyteshash: FxHashMap<AddressBytesHash, TypeIndex> =
-            FxHashMap::default();
-        let mut same_block_spent_outpoints: FxHashSet<OutPoint> = FxHashSet::default();
-        let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
-            FxHashMap::default();
 
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
 
         for block in blocks.after(prev_hash)? {
             // let i_tot = Instant::now();
-            already_added_addressbyteshash.clear();
-            same_block_spent_outpoints.clear();
-            same_block_output_info.clear();
 
             let height = block.height();
             let blockhash = block.hash();
@@ -305,16 +297,19 @@ impl Indexer {
             // println!("txinindex_and_txindata = : {:?}", i.elapsed());
 
             // let i = Instant::now();
-            same_block_spent_outpoints.extend(txins.iter().filter_map(|(_, input_source)| {
-                let InputSource::SameBlock((_, _, _, outpoint)) = input_source else {
-                    return None;
-                };
-                if !outpoint.is_coinbase() {
-                    Some(*outpoint)
-                } else {
-                    None
-                }
-            }));
+            let same_block_spent_outpoints: FxHashSet<OutPoint> = txins
+                .iter()
+                .filter_map(|(_, input_source)| {
+                    let InputSource::SameBlock((_, _, _, outpoint)) = input_source else {
+                        return None;
+                    };
+                    if !outpoint.is_coinbase() {
+                        Some(*outpoint)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
             // println!("same_block_spent_outpoints = : {:?}", i.elapsed());
 
             // let i = Instant::now();
@@ -475,6 +470,10 @@ impl Indexer {
             let tx_len = block.txdata.len();
 
             // let i = Instant::now();
+            let mut already_added_addressbyteshash: FxHashMap<AddressBytesHash, TypeIndex> =
+                FxHashMap::default();
+            let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
+                FxHashMap::default();
             txouts
                 .into_iter()
                 .try_for_each(|data| -> Result<()> {
