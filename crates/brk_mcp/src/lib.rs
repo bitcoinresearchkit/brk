@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use brk_query::{PaginatedIndexParam, PaginationParam, Params, Query};
+use brk_query::{AsyncQuery, PaginatedIndexParam, PaginationParam, Params};
 use brk_rmcp::{
     ErrorData as McpError, RoleServer, ServerHandler,
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
@@ -16,7 +16,7 @@ pub mod route;
 
 #[derive(Clone)]
 pub struct MCP {
-    query: Query,
+    query: AsyncQuery,
     tool_router: ToolRouter<MCP>,
 }
 
@@ -24,7 +24,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tool_router]
 impl MCP {
-    pub fn new(query: &Query) -> Self {
+    pub fn new(query: &AsyncQuery) -> Self {
         Self {
             query: query.clone(),
             tool_router: Self::tool_router(),

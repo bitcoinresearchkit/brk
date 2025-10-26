@@ -36,6 +36,10 @@ impl TxOutIndex {
 
     pub const COINBASE: Self = Self(u64::MAX);
 
+    pub fn new(index: u64) -> Self {
+        Self(index)
+    }
+
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }

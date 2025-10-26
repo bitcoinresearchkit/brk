@@ -59,12 +59,20 @@ impl Computer {
 
         let computed_path = outputs_path.join("computed");
 
-        let (indexes, fetched, blks) = thread::scope(|s| -> Result<_> {
-            let fetched_handle = fetcher.map(|fetcher| {
-                s.spawn(move || fetched::Vecs::forced_import(outputs_path, fetcher, VERSION))
-            });
+        const STACK_SIZE: usize = 512 * 1024 * 1024;
+        let big_thread = || thread::Builder::new().stack_size(STACK_SIZE);
 
-            let blks_handle = s.spawn(|| blks::Vecs::forced_import(&computed_path, VERSION));
+        let (indexes, fetched, blks) = thread::scope(|s| -> Result<_> {
+            let fetched_handle = fetcher
+                .map(|fetcher| {
+                    big_thread().spawn_scoped(s, move || {
+                        fetched::Vecs::forced_import(outputs_path, fetcher, VERSION)
+                    })
+                })
+                .transpose()?;
+
+            let blks_handle = big_thread()
+                .spawn_scoped(s, || blks::Vecs::forced_import(&computed_path, VERSION))?;
 
             let indexes = indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?;
             let fetched = fetched_handle.map(|h| h.join().unwrap()).transpose()?;
@@ -74,11 +82,13 @@ impl Computer {
         })?;
 
         let (price, constants, market) = thread::scope(|s| -> Result<_> {
-            let constants_handle =
-                s.spawn(|| constants::Vecs::forced_import(&computed_path, VERSION, &indexes));
+            let constants_handle = big_thread().spawn_scoped(s, || {
+                constants::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
 
-            let market_handle =
-                s.spawn(|| market::Vecs::forced_import(&computed_path, VERSION, &indexes));
+            let market_handle = big_thread().spawn_scoped(s, || {
+                market::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
 
             let price = fetched
                 .is_some()
@@ -91,7 +101,7 @@ impl Computer {
         })?;
 
         let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
-            let chain_handle = s.spawn(|| {
+            let chain_handle = big_thread().spawn_scoped(s, || {
                 chain::Vecs::forced_import(
                     &computed_path,
                     VERSION,
@@ -99,11 +109,11 @@ impl Computer {
                     &indexes,
                     price.as_ref(),
                 )
-            });
+            })?;
 
-            let pools_handle = s.spawn(|| {
+            let pools_handle = big_thread().spawn_scoped(s, || {
                 pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())
-            });
+            })?;
 
             let cointime =
                 cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;

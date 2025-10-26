@@ -40,7 +40,7 @@ brk_error = { version = "0.0.111", path = "crates/brk_error" }
 brk_fetcher = { version = "0.0.111", path = "crates/brk_fetcher" }
 brk_grouper = { version = "0.0.111", path = "crates/brk_grouper" }
 brk_indexer = { version = "0.0.111", path = "crates/brk_indexer" }
-brk_query = { version = "0.0.111", path = "crates/brk_query" }
+brk_query = { version = "0.0.111", path = "crates/brk_query", features = ["tokio"] }
 brk_iterator = { version = "0.0.111", path = "crates/brk_iterator" }
 brk_logger = { version = "0.0.111", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.111", path = "crates/brk_mcp" }

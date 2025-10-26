@@ -71,6 +71,10 @@ impl Sats {
     pub fn is_not_zero(&self) -> bool {
         *self != Self::ZERO
     }
+
+    pub fn is_max(&self) -> bool {
+        *self == Self::MAX
+    }
 }
 
 impl Add for Sats {

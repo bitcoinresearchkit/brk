@@ -1,4 +1,5 @@
 use brk_traversable::Traversable;
+use rayon::prelude::*;
 
 use crate::Filtered;
 
@@ -21,6 +22,13 @@ impl<T> AddressGroups<T> {
 
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.amount_range.iter_mut()
+    }
+
+    pub fn par_iter_separate_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        self.amount_range.par_iter_mut()
     }
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {

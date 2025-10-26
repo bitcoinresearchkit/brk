@@ -13,6 +13,7 @@ use brk_types::{
 };
 use vecdb::{AnyCollectableVec, AnyStoredVec};
 
+mod r#async;
 mod chain;
 mod deser;
 mod output;
@@ -20,6 +21,7 @@ mod pagination;
 mod params;
 mod vecs;
 
+pub use r#async::*;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};

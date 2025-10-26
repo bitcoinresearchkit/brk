@@ -9,6 +9,9 @@ repository.workspace = true
 rust-version.workspace = true
 build = "build.rs"
 
+[features]
+tokio = ["dep:tokio"]
+
 [dependencies]
 bitcoin = { workspace = true }
 brk_computer = { workspace = true }
@@ -24,4 +27,5 @@ quickmatch = "0.1.8"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tokio = { workspace = true, optional = true }
 vecdb = { workspace = true }

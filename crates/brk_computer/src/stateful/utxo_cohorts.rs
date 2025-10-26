@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
+use std::{ops::ControlFlow, path::Path};
 
 use brk_error::Result;
 use brk_grouper::{
@@ -10,6 +10,7 @@ use brk_types::{
     Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, Timestamp, Version,
 };
 use derive_deref::{Deref, DerefMut};
+use rustc_hash::FxHashMap;
 use vecdb::{AnyIterableVec, Database, Exit, Format, StoredIndex};
 
 use crate::{
@@ -1498,7 +1499,7 @@ impl Vecs {
 
     pub fn send(
         &mut self,
-        height_to_sent: BTreeMap<Height, Transacted>,
+        height_to_sent: FxHashMap<Height, Transacted>,
         chain_state: &mut [BlockState],
     ) {
         let mut time_based_vecs = self

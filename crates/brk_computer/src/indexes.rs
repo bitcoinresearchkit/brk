@@ -120,6 +120,9 @@ impl Vecs {
                     .next_at(index.to_usize())
                     .map(|(_, outpoint)| {
                         let outpoint = outpoint.into_owned();
+                        if outpoint.is_coinbase() {
+                            return TxOutIndex::COINBASE;
+                        }
                         txindex_to_first_txoutindex_iter
                             .next_at(outpoint.txindex().to_usize())
                             .unwrap()

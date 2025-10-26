@@ -28,9 +28,9 @@ pub use vecs::*;
 
 // One version for all data sources
 // Increment on **change _OR_ addition**
-const VERSION: Version = Version::new(22);
+const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(920_000);
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -474,94 +474,49 @@ impl Indexer {
                 FxHashMap::default();
             let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
                 FxHashMap::default();
-            txouts
-                .into_iter()
-                .try_for_each(|data| -> Result<()> {
-                    let (
-                        txoutindex,
-                        txout,
-                        txindex,
-                        vout,
-                        outputtype,
-                        addressbytes_opt,
-                        typeindex_opt,
-                    ) = data;
+            for (txoutindex, txout, txindex, vout, outputtype, addressbytes_opt, typeindex_opt) in
+                txouts
+            {
+                let sats = Sats::from(txout.value);
 
-                    let sats = Sats::from(txout.value);
+                if vout.is_zero() {
+                    vecs.txindex_to_first_txoutindex
+                        .push_if_needed(txindex, txoutindex)?;
+                }
 
-                    if vout.is_zero() {
-                        vecs.txindex_to_first_txoutindex
-                            .push_if_needed(txindex, txoutindex)?;
-                    }
+                vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
-                    vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
+                vecs.txoutindex_to_txindex
+                    .push_if_needed(txoutindex, txindex)?;
 
-                    vecs.txoutindex_to_txindex
-                        .push_if_needed(txoutindex, txindex)?;
+                vecs.txoutindex_to_outputtype
+                    .push_if_needed(txoutindex, outputtype)?;
 
-                    vecs.txoutindex_to_outputtype
-                        .push_if_needed(txoutindex, outputtype)?;
-
-                    let typeindex = if let Some(ti) = typeindex_opt {
+                let typeindex = if let Some(ti) = typeindex_opt {
+                    ti
+                } else if let Some((address_bytes, address_hash)) = addressbytes_opt {
+                    if let Some(&ti) = already_added_addressbyteshash.get(&address_hash) {
                         ti
-                    } else if let Some((address_bytes, address_hash)) = addressbytes_opt {
-                        if let Some(&ti) = already_added_addressbyteshash.get(&address_hash) {
-                            ti
-                        } else {
-                            let ti = match outputtype {
-                                OutputType::P2PK65 => indexes.p2pk65addressindex.copy_then_increment(),
-                                OutputType::P2PK33 => indexes.p2pk33addressindex.copy_then_increment(),
-                                OutputType::P2PKH => indexes.p2pkhaddressindex.copy_then_increment(),
-                                OutputType::P2MS => {
-                                    vecs.p2msoutputindex_to_txindex
-                                        .push_if_needed(indexes.p2msoutputindex, txindex)?;
-                                    indexes.p2msoutputindex.copy_then_increment()
-                                }
-                                OutputType::P2SH => indexes.p2shaddressindex.copy_then_increment(),
-                                OutputType::OpReturn => {
-                                    vecs.opreturnindex_to_txindex
-                                        .push_if_needed(indexes.opreturnindex, txindex)?;
-                                    indexes.opreturnindex.copy_then_increment()
-                                }
-                                OutputType::P2WPKH => indexes.p2wpkhaddressindex.copy_then_increment(),
-                                OutputType::P2WSH => indexes.p2wshaddressindex.copy_then_increment(),
-                                OutputType::P2TR => indexes.p2traddressindex.copy_then_increment(),
-                                OutputType::P2A => indexes.p2aaddressindex.copy_then_increment(),
-                                OutputType::Empty => {
-                                    vecs.emptyoutputindex_to_txindex
-                                        .push_if_needed(indexes.emptyoutputindex, txindex)?;
-                                    indexes.emptyoutputindex.copy_then_increment()
-                                }
-                                OutputType::Unknown => {
-                                    vecs.unknownoutputindex_to_txindex
-                                        .push_if_needed(indexes.unknownoutputindex, txindex)?;
-                                    indexes.unknownoutputindex.copy_then_increment()
-                                }
-                                _ => unreachable!(),
-                            };
-
-                            already_added_addressbyteshash.insert(address_hash, ti);
-                            stores.addressbyteshash_to_typeindex.insert_if_needed(
-                                address_hash,
-                                ti,
-                                height,
-                            );
-                            vecs.push_bytes_if_needed(ti, address_bytes)?;
-
-                            ti
-                        }
                     } else {
-                        match outputtype {
+                        let ti = match outputtype {
+                            OutputType::P2PK65 => indexes.p2pk65addressindex.copy_then_increment(),
+                            OutputType::P2PK33 => indexes.p2pk33addressindex.copy_then_increment(),
+                            OutputType::P2PKH => indexes.p2pkhaddressindex.copy_then_increment(),
                             OutputType::P2MS => {
                                 vecs.p2msoutputindex_to_txindex
                                     .push_if_needed(indexes.p2msoutputindex, txindex)?;
                                 indexes.p2msoutputindex.copy_then_increment()
                             }
+                            OutputType::P2SH => indexes.p2shaddressindex.copy_then_increment(),
                             OutputType::OpReturn => {
                                 vecs.opreturnindex_to_txindex
                                     .push_if_needed(indexes.opreturnindex, txindex)?;
                                 indexes.opreturnindex.copy_then_increment()
                             }
+                            OutputType::P2WPKH => indexes.p2wpkhaddressindex.copy_then_increment(),
+                            OutputType::P2WSH => indexes.p2wshaddressindex.copy_then_increment(),
+                            OutputType::P2TR => indexes.p2traddressindex.copy_then_increment(),
+                            OutputType::P2A => indexes.p2aaddressindex.copy_then_increment(),
                             OutputType::Empty => {
                                 vecs.emptyoutputindex_to_txindex
                                     .push_if_needed(indexes.emptyoutputindex, txindex)?;
@@ -573,217 +528,203 @@ impl Indexer {
                                 indexes.unknownoutputindex.copy_then_increment()
                             }
                             _ => unreachable!(),
-                        }
-                    };
+                        };
 
-                    vecs.txoutindex_to_typeindex
-                        .push_if_needed(txoutindex, typeindex)?;
+                        already_added_addressbyteshash.insert(address_hash, ti);
+                        stores.addressbyteshash_to_typeindex.insert_if_needed(
+                            address_hash,
+                            ti,
+                            height,
+                        );
+                        vecs.push_bytes_if_needed(ti, address_bytes)?;
 
-                    if outputtype.is_unspendable() {
-                        return Ok(());
-                    } else if outputtype.is_address() {
-                        stores
-                            .addresstype_to_typeindex_and_txindex
-                            .get_mut(outputtype)
-                            .unwrap()
-                            .insert_if_needed(
-                                TypeIndexAndTxIndex::from((typeindex, txindex)),
-                                Unit,
-                                height,
-                            );
+                        ti
                     }
-
-                    let outpoint = OutPoint::new(txindex, vout);
-
-                    if !same_block_spent_outpoints.contains(&outpoint) {
-                        if outputtype.is_address() {
-                            stores
-                                .addresstype_to_typeindex_and_unspentoutpoint
-                                .get_mut(outputtype)
-                                .unwrap()
-                                .insert_if_needed(
-                                    TypeIndexAndOutPoint::from((typeindex, outpoint)),
-                                    Unit,
-                                    height,
-                                );
+                } else {
+                    match outputtype {
+                        OutputType::P2MS => {
+                            vecs.p2msoutputindex_to_txindex
+                                .push_if_needed(indexes.p2msoutputindex, txindex)?;
+                            indexes.p2msoutputindex.copy_then_increment()
                         }
-                    } else {
-                        same_block_output_info.insert(outpoint, (outputtype, typeindex));
+                        OutputType::OpReturn => {
+                            vecs.opreturnindex_to_txindex
+                                .push_if_needed(indexes.opreturnindex, txindex)?;
+                            indexes.opreturnindex.copy_then_increment()
+                        }
+                        OutputType::Empty => {
+                            vecs.emptyoutputindex_to_txindex
+                                .push_if_needed(indexes.emptyoutputindex, txindex)?;
+                            indexes.emptyoutputindex.copy_then_increment()
+                        }
+                        OutputType::Unknown => {
+                            vecs.unknownoutputindex_to_txindex
+                                .push_if_needed(indexes.unknownoutputindex, txindex)?;
+                            indexes.unknownoutputindex.copy_then_increment()
+                        }
+                        _ => unreachable!(),
                     }
+                };
 
-                    Ok(())
-                })?;
+                vecs.txoutindex_to_typeindex
+                    .push_if_needed(txoutindex, typeindex)?;
+
+                if outputtype.is_unspendable() {
+                    continue;
+                } else if outputtype.is_address() {
+                    stores
+                        .addresstype_to_typeindex_and_txindex
+                        .get_mut(outputtype)
+                        .unwrap()
+                        .insert_if_needed(
+                            TypeIndexAndTxIndex::from((typeindex, txindex)),
+                            Unit,
+                            height,
+                        );
+                }
+
+                let outpoint = OutPoint::new(txindex, vout);
+
+                if same_block_spent_outpoints.contains(&outpoint) {
+                    same_block_output_info.insert(outpoint, (outputtype, typeindex));
+                } else if outputtype.is_address() {
+                    stores
+                        .addresstype_to_typeindex_and_unspentoutpoint
+                        .get_mut(outputtype)
+                        .unwrap()
+                        .insert_if_needed(
+                            TypeIndexAndOutPoint::from((typeindex, outpoint)),
+                            Unit,
+                            height,
+                        );
+                }
+            }
             // println!(
             //     "txouts.into_iter() = : {:?}",
             // i.elapsed()
             // );
 
             // let i = Instant::now();
-            txins
-                .into_iter()
-                .map(
-                    #[allow(clippy::type_complexity)]
-                    |(txinindex, input_source)| -> Result<(
-                        TxInIndex,
-                        Vin,
-                        TxIndex,
-                        OutPoint,
-                        Option<(OutputType, TypeIndex)>,
-                    )> {
-                        if let InputSource::PreviousBlock((
-                            vin,
-                            txindex,
-                            outpoint,
-                            outputtype_typeindex_opt,
-                        )) = input_source
-                        {
-                            return Ok((
-                                txinindex,
-                                vin,
-                                txindex,
-                                outpoint,
-                                outputtype_typeindex_opt,
-                            ));
-                        }
-
-                        let InputSource::SameBlock((txindex, txin, vin, outpoint)) = input_source
-                        else {
-                            unreachable!()
-                        };
-
-                        let mut tuple = (txinindex, vin, txindex, outpoint, None);
-
+            for (txinindex, input_source) in txins {
+                let (vin, txindex, outpoint, outputtype_typeindex_opt) = match input_source {
+                    InputSource::PreviousBlock(tuple) => tuple,
+                    InputSource::SameBlock((txindex, txin, vin, outpoint)) => {
+                        let mut tuple = (vin, txindex, outpoint, None);
                         if outpoint.is_coinbase() {
-                            return Ok(tuple);
+                            tuple
+                        } else {
+                            let outputtype_typeindex = same_block_output_info
+                                .remove(&outpoint)
+                                .ok_or(Error::Str("should have found addressindex from same block"))
+                                .inspect_err(|_| {
+                                    dbg!(&same_block_output_info, txin);
+                                })?;
+                            if outputtype_typeindex.0.is_address() {
+                                tuple.3 = Some(outputtype_typeindex);
+                            }
+                            (tuple.0, tuple.1, tuple.2, tuple.3)
                         }
-
-                        let outputtype_typeindex = same_block_output_info
-                            .remove(&outpoint)
-                            .ok_or(Error::Str("should have found addressindex from same block"))
-                            .inspect_err(|_| {
-                                dbg!(&same_block_output_info, txin);
-                            })?;
-
-                        if outputtype_typeindex.0.is_address() {
-                            tuple.4 = Some(outputtype_typeindex);
-                        }
-
-                        Ok(tuple)
-                    },
-                )
-                .try_for_each(|res| -> Result<()> {
-                    let (txinindex, vin, txindex, outpoint, outputtype_typeindex_opt) = res?;
-
-                    if vin.is_zero() {
-                        vecs.txindex_to_first_txinindex
-                            .push_if_needed(txindex, txinindex)?;
                     }
+                };
 
-                    vecs.txinindex_to_outpoint
-                        .push_if_needed(txinindex, outpoint)?;
+                if vin.is_zero() {
+                    vecs.txindex_to_first_txinindex
+                        .push_if_needed(txindex, txinindex)?;
+                }
 
-                    let Some((outputtype, typeindex)) = outputtype_typeindex_opt else {
-                        return Ok(());
-                    };
+                vecs.txinindex_to_outpoint
+                    .push_if_needed(txinindex, outpoint)?;
 
-                    stores
-                        .addresstype_to_typeindex_and_txindex
-                        .get_mut_unwrap(outputtype)
-                        .insert_if_needed(
-                            TypeIndexAndTxIndex::from((typeindex, txindex)),
-                            Unit,
-                            height,
-                        );
+                let Some((outputtype, typeindex)) = outputtype_typeindex_opt else {
+                    continue;
+                };
 
-                    stores
-                        .addresstype_to_typeindex_and_unspentoutpoint
-                        .get_mut_unwrap(outputtype)
-                        .remove_if_needed(
-                            TypeIndexAndOutPoint::from((typeindex, outpoint)),
-                            height,
-                        );
+                stores
+                    .addresstype_to_typeindex_and_txindex
+                    .get_mut_unwrap(outputtype)
+                    .insert_if_needed(
+                        TypeIndexAndTxIndex::from((typeindex, txindex)),
+                        Unit,
+                        height,
+                    );
 
-                    Ok(())
-                })?;
+                stores
+                    .addresstype_to_typeindex_and_unspentoutpoint
+                    .get_mut_unwrap(outputtype)
+                    .remove_if_needed(TypeIndexAndOutPoint::from((typeindex, outpoint)), height);
+            }
             // println!("txins.into_iter(): {:?}", i.elapsed());
 
             // let i = Instant::now();
             if check_collisions {
                 let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
-                txs.iter()
-                    .try_for_each(|(txindex, _, _, _, prev_txindex_opt)| -> Result<()> {
-                        let Some(prev_txindex) = prev_txindex_opt else {
-                            return Ok(());
-                        };
+                for (txindex, _, _, _, prev_txindex_opt) in txs.iter() {
+                    let Some(prev_txindex) = prev_txindex_opt else {
+                        continue;
+                    };
 
-                        // In case if we start at an already parsed height
-                        if txindex == prev_txindex {
-                            return Ok(());
-                        }
+                    // In case if we start at an already parsed height
+                    if txindex == prev_txindex {
+                        continue;
+                    }
 
-                        let len = vecs.txindex_to_txid.len();
-                        // Ok if `get` is not par as should happen only twice
-                        let prev_txid = txindex_to_txid_iter
-                            .get(*prev_txindex)
-                            .ok_or(Error::Str("To have txid for txindex"))
-                            .inspect_err(|_| {
-                                dbg!(txindex, len);
-                            })?;
+                    let len = vecs.txindex_to_txid.len();
+                    // Ok if `get` is not par as should happen only twice
+                    let prev_txid = txindex_to_txid_iter
+                        .get(*prev_txindex)
+                        .ok_or(Error::Str("To have txid for txindex"))
+                        .inspect_err(|_| {
+                            dbg!(txindex, len);
+                        })?;
 
-                        let prev_txid = prev_txid.as_ref();
+                    let prev_txid = prev_txid.as_ref();
 
-                        // If another Txid needs to be added to the list
-                        // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
-                        let only_known_dup_txids = [
-                            bitcoin::Txid::from_str(
-                                "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                            )
-                            .unwrap()
-                            .into(),
-                            bitcoin::Txid::from_str(
-                                "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                            )
-                            .unwrap()
-                            .into(),
-                        ];
+                    // If another Txid needs to be added to the list
+                    // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
+                    let only_known_dup_txids = [
+                        bitcoin::Txid::from_str(
+                            "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
+                        )
+                        .unwrap()
+                        .into(),
+                        bitcoin::Txid::from_str(
+                            "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
+                        )
+                        .unwrap()
+                        .into(),
+                    ];
 
-                        let is_dup = only_known_dup_txids.contains(prev_txid);
+                    let is_dup = only_known_dup_txids.contains(prev_txid);
 
-                        if !is_dup {
-                            dbg!(height, txindex, prev_txid, prev_txindex);
-                            return Err(Error::Str("Expect none"));
-                        }
-
-                        Ok(())
-                    })?;
+                    if !is_dup {
+                        dbg!(height, txindex, prev_txid, prev_txindex);
+                        return Err(Error::Str("Expect none"));
+                    }
+                }
             }
             // println!("txindex_to_tx_and_txid = : {:?}", i.elapsed());
 
             // let i = Instant::now();
-            txs.into_iter().try_for_each(
-                |(txindex, tx, txid, txid_prefix, prev_txindex_opt)| -> Result<()> {
-                    if prev_txindex_opt.is_none() {
-                        stores
-                            .txidprefix_to_txindex
-                            .insert_if_needed(txid_prefix, txindex, height);
-                    }
+            for (txindex, tx, txid, txid_prefix, prev_txindex_opt) in txs {
+                if prev_txindex_opt.is_none() {
+                    stores
+                        .txidprefix_to_txindex
+                        .insert_if_needed(txid_prefix, txindex, height);
+                }
 
-                    vecs.txindex_to_height.push_if_needed(txindex, height)?;
-                    vecs.txindex_to_txversion
-                        .push_if_needed(txindex, tx.version.into())?;
-                    vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
-                    vecs.txindex_to_rawlocktime
-                        .push_if_needed(txindex, tx.lock_time.into())?;
-                    vecs.txindex_to_base_size
-                        .push_if_needed(txindex, tx.base_size().into())?;
-                    vecs.txindex_to_total_size
-                        .push_if_needed(txindex, tx.total_size().into())?;
-                    vecs.txindex_to_is_explicitly_rbf
-                        .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
-
-                    Ok(())
-                },
-            )?;
+                vecs.txindex_to_height.push_if_needed(txindex, height)?;
+                vecs.txindex_to_txversion
+                    .push_if_needed(txindex, tx.version.into())?;
+                vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
+                vecs.txindex_to_rawlocktime
+                    .push_if_needed(txindex, tx.lock_time.into())?;
+                vecs.txindex_to_base_size
+                    .push_if_needed(txindex, tx.base_size().into())?;
+                vecs.txindex_to_total_size
+                    .push_if_needed(txindex, tx.total_size().into())?;
+                vecs.txindex_to_is_explicitly_rbf
+                    .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
+            }
             // println!("txindex_to_tx_and_txid.into_iter(): {:?}", i.elapsed());
 
             indexes.txindex += TxIndex::from(tx_len);

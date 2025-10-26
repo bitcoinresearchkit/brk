@@ -27,6 +27,7 @@ derive_deref = { workspace = true }
 log = { workspace = true }
 pco = "0.4.7"
 rayon = { workspace = true }
+rustc-hash = { workspace = true }
 serde = { workspace = true }
 vecdb = { workspace = true }
 zerocopy = { workspace = true }

@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use brk_traversable::Traversable;
 use brk_types::OutputType;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::{Filter, Filtered};
 
@@ -53,6 +54,26 @@ impl<T> BySpendableType<T> {
             &mut self.empty,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self.p2pk65,
+            &mut self.p2pk33,
+            &mut self.p2pkh,
+            &mut self.p2ms,
+            &mut self.p2sh,
+            &mut self.p2wpkh,
+            &mut self.p2wsh,
+            &mut self.p2tr,
+            &mut self.p2a,
+            &mut self.unknown,
+            &mut self.empty,
+        ]
+        .into_par_iter()
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {

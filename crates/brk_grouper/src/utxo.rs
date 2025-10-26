@@ -1,4 +1,5 @@
 use brk_traversable::Traversable;
+use rayon::prelude::*;
 
 use crate::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
@@ -40,6 +41,17 @@ impl<T> UTXOGroups<T> {
             .chain(self.epoch.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self._type.iter_mut())
+    }
+
+    pub fn par_iter_separate_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        self.age_range
+            .par_iter_mut()
+            .chain(self.epoch.par_iter_mut())
+            .chain(self.amount_range.par_iter_mut())
+            .chain(self._type.par_iter_mut())
     }
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
