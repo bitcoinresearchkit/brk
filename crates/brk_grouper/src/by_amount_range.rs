@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use brk_traversable::Traversable;
 use brk_types::Sats;
+use rayon::prelude::*;
 
 use super::{Filter, Filtered};
 
@@ -200,6 +201,30 @@ impl<T> ByAmountRange<T> {
             &mut self._100k_btc_or_more,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self._0sats,
+            &mut self._1sat_to_10sats,
+            &mut self._10sats_to_100sats,
+            &mut self._100sats_to_1k_sats,
+            &mut self._1k_sats_to_10k_sats,
+            &mut self._10k_sats_to_100k_sats,
+            &mut self._100k_sats_to_1m_sats,
+            &mut self._1m_sats_to_10m_sats,
+            &mut self._10m_sats_to_1btc,
+            &mut self._1btc_to_10btc,
+            &mut self._10btc_to_100btc,
+            &mut self._100btc_to_1k_btc,
+            &mut self._1k_btc_to_10k_btc,
+            &mut self._10k_btc_to_100k_btc,
+            &mut self._100k_btc_or_more,
+        ]
+        .into_par_iter()
     }
 }
 

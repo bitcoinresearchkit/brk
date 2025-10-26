@@ -1,6 +1,7 @@
 use allocative::Allocative;
 use schemars::JsonSchema;
 use serde::Serialize;
+use vecdb::StoredCompressed;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{TxIndex, Vout};
@@ -22,6 +23,7 @@ use crate::{TxIndex, Vout};
     Allocative,
     JsonSchema,
     Hash,
+    StoredCompressed,
 )]
 pub struct OutPoint(u64);
 

@@ -1,10 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{BTreeMap, BTreeSet},
-    mem,
-    path::Path,
-    thread,
-};
+use std::{cmp::Ordering, collections::BTreeSet, mem, path::Path, thread};
 
 use brk_error::Result;
 use brk_grouper::{ByAddressType, ByAnyAddress, Filtered};
@@ -19,6 +13,7 @@ use brk_types::{
 };
 use log::info;
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 use vecdb::{
     AnyCloneableIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
     Format, GenericStoredVec, ImportOptions, LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp,
@@ -59,17 +54,8 @@ pub struct Vecs {
     // States
     // ---
     pub chain_state: RawVec<Height, SupplyState>,
-    pub p2pk33addressindex_to_anyaddressindex: RawVec<P2PK33AddressIndex, AnyAddressIndex>,
-    pub p2pk65addressindex_to_anyaddressindex: RawVec<P2PK65AddressIndex, AnyAddressIndex>,
-    pub p2pkhaddressindex_to_anyaddressindex: RawVec<P2PKHAddressIndex, AnyAddressIndex>,
-    pub p2shaddressindex_to_anyaddressindex: RawVec<P2SHAddressIndex, AnyAddressIndex>,
-    pub p2traddressindex_to_anyaddressindex: RawVec<P2TRAddressIndex, AnyAddressIndex>,
-    pub p2wpkhaddressindex_to_anyaddressindex: RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
-    pub p2wshaddressindex_to_anyaddressindex: RawVec<P2WSHAddressIndex, AnyAddressIndex>,
-    pub p2aaddressindex_to_anyaddressindex: RawVec<P2AAddressIndex, AnyAddressIndex>,
-    pub loadedaddressindex_to_loadedaddressdata: RawVec<LoadedAddressIndex, LoadedAddressData>,
-    pub emptyaddressindex_to_emptyaddressdata: RawVec<EmptyAddressIndex, EmptyAddressData>,
-
+    pub any_address_indexes: AnyAddressIndexes,
+    pub addresses_data: AddressesData,
     pub utxo_cohorts: utxo_cohorts::Vecs,
     pub address_cohorts: address_cohorts::Vecs,
 
@@ -453,41 +439,44 @@ impl Vecs {
                 &states_path,
             )?,
 
-            p2aaddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2pk33addressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2pk65addressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2pkhaddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2shaddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2traddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2wpkhaddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-            p2wshaddressindex_to_anyaddressindex: RawVec::forced_import_with(
-                ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
-                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
-            )?,
-
-            loadedaddressindex_to_loadedaddressdata,
-            emptyaddressindex_to_emptyaddressdata,
+            any_address_indexes: AnyAddressIndexes {
+                p2a: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2pk33: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2pk65: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2pkh: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2sh: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2tr: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2wpkh: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+                p2wsh: RawVec::forced_import_with(
+                    ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
+                        .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+                )?,
+            },
+            addresses_data: AddressesData {
+                loaded: loadedaddressindex_to_loadedaddressdata,
+                empty: emptyaddressindex_to_emptyaddressdata,
+            },
             loadedaddressindex_to_loadedaddressindex,
             emptyaddressindex_to_emptyaddressindex,
 
@@ -634,16 +623,8 @@ impl Vecs {
                     .unwrap_or_default(),
             )
             .min(chain_state_starting_height)
-            .min(Height::from(self.p2pk33addressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2pk65addressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2pkhaddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2shaddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2traddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2wpkhaddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2wshaddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.p2aaddressindex_to_anyaddressindex.stamp()).incremented())
-            .min(Height::from(self.loadedaddressindex_to_loadedaddressdata.stamp()).incremented())
-            .min(Height::from(self.emptyaddressindex_to_emptyaddressdata.stamp()).incremented())
+            .min(self.any_address_indexes.min_stamped_height())
+            .min(self.addresses_data.min_stamped_height())
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()))
             .cmp(&chain_state_starting_height)
@@ -666,40 +647,21 @@ impl Vecs {
         if starting_height <= last_height {
             // info!("starting_height = {starting_height}");
 
+            let stamp = starting_height.into();
             let starting_height = if starting_height.is_not_zero() {
-                let mut set = [
-                    self.chain_state.rollback_before(starting_height.into())?,
-                    self.p2pk33addressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2pk65addressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2pkhaddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2shaddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2traddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2wpkhaddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2wshaddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.p2aaddressindex_to_anyaddressindex
-                        .rollback_before(starting_height.into())?,
-                    self.loadedaddressindex_to_loadedaddressdata
-                        .rollback_before(starting_height.into())?,
-                    self.emptyaddressindex_to_emptyaddressdata
-                        .rollback_before(starting_height.into())?,
-                ]
-                .into_iter()
-                // .enumerate()
-                // .map(|(i, s)| {
-                //     let h = Height::from(s).incremented();
-                //     // dbg!((i, s, h));
-                //     h
-                // })
-                .map(Height::from)
-                .map(Height::incremented)
-                .collect::<BTreeSet<Height>>();
+                let mut set = [self.chain_state.rollback_before(stamp)?]
+                    .into_iter()
+                    .chain(self.any_address_indexes.rollback_before(stamp)?)
+                    .chain(self.addresses_data.rollback_before(stamp)?)
+                    // .enumerate()
+                    // .map(|(i, s)| {
+                    //     let h = Height::from(s).incremented();
+                    //     // dbg!((i, s, h));
+                    //     h
+                    // })
+                    .map(Height::from)
+                    .map(Height::incremented)
+                    .collect::<BTreeSet<Height>>();
 
                 if set.len() == 1 {
                     set.pop_first().unwrap()
@@ -762,16 +724,8 @@ impl Vecs {
 
                 chain_state = vec![];
 
-                self.p2pk33addressindex_to_anyaddressindex.reset()?;
-                self.p2pk65addressindex_to_anyaddressindex.reset()?;
-                self.p2pkhaddressindex_to_anyaddressindex.reset()?;
-                self.p2shaddressindex_to_anyaddressindex.reset()?;
-                self.p2traddressindex_to_anyaddressindex.reset()?;
-                self.p2wpkhaddressindex_to_anyaddressindex.reset()?;
-                self.p2wshaddressindex_to_anyaddressindex.reset()?;
-                self.p2aaddressindex_to_anyaddressindex.reset()?;
-                self.loadedaddressindex_to_loadedaddressdata.reset()?;
-                self.emptyaddressindex_to_emptyaddressdata.reset()?;
+                self.any_address_indexes.reset()?;
+                self.addresses_data.reset()?;
 
                 separate_utxo_vecs
                     .par_iter_mut()
@@ -792,11 +746,7 @@ impl Vecs {
 
             starting_indexes.update_from_height(starting_height, indexes);
 
-            let txinindex_to_outpoint_reader = txinindex_to_outpoint.create_reader();
-            let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
-            let txoutindex_to_value_reader = txoutindex_to_value.create_reader();
-            let txoutindex_to_outputtype_reader = txoutindex_to_outputtype.create_reader();
-            let txoutindex_to_typeindex_reader = txoutindex_to_typeindex.create_reader();
+            let ir = IndexerReaders::new(indexer);
 
             let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
             let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
@@ -857,18 +807,11 @@ impl Vecs {
             let mut height = starting_height;
 
             let mut addresstype_to_typeindex_to_loadedaddressdata =
-                AddressTypeToTypeIndexTree::<WithAddressDataSource<LoadedAddressData>>::default();
+                AddressTypeToTypeIndexMap::<WithAddressDataSource<LoadedAddressData>>::default();
             let mut addresstype_to_typeindex_to_emptyaddressdata =
-                AddressTypeToTypeIndexTree::<WithAddressDataSource<EmptyAddressData>>::default();
-            let mut addresstypeindex_to_anyaddressindex_reader_opt =
-                ByAddressType::<Option<Reader>>::default();
-            let mut anyaddressindex_to_anyaddressdata_reader_opt =
-                ByAnyAddress::<Option<Reader>>::default();
+                AddressTypeToTypeIndexMap::<WithAddressDataSource<EmptyAddressData>>::default();
 
-            self.reset_readers_options(
-                &mut addresstypeindex_to_anyaddressindex_reader_opt,
-                &mut anyaddressindex_to_anyaddressdata_reader_opt,
-            );
+            let mut vr = VecsReaders::new(self);
 
             let last_height = Height::from(
                 height_to_date_fixed
@@ -877,170 +820,172 @@ impl Vecs {
                     .unwrap_or_default(),
             );
 
-            (height.to_usize()..height_to_date_fixed.len())
-                .map(Height::from)
-                .try_for_each(|_height| -> Result<()> {
-                    height = _height;
+            for _height in (height.to_usize()..height_to_date_fixed.len()).map(Height::from) {
+                height = _height;
 
-                    info!("Processing chain at {height}...");
+                info!("Processing chain at {height}...");
 
-                    self.utxo_cohorts
-                        .iter_separate_mut()
-                        .for_each(|Filtered(_, v)| v.state.as_mut().unwrap().reset_single_iteration_values());
+                self.utxo_cohorts
+                    .iter_separate_mut()
+                    .for_each(|Filtered(_, v)| {
+                        v.state.as_mut().unwrap().reset_single_iteration_values()
+                    });
 
-                    self.address_cohorts
-                        .iter_separate_mut()
-                        .for_each(|Filtered(_, v)| v.state.as_mut().unwrap().reset_single_iteration_values());
+                self.address_cohorts
+                    .iter_separate_mut()
+                    .for_each(|Filtered(_, v)| {
+                        v.state.as_mut().unwrap().reset_single_iteration_values()
+                    });
 
-                    let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
-                    let price = height_to_price_close_iter
-                        .as_mut()
-                        .map(|i| *i.unwrap_get_inner(height));
-                    let first_txoutindex = height_to_first_txoutindex_iter
+                let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
+                let price = height_to_price_close_iter
+                    .as_mut()
+                    .map(|i| *i.unwrap_get_inner(height));
+                let first_txoutindex = height_to_first_txoutindex_iter
+                    .unwrap_get_inner(height)
+                    .to_usize();
+                let first_txinindex = height_to_first_txinindex_iter
+                    .unwrap_get_inner(height)
+                    .to_usize();
+                let output_count = height_to_output_count_iter.unwrap_get_inner(height);
+                let input_count = height_to_input_count_iter.unwrap_get_inner(height);
+
+                let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
+                    p2a: height_to_first_p2aaddressindex_iter
                         .unwrap_get_inner(height)
-                        .to_usize();
-                    let first_txinindex = height_to_first_txinindex_iter
+                        .into(),
+                    p2pk33: height_to_first_p2pk33addressindex_iter
                         .unwrap_get_inner(height)
-                        .to_usize();
-                    let output_count = height_to_output_count_iter.unwrap_get_inner(height);
-                    let input_count = height_to_input_count_iter.unwrap_get_inner(height);
+                        .into(),
+                    p2pk65: height_to_first_p2pk65addressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                    p2pkh: height_to_first_p2pkhaddressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                    p2sh: height_to_first_p2shaddressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                    p2tr: height_to_first_p2traddressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                    p2wpkh: height_to_first_p2wpkhaddressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                    p2wsh: height_to_first_p2wshaddressindex_iter
+                        .unwrap_get_inner(height)
+                        .into(),
+                };
 
-                    let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
-                        p2a: height_to_first_p2aaddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2pk33: height_to_first_p2pk33addressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2pk65: height_to_first_p2pk65addressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2pkh: height_to_first_p2pkhaddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2sh: height_to_first_p2shaddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2tr: height_to_first_p2traddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2wpkh: height_to_first_p2wpkhaddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                        p2wsh: height_to_first_p2wshaddressindex_iter
-                            .unwrap_get_inner(height)
-                            .into(),
-                    };
+                let (
+                    mut transacted,
+                    addresstype_to_typedindex_to_received_data,
+                    mut height_to_sent,
+                    addresstype_to_typedindex_to_sent_data,
+                    mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
+                ) = thread::scope(|scope| {
+                    scope.spawn(|| {
+                        self.utxo_cohorts
+                            .tick_tock_next_block(&chain_state, timestamp);
+                    });
 
-                    let (
-                        mut transacted,
-                        addresstype_to_typedindex_to_received_data,
-                        mut height_to_sent,
-                        addresstype_to_typedindex_to_sent_data,
-                        mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
-                    ) = thread::scope(|scope| {
-                        scope.spawn(|| {
-                            self.utxo_cohorts
-                                .tick_tock_next_block(&chain_state, timestamp);
-                        });
+                    let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_txoutindex..first_txoutindex + usize::from(output_count))
+                        .into_par_iter()
+                        .map(|i| {
+                            let txoutindex = TxOutIndex::from(i);
 
-                        let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_txoutindex..first_txoutindex + usize::from(output_count))
-                            .into_par_iter()
-                            .map(TxOutIndex::from)
-                            .map(|txoutindex| {
-                                let value = txoutindex_to_value
-                                    .unwrap_read(txoutindex, &txoutindex_to_value_reader);
+                            let value = txoutindex_to_value
+                                .unwrap_read(txoutindex, &ir.txoutindex_to_value);
 
-                                let output_type = txoutindex_to_outputtype
-                                    .unwrap_read(txoutindex, &txoutindex_to_outputtype_reader);
+                            let output_type = txoutindex_to_outputtype
+                                .unwrap_read(txoutindex, &ir.txoutindex_to_outputtype);
 
-                                if output_type.is_not_address() {
-                                    return (value, output_type, None);
+                            if output_type.is_not_address() {
+                                return (value, output_type, None);
+                            }
+
+                            let typeindex = txoutindex_to_typeindex
+                                .unwrap_read(txoutindex, &ir.txoutindex_to_typeindex);
+
+                            let addressdata_opt = Self::get_addressdatawithsource(
+                                output_type,
+                                typeindex,
+                                &first_addressindexes,
+                                &addresstype_to_typeindex_to_loadedaddressdata,
+                                &addresstype_to_typeindex_to_emptyaddressdata,
+                                &vr,
+                                &self.any_address_indexes,
+                                &self.addresses_data,
+                            );
+
+                            (value, output_type, Some((typeindex, addressdata_opt)))
+                        }).fold(
+                        || {
+                            (
+                                Transacted::default(),
+                                AddressTypeToVec::<(TypeIndex, Sats)>::default(),
+                                AddressTypeToTypeIndexMap::default()
+                            )
+                        },
+                        |(mut transacted, mut addresstype_to_typedindex_to_data, mut addresstype_to_typeindex_to_addressdatawithsource),
+                            (
+                            value,
+                            output_type,
+                            typeindex_with_addressdata_opt,
+                        )| {
+                            transacted.iterate(value, output_type);
+
+                            if let Some((typeindex, addressdata_opt)) = typeindex_with_addressdata_opt {
+                                if let Some(addressdata) = addressdata_opt
+                                {
+                                    addresstype_to_typeindex_to_addressdatawithsource
+                                        .insert_for_type(output_type, typeindex, addressdata);
                                 }
 
-                                let typeindex = txoutindex_to_typeindex
-                                    .unwrap_read(txoutindex, &txoutindex_to_typeindex_reader);
+                                addresstype_to_typedindex_to_data
+                                    .get_mut(output_type)
+                                    .unwrap()
+                                    .push((typeindex, value));
+                            }
 
-                                let addressdata_opt = Self::get_addressdatawithsource(
-                                    output_type,
-                                    typeindex,
-                                    &first_addressindexes,
-                                    &addresstype_to_typeindex_to_loadedaddressdata,
-                                    &addresstype_to_typeindex_to_emptyaddressdata,
-                                    &addresstypeindex_to_anyaddressindex_reader_opt,
-                                    &anyaddressindex_to_anyaddressdata_reader_opt,
-                                    &self.p2pk33addressindex_to_anyaddressindex,
-                                    &self.p2pk65addressindex_to_anyaddressindex,
-                                    &self.p2pkhaddressindex_to_anyaddressindex,
-                                    &self.p2shaddressindex_to_anyaddressindex,
-                                    &self.p2traddressindex_to_anyaddressindex,
-                                    &self.p2wpkhaddressindex_to_anyaddressindex,
-                                    &self.p2wshaddressindex_to_anyaddressindex,
-                                    &self.p2aaddressindex_to_anyaddressindex,
-                                    &self.loadedaddressindex_to_loadedaddressdata,
-                                    &self.emptyaddressindex_to_emptyaddressdata,
-                                );
-
-                                (value, output_type, Some((typeindex, addressdata_opt)))
-                            }).fold(
+                            (transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource)
+                        }).reduce(
                             || {
                                 (
                                     Transacted::default(),
                                     AddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                    AddressTypeToTypeIndexTree::default()
+                                    AddressTypeToTypeIndexMap::default()
                                 )
                             },
-                            |(mut transacted, mut addresstype_to_typedindex_to_data, mut addresstype_to_typeindex_to_addressdatawithsource),
-                                (
-                                value,
-                                output_type,
-                                typeindex_with_addressdata_opt,
-                            )| {
-                                transacted.iterate(value, output_type);
+                            |(transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource), (transacted2, addresstype_to_typedindex_to_data2, addresstype_to_typeindex_to_addressdatawithsource2)| {
+                                (transacted + transacted2, addresstype_to_typedindex_to_data.merge(addresstype_to_typedindex_to_data2), addresstype_to_typeindex_to_addressdatawithsource.merge(addresstype_to_typeindex_to_addressdatawithsource2))
+                            },
+                        );
 
-                                if let Some((typeindex, addressdata_opt)) = typeindex_with_addressdata_opt {
-                                    if let Some(addressdata) = addressdata_opt
-                                    {
-                                        addresstype_to_typeindex_to_addressdatawithsource
-                                            .get_mut(output_type)
-                                            .unwrap()
-                                            .insert(typeindex, addressdata);
-                                    }
-
-                                    addresstype_to_typedindex_to_data
-                                        .get_mut(output_type)
-                                        .unwrap()
-                                        .push((typeindex, value));
-                                }
-
-                                (transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource)
-                            }).reduce(
-                                || {
-                                    (
-                                        Transacted::default(),
-                                        AddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                        AddressTypeToTypeIndexTree::default()
-                                    )
-                                },
-                                |(transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource), (transacted2, addresstype_to_typedindex_to_data2, addresstype_to_typeindex_to_addressdatawithsource2)| {
-                                    (transacted + transacted2, addresstype_to_typedindex_to_data.merge(addresstype_to_typedindex_to_data2), addresstype_to_typeindex_to_addressdatawithsource.merge(addresstype_to_typeindex_to_addressdatawithsource2))
-                                },
-                            );
-
-                        // Skip coinbase
-                        let (height_to_sent, addresstype_to_typedindex_to_sent_data, sending_addresstype_to_typeindex_to_addressdatawithsource) = (first_txinindex + 1..first_txinindex + usize::from(input_count))
+                    // Skip coinbase
+                    let (
+                        height_to_sent,
+                        addresstype_to_typedindex_to_sent_data,
+                        sending_addresstype_to_typeindex_to_addressdatawithsource,
+                    ) =
+                        (first_txinindex + 1..first_txinindex + usize::from(input_count))
                             .into_par_iter()
-                            .map(TxInIndex::from)
-                            .map(|txinindex| {
-                                let outpoint = txinindex_to_outpoint.unwrap_read(txinindex, &txinindex_to_outpoint_reader);
+                            .map(|i| {
+                                let txinindex = TxInIndex::from(i);
 
-                                let txoutindex = txindex_to_first_txoutindex.unwrap_read(outpoint.txindex(), &txindex_to_first_txoutindex_reader) + outpoint.vout();
+                                let outpoint = txinindex_to_outpoint
+                                    .unwrap_read(txinindex, &ir.txinindex_to_outpoint);
+
+                                let txoutindex = txindex_to_first_txoutindex.unwrap_read(
+                                    outpoint.txindex(),
+                                    &ir.txindex_to_first_txoutindex,
+                                ) + outpoint.vout();
 
                                 let value = txoutindex_to_value
-                                    .unwrap_read(txoutindex, &txoutindex_to_value_reader);
+                                    .unwrap_read(txoutindex, &ir.txoutindex_to_value);
 
                                 let input_type = txoutindex_to_outputtype
-                                    .unwrap_read(txoutindex, &txoutindex_to_outputtype_reader);
+                                    .unwrap_read(txoutindex, &ir.txoutindex_to_outputtype);
 
                                 let prev_height =
                                     *txoutindex_range_to_height.get(txoutindex).unwrap();
@@ -1050,7 +995,7 @@ impl Vecs {
                                 }
 
                                 let typeindex = txoutindex_to_typeindex
-                                    .unwrap_read(txoutindex, &txoutindex_to_typeindex_reader);
+                                    .unwrap_read(txoutindex, &ir.txoutindex_to_typeindex);
 
                                 let addressdata_opt = Self::get_addressdatawithsource(
                                     input_type,
@@ -1058,242 +1003,289 @@ impl Vecs {
                                     &first_addressindexes,
                                     &addresstype_to_typeindex_to_loadedaddressdata,
                                     &addresstype_to_typeindex_to_emptyaddressdata,
-                                    &addresstypeindex_to_anyaddressindex_reader_opt,
-                                    &anyaddressindex_to_anyaddressdata_reader_opt,
-                                    &self.p2pk33addressindex_to_anyaddressindex,
-                                    &self.p2pk65addressindex_to_anyaddressindex,
-                                    &self.p2pkhaddressindex_to_anyaddressindex,
-                                    &self.p2shaddressindex_to_anyaddressindex,
-                                    &self.p2traddressindex_to_anyaddressindex,
-                                    &self.p2wpkhaddressindex_to_anyaddressindex,
-                                    &self.p2wshaddressindex_to_anyaddressindex,
-                                    &self.p2aaddressindex_to_anyaddressindex,
-                                    &self.loadedaddressindex_to_loadedaddressdata,
-                                    &self.emptyaddressindex_to_emptyaddressdata,
+                                    &vr,
+                                    &self.any_address_indexes,
+                                    &self.addresses_data,
                                 );
 
-                                (prev_height, value, input_type, Some((typeindex, addressdata_opt)))
-                            }).fold(
-                            || {
                                 (
-                                    BTreeMap::<Height, Transacted>::default(),
-                                    HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                    AddressTypeToTypeIndexTree::default()
+                                    prev_height,
+                                    value,
+                                    input_type,
+                                    Some((typeindex, addressdata_opt)),
                                 )
-                            },
-                            |(mut height_to_transacted, mut height_to_addresstype_to_typedindex_to_data, mut addresstype_to_typeindex_to_addressdatawithsource),
-                                (
-                                prev_height,
-                                value,
-                                output_type,
-                                typeindex_with_addressdata_opt,
-                            )| {
-                                height_to_transacted
-                                    .entry(prev_height)
-                                    .or_default()
-                                    .iterate(value, output_type);
-
-                                if let Some((typeindex, addressdata_opt)) = typeindex_with_addressdata_opt {
-                                    if let Some(addressdata) = addressdata_opt
-                                    {
-                                        addresstype_to_typeindex_to_addressdatawithsource
-                                            .get_mut(output_type)
-                                            .unwrap()
-                                            .insert(typeindex, addressdata);
-                                    }
-
-                                    height_to_addresstype_to_typedindex_to_data
-                                        .entry(prev_height)
-                                        .or_default()
-                                        .get_mut(output_type)
-                                        .unwrap()
-                                        .push((typeindex, value));
-                                }
-
-                                (height_to_transacted, height_to_addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource)
-                            }).reduce(
+                            })
+                            .fold(
                                 || {
                                     (
-                                        BTreeMap::<Height, Transacted>::default(),
+                                        FxHashMap::<Height, Transacted>::default(),
                                         HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                        AddressTypeToTypeIndexTree::default()
+                                        AddressTypeToTypeIndexMap::default(),
                                     )
                                 },
-                                |(height_to_transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource), (height_to_transacted2, addresstype_to_typedindex_to_data2, addresstype_to_typeindex_to_addressdatawithsource2)| {
-                                    let (mut height_to_transacted, height_to_transacted_consumed) = if height_to_transacted.len() > height_to_transacted2.len() {
-                                        (height_to_transacted, height_to_transacted2)
-                                    } else {
-                                        (height_to_transacted2, height_to_transacted)
-                                    };
-                                    height_to_transacted_consumed.into_iter().for_each(|(k, v)| {
-                                        *height_to_transacted.entry(k).or_default() += v;
-                                    });
+                                |(
+                                    mut height_to_transacted,
+                                    mut height_to_addresstype_to_typedindex_to_data,
+                                    mut addresstype_to_typeindex_to_addressdatawithsource,
+                                ),
+                                 (
+                                    prev_height,
+                                    value,
+                                    output_type,
+                                    typeindex_with_addressdata_opt,
+                                )| {
+                                    height_to_transacted
+                                        .entry(prev_height)
+                                        .or_default()
+                                        .iterate(value, output_type);
 
-                                    let (mut addresstype_to_typedindex_to_data, addresstype_to_typedindex_to_data_consumed) = if addresstype_to_typedindex_to_data.len() > addresstype_to_typedindex_to_data2.len() {
-                                        (addresstype_to_typedindex_to_data, addresstype_to_typedindex_to_data2)
-                                    } else {
-                                        (addresstype_to_typedindex_to_data2, addresstype_to_typedindex_to_data)
-                                    };
-                                    addresstype_to_typedindex_to_data_consumed.0.into_iter().for_each(|(k, v)| {
-                                        addresstype_to_typedindex_to_data.entry(k).or_default().merge_mut(v);
-                                    });
+                                    if let Some((typeindex, addressdata_opt)) =
+                                        typeindex_with_addressdata_opt
+                                    {
+                                        if let Some(addressdata) = addressdata_opt {
+                                            addresstype_to_typeindex_to_addressdatawithsource
+                                                .insert_for_type(
+                                                    output_type,
+                                                    typeindex,
+                                                    addressdata,
+                                                );
+                                        }
 
-                                    (height_to_transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource.merge(addresstype_to_typeindex_to_addressdatawithsource2))
+                                        height_to_addresstype_to_typedindex_to_data
+                                            .entry(prev_height)
+                                            .or_default()
+                                            .get_mut(output_type)
+                                            .unwrap()
+                                            .push((typeindex, value));
+                                    }
+
+                                    (
+                                        height_to_transacted,
+                                        height_to_addresstype_to_typedindex_to_data,
+                                        addresstype_to_typeindex_to_addressdatawithsource,
+                                    )
+                                },
+                            )
+                            .reduce(
+                                || {
+                                    (
+                                        FxHashMap::<Height, Transacted>::default(),
+                                        HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
+                                        AddressTypeToTypeIndexMap::default(),
+                                    )
+                                },
+                                |(
+                                    height_to_transacted,
+                                    addresstype_to_typedindex_to_data,
+                                    addresstype_to_typeindex_to_addressdatawithsource,
+                                ),
+                                 (
+                                    height_to_transacted2,
+                                    addresstype_to_typedindex_to_data2,
+                                    addresstype_to_typeindex_to_addressdatawithsource2,
+                                )| {
+                                    let (mut height_to_transacted, height_to_transacted_consumed) =
+                                        if height_to_transacted.len() > height_to_transacted2.len()
+                                        {
+                                            (height_to_transacted, height_to_transacted2)
+                                        } else {
+                                            (height_to_transacted2, height_to_transacted)
+                                        };
+                                    height_to_transacted_consumed
+                                        .into_iter()
+                                        .for_each(|(k, v)| {
+                                            *height_to_transacted.entry(k).or_default() += v;
+                                        });
+
+                                    let (
+                                        mut addresstype_to_typedindex_to_data,
+                                        addresstype_to_typedindex_to_data_consumed,
+                                    ) = if addresstype_to_typedindex_to_data.len()
+                                        > addresstype_to_typedindex_to_data2.len()
+                                    {
+                                        (
+                                            addresstype_to_typedindex_to_data,
+                                            addresstype_to_typedindex_to_data2,
+                                        )
+                                    } else {
+                                        (
+                                            addresstype_to_typedindex_to_data2,
+                                            addresstype_to_typedindex_to_data,
+                                        )
+                                    };
+                                    addresstype_to_typedindex_to_data_consumed
+                                        .0
+                                        .into_iter()
+                                        .for_each(|(k, v)| {
+                                            addresstype_to_typedindex_to_data
+                                                .entry(k)
+                                                .or_default()
+                                                .merge_mut(v);
+                                        });
+
+                                    (
+                                        height_to_transacted,
+                                        addresstype_to_typedindex_to_data,
+                                        addresstype_to_typeindex_to_addressdatawithsource.merge(
+                                            addresstype_to_typeindex_to_addressdatawithsource2,
+                                        ),
+                                    )
                                 },
                             );
 
-                        let addresstype_to_typeindex_to_addressdatawithsource =
-                            receiving_addresstype_to_typeindex_to_addressdatawithsource
-                                .merge(sending_addresstype_to_typeindex_to_addressdatawithsource);
+                    let addresstype_to_typeindex_to_addressdatawithsource =
+                        receiving_addresstype_to_typeindex_to_addressdatawithsource
+                            .merge(sending_addresstype_to_typeindex_to_addressdatawithsource);
 
-                        (
-                            transacted,
-                            addresstype_to_typedindex_to_received_data,
-                            height_to_sent,
-                            addresstype_to_typedindex_to_sent_data,
-                            addresstype_to_typeindex_to_addressdatawithsource,
-                        )
-                    });
+                    (
+                        transacted,
+                        addresstype_to_typedindex_to_received_data,
+                        height_to_sent,
+                        addresstype_to_typedindex_to_sent_data,
+                        addresstype_to_typeindex_to_addressdatawithsource,
+                    )
+                });
 
-                    thread::scope(|scope| {
-                        scope.spawn(|| {
-                            addresstype_to_typedindex_to_received_data.process_received(
+                thread::scope(|scope| {
+                    scope.spawn(|| {
+                        addresstype_to_typedindex_to_received_data.process_received(
+                            &mut self.address_cohorts,
+                            &mut addresstype_to_typeindex_to_loadedaddressdata,
+                            &mut addresstype_to_typeindex_to_emptyaddressdata,
+                            price,
+                            &mut addresstype_to_addr_count,
+                            &mut addresstype_to_empty_addr_count,
+                            &mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
+                        );
+
+                        addresstype_to_typedindex_to_sent_data
+                            .process_sent(
                                 &mut self.address_cohorts,
                                 &mut addresstype_to_typeindex_to_loadedaddressdata,
                                 &mut addresstype_to_typeindex_to_emptyaddressdata,
                                 price,
                                 &mut addresstype_to_addr_count,
                                 &mut addresstype_to_empty_addr_count,
+                                height_to_price_close_vec.as_ref(),
+                                &height_to_timestamp_fixed_vec,
+                                height,
+                                timestamp,
                                 &mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
-                            );
-
-                            addresstype_to_typedindex_to_sent_data
-                                .process_sent(
-                                    &mut self.address_cohorts,
-                                    &mut addresstype_to_typeindex_to_loadedaddressdata,
-                                    &mut addresstype_to_typeindex_to_emptyaddressdata,
-                                    price,
-                                    &mut addresstype_to_addr_count,
-                                    &mut addresstype_to_empty_addr_count,
-                                    height_to_price_close_vec.as_ref(),
-                                    &height_to_timestamp_fixed_vec,
-                                    height,
-                                    timestamp,
-                                    &mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
-                                )
-                                .unwrap();
-                        });
-
-                        if chain_state_starting_height > height {
-                            dbg!(chain_state_starting_height, height);
-                            panic!("temp, just making sure")
-                        }
-
-                        unspendable_supply += transacted
-                            .by_type
-                            .unspendable
-                            .as_vec()
-                            .into_iter()
-                            .map(|state| state.value)
-                            .sum::<Sats>()
-                            + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
-
-                        opreturn_supply += transacted.by_type.unspendable.opreturn.value;
-
-                        if height == Height::new(0) {
-                            transacted = Transacted::default();
-                            unspendable_supply += Sats::FIFTY_BTC;
-                        } else if height == Height::new(91_842) || height == Height::new(91_880) {
-                            // Need to destroy invalid coinbases due to duplicate txids
-                            if height == Height::new(91_842) {
-                                height_to_sent.entry(Height::new(91_812)).or_default()
-                            } else {
-                                height_to_sent.entry(Height::new(91_722)).or_default()
-                            }
-                            .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
-                        };
-
-                        // Push current block state before processing sends and receives
-                        chain_state.push(BlockState {
-                            supply: transacted.spendable_supply.clone(),
-                            price,
-                            timestamp,
-                        });
-
-                        self.utxo_cohorts.receive(transacted, height, price);
-
-                        self.utxo_cohorts.send(height_to_sent, &mut chain_state);
+                            )
+                            .unwrap();
                     });
 
-                    self.height_to_unspendable_supply.forced_push_at(
-                        height,
-                        unspendable_supply,
-                        exit,
-                    )?;
-
-                    self.height_to_opreturn_supply
-                        .forced_push_at(height, opreturn_supply, exit)?;
-
-                    self.addresstype_to_height_to_addr_count.forced_push_at(
-                        height,
-                        &addresstype_to_addr_count,
-                        exit,
-                    )?;
-
-                    self.addresstype_to_height_to_empty_addr_count
-                        .forced_push_at(height, &addresstype_to_empty_addr_count, exit)?;
-
-                    let date = height_to_date_fixed_iter.unwrap_get_inner(height);
-                    let dateindex = DateIndex::try_from(date).unwrap();
-                    let date_first_height =
-                        dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
-                    let date_height_count =
-                        dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
-                    let is_date_last_height = date_first_height
-                        + Height::from(date_height_count).decremented().unwrap()
-                        == height;
-                    let date_price = dateindex_to_price_close_iter
-                        .as_mut()
-                        .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
-
-                    let dateindex = is_date_last_height.then_some(dateindex);
-
-                    self.utxo_cohorts.iter_separate_mut().par_bridge()
-                        .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs)
-                        .chain(
-                            self.address_cohorts.iter_separate_mut()
-                                .par_bridge()
-                                .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs),
-                        )
-                        .try_for_each(|v| {
-                            v.forced_pushed_at(height, exit)?;
-                            v.compute_then_force_push_unrealized_states(
-                                height, price, dateindex, date_price, exit,
-                            )
-                        })?;
-
-                    if height != last_height && height != Height::ZERO && height.to_usize() % 10_000 == 0 {
-                        let _lock = exit.lock();
-
-                        addresstypeindex_to_anyaddressindex_reader_opt.take();
-                        anyaddressindex_to_anyaddressdata_reader_opt.take();
-
-                        self.flush_states(height, &chain_state, mem::take(&mut addresstype_to_typeindex_to_loadedaddressdata), mem::take(&mut addresstype_to_typeindex_to_emptyaddressdata), false, exit)?;
-
-                        self.reset_readers_options(
-                            &mut addresstypeindex_to_anyaddressindex_reader_opt,
-                            &mut anyaddressindex_to_anyaddressdata_reader_opt,
-                        );
+                    if chain_state_starting_height > height {
+                        dbg!(chain_state_starting_height, height);
+                        panic!("temp, just making sure")
                     }
 
-                    Ok(())
-                })?;
+                    unspendable_supply += transacted
+                        .by_type
+                        .unspendable
+                        .as_vec()
+                        .into_iter()
+                        .map(|state| state.value)
+                        .sum::<Sats>()
+                        + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
+
+                    opreturn_supply += transacted.by_type.unspendable.opreturn.value;
+
+                    if height == Height::new(0) {
+                        transacted = Transacted::default();
+                        unspendable_supply += Sats::FIFTY_BTC;
+                    } else if height == Height::new(91_842) || height == Height::new(91_880) {
+                        // Need to destroy invalid coinbases due to duplicate txids
+                        if height == Height::new(91_842) {
+                            height_to_sent.entry(Height::new(91_812)).or_default()
+                        } else {
+                            height_to_sent.entry(Height::new(91_722)).or_default()
+                        }
+                        .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
+                    };
+
+                    // Push current block state before processing sends and receives
+                    chain_state.push(BlockState {
+                        supply: transacted.spendable_supply.clone(),
+                        price,
+                        timestamp,
+                    });
+
+                    self.utxo_cohorts.receive(transacted, height, price);
+
+                    self.utxo_cohorts.send(height_to_sent, &mut chain_state);
+                });
+
+                self.height_to_unspendable_supply.forced_push_at(
+                    height,
+                    unspendable_supply,
+                    exit,
+                )?;
+
+                self.height_to_opreturn_supply
+                    .forced_push_at(height, opreturn_supply, exit)?;
+
+                self.addresstype_to_height_to_addr_count.forced_push_at(
+                    height,
+                    &addresstype_to_addr_count,
+                    exit,
+                )?;
+
+                self.addresstype_to_height_to_empty_addr_count
+                    .forced_push_at(height, &addresstype_to_empty_addr_count, exit)?;
+
+                let date = height_to_date_fixed_iter.unwrap_get_inner(height);
+                let dateindex = DateIndex::try_from(date).unwrap();
+                let date_first_height = dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
+                let date_height_count = dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
+                let is_date_last_height = date_first_height
+                    + Height::from(date_height_count).decremented().unwrap()
+                    == height;
+                let date_price = dateindex_to_price_close_iter
+                    .as_mut()
+                    .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
+
+                let dateindex = is_date_last_height.then_some(dateindex);
+
+                self.utxo_cohorts
+                    .par_iter_separate_mut()
+                    .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs)
+                    .chain(
+                        self.address_cohorts
+                            .par_iter_separate_mut()
+                            .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs),
+                    )
+                    .try_for_each(|v| {
+                        v.forced_pushed_at(height, exit)?;
+                        v.compute_then_force_push_unrealized_states(
+                            height, price, dateindex, date_price, exit,
+                        )
+                    })?;
+
+                if height != last_height
+                    && height != Height::ZERO
+                    && height.to_usize() % 10_000 == 0
+                {
+                    let _lock = exit.lock();
+
+                    drop(vr);
+
+                    self.flush_states(
+                        height,
+                        &chain_state,
+                        mem::take(&mut addresstype_to_typeindex_to_loadedaddressdata),
+                        mem::take(&mut addresstype_to_typeindex_to_emptyaddressdata),
+                        false,
+                        exit,
+                    )?;
+
+                    vr = VecsReaders::new(self);
+                }
+            }
+
+            drop(vr);
 
             let _lock = exit.lock();
-
-            addresstypeindex_to_anyaddressindex_reader_opt.take();
-            anyaddressindex_to_anyaddressdata_reader_opt.take();
-
             self.flush_states(
                 height,
                 &chain_state,
@@ -1468,24 +1460,15 @@ impl Vecs {
         address_type: OutputType,
         typeindex: TypeIndex,
         first_addressindexes: &ByAddressType<TypeIndex>,
-        addresstype_to_typeindex_to_loadedaddressdata: &AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_loadedaddressdata: &AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
-        addresstype_to_typeindex_to_emptyaddressdata: &AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_emptyaddressdata: &AddressTypeToTypeIndexMap<
             WithAddressDataSource<EmptyAddressData>,
         >,
-        addresstypeindex_to_anyaddressindex_reader_opt: &ByAddressType<Option<Reader>>,
-        anyaddressindex_to_anyaddressdata_reader_opt: &ByAnyAddress<Option<Reader>>,
-        p2pk33addressindex_to_anyaddressindex: &RawVec<P2PK33AddressIndex, AnyAddressIndex>,
-        p2pk65addressindex_to_anyaddressindex: &RawVec<P2PK65AddressIndex, AnyAddressIndex>,
-        p2pkhaddressindex_to_anyaddressindex: &RawVec<P2PKHAddressIndex, AnyAddressIndex>,
-        p2shaddressindex_to_anyaddressindex: &RawVec<P2SHAddressIndex, AnyAddressIndex>,
-        p2traddressindex_to_anyaddressindex: &RawVec<P2TRAddressIndex, AnyAddressIndex>,
-        p2wpkhaddressindex_to_anyaddressindex: &RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
-        p2wshaddressindex_to_anyaddressindex: &RawVec<P2WSHAddressIndex, AnyAddressIndex>,
-        p2aaddressindex_to_anyaddressindex: &RawVec<P2AAddressIndex, AnyAddressIndex>,
-        loadedaddressindex_to_loadedaddressdata: &RawVec<LoadedAddressIndex, LoadedAddressData>,
-        emptyaddressindex_to_emptyaddressdata: &RawVec<EmptyAddressIndex, EmptyAddressData>,
+        vr: &VecsReaders,
+        any_address_indexes: &AnyAddressIndexes,
+        addresses_data: &AddressesData,
     ) -> Option<WithAddressDataSource<LoadedAddressData>> {
         if *first_addressindexes.get(address_type).unwrap() <= typeindex {
             return Some(WithAddressDataSource::New(LoadedAddressData::default()));
@@ -1503,51 +1486,18 @@ impl Vecs {
             return None;
         }
 
-        let reader = addresstypeindex_to_anyaddressindex_reader_opt
-            .get_unwrap(address_type)
-            .as_ref()
-            .unwrap();
+        let reader = vr.get_anyaddressindex_reader(address_type);
 
-        let anyaddressindex = match address_type {
-            OutputType::P2PK33 => {
-                p2pk33addressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2PK65 => {
-                p2pk65addressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2PKH => {
-                p2pkhaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2SH => {
-                p2shaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2TR => {
-                p2traddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2WPKH => {
-                p2wpkhaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2WSH => {
-                p2wshaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            OutputType::P2A => {
-                p2aaddressindex_to_anyaddressindex.get_any_or_read(typeindex.into(), reader)
-            }
-            _ => unreachable!(),
-        }
-        .unwrap()
-        .unwrap()
-        .into_owned();
+        let anyaddressindex =
+            any_address_indexes.get_anyaddressindex(address_type, typeindex, reader);
 
         Some(match anyaddressindex.to_enum() {
             AnyAddressDataIndexEnum::Loaded(loadedaddressindex) => {
-                let mmap = anyaddressindex_to_anyaddressdata_reader_opt
-                    .loaded
-                    .as_ref()
-                    .unwrap();
+                let reader = &vr.anyaddressindex_to_anyaddressdata.loaded;
 
-                let loadedaddressdata = loadedaddressindex_to_loadedaddressdata
-                    .get_any_or_read(loadedaddressindex, mmap)
+                let loadedaddressdata = addresses_data
+                    .loaded
+                    .get_any_or_read(loadedaddressindex, reader)
                     .unwrap()
                     .unwrap()
                     .into_owned();
@@ -1558,13 +1508,11 @@ impl Vecs {
                 ))
             }
             AnyAddressDataIndexEnum::Empty(emtpyaddressindex) => {
-                let mmap = anyaddressindex_to_anyaddressdata_reader_opt
-                    .empty
-                    .as_ref()
-                    .unwrap();
+                let reader = &vr.anyaddressindex_to_anyaddressdata.empty;
 
-                let emptyaddressdata = emptyaddressindex_to_emptyaddressdata
-                    .get_any_or_read(emtpyaddressindex, mmap)
+                let emptyaddressdata = addresses_data
+                    .empty
+                    .get_any_or_read(emtpyaddressindex, reader)
                     .unwrap()
                     .unwrap()
                     .into_owned();
@@ -1577,71 +1525,14 @@ impl Vecs {
         })
     }
 
-    fn reset_readers_options(
-        &self,
-        addresstypeindex_to_anyaddressindex_reader_opt: &mut ByAddressType<Option<Reader>>,
-        anyaddressindex_to_anyaddressdata_reader_opt: &mut ByAnyAddress<Option<Reader>>,
-    ) {
-        addresstypeindex_to_anyaddressindex_reader_opt
-            .p2pk65
-            .replace(
-                self.p2pk65addressindex_to_anyaddressindex
-                    .create_static_reader(),
-            );
-        addresstypeindex_to_anyaddressindex_reader_opt
-            .p2pk33
-            .replace(
-                self.p2pk33addressindex_to_anyaddressindex
-                    .create_static_reader(),
-            );
-        addresstypeindex_to_anyaddressindex_reader_opt
-            .p2pkh
-            .replace(
-                self.p2pkhaddressindex_to_anyaddressindex
-                    .create_static_reader(),
-            );
-        addresstypeindex_to_anyaddressindex_reader_opt.p2sh.replace(
-            self.p2shaddressindex_to_anyaddressindex
-                .create_static_reader(),
-        );
-        addresstypeindex_to_anyaddressindex_reader_opt
-            .p2wpkh
-            .replace(
-                self.p2wpkhaddressindex_to_anyaddressindex
-                    .create_static_reader(),
-            );
-        addresstypeindex_to_anyaddressindex_reader_opt
-            .p2wsh
-            .replace(
-                self.p2wshaddressindex_to_anyaddressindex
-                    .create_static_reader(),
-            );
-        addresstypeindex_to_anyaddressindex_reader_opt.p2tr.replace(
-            self.p2traddressindex_to_anyaddressindex
-                .create_static_reader(),
-        );
-        addresstypeindex_to_anyaddressindex_reader_opt.p2a.replace(
-            self.p2aaddressindex_to_anyaddressindex
-                .create_static_reader(),
-        );
-        anyaddressindex_to_anyaddressdata_reader_opt.loaded.replace(
-            self.loadedaddressindex_to_loadedaddressdata
-                .create_static_reader(),
-        );
-        anyaddressindex_to_anyaddressdata_reader_opt.empty.replace(
-            self.emptyaddressindex_to_emptyaddressdata
-                .create_static_reader(),
-        );
-    }
-
     fn flush_states(
         &mut self,
         height: Height,
         chain_state: &[BlockState],
-        addresstype_to_typeindex_to_loadedaddressdata: AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_loadedaddressdata: AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
-        addresstype_to_typeindex_to_emptyaddressdata: AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_emptyaddressdata: AddressTypeToTypeIndexMap<
             WithAddressDataSource<EmptyAddressData>,
         >,
         with_changes: bool,
@@ -1650,12 +1541,10 @@ impl Vecs {
         info!("Flushing...");
 
         self.utxo_cohorts
-            .iter_separate_mut()
-            .par_bridge()
+            .par_iter_separate_mut()
             .try_for_each(|Filtered(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.address_cohorts
-            .iter_separate_mut()
-            .par_bridge()
+            .par_iter_separate_mut()
             .try_for_each(|Filtered(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
@@ -1667,172 +1556,119 @@ impl Vecs {
             .try_for_each(|v| v.safe_flush(exit))?;
 
         let mut addresstype_to_typeindex_to_new_or_updated_anyaddressindex =
-            AddressTypeToTypeIndexTree::default();
+            AddressTypeToTypeIndexMap::default();
 
-        addresstype_to_typeindex_to_emptyaddressdata
-            .unwrap()
-            .into_iter_typed()
-            .try_for_each(|(_type, tree)| -> Result<()> {
-                tree.into_iter().try_for_each(
-                    |(typeindex, emptyaddressdata_with_source)| -> Result<()> {
-                        match emptyaddressdata_with_source {
-                            WithAddressDataSource::New(emptyaddressdata) => {
-                                let emptyaddressindex = self
-                                    .emptyaddressindex_to_emptyaddressdata
-                                    .fill_first_hole_or_push(emptyaddressdata)?;
+        for (address_type, sorted) in
+            addresstype_to_typeindex_to_emptyaddressdata.into_sorted_iter()
+        {
+            for (typeindex, emptyaddressdata_with_source) in sorted.into_iter() {
+                match emptyaddressdata_with_source {
+                    WithAddressDataSource::New(emptyaddressdata) => {
+                        let emptyaddressindex = self
+                            .addresses_data
+                            .empty
+                            .fill_first_hole_or_push(emptyaddressdata)?;
 
-                                let anyaddressindex = AnyAddressIndex::from(emptyaddressindex);
+                        let anyaddressindex = AnyAddressIndex::from(emptyaddressindex);
 
-                                addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-                                    .get_mut(_type)
-                                    .unwrap()
-                                    .insert(typeindex, anyaddressindex);
+                        addresstype_to_typeindex_to_new_or_updated_anyaddressindex
+                            .get_mut(address_type)
+                            .unwrap()
+                            .insert(typeindex, anyaddressindex);
+                    }
+                    WithAddressDataSource::FromEmptyAddressDataVec((
+                        emptyaddressindex,
+                        emptyaddressdata,
+                    )) => self
+                        .addresses_data
+                        .empty
+                        .update(emptyaddressindex, emptyaddressdata)?,
+                    WithAddressDataSource::FromLoadedAddressDataVec((
+                        loadedaddressindex,
+                        emptyaddressdata,
+                    )) => {
+                        self.addresses_data.loaded.delete(loadedaddressindex);
 
-                                Ok(())
-                            }
-                            WithAddressDataSource::FromEmptyAddressDataVec((
-                                emptyaddressindex,
-                                emptyaddressdata,
-                            )) => self
-                                .emptyaddressindex_to_emptyaddressdata
-                                .update(emptyaddressindex, emptyaddressdata)
-                                .map_err(|e| e.into()),
-                            WithAddressDataSource::FromLoadedAddressDataVec((
-                                loadedaddressindex,
-                                emptyaddressdata,
-                            )) => {
-                                self.loadedaddressindex_to_loadedaddressdata
-                                    .delete(loadedaddressindex);
+                        let emptyaddressindex = self
+                            .addresses_data
+                            .empty
+                            .fill_first_hole_or_push(emptyaddressdata)?;
 
-                                let emptyaddressindex = self
-                                    .emptyaddressindex_to_emptyaddressdata
-                                    .fill_first_hole_or_push(emptyaddressdata)?;
+                        let anyaddressindex = emptyaddressindex.into();
 
-                                let anyaddressindex = emptyaddressindex.into();
+                        addresstype_to_typeindex_to_new_or_updated_anyaddressindex
+                            .get_mut(address_type)
+                            .unwrap()
+                            .insert(typeindex, anyaddressindex);
+                    }
+                }
+            }
+        }
 
-                                addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-                                    .get_mut(_type)
-                                    .unwrap()
-                                    .insert(typeindex, anyaddressindex);
+        for (address_type, sorted) in
+            addresstype_to_typeindex_to_loadedaddressdata.into_sorted_iter()
+        {
+            for (typeindex, loadedaddressdata_with_source) in sorted.into_iter() {
+                match loadedaddressdata_with_source {
+                    WithAddressDataSource::New(loadedaddressdata) => {
+                        let loadedaddressindex = self
+                            .addresses_data
+                            .loaded
+                            .fill_first_hole_or_push(loadedaddressdata)?;
 
-                                Ok(())
-                            }
-                        }
-                    },
-                )
-            })?;
+                        let anyaddressindex = AnyAddressIndex::from(loadedaddressindex);
 
-        addresstype_to_typeindex_to_loadedaddressdata
-            .unwrap()
-            .into_iter_typed()
-            .try_for_each(|(_type, tree)| -> Result<()> {
-                tree.into_iter().try_for_each(
-                    |(typeindex, loadedaddressdata_with_source)| -> Result<()> {
-                        match loadedaddressdata_with_source {
-                            WithAddressDataSource::New(loadedaddressdata) => {
-                                let loadedaddressindex = self
-                                    .loadedaddressindex_to_loadedaddressdata
-                                    .fill_first_hole_or_push(loadedaddressdata)?;
+                        addresstype_to_typeindex_to_new_or_updated_anyaddressindex
+                            .get_mut(address_type)
+                            .unwrap()
+                            .insert(typeindex, anyaddressindex);
+                    }
+                    WithAddressDataSource::FromLoadedAddressDataVec((
+                        loadedaddressindex,
+                        loadedaddressdata,
+                    )) => self
+                        .addresses_data
+                        .loaded
+                        .update(loadedaddressindex, loadedaddressdata)?,
+                    WithAddressDataSource::FromEmptyAddressDataVec((
+                        emptyaddressindex,
+                        loadedaddressdata,
+                    )) => {
+                        self.addresses_data.empty.delete(emptyaddressindex);
 
-                                let anyaddressindex = AnyAddressIndex::from(loadedaddressindex);
+                        let loadedaddressindex = self
+                            .addresses_data
+                            .loaded
+                            .fill_first_hole_or_push(loadedaddressdata)?;
 
-                                addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-                                    .get_mut(_type)
-                                    .unwrap()
-                                    .insert(typeindex, anyaddressindex);
+                        let anyaddressindex = loadedaddressindex.into();
 
-                                Ok(())
-                            }
-                            WithAddressDataSource::FromLoadedAddressDataVec((
-                                loadedaddressindex,
-                                loadedaddressdata,
-                            )) => self
-                                .loadedaddressindex_to_loadedaddressdata
-                                .update(loadedaddressindex, loadedaddressdata)
-                                .map_err(|e| e.into()),
-                            WithAddressDataSource::FromEmptyAddressDataVec((
-                                emptyaddressindex,
-                                loadedaddressdata,
-                            )) => {
-                                self.emptyaddressindex_to_emptyaddressdata
-                                    .delete(emptyaddressindex);
+                        addresstype_to_typeindex_to_new_or_updated_anyaddressindex
+                            .get_mut(address_type)
+                            .unwrap()
+                            .insert(typeindex, anyaddressindex);
+                    }
+                }
+            }
+        }
 
-                                let loadedaddressindex = self
-                                    .loadedaddressindex_to_loadedaddressdata
-                                    .fill_first_hole_or_push(loadedaddressdata)?;
-
-                                let anyaddressindex = loadedaddressindex.into();
-
-                                addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-                                    .get_mut(_type)
-                                    .unwrap()
-                                    .insert(typeindex, anyaddressindex);
-
-                                Ok(())
-                            }
-                        }
-                    },
-                )
-            })?;
-
-        addresstype_to_typeindex_to_new_or_updated_anyaddressindex
-            .unwrap()
-            .into_iter_typed()
-            .try_for_each(|(_type, tree)| -> Result<()> {
-                tree.into_iter()
-                    .try_for_each(|(typeindex, anyaddressindex)| -> Result<()> {
-                        match _type {
-                            OutputType::P2PK33 => self
-                                .p2pk33addressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2PK65 => self
-                                .p2pk65addressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2PKH => self
-                                .p2pkhaddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2SH => self
-                                .p2shaddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2TR => self
-                                .p2traddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2WPKH => self
-                                .p2wpkhaddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2WSH => self
-                                .p2wshaddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            OutputType::P2A => self
-                                .p2aaddressindex_to_anyaddressindex
-                                .update_or_push(typeindex.into(), anyaddressindex),
-                            _ => unreachable!(),
-                        }?;
-                        Ok(())
-                    })
-            })?;
+        for (address_type, sorted) in
+            addresstype_to_typeindex_to_new_or_updated_anyaddressindex.into_sorted_iter()
+        {
+            for (typeindex, anyaddressindex) in sorted {
+                self.any_address_indexes.update_or_push(
+                    address_type,
+                    typeindex,
+                    anyaddressindex,
+                )?;
+            }
+        }
 
         let stamp = Stamp::from(height);
 
-        self.p2pk33addressindex_to_anyaddressindex
+        self.any_address_indexes
             .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2pk65addressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2pkhaddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2shaddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2traddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2wpkhaddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2wshaddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.p2aaddressindex_to_anyaddressindex
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.loadedaddressindex_to_loadedaddressdata
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
-        self.emptyaddressindex_to_emptyaddressdata
+        self.addresses_data
             .stamped_flush_maybe_with_changes(stamp, with_changes)?;
 
         self.chain_state.truncate_if_needed(Height::ZERO)?;
@@ -1851,16 +1687,16 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
     fn process_received(
         self,
         vecs: &mut address_cohorts::Vecs,
-        addresstype_to_typeindex_to_loadedaddressdata: &mut AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_loadedaddressdata: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
-        addresstype_to_typeindex_to_emptyaddressdata: &mut AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_emptyaddressdata: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
         addresstype_to_addr_count: &mut ByAddressType<u64>,
         addresstype_to_empty_addr_count: &mut ByAddressType<u64>,
-        stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexTree<
+        stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
     ) {
@@ -1885,10 +1721,7 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                             .unwrap_or_else(|| {
                                 let addressdata =
                                     stored_or_new_addresstype_to_typeindex_to_addressdatawithsource
-                                        .get_mut(_type)
-                                        .unwrap()
-                                        .remove(&type_index)
-                                        .unwrap();
+                                        .remove_for_type(_type, &type_index);
                                 is_new = addressdata.is_new();
                                 from_any_empty = addressdata.is_from_emptyaddressdata();
                                 addressdata
@@ -1951,10 +1784,10 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
     fn process_sent(
         self,
         vecs: &mut address_cohorts::Vecs,
-        addresstype_to_typeindex_to_loadedaddressdata: &mut AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_loadedaddressdata: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
-        addresstype_to_typeindex_to_emptyaddressdata: &mut AddressTypeToTypeIndexTree<
+        addresstype_to_typeindex_to_emptyaddressdata: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
@@ -1964,7 +1797,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
         height_to_timestamp_fixed_vec: &[Timestamp],
         height: Height,
         timestamp: Timestamp,
-        stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexTree<
+        stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexMap<
             WithAddressDataSource<LoadedAddressData>,
         >,
     ) -> Result<()> {
@@ -1989,18 +1822,13 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
             v.unwrap().into_iter_typed().try_for_each(|(_type, vec)| {
                 vec.into_iter().try_for_each(|(type_index, value)| {
                     let typeindex_to_loadedaddressdata =
-                        addresstype_to_typeindex_to_loadedaddressdata
-                            .get_mut(_type)
-                            .unwrap();
+                        addresstype_to_typeindex_to_loadedaddressdata.get_mut_unwrap(_type);
 
                     let addressdata_withsource = typeindex_to_loadedaddressdata
                         .entry(type_index)
                         .or_insert_with(|| {
                             stored_or_new_addresstype_to_typeindex_to_addressdatawithsource
-                                .get_mut(_type)
-                                .unwrap()
-                                .remove(&type_index)
-                                .unwrap()
+                                .remove_for_type(_type, &type_index)
                         });
 
                     let addressdata = addressdata_withsource.deref_mut();
@@ -2071,5 +1899,208 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                 })
             })
         })
+    }
+}
+
+#[derive(Clone, Traversable)]
+pub struct AnyAddressIndexes {
+    pub p2pk33: RawVec<P2PK33AddressIndex, AnyAddressIndex>,
+    pub p2pk65: RawVec<P2PK65AddressIndex, AnyAddressIndex>,
+    pub p2pkh: RawVec<P2PKHAddressIndex, AnyAddressIndex>,
+    pub p2sh: RawVec<P2SHAddressIndex, AnyAddressIndex>,
+    pub p2tr: RawVec<P2TRAddressIndex, AnyAddressIndex>,
+    pub p2wpkh: RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
+    pub p2wsh: RawVec<P2WSHAddressIndex, AnyAddressIndex>,
+    pub p2a: RawVec<P2AAddressIndex, AnyAddressIndex>,
+}
+
+impl AnyAddressIndexes {
+    fn min_stamped_height(&self) -> Height {
+        Height::from(self.p2pk33.stamp())
+            .incremented()
+            .min(Height::from(self.p2pk65.stamp()).incremented())
+            .min(Height::from(self.p2pkh.stamp()).incremented())
+            .min(Height::from(self.p2sh.stamp()).incremented())
+            .min(Height::from(self.p2tr.stamp()).incremented())
+            .min(Height::from(self.p2wpkh.stamp()).incremented())
+            .min(Height::from(self.p2wsh.stamp()).incremented())
+            .min(Height::from(self.p2a.stamp()).incremented())
+    }
+
+    fn rollback_before(&mut self, stamp: Stamp) -> Result<[Stamp; 8]> {
+        Ok([
+            self.p2pk33.rollback_before(stamp)?,
+            self.p2pk65.rollback_before(stamp)?,
+            self.p2pkh.rollback_before(stamp)?,
+            self.p2sh.rollback_before(stamp)?,
+            self.p2tr.rollback_before(stamp)?,
+            self.p2wpkh.rollback_before(stamp)?,
+            self.p2wsh.rollback_before(stamp)?,
+            self.p2a.rollback_before(stamp)?,
+        ])
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.p2pk33.reset()?;
+        self.p2pk65.reset()?;
+        self.p2pkh.reset()?;
+        self.p2sh.reset()?;
+        self.p2tr.reset()?;
+        self.p2wpkh.reset()?;
+        self.p2wsh.reset()?;
+        self.p2a.reset()?;
+        Ok(())
+    }
+
+    fn get_anyaddressindex(
+        &self,
+        address_type: OutputType,
+        typeindex: TypeIndex,
+        reader: &Reader<'static>,
+    ) -> AnyAddressIndex {
+        let result = match address_type {
+            OutputType::P2PK33 => self.p2pk33.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2PK65 => self.p2pk65.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2PKH => self.p2pkh.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2SH => self.p2sh.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2TR => self.p2tr.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2WPKH => self.p2wpkh.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2WSH => self.p2wsh.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2A => self.p2a.get_any_or_read(typeindex.into(), reader),
+            _ => unreachable!(),
+        };
+        result.unwrap().unwrap().into_owned()
+    }
+
+    fn update_or_push(
+        &mut self,
+        address_type: OutputType,
+        typeindex: TypeIndex,
+        anyaddressindex: AnyAddressIndex,
+    ) -> Result<()> {
+        (match address_type {
+            OutputType::P2PK33 => self
+                .p2pk33
+                .update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2PK65 => self
+                .p2pk65
+                .update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2PKH => self.p2pkh.update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2SH => self.p2sh.update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2TR => self.p2tr.update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2WPKH => self
+                .p2wpkh
+                .update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2WSH => self.p2wsh.update_or_push(typeindex.into(), anyaddressindex),
+            OutputType::P2A => self.p2a.update_or_push(typeindex.into(), anyaddressindex),
+            _ => unreachable!(),
+        })?;
+        Ok(())
+    }
+
+    fn stamped_flush_maybe_with_changes(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
+        self.p2pk33
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2pk65
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2pkh
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2sh
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2tr
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2wpkh
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2wsh
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.p2a
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Traversable)]
+pub struct AddressesData {
+    pub loaded: RawVec<LoadedAddressIndex, LoadedAddressData>,
+    pub empty: RawVec<EmptyAddressIndex, EmptyAddressData>,
+}
+
+impl AddressesData {
+    fn min_stamped_height(&self) -> Height {
+        Height::from(self.loaded.stamp())
+            .incremented()
+            .min(Height::from(self.empty.stamp()).incremented())
+    }
+
+    fn rollback_before(&mut self, stamp: Stamp) -> Result<[Stamp; 2]> {
+        Ok([
+            self.loaded.rollback_before(stamp)?,
+            self.empty.rollback_before(stamp)?,
+        ])
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.loaded.reset()?;
+        self.empty.reset()?;
+        Ok(())
+    }
+
+    fn stamped_flush_maybe_with_changes(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
+        self.loaded
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        self.empty
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+        Ok(())
+    }
+}
+
+struct IndexerReaders<'a> {
+    txinindex_to_outpoint: Reader<'a>,
+    txindex_to_first_txoutindex: Reader<'a>,
+    txoutindex_to_value: Reader<'a>,
+    txoutindex_to_outputtype: Reader<'a>,
+    txoutindex_to_typeindex: Reader<'a>,
+}
+
+impl<'a> IndexerReaders<'a> {
+    fn new(indexer: &'a Indexer) -> Self {
+        Self {
+            txinindex_to_outpoint: indexer.vecs.txinindex_to_outpoint.create_reader(),
+            txindex_to_first_txoutindex: indexer.vecs.txindex_to_first_txoutindex.create_reader(),
+            txoutindex_to_value: indexer.vecs.txoutindex_to_value.create_reader(),
+            txoutindex_to_outputtype: indexer.vecs.txoutindex_to_outputtype.create_reader(),
+            txoutindex_to_typeindex: indexer.vecs.txoutindex_to_typeindex.create_reader(),
+        }
+    }
+}
+
+struct VecsReaders {
+    addresstypeindex_to_anyaddressindex: ByAddressType<Reader<'static>>,
+    anyaddressindex_to_anyaddressdata: ByAnyAddress<Reader<'static>>,
+}
+
+impl VecsReaders {
+    fn new(vecs: &Vecs) -> Self {
+        Self {
+            addresstypeindex_to_anyaddressindex: ByAddressType {
+                p2pk33: vecs.any_address_indexes.p2pk33.create_static_reader(),
+                p2pk65: vecs.any_address_indexes.p2pk65.create_static_reader(),
+                p2pkh: vecs.any_address_indexes.p2pkh.create_static_reader(),
+                p2sh: vecs.any_address_indexes.p2sh.create_static_reader(),
+                p2tr: vecs.any_address_indexes.p2tr.create_static_reader(),
+                p2wpkh: vecs.any_address_indexes.p2wpkh.create_static_reader(),
+                p2wsh: vecs.any_address_indexes.p2wsh.create_static_reader(),
+                p2a: vecs.any_address_indexes.p2a.create_static_reader(),
+            },
+            anyaddressindex_to_anyaddressdata: ByAnyAddress {
+                loaded: vecs.addresses_data.loaded.create_static_reader(),
+                empty: vecs.addresses_data.empty.create_static_reader(),
+            },
+        }
+    }
+
+    fn get_anyaddressindex_reader(&self, address_type: OutputType) -> &Reader<'static> {
+        self.addresstypeindex_to_anyaddressindex
+            .get_unwrap(address_type)
     }
 }

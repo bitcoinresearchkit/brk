@@ -83,6 +83,12 @@ impl From<Vout> for u64 {
     }
 }
 
+impl From<Vout> for usize {
+    fn from(value: Vout) -> Self {
+        value.0 as usize
+    }
+}
+
 impl From<&[u8]> for Vout {
     fn from(value: &[u8]) -> Self {
         Self(u16::from_be_bytes(copy_first_2bytes(value).unwrap()))

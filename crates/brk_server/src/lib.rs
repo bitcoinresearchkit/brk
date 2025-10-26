@@ -19,7 +19,7 @@ use axum::{
 use brk_error::Result;
 use brk_logger::OwoColorize;
 use brk_mcp::route::MCPRoutes;
-use brk_query::Query;
+use brk_query::AsyncQuery;
 use files::FilesRoutes;
 use log::{error, info};
 use quick_cache::sync::Cache;
@@ -31,19 +31,18 @@ mod api;
 mod extended;
 mod files;
 
+use api::*;
 use extended::*;
-
-use crate::api::create_openapi;
 
 #[derive(Clone)]
 pub struct AppState {
-    query: Query,
+    query: AsyncQuery,
     path: Option<PathBuf>,
     cache: Arc<Cache<String, Bytes>>,
 }
 
 impl Deref for AppState {
-    type Target = Query;
+    type Target = AsyncQuery;
     fn deref(&self) -> &Self::Target {
         &self.query
     }
@@ -54,7 +53,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: &Query, files_path: Option<PathBuf>) -> Self {
+    pub fn new(query: &AsyncQuery, files_path: Option<PathBuf>) -> Self {
         Self(AppState {
             query: query.clone(),
             path: files_path,

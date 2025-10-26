@@ -62,10 +62,12 @@ impl<T> ByAddressType<T> {
         })
     }
 
+    #[inline]
     pub fn get_unwrap(&self, address_type: OutputType) -> &T {
         self.get(address_type).unwrap()
     }
 
+    #[inline]
     pub fn get(&self, address_type: OutputType) -> Option<&T> {
         match address_type {
             OutputType::P2PK65 => Some(&self.p2pk65),
@@ -80,10 +82,12 @@ impl<T> ByAddressType<T> {
         }
     }
 
+    #[inline]
     pub fn get_mut_unwrap(&mut self, address_type: OutputType) -> &mut T {
         self.get_mut(address_type).unwrap()
     }
 
+    #[inline]
     pub fn get_mut(&mut self, address_type: OutputType) -> Option<&mut T> {
         match address_type {
             OutputType::P2PK65 => Some(&mut self.p2pk65),
@@ -98,6 +102,7 @@ impl<T> ByAddressType<T> {
         }
     }
 
+    #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65,
@@ -112,6 +117,7 @@ impl<T> ByAddressType<T> {
         .into_iter()
     }
 
+    #[inline]
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self.p2pk65,
@@ -126,6 +132,7 @@ impl<T> ByAddressType<T> {
         .into_iter()
     }
 
+    #[inline]
     pub fn par_iter(&mut self) -> impl ParallelIterator<Item = &T>
     where
         T: Send + Sync,
@@ -143,6 +150,7 @@ impl<T> ByAddressType<T> {
         .into_par_iter()
     }
 
+    #[inline]
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
     where
         T: Send + Sync,
@@ -160,6 +168,7 @@ impl<T> ByAddressType<T> {
         .into_par_iter()
     }
 
+    #[inline]
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
         [
             (OutputType::P2PK65, &self.p2pk65),
@@ -174,6 +183,7 @@ impl<T> ByAddressType<T> {
         .into_iter()
     }
 
+    #[inline]
     pub fn into_iter_typed(self) -> impl Iterator<Item = (OutputType, T)> {
         [
             (OutputType::P2PK65, self.p2pk65),
@@ -188,6 +198,7 @@ impl<T> ByAddressType<T> {
         .into_iter()
     }
 
+    #[inline]
     pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
         [
             (OutputType::P2PK65, &mut self.p2pk65),

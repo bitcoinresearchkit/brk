@@ -1,4 +1,5 @@
 use brk_traversable::Traversable;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::Filtered;
 
@@ -106,6 +107,35 @@ impl<T> ByAgeRange<T> {
             &mut self.from_15y,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self.up_to_1d,
+            &mut self._1d_to_1w,
+            &mut self._1w_to_1m,
+            &mut self._1m_to_2m,
+            &mut self._2m_to_3m,
+            &mut self._3m_to_4m,
+            &mut self._4m_to_5m,
+            &mut self._5m_to_6m,
+            &mut self._6m_to_1y,
+            &mut self._1y_to_2y,
+            &mut self._2y_to_3y,
+            &mut self._3y_to_4y,
+            &mut self._4y_to_5y,
+            &mut self._5y_to_6y,
+            &mut self._6y_to_7y,
+            &mut self._7y_to_8y,
+            &mut self._8y_to_10y,
+            &mut self._10y_to_12y,
+            &mut self._12y_to_15y,
+            &mut self.from_15y,
+        ]
+        .into_par_iter()
     }
 }
 

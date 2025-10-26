@@ -1,5 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{HalvingEpoch, Height};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::{Filter, Filtered};
 
@@ -34,6 +35,20 @@ impl<T> ByEpoch<T> {
             &mut self._4,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self._0,
+            &mut self._1,
+            &mut self._2,
+            &mut self._3,
+            &mut self._4,
+        ]
+        .into_par_iter()
     }
 
     pub fn mut_vec_from_height(&mut self, height: Height) -> &mut T {

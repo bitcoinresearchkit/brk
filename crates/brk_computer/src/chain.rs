@@ -168,7 +168,7 @@ impl Vecs {
                     |(txinindex, txoutindex)| {
                         let txoutindex = txoutindex.into_owned();
                         if txoutindex == TxOutIndex::COINBASE {
-                            Sats::ZERO
+                            Sats::MAX
                         } else if let Some((_, value)) =
                             txoutindex_to_value_iter.next_at(txoutindex.to_usize())
                         {
@@ -1456,15 +1456,14 @@ impl Vecs {
         //     },
         // )?;
 
-        self.txindex_to_fee.compute_transform3(
+        self.txindex_to_fee.compute_transform2(
             starting_indexes.txindex,
             &self.txindex_to_input_value,
             &self.txindex_to_output_value,
-            &self.txindex_to_is_coinbase,
-            |(i, input, output, coinbase, ..)| {
+            |(i, input, output, ..)| {
                 (
                     i,
-                    if coinbase.is_true() {
+                    if input.is_max() {
                         Sats::ZERO
                     } else {
                         input.checked_sub(output).unwrap()

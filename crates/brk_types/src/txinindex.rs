@@ -30,6 +30,10 @@ use super::Vin;
 pub struct TxInIndex(u64);
 
 impl TxInIndex {
+    pub fn new(index: u64) -> Self {
+        Self(index)
+    }
+
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
