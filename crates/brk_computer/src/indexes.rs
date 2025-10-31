@@ -119,7 +119,6 @@ impl Vecs {
                 txinindex_to_outpoint_iter
                     .next_at(index.to_usize())
                     .map(|(_, outpoint)| {
-                        let outpoint = outpoint.into_owned();
                         if outpoint.is_coinbase() {
                             return TxOutIndex::COINBASE;
                         }
@@ -127,7 +126,6 @@ impl Vecs {
                             .next_at(outpoint.txindex().to_usize())
                             .unwrap()
                             .1
-                            .into_owned()
                             + outpoint.vout()
                     })
             },
@@ -164,10 +162,10 @@ impl Vecs {
                 txindex_to_first_txinindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_owned());
+                        let start = usize::from(start);
                         let end = txindex_to_first_txinindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_owned()))
+                            .map(|(_, v)| usize::from(v))
                             .unwrap_or_else(|| txinindex_to_txoutindex_iter.len());
                         StoredU64::from((start..end).count())
                     })
@@ -184,10 +182,10 @@ impl Vecs {
                 txindex_to_first_txoutindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_owned());
+                        let start = usize::from(start);
                         let end = txindex_to_first_txoutindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_owned()))
+                            .map(|(_, v)| usize::from(v))
                             .unwrap_or_else(|| txoutindex_to_value_iter.len());
                         StoredU64::from((start..end).count())
                     })

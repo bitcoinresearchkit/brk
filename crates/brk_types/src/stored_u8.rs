@@ -34,12 +34,14 @@ impl StoredU8 {
 }
 
 impl From<u8> for StoredU8 {
+    #[inline]
     fn from(value: u8) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for StoredU8 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u8)
     }
@@ -72,6 +74,7 @@ impl AddAssign for StoredU8 {
 }
 
 impl From<f64> for StoredU8 {
+    #[inline]
     fn from(value: f64) -> Self {
         if value < 0.0 || value > u32::MAX as f64 {
             panic!()
@@ -81,6 +84,7 @@ impl From<f64> for StoredU8 {
 }
 
 impl From<StoredU8> for f64 {
+    #[inline]
     fn from(value: StoredU8) -> Self {
         value.0 as f64
     }
@@ -94,6 +98,7 @@ impl Add<usize> for StoredU8 {
 }
 
 impl From<StoredU8> for usize {
+    #[inline]
     fn from(value: StoredU8) -> Self {
         value.0 as usize
     }

@@ -59,33 +59,39 @@ impl TypeIndex {
 }
 
 impl From<u32> for TypeIndex {
+    #[inline]
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 impl From<TypeIndex> for u32 {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         value.0
     }
 }
 
 impl From<u64> for TypeIndex {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
 impl From<TypeIndex> for u64 {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         value.0 as u64
     }
 }
 
 impl From<usize> for TypeIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
 impl From<TypeIndex> for usize {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         value.0 as usize
     }
@@ -112,17 +118,20 @@ impl Add<TypeIndex> for TypeIndex {
 }
 
 impl From<&[u8]> for TypeIndex {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(u32::from_be_bytes(copy_first_4bytes(value).unwrap()))
     }
 }
 
 impl From<ByteView> for TypeIndex {
+    #[inline]
     fn from(value: ByteView) -> Self {
         Self::from(value.as_bytes())
     }
 }
 impl From<TypeIndex> for ByteView {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self::new(&value.0.to_be_bytes())
     }

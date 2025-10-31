@@ -389,11 +389,8 @@ impl Vecs {
             .height_to_price_ohlc_in_cents
             .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
-                self.height_to_price_ohlc.forced_push_at(
-                    i,
-                    OHLCDollars::from(v.into_owned()),
-                    exit,
-                )?;
+                self.height_to_price_ohlc
+                    .forced_push_at(i, OHLCDollars::from(v), exit)?;
                 Ok(())
             })?;
         self.height_to_price_ohlc.safe_flush(exit)?;
@@ -433,11 +430,8 @@ impl Vecs {
             .dateindex_to_price_ohlc_in_cents
             .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
-                self.dateindex_to_price_ohlc.forced_push_at(
-                    i,
-                    OHLCDollars::from(v.into_owned()),
-                    exit,
-                )?;
+                self.dateindex_to_price_ohlc
+                    .forced_push_at(i, OHLCDollars::from(v), exit)?;
                 Ok(())
             })?;
         self.dateindex_to_price_ohlc.safe_flush(exit)?;
@@ -544,8 +538,7 @@ impl Vecs {
             .weekindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = weekindex_first_iter.unwrap_get_inner(i);
                 let high = weekindex_max_iter.unwrap_get_inner(i);
                 let low = weekindex_min_iter.unwrap_get_inner(i);
@@ -585,8 +578,7 @@ impl Vecs {
             .difficultyepoch
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = difficultyepoch_first_iter.unwrap_get_inner(i);
                 let high = difficultyepoch_max_iter.unwrap_get_inner(i);
                 let low = difficultyepoch_min_iter.unwrap_get_inner(i);
@@ -622,8 +614,7 @@ impl Vecs {
             .monthindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = monthindex_first_iter.unwrap_get_inner(i);
                 let high = monthindex_max_iter.unwrap_get_inner(i);
                 let low = monthindex_min_iter.unwrap_get_inner(i);
@@ -663,8 +654,7 @@ impl Vecs {
             .quarterindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = quarterindex_first_iter.unwrap_get_inner(i);
                 let high = quarterindex_max_iter.unwrap_get_inner(i);
                 let low = quarterindex_min_iter.unwrap_get_inner(i);
@@ -704,8 +694,7 @@ impl Vecs {
             .semesterindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = semesterindex_first_iter.unwrap_get_inner(i);
                 let high = semesterindex_max_iter.unwrap_get_inner(i);
                 let low = semesterindex_min_iter.unwrap_get_inner(i);
@@ -737,8 +726,7 @@ impl Vecs {
             .yearindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = yearindex_first_iter.unwrap_get_inner(i);
                 let high = yearindex_max_iter.unwrap_get_inner(i);
                 let low = yearindex_min_iter.unwrap_get_inner(i);
@@ -781,8 +769,7 @@ impl Vecs {
             .decadeindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 let open = decadeindex_first_iter.unwrap_get_inner(i);
                 let high = decadeindex_max_iter.unwrap_get_inner(i);
                 let low = decadeindex_min_iter.unwrap_get_inner(i);
@@ -897,8 +884,7 @@ impl Vecs {
         self.chainindexes_to_price_close_in_sats
             .height
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.height_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -939,8 +925,7 @@ impl Vecs {
             .as_ref()
             .unwrap()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.dateindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -977,8 +962,7 @@ impl Vecs {
             .weekindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.weekindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1015,8 +999,7 @@ impl Vecs {
             .difficultyepoch
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.difficultyepoch_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1054,8 +1037,7 @@ impl Vecs {
             .monthindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.monthindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1092,8 +1074,7 @@ impl Vecs {
             .quarterindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.quarterindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1130,8 +1111,7 @@ impl Vecs {
             .semesterindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.semesterindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1168,8 +1148,7 @@ impl Vecs {
             .yearindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.yearindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {
@@ -1209,8 +1188,7 @@ impl Vecs {
             .decadeindex
             .unwrap_last()
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let close = v.into_owned();
+            .try_for_each(|(i, close)| -> Result<()> {
                 self.decadeindex_to_price_ohlc_in_sats.forced_push_at(
                     i,
                     OHLCSats {

@@ -78,6 +78,7 @@ impl<T> ByMaxAge<Filtered<T>> {
 }
 
 impl<T> From<ByMaxAge<T>> for ByMaxAge<Filtered<T>> {
+    #[inline]
     fn from(value: ByMaxAge<T>) -> Self {
         Self {
             _1w: (Filter::LowerThan(7), value._1w).into(),

@@ -300,21 +300,21 @@ fn run_method2(
             .txoutindex_to_value
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let output_types: Vec<_> = vecs
             .txoutindex_to_outputtype
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let typeindexes: Vec<_> = vecs
             .txoutindex_to_typeindex
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let _outputs: Vec<_> = (0..outputs_per_block)
@@ -330,7 +330,7 @@ fn run_method2(
             .txinindex_to_outpoint
             .iter_at(input_block_start)
             .take(inputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();
@@ -384,7 +384,7 @@ fn run_method4(
                 vecs.txoutindex_to_value
                     .iter_at(block_start)
                     .take(outputs_per_block)
-                    .map(|(_, v)| v.into_owned())
+                    .map(|(_, v)| v)
                     .collect::<Vec<_>>()
             });
 
@@ -392,7 +392,7 @@ fn run_method4(
                 vecs.txoutindex_to_outputtype
                     .iter_at(block_start)
                     .take(outputs_per_block)
-                    .map(|(_, v)| v.into_owned())
+                    .map(|(_, v)| v)
                     .collect::<Vec<_>>()
             });
 
@@ -400,7 +400,7 @@ fn run_method4(
                 vecs.txoutindex_to_typeindex
                     .iter_at(block_start)
                     .take(outputs_per_block)
-                    .map(|(_, v)| v.into_owned())
+                    .map(|(_, v)| v)
                     .collect::<Vec<_>>()
             });
 
@@ -420,7 +420,7 @@ fn run_method4(
             .txinindex_to_outpoint
             .iter_at(input_block_start)
             .take(inputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();
@@ -541,21 +541,21 @@ fn run_method6(
             .txoutindex_to_value
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let output_types: Vec<_> = vecs
             .txoutindex_to_outputtype
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let typeindexes: Vec<_> = vecs
             .txoutindex_to_typeindex
             .iter_at(block_start)
             .take(outputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         // Read inputs sequentially
@@ -566,7 +566,7 @@ fn run_method6(
             .txinindex_to_outpoint
             .iter_at(input_block_start)
             .take(inputs_per_block)
-            .map(|(_, v)| v.into_owned())
+            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();

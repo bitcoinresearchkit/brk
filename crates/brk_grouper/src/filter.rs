@@ -71,6 +71,7 @@ impl<T> Filtered<T> {
 }
 
 impl<T> From<(Filter, T)> for Filtered<T> {
+    #[inline]
     fn from(value: (Filter, T)) -> Self {
         Self(value.0, value.1)
     }

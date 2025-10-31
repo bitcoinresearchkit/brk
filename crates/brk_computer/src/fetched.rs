@@ -78,7 +78,6 @@ impl Vecs {
         height_to_timestamp
             .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
-                let v = v.into_owned();
                 self.height_to_price_ohlc_in_cents.forced_push_at(
                     i,
                     self.fetcher
@@ -103,8 +102,7 @@ impl Vecs {
         indexes
             .dateindex_to_date
             .iter_at(index)
-            .try_for_each(|(i, v)| -> Result<()> {
-                let d = v.into_owned();
+            .try_for_each(|(i, d)| -> Result<()> {
                 if prev.is_none() {
                     let i = i.to_usize();
                     prev.replace(if i > 0 {

@@ -81,7 +81,7 @@ impl Indexer {
         check_collisions: bool,
     ) -> Result<Indexes> {
         let (starting_indexes, prev_hash) = if let Some(hash) =
-            VecIterator::last(self.vecs.height_to_blockhash.iter()).map(|(_, v)| v.into_owned())
+            VecIterator::last(self.vecs.height_to_blockhash.iter()).map(|(_, v)| v)
         {
             let (height, hash) = client.get_closest_valid_height(hash)?;
             let starting_indexes =
@@ -265,13 +265,13 @@ impl Indexer {
                         .ok_or(Error::Str("Expect txoutindex to not be none"))
                         .inspect_err(|_| {
                             dbg!(outpoint.txid, prev_txindex, vout);
-                        })?.into_owned()
+                        })?
                         + vout;
 
                     let outpoint = OutPoint::new(prev_txindex, vout);
 
                     let outputtype = vecs.txoutindex_to_outputtype.get_pushed_or_read(txoutindex, &readers.txoutindex_to_outputtype)?
-                        .ok_or(Error::Str("Expect outputtype to not be none"))?.into_owned();
+                        .ok_or(Error::Str("Expect outputtype to not be none"))?;
 
                     let mut tuple = (
                         vin,
@@ -286,7 +286,7 @@ impl Indexer {
                         let typeindex = vecs
                             .txoutindex_to_typeindex
                             .get_pushed_or_read(txoutindex, &readers.txoutindex_to_typeindex)?
-                            .ok_or(Error::Str("Expect typeindex to not be none"))?.into_owned();
+                            .ok_or(Error::Str("Expect typeindex to not be none"))?;
                         tuple.3 = Some((outputtype, typeindex));
                     }
 
@@ -377,56 +377,56 @@ impl Indexer {
                                         typeindex.into(),
                                         &readers.p2pk65addressindex_to_p2pk65bytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2PK33 => vecs
                                     .p2pk33addressindex_to_p2pk33bytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pk33addressindex_to_p2pk33bytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2PKH => vecs
                                     .p2pkhaddressindex_to_p2pkhbytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pkhaddressindex_to_p2pkhbytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2SH => vecs
                                     .p2shaddressindex_to_p2shbytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2shaddressindex_to_p2shbytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2WPKH => vecs
                                     .p2wpkhaddressindex_to_p2wpkhbytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wpkhaddressindex_to_p2wpkhbytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2WSH => vecs
                                     .p2wshaddressindex_to_p2wshbytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wshaddressindex_to_p2wshbytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2TR => vecs
                                     .p2traddressindex_to_p2trbytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2traddressindex_to_p2trbytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 OutputType::P2A => vecs
                                     .p2aaddressindex_to_p2abytes
                                     .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2aaddressindex_to_p2abytes,
                                     )?
-                                    .map(|v| AddressBytes::from(v.into_owned())),
+                                    .map(AddressBytes::from),
                                 _ => {
                                     unreachable!()
                                 }
@@ -677,8 +677,6 @@ impl Indexer {
                             dbg!(txindex, len);
                         })?;
 
-                    let prev_txid = prev_txid.as_ref();
-
                     // If another Txid needs to be added to the list
                     // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
                     let only_known_dup_txids = [
@@ -694,7 +692,7 @@ impl Indexer {
                         .into(),
                     ];
 
-                    let is_dup = only_known_dup_txids.contains(prev_txid);
+                    let is_dup = only_known_dup_txids.contains(&prev_txid);
 
                     if !is_dup {
                         dbg!(height, txindex, prev_txid, prev_txindex);

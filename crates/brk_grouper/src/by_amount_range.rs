@@ -26,6 +26,7 @@ pub struct ByAmountRange<T> {
 }
 
 impl<T> From<ByAmountRange<T>> for ByAmountRange<Filtered<T>> {
+    #[inline]
     fn from(value: ByAmountRange<T>) -> Self {
         #[allow(clippy::inconsistent_digit_grouping)]
         Self {

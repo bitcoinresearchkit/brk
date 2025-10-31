@@ -440,7 +440,6 @@ impl ComputedRatioVecsFromDateIndex {
                         .unwrap()
                         .forced_push_at(index, StoredF32::NAN, exit)?;
                 } else {
-                    let ratio = ratio.into_owned();
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 

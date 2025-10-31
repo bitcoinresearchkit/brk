@@ -28,21 +28,25 @@ use crate::TypeIndex;
 pub struct UnknownOutputIndex(TypeIndex);
 
 impl From<TypeIndex> for UnknownOutputIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 impl From<UnknownOutputIndex> for u64 {
+    #[inline]
     fn from(value: UnknownOutputIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<UnknownOutputIndex> for usize {
+    #[inline]
     fn from(value: UnknownOutputIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<usize> for UnknownOutputIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }

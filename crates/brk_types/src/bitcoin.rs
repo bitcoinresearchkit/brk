@@ -68,30 +68,35 @@ impl Div<usize> for Bitcoin {
 }
 
 impl From<Sats> for Bitcoin {
+    #[inline]
     fn from(value: Sats) -> Self {
         Self(f64::from(value) / (f64::from(Sats::ONE_BTC)))
     }
 }
 
 impl From<f64> for Bitcoin {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value)
     }
 }
 
 impl From<StoredF64> for Bitcoin {
+    #[inline]
     fn from(value: StoredF64) -> Self {
         Self(*value)
     }
 }
 
 impl From<Bitcoin> for f64 {
+    #[inline]
     fn from(value: Bitcoin) -> Self {
         value.0
     }
 }
 
 impl From<usize> for Bitcoin {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as f64)
     }

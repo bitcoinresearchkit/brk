@@ -56,60 +56,70 @@ impl Dollars {
 }
 
 impl From<f32> for Dollars {
+    #[inline]
     fn from(value: f32) -> Self {
         Self(value as f64)
     }
 }
 
 impl From<f64> for Dollars {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value)
     }
 }
 
 impl From<Cents> for Dollars {
+    #[inline]
     fn from(value: Cents) -> Self {
         Self(f64::from(value) / 100.0)
     }
 }
 
 impl From<Dollars> for f32 {
+    #[inline]
     fn from(value: Dollars) -> Self {
         value.0 as f32
     }
 }
 
 impl From<Dollars> for f64 {
+    #[inline]
     fn from(value: Dollars) -> Self {
         value.0
     }
 }
 
 impl From<Open<Dollars>> for Dollars {
+    #[inline]
     fn from(value: Open<Dollars>) -> Self {
         *value
     }
 }
 
 impl From<High<Dollars>> for Dollars {
+    #[inline]
     fn from(value: High<Dollars>) -> Self {
         *value
     }
 }
 
 impl From<Low<Dollars>> for Dollars {
+    #[inline]
     fn from(value: Low<Dollars>) -> Self {
         *value
     }
 }
 
 impl From<Close<Dollars>> for Dollars {
+    #[inline]
     fn from(value: Close<Dollars>) -> Self {
         *value
     }
 }
 
 impl From<usize> for Dollars {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as f64)
     }
@@ -301,24 +311,28 @@ impl Mul<usize> for Dollars {
 }
 
 impl From<u128> for Dollars {
+    #[inline]
     fn from(value: u128) -> Self {
         Self::from(Cents::from(value))
     }
 }
 
 impl From<StoredF64> for Dollars {
+    #[inline]
     fn from(value: StoredF64) -> Self {
         Self(*value)
     }
 }
 
 impl From<Close<Dollars>> for u128 {
+    #[inline]
     fn from(value: Close<Dollars>) -> Self {
         u128::from(*value)
     }
 }
 
 impl From<Dollars> for u128 {
+    #[inline]
     fn from(value: Dollars) -> Self {
         u128::from(Cents::from(value))
     }

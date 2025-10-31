@@ -25,10 +25,11 @@ where
     I: StoredIndex,
     T: StoredIndex + StoredRaw,
 {
+    #[inline]
     fn from(vec: &RawVec<I, T>) -> Self {
         Self(
             vec.into_iter()
-                .map(|(i, v)| (v.into_owned(), i))
+                .map(|(i, v)| (v, i))
                 .collect::<BTreeMap<_, _>>(),
         )
     }
@@ -39,10 +40,11 @@ where
     I: StoredIndex,
     T: StoredIndex + StoredCompressed,
 {
+    #[inline]
     fn from(vec: &CompressedVec<I, T>) -> Self {
         Self(
             vec.into_iter()
-                .map(|(i, v)| (v.into_owned(), i))
+                .map(|(i, v)| (v, i))
                 .collect::<BTreeMap<_, _>>(),
         )
     }

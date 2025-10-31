@@ -29,18 +29,21 @@ impl<I, T> Source<I, T> {
 }
 
 impl<I, T> From<bool> for Source<I, T> {
+    #[inline]
     fn from(value: bool) -> Self {
         if value { Self::Compute } else { Self::None }
     }
 }
 
 impl<I, T> From<AnyBoxedIterableVec<I, T>> for Source<I, T> {
+    #[inline]
     fn from(value: AnyBoxedIterableVec<I, T>) -> Self {
         Self::Vec(value)
     }
 }
 
 impl<I, T> From<Option<AnyBoxedIterableVec<I, T>>> for Source<I, T> {
+    #[inline]
     fn from(value: Option<AnyBoxedIterableVec<I, T>>) -> Self {
         if let Some(v) = value {
             Self::Vec(v)

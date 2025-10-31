@@ -265,6 +265,7 @@ where
     K: Into<ByteView>,
     V: Into<ByteView>,
 {
+    #[inline]
     fn from(value: Item<K, V>) -> Self {
         match value {
             Item::Value { key, value } => Self {

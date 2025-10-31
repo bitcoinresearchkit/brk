@@ -33,6 +33,7 @@ impl Block {
 }
 
 impl From<(Height, bitcoin::Block)> for Block {
+    #[inline]
     fn from((height, block): (Height, bitcoin::Block)) -> Self {
         Self::from((height, block.block_hash(), block))
     }
@@ -57,6 +58,7 @@ impl From<(Height, BlockHash, bitcoin::Block)> for Block {
 }
 
 impl From<ReadBlock> for Block {
+    #[inline]
     fn from(value: ReadBlock) -> Self {
         value.block
     }
@@ -77,6 +79,7 @@ pub struct ReadBlock {
 }
 
 impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ReadBlock {
+    #[inline]
     fn from((block, metadata, tx_metadata): (Block, BlkMetadata, Vec<BlkMetadata>)) -> Self {
         Self {
             block,

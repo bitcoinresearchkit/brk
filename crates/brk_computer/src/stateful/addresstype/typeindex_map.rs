@@ -66,3 +66,26 @@ impl<T> Default for AddressTypeToTypeIndexMap<T> {
         })
     }
 }
+
+impl<T> AddressTypeToTypeIndexMap<Vec<T>>
+where
+    T: Copy,
+{
+    pub fn merge_vec(mut self, other: Self) -> Self {
+        for (address_type, other_map) in other.0.into_iter_typed() {
+            let self_map = self.0.get_mut_unwrap(address_type);
+            for (typeindex, mut other_vec) in other_map {
+                self_map
+                    .entry(typeindex)
+                    .and_modify(|self_vec| {
+                        if other_vec.len() > self_vec.len() {
+                            mem::swap(self_vec, &mut other_vec);
+                        }
+                        self_vec.extend(other_vec.iter().copied());
+                    })
+                    .or_insert(other_vec);
+            }
+        }
+        self
+    }
+}

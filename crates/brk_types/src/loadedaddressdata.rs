@@ -104,12 +104,14 @@ impl LoadedAddressData {
 }
 
 impl From<EmptyAddressData> for LoadedAddressData {
+    #[inline]
     fn from(value: EmptyAddressData) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<&EmptyAddressData> for LoadedAddressData {
+    #[inline]
     fn from(value: &EmptyAddressData) -> Self {
         Self {
             tx_count: value.tx_count,

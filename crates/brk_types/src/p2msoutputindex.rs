@@ -27,21 +27,25 @@ use crate::TypeIndex;
 )]
 pub struct P2MSOutputIndex(TypeIndex);
 impl From<TypeIndex> for P2MSOutputIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 impl From<P2MSOutputIndex> for usize {
+    #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<P2MSOutputIndex> for u64 {
+    #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<usize> for P2MSOutputIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }

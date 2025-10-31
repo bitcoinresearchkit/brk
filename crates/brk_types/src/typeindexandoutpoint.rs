@@ -25,6 +25,7 @@ impl Hash for TypeIndexAndOutPoint {
 }
 
 impl From<(TypeIndex, OutPoint)> for TypeIndexAndOutPoint {
+    #[inline]
     fn from(value: (TypeIndex, OutPoint)) -> Self {
         Self {
             typeindexandtxindex: TypeIndexAndTxIndex::from((value.0, value.1.txindex())),
@@ -34,6 +35,7 @@ impl From<(TypeIndex, OutPoint)> for TypeIndexAndOutPoint {
 }
 
 impl From<ByteView> for TypeIndexAndOutPoint {
+    #[inline]
     fn from(value: ByteView) -> Self {
         Self {
             typeindexandtxindex: TypeIndexAndTxIndex::from(&value[0..8]),
@@ -43,11 +45,13 @@ impl From<ByteView> for TypeIndexAndOutPoint {
 }
 
 impl From<TypeIndexAndOutPoint> for ByteView {
+    #[inline]
     fn from(value: TypeIndexAndOutPoint) -> Self {
         ByteView::from(&value)
     }
 }
 impl From<&TypeIndexAndOutPoint> for ByteView {
+    #[inline]
     fn from(value: &TypeIndexAndOutPoint) -> Self {
         ByteView::from(
             [

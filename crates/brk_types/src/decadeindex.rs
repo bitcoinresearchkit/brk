@@ -31,24 +31,28 @@ use super::{Date, DateIndex, YearIndex};
 pub struct DecadeIndex(u16);
 
 impl From<u16> for DecadeIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<DecadeIndex> for u16 {
+    #[inline]
     fn from(value: DecadeIndex) -> Self {
         value.0
     }
 }
 
 impl From<usize> for DecadeIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<DecadeIndex> for usize {
+    #[inline]
     fn from(value: DecadeIndex) -> Self {
         value.0 as usize
     }
@@ -84,12 +88,14 @@ impl Div<usize> for DecadeIndex {
 }
 
 impl From<DateIndex> for DecadeIndex {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
 impl From<Date> for DecadeIndex {
+    #[inline]
     fn from(value: Date) -> Self {
         let year = value.year();
         if year < 2000 {
@@ -106,6 +112,7 @@ impl CheckedSub for DecadeIndex {
 }
 
 impl From<YearIndex> for DecadeIndex {
+    #[inline]
     fn from(value: YearIndex) -> Self {
         let v = usize::from(value);
         if v == 0 {

@@ -24,12 +24,14 @@ use crate::U8x32;
 pub struct P2WSHBytes(U8x32);
 
 impl From<&[u8]> for P2WSHBytes {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(U8x32::from(value))
     }
 }
 
 impl From<U8x32> for P2WSHBytes {
+    #[inline]
     fn from(value: U8x32) -> Self {
         Self(value)
     }

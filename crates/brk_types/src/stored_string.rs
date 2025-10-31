@@ -23,18 +23,21 @@ impl StoredString {
 }
 
 impl From<String> for StoredString {
+    #[inline]
     fn from(value: String) -> Self {
         Self(value)
     }
 }
 
 impl From<Cow<'_, str>> for StoredString {
+    #[inline]
     fn from(value: Cow<'_, str>) -> Self {
         Self(value.to_string())
     }
 }
 
 impl From<ByteView> for StoredString {
+    #[inline]
     fn from(value: ByteView) -> Self {
         let bytes = &*value;
         Self(String::from_utf8_lossy(bytes).into_owned())
@@ -42,12 +45,14 @@ impl From<ByteView> for StoredString {
 }
 
 impl From<StoredString> for ByteView {
+    #[inline]
     fn from(value: StoredString) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<&StoredString> for ByteView {
+    #[inline]
     fn from(value: &StoredString) -> Self {
         Self::new(value.as_bytes())
     }

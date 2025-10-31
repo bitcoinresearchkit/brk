@@ -42,12 +42,14 @@ impl StoredU16 {
 }
 
 impl From<u16> for StoredU16 {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for StoredU16 {
+    #[inline]
     fn from(value: usize) -> Self {
         if value > u16::MAX as usize {
             panic!("usize too big (value = {value})")
@@ -83,6 +85,7 @@ impl AddAssign for StoredU16 {
 }
 
 impl From<f64> for StoredU16 {
+    #[inline]
     fn from(value: f64) -> Self {
         if value < 0.0 || value > u16::MAX as f64 {
             panic!()
@@ -92,84 +95,98 @@ impl From<f64> for StoredU16 {
 }
 
 impl From<StoredU16> for f64 {
+    #[inline]
     fn from(value: StoredU16) -> Self {
         value.0 as f64
     }
 }
 
 impl From<StoredU16> for usize {
+    #[inline]
     fn from(value: StoredU16) -> Self {
         value.0 as usize
     }
 }
 
 impl From<P2PK65AddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2PK65AddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2PK33AddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2PK33AddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2PKHAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<OpReturnIndex> for StoredU16 {
+    #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2MSOutputIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2SHAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2SHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2WSHAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2WSHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2WPKHAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2WPKHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2TRAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2TRAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<P2AAddressIndex> for StoredU16 {
+    #[inline]
     fn from(value: P2AAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<UnknownOutputIndex> for StoredU16 {
+    #[inline]
     fn from(value: UnknownOutputIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
 impl From<EmptyOutputIndex> for StoredU16 {
+    #[inline]
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(usize::from(value))
     }

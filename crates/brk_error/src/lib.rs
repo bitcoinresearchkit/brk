@@ -44,108 +44,126 @@ pub enum Error {
 }
 
 impl From<bitcoin::block::Bip34Error> for Error {
+    #[inline]
     fn from(value: bitcoin::block::Bip34Error) -> Self {
         Self::BitcoinBip34Error(value)
     }
 }
 
 impl From<bitcoin::consensus::encode::Error> for Error {
+    #[inline]
     fn from(value: bitcoin::consensus::encode::Error) -> Self {
         Self::BitcoinConsensusEncode(value)
     }
 }
 
 impl From<bitcoin::consensus::encode::FromHexError> for Error {
+    #[inline]
     fn from(value: bitcoin::consensus::encode::FromHexError) -> Self {
         Self::BitcoinHexError(value)
     }
 }
 
 impl From<bitcoin::hex::HexToArrayError> for Error {
+    #[inline]
     fn from(value: bitcoin::hex::HexToArrayError) -> Self {
         Self::BitcoinHexToArrayError(value)
     }
 }
 
 impl From<bitcoin::address::FromScriptError> for Error {
+    #[inline]
     fn from(value: bitcoin::address::FromScriptError) -> Self {
         Self::BitcoinFromScriptError(value)
     }
 }
 
 impl From<time::SystemTimeError> for Error {
+    #[inline]
     fn from(value: time::SystemTimeError) -> Self {
         Self::SystemTimeError(value)
     }
 }
 
 impl From<sonic_rs::Error> for Error {
+    #[inline]
     fn from(error: sonic_rs::Error) -> Self {
         Self::SonicRS(error)
     }
 }
 
 impl From<io::Error> for Error {
+    #[inline]
     fn from(value: io::Error) -> Self {
         Self::IO(value)
     }
 }
 
 impl From<vecdb::Error> for Error {
+    #[inline]
     fn from(value: vecdb::Error) -> Self {
         Self::VecDB(value)
     }
 }
 
 impl From<vecdb::SeqDBError> for Error {
+    #[inline]
     fn from(value: vecdb::SeqDBError) -> Self {
         Self::SeqDB(value)
     }
 }
 
 impl From<bitcoincore_rpc::Error> for Error {
+    #[inline]
     fn from(value: bitcoincore_rpc::Error) -> Self {
         Self::BitcoinRPC(value)
     }
 }
 
 impl From<minreq::Error> for Error {
+    #[inline]
     fn from(value: minreq::Error) -> Self {
         Self::Minreq(value)
     }
 }
 
 impl From<jiff::Error> for Error {
+    #[inline]
     fn from(value: jiff::Error) -> Self {
         Self::Jiff(value)
     }
 }
 
 // impl From<fjall3::Error> for Error {
-//     fn from(value: fjall3::Error) -> Self {
+// #[inline]
+// fn from(value: fjall3::Error) -> Self {
 //         Self::FjallV3(value)
 //     }
 // }
 
 impl From<fjall2::Error> for Error {
+    #[inline]
     fn from(value: fjall2::Error) -> Self {
         Self::FjallV2(value)
     }
 }
 
 impl From<&'static str> for Error {
+    #[inline]
     fn from(value: &'static str) -> Self {
         Self::Str(value)
     }
 }
 
 impl<A, B, C> From<zerocopy::error::ConvertError<A, B, C>> for Error {
+    #[inline]
     fn from(_: zerocopy::error::ConvertError<A, B, C>) -> Self {
         Self::ZeroCopyError
     }
 }
 
 impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
+    #[inline]
     fn from(_: zerocopy::error::SizeError<A, B>) -> Self {
         Self::ZeroCopyError
     }

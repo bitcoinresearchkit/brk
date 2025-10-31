@@ -23,6 +23,7 @@ impl<T> ByTerm<Filtered<T>> {
 }
 
 impl<T> From<ByTerm<T>> for ByTerm<Filtered<T>> {
+    #[inline]
     fn from(value: ByTerm<T>) -> Self {
         Self {
             short: (Filter::LowerThan(5 * 30), value.short).into(),

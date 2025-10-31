@@ -35,24 +35,28 @@ impl DateIndex {
 }
 
 impl From<DateIndex> for usize {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         value.0 as usize
     }
 }
 
 impl From<DateIndex> for u64 {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         value.0 as u64
     }
 }
 
 impl From<usize> for DateIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<DateIndex> for i64 {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         value.0 as i64
     }

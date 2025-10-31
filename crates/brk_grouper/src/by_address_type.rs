@@ -231,6 +231,7 @@ impl<T> ByAddressType<Filtered<T>> {
 }
 
 impl<T> From<ByAddressType<T>> for ByAddressType<Filtered<T>> {
+    #[inline]
     fn from(value: ByAddressType<T>) -> Self {
         Self {
             p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),

@@ -31,24 +31,28 @@ use super::{Date, DateIndex};
 pub struct WeekIndex(u16);
 
 impl From<u16> for WeekIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<WeekIndex> for u16 {
+    #[inline]
     fn from(value: WeekIndex) -> Self {
         value.0
     }
 }
 
 impl From<usize> for WeekIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<WeekIndex> for usize {
+    #[inline]
     fn from(value: WeekIndex) -> Self {
         value.0 as usize
     }
@@ -84,12 +88,14 @@ impl Add<usize> for WeekIndex {
 }
 
 impl From<DateIndex> for WeekIndex {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
 impl From<Date> for WeekIndex {
+    #[inline]
     fn from(value: Date) -> Self {
         let date = jiff::civil::Date::from(value).iso_week_date();
 

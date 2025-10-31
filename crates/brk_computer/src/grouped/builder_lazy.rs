@@ -71,9 +71,7 @@ where
                         if i.to_usize() >= len_source.len() {
                             return None;
                         }
-                        source
-                            .next_at(S1I::min_from(i))
-                            .map(|(_, cow)| cow.into_owned())
+                        source.next_at(S1I::min_from(i)).map(|(_, v)| v)
                     },
                 ))
             }),
@@ -100,7 +98,7 @@ where
                         }
                         source
                             .next_at(S1I::max_from(i, source.len()))
-                            .map(|(_, cow)| cow.into_owned())
+                            .map(|(_, v)| v)
                     },
                 ))
             }),
@@ -118,7 +116,7 @@ where
                             return None;
                         }
                         S1I::inclusive_range_from(i, source.len())
-                            .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
+                            .flat_map(|i| source.next_at(i).map(|(_, v)| v))
                             .min()
                     },
                 ))
@@ -137,7 +135,7 @@ where
                             return None;
                         }
                         S1I::inclusive_range_from(i, source.len())
-                            .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
+                            .flat_map(|i| source.next_at(i).map(|(_, v)| v))
                             .max()
                     },
                 ))
@@ -156,7 +154,7 @@ where
                             return None;
                         }
                         let vec = S1I::inclusive_range_from(i, source.len())
-                            .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
+                            .flat_map(|i| source.next_at(i).map(|(_, v)| v))
                             .collect::<Vec<_>>();
                         if vec.is_empty() {
                             return None;
@@ -186,7 +184,7 @@ where
                             return None;
                         }
                         let vec = S1I::inclusive_range_from(i, source.len())
-                            .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
+                            .flat_map(|i| source.next_at(i).map(|(_, v)| v))
                             .collect::<Vec<_>>();
                         if vec.is_empty() {
                             return None;
@@ -209,7 +207,7 @@ where
                         }
                         source
                             .next_at(S1I::max_from(i, source.len()))
-                            .map(|(_, cow)| cow.into_owned())
+                            .map(|(_, v)| v)
                     },
                 ))
             }),
@@ -259,6 +257,7 @@ pub struct LazyVecBuilderOptions {
 }
 
 impl From<VecBuilderOptions> for LazyVecBuilderOptions {
+    #[inline]
     fn from(value: VecBuilderOptions) -> Self {
         Self {
             average: value.average(),

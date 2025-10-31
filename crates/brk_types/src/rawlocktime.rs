@@ -20,12 +20,14 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct RawLockTime(u32);
 
 impl From<LockTime> for RawLockTime {
+    #[inline]
     fn from(value: LockTime) -> Self {
         Self(value.to_consensus_u32())
     }
 }
 
 impl From<RawLockTime> for LockTime {
+    #[inline]
     fn from(value: RawLockTime) -> Self {
         let value = value.0;
         if value < LOCK_TIME_THRESHOLD {

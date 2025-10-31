@@ -86,6 +86,7 @@ impl Indexes {
 }
 
 impl From<(Height, &mut Vecs, &Stores)> for Indexes {
+    #[inline]
     fn from((min_height, vecs, stores): (Height, &mut Vecs, &Stores)) -> Self {
         // Height at which we want to start: min last saved + 1 or 0
         let vecs_starting_height = vecs.starting_height();

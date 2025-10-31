@@ -38,12 +38,14 @@ impl StoredBool {
 }
 
 impl From<bool> for StoredBool {
+    #[inline]
     fn from(value: bool) -> Self {
         if value { Self(1) } else { Self(0) }
     }
 }
 
 impl From<StoredBool> for usize {
+    #[inline]
     fn from(value: StoredBool) -> Self {
         value.0 as usize
     }

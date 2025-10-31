@@ -27,21 +27,25 @@ use crate::TypeIndex;
 )]
 pub struct EmptyOutputIndex(TypeIndex);
 impl From<TypeIndex> for EmptyOutputIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 impl From<EmptyOutputIndex> for u64 {
+    #[inline]
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(value.0)
     }
 }
 impl From<EmptyOutputIndex> for usize {
+    #[inline]
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(value.0)
     }
 }
 impl From<usize> for EmptyOutputIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }

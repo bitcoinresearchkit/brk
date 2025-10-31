@@ -12,12 +12,14 @@ pub struct Metric {
 }
 
 impl From<String> for Metric {
+    #[inline]
     fn from(metric: String) -> Self {
         Self { metric }
     }
 }
 
 impl From<&str> for Metric {
+    #[inline]
     fn from(metric: &str) -> Self {
         Self {
             metric: metric.to_string(),
