@@ -41,7 +41,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
 
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes.into_owned();
+            let price = *closes;
             let i_usize = i.to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
@@ -91,7 +91,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
 
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes.into_owned();
+            let price = *closes;
             let i_usize = i.to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
@@ -152,7 +152,6 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
         let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12)).unwrap();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let stack = stack.into_owned();
             let mut avg_price = Dollars::from(f64::NAN);
             if i > first_price_date {
                 avg_price = DCA_AMOUNT
@@ -185,7 +184,6 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
         let from_usize = from.to_usize();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let stack = stack.into_owned();
             let mut avg_price = Dollars::from(f64::NAN);
             if i >= from {
                 avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from_usize) / Bitcoin::from(stack);
@@ -223,7 +221,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         sats.iter_at(index).try_for_each(|(i, sats)| {
-            let (i, v) = (i, Bitcoin::from(sats.into_owned()));
+            let (i, v) = (i, Bitcoin::from(sats));
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -261,7 +259,7 @@ where
         let index = max_from.min(I::from(self.len()));
         bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
             let dollars = price_iter.unwrap_get_inner(i);
-            let (i, v) = (i, *dollars * bitcoin.into_owned());
+            let (i, v) = (i, *dollars * bitcoin);
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -298,7 +296,6 @@ where
         let index = max_from.min(I::from(self.len()));
         let mut close_iter = close.iter();
         ath.iter_at(index).try_for_each(|(i, ath)| {
-            let ath = ath.into_owned();
             if ath == Dollars::ZERO {
                 self.forced_push_at(i, StoredF32::default(), exit)
             } else {

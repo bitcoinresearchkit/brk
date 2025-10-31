@@ -24,12 +24,14 @@ use crate::U8x2;
 pub struct P2ABytes(U8x2);
 
 impl From<&[u8]> for P2ABytes {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(U8x2::from(value))
     }
 }
 
 impl From<U8x2> for P2ABytes {
+    #[inline]
     fn from(value: U8x2) -> Self {
         Self(value)
     }

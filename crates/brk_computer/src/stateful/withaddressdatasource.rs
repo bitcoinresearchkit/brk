@@ -26,6 +26,7 @@ impl<T> WithAddressDataSource<T> {
 }
 
 impl From<WithAddressDataSource<EmptyAddressData>> for WithAddressDataSource<LoadedAddressData> {
+    #[inline]
     fn from(value: WithAddressDataSource<EmptyAddressData>) -> Self {
         match value {
             WithAddressDataSource::New(v) => Self::New(v.into()),
@@ -40,6 +41,7 @@ impl From<WithAddressDataSource<EmptyAddressData>> for WithAddressDataSource<Loa
 }
 
 impl From<WithAddressDataSource<LoadedAddressData>> for WithAddressDataSource<EmptyAddressData> {
+    #[inline]
     fn from(value: WithAddressDataSource<LoadedAddressData>) -> Self {
         match value {
             WithAddressDataSource::New(v) => Self::New(v.into()),

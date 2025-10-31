@@ -16,6 +16,7 @@ const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
 impl From<Metric> for Metrics {
+    #[inline]
     fn from(metric: Metric) -> Self {
         Self {
             metrics: vec![metric],
@@ -24,12 +25,14 @@ impl From<Metric> for Metrics {
 }
 
 impl From<String> for Metrics {
+    #[inline]
     fn from(value: String) -> Self {
         Self::from(Metric::from(value.replace("-", "_").to_lowercase()))
     }
 }
 
 impl<'a> From<Vec<&'a str>> for Metrics {
+    #[inline]
     fn from(value: Vec<&'a str>) -> Self {
         Self {
             metrics: value

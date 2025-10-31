@@ -31,24 +31,28 @@ use super::MonthIndex;
 pub struct QuarterIndex(u16);
 
 impl From<u16> for QuarterIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for QuarterIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<QuarterIndex> for u16 {
+    #[inline]
     fn from(value: QuarterIndex) -> Self {
         value.0
     }
 }
 
 impl From<QuarterIndex> for usize {
+    #[inline]
     fn from(value: QuarterIndex) -> Self {
         value.0 as usize
     }
@@ -84,6 +88,7 @@ impl Div<usize> for QuarterIndex {
 }
 
 impl From<MonthIndex> for QuarterIndex {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         Self((usize::from(value) / 3) as u16)
     }

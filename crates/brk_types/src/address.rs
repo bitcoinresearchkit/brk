@@ -24,6 +24,7 @@ impl fmt::Display for Address {
 }
 
 impl From<String> for Address {
+    #[inline]
     fn from(address: String) -> Self {
         Self { address }
     }

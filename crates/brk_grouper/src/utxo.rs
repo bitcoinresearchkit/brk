@@ -82,6 +82,7 @@ impl<T> UTXOGroups<Filtered<T>> {
 }
 
 impl<T> From<UTXOGroups<T>> for UTXOGroups<Filtered<T>> {
+    #[inline]
     fn from(value: UTXOGroups<T>) -> Self {
         Self {
             all: (Filter::All, value.all).into(),

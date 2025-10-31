@@ -81,6 +81,15 @@ impl Add for Sats {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self::from(self.0 + rhs.0)
+        // Self::from(
+        //     self.0
+        //         .checked_add(rhs.0)
+        //         .or_else(|| {
+        //             dbg!(rhs);
+        //             panic!();
+        //         })
+        //         .unwrap(),
+        // )
     }
 }
 
@@ -185,59 +194,69 @@ impl Div<usize> for Sats {
 }
 
 impl From<u64> for Sats {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for Sats {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
 
 impl From<f64> for Sats {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value.round() as u64)
     }
 }
 
 impl From<Sats> for f64 {
+    #[inline]
     fn from(value: Sats) -> Self {
         value.0 as f64
     }
 }
 
 impl From<Sats> for usize {
+    #[inline]
     fn from(value: Sats) -> Self {
         value.0 as usize
     }
 }
 
 impl From<Amount> for Sats {
+    #[inline]
     fn from(value: Amount) -> Self {
         Self(value.to_sat())
     }
 }
 impl From<Sats> for Amount {
+    #[inline]
     fn from(value: Sats) -> Self {
         Self::from_sat(value.0)
     }
 }
 
 impl From<Bitcoin> for Sats {
+    #[inline]
     fn from(value: Bitcoin) -> Self {
         Self((f64::from(value) * (Sats::ONE_BTC.0 as f64)).round() as u64)
     }
 }
 
 impl From<Sats> for u64 {
+    #[inline]
     fn from(value: Sats) -> Self {
         value.0
     }
 }
 
 impl From<u128> for Sats {
+    #[inline]
     fn from(value: u128) -> Self {
         if value > u64::MAX as u128 {
             panic!("u128 bigger than u64")
@@ -247,6 +266,7 @@ impl From<u128> for Sats {
 }
 
 impl From<Sats> for u128 {
+    #[inline]
     fn from(value: Sats) -> Self {
         value.0 as u128
     }

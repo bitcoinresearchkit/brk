@@ -39,18 +39,21 @@ impl HalvingEpoch {
 }
 
 impl From<u16> for HalvingEpoch {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for HalvingEpoch {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<HalvingEpoch> for usize {
+    #[inline]
     fn from(value: HalvingEpoch) -> Self {
         value.0 as usize
     }
@@ -79,6 +82,7 @@ impl Add<usize> for HalvingEpoch {
 }
 
 impl From<Height> for HalvingEpoch {
+    #[inline]
     fn from(value: Height) -> Self {
         Self((u32::from(value) / BLOCKS_PER_HALVING) as u16)
     }

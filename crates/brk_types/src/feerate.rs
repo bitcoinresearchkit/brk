@@ -25,6 +25,7 @@ use super::{Sats, StoredU64};
 pub struct FeeRate(f64);
 
 impl From<(Sats, StoredU64)> for FeeRate {
+    #[inline]
     fn from((sats, vsize): (Sats, StoredU64)) -> Self {
         let sats = u64::from(sats);
         let vsize = u64::from(vsize);
@@ -33,11 +34,13 @@ impl From<(Sats, StoredU64)> for FeeRate {
 }
 
 impl From<f64> for FeeRate {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value)
     }
 }
 impl From<FeeRate> for f64 {
+    #[inline]
     fn from(value: FeeRate) -> Self {
         value.0
     }
@@ -64,6 +67,7 @@ impl Div<usize> for FeeRate {
 }
 
 impl From<usize> for FeeRate {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as f64)
     }

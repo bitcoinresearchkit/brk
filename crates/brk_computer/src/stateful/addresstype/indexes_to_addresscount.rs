@@ -13,6 +13,7 @@ use super::AddressTypeToHeightToAddressCount;
 pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);
 
 impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToIndexesToAddressCount {
+    #[inline]
     fn from(value: ByAddressType<ComputedVecsFromHeight<StoredU64>>) -> Self {
         Self(value)
     }

@@ -28,21 +28,25 @@ use crate::TypeIndex;
 pub struct OpReturnIndex(TypeIndex);
 
 impl From<TypeIndex> for OpReturnIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 impl From<OpReturnIndex> for usize {
+    #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<OpReturnIndex> for u64 {
+    #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<usize> for OpReturnIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }

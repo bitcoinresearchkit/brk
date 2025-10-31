@@ -34,18 +34,21 @@ impl StoredF64 {
 }
 
 impl From<f64> for StoredF64 {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value)
     }
 }
 
 impl From<f32> for StoredF64 {
+    #[inline]
     fn from(value: f32) -> Self {
         Self(value as f64)
     }
 }
 
 impl From<usize> for StoredF64 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as f64)
     }
@@ -113,18 +116,21 @@ impl AddAssign for StoredF64 {
 }
 
 impl From<StoredF64> for f64 {
+    #[inline]
     fn from(value: StoredF64) -> Self {
         value.0
     }
 }
 
 impl From<StoredF64> for f32 {
+    #[inline]
     fn from(value: StoredF64) -> Self {
         value.0 as f32
     }
 }
 
 impl From<Dollars> for StoredF64 {
+    #[inline]
     fn from(value: Dollars) -> Self {
         Self(f64::from(value))
     }
@@ -169,6 +175,7 @@ impl Ord for StoredF64 {
 }
 
 impl From<Bitcoin> for StoredF64 {
+    #[inline]
     fn from(value: Bitcoin) -> Self {
         Self(f64::from(value))
     }

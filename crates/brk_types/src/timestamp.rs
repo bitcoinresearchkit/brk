@@ -81,36 +81,42 @@ impl Timestamp {
 }
 
 impl From<u32> for Timestamp {
+    #[inline]
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
 impl From<jiff::Timestamp> for Timestamp {
+    #[inline]
     fn from(value: jiff::Timestamp) -> Self {
         Self(value.as_second() as u32)
     }
 }
 
 impl From<Timestamp> for jiff::Timestamp {
+    #[inline]
     fn from(value: Timestamp) -> Self {
         jiff::Timestamp::from_second(*value as i64).unwrap()
     }
 }
 
 impl From<bitcoin::locktime::absolute::Time> for Timestamp {
+    #[inline]
     fn from(value: bitcoin::locktime::absolute::Time) -> Self {
         Self(value.to_consensus_u32())
     }
 }
 
 impl From<usize> for Timestamp {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
 
 impl From<Date> for Timestamp {
+    #[inline]
     fn from(value: Date) -> Self {
         Self::from(
             jiff::civil::Date::from(value)
@@ -148,6 +154,7 @@ impl AddAssign for Timestamp {
 }
 
 impl From<f64> for Timestamp {
+    #[inline]
     fn from(value: f64) -> Self {
         if value < 0.0 || value > u32::MAX as f64 {
             panic!()
@@ -157,6 +164,7 @@ impl From<f64> for Timestamp {
 }
 
 impl From<Timestamp> for f64 {
+    #[inline]
     fn from(value: Timestamp) -> Self {
         value.0 as f64
     }

@@ -31,30 +31,35 @@ use super::{Date, DateIndex, YearIndex};
 pub struct MonthIndex(u16);
 
 impl From<u16> for MonthIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<MonthIndex> for u16 {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         value.0
     }
 }
 
 impl From<usize> for MonthIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<MonthIndex> for u64 {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         value.0 as u64
     }
 }
 
 impl From<MonthIndex> for usize {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         value.0 as usize
     }
@@ -90,12 +95,14 @@ impl Div<usize> for MonthIndex {
 }
 
 impl From<DateIndex> for MonthIndex {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
 impl From<Date> for MonthIndex {
+    #[inline]
     fn from(value: Date) -> Self {
         Self(u16::from(YearIndex::from(value)) * 12 + value.month() as u16 - 1)
     }

@@ -31,24 +31,28 @@ use super::MonthIndex;
 pub struct SemesterIndex(u16);
 
 impl From<u16> for SemesterIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for SemesterIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<SemesterIndex> for u16 {
+    #[inline]
     fn from(value: SemesterIndex) -> Self {
         value.0
     }
 }
 
 impl From<SemesterIndex> for usize {
+    #[inline]
     fn from(value: SemesterIndex) -> Self {
         value.0 as usize
     }
@@ -84,6 +88,7 @@ impl Div<usize> for SemesterIndex {
 }
 
 impl From<MonthIndex> for SemesterIndex {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         Self((usize::from(value) / 6) as u16)
     }

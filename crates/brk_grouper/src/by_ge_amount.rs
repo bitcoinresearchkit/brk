@@ -63,6 +63,7 @@ impl<T> ByGreatEqualAmount<Filtered<T>> {
 }
 
 impl<T> From<ByGreatEqualAmount<T>> for ByGreatEqualAmount<Filtered<T>> {
+    #[inline]
     fn from(value: ByGreatEqualAmount<T>) -> Self {
         Self {
             _1sat: (Filter::GreaterOrEqual(Sats::_1.into()), value._1sat).into(),

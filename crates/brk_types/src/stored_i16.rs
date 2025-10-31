@@ -33,12 +33,14 @@ impl StoredI16 {
 }
 
 impl From<i16> for StoredI16 {
+    #[inline]
     fn from(value: i16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for StoredI16 {
+    #[inline]
     fn from(value: usize) -> Self {
         if value > i16::MAX as usize {
             panic!("usize too big (value = {value})")
@@ -74,6 +76,7 @@ impl AddAssign for StoredI16 {
 }
 
 impl From<f64> for StoredI16 {
+    #[inline]
     fn from(value: f64) -> Self {
         if value < 0.0 || value > i16::MAX as f64 {
             panic!()
@@ -83,12 +86,14 @@ impl From<f64> for StoredI16 {
 }
 
 impl From<StoredI16> for f64 {
+    #[inline]
     fn from(value: StoredI16) -> Self {
         value.0 as f64
     }
 }
 
 impl From<StoredI16> for usize {
+    #[inline]
     fn from(value: StoredI16) -> Self {
         value.0 as usize
     }

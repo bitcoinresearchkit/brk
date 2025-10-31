@@ -130,48 +130,56 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
 }
 
 impl From<P2PK65Bytes> for AddressBytes {
+    #[inline]
     fn from(value: P2PK65Bytes) -> Self {
         Self::P2PK65(Box::new(value))
     }
 }
 
 impl From<P2PK33Bytes> for AddressBytes {
+    #[inline]
     fn from(value: P2PK33Bytes) -> Self {
         Self::P2PK33(Box::new(value))
     }
 }
 
 impl From<P2PKHBytes> for AddressBytes {
+    #[inline]
     fn from(value: P2PKHBytes) -> Self {
         Self::P2PKH(Box::new(value))
     }
 }
 
 impl From<P2SHBytes> for AddressBytes {
+    #[inline]
     fn from(value: P2SHBytes) -> Self {
         Self::P2SH(Box::new(value))
     }
 }
 
 impl From<P2WPKHBytes> for AddressBytes {
+    #[inline]
     fn from(value: P2WPKHBytes) -> Self {
         Self::P2WPKH(Box::new(value))
     }
 }
 
 impl From<P2WSHBytes> for AddressBytes {
+    #[inline]
     fn from(value: P2WSHBytes) -> Self {
         Self::P2WSH(Box::new(value))
     }
 }
 
 impl From<P2TRBytes> for AddressBytes {
+    #[inline]
     fn from(value: P2TRBytes) -> Self {
         Self::P2TR(Box::new(value))
     }
 }
 
 impl From<P2ABytes> for AddressBytes {
+    #[inline]
     fn from(value: P2ABytes) -> Self {
         Self::P2A(Box::new(value))
     }

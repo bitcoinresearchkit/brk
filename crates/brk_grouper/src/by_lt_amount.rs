@@ -63,6 +63,7 @@ impl<T> ByLowerThanAmount<Filtered<T>> {
 }
 
 impl<T> From<ByLowerThanAmount<T>> for ByLowerThanAmount<Filtered<T>> {
+    #[inline]
     fn from(value: ByLowerThanAmount<T>) -> Self {
         Self {
             _10sats: (Filter::LowerThan(Sats::_10.into()), value._10sats).into(),

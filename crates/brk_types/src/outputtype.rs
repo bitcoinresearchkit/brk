@@ -836,6 +836,7 @@ impl OutputType {
 }
 
 impl From<&ScriptBuf> for OutputType {
+    #[inline]
     fn from(script: &ScriptBuf) -> Self {
         if script.is_p2pk() {
             let bytes = script.as_bytes();
@@ -877,6 +878,7 @@ impl From<&ScriptBuf> for OutputType {
 }
 
 impl From<AddressType> for OutputType {
+    #[inline]
     fn from(value: AddressType) -> Self {
         match value {
             AddressType::P2a => Self::P2A,

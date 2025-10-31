@@ -13,6 +13,7 @@ pub enum Format {
 }
 
 impl From<Option<String>> for Format {
+    #[inline]
     fn from(value: Option<String>) -> Self {
         if let Some(value) = value {
             let value = value.to_lowercase();

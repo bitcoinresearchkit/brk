@@ -23,6 +23,7 @@ pub struct OHLCCents {
 }
 
 impl From<(Open<Cents>, High<Cents>, Low<Cents>, Close<Cents>)> for OHLCCents {
+    #[inline]
     fn from(value: (Open<Cents>, High<Cents>, Low<Cents>, Close<Cents>)) -> Self {
         Self {
             open: value.0,
@@ -34,6 +35,7 @@ impl From<(Open<Cents>, High<Cents>, Low<Cents>, Close<Cents>)> for OHLCCents {
 }
 
 impl From<Close<Cents>> for OHLCCents {
+    #[inline]
     fn from(value: Close<Cents>) -> Self {
         Self {
             open: Open::from(value),
@@ -92,6 +94,7 @@ impl Serialize for OHLCDollars {
 }
 
 impl From<(Open<Dollars>, High<Dollars>, Low<Dollars>, Close<Dollars>)> for OHLCDollars {
+    #[inline]
     fn from(value: (Open<Dollars>, High<Dollars>, Low<Dollars>, Close<Dollars>)) -> Self {
         Self {
             open: value.0,
@@ -103,6 +106,7 @@ impl From<(Open<Dollars>, High<Dollars>, Low<Dollars>, Close<Dollars>)> for OHLC
 }
 
 impl From<Close<Dollars>> for OHLCDollars {
+    #[inline]
     fn from(value: Close<Dollars>) -> Self {
         Self {
             open: Open::from(value),
@@ -114,12 +118,14 @@ impl From<Close<Dollars>> for OHLCDollars {
 }
 
 impl From<OHLCCents> for OHLCDollars {
+    #[inline]
     fn from(value: OHLCCents) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<&OHLCCents> for OHLCDollars {
+    #[inline]
     fn from(value: &OHLCCents) -> Self {
         Self {
             open: value.open.into(),
@@ -164,6 +170,7 @@ impl Serialize for OHLCSats {
 }
 
 impl From<(Open<Sats>, High<Sats>, Low<Sats>, Close<Sats>)> for OHLCSats {
+    #[inline]
     fn from(value: (Open<Sats>, High<Sats>, Low<Sats>, Close<Sats>)) -> Self {
         Self {
             open: value.0,
@@ -175,6 +182,7 @@ impl From<(Open<Sats>, High<Sats>, Low<Sats>, Close<Sats>)> for OHLCSats {
 }
 
 impl From<Close<Sats>> for OHLCSats {
+    #[inline]
     fn from(value: Close<Sats>) -> Self {
         Self {
             open: Open::from(value),
@@ -226,6 +234,7 @@ impl<T> From<usize> for Open<T>
 where
     T: From<usize>,
 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(T::from(value))
     }
@@ -235,6 +244,7 @@ impl<T> From<f64> for Open<T>
 where
     T: From<f64>,
 {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(T::from(value))
     }
@@ -244,6 +254,7 @@ impl<T> From<Open<T>> for f64
 where
     f64: From<T>,
 {
+    #[inline]
     fn from(value: Open<T>) -> Self {
         Self::from(value.0)
     }
@@ -253,6 +264,7 @@ impl<T> From<Open<T>> for StoredF64
 where
     StoredF64: From<T>,
 {
+    #[inline]
     fn from(value: Open<T>) -> Self {
         Self::from(value.0)
     }
@@ -262,12 +274,14 @@ impl<T> From<Close<T>> for Open<T>
 where
     T: Copy,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self(*value)
     }
 }
 
 impl From<Open<Cents>> for Open<Dollars> {
+    #[inline]
     fn from(value: Open<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
@@ -342,6 +356,7 @@ impl<T> From<usize> for High<T>
 where
     T: From<usize>,
 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(T::from(value))
     }
@@ -351,6 +366,7 @@ impl<T> From<f64> for High<T>
 where
     T: From<f64>,
 {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(T::from(value))
     }
@@ -360,6 +376,7 @@ impl<T> From<High<T>> for f64
 where
     f64: From<T>,
 {
+    #[inline]
     fn from(value: High<T>) -> Self {
         Self::from(value.0)
     }
@@ -369,6 +386,7 @@ impl<T> From<High<T>> for StoredF64
 where
     StoredF64: From<T>,
 {
+    #[inline]
     fn from(value: High<T>) -> Self {
         Self::from(value.0)
     }
@@ -378,12 +396,14 @@ impl<T> From<Close<T>> for High<T>
 where
     T: Copy,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self(*value)
     }
 }
 
 impl From<High<Cents>> for High<Dollars> {
+    #[inline]
     fn from(value: High<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
@@ -458,6 +478,7 @@ impl<T> From<usize> for Low<T>
 where
     T: From<usize>,
 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(T::from(value))
     }
@@ -467,6 +488,7 @@ impl<T> From<f64> for Low<T>
 where
     T: From<f64>,
 {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(T::from(value))
     }
@@ -476,6 +498,7 @@ impl<T> From<Low<T>> for f64
 where
     f64: From<T>,
 {
+    #[inline]
     fn from(value: Low<T>) -> Self {
         Self::from(value.0)
     }
@@ -485,6 +508,7 @@ impl<T> From<Low<T>> for StoredF64
 where
     StoredF64: From<T>,
 {
+    #[inline]
     fn from(value: Low<T>) -> Self {
         Self::from(value.0)
     }
@@ -494,12 +518,14 @@ impl<T> From<Close<T>> for Low<T>
 where
     T: Copy,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self(*value)
     }
 }
 
 impl From<Low<Cents>> for Low<Dollars> {
+    #[inline]
     fn from(value: Low<Cents>) -> Self {
         Self(Dollars::from(*value))
     }
@@ -575,6 +601,7 @@ impl<T> From<usize> for Close<T>
 where
     T: From<usize>,
 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(T::from(value))
     }
@@ -584,6 +611,7 @@ impl<T> From<f32> for Close<T>
 where
     T: From<f32>,
 {
+    #[inline]
     fn from(value: f32) -> Self {
         Self(T::from(value))
     }
@@ -593,6 +621,7 @@ impl<T> From<f64> for Close<T>
 where
     T: From<f64>,
 {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(T::from(value))
     }
@@ -602,6 +631,7 @@ impl<T> From<Close<T>> for f32
 where
     f32: From<T>,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self::from(value.0)
     }
@@ -611,6 +641,7 @@ impl<T> From<Close<T>> for f64
 where
     f64: From<T>,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self::from(value.0)
     }
@@ -620,6 +651,7 @@ impl<T> From<Close<T>> for StoredF64
 where
     StoredF64: From<T>,
 {
+    #[inline]
     fn from(value: Close<T>) -> Self {
         Self::from(value.0)
     }
@@ -629,9 +661,11 @@ where
 // where
 //     B: From<A>,
 // {
-//     fn from(value: Close<A>) -> Self {
+// #[inline]
+// fn from(value: Close<A>) -> Self {
 //         Self(B::from(*value))
 impl From<Close<Cents>> for Close<Dollars> {
+    #[inline]
     fn from(value: Close<Cents>) -> Self {
         Self(Dollars::from(*value))
     }

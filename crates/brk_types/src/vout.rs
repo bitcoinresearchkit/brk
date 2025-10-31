@@ -47,6 +47,7 @@ impl Vout {
 
 const U16_MAX_AS_U32: u32 = u16::MAX as u32;
 impl From<u32> for Vout {
+    #[inline]
     fn from(value: u32) -> Self {
         if value > U16_MAX_AS_U32 {
             panic!()
@@ -57,6 +58,7 @@ impl From<u32> for Vout {
 
 const U16_MAX_AS_USIZE: usize = u16::MAX as usize;
 impl From<usize> for Vout {
+    #[inline]
     fn from(value: usize) -> Self {
         if value > U16_MAX_AS_USIZE {
             panic!()
@@ -66,30 +68,35 @@ impl From<usize> for Vout {
 }
 
 impl From<Vout> for u16 {
+    #[inline]
     fn from(value: Vout) -> Self {
         value.0
     }
 }
 
 impl From<Vout> for u32 {
+    #[inline]
     fn from(value: Vout) -> Self {
         value.0 as u32
     }
 }
 
 impl From<Vout> for u64 {
+    #[inline]
     fn from(value: Vout) -> Self {
         value.0 as u64
     }
 }
 
 impl From<Vout> for usize {
+    #[inline]
     fn from(value: Vout) -> Self {
         value.0 as usize
     }
 }
 
 impl From<&[u8]> for Vout {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(u16::from_be_bytes(copy_first_2bytes(value).unwrap()))
     }

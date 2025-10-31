@@ -33,18 +33,21 @@ pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
 pub struct DifficultyEpoch(u16);
 
 impl From<u16> for DifficultyEpoch {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for DifficultyEpoch {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<DifficultyEpoch> for usize {
+    #[inline]
     fn from(value: DifficultyEpoch) -> Self {
         value.0 as usize
     }
@@ -80,6 +83,7 @@ impl Div<usize> for DifficultyEpoch {
 }
 
 impl From<Height> for DifficultyEpoch {
+    #[inline]
     fn from(value: Height) -> Self {
         Self((u32::from(value) / BLOCKS_PER_DIFF_EPOCHS) as u16)
     }

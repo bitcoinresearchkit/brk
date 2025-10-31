@@ -22,30 +22,35 @@ impl TryFrom<&str> for BlockHash {
 }
 
 impl From<bitcoin::BlockHash> for BlockHash {
+    #[inline]
     fn from(value: bitcoin::BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<&bitcoin::BlockHash> for &BlockHash {
+    #[inline]
     fn from(value: &bitcoin::BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<BlockHash> for bitcoin::BlockHash {
+    #[inline]
     fn from(value: BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<&BlockHash> for &bitcoin::BlockHash {
+    #[inline]
     fn from(value: &BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<&BlockHash> for bitcoin::BlockHash {
+    #[inline]
     fn from(value: &BlockHash) -> Self {
         bitcoin::BlockHash::from_slice(&value.0).unwrap()
     }

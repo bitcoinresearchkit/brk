@@ -9,6 +9,7 @@ use super::AddressTypeToHeightToAddressCount;
 pub struct AddressTypeToAddressCount(ByAddressType<u64>);
 
 impl From<(&AddressTypeToHeightToAddressCount, Height)> for AddressTypeToAddressCount {
+    #[inline]
     fn from((groups, starting_height): (&AddressTypeToHeightToAddressCount, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
             Self(ByAddressType {

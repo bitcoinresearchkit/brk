@@ -37,12 +37,14 @@ impl StoredF32 {
 }
 
 impl From<f32> for StoredF32 {
+    #[inline]
     fn from(value: f32) -> Self {
         Self(value)
     }
 }
 
 impl From<f64> for StoredF32 {
+    #[inline]
     fn from(value: f64) -> Self {
         if value > f32::MAX as f64 {
             panic!("f64 is too big")
@@ -52,24 +54,28 @@ impl From<f64> for StoredF32 {
 }
 
 impl From<StoredF32> for f64 {
+    #[inline]
     fn from(value: StoredF32) -> Self {
         value.0 as f64
     }
 }
 
 impl From<StoredF64> for StoredF32 {
+    #[inline]
     fn from(value: StoredF64) -> Self {
         Self(*value as f32)
     }
 }
 
 impl From<usize> for StoredF32 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as f32)
     }
 }
 
 impl From<StoredU32> for StoredF32 {
+    #[inline]
     fn from(value: StoredU32) -> Self {
         Self(f32::from(value))
     }
@@ -115,18 +121,21 @@ impl AddAssign for StoredF32 {
 }
 
 impl From<StoredF32> for f32 {
+    #[inline]
     fn from(value: StoredF32) -> Self {
         value.0
     }
 }
 
 impl From<Dollars> for StoredF32 {
+    #[inline]
     fn from(value: Dollars) -> Self {
         StoredF32::from(f64::from(value))
     }
 }
 
 impl From<Close<Dollars>> for StoredF32 {
+    #[inline]
     fn from(value: Close<Dollars>) -> Self {
         Self::from(*value)
     }

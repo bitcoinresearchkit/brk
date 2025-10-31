@@ -7,9 +7,9 @@ use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
-    DateIndex, EmptyOutputIndex, Height, TxInIndex, MonthIndex, OpReturnIndex, TxOutIndex,
-    P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex,
+    DateIndex, EmptyOutputIndex, Height, MonthIndex, OpReturnIndex, P2AAddressIndex,
+    P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex,
+    P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex,
     UnknownOutputIndex, YearIndex,
 };
 
@@ -42,24 +42,28 @@ impl StoredU64 {
 }
 
 impl From<u64> for StoredU64 {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
 
 impl From<StoredU64> for u64 {
+    #[inline]
     fn from(value: StoredU64) -> Self {
         value.0
     }
 }
 
 impl From<StoredU64> for usize {
+    #[inline]
     fn from(value: StoredU64) -> Self {
         value.0 as usize
     }
 }
 
 impl From<usize> for StoredU64 {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
@@ -92,6 +96,7 @@ impl AddAssign for StoredU64 {
 }
 
 impl From<f64> for StoredU64 {
+    #[inline]
     fn from(value: f64) -> Self {
         if value < 0.0 || value > u32::MAX as f64 {
             panic!()
@@ -101,120 +106,140 @@ impl From<f64> for StoredU64 {
 }
 
 impl From<StoredU64> for f64 {
+    #[inline]
     fn from(value: StoredU64) -> Self {
         value.0 as f64
     }
 }
 
 impl From<TxIndex> for StoredU64 {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         Self(*value as u64)
     }
 }
 
 impl From<TxInIndex> for StoredU64 {
+    #[inline]
     fn from(value: TxInIndex) -> Self {
         Self(*value)
     }
 }
 
 impl From<Height> for StoredU64 {
+    #[inline]
     fn from(value: Height) -> Self {
         Self(*value as u64)
     }
 }
 
 impl From<TxOutIndex> for StoredU64 {
+    #[inline]
     fn from(value: TxOutIndex) -> Self {
         Self(*value)
     }
 }
 
 impl From<DateIndex> for StoredU64 {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<MonthIndex> for StoredU64 {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<YearIndex> for StoredU64 {
+    #[inline]
     fn from(value: YearIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2PK65AddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2PK65AddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2PK33AddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2PK33AddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2PKHAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<OpReturnIndex> for StoredU64 {
+    #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2MSOutputIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2SHAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2SHAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2WSHAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2WSHAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2WPKHAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2WPKHAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2TRAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2TRAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<P2AAddressIndex> for StoredU64 {
+    #[inline]
     fn from(value: P2AAddressIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<UnknownOutputIndex> for StoredU64 {
+    #[inline]
     fn from(value: UnknownOutputIndex) -> Self {
         Self::from(u64::from(value))
     }
 }
 
 impl From<EmptyOutputIndex> for StoredU64 {
+    #[inline]
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(u64::from(value))
     }

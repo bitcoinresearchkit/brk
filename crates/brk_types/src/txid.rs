@@ -29,30 +29,35 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct Txid([u8; 32]);
 
 impl From<bitcoin::Txid> for Txid {
+    #[inline]
     fn from(value: bitcoin::Txid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<&bitcoin::Txid> for &Txid {
+    #[inline]
     fn from(value: &bitcoin::Txid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<Txid> for bitcoin::Txid {
+    #[inline]
     fn from(value: Txid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
 impl From<&Txid> for bitcoin::Txid {
+    #[inline]
     fn from(value: &Txid) -> Self {
         bitcoin::Txid::from_slice(&value.0).unwrap()
     }
 }
 
 impl From<&Txid> for &bitcoin::Txid {
+    #[inline]
     fn from(value: &Txid) -> Self {
         unsafe { mem::transmute(value) }
     }

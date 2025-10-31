@@ -30,6 +30,7 @@ pub struct ByAgeRange<T> {
 }
 
 impl<T> From<ByAgeRange<T>> for ByAgeRange<Filtered<T>> {
+    #[inline]
     fn from(value: ByAgeRange<T>) -> Self {
         Self {
             up_to_1d: (Filter::LowerThan(1), value.up_to_1d).into(),

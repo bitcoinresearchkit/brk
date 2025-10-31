@@ -27,23 +27,27 @@ use crate::TypeIndex;
 pub struct EmptyAddressIndex(TypeIndex);
 
 impl From<TypeIndex> for EmptyAddressIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for EmptyAddressIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }
 }
 impl From<u32> for EmptyAddressIndex {
+    #[inline]
     fn from(value: u32) -> Self {
         Self(TypeIndex::from(value))
     }
 }
 
 impl From<EmptyAddressIndex> for usize {
+    #[inline]
     fn from(value: EmptyAddressIndex) -> Self {
         usize::from(value.0)
     }

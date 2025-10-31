@@ -16,12 +16,14 @@ pub struct EmptyAddressData {
 }
 
 impl From<LoadedAddressData> for EmptyAddressData {
+    #[inline]
     fn from(value: LoadedAddressData) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<&LoadedAddressData> for EmptyAddressData {
+    #[inline]
     fn from(value: &LoadedAddressData) -> Self {
         if value.sent != value.received {
             dbg!(&value);

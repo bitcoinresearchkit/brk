@@ -19,6 +19,7 @@ impl Pool {
 }
 
 impl From<(usize, JSONPool)> for Pool {
+    #[inline]
     fn from((index, pool): (usize, JSONPool)) -> Self {
         Self {
             id: (index as u8).into(),

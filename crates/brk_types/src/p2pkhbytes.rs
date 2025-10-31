@@ -24,12 +24,14 @@ use crate::U8x20;
 pub struct P2PKHBytes(U8x20);
 
 impl From<&[u8]> for P2PKHBytes {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(U8x20::from(value))
     }
 }
 
 impl From<U8x20> for P2PKHBytes {
+    #[inline]
     fn from(value: U8x20) -> Self {
         Self(value)
     }

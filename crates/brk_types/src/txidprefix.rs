@@ -24,36 +24,42 @@ use super::Txid;
 pub struct TxidPrefix(u64);
 
 impl From<Txid> for TxidPrefix {
+    #[inline]
     fn from(value: Txid) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<&Txid> for TxidPrefix {
+    #[inline]
     fn from(value: &Txid) -> Self {
         Self(u64::from_ne_bytes(copy_first_8bytes(&value[..]).unwrap()))
     }
 }
 
 impl From<ByteView> for TxidPrefix {
+    #[inline]
     fn from(value: ByteView) -> Self {
         Self::read_from_bytes(&value).unwrap()
     }
 }
 
 impl From<&TxidPrefix> for ByteView {
+    #[inline]
     fn from(value: &TxidPrefix) -> Self {
         Self::new(value.as_bytes())
     }
 }
 
 impl From<TxidPrefix> for ByteView {
+    #[inline]
     fn from(value: TxidPrefix) -> Self {
         Self::from(&value)
     }
 }
 
 impl From<[u8; 8]> for TxidPrefix {
+    #[inline]
     fn from(value: [u8; 8]) -> Self {
         Self(u64::from_ne_bytes(value))
     }

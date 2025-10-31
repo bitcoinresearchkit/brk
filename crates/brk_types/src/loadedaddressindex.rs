@@ -27,22 +27,26 @@ use crate::TypeIndex;
 pub struct LoadedAddressIndex(TypeIndex);
 
 impl From<TypeIndex> for LoadedAddressIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for LoadedAddressIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }
 }
 impl From<LoadedAddressIndex> for usize {
+    #[inline]
     fn from(value: LoadedAddressIndex) -> Self {
         usize::from(value.0)
     }
 }
 impl From<LoadedAddressIndex> for u32 {
+    #[inline]
     fn from(value: LoadedAddressIndex) -> Self {
         u32::from(value.0)
     }

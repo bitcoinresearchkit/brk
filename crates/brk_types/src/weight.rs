@@ -28,30 +28,35 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct Weight(u64);
 
 impl From<bitcoin::Weight> for Weight {
+    #[inline]
     fn from(value: bitcoin::Weight) -> Self {
         Self(value.to_wu())
     }
 }
 
 impl From<Weight> for bitcoin::Weight {
+    #[inline]
     fn from(value: Weight) -> Self {
         Self::from_wu(value.0)
     }
 }
 
 impl From<usize> for Weight {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
 
 impl From<f64> for Weight {
+    #[inline]
     fn from(value: f64) -> Self {
         Self(value as u64)
     }
 }
 
 impl From<Weight> for f64 {
+    #[inline]
     fn from(value: Weight) -> Self {
         value.0 as f64
     }

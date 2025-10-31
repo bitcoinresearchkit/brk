@@ -27,36 +27,43 @@ use crate::TypeIndex;
 )]
 pub struct P2PKHAddressIndex(TypeIndex);
 impl From<TypeIndex> for P2PKHAddressIndex {
+    #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
 impl From<P2PKHAddressIndex> for TypeIndex {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         value.0
     }
 }
 impl From<P2PKHAddressIndex> for usize {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<P2PKHAddressIndex> for u64 {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<P2PKHAddressIndex> for u32 {
+    #[inline]
     fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(*value)
     }
 }
 impl From<u32> for P2PKHAddressIndex {
+    #[inline]
     fn from(value: u32) -> Self {
         Self(TypeIndex::from(value))
     }
 }
 impl From<usize> for P2PKHAddressIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }

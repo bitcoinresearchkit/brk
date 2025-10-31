@@ -1168,6 +1168,7 @@ pub fn pools() -> &'static Pools {
 }
 
 impl From<[JSONPool; POOL_COUNT]> for Pools {
+    #[inline]
     fn from(value: [JSONPool; POOL_COUNT]) -> Self {
         Pools(
             value

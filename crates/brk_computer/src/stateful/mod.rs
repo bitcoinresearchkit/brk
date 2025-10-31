@@ -8,16 +8,17 @@ use brk_types::{
     AnyAddressDataIndexEnum, AnyAddressIndex, CheckedSub, DateIndex, Dollars, EmptyAddressData,
     EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, OutputType, P2AAddressIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
-    P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64, Timestamp, TxInIndex, TxOutIndex,
-    TypeIndex, Version,
+    P2WPKHAddressIndex, P2WSHAddressIndex, Sats, StoredU64, Timestamp, TxInIndex, TxIndex,
+    TxOutIndex, TypeIndex, Version,
 };
 use log::info;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 use vecdb::{
-    AnyCloneableIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
-    Format, GenericStoredVec, ImportOptions, LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp,
-    StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator,
+    CollectableVec, Database, EagerVec, Exit, Format, GenericStoredVec, ImportOptions,
+    LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -43,6 +44,8 @@ use addresstype::*;
 use range_map::*;
 use r#trait::*;
 use withaddressdatasource::*;
+
+type TxIndexVec = SmallVec<[TxIndex; 4]>;
 
 const VERSION: Version = Version::new(21);
 
@@ -186,12 +189,7 @@ impl Vecs {
                         .as_ref()
                         .unwrap()
                         .boxed_clone(),
-                    |height: Height, iter| {
-                        iter.next_at(height.to_usize()).map(|(_, value)| {
-                            let d: Dollars = value.into_owned();
-                            d
-                        })
-                    },
+                    |height: Height, iter| iter.next_at(height.to_usize()).map(|(_, d)| d),
                 )
             }),
             indexes_to_market_cap: compute_dollars.then(|| {
@@ -519,8 +517,12 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
-        let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
+        let dateindex_to_first_height = &indexes.dateindex_to_first_height;
+        let dateindex_to_height_count = &indexes.dateindex_to_height_count;
+        let dateindex_to_price_close = price
+            .as_ref()
+            .map(|price| price.timeindexes_to_price_close.dateindex.as_ref().unwrap());
+        let height_to_date_fixed = &indexes.height_to_date_fixed;
         let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
         let height_to_first_p2pk33addressindex = &indexer.vecs.height_to_first_p2pk33addressindex;
         let height_to_first_p2pk65addressindex = &indexer.vecs.height_to_first_p2pk65addressindex;
@@ -529,38 +531,42 @@ impl Vecs {
         let height_to_first_p2traddressindex = &indexer.vecs.height_to_first_p2traddressindex;
         let height_to_first_p2wpkhaddressindex = &indexer.vecs.height_to_first_p2wpkhaddressindex;
         let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
-        let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
+        let height_to_first_txindex = &indexer.vecs.height_to_first_txindex;
+        let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
+        let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
-        let txinindex_to_outpoint = &indexer.vecs.txinindex_to_outpoint;
-        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
-        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
-        let txindex_to_height = &indexer.vecs.txindex_to_height;
+        let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
+        let height_to_price_close = price
+            .as_ref()
+            .map(|price| &price.chainindexes_to_price_close.height);
         let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
-        let txoutindex_to_txindex = &indexer.vecs.txoutindex_to_txindex;
-        let txoutindex_to_outputtype = &indexer.vecs.txoutindex_to_outputtype;
-        let txoutindex_to_typeindex = &indexer.vecs.txoutindex_to_typeindex;
+        let height_to_tx_count = chain.indexes_to_tx_count.height.as_ref().unwrap();
         let height_to_unclaimed_rewards = chain
             .indexes_to_unclaimed_rewards
             .sats
             .height
             .as_ref()
             .unwrap();
-        let height_to_price_close = price
-            .as_ref()
-            .map(|price| &price.chainindexes_to_price_close.height);
-        let dateindex_to_price_close = price
-            .as_ref()
-            .map(|price| price.timeindexes_to_price_close.dateindex.as_ref().unwrap());
-        let height_to_date_fixed = &indexes.height_to_date_fixed;
-        let dateindex_to_first_height = &indexes.dateindex_to_first_height;
-        let dateindex_to_height_count = &indexes.dateindex_to_height_count;
+        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
+        let txindex_to_height = &indexer.vecs.txindex_to_height;
+        let txindex_to_input_count = &indexes.txindex_to_input_count;
+        let txindex_to_output_count = &indexes.txindex_to_output_count;
+        let txinindex_to_outpoint = &indexer.vecs.txinindex_to_outpoint;
+        let txoutindex_to_outputtype = &indexer.vecs.txoutindex_to_outputtype;
+        let txoutindex_to_txindex = &indexer.vecs.txoutindex_to_txindex;
+        let txoutindex_to_typeindex = &indexer.vecs.txoutindex_to_typeindex;
+        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
 
         let mut height_to_price_close_iter = height_to_price_close.as_ref().map(|v| v.into_iter());
         let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
 
         let base_version = Version::ZERO
-            + height_to_first_txoutindex.version()
-            + height_to_first_txinindex.version()
+            + dateindex_to_first_height.version()
+            + dateindex_to_height_count.version()
+            + dateindex_to_price_close
+                .as_ref()
+                .map_or(Version::ZERO, |v| v.version())
+            + height_to_date_fixed.version()
             + height_to_first_p2aaddressindex.version()
             + height_to_first_p2pk33addressindex.version()
             + height_to_first_p2pk65addressindex.version()
@@ -569,26 +575,26 @@ impl Vecs {
             + height_to_first_p2traddressindex.version()
             + height_to_first_p2wpkhaddressindex.version()
             + height_to_first_p2wshaddressindex.version()
-            + height_to_timestamp_fixed.version()
-            + height_to_output_count.version()
+            + height_to_first_txindex.version()
+            + height_to_first_txinindex.version()
+            + height_to_first_txoutindex.version()
             + height_to_input_count.version()
-            + txinindex_to_outpoint.version()
-            + txoutindex_to_value.version()
-            + txindex_to_height.version()
-            + txindex_to_first_txoutindex.version()
-            + txoutindex_to_txindex.version()
-            + txoutindex_to_outputtype.version()
-            + txoutindex_to_typeindex.version()
-            + height_to_unclaimed_rewards.version()
+            + height_to_output_count.version()
             + height_to_price_close
                 .as_ref()
                 .map_or(Version::ZERO, |v| v.version())
-            + dateindex_to_price_close
-                .as_ref()
-                .map_or(Version::ZERO, |v| v.version())
-            + height_to_date_fixed.version()
-            + dateindex_to_first_height.version()
-            + dateindex_to_height_count.version();
+            + height_to_timestamp_fixed.version()
+            + height_to_tx_count.version()
+            + height_to_unclaimed_rewards.version()
+            + txindex_to_first_txoutindex.version()
+            + txindex_to_height.version()
+            + txindex_to_input_count.version()
+            + txindex_to_output_count.version()
+            + txinindex_to_outpoint.version()
+            + txoutindex_to_outputtype.version()
+            + txoutindex_to_txindex.version()
+            + txoutindex_to_typeindex.version()
+            + txoutindex_to_value.version();
 
         let mut separate_utxo_vecs = self.utxo_cohorts.iter_separate_mut().collect::<Vec<_>>();
         let mut separate_address_vecs =
@@ -748,8 +754,11 @@ impl Vecs {
 
             let ir = IndexerReaders::new(indexer);
 
-            let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
-            let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
+            let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
+            let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
+            let mut dateindex_to_price_close_iter =
+                dateindex_to_price_close.as_ref().map(|v| v.into_iter());
+            let mut height_to_date_fixed_iter = height_to_date_fixed.into_iter();
             let mut height_to_first_p2aaddressindex_iter =
                 height_to_first_p2aaddressindex.into_iter();
             let mut height_to_first_p2pk33addressindex_iter =
@@ -766,14 +775,15 @@ impl Vecs {
                 height_to_first_p2wpkhaddressindex.into_iter();
             let mut height_to_first_p2wshaddressindex_iter =
                 height_to_first_p2wshaddressindex.into_iter();
-            let mut height_to_output_count_iter = height_to_output_count.into_iter();
+            let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
+            let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
+            let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
             let mut height_to_input_count_iter = height_to_input_count.into_iter();
+            let mut height_to_output_count_iter = height_to_output_count.into_iter();
+            let mut height_to_tx_count_iter = height_to_tx_count.into_iter();
             let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
-            let mut dateindex_to_price_close_iter =
-                dateindex_to_price_close.as_ref().map(|v| v.into_iter());
-            let mut height_to_date_fixed_iter = height_to_date_fixed.into_iter();
-            let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
-            let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
+            let mut txindex_to_input_count_iter = txindex_to_input_count.boxed_iter();
+            let mut txindex_to_output_count_iter = txindex_to_output_count.boxed_iter();
 
             let height_to_price_close_vec =
                 height_to_price_close.map(|height_to_price_close| height_to_price_close.collect());
@@ -841,14 +851,28 @@ impl Vecs {
                 let price = height_to_price_close_iter
                     .as_mut()
                     .map(|i| *i.unwrap_get_inner(height));
+                let first_txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
                 let first_txoutindex = height_to_first_txoutindex_iter
                     .unwrap_get_inner(height)
                     .to_usize();
                 let first_txinindex = height_to_first_txinindex_iter
                     .unwrap_get_inner(height)
                     .to_usize();
+                let tx_count = height_to_tx_count_iter.unwrap_get_inner(height);
                 let output_count = height_to_output_count_iter.unwrap_get_inner(height);
                 let input_count = height_to_input_count_iter.unwrap_get_inner(height);
+
+                let txoutindex_to_txindex = build_txoutindex_to_txindex(
+                    first_txindex,
+                    u64::from(tx_count),
+                    &mut txindex_to_output_count_iter,
+                );
+
+                let txinindex_to_txindex = build_txinindex_to_txindex(
+                    first_txindex,
+                    u64::from(tx_count),
+                    &mut txindex_to_input_count_iter,
+                );
 
                 let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
                     p2a: height_to_first_p2aaddressindex_iter
@@ -1499,8 +1523,7 @@ impl Vecs {
                     .loaded
                     .get_any_or_read(loadedaddressindex, reader)
                     .unwrap()
-                    .unwrap()
-                    .into_owned();
+                    .unwrap();
 
                 WithAddressDataSource::FromLoadedAddressDataVec((
                     loadedaddressindex,
@@ -1514,8 +1537,7 @@ impl Vecs {
                     .empty
                     .get_any_or_read(emtpyaddressindex, reader)
                     .unwrap()
-                    .unwrap()
-                    .into_owned();
+                    .unwrap();
 
                 WithAddressDataSource::FromEmptyAddressDataVec((
                     emtpyaddressindex,
@@ -1969,7 +1991,7 @@ impl AnyAddressIndexes {
             OutputType::P2A => self.p2a.get_any_or_read(typeindex.into(), reader),
             _ => unreachable!(),
         };
-        result.unwrap().unwrap().into_owned()
+        result.unwrap().unwrap()
     }
 
     fn update_or_push(
@@ -2103,4 +2125,44 @@ impl VecsReaders {
         self.addresstypeindex_to_anyaddressindex
             .get_unwrap(address_type)
     }
+}
+
+fn build_txoutindex_to_txindex<'a>(
+    block_first_txindex: TxIndex,
+    block_tx_count: u64,
+    txindex_to_output_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+) -> Vec<TxIndex> {
+    let mut vec = Vec::new();
+
+    let block_first_txindex = block_first_txindex.to_usize();
+    for tx_offset in 0..block_tx_count as usize {
+        let txindex = TxIndex::from(block_first_txindex + tx_offset);
+        let output_count = u64::from(txindex_to_output_count.unwrap_get_inner(txindex));
+
+        for _ in 0..output_count {
+            vec.push(txindex);
+        }
+    }
+
+    vec
+}
+
+fn build_txinindex_to_txindex<'a>(
+    block_first_txindex: TxIndex,
+    block_tx_count: u64,
+    txindex_to_input_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+) -> Vec<TxIndex> {
+    let mut vec = Vec::new();
+
+    let block_first_txindex = block_first_txindex.to_usize();
+    for tx_offset in 0..block_tx_count as usize {
+        let txindex = TxIndex::from(block_first_txindex + tx_offset);
+        let input_count = u64::from(txindex_to_input_count.unwrap_get_inner(txindex));
+
+        for _ in 0..input_count {
+            vec.push(txindex);
+        }
+    }
+
+    vec
 }

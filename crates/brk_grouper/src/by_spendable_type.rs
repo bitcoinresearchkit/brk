@@ -114,6 +114,7 @@ impl<T> BySpendableType<Filtered<T>> {
 }
 
 impl<T> From<BySpendableType<T>> for BySpendableType<Filtered<T>> {
+    #[inline]
     fn from(value: BySpendableType<T>) -> Self {
         Self {
             p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),

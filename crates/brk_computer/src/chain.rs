@@ -98,7 +98,7 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredU64>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
-    pub txinindex_to_value: LazyVecFrom2<TxInIndex, Sats, TxInIndex, TxOutIndex, TxOutIndex, Sats>,
+    pub txinindex_to_value: EagerVec<TxInIndex, Sats>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,
@@ -158,29 +158,8 @@ impl Vecs {
 
         let compute_dollars = price.is_some();
 
-        let txinindex_to_value = LazyVecFrom2::init(
-            "value",
-            version + Version::ZERO,
-            indexes.txinindex_to_txoutindex.boxed_clone(),
-            indexer.vecs.txoutindex_to_value.boxed_clone(),
-            |index: TxInIndex, txinindex_to_txoutindex_iter, txoutindex_to_value_iter| {
-                txinindex_to_txoutindex_iter.next_at(index.to_usize()).map(
-                    |(txinindex, txoutindex)| {
-                        let txoutindex = txoutindex.into_owned();
-                        if txoutindex == TxOutIndex::COINBASE {
-                            Sats::MAX
-                        } else if let Some((_, value)) =
-                            txoutindex_to_value_iter.next_at(txoutindex.to_usize())
-                        {
-                            value.into_owned()
-                        } else {
-                            dbg!(txinindex, txoutindex);
-                            panic!()
-                        }
-                    },
-                )
-            },
-        );
+        let txinindex_to_value: EagerVec<TxInIndex, Sats> =
+            EagerVec::forced_import_compressed(&db, "value", version + Version::ZERO)?;
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
@@ -192,12 +171,7 @@ impl Vecs {
                 txindex_to_base_size_iter
                     .next_at(index)
                     .map(|(_, base_size)| {
-                        let base_size = base_size.into_owned();
-                        let total_size = txindex_to_total_size_iter
-                            .next_at(index)
-                            .unwrap()
-                            .1
-                            .into_owned();
+                        let total_size = txindex_to_total_size_iter.next_at(index).unwrap().1;
 
                         // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
                         let wu = usize::from(base_size) * 3 + usize::from(total_size);
@@ -214,9 +188,7 @@ impl Vecs {
             |index: TxIndex, iter| {
                 let index = index.to_usize();
                 iter.next_at(index).map(|(_, weight)| {
-                    StoredU64::from(
-                        bitcoin::Weight::from(weight.into_owned()).to_vbytes_ceil() as usize
-                    )
+                    StoredU64::from(bitcoin::Weight::from(weight).to_vbytes_ceil() as usize)
                 })
             },
         );
@@ -230,12 +202,10 @@ impl Vecs {
                 txindex_to_height_iter
                     .next_at(index.to_usize())
                     .map(|(_, height)| {
-                        let height = height.into_owned();
                         let txindex = height_to_first_txindex_iter
                             .next_at(height.to_usize())
                             .unwrap()
-                            .1
-                            .into_owned();
+                            .1;
                         StoredBool::from(index == txindex)
                     })
             },
@@ -255,20 +225,11 @@ impl Vecs {
                 txindex_to_first_txinindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
-                        let first_index = usize::from(first_index.into_owned());
-                        let count = *txindex_to_input_count_iter
-                            .next_at(txindex)
-                            .unwrap()
-                            .1
-                            .into_owned();
+                        let first_index = usize::from(first_index);
+                        let count = *txindex_to_input_count_iter.next_at(txindex).unwrap().1;
                         let range = first_index..first_index + count as usize;
                         range.into_iter().fold(Sats::ZERO, |total, txinindex| {
-                            total
-                                + txinindex_to_value_iter
-                                    .next_at(txinindex)
-                                    .unwrap()
-                                    .1
-                                    .into_owned()
+                            total + txinindex_to_value_iter.next_at(txinindex).unwrap().1
                         })
                     })
             },
@@ -302,19 +263,11 @@ impl Vecs {
                 txindex_to_first_txoutindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
-                        let first_index = usize::from(first_index.into_owned());
-                        let count = *txindex_to_output_count_iter
-                            .next_at(txindex)
-                            .unwrap()
-                            .1
-                            .into_owned();
+                        let first_index = usize::from(first_index);
+                        let count = *txindex_to_output_count_iter.next_at(txindex).unwrap().1;
                         let range = first_index..first_index + count as usize;
                         range.into_iter().fold(Sats::ZERO, |total, txoutindex| {
-                            let v = txoutindex_to_value_iter
-                                .next_at(txoutindex)
-                                .unwrap()
-                                .1
-                                .into_owned();
+                            let v = txoutindex_to_value_iter.next_at(txoutindex).unwrap().1;
                             total + v
                         })
                     })
@@ -1423,6 +1376,41 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v1, TxVersion::ONE)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
+
+        let mut txoutindex_to_value_iter = indexer.vecs.txoutindex_to_value.into_iter();
+        self.txinindex_to_value.compute_transform(
+            starting_indexes.txinindex,
+            &indexes.txinindex_to_txoutindex,
+            |(txinindex, txoutindex, ..)| {
+                let value = if txoutindex == TxOutIndex::COINBASE {
+                    Sats::MAX
+                } else {
+                    txoutindex_to_value_iter.unwrap_get_inner(txoutindex)
+                };
+                (txinindex, value)
+            },
+            exit,
+        )?;
+
+        // indexes.txinindex_to_txoutindex.boxed_clone(),
+        // indexer.vecs.txoutindex_to_value.boxed_clone(),
+        // |index: TxInIndex, txinindex_to_txoutindex_iter, txoutindex_to_value_iter| {
+        //     txinindex_to_txoutindex_iter.next_at(index.to_usize()).map(
+        //         |(txinindex, txoutindex)| {
+        //             let txoutindex = txoutindex;
+        //             if txoutindex == TxOutIndex::COINBASE {
+        //                 Sats::MAX
+        //             } else if let Some((_, value)) =
+        //                 txoutindex_to_value_iter.next_at(txoutindex.to_usize())
+        //             {
+        //                 value
+        //             } else {
+        //                 dbg!(txinindex, txoutindex);
+        //                 panic!()
+        //             }
+        //         },
+        //     )
+        // },
 
         // self.indexes_to_output_value.compute_all(
         //     indexer,

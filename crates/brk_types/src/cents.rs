@@ -47,30 +47,35 @@ impl Cents {
 }
 
 impl From<Dollars> for Cents {
+    #[inline]
     fn from(value: Dollars) -> Self {
         Self((*value * 100.0).round() as i64)
     }
 }
 
 impl From<Cents> for f64 {
+    #[inline]
     fn from(value: Cents) -> Self {
         value.0 as f64
     }
 }
 
 impl From<i64> for Cents {
+    #[inline]
     fn from(value: i64) -> Self {
         Self(value)
     }
 }
 
 impl From<u64> for Cents {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value as i64)
     }
 }
 
 impl From<Cents> for usize {
+    #[inline]
     fn from(value: Cents) -> Self {
         if value.0 < 0 {
             panic!()
@@ -80,18 +85,21 @@ impl From<Cents> for usize {
 }
 
 impl From<usize> for Cents {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as i64)
     }
 }
 
 impl From<Cents> for i64 {
+    #[inline]
     fn from(value: Cents) -> Self {
         value.0
     }
 }
 
 impl From<Cents> for u64 {
+    #[inline]
     fn from(value: Cents) -> Self {
         if value.0 < 0 {
             panic!("Shouldn't convert neg cents to u64")
@@ -122,6 +130,7 @@ impl Div<usize> for Cents {
 }
 
 impl From<u128> for Cents {
+    #[inline]
     fn from(value: u128) -> Self {
         if value > i64::MAX as u128 {
             panic!("u128 bigger than i64")
@@ -131,6 +140,7 @@ impl From<u128> for Cents {
 }
 
 impl From<Cents> for u128 {
+    #[inline]
     fn from(value: Cents) -> Self {
         if value.0 < 0 {
             panic!("Shouldn't convert neg cents to u128")

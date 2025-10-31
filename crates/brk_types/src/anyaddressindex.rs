@@ -17,6 +17,7 @@ impl AnyAddressIndex {
 }
 
 impl From<LoadedAddressIndex> for AnyAddressIndex {
+    #[inline]
     fn from(value: LoadedAddressIndex) -> Self {
         if u32::from(value) >= MIN_EMPTY_INDEX {
             panic!("{value} is higher than MIN_EMPTY_INDEX ({MIN_EMPTY_INDEX})")
@@ -26,6 +27,7 @@ impl From<LoadedAddressIndex> for AnyAddressIndex {
 }
 
 impl From<EmptyAddressIndex> for AnyAddressIndex {
+    #[inline]
     fn from(value: EmptyAddressIndex) -> Self {
         Self(*value + MIN_EMPTY_INDEX)
     }
@@ -54,6 +56,7 @@ pub enum AnyAddressDataIndexEnum {
 }
 
 impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
+    #[inline]
     fn from(value: AnyAddressIndex) -> Self {
         let uvalue = u32::from(value.0);
         if uvalue >= MIN_EMPTY_INDEX {

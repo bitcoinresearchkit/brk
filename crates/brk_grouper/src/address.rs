@@ -46,6 +46,7 @@ impl<T> AddressGroups<Filtered<T>> {
 }
 
 impl<T> From<AddressGroups<T>> for AddressGroups<Filtered<T>> {
+    #[inline]
     fn from(value: AddressGroups<T>) -> Self {
         Self {
             amount_range: ByAmountRange::from(value.amount_range),

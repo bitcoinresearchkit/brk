@@ -83,6 +83,7 @@ impl CheckedSub<TxOutIndex> for TxOutIndex {
 }
 
 impl From<TxOutIndex> for u32 {
+    #[inline]
     fn from(value: TxOutIndex) -> Self {
         if value.0 > u32::MAX as u64 {
             panic!()
@@ -92,28 +93,33 @@ impl From<TxOutIndex> for u32 {
 }
 
 impl From<u64> for TxOutIndex {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
 impl From<TxOutIndex> for u64 {
+    #[inline]
     fn from(value: TxOutIndex) -> Self {
         value.0
     }
 }
 
 impl From<usize> for TxOutIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
 impl From<TxOutIndex> for usize {
+    #[inline]
     fn from(value: TxOutIndex) -> Self {
         value.0 as usize
     }
 }
 
 impl From<&[u8]> for TxOutIndex {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(u64::from_be_bytes(copy_first_8bytes(value).unwrap()))
     }

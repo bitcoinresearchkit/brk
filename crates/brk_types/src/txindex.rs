@@ -83,57 +83,67 @@ impl CheckedSub<TxIndex> for TxIndex {
 }
 
 impl From<u32> for TxIndex {
+    #[inline]
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
 impl From<TxIndex> for u32 {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         value.0
     }
 }
 
 impl From<u64> for TxIndex {
+    #[inline]
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
 impl From<TxIndex> for u64 {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         value.0 as u64
     }
 }
 
 impl From<usize> for TxIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
 impl From<TxIndex> for usize {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         value.0 as usize
     }
 }
 
 impl From<ByteView> for TxIndex {
+    #[inline]
     fn from(value: ByteView) -> Self {
         Self(u32::from_be_bytes(copy_first_4bytes(&value).unwrap()))
     }
 }
 impl From<TxIndex> for ByteView {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         Self::new(&value.to_be_bytes())
     }
 }
 
 impl From<TxIndex> for StoredU32 {
+    #[inline]
     fn from(value: TxIndex) -> Self {
         Self::from(value.0)
     }
 }
 
 impl From<&[u8]> for TxIndex {
+    #[inline]
     fn from(value: &[u8]) -> Self {
         Self(u32::from_be_bytes(copy_first_4bytes(value).unwrap()))
     }

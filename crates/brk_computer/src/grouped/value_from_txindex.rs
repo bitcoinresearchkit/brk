@@ -59,10 +59,8 @@ impl ComputedValueVecsFromTxindex {
             version + VERSION,
             source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
-                iter.next_at(txindex.to_usize()).map(|(_, value)| {
-                    let sats = value.into_owned();
-                    Bitcoin::from(sats)
-                })
+                iter.next_at(txindex.to_usize())
+                    .map(|(_, sats)| Bitcoin::from(sats))
             },
         );
 
@@ -87,15 +85,13 @@ impl ComputedValueVecsFromTxindex {
                  txindex_to_height_iter,
                  height_to_price_close_iter| {
                     let txindex = txindex.to_usize();
-                    txindex_to_btc_iter.next_at(txindex).and_then(|(_, value)| {
-                        let btc = value.into_owned();
+                    txindex_to_btc_iter.next_at(txindex).and_then(|(_, btc)| {
                         txindex_to_height_iter
                             .next_at(txindex)
-                            .and_then(|(_, value)| {
-                                let height = value.into_owned();
+                            .and_then(|(_, height)| {
                                 height_to_price_close_iter
                                     .next_at(height.to_usize())
-                                    .map(|(_, close)| *close.into_owned() * btc)
+                                    .map(|(_, close)| *close * btc)
                             })
                     })
                 },

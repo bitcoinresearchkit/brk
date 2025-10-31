@@ -31,24 +31,28 @@ use super::{Date, DateIndex, MonthIndex};
 pub struct YearIndex(u16);
 
 impl From<u16> for YearIndex {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
 impl From<usize> for YearIndex {
+    #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
 impl From<YearIndex> for u64 {
+    #[inline]
     fn from(value: YearIndex) -> Self {
         value.0 as u64
     }
 }
 
 impl From<YearIndex> for usize {
+    #[inline]
     fn from(value: YearIndex) -> Self {
         value.0 as usize
     }
@@ -84,18 +88,21 @@ impl Div<usize> for YearIndex {
 }
 
 impl From<DateIndex> for YearIndex {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
 impl From<Date> for YearIndex {
+    #[inline]
     fn from(value: Date) -> Self {
         Self(value.year() - 2009)
     }
 }
 
 impl From<YearIndex> for u16 {
+    #[inline]
     fn from(value: YearIndex) -> Self {
         value.0
     }
@@ -108,6 +115,7 @@ impl CheckedSub for YearIndex {
 }
 
 impl From<MonthIndex> for YearIndex {
+    #[inline]
     fn from(value: MonthIndex) -> Self {
         Self((usize::from(value) / 12) as u16)
     }

@@ -77,24 +77,28 @@ impl Default for Date {
 }
 
 impl From<Date_> for Date {
+    #[inline]
     fn from(value: Date_) -> Self {
         Self::new(value.year() as u16, value.month() as u8, value.day() as u8)
     }
 }
 
 impl From<Date> for Date_ {
+    #[inline]
     fn from(value: Date) -> Self {
         Self::new(value.year() as i16, value.month() as i8, value.day() as i8).unwrap()
     }
 }
 
 impl From<Date> for jiff::Timestamp {
+    #[inline]
     fn from(value: Date) -> Self {
         Self::from(Timestamp::from(value))
     }
 }
 
 impl From<Timestamp> for Date {
+    #[inline]
     fn from(value: Timestamp) -> Self {
         Self::from(Date_::from(
             jiff::Timestamp::from(value).to_zoned(TimeZone::UTC),
@@ -103,6 +107,7 @@ impl From<Timestamp> for Date {
 }
 
 impl From<DateIndex> for Date {
+    #[inline]
     fn from(value: DateIndex) -> Self {
         if value == DateIndex::default() {
             Date::INDEX_ZERO

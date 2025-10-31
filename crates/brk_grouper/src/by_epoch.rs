@@ -14,6 +14,7 @@ pub struct ByEpoch<T> {
 }
 
 impl<T> From<ByEpoch<T>> for ByEpoch<Filtered<T>> {
+    #[inline]
     fn from(value: ByEpoch<T>) -> Self {
         Self {
             _0: (Filter::Epoch(HalvingEpoch::new(0)), value._0).into(),

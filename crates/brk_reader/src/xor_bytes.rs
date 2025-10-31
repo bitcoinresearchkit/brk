@@ -8,6 +8,7 @@ pub const XOR_LEN: usize = 8;
 pub struct XORBytes([u8; XOR_LEN]);
 
 impl From<&Path> for XORBytes {
+    #[inline]
     fn from(value: &Path) -> Self {
         Self(
             fs::read(value.join("xor.dat"))

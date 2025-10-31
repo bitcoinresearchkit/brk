@@ -11,6 +11,7 @@ use super::AddressTypeToAddressCount;
 pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<Height, StoredU64>>);
 
 impl From<ByAddressType<EagerVec<Height, StoredU64>>> for AddressTypeToHeightToAddressCount {
+    #[inline]
     fn from(value: ByAddressType<EagerVec<Height, StoredU64>>) -> Self {
         Self(value)
     }

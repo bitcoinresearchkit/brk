@@ -34,6 +34,7 @@ impl TxVersion {
 }
 
 impl From<bitcoin::transaction::Version> for TxVersion {
+    #[inline]
     fn from(value: bitcoin::transaction::Version) -> Self {
         match value.0 {
             1 => Self::ONE,
@@ -45,12 +46,14 @@ impl From<bitcoin::transaction::Version> for TxVersion {
 }
 
 impl From<TxVersion> for bitcoin::transaction::Version {
+    #[inline]
     fn from(value: TxVersion) -> Self {
         Self(value.0 as i32)
     }
 }
 
 impl From<TxVersion> for StoredU16 {
+    #[inline]
     fn from(value: TxVersion) -> Self {
         Self::from(value.0)
     }

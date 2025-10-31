@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
 use brk_types::{Format, Index, Metric, Metrics};
-use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -28,6 +27,7 @@ impl Deref for Params {
 }
 
 impl From<(Index, Metric, ParamsOpt)> for Params {
+    #[inline]
     fn from((index, metric, rest): (Index, Metric, ParamsOpt)) -> Self {
         Self {
             index,
@@ -38,6 +38,7 @@ impl From<(Index, Metric, ParamsOpt)> for Params {
 }
 
 impl From<(Index, Metrics, ParamsOpt)> for Params {
+    #[inline]
     fn from((index, metrics, rest): (Index, Metrics, ParamsOpt)) -> Self {
         Self {
             index,
@@ -118,6 +119,7 @@ pub struct ParamsDeprec {
 }
 
 impl From<ParamsDeprec> for Params {
+    #[inline]
     fn from(value: ParamsDeprec) -> Self {
         Params {
             index: value.index,
