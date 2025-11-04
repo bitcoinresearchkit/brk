@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
-use brk_store::{AnyStore, StoreV2 as Store};
+use brk_store::{AnyStore, StoreFjallV2 as Store};
 use brk_types::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
     TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
@@ -10,7 +10,7 @@ use brk_types::{
 };
 use fjall2::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
-use vecdb::{AnyVec, StoredIndex, VecIterator};
+use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
 
 use crate::Indexes;
 
@@ -160,10 +160,11 @@ impl Stores {
 
         if starting_indexes.height != Height::ZERO {
             vecs.height_to_blockhash
-                .iter_at(starting_indexes.height)
-                .for_each(|(_, v)| {
-                    let blockhashprefix = BlockHashPrefix::from(v);
-                    self.blockhashprefix_to_height.remove(blockhashprefix);
+                .iter()?
+                .skip(starting_indexes.height.to_usize())
+                .map(BlockHashPrefix::from)
+                .for_each(|prefix| {
+                    self.blockhashprefix_to_height.remove(prefix);
                 });
 
             (starting_indexes.height.to_usize()..vecs.height_to_blockhash.len())
@@ -172,13 +173,12 @@ impl Stores {
                     self.height_to_coinbase_tag.remove(h);
                 });
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2pk65addressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2pk65addressindex_to_p2pk65bytes_iter =
-                    vecs.p2pk65addressindex_to_p2pk65bytes.iter();
+                    vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
 
                 while let Some(typedbytes) = p2pk65addressindex_to_p2pk65bytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -188,13 +188,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2pk33addressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2pk33addressindex_to_p2pk33bytes_iter =
-                    vecs.p2pk33addressindex_to_p2pk33bytes.iter();
+                    vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
 
                 while let Some(typedbytes) = p2pk33addressindex_to_p2pk33bytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -204,13 +203,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2pkhaddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-                    vecs.p2pkhaddressindex_to_p2pkhbytes.iter();
+                    vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
 
                 while let Some(typedbytes) = p2pkhaddressindex_to_p2pkhbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -220,13 +218,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2shaddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2shaddressindex_to_p2shbytes_iter =
-                    vecs.p2shaddressindex_to_p2shbytes.iter();
+                    vecs.p2shaddressindex_to_p2shbytes.iter()?;
 
                 while let Some(typedbytes) = p2shaddressindex_to_p2shbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -236,13 +233,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2traddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2traddressindex_to_p2trbytes_iter =
-                    vecs.p2traddressindex_to_p2trbytes.iter();
+                    vecs.p2traddressindex_to_p2trbytes.iter()?;
 
                 while let Some(typedbytes) = p2traddressindex_to_p2trbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -252,13 +248,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2wpkhaddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-                    vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter();
+                    vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
 
                 while let Some(typedbytes) = p2wpkhaddressindex_to_p2wpkhbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -268,13 +263,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2wshaddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
                 let mut p2wshaddressindex_to_p2wshbytes_iter =
-                    vecs.p2wshaddressindex_to_p2wshbytes.iter();
+                    vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
 
                 while let Some(typedbytes) = p2wshaddressindex_to_p2wshbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -284,12 +278,12 @@ impl Stores {
                 }
             }
 
-            if let Some(mut index) = vecs
+            if let Ok(mut index) = vecs
                 .height_to_first_p2aaddressindex
-                .iter()
-                .get(starting_indexes.height)
+                .one_shot_read(starting_indexes.height)
             {
-                let mut p2aaddressindex_to_p2abytes_iter = vecs.p2aaddressindex_to_p2abytes.iter();
+                let mut p2aaddressindex_to_p2abytes_iter =
+                    vecs.p2aaddressindex_to_p2abytes.iter()?;
 
                 while let Some(typedbytes) = p2aaddressindex_to_p2abytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
@@ -306,8 +300,12 @@ impl Stores {
 
         if starting_indexes.txindex != TxIndex::ZERO {
             vecs.txindex_to_txid
-                .iter_at(starting_indexes.txindex)
+                .iter()?
+                .enumerate()
+                .skip(starting_indexes.txindex.to_usize())
                 .for_each(|(txindex, txid)| {
+                    let txindex = TxIndex::from(txindex);
+
                     let txidprefix = TxidPrefix::from(&txid);
 
                     // "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599"
@@ -328,23 +326,25 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
+            let mut txoutindex_to_txindex_iter = vecs.txoutindex_to_txindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
             vecs.txoutindex_to_outputtype
-                .iter_at(starting_indexes.txoutindex)
+                .iter()?
+                .enumerate()
+                .skip(starting_indexes.txoutindex.to_usize())
                 .zip(
                     vecs.txoutindex_to_typeindex
-                        .iter_at(starting_indexes.txoutindex),
+                        .iter()?
+                        .skip(starting_indexes.txoutindex.to_usize()),
                 )
                 .filter(|((_, outputtype), _)| outputtype.is_address())
-                .for_each(|((txoutindex, outputtype), (_, typeindex))| {
-                    let txindex = vecs.txoutindex_to_txindex.iter().get(txoutindex).unwrap();
+                .for_each(|((txoutindex, outputtype), typeindex)| {
+                    let txindex = txoutindex_to_txindex_iter.unsafe_get_(txoutindex);
 
                     let vout = Vout::from(
                         txoutindex.to_usize()
-                            - vecs
-                                .txindex_to_first_txoutindex
-                                .iter()
-                                .get(txindex)
-                                .unwrap()
+                            - txindex_to_first_txoutindex_iter
+                                .unsafe_get(txindex)
                                 .to_usize(),
                     );
                     let outpoint = OutPoint::new(txindex, vout);
@@ -356,9 +356,13 @@ impl Stores {
                 });
 
             // Add back outputs that were spent after the rollback point
+            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.iter()?;
             vecs.txinindex_to_outpoint
-                .iter_at(starting_indexes.txinindex)
-                .for_each(|(_, outpoint)| {
+                .iter()?
+                .skip(starting_indexes.txinindex.to_usize())
+                .for_each(|outpoint| {
                     if outpoint.is_coinbase() {
                         return;
                     }
@@ -367,24 +371,14 @@ impl Stores {
                     let vout = outpoint.vout();
 
                     // Calculate txoutindex from txindex and vout
-                    let txoutindex = vecs
-                        .txindex_to_first_txoutindex
-                        .iter()
-                        .get(txindex)
-                        .unwrap()
-                        + vout;
+                    let txoutindex = txindex_to_first_txoutindex_iter.unsafe_get(txindex) + vout;
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
-                        let outputtype = vecs
-                            .txoutindex_to_outputtype
-                            .iter()
-                            .get(txoutindex)
-                            .unwrap();
+                        let outputtype = txoutindex_to_outputtype_iter.unsafe_get(txoutindex);
 
                         if outputtype.is_address() {
-                            let typeindex =
-                                vecs.txoutindex_to_typeindex.iter().get(txoutindex).unwrap();
+                            let typeindex = txoutindex_to_typeindex_iter.unsafe_get(txoutindex);
 
                             self.addresstype_to_typeindex_and_unspentoutpoint
                                 .get_mut(outputtype)

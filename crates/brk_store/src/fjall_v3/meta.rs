@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_types::Version;
-use fjall3::{PersistMode, TxDatabase, TxKeyspace};
+use fjall3::{TxDatabase, TxKeyspace};
 
 use super::Height;
 
@@ -18,7 +18,7 @@ pub struct StoreMeta {
 
 impl StoreMeta {
     pub fn checked_open<F>(
-        database: &TxDatabase,
+        _database: &TxDatabase,
         path: &Path,
         version: Version,
         open_partition_handle: F,
@@ -28,18 +28,18 @@ impl StoreMeta {
     {
         fs::create_dir_all(path)?;
 
-        let mut partition = open_partition_handle()?;
+        let partition = open_partition_handle()?;
 
         if Version::try_from(Self::path_version_(path).as_path())
             .is_ok_and(|prev_version| version != prev_version)
         {
             todo!();
-            fs::remove_dir_all(path)?;
-            // Doesn't exist
-            // database.delete_partition(partition)?;
-            fs::create_dir(path)?;
-            database.persist(PersistMode::SyncAll)?;
-            partition = open_partition_handle()?;
+            // fs::remove_dir_all(path)?;
+            // // Doesn't exist
+            // // database.delete_partition(partition)?;
+            // fs::create_dir(path)?;
+            // database.persist(PersistMode::SyncAll)?;
+            // partition = open_partition_handle()?;
         }
 
         let slf = Self {
@@ -60,10 +60,6 @@ impl StoreMeta {
     pub fn export(&mut self, height: Height) -> io::Result<()> {
         self.height = Some(height);
         height.write(&self.path_height())
-    }
-
-    pub fn reset(&mut self) {
-        self.height.take();
     }
 
     pub fn path(&self) -> &Path {

@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview6::ByteView;
 use fjall2::{
-    InnerItem, PartitionCreateOptions, PersistMode, TransactionalKeyspace,
-    TransactionalPartitionHandle, ValueType,
+    InnerItem, PartitionCreateOptions, TransactionalKeyspace, TransactionalPartitionHandle,
+    ValueType,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -16,7 +16,7 @@ mod meta;
 use meta::*;
 
 #[derive(Clone)]
-pub struct StoreV2<Key, Value> {
+pub struct StoreFjallV2<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
     keyspace: TransactionalKeyspace,
@@ -33,7 +33,7 @@ pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
         .open_transactional()
 }
 
-impl<K, V> StoreV2<K, V>
+impl<K, V> StoreFjallV2<K, V>
 where
     K: Debug + Clone + From<ByteView> + Ord + Eq + Hash,
     V: Debug + Clone + From<ByteView>,
@@ -163,7 +163,7 @@ where
     }
 }
 
-impl<K, V> AnyStore for StoreV2<K, V>
+impl<K, V> AnyStore for StoreFjallV2<K, V>
 where
     K: Debug + Clone + From<ByteView> + Ord + Eq + Hash,
     V: Debug + Clone + From<ByteView>,
@@ -200,12 +200,6 @@ where
         Ok(())
     }
 
-    fn persist(&self) -> Result<()> {
-        self.keyspace
-            .persist(PersistMode::SyncAll)
-            .map_err(|e| e.into())
-    }
-
     fn name(&self) -> &'static str {
         self.name
     }
@@ -227,7 +221,7 @@ where
     }
 }
 
-pub enum Item<K, V> {
+enum Item<K, V> {
     Value { key: K, value: V },
     Tomb(K),
 }

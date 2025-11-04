@@ -675,7 +675,8 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "brk_fjall",
+ "brk_fjall 2.11.5",
+ "brk_fjall 3.0.0-pre.4",
  "jiff",
  "minreq",
  "sonic-rs",
@@ -705,8 +706,22 @@ dependencies = [
  "byteview 0.6.1",
  "dashmap",
  "log",
- "lsm-tree",
+ "lsm-tree 2.10.4",
  "path-absolutize",
+ "std-semaphore",
+ "tempfile",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "brk_fjall"
+version = "3.0.0-pre.4"
+dependencies = [
+ "byteorder-lite",
+ "byteview 0.8.0",
+ "dashmap",
+ "log",
+ "lsm-tree 3.0.0-pre.4",
  "std-semaphore",
  "tempfile",
  "xxhash-rust",
@@ -729,7 +744,8 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "brk_error",
- "brk_fjall",
+ "brk_fjall 2.11.5",
+ "brk_fjall 3.0.0-pre.4",
  "brk_grouper",
  "brk_iterator",
  "brk_logger",
@@ -740,6 +756,7 @@ dependencies = [
  "brk_types",
  "log",
  "rayon",
+ "redb",
  "rustc-hash",
  "vecdb",
 ]
@@ -1269,13 +1286,15 @@ name = "brk_store"
 version = "0.0.111"
 dependencies = [
  "brk_error",
- "brk_fjall",
+ "brk_fjall 2.11.5",
+ "brk_fjall 3.0.0-pre.4",
  "brk_types",
  "byteview 0.6.1",
  "byteview 0.8.0",
  "candystore",
  "log",
  "parking_lot 0.12.5",
+ "redb",
  "rustc-hash",
 ]
 
@@ -1317,12 +1336,13 @@ dependencies = [
  "allocative",
  "bitcoin",
  "brk_error",
- "byteview 0.6.1",
+ "byteview 0.8.0",
  "derive_deref",
  "itoa",
  "jiff",
  "num_enum",
  "rapidhash",
+ "redb",
  "ryu",
  "schemars",
  "serde",
@@ -1388,6 +1408,12 @@ name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
+
+[[package]]
+name = "byteorder-lite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
 
 [[package]]
 name = "bytes"
@@ -2837,6 +2863,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "lsm-tree"
+version = "3.0.0-pre.4"
+dependencies = [
+ "byteorder-lite",
+ "byteview 0.8.0",
+ "crossbeam-skiplist",
+ "enum_dispatch",
+ "interval-heap",
+ "log",
+ "lz4_flex",
+ "quick_cache",
+ "rustc-hash",
+ "self_cell",
+ "sfa",
+ "tempfile",
+ "varint-rs",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "lz4_flex"
 version = "0.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4061,6 +4107,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rawdb"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6601495283897e6193cbd70d65e4e7420995c59c0de3de953f297c2fa8d9dc7"
+dependencies = [
+ "allocative",
+ "libc",
+ "memmap2",
+ "parking_lot 0.12.5",
+ "rayon",
+]
+
+[[package]]
 name = "rayon"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4078,6 +4137,15 @@ checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "redb"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae323eb086579a3769daa2c753bb96deb95993c534711e0dbe881b5192906a06"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -4296,9 +4364,9 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82d20c4491bc164fa2f6c5d44565947a52ad80b9505d8e36f8d54c27c739fcd0"
+checksum = "1317c3bf3e7df961da95b0a56a172a02abead31276215a0497241a7624b487ce"
 dependencies = [
  "chrono",
  "dyn-clone",
@@ -4311,9 +4379,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33d020396d1d138dc19f1165df7545479dcd58d93810dc5d646a16e55abefa80"
+checksum = "5f760a6150d45dd66ec044983c124595ae76912e77ed0b44124cb3e415cce5d9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4379,18 +4447,6 @@ name = "seq-macro"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
-
-[[package]]
-name = "seqdb"
-version = "0.2.17"
-dependencies = [
- "allocative",
- "libc",
- "memmap2",
- "parking_lot 0.12.5",
- "rayon",
- "zerocopy",
-]
 
 [[package]]
 name = "serde"
@@ -4503,6 +4559,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sfa"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b84349eedbb0664e9febec9c385e8a6644d0496281965ed28b1b20a0108264a9"
+dependencies = [
+ "byteorder-lite",
+ "log",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4594,9 +4661,9 @@ dependencies = [
 
 [[package]]
 name = "sonic-rs"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22540d56ba14521e4878ad436d498518c59698c39a89d5905c694932f0bf7134"
+checksum = "4425ea8d66ec950e0a8f2ef52c766cc3d68d661d9a0845c353c40833179fd866"
 dependencies = [
  "ahash",
  "bumpalo",
@@ -4615,9 +4682,9 @@ dependencies = [
 
 [[package]]
 name = "sonic-simd"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b421f7b6aa4a5de8f685aaf398dfaa828346ee639d2b1c1061ab43d40baa6223"
+checksum = "5707edbfb34a40c9f2a55fa09a49101d9fec4e0cc171ce386086bd9616f34257"
 dependencies = [
  "cfg-if",
 ]
@@ -4905,9 +4972,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.16"
+version = "0.7.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14307c986784f72ef81c89db7d9e28d6ac26d16213b109ea501696195e6e3ce5"
+checksum = "2efa149fe76073d6e8fd97ef4f4eca7b67f599660115591483572e406e165594"
 dependencies = [
  "bytes",
  "futures-core",
@@ -5264,17 +5331,18 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.2.17"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cffa6180edb8fb521c9958d4d00a1cca1b5de396ee371f2f8e3ec54c21205eff"
 dependencies = [
  "allocative",
  "ctrlc",
  "log",
  "parking_lot 0.12.5",
  "pco",
- "seqdb",
+ "rawdb",
  "serde",
  "serde_derive",
- "serde_json",
  "sonic-rs",
  "vecdb_derive",
  "zerocopy",
@@ -5282,7 +5350,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.2.17"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23dffd7af8e5579122f79e4a2df3f62f5f315ef0d593721f585384b61bc722e2"
 dependencies = [
  "quote",
  "syn 2.0.108",

@@ -1,6 +1,10 @@
-use std::hash::{Hash, Hasher};
+use std::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+};
 
 use byteview::ByteView;
+use redb::{Key, TypeName, Value};
 use serde::Serialize;
 use zerocopy::IntoBytes;
 
@@ -60,5 +64,51 @@ impl From<&TypeIndexAndOutPoint> for ByteView {
             ]
             .concat(),
         )
+    }
+}
+
+impl Value for TypeIndexAndOutPoint {
+    type SelfType<'a> = TypeIndexAndOutPoint;
+    type AsBytes<'a>
+        = [u8; 10]
+    // 8 bytes (u64) + 2 bytes (u16)
+    where
+        Self: 'a;
+
+    fn fixed_width() -> Option<usize> {
+        Some(10) // 8 + 2
+    }
+
+    fn from_bytes<'a>(data: &'a [u8]) -> TypeIndexAndOutPoint
+    where
+        Self: 'a,
+    {
+        TypeIndexAndOutPoint {
+            typeindexandtxindex: TypeIndexAndTxIndex::from_bytes(&data[0..8]),
+            vout: Vout::from_bytes(&data[8..10]),
+        }
+    }
+
+    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> [u8; 10]
+    where
+        Self: 'a,
+        Self: 'b,
+    {
+        let mut bytes = [0u8; 10];
+        bytes[0..8].copy_from_slice(&<TypeIndexAndTxIndex as redb::Value>::as_bytes(
+            &value.typeindexandtxindex,
+        ));
+        bytes[8..10].copy_from_slice(&<Vout as redb::Value>::as_bytes(&value.vout));
+        bytes
+    }
+
+    fn type_name() -> TypeName {
+        TypeName::new("TypeIndexAndOutPoint")
+    }
+}
+
+impl Key for TypeIndexAndOutPoint {
+    fn compare(data1: &[u8], data2: &[u8]) -> Ordering {
+        Self::from_bytes(data1).cmp(&Self::from_bytes(data2))
     }
 }

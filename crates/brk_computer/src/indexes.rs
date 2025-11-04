@@ -605,12 +605,11 @@ impl Vecs {
             starting_dateindex
         };
 
-        self.dateindex_to_first_height
-            .compute_inverse_more_to_less(
-                starting_indexes.height,
-                &self.height_to_dateindex,
-                exit,
-            )?;
+        self.dateindex_to_first_height.compute_coarser(
+            starting_indexes.height,
+            &self.height_to_dateindex,
+            exit,
+        )?;
 
         self.dateindex_to_dateindex.compute_from_index(
             starting_dateindex,
@@ -648,8 +647,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.weekindex_to_first_dateindex
-            .compute_inverse_more_to_less(starting_dateindex, &self.dateindex_to_weekindex, exit)?;
+        self.weekindex_to_first_dateindex.compute_coarser(
+            starting_dateindex,
+            &self.dateindex_to_weekindex,
+            exit,
+        )?;
 
         self.weekindex_to_weekindex.compute_from_index(
             starting_weekindex,
@@ -681,12 +683,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.difficultyepoch_to_first_height
-            .compute_inverse_more_to_less(
-                starting_indexes.height,
-                &self.height_to_difficultyepoch,
-                exit,
-            )?;
+        self.difficultyepoch_to_first_height.compute_coarser(
+            starting_indexes.height,
+            &self.height_to_difficultyepoch,
+            exit,
+        )?;
 
         self.difficultyepoch_to_difficultyepoch.compute_from_index(
             starting_difficultyepoch,
@@ -719,12 +720,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.monthindex_to_first_dateindex
-            .compute_inverse_more_to_less(
-                starting_dateindex,
-                &self.dateindex_to_monthindex,
-                exit,
-            )?;
+        self.monthindex_to_first_dateindex.compute_coarser(
+            starting_dateindex,
+            &self.dateindex_to_monthindex,
+            exit,
+        )?;
 
         self.monthindex_to_monthindex.compute_from_index(
             starting_monthindex,
@@ -756,12 +756,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.quarterindex_to_first_monthindex
-            .compute_inverse_more_to_less(
-                starting_monthindex,
-                &self.monthindex_to_quarterindex,
-                exit,
-            )?;
+        self.quarterindex_to_first_monthindex.compute_coarser(
+            starting_monthindex,
+            &self.monthindex_to_quarterindex,
+            exit,
+        )?;
 
         // let quarter_count = self.quarterindex_to_first_monthindex.len();
 
@@ -795,12 +794,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.semesterindex_to_first_monthindex
-            .compute_inverse_more_to_less(
-                starting_monthindex,
-                &self.monthindex_to_semesterindex,
-                exit,
-            )?;
+        self.semesterindex_to_first_monthindex.compute_coarser(
+            starting_monthindex,
+            &self.monthindex_to_semesterindex,
+            exit,
+        )?;
 
         // let semester_count = self.semesterindex_to_first_monthindex.len();
 
@@ -834,12 +832,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.yearindex_to_first_monthindex
-            .compute_inverse_more_to_less(
-                starting_monthindex,
-                &self.monthindex_to_yearindex,
-                exit,
-            )?;
+        self.yearindex_to_first_monthindex.compute_coarser(
+            starting_monthindex,
+            &self.monthindex_to_yearindex,
+            exit,
+        )?;
 
         self.yearindex_to_yearindex.compute_from_index(
             starting_yearindex,
@@ -870,12 +867,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.halvingepoch_to_first_height
-            .compute_inverse_more_to_less(
-                starting_indexes.height,
-                &self.height_to_halvingepoch,
-                exit,
-            )?;
+        self.halvingepoch_to_first_height.compute_coarser(
+            starting_indexes.height,
+            &self.height_to_halvingepoch,
+            exit,
+        )?;
 
         self.halvingepoch_to_halvingepoch.compute_from_index(
             starting_halvingepoch,
@@ -899,12 +895,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.decadeindex_to_first_yearindex
-            .compute_inverse_more_to_less(
-                starting_yearindex,
-                &self.yearindex_to_decadeindex,
-                exit,
-            )?;
+        self.decadeindex_to_first_yearindex.compute_coarser(
+            starting_yearindex,
+            &self.yearindex_to_decadeindex,
+            exit,
+        )?;
 
         self.decadeindex_to_decadeindex.compute_from_index(
             starting_decadeindex,

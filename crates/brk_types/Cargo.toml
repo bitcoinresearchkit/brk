@@ -19,6 +19,7 @@ itoa = "1.0.15"
 jiff = { workspace = true }
 num_enum = "0.7.5"
 rapidhash = "4.1.1"
+redb = { workspace = true }
 ryu = "1.0.20"
 schemars = { workspace = true }
 serde = { workspace = true }

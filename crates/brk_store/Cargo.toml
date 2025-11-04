@@ -18,7 +18,8 @@ byteview6 = { version = "=0.6.1", package = "byteview" }
 byteview8 = { version = "~0.8.0", package = "byteview" }
 candystore = "0.5.5"
 fjall2 = { workspace = true }
-# fjall3 = { workspace = true }
+fjall3 = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
+redb = { workspace = true }
 rustc-hash = { workspace = true }

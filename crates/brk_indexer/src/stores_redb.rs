@@ -1,16 +1,15 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, sync::Arc};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
-use brk_store::{AnyStore, StoreFjallV3 as Store};
+use brk_store::{AnyStore, StoreRedb as Store};
 use brk_types::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
     TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
     Vout,
 };
-use fjall3::{PersistMode, TxDatabase};
-use log::info;
 use rayon::prelude::*;
+use redb::Database;
 use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
 
 use crate::Indexes;
@@ -19,7 +18,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub database: TxDatabase,
+    pub database: Arc<Database>,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -37,13 +36,13 @@ impl Stores {
 
         fs::create_dir_all(&pathbuf)?;
 
-        let database = match brk_store::open_fjall2_database(path) {
+        let database = Arc::new(match brk_store::open_redb_database(path) {
             Ok(database) => database,
             Err(_) => {
                 fs::remove_dir_all(path)?;
                 return Self::forced_import(path, version);
             }
-        };
+        });
 
         let database_ref = &database;
 
@@ -88,40 +87,32 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        info!(
-            "database.write_buffer_size = {}",
-            self.database.write_buffer_size()
-        );
-        info!("database.journal_count = {}", self.database.journal_count());
-
         [
             &mut self.addressbyteshash_to_typeindex as &mut dyn AnyStore,
             &mut self.blockhashprefix_to_height,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
         ]
+        // .into_iter() // Changed from par_iter_mut()
         .into_par_iter() // Changed from par_iter_mut()
         .chain(
             self.addresstype_to_typeindex_and_txindex
+                // .iter_mut()
                 .par_iter_mut()
                 .map(|s| s as &mut dyn AnyStore),
         )
         .chain(
             self.addresstype_to_typeindex_and_unspentoutpoint
+                // .iter_mut()
                 .par_iter_mut()
                 .map(|s| s as &mut dyn AnyStore),
         )
         .try_for_each(|store| store.commit(height))?;
 
-        info!(
-            "database.write_buffer_size = {}",
-            self.database.write_buffer_size()
-        );
-        info!("database.journal_count = {}", self.database.journal_count());
-
-        self.database
-            .persist(PersistMode::SyncAll)
-            .map_err(|e| e.into())
+        Ok(())
+        // self.database
+        //     .persist(PersistMode::SyncAll)
+        //     .map_err(|e| e.into())
     }
 
     fn iter_any_store(&self) -> impl Iterator<Item = &dyn AnyStore> {

@@ -1,4 +1,9 @@
-use std::{fs, path::Path, thread, time::Instant};
+use std::{
+    fs,
+    path::Path,
+    thread,
+    time::{Duration, Instant},
+};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -54,7 +59,7 @@ fn main() -> Result<()> {
             _ => vec![6, 4, 7, 1, 8, 5, 2],
         };
 
-        let mut run_times = [std::time::Duration::ZERO; 7];
+        let mut run_times = [Duration::ZERO; 7];
 
         for &method in &order {
             match method {
@@ -77,7 +82,7 @@ fn main() -> Result<()> {
                         INPUTS_PER_BLOCK,
                         OUTPUT_START_OFFSET,
                         INPUT_START_OFFSET,
-                    );
+                    )?;
                     run_times[1] = time;
                 }
                 4 => {
@@ -88,7 +93,7 @@ fn main() -> Result<()> {
                         INPUTS_PER_BLOCK,
                         OUTPUT_START_OFFSET,
                         INPUT_START_OFFSET,
-                    );
+                    )?;
                     run_times[2] = time;
                 }
                 5 => {
@@ -110,7 +115,7 @@ fn main() -> Result<()> {
                         INPUTS_PER_BLOCK,
                         OUTPUT_START_OFFSET,
                         INPUT_START_OFFSET,
-                    );
+                    )?;
                     run_times[4] = time;
                 }
                 7 => {
@@ -177,7 +182,7 @@ fn main() -> Result<()> {
     ];
 
     for (name, times) in &methods {
-        let avg = times.iter().sum::<std::time::Duration>() / times.len() as u32;
+        let avg = times.iter().sum::<Duration>() / times.len() as u32;
         let min = times.iter().min().unwrap();
         let max = times.iter().max().unwrap();
 
@@ -193,7 +198,7 @@ fn main() -> Result<()> {
     let averages: Vec<_> = methods
         .iter()
         .map(|(name, times)| {
-            let avg = times.iter().sum::<std::time::Duration>() / times.len() as u32;
+            let avg = times.iter().sum::<Duration>() / times.len() as u32;
             (*name, avg)
         })
         .collect();
@@ -221,7 +226,7 @@ fn run_method1(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Duration {
     let txoutindex_to_value_reader = vecs.txoutindex_to_value.create_reader();
     let txoutindex_to_outputtype_reader = vecs.txoutindex_to_outputtype.create_reader();
     let txoutindex_to_typeindex_reader = vecs.txoutindex_to_typeindex.create_reader();
@@ -287,7 +292,7 @@ fn run_method2(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Result<Duration> {
     let start_time = Instant::now();
 
     for block_idx in 0..num_blocks {
@@ -298,23 +303,23 @@ fn run_method2(
 
         let values: Vec<_> = vecs
             .txoutindex_to_value
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let output_types: Vec<_> = vecs
             .txoutindex_to_outputtype
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let typeindexes: Vec<_> = vecs
             .txoutindex_to_typeindex
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let _outputs: Vec<_> = (0..outputs_per_block)
@@ -328,9 +333,9 @@ fn run_method2(
 
         let outpoints: Vec<_> = vecs
             .txinindex_to_outpoint
-            .iter_at(input_block_start)
+            .iter()?
+            .skip(input_block_start.to_usize())
             .take(inputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();
@@ -360,7 +365,7 @@ fn run_method2(
         std::hint::black_box(input_sum);
     }
 
-    start_time.elapsed()
+    Ok(start_time.elapsed())
 }
 
 fn run_method4(
@@ -370,7 +375,7 @@ fn run_method4(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Result<Duration> {
     let start_time = Instant::now();
 
     for block_idx in 0..num_blocks {
@@ -379,33 +384,40 @@ fn run_method4(
             (output_start_offset + (block_idx * outputs_per_block)) as u64,
         );
 
-        let (values, output_types, typeindexes) = thread::scope(|s| {
-            let h1 = s.spawn(|| {
-                vecs.txoutindex_to_value
-                    .iter_at(block_start)
+        let (values, output_types, typeindexes) = thread::scope(|s| -> Result<_> {
+            let h1 = s.spawn(|| -> Result<_> {
+                Ok(vecs
+                    .txoutindex_to_value
+                    .iter()?
+                    .skip(block_start.to_usize())
                     .take(outputs_per_block)
-                    .map(|(_, v)| v)
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>())
             });
 
-            let h2 = s.spawn(|| {
-                vecs.txoutindex_to_outputtype
-                    .iter_at(block_start)
+            let h2 = s.spawn(|| -> Result<_> {
+                Ok(vecs
+                    .txoutindex_to_outputtype
+                    .iter()?
+                    .skip(block_start.to_usize())
                     .take(outputs_per_block)
-                    .map(|(_, v)| v)
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>())
             });
 
-            let h3 = s.spawn(|| {
-                vecs.txoutindex_to_typeindex
-                    .iter_at(block_start)
+            let h3 = s.spawn(|| -> Result<_> {
+                Ok(vecs
+                    .txoutindex_to_typeindex
+                    .iter()?
+                    .skip(block_start.to_usize())
                     .take(outputs_per_block)
-                    .map(|(_, v)| v)
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>())
             });
 
-            (h1.join().unwrap(), h2.join().unwrap(), h3.join().unwrap())
-        });
+            Ok((
+                h1.join().unwrap()?,
+                h2.join().unwrap()?,
+                h3.join().unwrap()?,
+            ))
+        })?;
 
         let _outputs: Vec<_> = (0..outputs_per_block)
             .into_par_iter()
@@ -418,9 +430,9 @@ fn run_method4(
 
         let outpoints: Vec<_> = vecs
             .txinindex_to_outpoint
-            .iter_at(input_block_start)
+            .iter()?
+            .skip(input_block_start.to_usize())
             .take(inputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();
@@ -450,7 +462,7 @@ fn run_method4(
         std::hint::black_box(input_sum);
     }
 
-    start_time.elapsed()
+    Ok(start_time.elapsed())
 }
 
 fn run_method5(
@@ -460,7 +472,7 @@ fn run_method5(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Duration {
     let txoutindex_to_value_reader = vecs.txoutindex_to_value.create_reader();
     let txoutindex_to_outputtype_reader = vecs.txoutindex_to_outputtype.create_reader();
     let txoutindex_to_typeindex_reader = vecs.txoutindex_to_typeindex.create_reader();
@@ -528,7 +540,7 @@ fn run_method6(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Result<Duration> {
     let start_time = Instant::now();
 
     for block_idx in 0..num_blocks {
@@ -539,23 +551,23 @@ fn run_method6(
 
         let values: Vec<_> = vecs
             .txoutindex_to_value
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let output_types: Vec<_> = vecs
             .txoutindex_to_outputtype
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let typeindexes: Vec<_> = vecs
             .txoutindex_to_typeindex
-            .iter_at(block_start)
+            .iter()?
+            .skip(block_start.to_usize())
             .take(outputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         // Read inputs sequentially
@@ -564,9 +576,9 @@ fn run_method6(
 
         let outpoints: Vec<_> = vecs
             .txinindex_to_outpoint
-            .iter_at(input_block_start)
+            .iter()?
+            .skip(input_block_start.to_usize())
             .take(inputs_per_block)
-            .map(|(_, v)| v)
             .collect();
 
         let txindex_to_first_txoutindex_reader = vecs.txindex_to_first_txoutindex.create_reader();
@@ -608,7 +620,7 @@ fn run_method6(
         std::hint::black_box(input_sum);
     }
 
-    start_time.elapsed()
+    Ok(start_time.elapsed())
 }
 
 fn run_method7(
@@ -618,7 +630,7 @@ fn run_method7(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Duration {
     // Create readers ONCE outside loop
     let txoutindex_to_value_reader = vecs.txoutindex_to_value.create_reader();
     let txoutindex_to_outputtype_reader = vecs.txoutindex_to_outputtype.create_reader();
@@ -683,7 +695,7 @@ fn run_method8(
     inputs_per_block: usize,
     output_start_offset: usize,
     input_start_offset: usize,
-) -> std::time::Duration {
+) -> Duration {
     let txoutindex_to_value_reader = vecs.txoutindex_to_value.create_reader();
     let txoutindex_to_outputtype_reader = vecs.txoutindex_to_outputtype.create_reader();
     let txoutindex_to_typeindex_reader = vecs.txoutindex_to_typeindex.create_reader();
@@ -758,8 +770,8 @@ fn run_method8(
     start_time.elapsed()
 }
 
-fn calculate_stddev(times: &[std::time::Duration]) -> std::time::Duration {
-    let avg = times.iter().sum::<std::time::Duration>().as_secs_f64() / times.len() as f64;
+fn calculate_stddev(times: &[Duration]) -> Duration {
+    let avg = times.iter().sum::<Duration>().as_secs_f64() / times.len() as f64;
     let variance = times
         .iter()
         .map(|t| {
@@ -768,5 +780,5 @@ fn calculate_stddev(times: &[std::time::Duration]) -> std::time::Duration {
         })
         .sum::<f64>()
         / times.len() as f64;
-    std::time::Duration::from_secs_f64(variance.sqrt())
+    Duration::from_secs_f64(variance.sqrt())
 }

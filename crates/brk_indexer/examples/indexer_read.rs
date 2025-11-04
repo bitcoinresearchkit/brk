@@ -14,7 +14,7 @@ fn main() -> Result<()> {
     let mut sum = Sats::ZERO;
     let mut count: usize = 0;
 
-    for value in indexer.vecs.txoutindex_to_value.clean_values().unwrap() {
+    for value in indexer.vecs.txoutindex_to_value.clean_iter().unwrap() {
         sum += value;
         count += 1;
     }
