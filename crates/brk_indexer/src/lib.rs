@@ -15,14 +15,16 @@ use brk_types::{
 use log::{error, info};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIterator};
+use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIteratorExtended};
 mod indexes;
-mod stores_v2;
+mod stores_redb;
+// mod stores_v2;
 // mod stores_v3;
 mod vecs;
 
 pub use indexes::*;
-pub use stores_v2::*;
+pub use stores_redb::*;
+// pub use stores_v2::*;
 // pub use stores_v3::*;
 pub use vecs::*;
 
@@ -80,9 +82,8 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
-        let (starting_indexes, prev_hash) = if let Some(hash) =
-            VecIterator::last(self.vecs.height_to_blockhash.iter()).map(|(_, v)| v)
-        {
+        let last_blockhash = self.vecs.height_to_blockhash.iter()?.last();
+        let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
             let starting_indexes =
                 Indexes::from((height.incremented(), &mut self.vecs, &self.stores));

@@ -1,4 +1,7 @@
+use std::{cmp::Ordering, mem};
+
 use byteview::ByteView;
+use redb::{Key, TypeName, Value};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -76,5 +79,42 @@ impl From<TypeIndexAndTxIndex> for u64 {
     #[inline]
     fn from(value: TypeIndexAndTxIndex) -> Self {
         value.0
+    }
+}
+
+impl Value for TypeIndexAndTxIndex {
+    type SelfType<'a> = TypeIndexAndTxIndex;
+    type AsBytes<'a>
+        = [u8; mem::size_of::<u64>()]
+    where
+        Self: 'a;
+
+    fn fixed_width() -> Option<usize> {
+        Some(mem::size_of::<u64>())
+    }
+
+    fn from_bytes<'a>(data: &'a [u8]) -> TypeIndexAndTxIndex
+    where
+        Self: 'a,
+    {
+        TypeIndexAndTxIndex(u64::from_le_bytes(data.try_into().unwrap()))
+    }
+
+    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> [u8; mem::size_of::<u64>()]
+    where
+        Self: 'a,
+        Self: 'b,
+    {
+        value.0.to_le_bytes()
+    }
+
+    fn type_name() -> TypeName {
+        TypeName::new("TypeIndexAndTxIndex")
+    }
+}
+
+impl Key for TypeIndexAndTxIndex {
+    fn compare(data1: &[u8], data2: &[u8]) -> Ordering {
+        Self::from_bytes(data1).cmp(&Self::from_bytes(data2))
     }
 }

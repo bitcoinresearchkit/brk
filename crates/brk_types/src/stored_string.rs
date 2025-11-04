@@ -1,7 +1,8 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, str};
 
 use byteview::ByteView;
 use derive_deref::Deref;
+use redb::{TypeName, Value};
 use serde::Serialize;
 use vecdb::PrintableIndex;
 
@@ -65,5 +66,38 @@ impl PrintableIndex for StoredString {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["string"]
+    }
+}
+
+impl Value for StoredString {
+    type SelfType<'a>
+        = StoredString
+    where
+        Self: 'a;
+    type AsBytes<'a>
+        = &'a str
+    where
+        Self: 'a;
+
+    fn fixed_width() -> Option<usize> {
+        None
+    }
+
+    fn from_bytes<'a>(data: &'a [u8]) -> StoredString
+    where
+        Self: 'a,
+    {
+        StoredString(str::from_utf8(data).unwrap().to_string())
+    }
+
+    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> &'a str
+    where
+        Self: 'b,
+    {
+        value.as_str()
+    }
+
+    fn type_name() -> TypeName {
+        TypeName::new("StoredString")
     }
 }

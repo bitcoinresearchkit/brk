@@ -3,8 +3,6 @@ use brk_types::{Height, Version};
 
 pub trait AnyStore: Send + Sync {
     fn commit(&mut self, height: Height) -> Result<()>;
-    fn persist(&self) -> Result<()>;
-    // fn reset(&mut self) -> Result<()>;
     fn name(&self) -> &'static str;
     fn height(&self) -> Option<Height>;
     fn has(&self, height: Height) -> bool;

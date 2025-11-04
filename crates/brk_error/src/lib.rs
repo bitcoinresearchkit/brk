@@ -13,7 +13,7 @@ pub enum Error {
     BitcoinRPC(bitcoincore_rpc::Error),
     Jiff(jiff::Error),
     FjallV2(fjall2::Error),
-    // FjallV3(fjall3::Error),
+    FjallV3(fjall3::Error),
     VecDB(vecdb::Error),
     SeqDB(vecdb::SeqDBError),
     Minreq(minreq::Error),
@@ -134,12 +134,12 @@ impl From<jiff::Error> for Error {
     }
 }
 
-// impl From<fjall3::Error> for Error {
-// #[inline]
-// fn from(value: fjall3::Error) -> Self {
-//         Self::FjallV3(value)
-//     }
-// }
+impl From<fjall3::Error> for Error {
+    #[inline]
+    fn from(value: fjall3::Error) -> Self {
+        Self::FjallV3(value)
+    }
+}
 
 impl From<fjall2::Error> for Error {
     #[inline]
@@ -179,7 +179,7 @@ impl fmt::Display for Error {
             Error::BitcoinHexToArrayError(error) => Display::fmt(&error, f),
             Error::BitcoinRPC(error) => Display::fmt(&error, f),
             Error::FjallV2(error) => Display::fmt(&error, f),
-            // Error::FjallV3(error) => Display::fmt(&error, f),
+            Error::FjallV3(error) => Display::fmt(&error, f),
             Error::IO(error) => Display::fmt(&error, f),
             Error::Jiff(error) => Display::fmt(&error, f),
             Error::Minreq(error) => Display::fmt(&error, f),

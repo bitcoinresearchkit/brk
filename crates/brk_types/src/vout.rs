@@ -1,5 +1,8 @@
+use std::mem;
+
 use allocative::Allocative;
 use derive_deref::Deref;
+use redb::{TypeName, Value};
 use schemars::JsonSchema;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -105,5 +108,36 @@ impl From<&[u8]> for Vout {
 impl std::fmt::Display for Vout {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl Value for Vout {
+    type SelfType<'a> = Vout;
+    type AsBytes<'a>
+        = [u8; mem::size_of::<u16>()]
+    where
+        Self: 'a;
+
+    fn fixed_width() -> Option<usize> {
+        Some(mem::size_of::<u16>())
+    }
+
+    fn from_bytes<'a>(data: &'a [u8]) -> Vout
+    where
+        Self: 'a,
+    {
+        Vout(u16::from_le_bytes(data.try_into().unwrap()))
+    }
+
+    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> [u8; mem::size_of::<u16>()]
+    where
+        Self: 'a,
+        Self: 'b,
+    {
+        value.0.to_le_bytes()
+    }
+
+    fn type_name() -> TypeName {
+        TypeName::new("Vout")
     }
 }

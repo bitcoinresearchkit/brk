@@ -13,7 +13,7 @@ build = "build.rs"
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 fjall2 = { workspace = true }
-# fjall3 = { workspace = true }
+fjall3 = { workspace = true }
 jiff = { workspace = true }
 minreq = { workspace = true }
 sonic-rs = { workspace = true }
