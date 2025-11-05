@@ -364,8 +364,8 @@ impl Vecs {
             .unwrap()
     }
 
-    pub fn punch_holes(&self) -> Result<()> {
-        self.db.punch_holes()?;
+    pub fn compact(&self) -> Result<()> {
+        self.db.compact()?;
         Ok(())
     }
 

@@ -76,7 +76,7 @@ serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.6"
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
-vecdb = { version = "0.3.1", features = ["derive"] }
+vecdb = { version = "0.3.4", features = ["derive"] }
 zerocopy = { version = "0.8.27", features = ["derive"] }
 
 [workspace.metadata.release]
@@ -86,8 +86,8 @@ pre-release-commit-message = "release: v{{version}}"
 tag-message = "release: v{{version}}"
 
 [workspace.metadata.dist]
-cargo-dist-version = "0.30.0"
+cargo-dist-version = "0.30.2"
 ci = "github"
-allow-dirty = ["ci"]
+# allow-dirty = ["ci"]
 installers = []
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]
