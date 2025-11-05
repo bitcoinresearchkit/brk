@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_types::Version;
-use fjall3::{TxDatabase, TxKeyspace};
+use fjall3::{Database, Keyspace};
 
 use super::Height;
 
@@ -18,13 +18,13 @@ pub struct StoreMeta {
 
 impl StoreMeta {
     pub fn checked_open<F>(
-        _database: &TxDatabase,
+        _database: &Database,
         path: &Path,
         version: Version,
         open_partition_handle: F,
-    ) -> Result<(Self, TxKeyspace)>
+    ) -> Result<(Self, Keyspace)>
     where
-        F: Fn() -> Result<TxKeyspace>,
+        F: Fn() -> Result<Keyspace>,
     {
         fs::create_dir_all(path)?;
 

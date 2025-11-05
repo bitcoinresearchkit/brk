@@ -8,7 +8,7 @@ use brk_types::{
     TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
     Vout,
 };
-use fjall3::{PersistMode, TxDatabase};
+use fjall3::{Database, PersistMode};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
@@ -19,7 +19,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub database: TxDatabase,
+    pub database: Database,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -37,7 +37,7 @@ impl Stores {
 
         fs::create_dir_all(&pathbuf)?;
 
-        let database = match brk_store::open_fjall2_database(path) {
+        let database = match brk_store::open_fjall3_database(path) {
             Ok(database) => database,
             Err(_) => {
                 fs::remove_dir_all(path)?;

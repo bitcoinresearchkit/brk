@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview8::ByteView;
 use fjall3::{
-    KeyspaceCreateOptions, TxDatabase, TxKeyspace, ValueType,
-    config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry},
+    Database, Keyspace, KeyspaceCreateOptions, ValueType,
+    config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PinningPolicy},
 };
 
 mod meta;
@@ -19,16 +19,16 @@ use crate::any::AnyStore;
 pub struct StoreFjallV3<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    database: TxDatabase,
-    keyspace: TxKeyspace,
+    database: Database,
+    keyspace: Keyspace,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::new(3);
 
-pub fn open_fjall2_database(path: &Path) -> fjall3::Result<TxDatabase> {
-    TxDatabase::builder(path.join("fjall"))
+pub fn open_fjall3_database(path: &Path) -> fjall3::Result<Database> {
+    Database::builder(path.join("fjall"))
         .max_write_buffer_size(32 * 1024 * 1024)
         .cache_size(1024 * 1024 * 1024)
         .open()
@@ -41,12 +41,14 @@ where
     ByteView: From<K> + From<V>,
 {
     fn open_keyspace(
-        database: &TxDatabase,
+        database: &Database,
         name: &str,
         bloom_filters: Option<bool>,
-    ) -> Result<TxKeyspace> {
+    ) -> Result<Keyspace> {
         let mut options = KeyspaceCreateOptions::default()
             .manual_journal_persist(true)
+            .filter_block_pinning_policy(PinningPolicy::all(false))
+            .index_block_pinning_policy(PinningPolicy::all(false))
             .max_memtable_size(8 * 1024 * 1024);
 
         if bloom_filters.is_some_and(|b| !b) {
@@ -61,7 +63,7 @@ where
     }
 
     pub fn import(
-        database: &TxDatabase,
+        database: &Database,
         path: &Path,
         name: &str,
         version: Version,
@@ -112,10 +114,7 @@ where
 
     #[inline]
     pub fn is_empty(&self) -> Result<bool> {
-        self.database
-            .read_tx()
-            .is_empty(&self.keyspace)
-            .map_err(|e| e.into())
+        self.keyspace.is_empty().map_err(|e| e.into())
     }
 
     #[inline]
@@ -178,7 +177,7 @@ where
             return Ok(());
         }
 
-        let mut batch = self.database.inner().batch();
+        let mut batch = self.database.batch();
         let mut items = mem::take(&mut self.puts)
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
@@ -193,7 +192,7 @@ where
             .into_iter()
             .map(|i| i.fjall(&self.keyspace))
             .collect::<Vec<_>>();
-        batch.commit_keyspace(self.keyspace.inner())?;
+        batch.commit_keyspace(&self.keyspace)?;
 
         // let mut wtx = self.database.write_tx();
 
@@ -266,20 +265,20 @@ impl<K, V> Item<K, V> {
         }
     }
 
-    pub fn fjall(self, keyspace: &TxKeyspace) -> fjall3::Item
+    pub fn fjall(self, keyspace: &Keyspace) -> fjall3::Item
     where
         K: Into<ByteView>,
         V: Into<ByteView>,
     {
         match self {
             Item::Value { key, value } => fjall3::Item {
-                keyspace_id: keyspace.inner().id,
+                keyspace_id: keyspace.id,
                 key: key.into().into(),
                 value: value.into().into(),
                 value_type: ValueType::Value,
             },
             Item::Tomb(key) => fjall3::Item {
-                keyspace_id: keyspace.inner().id,
+                keyspace_id: keyspace.id,
                 key: key.into().into(),
                 value: [].into(),
                 value_type: ValueType::WeakTombstone,

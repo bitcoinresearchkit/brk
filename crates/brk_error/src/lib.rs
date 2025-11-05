@@ -15,7 +15,7 @@ pub enum Error {
     FjallV2(fjall2::Error),
     FjallV3(fjall3::Error),
     VecDB(vecdb::Error),
-    SeqDB(vecdb::SeqDBError),
+    RawDB(vecdb::RawDBError),
     Minreq(minreq::Error),
     SystemTimeError(time::SystemTimeError),
     BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
@@ -106,10 +106,10 @@ impl From<vecdb::Error> for Error {
     }
 }
 
-impl From<vecdb::SeqDBError> for Error {
+impl From<vecdb::RawDBError> for Error {
     #[inline]
-    fn from(value: vecdb::SeqDBError) -> Self {
-        Self::SeqDB(value)
+    fn from(value: vecdb::RawDBError) -> Self {
+        Self::RawDB(value)
     }
 }
 
@@ -183,7 +183,7 @@ impl fmt::Display for Error {
             Error::IO(error) => Display::fmt(&error, f),
             Error::Jiff(error) => Display::fmt(&error, f),
             Error::Minreq(error) => Display::fmt(&error, f),
-            Error::SeqDB(error) => Display::fmt(&error, f),
+            Error::RawDB(error) => Display::fmt(&error, f),
             Error::SonicRS(error) => Display::fmt(&error, f),
             Error::SystemTimeError(error) => Display::fmt(&error, f),
             Error::VecDB(error) => Display::fmt(&error, f),
