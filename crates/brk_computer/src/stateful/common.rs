@@ -1338,19 +1338,15 @@ impl Vecs {
                 prev_height = state.import_at_or_before(prev_height)?;
             }
 
-            state.supply.value = self
-                .height_to_supply
-                .into_iter()
-                .unwrap_get_inner(prev_height);
+            state.supply.value = self.height_to_supply.into_iter().unsafe_get(prev_height);
             state.supply.utxo_count = *self
                 .height_to_utxo_count
                 .into_iter()
-                .unwrap_get_inner(prev_height);
+                .unsafe_get(prev_height);
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-                state.realized.as_mut().unwrap().cap = height_to_realized_cap
-                    .into_iter()
-                    .unwrap_get_inner(prev_height);
+                state.realized.as_mut().unwrap().cap =
+                    height_to_realized_cap.into_iter().unsafe_get(prev_height);
             }
 
             Ok(prev_height.incremented())
@@ -2106,11 +2102,11 @@ impl Vecs {
                     starting_indexes.dateindex,
                     &indexes.dateindex_to_first_height,
                     |(i, height, ..)| {
-                        let count = dateindex_to_height_count_iter.unwrap_get_inner(i);
+                        let count = dateindex_to_height_count_iter.unsafe_get(i);
                         if count == StoredU64::default() {
                             unreachable!()
                         }
-                        let supply = height_to_supply_iter.unwrap_get_inner(height + (*count - 1));
+                        let supply = height_to_supply_iter.unsafe_get(height + (*count - 1));
                         (i, supply)
                     },
                     exit,

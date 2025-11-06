@@ -9,7 +9,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::TxInIndex;
 use rayon::prelude::*;
-use vecdb::{GenericStoredVec, StoredIndex};
+use vecdb::{AnyVec, GenericStoredVec, StoredIndex};
 
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
@@ -20,8 +20,8 @@ fn main() -> Result<()> {
     let indexer = Indexer::forced_import(&outputs_dir)?;
     let vecs = indexer.vecs;
 
-    let output_len = vecs.txoutindex_to_value.len_();
-    let input_len = vecs.txinindex_to_outpoint.len_();
+    let output_len = vecs.txoutindex_to_value.len();
+    let input_len = vecs.txinindex_to_outpoint.len();
     dbg!(output_len, input_len);
 
     // Simulate processing blocks
@@ -244,11 +244,11 @@ fn run_method1(
             .map(|i| {
                 (
                     vecs.txoutindex_to_value
-                        .unwrap_read_(i, &txoutindex_to_value_reader),
+                        .read_at_unwrap(i, &txoutindex_to_value_reader),
                     vecs.txoutindex_to_outputtype
-                        .unwrap_read_(i, &txoutindex_to_outputtype_reader),
+                        .read_at_unwrap(i, &txoutindex_to_outputtype_reader),
                     vecs.txoutindex_to_typeindex
-                        .unwrap_read_(i, &txoutindex_to_typeindex_reader),
+                        .read_at_unwrap(i, &txoutindex_to_typeindex_reader),
                 )
             })
             .collect();
@@ -261,20 +261,20 @@ fn run_method1(
             .filter_map(|i| {
                 let outpoint = vecs
                     .txinindex_to_outpoint
-                    .unwrap_read_(i, &txinindex_to_outpoint_reader);
+                    .read_at_unwrap(i, &txinindex_to_outpoint_reader);
 
                 if outpoint.is_coinbase() {
                     return None;
                 }
 
-                let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                     outpoint.txindex().to_usize(),
                     &txindex_to_first_txoutindex_reader,
                 );
                 let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -350,14 +350,14 @@ fn run_method2(
                     return None;
                 }
 
-                let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                     outpoint.txindex().to_usize(),
                     &txindex_to_first_txoutindex_reader,
                 );
                 let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -447,14 +447,14 @@ fn run_method4(
                     return None;
                 }
 
-                let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                     outpoint.txindex().to_usize(),
                     &txindex_to_first_txoutindex_reader,
                 );
                 let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -491,11 +491,11 @@ fn run_method5(
             .map(|i| {
                 (
                     vecs.txoutindex_to_value
-                        .unwrap_read_(i, &txoutindex_to_value_reader),
+                        .read_at_unwrap(i, &txoutindex_to_value_reader),
                     vecs.txoutindex_to_outputtype
-                        .unwrap_read_(i, &txoutindex_to_outputtype_reader),
+                        .read_at_unwrap(i, &txoutindex_to_outputtype_reader),
                     vecs.txoutindex_to_typeindex
-                        .unwrap_read_(i, &txoutindex_to_typeindex_reader),
+                        .read_at_unwrap(i, &txoutindex_to_typeindex_reader),
                 )
             })
             .collect();
@@ -509,20 +509,20 @@ fn run_method5(
             .filter_map(|i| {
                 let outpoint = vecs
                     .txinindex_to_outpoint
-                    .unwrap_read_(i, &txinindex_to_outpoint_reader);
+                    .read_at_unwrap(i, &txinindex_to_outpoint_reader);
 
                 if outpoint.is_coinbase() {
                     return None;
                 }
 
-                let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                     outpoint.txindex().to_usize(),
                     &txindex_to_first_txoutindex_reader,
                 );
                 let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -585,18 +585,19 @@ fn run_method6(
         let txoutindex_to_value_reader = vecs.txoutindex_to_value.create_reader();
 
         // Prefetch all first_txoutindexes in parallel
-        let first_txoutindexes: Vec<Option<_>> = outpoints
-            .par_iter()
-            .map(|op| {
-                if op.is_coinbase() {
-                    return None;
-                }
-                Some(
-                    vecs.txindex_to_first_txoutindex
-                        .unwrap_read_(op.txindex().to_usize(), &txindex_to_first_txoutindex_reader),
-                )
-            })
-            .collect();
+        let first_txoutindexes: Vec<Option<_>> =
+            outpoints
+                .par_iter()
+                .map(|op| {
+                    if op.is_coinbase() {
+                        return None;
+                    }
+                    Some(vecs.txindex_to_first_txoutindex.read_at_unwrap(
+                        op.txindex().to_usize(),
+                        &txindex_to_first_txoutindex_reader,
+                    ))
+                })
+                .collect();
 
         // Then read values in parallel
         let input_sum: u64 = outpoints
@@ -607,7 +608,7 @@ fn run_method6(
                 let txoutindex = first_txoutindex.to_usize() + usize::from(op.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -648,11 +649,11 @@ fn run_method7(
             .map(|i| {
                 (
                     vecs.txoutindex_to_value
-                        .unwrap_read_(i, &txoutindex_to_value_reader),
+                        .read_at_unwrap(i, &txoutindex_to_value_reader),
                     vecs.txoutindex_to_outputtype
-                        .unwrap_read_(i, &txoutindex_to_outputtype_reader),
+                        .read_at_unwrap(i, &txoutindex_to_outputtype_reader),
                     vecs.txoutindex_to_typeindex
-                        .unwrap_read_(i, &txoutindex_to_typeindex_reader),
+                        .read_at_unwrap(i, &txoutindex_to_typeindex_reader),
                 )
             })
             .collect();
@@ -664,20 +665,20 @@ fn run_method7(
             .filter_map(|i| {
                 let outpoint = vecs
                     .txinindex_to_outpoint
-                    .unwrap_read_(i, &txinindex_to_outpoint_reader);
+                    .read_at_unwrap(i, &txinindex_to_outpoint_reader);
 
                 if outpoint.is_coinbase() {
                     return None;
                 }
 
-                let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                     outpoint.txindex().to_usize(),
                     &txindex_to_first_txoutindex_reader,
                 );
                 let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                 let value = vecs
                     .txoutindex_to_value
-                    .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                    .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                 Some(u64::from(value))
             })
             .sum();
@@ -720,11 +721,11 @@ fn run_method8(
                         let i = block_start + offset;
                         (
                             vecs.txoutindex_to_value
-                                .unwrap_read_(i, &txoutindex_to_value_reader),
+                                .read_at_unwrap(i, &txoutindex_to_value_reader),
                             vecs.txoutindex_to_outputtype
-                                .unwrap_read_(i, &txoutindex_to_outputtype_reader),
+                                .read_at_unwrap(i, &txoutindex_to_outputtype_reader),
                             vecs.txoutindex_to_typeindex
-                                .unwrap_read_(i, &txoutindex_to_typeindex_reader),
+                                .read_at_unwrap(i, &txoutindex_to_typeindex_reader),
                         )
                     })
                     .collect::<Vec<_>>()
@@ -744,20 +745,20 @@ fn run_method8(
                         let i = input_block_start + offset;
                         let outpoint = vecs
                             .txinindex_to_outpoint
-                            .unwrap_read_(i, &txinindex_to_outpoint_reader);
+                            .read_at_unwrap(i, &txinindex_to_outpoint_reader);
 
                         if outpoint.is_coinbase() {
                             return None;
                         }
 
-                        let first_txoutindex = vecs.txindex_to_first_txoutindex.unwrap_read_(
+                        let first_txoutindex = vecs.txindex_to_first_txoutindex.read_at_unwrap(
                             outpoint.txindex().to_usize(),
                             &txindex_to_first_txoutindex_reader,
                         );
                         let txoutindex = first_txoutindex.to_usize() + usize::from(outpoint.vout());
                         let value = vecs
                             .txoutindex_to_value
-                            .unwrap_read_(txoutindex, &txoutindex_to_value_reader);
+                            .read_at_unwrap(txoutindex, &txoutindex_to_value_reader);
                         Some(u64::from(value))
                     })
                     .collect::<Vec<_>>()

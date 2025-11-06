@@ -60,7 +60,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -76,16 +76,18 @@ impl Vecs {
             .height
             .min(Height::from(self.height_to_price_ohlc_in_cents.len()));
         height_to_timestamp
-            .iter_at(index)
+            .iter()?
+            .skip(index.to_usize())
+            .enumerate()
             .try_for_each(|(i, v)| -> Result<()> {
                 self.height_to_price_ohlc_in_cents.forced_push_at(
-                    i,
+                    i.into(),
                     self.fetcher
                         .get_height(
-                            i,
+                            i.into(),
                             v,
                             i.decremented().map(|prev_i| {
-                                height_to_timestamp.into_iter().unwrap_get_inner(prev_i)
+                                height_to_timestamp.into_iter().get_unwrap_at(prev_i)
                             }),
                         )
                         .unwrap(),
@@ -101,14 +103,16 @@ impl Vecs {
         let mut prev = None;
         indexes
             .dateindex_to_date
-            .iter_at(index)
+            .iter()
+            .skip(index.to_usize())
+            .enumerate()
             .try_for_each(|(i, d)| -> Result<()> {
                 if prev.is_none() {
                     let i = i.to_usize();
                     prev.replace(if i > 0 {
                         self.dateindex_to_price_ohlc_in_cents
                             .into_iter()
-                            .unwrap_get_inner_(i - 1)
+                            .get_unwrap_at(i - 1)
                     } else {
                         OHLCCents::default()
                     });
@@ -129,7 +133,7 @@ impl Vecs {
                 prev.replace(ohlc.clone());
 
                 self.dateindex_to_price_ohlc_in_cents
-                    .forced_push_at(i, ohlc, exit)?;
+                    .forced_push_at_(i, ohlc, exit)?;
 
                 Ok(())
             })?;

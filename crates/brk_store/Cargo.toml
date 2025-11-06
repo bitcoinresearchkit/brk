@@ -21,5 +21,4 @@ fjall2 = { workspace = true }
 fjall3 = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
-redb = { workspace = true }
 rustc-hash = { workspace = true }

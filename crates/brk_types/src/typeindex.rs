@@ -1,7 +1,6 @@
-use std::{mem, ops::Add};
+use std::ops::Add;
 
 use byteview::ByteView;
-use redb::{TypeName, Value};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, StoredCompressed};
@@ -149,36 +148,5 @@ impl std::fmt::Display for TypeIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
-    }
-}
-
-impl Value for TypeIndex {
-    type SelfType<'a> = TypeIndex;
-    type AsBytes<'a>
-        = [u8; mem::size_of::<u32>()]
-    where
-        Self: 'a;
-
-    fn fixed_width() -> Option<usize> {
-        Some(mem::size_of::<u32>())
-    }
-
-    fn from_bytes<'a>(data: &'a [u8]) -> TypeIndex
-    where
-        Self: 'a,
-    {
-        TypeIndex(u32::from_le_bytes(data.try_into().unwrap()))
-    }
-
-    fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> [u8; mem::size_of::<u32>()]
-    where
-        Self: 'a,
-        Self: 'b,
-    {
-        value.0.to_le_bytes()
-    }
-
-    fn type_name() -> TypeName {
-        TypeName::new("TypeIndex")
     }
 }

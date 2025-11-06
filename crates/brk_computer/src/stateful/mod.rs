@@ -502,7 +502,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, chain, price, starting_indexes, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -712,10 +712,10 @@ impl Vecs {
                     .enumerate()
                     .map(|(height, supply)| {
                         let height = Height::from(height);
-                        let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
+                        let timestamp = height_to_timestamp_fixed_iter.unsafe_get(height);
                         let price = height_to_price_close_iter
                             .as_mut()
-                            .map(|i| *i.unwrap_get_inner(height));
+                            .map(|i| *i.unsafe_get(height));
                         BlockState {
                             timestamp,
                             price,
@@ -794,14 +794,14 @@ impl Vecs {
             let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_unspendable_supply
                     .into_iter()
-                    .unwrap_get_inner(prev_height)
+                    .unsafe_get(prev_height)
             } else {
                 Sats::ZERO
             };
             let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_opreturn_supply
                     .into_iter()
-                    .unwrap_get_inner(prev_height)
+                    .unsafe_get(prev_height)
             } else {
                 Sats::ZERO
             };
@@ -847,20 +847,18 @@ impl Vecs {
                         v.state.as_mut().unwrap().reset_single_iteration_values()
                     });
 
-                let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
+                let timestamp = height_to_timestamp_fixed_iter.unsafe_get(height);
                 let price = height_to_price_close_iter
                     .as_mut()
-                    .map(|i| *i.unwrap_get_inner(height));
-                let first_txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
+                    .map(|i| *i.unsafe_get(height));
+                let first_txindex = height_to_first_txindex_iter.unsafe_get(height);
                 let first_txoutindex = height_to_first_txoutindex_iter
-                    .unwrap_get_inner(height)
+                    .unsafe_get(height)
                     .to_usize();
-                let first_txinindex = height_to_first_txinindex_iter
-                    .unwrap_get_inner(height)
-                    .to_usize();
-                let tx_count = height_to_tx_count_iter.unwrap_get_inner(height);
-                let output_count = height_to_output_count_iter.unwrap_get_inner(height);
-                let input_count = height_to_input_count_iter.unwrap_get_inner(height);
+                let first_txinindex = height_to_first_txinindex_iter.unsafe_get(height).to_usize();
+                let tx_count = height_to_tx_count_iter.unsafe_get(height);
+                let output_count = height_to_output_count_iter.unsafe_get(height);
+                let input_count = height_to_input_count_iter.unsafe_get(height);
 
                 let txoutindex_to_txindex = build_txoutindex_to_txindex(
                     first_txindex,
@@ -876,28 +874,28 @@ impl Vecs {
 
                 let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
                     p2a: height_to_first_p2aaddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2pk33: height_to_first_p2pk33addressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2pk65: height_to_first_p2pk65addressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2pkh: height_to_first_p2pkhaddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2sh: height_to_first_p2shaddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2tr: height_to_first_p2traddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2wpkh: height_to_first_p2wpkhaddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                     p2wsh: height_to_first_p2wshaddressindex_iter
-                        .unwrap_get_inner(height)
+                        .unsafe_get(height)
                         .into(),
                 };
 
@@ -1211,7 +1209,7 @@ impl Vecs {
                         .into_iter()
                         .map(|state| state.value)
                         .sum::<Sats>()
-                        + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
+                        + height_to_unclaimed_rewards_iter.unsafe_get(height);
 
                     opreturn_supply += transacted.by_type.unspendable.opreturn.value;
 
@@ -1258,16 +1256,16 @@ impl Vecs {
                 self.addresstype_to_height_to_empty_addr_count
                     .forced_push_at(height, &addresstype_to_empty_addr_count, exit)?;
 
-                let date = height_to_date_fixed_iter.unwrap_get_inner(height);
+                let date = height_to_date_fixed_iter.unsafe_get(height);
                 let dateindex = DateIndex::try_from(date).unwrap();
-                let date_first_height = dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
-                let date_height_count = dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
+                let date_first_height = dateindex_to_first_height_iter.unsafe_get(dateindex);
+                let date_height_count = dateindex_to_height_count_iter.unsafe_get(dateindex);
                 let is_date_last_height = date_first_height
                     + Height::from(date_height_count).decremented().unwrap()
                     == height;
                 let date_price = dateindex_to_price_close_iter
                     .as_mut()
-                    .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
+                    .map(|v| is_date_last_height.then(|| *v.unsafe_get(dateindex)));
 
                 let dateindex = is_date_last_height.then_some(dateindex);
 
@@ -2137,7 +2135,7 @@ fn build_txoutindex_to_txindex<'a>(
     let block_first_txindex = block_first_txindex.to_usize();
     for tx_offset in 0..block_tx_count as usize {
         let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let output_count = u64::from(txindex_to_output_count.unwrap_get_inner(txindex));
+        let output_count = u64::from(txindex_to_output_count.unsafe_get(txindex));
 
         for _ in 0..output_count {
             vec.push(txindex);
@@ -2157,7 +2155,7 @@ fn build_txinindex_to_txindex<'a>(
     let block_first_txindex = block_first_txindex.to_usize();
     for tx_offset in 0..block_tx_count as usize {
         let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let input_count = u64::from(txindex_to_input_count.unwrap_get_inner(txindex));
+        let input_count = u64::from(txindex_to_input_count.unsafe_get(txindex));
 
         for _ in 0..input_count {
             vec.push(txindex);

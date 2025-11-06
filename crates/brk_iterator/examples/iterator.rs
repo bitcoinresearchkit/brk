@@ -1,4 +1,4 @@
-use std::{path::Path, time::Instant};
+use std::time::Instant;
 
 use brk_error::Result;
 use brk_iterator::Blocks;
@@ -7,13 +7,10 @@ use brk_rpc::{Auth, Client};
 use brk_types::Height;
 
 fn main() -> Result<()> {
-    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
-        .join("Library")
-        .join("Application Support")
-        .join("Bitcoin");
+    let bitcoin_dir = Client::default_bitcoin_path();
 
     let client = Client::new(
-        "http://localhost:8332",
+        Client::default_url(),
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 

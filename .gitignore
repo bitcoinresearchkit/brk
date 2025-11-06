@@ -14,7 +14,7 @@ bridge/
 _*
 
 # Logs
-.log*
+*.log*
 
 # Environment variables/configs
 .env

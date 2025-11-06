@@ -29,17 +29,14 @@ pub fn main() -> Result<()> {
 fn run() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 
-    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
-        .join("Library")
-        .join("Application Support")
-        .join("Bitcoin");
+    let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
     let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
     // let outputs_dir = Path::new("../../_outputs");
 
     let client = Client::new(
-        "http://localhost:8332",
+        Client::default_url(),
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 

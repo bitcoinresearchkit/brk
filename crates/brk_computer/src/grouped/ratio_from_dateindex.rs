@@ -394,7 +394,9 @@ impl ComputedRatioVecsFromDateIndex {
             .dateindex
             .as_ref()
             .unwrap()
-            .iter_at(starting_dateindex)
+            .iter()
+            .skip(starting_dateindex)
+            .enumerate()
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_ratio_date {
                     self.ratio_pct5
@@ -545,7 +547,7 @@ impl ComputedRatioVecsFromDateIndex {
                     starting_indexes.dateindex,
                     date_to_price,
                     |(i, price, ..)| {
-                        let multiplier = iter.unwrap_get_inner(i);
+                        let multiplier = iter.unsafe_get(i);
                         (i, price * multiplier)
                     },
                     exit,
@@ -562,7 +564,7 @@ impl ComputedRatioVecsFromDateIndex {
                         starting_indexes.dateindex,
                         date_to_price,
                         |(i, price, ..)| {
-                            let multiplier = iter.unwrap_get_inner(i);
+                            let multiplier = iter.unsafe_get(i);
                             (i, price * multiplier)
                         },
                         exit,

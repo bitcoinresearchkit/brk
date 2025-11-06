@@ -1,15 +1,13 @@
 use std::{fs, path::Path};
 
 use brk_error::Result;
-use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, StoreFjallV3 as Store};
 use brk_types::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
-    TxOutIndex, TxidPrefix, TypeIndex, TypeIndexAndOutPoint, TypeIndexAndTxIndex, Unit, Version,
-    Vout,
+    AddressBytes, AddressBytesHash, AddressTypeAddressIndexOutPoint,
+    AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
+    TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall3::{Database, PersistMode};
-use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
 
@@ -25,9 +23,9 @@ pub struct Stores {
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
-    pub addresstype_to_typeindex_and_txindex: ByAddressType<Store<TypeIndexAndTxIndex, Unit>>,
-    pub addresstype_to_typeindex_and_unspentoutpoint:
-        ByAddressType<Store<TypeIndexAndOutPoint, Unit>>,
+    pub addresstype_to_addressindex_and_txindex: Store<AddressTypeAddressIndexTxIndex, Unit>,
+    pub addresstype_to_addressindex_and_unspentoutpoint:
+        Store<AddressTypeAddressIndexOutPoint, Unit>,
 }
 
 impl Stores {
@@ -47,31 +45,56 @@ impl Stores {
 
         let database_ref = &database;
 
-        let create_addressindex_and_txindex_store = |index| {
-            Store::import(
-                database_ref,
-                path,
-                &format!("a2t{}", index),
-                version,
-                Some(false),
-            )
-        };
-
-        let create_addressindex_and_unspentoutpoint_store =
-            |index| Store::import(database_ref, path, &format!("a2u{}", index), version, None);
-
         Ok(Self {
             database: database.clone(),
 
-            height_to_coinbase_tag: Store::import(database_ref, path, "h2c", version, None)?,
-            addressbyteshash_to_typeindex: Store::import(database_ref, path, "a2t", version, None)?,
-            blockhashprefix_to_height: Store::import(database_ref, path, "b2h", version, None)?,
-            txidprefix_to_txindex: Store::import(database_ref, path, "t2t", version, None)?,
-            addresstype_to_typeindex_and_txindex: ByAddressType::new_with_index(
-                create_addressindex_and_txindex_store,
+            height_to_coinbase_tag: Store::import(
+                database_ref,
+                path,
+                "height_to_coinbase_tag",
+                version,
+                true,
+                true,
             )?,
-            addresstype_to_typeindex_and_unspentoutpoint: ByAddressType::new_with_index(
-                create_addressindex_and_unspentoutpoint_store,
+            addressbyteshash_to_typeindex: Store::import(
+                database_ref,
+                path,
+                "addressbyteshash_to_typeindex",
+                version,
+                true,
+                false,
+            )?,
+            blockhashprefix_to_height: Store::import(
+                database_ref,
+                path,
+                "blockhashprefix_to_height",
+                version,
+                true,
+                false,
+            )?,
+            txidprefix_to_txindex: Store::import(
+                database_ref,
+                path,
+                "txidprefix_to_txindex",
+                version,
+                true,
+                false,
+            )?,
+            addresstype_to_addressindex_and_txindex: Store::import(
+                database_ref,
+                path,
+                "addresstype_to_addressindex_and_txindex",
+                version,
+                false,
+                false,
+            )?,
+            addresstype_to_addressindex_and_unspentoutpoint: Store::import(
+                database_ref,
+                path,
+                "addresstype_to_addressindex_and_unspentoutpoint",
+                version,
+                false,
+                false,
             )?,
         })
     }
@@ -88,36 +111,16 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        info!(
-            "database.write_buffer_size = {}",
-            self.database.write_buffer_size()
-        );
-        info!("database.journal_count = {}", self.database.journal_count());
-
         [
             &mut self.addressbyteshash_to_typeindex as &mut dyn AnyStore,
             &mut self.blockhashprefix_to_height,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
+            &mut self.addresstype_to_addressindex_and_txindex,
+            &mut self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_par_iter() // Changed from par_iter_mut()
-        .chain(
-            self.addresstype_to_typeindex_and_txindex
-                .par_iter_mut()
-                .map(|s| s as &mut dyn AnyStore),
-        )
-        .chain(
-            self.addresstype_to_typeindex_and_unspentoutpoint
-                .par_iter_mut()
-                .map(|s| s as &mut dyn AnyStore),
-        )
         .try_for_each(|store| store.commit(height))?;
-
-        info!(
-            "database.write_buffer_size = {}",
-            self.database.write_buffer_size()
-        );
-        info!("database.journal_count = {}", self.database.journal_count());
 
         self.database
             .persist(PersistMode::SyncAll)
@@ -130,18 +133,10 @@ impl Stores {
             &self.blockhashprefix_to_height,
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
+            &self.addresstype_to_addressindex_and_txindex,
+            &self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_iter()
-        .chain(
-            self.addresstype_to_typeindex_and_txindex
-                .iter()
-                .map(|s| s as &dyn AnyStore),
-        )
-        .chain(
-            self.addresstype_to_typeindex_and_unspentoutpoint
-                .iter()
-                .map(|s| s as &dyn AnyStore),
-        )
     }
 
     pub fn rollback_if_needed(
@@ -153,20 +148,10 @@ impl Stores {
             && self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
+            && self.addresstype_to_addressindex_and_txindex.is_empty()?
             && self
-                .addresstype_to_typeindex_and_txindex
-                .iter()
-                .map(|s| s.is_empty())
-                .collect::<Result<Vec<_>>>()?
-                .into_iter()
-                .all(|empty| empty)
-            && self
-                .addresstype_to_typeindex_and_unspentoutpoint
-                .iter()
-                .map(|s| s.is_empty())
-                .collect::<Result<Vec<_>>>()?
-                .into_iter()
-                .all(|empty| empty)
+                .addresstype_to_addressindex_and_unspentoutpoint
+                .is_empty()?
         {
             return Ok(());
         }
@@ -188,7 +173,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pk65addressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2pk65addressindex_to_p2pk65bytes_iter =
                     vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
@@ -203,7 +188,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pk33addressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2pk33addressindex_to_p2pk33bytes_iter =
                     vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
@@ -218,7 +203,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pkhaddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2pkhaddressindex_to_p2pkhbytes_iter =
                     vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
@@ -233,7 +218,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2shaddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2shaddressindex_to_p2shbytes_iter =
                     vecs.p2shaddressindex_to_p2shbytes.iter()?;
@@ -248,7 +233,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2traddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2traddressindex_to_p2trbytes_iter =
                     vecs.p2traddressindex_to_p2trbytes.iter()?;
@@ -263,7 +248,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2wpkhaddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
                     vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
@@ -278,7 +263,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2wshaddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2wshaddressindex_to_p2wshbytes_iter =
                     vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
@@ -293,7 +278,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2aaddressindex
-                .one_shot_read(starting_indexes.height)
+                .read(starting_indexes.height)
             {
                 let mut p2aaddressindex_to_p2abytes_iter =
                     vecs.p2aaddressindex_to_p2abytes.iter()?;
@@ -351,21 +336,28 @@ impl Stores {
                         .skip(starting_indexes.txoutindex.to_usize()),
                 )
                 .filter(|((_, outputtype), _)| outputtype.is_address())
-                .for_each(|((txoutindex, outputtype), typeindex)| {
-                    let txindex = txoutindex_to_txindex_iter.unsafe_get_(txoutindex);
+                .for_each(|((txoutindex, addresstype), addressindex)| {
+                    let txindex = txoutindex_to_txindex_iter.get_unwrap_at(txoutindex);
+
+                    self.addresstype_to_addressindex_and_txindex.remove(
+                        AddressTypeAddressIndexTxIndex::from((addresstype, addressindex, txindex)),
+                    );
 
                     let vout = Vout::from(
                         txoutindex.to_usize()
                             - txindex_to_first_txoutindex_iter
-                                .unsafe_get(txindex)
+                                .get_unwrap(txindex)
                                 .to_usize(),
                     );
                     let outpoint = OutPoint::new(txindex, vout);
 
-                    self.addresstype_to_typeindex_and_unspentoutpoint
-                        .get_mut(outputtype)
-                        .unwrap()
-                        .remove(TypeIndexAndOutPoint::from((typeindex, outpoint)));
+                    self.addresstype_to_addressindex_and_unspentoutpoint.remove(
+                        AddressTypeAddressIndexOutPoint::from((
+                            addresstype,
+                            addressindex,
+                            outpoint,
+                        )),
+                    );
                 });
 
             // Add back outputs that were spent after the rollback point
@@ -384,19 +376,32 @@ impl Stores {
                     let vout = outpoint.vout();
 
                     // Calculate txoutindex from txindex and vout
-                    let txoutindex = txindex_to_first_txoutindex_iter.unsafe_get(txindex) + vout;
+                    let txoutindex = txindex_to_first_txoutindex_iter.get_unwrap(txindex) + vout;
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
-                        let outputtype = txoutindex_to_outputtype_iter.unsafe_get(txoutindex);
+                        let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
 
                         if outputtype.is_address() {
-                            let typeindex = txoutindex_to_typeindex_iter.unsafe_get(txoutindex);
+                            let addresstype = outputtype;
+                            let addressindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
 
-                            self.addresstype_to_typeindex_and_unspentoutpoint
-                                .get_mut(outputtype)
-                                .unwrap()
-                                .insert(TypeIndexAndOutPoint::from((typeindex, outpoint)), Unit);
+                            self.addresstype_to_addressindex_and_txindex.remove(
+                                AddressTypeAddressIndexTxIndex::from((
+                                    addresstype,
+                                    addressindex,
+                                    txindex,
+                                )),
+                            );
+
+                            self.addresstype_to_addressindex_and_unspentoutpoint.insert(
+                                AddressTypeAddressIndexOutPoint::from((
+                                    addresstype,
+                                    addressindex,
+                                    outpoint,
+                                )),
+                                Unit,
+                            );
                         }
                     }
                 });

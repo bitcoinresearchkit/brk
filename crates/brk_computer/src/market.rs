@@ -3,7 +3,10 @@ use std::{path::Path, thread};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
-use vecdb::{Database, EagerVec, Exit, PAGE_SIZE, StoredIndex, VecIterator};
+use vecdb::{
+    Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, StoredIndex, VecIterator,
+    VecIteratorExtended,
+};
 
 use crate::{
     grouped::{ComputedStandardDeviationVecsFromDateIndex, Source, StandardDeviationVecsOptions},
@@ -1532,7 +1535,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(price, starting_indexes, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -1591,12 +1594,12 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.into_iter().unwrap_get_inner_(i - 1)
+                                slf.one_shot_get_any_or_read_(i - 1).unwrap().unwrap()
                             } else {
                                 StoredU16::default()
                             });
                         }
-                        let days = if *high_iter.unwrap_get_inner(i) == ath {
+                        let days = if *high_iter.unsafe_get(i) == ath {
                             StoredU16::default()
                         } else {
                             prev.unwrap() + StoredU16::new(1)
@@ -1622,7 +1625,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.into_iter().unwrap_get_inner_(i - 1)
+                                slf.one_shot_get_any_or_read_(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });
