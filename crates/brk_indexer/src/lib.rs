@@ -18,20 +18,20 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIteratorExtended};
 mod indexes;
-mod stores_v2;
-// mod stores_v3;
+// mod stores_v2;
+mod stores_v3;
 mod vecs;
 
 pub use indexes::*;
-pub use stores_v2::*;
-// pub use stores_v3::*;
+// pub use stores_v2::*;
+pub use stores_v3::*;
 pub use vecs::*;
 
 // One version for all data sources
 // Increment on **change _OR_ addition**
 const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(920_000);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
 
 #[derive(Clone)]
 pub struct Indexer {

@@ -14,7 +14,7 @@ use brk_types::{
 };
 use vecdb::{
     AnyCloneableIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
-    StoredIndex, VecIterator,
+    StoredIndex, VecIteratorExtended,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -117,15 +117,13 @@ impl Vecs {
             indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
             |index: TxInIndex, txinindex_to_outpoint_iter, txindex_to_first_txoutindex_iter| {
                 txinindex_to_outpoint_iter
-                    .next_at(index.to_usize())
-                    .map(|(_, outpoint)| {
+                    .get_at(index.to_usize())
+                    .map(|outpoint| {
                         if outpoint.is_coinbase() {
                             return TxOutIndex::COINBASE;
                         }
                         txindex_to_first_txoutindex_iter
-                            .next_at(outpoint.txindex().to_usize())
-                            .unwrap()
-                            .1
+                            .get_unwrap_at(outpoint.txindex().to_usize())
                             + outpoint.vout()
                     })
             },
@@ -160,12 +158,12 @@ impl Vecs {
             |index: TxIndex, txindex_to_first_txinindex_iter, txinindex_to_txoutindex_iter| {
                 let txindex = index.to_usize();
                 txindex_to_first_txinindex_iter
-                    .next_at(txindex)
-                    .map(|(_, start)| {
+                    .get_at(txindex)
+                    .map(|start| {
                         let start = usize::from(start);
                         let end = txindex_to_first_txinindex_iter
-                            .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v))
+                            .get_at(txindex + 1)
+                            .map(|v| usize::from(v))
                             .unwrap_or_else(|| txinindex_to_txoutindex_iter.len());
                         StoredU64::from((start..end).count())
                     })
@@ -180,12 +178,12 @@ impl Vecs {
             |index: TxIndex, txindex_to_first_txoutindex_iter, txoutindex_to_value_iter| {
                 let txindex = index.to_usize();
                 txindex_to_first_txoutindex_iter
-                    .next_at(txindex)
-                    .map(|(_, start)| {
+                    .get_at(txindex)
+                    .map(|start| {
                         let start = usize::from(start);
                         let end = txindex_to_first_txoutindex_iter
-                            .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v))
+                            .get_at(txindex + 1)
+                            .map(|v| usize::from(v))
                             .unwrap_or_else(|| txoutindex_to_value_iter.len());
                         StoredU64::from((start..end).count())
                     })
@@ -558,7 +556,7 @@ impl Vecs {
                     prev_timestamp_fixed.replace(
                         height_to_timestamp_fixed_iter
                             .into_iter()
-                            .unsafe_get(prev_h),
+                            .get_unwrap(prev_h),
                     );
                 }
                 let timestamp_fixed =
@@ -585,7 +583,7 @@ impl Vecs {
         let starting_dateindex = self
             .height_to_dateindex
             .into_iter()
-            .get_inner(decremented_starting_height)
+            .get(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_dateindex.compute_transform(
@@ -598,7 +596,7 @@ impl Vecs {
         let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
             .into_iter()
-            .get_inner(decremented_starting_height)
+            .get(decremented_starting_height)
         {
             starting_dateindex.min(dateindex)
         } else {
@@ -637,7 +635,7 @@ impl Vecs {
         let starting_weekindex = self
             .dateindex_to_weekindex
             .into_iter()
-            .get_inner(starting_dateindex)
+            .get(starting_dateindex)
             .unwrap_or_default();
 
         self.dateindex_to_weekindex.compute_range(
@@ -674,7 +672,7 @@ impl Vecs {
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
             .into_iter()
-            .get_inner(decremented_starting_height)
+            .get(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_difficultyepoch.compute_from_index(
@@ -710,7 +708,7 @@ impl Vecs {
         let starting_monthindex = self
             .dateindex_to_monthindex
             .into_iter()
-            .get_inner(starting_dateindex)
+            .get(starting_dateindex)
             .unwrap_or_default();
 
         self.dateindex_to_monthindex.compute_range(
@@ -747,7 +745,7 @@ impl Vecs {
         let starting_quarterindex = self
             .monthindex_to_quarterindex
             .into_iter()
-            .get_inner(starting_monthindex)
+            .get(starting_monthindex)
             .unwrap_or_default();
 
         self.monthindex_to_quarterindex.compute_from_index(
@@ -785,7 +783,7 @@ impl Vecs {
         let starting_semesterindex = self
             .monthindex_to_semesterindex
             .into_iter()
-            .get_inner(starting_monthindex)
+            .get(starting_monthindex)
             .unwrap_or_default();
 
         self.monthindex_to_semesterindex.compute_from_index(
@@ -823,7 +821,7 @@ impl Vecs {
         let starting_yearindex = self
             .monthindex_to_yearindex
             .into_iter()
-            .get_inner(starting_monthindex)
+            .get(starting_monthindex)
             .unwrap_or_default();
 
         self.monthindex_to_yearindex.compute_from_index(
@@ -858,7 +856,7 @@ impl Vecs {
         let starting_halvingepoch = self
             .height_to_halvingepoch
             .into_iter()
-            .get_inner(decremented_starting_height)
+            .get(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_halvingepoch.compute_from_index(
@@ -886,7 +884,7 @@ impl Vecs {
         let starting_decadeindex = self
             .yearindex_to_decadeindex
             .into_iter()
-            .get_inner(starting_yearindex)
+            .get(starting_yearindex)
             .unwrap_or_default();
 
         self.yearindex_to_decadeindex.compute_from_index(
@@ -947,7 +945,7 @@ impl Indexes {
     pub fn update_from_height(&mut self, height: Height, indexes: &Vecs) {
         self.indexes.height = height;
         self.dateindex =
-            DateIndex::try_from(indexes.height_to_date_fixed.into_iter().unsafe_get(height))
+            DateIndex::try_from(indexes.height_to_date_fixed.into_iter().get_unwrap(height))
                 .unwrap();
         self.weekindex = WeekIndex::from(self.dateindex);
         self.monthindex = MonthIndex::from(self.dateindex);

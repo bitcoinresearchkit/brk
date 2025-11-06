@@ -4,7 +4,10 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview8::ByteView;
 use fjall3::{
-    Database, Keyspace, KeyspaceCreateOptions, ValueType,
+    Database,
+    Keyspace,
+    KeyspaceCreateOptions,
+    // ValueType,
     config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PinningPolicy},
 };
 
@@ -198,13 +201,28 @@ where
             )
             .collect::<Vec<_>>();
         items.sort_unstable();
-        batch.ingest(
-            items
-                .into_iter()
-                .map(|i| i.fjalled(&self.keyspace))
-                .collect::<Vec<_>>(),
-        );
-        batch.commit_keyspace(&self.keyspace)?;
+        items.into_iter().for_each(|item| match item {
+            Item::Value { key, value } => {
+                batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
+            }
+            Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
+        });
+        batch.commit()?;
+
+        // batch.ingest(
+        //     items
+        //         .into_iter()
+        //         .map(|i| i.fjalled(&self.keyspace))
+        //         .collect::<Vec<_>>(),
+        // );
+        // batch.commit_keyspace(&self.keyspace)?;
+        // batch.ingest(
+        //     items
+        //         .into_iter()
+        //         .map(|i| i.fjalled(&self.keyspace))
+        //         .collect::<Vec<_>>(),
+        // );
+        // batch.commit_keyspace(&self.keyspace)?;
         // batch.commit_keyspace(self.keyspace.inner())?;
 
         Ok(())
@@ -263,26 +281,26 @@ impl<K, V> Item<K, V> {
         }
     }
 
-    pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
-    where
-        K: Into<ByteView>,
-        V: Into<ByteView>,
-    {
-        let keyspace_id = keyspace.id;
-        // let keyspace_id = keyspace.inner().id;
-        match self {
-            Item::Value { key, value } => fjall3::Item {
-                keyspace_id,
-                key: key.into().into(),
-                value: value.into().into(),
-                value_type: ValueType::Value,
-            },
-            Item::Tomb(key) => fjall3::Item {
-                keyspace_id,
-                key: key.into().into(),
-                value: [].into(),
-                value_type: ValueType::WeakTombstone,
-            },
-        }
-    }
+    //     pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
+    //     where
+    //         K: Into<ByteView>,
+    //         V: Into<ByteView>,
+    //     {
+    //         let keyspace_id = keyspace.id;
+    //         // let keyspace_id = keyspace.inner().id;
+    //         match self {
+    //             Item::Value { key, value } => fjall3::Item {
+    //                 keyspace_id,
+    //                 key: key.into().into(),
+    //                 value: value.into().into(),
+    //                 value_type: ValueType::Value,
+    //             },
+    //             Item::Tomb(key) => fjall3::Item {
+    //                 keyspace_id,
+    //                 key: key.into().into(),
+    //                 value: [].into(),
+    //                 value_type: ValueType::WeakTombstone,
+    //             },
+    //         }
+    //     }
 }

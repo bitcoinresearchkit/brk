@@ -675,8 +675,8 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "brk_fjall 2.11.5",
- "brk_fjall 3.0.0-pre.4",
+ "brk_fjall",
+ "fjall",
  "jiff",
  "minreq",
  "sonic-rs",
@@ -714,20 +714,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_fjall"
-version = "3.0.0-pre.4"
-dependencies = [
- "byteorder-lite",
- "byteview 0.8.0",
- "dashmap",
- "log",
- "lsm-tree 3.0.0-pre.4",
- "std-semaphore",
- "tempfile",
- "xxhash-rust",
-]
-
-[[package]]
 name = "brk_grouper"
 version = "0.0.111"
 dependencies = [
@@ -744,8 +730,7 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "brk_error",
- "brk_fjall 2.11.5",
- "brk_fjall 3.0.0-pre.4",
+ "brk_fjall",
  "brk_grouper",
  "brk_iterator",
  "brk_logger",
@@ -754,6 +739,7 @@ dependencies = [
  "brk_store",
  "brk_traversable",
  "brk_types",
+ "fjall",
  "log",
  "rand 0.9.2",
  "rayon",
@@ -1286,12 +1272,12 @@ name = "brk_store"
 version = "0.0.111"
 dependencies = [
  "brk_error",
- "brk_fjall 2.11.5",
- "brk_fjall 3.0.0-pre.4",
+ "brk_fjall",
  "brk_types",
  "byteview 0.6.1",
  "byteview 0.8.0",
  "candystore",
+ "fjall",
  "log",
  "parking_lot 0.12.5",
  "rustc-hash",
@@ -1335,7 +1321,7 @@ dependencies = [
  "allocative",
  "bitcoin",
  "brk_error",
- "byteview 0.6.1",
+ "byteview 0.8.0",
  "derive_deref",
  "itoa",
  "jiff",
@@ -2115,6 +2101,22 @@ name = "fixedbitset"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
+
+[[package]]
+name = "fjall"
+version = "3.0.0-pre.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcf4746eb86124d4cd91564bc01c247b8c2c3ddf2d9fb3701ca16c86fdb5b538"
+dependencies = [
+ "byteorder-lite",
+ "byteview 0.8.0",
+ "dashmap",
+ "log",
+ "lsm-tree 3.0.0-pre.4",
+ "std-semaphore",
+ "tempfile",
+ "xxhash-rust",
+]
 
 [[package]]
 name = "flate2"
@@ -4108,9 +4110,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c06cc46cc4b6da16c9981293906062230f822879c2c88367a40673db5e44414"
+checksum = "d07ae2ce76ce46d26972046ae67d1f65ddbf5bc1290d3abaee84b7ab159564c4"
 dependencies = [
  "libc",
  "memmap2",
@@ -5321,9 +5323,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0cff5037d7e5d66344dff249c366a527b530ef3c723e04f4a90fa11d5f6a9fc"
+checksum = "d96acc025cc0039bf828cbf4efdcb485eb0eda88da7ec805fb6ec9159a340b73"
 dependencies = [
  "allocative",
  "ctrlc",
@@ -5340,9 +5342,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f73046e065e63abb2ad8d1616a08ca8acf7d543f04ffb0222f6fc44e0d3eeec"
+checksum = "dae24e54786d92d4aa4b46098eed2594cd6ed51d2a47a36ff8ae3adfa232d958"
 dependencies = [
  "quote",
  "syn 2.0.109",
