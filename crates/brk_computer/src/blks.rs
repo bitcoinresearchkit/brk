@@ -94,22 +94,16 @@ impl Vecs {
             .try_for_each(|block| -> Result<()> {
                 let height = block.height();
 
-                self.height_to_position.forced_push_at(
-                    height,
-                    block.metadata().position(),
-                    exit,
-                )?;
+                self.height_to_position
+                    .forced_push(height, block.metadata().position(), exit)?;
 
                 let txindex = height_to_first_txindex_iter.get_unwrap(height);
 
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {
                         let txindex = txindex + index;
-                        self.txindex_to_position.forced_push_at(
-                            txindex,
-                            metadata.position(),
-                            exit,
-                        )?;
+                        self.txindex_to_position
+                            .forced_push(txindex, metadata.position(), exit)?;
                         Ok(())
                     },
                 )?;

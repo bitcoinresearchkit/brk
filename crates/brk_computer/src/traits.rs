@@ -197,7 +197,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         stacks
             .iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, stack)| {
                 let mut avg_price = Dollars::from(f64::NAN);

@@ -133,7 +133,7 @@ impl Vecs {
                 prev.replace(ohlc.clone());
 
                 self.dateindex_to_price_ohlc_in_cents
-                    .forced_push_at_(i, ohlc, exit)?;
+                    .forced_push_at(i, ohlc, exit)?;
 
                 Ok(())
             })?;
