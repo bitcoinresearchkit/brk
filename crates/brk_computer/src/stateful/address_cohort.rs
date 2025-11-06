@@ -112,7 +112,7 @@ impl DynCohortVecs for Vecs {
             self.state.as_mut().unwrap().addr_count = *self
                 .height_to_addr_count
                 .into_iter()
-                .unwrap_get_inner(prev_height);
+                .unsafe_get(prev_height);
         }
 
         Ok(starting_height)

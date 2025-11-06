@@ -1,3 +1,5 @@
+use std::env;
+use std::path::{Path, PathBuf};
 use std::thread::sleep;
 use std::{mem, sync::Arc, time::Duration};
 
@@ -269,5 +271,28 @@ impl Client {
         F: Fn(&CoreClient) -> Result<T, RpcError>,
     {
         self.0.call_once(f)
+    }
+
+    pub fn default_url() -> &'static str {
+        "http://localhost:8332"
+    }
+
+    pub fn default_bitcoin_path() -> PathBuf {
+        if env::consts::OS == "macos" {
+            Self::default_mac_bitcoin_path()
+        } else {
+            Self::default_linux_bitcoin_path()
+        }
+    }
+
+    pub fn default_linux_bitcoin_path() -> PathBuf {
+        Path::new(&env::var("HOME").unwrap()).join(".bitcoin")
+    }
+
+    pub fn default_mac_bitcoin_path() -> PathBuf {
+        Path::new(&env::var("HOME").unwrap())
+            .join("Library")
+            .join("Application Support")
+            .join("Bitcoin")
     }
 }

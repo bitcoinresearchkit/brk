@@ -24,6 +24,6 @@ fjall2 = { workspace = true }
 fjall3 = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
-redb = { workspace = true }
 rustc-hash = { workspace = true }
 vecdb = { workspace = true }
+rand = "0.9.2"

@@ -1,4 +1,4 @@
-use std::{path::Path, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use brk_error::Result;
 use brk_monitor::Mempool;
@@ -6,14 +6,11 @@ use brk_rpc::{Auth, Client};
 
 fn main() -> Result<()> {
     // Connect to Bitcoin Core
-    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
-        .join("Library")
-        .join("Application Support")
-        .join("Bitcoin");
+    let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
     let client = Client::new(
-        "http://localhost:8332",
+        Client::default_url(),
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 

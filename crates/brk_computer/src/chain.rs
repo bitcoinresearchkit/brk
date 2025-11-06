@@ -12,7 +12,7 @@ use brk_types::{
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2,
-    LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator,
+    LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIterator, VecIteratorExtended,
 };
 
 use crate::grouped::{
@@ -1123,7 +1123,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, price, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -1152,9 +1152,8 @@ impl Vecs {
             starting_indexes.height,
             &indexes.height_to_timestamp_fixed,
             |(h, t, ..)| {
-                while t.difference_in_days_between(
-                    height_to_timestamp_fixed_iter.unwrap_get_inner(prev),
-                ) > 0
+                while t.difference_in_days_between(height_to_timestamp_fixed_iter.unsafe_get(prev))
+                    > 0
                 {
                     prev.increment();
                     if prev > h {
@@ -1216,7 +1215,7 @@ impl Vecs {
             &indexer.vecs.height_to_timestamp,
             |(height, timestamp, ..)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
-                    let prev_timestamp = height_to_timestamp_iter.unwrap_get_inner(prev_h);
+                    let prev_timestamp = height_to_timestamp_iter.unsafe_get(prev_h);
                     timestamp
                         .checked_sub(prev_timestamp)
                         .unwrap_or(Timestamp::ZERO)
@@ -1266,19 +1265,19 @@ impl Vecs {
             Some(&self.height_to_vbytes),
         )?;
 
-        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter();
+        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter()?;
 
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,
             &indexes.difficultyepoch_to_first_height,
-            |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
+            |(i, h, ..)| (i, height_to_timestamp_iter.unsafe_get(h)),
             exit,
         )?;
 
         self.halvingepoch_to_timestamp.compute_transform(
             starting_indexes.halvingepoch,
             &indexes.halvingepoch_to_first_height,
-            |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
+            |(i, h, ..)| (i, height_to_timestamp_iter.unsafe_get(h)),
             exit,
         )?;
 
@@ -1292,9 +1291,8 @@ impl Vecs {
                     |(di, height, ..)| {
                         (
                             di,
-                            height_to_difficultyepoch_iter.unwrap_get_inner(
-                                height + (*height_count_iter.unwrap_get_inner(di) - 1),
-                            ),
+                            height_to_difficultyepoch_iter
+                                .unsafe_get(height + (*height_count_iter.unsafe_get(di) - 1)),
                         )
                     },
                     exit,
@@ -1312,9 +1310,8 @@ impl Vecs {
                     |(di, height, ..)| {
                         (
                             di,
-                            height_to_halvingepoch_iter.unwrap_get_inner(
-                                height + (*height_count_iter.unwrap_get_inner(di) - 1),
-                            ),
+                            height_to_halvingepoch_iter
+                                .unsafe_get(height + (*height_count_iter.unsafe_get(di) - 1)),
                         )
                     },
                     exit,
@@ -1365,7 +1362,7 @@ impl Vecs {
                         &indexer.vecs.height_to_first_txindex,
                         &indexer.vecs.txindex_to_txid,
                         |txindex| {
-                            let v = txindex_to_txversion_iter.unwrap_get_inner(txindex);
+                            let v = txindex_to_txversion_iter.unsafe_get(txindex);
                             v == txversion
                         },
                         exit,
@@ -1385,7 +1382,7 @@ impl Vecs {
                 let value = if txoutindex == TxOutIndex::COINBASE {
                     Sats::MAX
                 } else {
-                    txoutindex_to_value_iter.unwrap_get_inner(txoutindex)
+                    txoutindex_to_value_iter.unsafe_get(txoutindex)
                 };
                 (txinindex, value)
             },
@@ -1525,14 +1522,14 @@ impl Vecs {
                     &indexer.vecs.height_to_first_txindex,
                     |(height, txindex, ..)| {
                         let first_txoutindex = txindex_to_first_txoutindex_iter
-                            .unwrap_get_inner(txindex)
+                            .unsafe_get(txindex)
                             .to_usize();
-                        let output_count = txindex_to_output_count_iter.unwrap_get_inner(txindex);
+                        let output_count = txindex_to_output_count_iter.unsafe_get(txindex);
                         let mut sats = Sats::ZERO;
                         (first_txoutindex..first_txoutindex + usize::from(output_count)).for_each(
                             |txoutindex| {
                                 sats += txoutindex_to_value_iter
-                                    .unwrap_get_inner(TxOutIndex::from(txoutindex));
+                                    .unsafe_get(TxOutIndex::from(txoutindex));
                             },
                         );
                         (height, sats)
@@ -1556,7 +1553,7 @@ impl Vecs {
                 let range = *h - (*count - 1)..=*h;
                 let sum = range
                     .map(Height::from)
-                    .map(|h| height_to_coinbase_iter.unwrap_get_inner(h))
+                    .map(|h| height_to_coinbase_iter.unsafe_get(h))
                     .sum::<Sats>();
                 (h, sum)
             },
@@ -1575,7 +1572,7 @@ impl Vecs {
                     let range = *h - (*count - 1)..=*h;
                     let sum = range
                         .map(Height::from)
-                        .map(|h| height_to_coinbase_iter.unwrap_get_inner(h))
+                        .map(|h| height_to_coinbase_iter.unsafe_get(h))
                         .sum::<Dollars>();
                     (h, sum)
                 },
@@ -1593,7 +1590,7 @@ impl Vecs {
                     starting_indexes.height,
                     self.indexes_to_coinbase.sats.height.as_ref().unwrap(),
                     |(height, coinbase, ..)| {
-                        let fees = indexes_to_fee_sum_iter.unwrap_get_inner(height);
+                        let fees = indexes_to_fee_sum_iter.unsafe_get(height);
                         (height, coinbase.checked_sub(fees).unwrap())
                     },
                     exit,
@@ -1787,8 +1784,8 @@ impl Vecs {
                     starting_indexes.height,
                     self.indexes_to_output_count.height.unwrap_cumulative(),
                     |(h, output_count, ..)| {
-                        let input_count = input_count_iter.unwrap_get_inner(h);
-                        let opreturn_count = opreturn_count_iter.unwrap_get_inner(h);
+                        let input_count = input_count_iter.unsafe_get(h);
+                        let opreturn_count = opreturn_count_iter.unsafe_get(h);
                         let block_count = u64::from(h + 1_usize);
                         // -1 > genesis output is unspendable
                         let mut utxo_count =

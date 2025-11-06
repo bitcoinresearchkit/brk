@@ -509,7 +509,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         let idxs = self.compute_(indexer, starting_indexes, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(idxs)
     }
 
@@ -558,7 +558,7 @@ impl Vecs {
                     prev_timestamp_fixed.replace(
                         height_to_timestamp_fixed_iter
                             .into_iter()
-                            .unwrap_get_inner(prev_h),
+                            .unsafe_get(prev_h),
                     );
                 }
                 let timestamp_fixed =
@@ -946,13 +946,9 @@ pub struct Indexes {
 impl Indexes {
     pub fn update_from_height(&mut self, height: Height, indexes: &Vecs) {
         self.indexes.height = height;
-        self.dateindex = DateIndex::try_from(
-            indexes
-                .height_to_date_fixed
-                .into_iter()
-                .unwrap_get_inner(height),
-        )
-        .unwrap();
+        self.dateindex =
+            DateIndex::try_from(indexes.height_to_date_fixed.into_iter().unsafe_get(height))
+                .unwrap();
         self.weekindex = WeekIndex::from(self.dateindex);
         self.monthindex = MonthIndex::from(self.dateindex);
         self.quarterindex = QuarterIndex::from(self.monthindex);

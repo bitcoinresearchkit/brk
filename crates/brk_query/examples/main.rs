@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{env, fs, path::Path};
 
 use brk_computer::Computer;
 use brk_error::Result;
@@ -10,24 +10,21 @@ use brk_types::Index;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
-    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
-        .join("Library")
-        .join("Application Support")
-        .join("Bitcoin");
+    let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
     let blocks_dir = bitcoin_dir.join("blocks");
 
-    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk");
     fs::create_dir_all(&outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 
     let client = Client::new(
-        "http://localhost:8332",
+        Client::default_url(),
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 
-    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk");
     // let outputs_dir = Path::new("../../_outputs");
 
     let exit = Exit::new();

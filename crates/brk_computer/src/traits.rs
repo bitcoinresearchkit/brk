@@ -39,37 +39,41 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         let mut other_iter = closes.iter();
         let mut prev = None;
 
-        let index = max_from.min(DateIndex::from(self.len()));
-        closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes;
-            let i_usize = i.to_usize();
-            if prev.is_none() {
-                if i_usize == 0 {
-                    prev.replace(Sats::ZERO);
-                } else {
-                    prev.replace(self.into_iter().unwrap_get_inner_(i_usize - 1));
-                }
-            }
-
-            let mut stack = Sats::ZERO;
-
-            if price != Dollars::ZERO {
-                stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
-
-                if i_usize >= len {
-                    let prev_price = *other_iter.unwrap_get_inner_(i_usize - len);
-                    if prev_price != Dollars::ZERO {
-                        stack = stack
-                            .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
-                            .unwrap();
+        let index = max_from.to_usize().min(self.len());
+        closes
+            .iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, closes)| {
+                let price = *closes;
+                let i_usize = i.to_usize();
+                if prev.is_none() {
+                    if i_usize == 0 {
+                        prev.replace(Sats::ZERO);
+                    } else {
+                        prev.replace(self.one_shot_get_any_or_read_(i_usize - 1));
                     }
                 }
-            }
 
-            prev.replace(stack);
+                let mut stack = Sats::ZERO;
 
-            self.forced_push_at(i, stack, exit)
-        })?;
+                if price != Dollars::ZERO {
+                    stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+
+                    if i_usize >= len {
+                        let prev_price = *other_iter.get_(i_usize - len);
+                        if prev_price != Dollars::ZERO {
+                            stack = stack
+                                .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
+                                .unwrap();
+                        }
+                    }
+                }
+
+                prev.replace(stack);
+
+                self.forced_push_at(i, stack, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -90,27 +94,31 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         let mut prev = None;
 
         let index = max_from.min(DateIndex::from(self.len()));
-        closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes;
-            let i_usize = i.to_usize();
-            if prev.is_none() {
-                if i_usize == 0 {
-                    prev.replace(Sats::ZERO);
-                } else {
-                    prev.replace(self.into_iter().unwrap_get_inner_(i_usize - 1));
+        closes
+            .iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, closes)| {
+                let price = *closes;
+                let i_usize = i.to_usize();
+                if prev.is_none() {
+                    if i_usize == 0 {
+                        prev.replace(Sats::ZERO);
+                    } else {
+                        prev.replace(self.one_shot_get_any_or_read_(i_usize - 1));
+                    }
                 }
-            }
 
-            let mut stack = Sats::ZERO;
+                let mut stack = Sats::ZERO;
 
-            if price != Dollars::ZERO && i >= from {
-                stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
-            }
+                if price != Dollars::ZERO && i >= from {
+                    stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+                }
 
-            prev.replace(stack);
+                prev.replace(stack);
 
-            self.forced_push_at(i, stack, exit)
-        })?;
+                self.forced_push_at(i, stack, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -151,17 +159,21 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12)).unwrap();
 
-        stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let mut avg_price = Dollars::from(f64::NAN);
-            if i > first_price_date {
-                avg_price = DCA_AMOUNT
-                    * len
-                        .min(i.to_usize() + 1)
-                        .min(i.checked_sub(first_price_date).unwrap().to_usize() + 1)
-                    / Bitcoin::from(stack);
-            }
-            self.forced_push_at(i, avg_price, exit)
-        })?;
+        stacks
+            .iter()
+            .skip(index.to_usize())
+            .enumerate()
+            .try_for_each(|(i, stack)| {
+                let mut avg_price = Dollars::from(f64::NAN);
+                if i > first_price_date {
+                    avg_price = DCA_AMOUNT
+                        * len
+                            .min(i.to_usize() + 1)
+                            .min(i.checked_sub(first_price_date).unwrap().to_usize() + 1)
+                        / Bitcoin::from(stack);
+                }
+                self.forced_push_at(i, avg_price, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -183,13 +195,17 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         let from_usize = from.to_usize();
 
-        stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let mut avg_price = Dollars::from(f64::NAN);
-            if i >= from {
-                avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from_usize) / Bitcoin::from(stack);
-            }
-            self.forced_push_at(i, avg_price, exit)
-        })?;
+        stacks
+            .iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, stack)| {
+                let mut avg_price = Dollars::from(f64::NAN);
+                if i >= from {
+                    avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from_usize) / Bitcoin::from(stack);
+                }
+                self.forced_push_at(i, avg_price, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -220,10 +236,13 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        sats.iter_at(index).try_for_each(|(i, sats)| {
-            let (i, v) = (i, Bitcoin::from(sats));
-            self.forced_push_at(i, v, exit)
-        })?;
+        sats.iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, sats)| {
+                let (i, v) = (i, Bitcoin::from(sats));
+                self.forced_push_at(i, v, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -257,11 +276,15 @@ where
 
         let mut price_iter = price.iter();
         let index = max_from.min(I::from(self.len()));
-        bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
-            let dollars = price_iter.unwrap_get_inner(i);
-            let (i, v) = (i, *dollars * bitcoin);
-            self.forced_push_at(i, v, exit)
-        })?;
+        bitcoin
+            .iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, bitcoin)| {
+                let dollars = price_iter.unsafe_get(i);
+                let (i, v) = (i, *dollars * bitcoin);
+                self.forced_push_at(i, v, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -295,15 +318,18 @@ where
 
         let index = max_from.min(I::from(self.len()));
         let mut close_iter = close.iter();
-        ath.iter_at(index).try_for_each(|(i, ath)| {
-            if ath == Dollars::ZERO {
-                self.forced_push_at(i, StoredF32::default(), exit)
-            } else {
-                let close = *close_iter.unwrap_get_inner(i);
-                let drawdown = StoredF32::from((*ath - *close) / *ath * -100.0);
-                self.forced_push_at(i, drawdown, exit)
-            }
-        })?;
+        ath.iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, ath)| {
+                if ath == Dollars::ZERO {
+                    self.forced_push_at(i, StoredF32::default(), exit)
+                } else {
+                    let close = *close_iter.unsafe_get(i);
+                    let drawdown = StoredF32::from((*ath - *close) / *ath * -100.0);
+                    self.forced_push_at(i, drawdown, exit)
+                }
+            })?;
 
         self.safe_flush(exit)?;
 

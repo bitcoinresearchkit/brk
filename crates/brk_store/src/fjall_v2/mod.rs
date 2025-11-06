@@ -28,9 +28,7 @@ pub struct StoreFjallV2<Key, Value> {
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
 pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
-    fjall2::Config::new(path.join("fjall"))
-        .max_write_buffer_size(32 * 1024 * 1024)
-        .open_transactional()
+    fjall2::Config::new(path.join("fjall")).open_transactional()
 }
 
 impl<K, V> StoreFjallV2<K, V>
@@ -42,16 +40,14 @@ where
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
         name: &str,
-        bloom_filters: Option<bool>,
+        bloom_filters: bool,
     ) -> Result<TransactionalPartitionHandle> {
-        let mut options = PartitionCreateOptions::default()
-            .max_memtable_size(8 * 1024 * 1024)
-            .manual_journal_persist(true);
+        let mut options = PartitionCreateOptions::default().manual_journal_persist(true);
 
-        if bloom_filters.is_some_and(|b| !b) {
-            options = options.bloom_filter_bits(None);
-        } else {
+        if bloom_filters {
             options = options.bloom_filter_bits(Some(5));
+        } else {
+            options = options.bloom_filter_bits(None);
         }
 
         keyspace.open_partition(name, options).map_err(|e| e.into())
@@ -62,7 +58,7 @@ where
         path: &Path,
         name: &str,
         version: Version,
-        bloom_filters: Option<bool>,
+        bloom_filters: bool,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 

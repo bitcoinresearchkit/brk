@@ -6,7 +6,8 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec, PAGE_SIZE, VecIterator,
+    AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec, PAGE_SIZE,
+    VecIteratorExtended,
 };
 
 use super::Indexes;
@@ -58,7 +59,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, starting_indexes, reader, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -75,14 +76,14 @@ impl Vecs {
         let Some(min_height) = indexer
             .vecs
             .txindex_to_height
-            .iter()
-            .get_inner(min_txindex)
+            .iter()?
+            .get(min_txindex)
             .map(|h| h.min(starting_indexes.height))
         else {
             return Ok(());
         };
 
-        let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter();
+        let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter()?;
 
         parser
             .read(
@@ -99,7 +100,7 @@ impl Vecs {
                     exit,
                 )?;
 
-                let txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
+                let txindex = height_to_first_txindex_iter.get_unwrap(height);
 
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {

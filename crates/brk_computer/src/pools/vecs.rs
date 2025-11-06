@@ -354,7 +354,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.into_iter().unwrap_get_inner_(i - 1)
+                                slf.one_shot_get_any_or_read_(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });

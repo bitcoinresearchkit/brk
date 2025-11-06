@@ -219,13 +219,17 @@ where
         let cumulative_vec = self.cumulative.as_mut().unwrap();
 
         let mut cumulative = index.decremented().map_or(T::from(0_usize), |index| {
-            cumulative_vec.iter().unwrap_get_inner(index)
+            cumulative_vec.iter().unsafe_get(index)
         });
-        source.iter_at(index).try_for_each(|(i, v)| -> Result<()> {
-            cumulative += v;
-            cumulative_vec.forced_push_at(i, cumulative, exit)?;
-            Ok(())
-        })?;
+        source
+            .iter()
+            .skip(index)
+            .enumerate()
+            .try_for_each(|(i, v)| -> Result<()> {
+                cumulative += v;
+                cumulative_vec.forced_push_at(i, cumulative, exit)?;
+                Ok(())
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -256,14 +260,13 @@ where
 
         let mut cumulative = cumulative_vec.map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                cumulative_vec.iter().unwrap_get_inner(index)
+                cumulative_vec.iter().unsafe_get(index)
             })
         });
 
-        first_indexes
-            .iter_at(index)
-            .try_for_each(|(index, first_index)| -> Result<()> {
-                let count_index = count_indexes_iter.unwrap_get_inner(index);
+        first_indexes.iter().skip(index).enumerate().try_for_each(
+            |(index, first_index)| -> Result<()> {
+                let count_index = count_indexes_iter.unsafe_get(index);
 
                 if let Some(first) = self.first.as_mut() {
                     let f = source_iter
@@ -278,7 +281,7 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_iter.unwrap_get_inner(last_index);
+                    let v = source_iter.unsafe_get(last_index);
                     // .context("to work")
                     // .inspect_err(|_| {
                     //     dbg!(first_index, count_index, last_index);
@@ -382,7 +385,8 @@ where
                 }
 
                 Ok(())
-            })?;
+            },
+        )?;
 
         self.safe_flush(exit)?;
 
@@ -427,20 +431,16 @@ where
 
         let mut cumulative = self.cumulative.as_mut().map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                cumulative_vec.iter().unwrap_get_inner(index)
+                cumulative_vec.iter().unsafe_get(index)
             })
         });
 
-        first_indexes
-            .iter_at(index)
-            .try_for_each(|(index, first_index, ..)| -> Result<()> {
-                let count_index = count_indexes_iter.unwrap_get_inner(index);
+        first_indexes.iter().skip(index).enumerate().try_for_each(
+            |(index, first_index, ..)| -> Result<()> {
+                let count_index = count_indexes_iter.unsafe_get(index);
 
                 if let Some(first) = self.first.as_mut() {
-                    let v = source_first_iter
-                        .as_mut()
-                        .unwrap()
-                        .unwrap_get_inner(first_index);
+                    let v = source_first_iter.as_mut().unwrap().unsafe_get(first_index);
                     first.forced_push_at(index, v, exit)?;
                 }
 
@@ -450,10 +450,7 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_last_iter
-                        .as_mut()
-                        .unwrap()
-                        .unwrap_get_inner(last_index);
+                    let v = source_last_iter.as_mut().unwrap().unsafe_get(last_index);
                     last.forced_push_at(index, v, exit)?;
                 }
 
@@ -529,7 +526,8 @@ where
                 }
 
                 Ok(())
-            })?;
+            },
+        )?;
 
         self.safe_flush(exit)?;
 

@@ -298,7 +298,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexes, starting_indexes, price, chain, stateful, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -339,7 +339,7 @@ impl Vecs {
                     starting_indexes.height,
                     self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
                     |(i, created, ..)| {
-                        let destroyed = coinblocks_destroyed_iter.unwrap_get_inner(i);
+                        let destroyed = coinblocks_destroyed_iter.unsafe_get(i);
                         (i, created.checked_sub(destroyed).unwrap())
                     },
                     exit,

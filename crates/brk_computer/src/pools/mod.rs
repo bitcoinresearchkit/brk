@@ -81,7 +81,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, chain, price, exit)?;
-        self.db.flush_then_punch()?;
+        self.db.compact()?;
         Ok(())
     }
 
@@ -155,47 +155,40 @@ impl Vecs {
             .iter()
             .skip(min)
             .try_for_each(|(height, coinbase_tag)| -> Result<()> {
-                let txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
-                let txoutindex = txindex_to_first_txoutindex_iter.unwrap_get_inner(txindex);
-                let outputcount = txindex_to_output_count_iter.unwrap_get_inner(txindex);
+                let txindex = height_to_first_txindex_iter.unsafe_get(height);
+                let txoutindex = txindex_to_first_txoutindex_iter.unsafe_get(txindex);
+                let outputcount = txindex_to_output_count_iter.unsafe_get(txindex);
 
                 let pool = (*txoutindex..(*txoutindex + *outputcount))
                     .map(TxOutIndex::from)
                     .find_map(|txoutindex| {
-                        let outputtype = txoutindex_to_outputtype_iter.unwrap_get_inner(txoutindex);
-                        let typeindex = txoutindex_to_typeindex_iter.unwrap_get_inner(txoutindex);
+                        let outputtype = txoutindex_to_outputtype_iter.unsafe_get(txoutindex);
+                        let typeindex = txoutindex_to_typeindex_iter.unsafe_get(txoutindex);
 
                         match outputtype {
                             OutputType::P2PK65 => Some(AddressBytes::from(
-                                p2pk65addressindex_to_p2pk65bytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2pk65addressindex_to_p2pk65bytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2PK33 => Some(AddressBytes::from(
-                                p2pk33addressindex_to_p2pk33bytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2pk33addressindex_to_p2pk33bytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2PKH => Some(AddressBytes::from(
-                                p2pkhaddressindex_to_p2pkhbytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2pkhaddressindex_to_p2pkhbytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2SH => Some(AddressBytes::from(
-                                p2shaddressindex_to_p2shbytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2shaddressindex_to_p2shbytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2WPKH => Some(AddressBytes::from(
-                                p2wpkhaddressindex_to_p2wpkhbytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2wpkhaddressindex_to_p2wpkhbytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2WSH => Some(AddressBytes::from(
-                                p2wshaddressindex_to_p2wshbytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2wshaddressindex_to_p2wshbytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2TR => Some(AddressBytes::from(
-                                p2traddressindex_to_p2trbytes_iter
-                                    .unwrap_get_inner(typeindex.into()),
+                                p2traddressindex_to_p2trbytes_iter.unsafe_get(typeindex.into()),
                             )),
                             OutputType::P2A => Some(AddressBytes::from(
-                                p2aaddressindex_to_p2abytes_iter.unwrap_get_inner(typeindex.into()),
+                                p2aaddressindex_to_p2abytes_iter.unsafe_get(typeindex.into()),
                             )),
                             _ => None,
                         }

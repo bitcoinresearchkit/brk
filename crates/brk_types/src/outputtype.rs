@@ -20,6 +20,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     Serialize,
     JsonSchema,
+    Hash,
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
@@ -904,5 +905,12 @@ impl TryFrom<OutputType> for AddressType {
             OutputType::P2WSH => Self::P2wsh,
             _ => return Err(Error::Str("Bad output format")),
         })
+    }
+}
+
+impl From<&[u8]> for OutputType {
+    #[inline]
+    fn from(value: &[u8]) -> Self {
+        Self::read_from_bytes(value).unwrap()
     }
 }

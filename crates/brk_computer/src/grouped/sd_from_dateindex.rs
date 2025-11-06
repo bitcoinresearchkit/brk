@@ -499,7 +499,9 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
 
         source
-            .iter_at(starting_dateindex)
+            .iter()
+            .skip(starting_dateindex)
+            .enumerate()
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_date {
                     self.sd.dateindex.as_mut().unwrap().forced_push_at(
@@ -548,7 +550,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 
-                    let avg = sma_iter.unwrap_get_inner(index);
+                    let avg = sma_iter.unsafe_get(index);
 
                     let population = index.checked_sub(min_date).unwrap().to_usize() as f32 + 1.0;
 
@@ -637,7 +639,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                         starting_indexes.dateindex,
                         price,
                         |(i, price, ..)| {
-                            let multiplier = iter.unwrap_get_inner(i);
+                            let multiplier = iter.unsafe_get(i);
                             (i, price * multiplier)
                         },
                         exit,

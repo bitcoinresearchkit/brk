@@ -29,7 +29,6 @@ const MAJOR_FJALL_VERSION: Version = Version::new(3);
 
 pub fn open_fjall3_database(path: &Path) -> fjall3::Result<Database> {
     Database::builder(path.join("fjall"))
-        .max_write_buffer_size(32 * 1024 * 1024)
         .cache_size(1024 * 1024 * 1024)
         .open()
 }
@@ -40,34 +39,13 @@ where
     V: Debug + Clone + From<ByteView>,
     ByteView: From<K> + From<V>,
 {
-    fn open_keyspace(
-        database: &Database,
-        name: &str,
-        bloom_filters: Option<bool>,
-    ) -> Result<Keyspace> {
-        let mut options = KeyspaceCreateOptions::default()
-            .manual_journal_persist(true)
-            .filter_block_pinning_policy(PinningPolicy::all(false))
-            .index_block_pinning_policy(PinningPolicy::all(false))
-            .max_memtable_size(8 * 1024 * 1024);
-
-        if bloom_filters.is_some_and(|b| !b) {
-            options = options.filter_policy(FilterPolicy::disabled());
-        } else {
-            options = options.filter_policy(FilterPolicy::all(FilterPolicyEntry::Bloom(
-                BloomConstructionPolicy::BitsPerKey(5.0),
-            )));
-        }
-
-        database.keyspace(name, options).map_err(|e| e.into())
-    }
-
     pub fn import(
         database: &Database,
         path: &Path,
         name: &str,
         version: Version,
-        bloom_filters: Option<bool>,
+        bloom_filters: bool,
+        sequential: bool,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -76,7 +54,7 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_keyspace(database, name, bloom_filters).inspect_err(|e| {
+                Self::open_keyspace(database, name, bloom_filters, sequential).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -91,6 +69,34 @@ where
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
         })
+    }
+
+    fn open_keyspace(
+        database: &Database,
+        name: &str,
+        bloom_filters: bool,
+        sequential: bool,
+    ) -> Result<Keyspace> {
+        let mut options = KeyspaceCreateOptions::default().manual_journal_persist(true);
+
+        if bloom_filters {
+            options = options.filter_policy(FilterPolicy::new(&[
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(10.0)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(7.5)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(5.0)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(2.5)),
+            ]));
+        } else {
+            options = options.filter_policy(FilterPolicy::disabled());
+        }
+
+        if sequential {
+            options = options
+                .filter_block_pinning_policy(PinningPolicy::all(false))
+                .index_block_pinning_policy(PinningPolicy::all(false));
+        }
+
+        database.keyspace(name, options).map_err(|e| e.into())
     }
 
     #[inline]
@@ -114,6 +120,9 @@ where
 
     #[inline]
     pub fn is_empty(&self) -> Result<bool> {
+        // self.database
+        //     .read_tx()
+        //     .is_empty(&self.keyspace)
         self.keyspace.is_empty().map_err(|e| e.into())
     }
 
@@ -178,6 +187,7 @@ where
         }
 
         let mut batch = self.database.batch();
+        // let mut batch = self.database.inner().batch();
         let mut items = mem::take(&mut self.puts)
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
@@ -188,26 +198,14 @@ where
             )
             .collect::<Vec<_>>();
         items.sort_unstable();
-        batch.data = items
-            .into_iter()
-            .map(|i| i.fjall(&self.keyspace))
-            .collect::<Vec<_>>();
+        batch.ingest(
+            items
+                .into_iter()
+                .map(|i| i.fjalled(&self.keyspace))
+                .collect::<Vec<_>>(),
+        );
         batch.commit_keyspace(&self.keyspace)?;
-
-        // let mut wtx = self.database.write_tx();
-
-        // let mut dels = self.dels.drain().collect::<Vec<_>>();
-        // dels.sort_unstable();
-        // dels.into_iter()
-        //     .for_each(|key| wtx.remove(&self.keyspace, ByteView::from(key)));
-
-        // let mut puts = self.puts.drain().collect::<Vec<_>>();
-        // puts.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-        // puts.into_iter().for_each(|(key, value)| {
-        //     wtx.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
-        // });
-
-        // wtx.commit()?;
+        // batch.commit_keyspace(self.keyspace.inner())?;
 
         Ok(())
     }
@@ -265,20 +263,22 @@ impl<K, V> Item<K, V> {
         }
     }
 
-    pub fn fjall(self, keyspace: &Keyspace) -> fjall3::Item
+    pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
     where
         K: Into<ByteView>,
         V: Into<ByteView>,
     {
+        let keyspace_id = keyspace.id;
+        // let keyspace_id = keyspace.inner().id;
         match self {
             Item::Value { key, value } => fjall3::Item {
-                keyspace_id: keyspace.id,
+                keyspace_id,
                 key: key.into().into(),
                 value: value.into().into(),
                 value_type: ValueType::Value,
             },
             Item::Tomb(key) => fjall3::Item {
-                keyspace_id: keyspace.id,
+                keyspace_id,
                 key: key.into().into(),
                 value: [].into(),
                 value_type: ValueType::WeakTombstone,
