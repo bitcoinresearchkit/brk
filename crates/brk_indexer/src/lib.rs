@@ -18,13 +18,13 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIteratorExtended};
 mod indexes;
-// mod stores_v2;
-mod stores_v3;
+mod stores_v2;
+// mod stores_v3;
 mod vecs;
 
 pub use indexes::*;
-// pub use stores_v2::*;
-pub use stores_v3::*;
+pub use stores_v2::*;
+// pub use stores_v3::*;
 pub use vecs::*;
 
 // One version for all data sources
