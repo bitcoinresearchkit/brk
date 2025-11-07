@@ -36,10 +36,9 @@ pub struct Vecs {
     pub height_to_first_txinindex: CompressedVec<Height, TxInIndex>,
     pub height_to_first_txoutindex: CompressedVec<Height, TxOutIndex>,
     pub height_to_first_unknownoutputindex: CompressedVec<Height, UnknownOutputIndex>,
-    /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
-    pub height_to_timestamp: CompressedVec<Height, Timestamp>,
-    pub height_to_total_size: CompressedVec<Height, StoredU64>,
-    pub height_to_weight: CompressedVec<Height, Weight>,
+    // pub height_to_timestamp: CompressedVec<Height, Timestamp>,
+    // pub height_to_total_size: CompressedVec<Height, StoredU64>,
+    // pub height_to_weight: CompressedVec<Height, Weight>,
     pub opreturnindex_to_txindex: CompressedVec<OpReturnIndex, TxIndex>,
     pub p2aaddressindex_to_p2abytes: RawVec<P2AAddressIndex, P2ABytes>,
     pub p2msoutputindex_to_txindex: CompressedVec<P2MSOutputIndex, TxIndex>,
@@ -50,20 +49,20 @@ pub struct Vecs {
     pub p2traddressindex_to_p2trbytes: RawVec<P2TRAddressIndex, P2TRBytes>,
     pub p2wpkhaddressindex_to_p2wpkhbytes: RawVec<P2WPKHAddressIndex, P2WPKHBytes>,
     pub p2wshaddressindex_to_p2wshbytes: RawVec<P2WSHAddressIndex, P2WSHBytes>,
-    pub txindex_to_base_size: CompressedVec<TxIndex, StoredU32>,
-    pub txindex_to_first_txinindex: CompressedVec<TxIndex, TxInIndex>,
+    // pub txindex_to_base_size: CompressedVec<TxIndex, StoredU32>,
+    // pub txindex_to_first_txinindex: CompressedVec<TxIndex, TxInIndex>,
     pub txindex_to_first_txoutindex: CompressedVec<TxIndex, TxOutIndex>,
-    pub txindex_to_height: CompressedVec<TxIndex, Height>,
-    pub txindex_to_is_explicitly_rbf: CompressedVec<TxIndex, StoredBool>,
-    pub txindex_to_rawlocktime: CompressedVec<TxIndex, RawLockTime>,
-    pub txindex_to_total_size: CompressedVec<TxIndex, StoredU32>,
-    pub txindex_to_txid: RawVec<TxIndex, Txid>,
-    pub txindex_to_txversion: CompressedVec<TxIndex, TxVersion>,
-    pub txinindex_to_outpoint: CompressedVec<TxInIndex, OutPoint>,
+    // pub txindex_to_height: CompressedVec<TxIndex, Height>,
+    // pub txindex_to_is_explicitly_rbf: CompressedVec<TxIndex, StoredBool>,
+    // pub txindex_to_rawlocktime: CompressedVec<TxIndex, RawLockTime>,
+    // pub txindex_to_total_size: CompressedVec<TxIndex, StoredU32>,
+    // pub txindex_to_txid: RawVec<TxIndex, Txid>,
+    // pub txindex_to_txversion: CompressedVec<TxIndex, TxVersion>,
+    // pub txinindex_to_outpoint: CompressedVec<TxInIndex, OutPoint>,
     pub txoutindex_to_outputtype: RawVec<TxOutIndex, OutputType>,
-    pub txoutindex_to_txindex: CompressedVec<TxOutIndex, TxIndex>,
+    // pub txoutindex_to_txindex: CompressedVec<TxOutIndex, TxIndex>,
     pub txoutindex_to_typeindex: RawVec<TxOutIndex, TypeIndex>,
-    pub txoutindex_to_value: RawVec<TxOutIndex, Sats>,
+    // pub txoutindex_to_value: RawVec<TxOutIndex, Sats>,
     pub unknownoutputindex_to_txindex: CompressedVec<UnknownOutputIndex, TxIndex>,
 }
 
@@ -149,9 +148,9 @@ impl Vecs {
                 "first_unknownoutputindex",
                 version,
             )?,
-            height_to_timestamp: CompressedVec::forced_import(&db, "timestamp", version)?,
-            height_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
-            height_to_weight: CompressedVec::forced_import(&db, "weight", version)?,
+            // height_to_timestamp: CompressedVec::forced_import(&db, "timestamp", version)?,
+            // height_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
+            // height_to_weight: CompressedVec::forced_import(&db, "weight", version)?,
             opreturnindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
             p2aaddressindex_to_p2abytes: RawVec::forced_import(&db, "p2abytes", version)?,
             p2msoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
@@ -162,32 +161,32 @@ impl Vecs {
             p2traddressindex_to_p2trbytes: RawVec::forced_import(&db, "p2trbytes", version)?,
             p2wpkhaddressindex_to_p2wpkhbytes: RawVec::forced_import(&db, "p2wpkhbytes", version)?,
             p2wshaddressindex_to_p2wshbytes: RawVec::forced_import(&db, "p2wshbytes", version)?,
-            txindex_to_base_size: CompressedVec::forced_import(&db, "base_size", version)?,
-            txindex_to_height: CompressedVec::forced_import(&db, "height", version)?,
-            txindex_to_first_txinindex: CompressedVec::forced_import(
-                &db,
-                "first_txinindex",
-                version,
-            )?,
+            // txindex_to_base_size: CompressedVec::forced_import(&db, "base_size", version)?,
+            // txindex_to_height: CompressedVec::forced_import(&db, "height", version)?,
+            // txindex_to_first_txinindex: CompressedVec::forced_import(
+            //     &db,
+            //     "first_txinindex",
+            //     version,
+            // )?,
             txindex_to_first_txoutindex: CompressedVec::forced_import(
                 &db,
                 "first_txoutindex",
                 version,
             )?,
-            txindex_to_is_explicitly_rbf: CompressedVec::forced_import(
-                &db,
-                "is_explicitly_rbf",
-                version,
-            )?,
-            txindex_to_rawlocktime: CompressedVec::forced_import(&db, "rawlocktime", version)?,
-            txindex_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
-            txindex_to_txid: RawVec::forced_import(&db, "txid", version)?,
-            txindex_to_txversion: CompressedVec::forced_import(&db, "txversion", version)?,
-            txinindex_to_outpoint: CompressedVec::forced_import(&db, "outpoint", version)?,
+            // txindex_to_is_explicitly_rbf: CompressedVec::forced_import(
+            //     &db,
+            //     "is_explicitly_rbf",
+            //     version,
+            // )?,
+            // txindex_to_rawlocktime: CompressedVec::forced_import(&db, "rawlocktime", version)?,
+            // txindex_to_total_size: CompressedVec::forced_import(&db, "total_size", version)?,
+            // txindex_to_txid: RawVec::forced_import(&db, "txid", version)?,
+            // txindex_to_txversion: CompressedVec::forced_import(&db, "txversion", version)?,
+            // txinindex_to_outpoint: CompressedVec::forced_import(&db, "outpoint", version)?,
             txoutindex_to_outputtype: RawVec::forced_import(&db, "outputtype", version)?,
-            txoutindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
+            // txoutindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
             txoutindex_to_typeindex: RawVec::forced_import(&db, "typeindex", version)?,
-            txoutindex_to_value: RawVec::forced_import(&db, "value", version)?,
+            // txoutindex_to_value: RawVec::forced_import(&db, "value", version)?,
             unknownoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,
 
             db,
@@ -262,22 +261,22 @@ impl Vecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.height_to_first_unknownoutputindex
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height_to_timestamp
-            .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height_to_total_size
-            .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height_to_weight
-            .truncate_if_needed_with_stamp(height, stamp)?;
-        self.txinindex_to_outpoint
-            .truncate_if_needed_with_stamp(txinindex, stamp)?;
+        // self.height_to_timestamp
+        //     .truncate_if_needed_with_stamp(height, stamp)?;
+        // self.height_to_total_size
+        //     .truncate_if_needed_with_stamp(height, stamp)?;
+        // self.height_to_weight
+        //     .truncate_if_needed_with_stamp(height, stamp)?;
+        // self.txinindex_to_outpoint
+        //     .truncate_if_needed_with_stamp(txinindex, stamp)?;
         self.opreturnindex_to_txindex
             .truncate_if_needed_with_stamp(opreturnindex, stamp)?;
         self.txoutindex_to_outputtype
             .truncate_if_needed_with_stamp(txoutindex, stamp)?;
         self.txoutindex_to_typeindex
             .truncate_if_needed_with_stamp(txoutindex, stamp)?;
-        self.txoutindex_to_value
-            .truncate_if_needed_with_stamp(txoutindex, stamp)?;
+        // self.txoutindex_to_value
+        //     .truncate_if_needed_with_stamp(txoutindex, stamp)?;
         self.p2aaddressindex_to_p2abytes
             .truncate_if_needed_with_stamp(p2aaddressindex, stamp)?;
         self.p2msoutputindex_to_txindex
@@ -296,22 +295,22 @@ impl Vecs {
             .truncate_if_needed_with_stamp(p2wpkhaddressindex, stamp)?;
         self.p2wshaddressindex_to_p2wshbytes
             .truncate_if_needed_with_stamp(p2wshaddressindex, stamp)?;
-        self.txindex_to_base_size
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_first_txinindex
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_base_size
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_first_txinindex
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
         self.txindex_to_first_txoutindex
             .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_is_explicitly_rbf
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_rawlocktime
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_total_size
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_txid
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txindex_to_txversion
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_is_explicitly_rbf
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_rawlocktime
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_total_size
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_txid
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
+        // self.txindex_to_txversion
+        //     .truncate_if_needed_with_stamp(txindex, stamp)?;
         self.unknownoutputindex_to_txindex
             .truncate_if_needed_with_stamp(unknownoutputindex, stamp)?;
 
@@ -391,9 +390,9 @@ impl Vecs {
             &mut self.height_to_first_txinindex,
             &mut self.height_to_first_txoutindex,
             &mut self.height_to_first_unknownoutputindex,
-            &mut self.height_to_timestamp,
-            &mut self.height_to_total_size,
-            &mut self.height_to_weight,
+            // &mut self.height_to_timestamp,
+            // &mut self.height_to_total_size,
+            // &mut self.height_to_weight,
             &mut self.opreturnindex_to_txindex,
             &mut self.p2aaddressindex_to_p2abytes,
             &mut self.p2msoutputindex_to_txindex,
@@ -404,20 +403,20 @@ impl Vecs {
             &mut self.p2traddressindex_to_p2trbytes,
             &mut self.p2wpkhaddressindex_to_p2wpkhbytes,
             &mut self.p2wshaddressindex_to_p2wshbytes,
-            &mut self.txindex_to_base_size,
-            &mut self.txindex_to_first_txinindex,
+            // &mut self.txindex_to_base_size,
+            // &mut self.txindex_to_first_txinindex,
             &mut self.txindex_to_first_txoutindex,
-            &mut self.txindex_to_height,
-            &mut self.txindex_to_is_explicitly_rbf,
-            &mut self.txindex_to_rawlocktime,
-            &mut self.txindex_to_total_size,
-            &mut self.txindex_to_txid,
-            &mut self.txindex_to_txversion,
-            &mut self.txinindex_to_outpoint,
+            // &mut self.txindex_to_height,
+            // &mut self.txindex_to_is_explicitly_rbf,
+            // &mut self.txindex_to_rawlocktime,
+            // &mut self.txindex_to_total_size,
+            // &mut self.txindex_to_txid,
+            // &mut self.txindex_to_txversion,
+            // &mut self.txinindex_to_outpoint,
             &mut self.txoutindex_to_outputtype,
-            &mut self.txoutindex_to_txindex,
+            // &mut self.txoutindex_to_txindex,
             &mut self.txoutindex_to_typeindex,
-            &mut self.txoutindex_to_value,
+            // &mut self.txoutindex_to_value,
             &mut self.unknownoutputindex_to_txindex,
         ]
         .into_iter()

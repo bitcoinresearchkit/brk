@@ -671,50 +671,50 @@ impl Indexer {
             // println!("txins.into_iter(): {:?}", i.elapsed());
 
             // let i = Instant::now();
-            if check_collisions {
-                let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
-                for (txindex, _, _, _, prev_txindex_opt) in txs.iter() {
-                    let Some(prev_txindex) = prev_txindex_opt else {
-                        continue;
-                    };
+            // if check_collisions {
+            //     let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
+            //     for (txindex, _, _, _, prev_txindex_opt) in txs.iter() {
+            //         let Some(prev_txindex) = prev_txindex_opt else {
+            //             continue;
+            //         };
 
-                    // In case if we start at an already parsed height
-                    if txindex == prev_txindex {
-                        continue;
-                    }
+            //         // In case if we start at an already parsed height
+            //         if txindex == prev_txindex {
+            //             continue;
+            //         }
 
-                    let len = vecs.txindex_to_txid.len();
-                    // Ok if `get` is not par as should happen only twice
-                    let prev_txid = txindex_to_txid_iter
-                        .get(*prev_txindex)
-                        .ok_or(Error::Str("To have txid for txindex"))
-                        .inspect_err(|_| {
-                            dbg!(txindex, len);
-                        })?;
+            //         let len = vecs.txindex_to_txid.len();
+            //         // Ok if `get` is not par as should happen only twice
+            //         let prev_txid = txindex_to_txid_iter
+            //             .get(*prev_txindex)
+            //             .ok_or(Error::Str("To have txid for txindex"))
+            //             .inspect_err(|_| {
+            //                 dbg!(txindex, len);
+            //             })?;
 
-                    // If another Txid needs to be added to the list
-                    // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
-                    let only_known_dup_txids = [
-                        bitcoin::Txid::from_str(
-                            "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                        )
-                        .unwrap()
-                        .into(),
-                        bitcoin::Txid::from_str(
-                            "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                        )
-                        .unwrap()
-                        .into(),
-                    ];
+            //         // If another Txid needs to be added to the list
+            //         // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
+            //         let only_known_dup_txids = [
+            //             bitcoin::Txid::from_str(
+            //                 "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
+            //             )
+            //             .unwrap()
+            //             .into(),
+            //             bitcoin::Txid::from_str(
+            //                 "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
+            //             )
+            //             .unwrap()
+            //             .into(),
+            //         ];
 
-                    let is_dup = only_known_dup_txids.contains(&prev_txid);
+            //         let is_dup = only_known_dup_txids.contains(&prev_txid);
 
-                    if !is_dup {
-                        dbg!(height, txindex, prev_txid, prev_txindex);
-                        return Err(Error::Str("Expect none"));
-                    }
-                }
-            }
+            //         if !is_dup {
+            //             dbg!(height, txindex, prev_txid, prev_txindex);
+            //             return Err(Error::Str("Expect none"));
+            //         }
+            //     }
+            // }
             // println!("txindex_to_tx_and_txid = : {:?}", i.elapsed());
 
             // let i = Instant::now();

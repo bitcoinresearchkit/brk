@@ -173,19 +173,18 @@ impl From<(Height, &mut Vecs, &Stores)> for Indexes {
         )
         .unwrap();
 
-        let txindex =
-            starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height).unwrap();
-
-        let txinindex = starting_index(
-            &vecs.height_to_first_txinindex,
-            &vecs.txinindex_to_outpoint,
+        let txindex = starting_index(
+            &vecs.height_to_first_txindex,
+            &vecs.txindex_to_first_txoutindex,
             height,
         )
         .unwrap();
 
+        let txinindex = TxInIndex::new(0);
+
         let txoutindex = starting_index(
             &vecs.height_to_first_txoutindex,
-            &vecs.txoutindex_to_value,
+            &vecs.txoutindex_to_outputtype,
             height,
         )
         .unwrap();
