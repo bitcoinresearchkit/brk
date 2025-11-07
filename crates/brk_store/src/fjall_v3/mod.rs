@@ -26,6 +26,8 @@ pub struct StoreFjallV3<Key, Value> {
     keyspace: Keyspace,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
+    mode: Mode3,
+    kind: Kind3,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::new(3);
@@ -47,8 +49,8 @@ where
         path: &Path,
         name: &str,
         version: Version,
-        bloom_filters: bool,
-        sequential: bool,
+        mode: Mode3,
+        kind: Kind3,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -57,7 +59,7 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_keyspace(database, name, bloom_filters, sequential).inspect_err(|e| {
+                Self::open_keyspace(database, name, mode, kind).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -71,29 +73,31 @@ where
             keyspace,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
+            mode,
+            kind,
         })
     }
 
     fn open_keyspace(
         database: &Database,
         name: &str,
-        bloom_filters: bool,
-        sequential: bool,
+        _mode: Mode3,
+        kind: Kind3,
     ) -> Result<Keyspace> {
         let mut options = KeyspaceCreateOptions::default().manual_journal_persist(true);
 
-        if bloom_filters {
+        if kind.is_not_vec() {
             options = options.filter_policy(FilterPolicy::new(&[
                 FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(10.0)),
-                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(7.5)),
-                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(5.0)),
-                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(2.5)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(10.0)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(8.0)),
+                FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(7.0)),
             ]));
         } else {
             options = options.filter_policy(FilterPolicy::disabled());
         }
 
-        if sequential {
+        if kind.is_sequential() {
             options = options
                 .filter_block_pinning_policy(PinningPolicy::all(false))
                 .index_block_pinning_policy(PinningPolicy::all(false));
@@ -109,11 +113,6 @@ where
     {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Cow::Borrowed(v)))
-        // } else if let Some(slice) = self
-        //     .database
-        //     .read_tx()
-        //     .get(&self.keyspace, ByteView::from(key))?
-        // {
         } else if let Some(slice) = self.keyspace.get(ByteView::from(key))? {
             Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
         } else {
@@ -123,9 +122,6 @@ where
 
     #[inline]
     pub fn is_empty(&self) -> Result<bool> {
-        // self.database
-        //     .read_tx()
-        //     .is_empty(&self.keyspace)
         self.keyspace.is_empty().map_err(|e| e.into())
     }
 
@@ -189,25 +185,38 @@ where
             return Ok(());
         }
 
-        let mut batch = self.database.batch();
-        // let mut batch = self.database.inner().batch();
-        let mut items = mem::take(&mut self.puts)
-            .into_iter()
-            .map(|(key, value)| Item::Value { key, value })
-            .chain(
-                mem::take(&mut self.dels)
-                    .into_iter()
-                    .map(|key| Item::Tomb(key)),
-            )
-            .collect::<Vec<_>>();
-        items.sort_unstable();
-        items.into_iter().for_each(|item| match item {
-            Item::Value { key, value } => {
-                batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
+        if self.mode.is_push_only() {
+            if !self.dels.is_empty() {
+                unreachable!();
             }
-            Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
-        });
-        batch.commit()?;
+            let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
+            puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+            // dbg!(&puts);
+            self.keyspace.ingest(
+                puts.into_iter()
+                    .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
+            )?;
+        } else {
+            let mut batch = self.database.batch();
+            // let mut batch = self.database.inner().batch();
+            let mut items = mem::take(&mut self.puts)
+                .into_iter()
+                .map(|(key, value)| Item::Value { key, value })
+                .chain(
+                    mem::take(&mut self.dels)
+                        .into_iter()
+                        .map(|key| Item::Tomb(key)),
+                )
+                .collect::<Vec<_>>();
+            items.sort_unstable();
+            items.into_iter().for_each(|item| match item {
+                Item::Value { key, value } => {
+                    batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
+                }
+                Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
+            });
+            batch.commit()?;
+        }
 
         // batch.ingest(
         //     items
@@ -303,4 +312,41 @@ impl<K, V> Item<K, V> {
     //             },
     //         }
     //     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Mode3 {
+    Any,
+    PushOnly,
+}
+
+impl Mode3 {
+    pub fn is_any(&self) -> bool {
+        matches!(*self, Self::Any)
+    }
+
+    pub fn is_push_only(&self) -> bool {
+        matches!(*self, Self::PushOnly)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Kind3 {
+    Random,
+    Sequential,
+    Vec,
+}
+
+impl Kind3 {
+    pub fn is_sequential(&self) -> bool {
+        matches!(*self, Self::Sequential)
+    }
+
+    pub fn is_random(&self) -> bool {
+        matches!(*self, Self::Random)
+    }
+
+    pub fn is_not_vec(&self) -> bool {
+        !matches!(*self, Self::Vec)
+    }
 }

@@ -1,13 +1,13 @@
 use std::{fs, path::Path};
 
 use brk_error::Result;
-use brk_store::{AnyStore, StoreFjallV2 as Store};
+use brk_store::{AnyStore, Mode, StoreFjallV2 as Store, Type};
 use brk_types::{
     AddressBytes, AddressBytesHash, AddressTypeAddressIndexOutPoint,
     AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
     TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
-use fjall2::{PersistMode, TransactionalKeyspace};
+use fjall2::{Keyspace, PersistMode};
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
 
@@ -17,7 +17,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: TransactionalKeyspace,
+    pub keyspace: Keyspace,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -48,23 +48,47 @@ impl Stores {
         Ok(Self {
             keyspace: keyspace.clone(),
 
-            height_to_coinbase_tag: Store::import(keyspace_ref, path, "h2c", version, true)?,
-            addressbyteshash_to_typeindex: Store::import(keyspace_ref, path, "a2t", version, true)?,
-            blockhashprefix_to_height: Store::import(keyspace_ref, path, "b2h", version, true)?,
-            txidprefix_to_txindex: Store::import(keyspace_ref, path, "t2t", version, true)?,
+            height_to_coinbase_tag: Store::import(
+                keyspace_ref,
+                path,
+                "h2c",
+                version,
+                Mode::UniquePushOnly(Type::Sequential),
+            )?,
+            addressbyteshash_to_typeindex: Store::import(
+                keyspace_ref,
+                path,
+                "a2t",
+                version,
+                Mode::UniquePushOnly(Type::Random),
+            )?,
+            blockhashprefix_to_height: Store::import(
+                keyspace_ref,
+                path,
+                "b2h",
+                version,
+                Mode::UniquePushOnly(Type::Random),
+            )?,
+            txidprefix_to_txindex: Store::import(
+                keyspace_ref,
+                path,
+                "t2t",
+                version,
+                Mode::UniquePushOnly(Type::Random),
+            )?,
             addresstype_to_addressindex_and_txindex: Store::import(
                 keyspace_ref,
                 path,
                 "aat",
                 version,
-                false,
+                Mode::VecLike,
             )?,
             addresstype_to_addressindex_and_unspentoutpoint: Store::import(
                 keyspace_ref,
                 path,
                 "aau",
                 version,
-                false,
+                Mode::VecLike,
             )?,
         })
     }

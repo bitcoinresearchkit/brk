@@ -2,6 +2,8 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::copy_first_8bytes;
+
 use super::AddressBytes;
 
 #[derive(
@@ -31,7 +33,7 @@ impl From<&AddressBytes> for AddressBytesHash {
 impl From<ByteView> for AddressBytesHash {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self::read_from_bytes(&value).unwrap()
+        Self(u64::from_be_bytes(copy_first_8bytes(&value).unwrap()))
     }
 }
 
@@ -45,6 +47,6 @@ impl From<AddressBytesHash> for ByteView {
 impl From<&AddressBytesHash> for ByteView {
     #[inline]
     fn from(value: &AddressBytesHash) -> Self {
-        Self::new(value.as_bytes())
+        Self::new(&value.0.to_be_bytes())
     }
 }

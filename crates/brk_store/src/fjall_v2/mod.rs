@@ -3,10 +3,7 @@ use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, mem, path::Path};
 use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview6::ByteView;
-use fjall2::{
-    InnerItem, PartitionCreateOptions, TransactionalKeyspace, TransactionalPartitionHandle,
-    ValueType,
-};
+use fjall2::{InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, ValueType};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::any::AnyStore;
@@ -19,16 +16,17 @@ use meta::*;
 pub struct StoreFjallV2<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    keyspace: TransactionalKeyspace,
-    partition: TransactionalPartitionHandle,
+    keyspace: Keyspace,
+    partition: PartitionHandle,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
+    mode: Mode,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
-pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
-    fjall2::Config::new(path.join("fjall")).open_transactional()
+pub fn open_keyspace(path: &Path) -> fjall2::Result<Keyspace> {
+    fjall2::Config::new(path.join("fjall")).open()
 }
 
 impl<K, V> StoreFjallV2<K, V>
@@ -38,14 +36,14 @@ where
     ByteView: From<K> + From<V>,
 {
     fn open_partition_handle(
-        keyspace: &TransactionalKeyspace,
+        keyspace: &Keyspace,
         name: &str,
-        bloom_filters: bool,
-    ) -> Result<TransactionalPartitionHandle> {
+        mode: Mode,
+    ) -> Result<PartitionHandle> {
         let mut options = PartitionCreateOptions::default().manual_journal_persist(true);
 
-        if bloom_filters {
-            options = options.bloom_filter_bits(Some(5));
+        if mode.is_unique_push_only() {
+            options = options.bloom_filter_bits(Some(7));
         } else {
             options = options.bloom_filter_bits(None);
         }
@@ -54,11 +52,11 @@ where
     }
 
     pub fn import(
-        keyspace: &TransactionalKeyspace,
+        keyspace: &Keyspace,
         path: &Path,
         name: &str,
         version: Version,
-        bloom_filters: bool,
+        mode: Mode,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -67,7 +65,7 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(keyspace, name, bloom_filters).inspect_err(|e| {
+                Self::open_partition_handle(keyspace, name, mode).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -81,6 +79,7 @@ where
             partition,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
+            mode,
         })
     }
 
@@ -99,16 +98,12 @@ where
     }
 
     pub fn is_empty(&self) -> Result<bool> {
-        self.keyspace
-            .read_tx()
-            .is_empty(&self.partition)
-            .map_err(|e| e.into())
+        self.partition.is_empty().map_err(|e| e.into())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.keyspace
-            .read_tx()
-            .iter(&self.partition)
+        self.partition
+            .iter()
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
@@ -177,6 +172,18 @@ where
             return Ok(());
         }
 
+        // if self.mode.is_unique_push_only() {
+        //     if !self.dels.is_empty() {
+        //         unreachable!();
+        //     }
+        //     let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
+        //     puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        //     dbg!(&puts);
+        //     self.partition.ingest(
+        //         puts.into_iter()
+        //             .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
+        //     )?;
+        // } else {
         let mut items = mem::take(&mut self.puts)
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
@@ -188,10 +195,11 @@ where
             .collect::<Vec<_>>();
         items.sort_unstable();
 
-        self.keyspace.inner().batch().commit_partition(
-            self.partition.inner(),
+        self.keyspace.batch().commit_partition(
+            &self.partition,
             items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
         )?;
+        // }
 
         Ok(())
     }
@@ -269,5 +277,27 @@ where
                 value_type: ValueType::WeakTombstone,
             },
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Mode {
+    VecLike,
+    UniquePushOnly(Type),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Type {
+    Random,
+    Sequential,
+}
+
+impl Mode {
+    pub fn is_vec_like(&self) -> bool {
+        matches!(*self, Self::VecLike)
+    }
+
+    pub fn is_unique_push_only(&self) -> bool {
+        matches!(*self, Self::UniquePushOnly(_))
     }
 }

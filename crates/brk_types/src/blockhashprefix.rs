@@ -40,14 +40,7 @@ impl From<&BlockHash> for BlockHashPrefix {
 impl From<ByteView> for BlockHashPrefix {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self::read_from_bytes(&value).unwrap()
-    }
-}
-
-impl From<&BlockHashPrefix> for ByteView {
-    #[inline]
-    fn from(value: &BlockHashPrefix) -> Self {
-        Self::new(value.as_bytes())
+        Self(u64::from_be_bytes(copy_first_8bytes(&value).unwrap()))
     }
 }
 
@@ -55,5 +48,12 @@ impl From<BlockHashPrefix> for ByteView {
     #[inline]
     fn from(value: BlockHashPrefix) -> Self {
         Self::from(&value)
+    }
+}
+
+impl From<&BlockHashPrefix> for ByteView {
+    #[inline]
+    fn from(value: &BlockHashPrefix) -> Self {
+        Self::from(value.to_be_bytes())
     }
 }

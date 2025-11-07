@@ -40,14 +40,7 @@ impl From<&Txid> for TxidPrefix {
 impl From<ByteView> for TxidPrefix {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self::read_from_bytes(&value).unwrap()
-    }
-}
-
-impl From<&TxidPrefix> for ByteView {
-    #[inline]
-    fn from(value: &TxidPrefix) -> Self {
-        Self::new(value.as_bytes())
+        Self(u64::from_be_bytes(copy_first_8bytes(&value).unwrap()))
     }
 }
 
@@ -55,6 +48,13 @@ impl From<TxidPrefix> for ByteView {
     #[inline]
     fn from(value: TxidPrefix) -> Self {
         Self::from(&value)
+    }
+}
+
+impl From<&TxidPrefix> for ByteView {
+    #[inline]
+    fn from(value: &TxidPrefix) -> Self {
+        Self::from(value.to_be_bytes())
     }
 }
 

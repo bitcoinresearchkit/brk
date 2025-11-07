@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use brk_error::Result;
-use brk_store::{AnyStore, StoreFjallV3 as Store};
+use brk_store::{AnyStore, Kind3, Mode3, StoreFjallV3 as Store};
 use brk_types::{
     AddressBytes, AddressBytesHash, AddressTypeAddressIndexOutPoint,
     AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
@@ -24,8 +24,8 @@ pub struct Stores {
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
     pub addresstype_to_addressindex_and_txindex: Store<AddressTypeAddressIndexTxIndex, Unit>,
-    pub addresstype_to_addressindex_and_unspentoutpoint:
-        Store<AddressTypeAddressIndexOutPoint, Unit>,
+    // pub addresstype_to_addressindex_and_unspentoutpoint:
+    // Store<AddressTypeAddressIndexOutPoint, Unit>,
 }
 
 impl Stores {
@@ -53,49 +53,49 @@ impl Stores {
                 path,
                 "height_to_coinbase_tag",
                 version,
-                true,
-                true,
+                Mode3::PushOnly,
+                Kind3::Sequential,
             )?,
             addressbyteshash_to_typeindex: Store::import(
                 database_ref,
                 path,
                 "addressbyteshash_to_typeindex",
                 version,
-                true,
-                false,
+                Mode3::PushOnly,
+                Kind3::Random,
             )?,
             blockhashprefix_to_height: Store::import(
                 database_ref,
                 path,
                 "blockhashprefix_to_height",
                 version,
-                true,
-                false,
+                Mode3::PushOnly,
+                Kind3::Random,
             )?,
             txidprefix_to_txindex: Store::import(
                 database_ref,
                 path,
                 "txidprefix_to_txindex",
                 version,
-                true,
-                false,
+                Mode3::PushOnly,
+                Kind3::Random,
             )?,
             addresstype_to_addressindex_and_txindex: Store::import(
                 database_ref,
                 path,
                 "addresstype_to_addressindex_and_txindex",
                 version,
-                false,
-                false,
+                Mode3::PushOnly,
+                Kind3::Vec,
             )?,
-            addresstype_to_addressindex_and_unspentoutpoint: Store::import(
-                database_ref,
-                path,
-                "addresstype_to_addressindex_and_unspentoutpoint",
-                version,
-                false,
-                false,
-            )?,
+            // addresstype_to_addressindex_and_unspentoutpoint: Store::import(
+            //     database_ref,
+            //     path,
+            //     "addresstype_to_addressindex_and_unspentoutpoint",
+            //     version,
+            //     Mode3::Any,
+            //     Kind3::Vec,
+            // )?,
         })
     }
 
@@ -117,7 +117,7 @@ impl Stores {
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
             &mut self.addresstype_to_addressindex_and_txindex,
-            &mut self.addresstype_to_addressindex_and_unspentoutpoint,
+            // &mut self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_par_iter() // Changed from par_iter_mut()
         .try_for_each(|store| store.commit(height))?;
@@ -134,7 +134,7 @@ impl Stores {
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
             &self.addresstype_to_addressindex_and_txindex,
-            &self.addresstype_to_addressindex_and_unspentoutpoint,
+            // &self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_iter()
     }
@@ -149,9 +149,9 @@ impl Stores {
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
             && self.addresstype_to_addressindex_and_txindex.is_empty()?
-            && self
-                .addresstype_to_addressindex_and_unspentoutpoint
-                .is_empty()?
+        // && self
+        //     .addresstype_to_addressindex_and_unspentoutpoint
+        //     .is_empty()?
         {
             return Ok(());
         }
@@ -351,13 +351,13 @@ impl Stores {
                     );
                     let outpoint = OutPoint::new(txindex, vout);
 
-                    self.addresstype_to_addressindex_and_unspentoutpoint.remove(
-                        AddressTypeAddressIndexOutPoint::from((
-                            addresstype,
-                            addressindex,
-                            outpoint,
-                        )),
-                    );
+                    // self.addresstype_to_addressindex_and_unspentoutpoint.remove(
+                    //     AddressTypeAddressIndexOutPoint::from((
+                    //         addresstype,
+                    //         addressindex,
+                    //         outpoint,
+                    //     )),
+                    // );
                 });
 
             // Add back outputs that were spent after the rollback point
@@ -394,14 +394,14 @@ impl Stores {
                                 )),
                             );
 
-                            self.addresstype_to_addressindex_and_unspentoutpoint.insert(
-                                AddressTypeAddressIndexOutPoint::from((
-                                    addresstype,
-                                    addressindex,
-                                    outpoint,
-                                )),
-                                Unit,
-                            );
+                            // self.addresstype_to_addressindex_and_unspentoutpoint.insert(
+                            //     AddressTypeAddressIndexOutPoint::from((
+                            //         addresstype,
+                            //         addressindex,
+                            //         outpoint,
+                            //     )),
+                            //     Unit,
+                            // );
                         }
                     }
                 });

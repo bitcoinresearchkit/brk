@@ -52,8 +52,8 @@ brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_types = { version = "0.0.111", path = "crates/brk_types" }
 brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
-# byteview = "=0.6.1"
-byteview = "~0.8.0"
+byteview = "=0.6.1"
+# byteview = "~0.8.0"
 derive_deref = "1.1.1"
 fjall2 = { version = "2.11.5", package = "brk_fjall" }
 # fjall2 = { path = "../fjall2", package = "brk_fjall" }
@@ -61,7 +61,7 @@ fjall2 = { version = "2.11.5", package = "brk_fjall" }
 fjall3 = { version = "=3.0.0-pre.4", package = "fjall" }
 # fjall3 = { path = "../fjall3", package = "brk_fjall" }
 # fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "bb15057500dce3115d7644d268b9deeaa895b431", package = "fjall" }
-jiff = "0.2.15"
+jiff = "0.2.16"
 log = "0.4.28"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
@@ -75,7 +75,7 @@ serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sonic-rs = "0.5.6"
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
 # vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"] }
-vecdb = { version = "0.3.8", features = ["derive"] }
+vecdb = { version = "0.3.11", features = ["derive"] }
 zerocopy = { version = "0.8.27", features = ["derive"] }
 
 [workspace.metadata.release]
