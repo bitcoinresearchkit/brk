@@ -185,38 +185,38 @@ where
             return Ok(());
         }
 
-        if self.mode.is_push_only() {
-            if !self.dels.is_empty() {
-                unreachable!();
+        // if self.mode.is_push_only() {
+        //     if !self.dels.is_empty() {
+        //         unreachable!();
+        //     }
+        //     let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
+        //     puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        //     // dbg!(&puts);
+        //     self.keyspace.ingest(
+        //         puts.into_iter()
+        //             .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
+        //     )?;
+        // } else {
+        let mut batch = self.database.batch();
+        // let mut batch = self.database.inner().batch();
+        let mut items = mem::take(&mut self.puts)
+            .into_iter()
+            .map(|(key, value)| Item::Value { key, value })
+            .chain(
+                mem::take(&mut self.dels)
+                    .into_iter()
+                    .map(|key| Item::Tomb(key)),
+            )
+            .collect::<Vec<_>>();
+        items.sort_unstable();
+        items.into_iter().for_each(|item| match item {
+            Item::Value { key, value } => {
+                batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
             }
-            let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
-            puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
-            // dbg!(&puts);
-            self.keyspace.ingest(
-                puts.into_iter()
-                    .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
-            )?;
-        } else {
-            let mut batch = self.database.batch();
-            // let mut batch = self.database.inner().batch();
-            let mut items = mem::take(&mut self.puts)
-                .into_iter()
-                .map(|(key, value)| Item::Value { key, value })
-                .chain(
-                    mem::take(&mut self.dels)
-                        .into_iter()
-                        .map(|key| Item::Tomb(key)),
-                )
-                .collect::<Vec<_>>();
-            items.sort_unstable();
-            items.into_iter().for_each(|item| match item {
-                Item::Value { key, value } => {
-                    batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
-                }
-                Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
-            });
-            batch.commit()?;
-        }
+            Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
+        });
+        batch.commit()?;
+        // }
 
         // batch.ingest(
         //     items

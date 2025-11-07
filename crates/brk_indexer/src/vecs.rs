@@ -69,8 +69,10 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
-        let db = Database::open(&parent.join("vecs"))?;
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
+        // let db = Database::open(&parent.join("vecs"))?;
+        // db.set_min_len(PAGE_SIZE * 50_000_000)?;
+
+        let db = Database::open_with_min_len(&parent.join("vecs"), PAGE_SIZE * 10_000_000)?;
 
         let this = Self {
             emptyoutputindex_to_txindex: CompressedVec::forced_import(&db, "txindex", version)?,

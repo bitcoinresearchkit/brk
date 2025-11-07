@@ -24,8 +24,8 @@ pub struct Stores {
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
     pub addresstype_to_addressindex_and_txindex: Store<AddressTypeAddressIndexTxIndex, Unit>,
-    // pub addresstype_to_addressindex_and_unspentoutpoint:
-    // Store<AddressTypeAddressIndexOutPoint, Unit>,
+    pub addresstype_to_addressindex_and_unspentoutpoint:
+        Store<AddressTypeAddressIndexOutPoint, Unit>,
 }
 
 impl Stores {
@@ -88,14 +88,14 @@ impl Stores {
                 Mode3::PushOnly,
                 Kind3::Vec,
             )?,
-            // addresstype_to_addressindex_and_unspentoutpoint: Store::import(
-            //     database_ref,
-            //     path,
-            //     "addresstype_to_addressindex_and_unspentoutpoint",
-            //     version,
-            //     Mode3::Any,
-            //     Kind3::Vec,
-            // )?,
+            addresstype_to_addressindex_and_unspentoutpoint: Store::import(
+                database_ref,
+                path,
+                "addresstype_to_addressindex_and_unspentoutpoint",
+                version,
+                Mode3::Any,
+                Kind3::Vec,
+            )?,
         })
     }
 
@@ -117,7 +117,7 @@ impl Stores {
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
             &mut self.addresstype_to_addressindex_and_txindex,
-            // &mut self.addresstype_to_addressindex_and_unspentoutpoint,
+            &mut self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_par_iter() // Changed from par_iter_mut()
         .try_for_each(|store| store.commit(height))?;
@@ -134,7 +134,7 @@ impl Stores {
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
             &self.addresstype_to_addressindex_and_txindex,
-            // &self.addresstype_to_addressindex_and_unspentoutpoint,
+            &self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_iter()
     }
@@ -149,9 +149,9 @@ impl Stores {
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
             && self.addresstype_to_addressindex_and_txindex.is_empty()?
-        // && self
-        //     .addresstype_to_addressindex_and_unspentoutpoint
-        //     .is_empty()?
+            && self
+                .addresstype_to_addressindex_and_unspentoutpoint
+                .is_empty()?
         {
             return Ok(());
         }
@@ -351,13 +351,13 @@ impl Stores {
                     );
                     let outpoint = OutPoint::new(txindex, vout);
 
-                    // self.addresstype_to_addressindex_and_unspentoutpoint.remove(
-                    //     AddressTypeAddressIndexOutPoint::from((
-                    //         addresstype,
-                    //         addressindex,
-                    //         outpoint,
-                    //     )),
-                    // );
+                    self.addresstype_to_addressindex_and_unspentoutpoint.remove(
+                        AddressTypeAddressIndexOutPoint::from((
+                            addresstype,
+                            addressindex,
+                            outpoint,
+                        )),
+                    );
                 });
 
             // Add back outputs that were spent after the rollback point
@@ -394,14 +394,14 @@ impl Stores {
                                 )),
                             );
 
-                            // self.addresstype_to_addressindex_and_unspentoutpoint.insert(
-                            //     AddressTypeAddressIndexOutPoint::from((
-                            //         addresstype,
-                            //         addressindex,
-                            //         outpoint,
-                            //     )),
-                            //     Unit,
-                            // );
+                            self.addresstype_to_addressindex_and_unspentoutpoint.insert(
+                                AddressTypeAddressIndexOutPoint::from((
+                                    addresstype,
+                                    addressindex,
+                                    outpoint,
+                                )),
+                                Unit,
+                            );
                         }
                     }
                 });

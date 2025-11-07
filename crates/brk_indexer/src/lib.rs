@@ -18,20 +18,20 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIteratorExtended};
 mod indexes;
-mod stores_v2;
-// mod stores_v3;
+// mod stores_v2;
+mod stores_v3;
 mod vecs;
 
 pub use indexes::*;
-pub use stores_v2::*;
-// pub use stores_v3::*;
+// pub use stores_v2::*;
+pub use stores_v3::*;
 pub use vecs::*;
 
 // One version for all data sources
 // Increment on **change _OR_ addition**
 const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(920_000);
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -166,14 +166,14 @@ impl Indexer {
 
             vecs.height_to_blockhash
                 .push_if_needed(height, blockhash.clone())?;
-            vecs.height_to_difficulty
-                .push_if_needed(height, block.header.difficulty_float().into())?;
-            vecs.height_to_timestamp
-                .push_if_needed(height, Timestamp::from(block.header.time))?;
-            vecs.height_to_total_size
-                .push_if_needed(height, block.total_size().into())?;
-            vecs.height_to_weight
-                .push_if_needed(height, block.weight().into())?;
+            // vecs.height_to_difficulty
+            //     .push_if_needed(height, block.header.difficulty_float().into())?;
+            // vecs.height_to_timestamp
+            //     .push_if_needed(height, Timestamp::from(block.header.time))?;
+            // vecs.height_to_total_size
+            //     .push_if_needed(height, block.total_size().into())?;
+            // vecs.height_to_weight
+            //     .push_if_needed(height, block.weight().into())?;
 
             // let i = Instant::now();
             let txs = block
@@ -484,10 +484,10 @@ impl Indexer {
                         .push_if_needed(txindex, txoutindex)?;
                 }
 
-                vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
+                // vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
-                vecs.txoutindex_to_txindex
-                    .push_if_needed(txoutindex, txindex)?;
+                // vecs.txoutindex_to_txindex
+                //     .push_if_needed(txoutindex, txindex)?;
 
                 vecs.txoutindex_to_outputtype
                     .push_if_needed(txoutindex, outputtype)?;
@@ -637,13 +637,13 @@ impl Indexer {
                     }
                 };
 
-                if vin.is_zero() {
-                    vecs.txindex_to_first_txinindex
-                        .push_if_needed(txindex, txinindex)?;
-                }
+                // if vin.is_zero() {
+                //     vecs.txindex_to_first_txinindex
+                //         .push_if_needed(txindex, txinindex)?;
+                // }
 
-                vecs.txinindex_to_outpoint
-                    .push_if_needed(txinindex, outpoint)?;
+                // vecs.txinindex_to_outpoint
+                //     .push_if_needed(txinindex, outpoint)?;
 
                 let Some((addresstype, addressindex)) = addresstype_addressindex_opt else {
                     continue;
@@ -725,18 +725,18 @@ impl Indexer {
                         .insert_if_needed(txid_prefix, txindex, height);
                 }
 
-                vecs.txindex_to_height.push_if_needed(txindex, height)?;
-                vecs.txindex_to_txversion
-                    .push_if_needed(txindex, tx.version.into())?;
-                vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
-                vecs.txindex_to_rawlocktime
-                    .push_if_needed(txindex, tx.lock_time.into())?;
-                vecs.txindex_to_base_size
-                    .push_if_needed(txindex, tx.base_size().into())?;
-                vecs.txindex_to_total_size
-                    .push_if_needed(txindex, tx.total_size().into())?;
-                vecs.txindex_to_is_explicitly_rbf
-                    .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
+                // vecs.txindex_to_height.push_if_needed(txindex, height)?;
+                // vecs.txindex_to_txversion
+                // .push_if_needed(txindex, tx.version.into())?;
+                // vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
+                // vecs.txindex_to_rawlocktime
+                //     .push_if_needed(txindex, tx.lock_time.into())?;
+                // vecs.txindex_to_base_size
+                //     .push_if_needed(txindex, tx.base_size().into())?;
+                // vecs.txindex_to_total_size
+                //     .push_if_needed(txindex, tx.total_size().into())?;
+                // vecs.txindex_to_is_explicitly_rbf
+                // .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
             }
             // println!("txindex_to_tx_and_txid.into_iter(): {:?}", i.elapsed());
 
