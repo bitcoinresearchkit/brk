@@ -20,8 +20,8 @@ split-debuginfo = "unpacked"
 lto = "fat"
 codegen-units = 1
 panic = "abort"
-strip = true
 overflow-checks = false
+debug = true
 
 [profile.dist]
 inherits = "release"
