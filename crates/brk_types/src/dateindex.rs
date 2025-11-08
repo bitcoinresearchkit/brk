@@ -1,6 +1,5 @@
 use std::ops::{Add, Rem};
 
-use allocative::Allocative;
 use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
@@ -26,7 +25,6 @@ use super::Date;
     KnownLayout,
     Serialize,
     StoredCompressed,
-    Allocative,
 )]
 pub struct DateIndex(u16);
 

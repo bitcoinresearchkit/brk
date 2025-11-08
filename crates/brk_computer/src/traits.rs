@@ -1,8 +1,7 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, StoredIndex,
-    VecIterator, Version,
+    AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, StoredIndex, Version,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -51,7 +50,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
                     if i_usize == 0 {
                         prev.replace(Sats::ZERO);
                     } else {
-                        prev.replace(self.one_shot_get_any_or_read_(i_usize - 1));
+                        prev.replace(self.read_at_unwrap_once(i_usize - 1));
                     }
                 }
 
@@ -61,7 +60,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
                     stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
 
                     if i_usize >= len {
-                        let prev_price = *other_iter.get_(i_usize - len);
+                        let prev_price = *other_iter.get_at_unwrap(i_usize - len);
                         if prev_price != Dollars::ZERO {
                             stack = stack
                                 .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
@@ -92,11 +91,12 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
         )?;
 
         let mut prev = None;
-
+        let from = from.to_usize();
         let index = max_from.min(DateIndex::from(self.len()));
+
         closes
             .iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, closes)| {
                 let price = *closes;
@@ -105,7 +105,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
                     if i_usize == 0 {
                         prev.replace(Sats::ZERO);
                     } else {
-                        prev.replace(self.one_shot_get_any_or_read_(i_usize - 1));
+                        prev.replace(self.read_at_unwrap_once(i_usize - 1));
                     }
                 }
 
@@ -157,7 +157,9 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         let index = max_from.min(DateIndex::from(self.len()));
 
-        let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12)).unwrap();
+        let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12))
+            .unwrap()
+            .to_usize();
 
         stacks
             .iter()
@@ -193,7 +195,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         let index = max_from.min(DateIndex::from(self.len()));
 
-        let from_usize = from.to_usize();
+        let from = from.to_usize();
 
         stacks
             .iter()
@@ -202,7 +204,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
             .try_for_each(|(i, stack)| {
                 let mut avg_price = Dollars::from(f64::NAN);
                 if i >= from {
-                    avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from_usize) / Bitcoin::from(stack);
+                    avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from) / Bitcoin::from(stack);
                 }
                 self.forced_push_at(i, avg_price, exit)
             })?;
@@ -237,7 +239,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         sats.iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, sats)| {
                 let (i, v) = (i, Bitcoin::from(sats));
@@ -278,10 +280,10 @@ where
         let index = max_from.min(I::from(self.len()));
         bitcoin
             .iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, bitcoin)| {
-                let dollars = price_iter.unsafe_get(i);
+                let dollars = price_iter.get_at_unwrap(i);
                 let (i, v) = (i, *dollars * bitcoin);
                 self.forced_push_at(i, v, exit)
             })?;
@@ -319,13 +321,13 @@ where
         let index = max_from.min(I::from(self.len()));
         let mut close_iter = close.iter();
         ath.iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, ath)| {
                 if ath == Dollars::ZERO {
                     self.forced_push_at(i, StoredF32::default(), exit)
                 } else {
-                    let close = *close_iter.unsafe_get(i);
+                    let close = *close_iter.get_at_unwrap(i);
                     let drawdown = StoredF32::from((*ath - *close) / *ath * -100.0);
                     self.forced_push_at(i, drawdown, exit)
                 }

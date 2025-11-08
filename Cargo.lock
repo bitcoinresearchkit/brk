@@ -645,7 +645,6 @@ dependencies = [
 name = "brk_computer"
 version = "0.0.111"
 dependencies = [
- "allocative",
  "bitcoin",
  "brk_error",
  "brk_fetcher",
@@ -1318,7 +1317,6 @@ dependencies = [
 name = "brk_types"
 version = "0.0.111"
 dependencies = [
- "allocative",
  "bitcoin",
  "brk_error",
  "byteview 0.6.1",
@@ -4110,9 +4108,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.3.11"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f79d5eea2a18c2cf7318e327bb3ead546514ea3bbea5f42c4e0cc0a89df2b46d"
+checksum = "b22052ecbd46a8bd9b1f80075a8f44727ba38cec22ff4cb505ea8bb4eecb5a7b"
 dependencies = [
  "libc",
  "memmap2",
@@ -5323,9 +5321,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.3.11"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7393aaf472d72417bb7b3366addc225ae4b65f64ceef6ec975dd2891e18b08cf"
+checksum = "8ff065db35c03b4ddd2e3319ec18c17b46cd85583795b1a6dd7eba468fa87f13"
 dependencies = [
  "allocative",
  "ctrlc",
@@ -5342,9 +5340,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.3.11"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "323a1fc669d513d1ad83a2fb1d1a589dfb502c9c626993a3313a834361bc64b5"
+checksum = "073dcff2ffaae6d8af87100342d23faec293c55c2d160a9fc8a62f74db5b06de"
 dependencies = [
  "quote",
  "syn 2.0.109",

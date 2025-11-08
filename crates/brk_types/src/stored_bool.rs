@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{PrintableIndex, StoredCompressed};
@@ -20,7 +19,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     Serialize,
     StoredCompressed,
-    Allocative,
 )]
 pub struct StoredBool(u16);
 

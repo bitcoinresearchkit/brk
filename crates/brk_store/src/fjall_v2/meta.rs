@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_types::Version;
-use fjall2::{Keyspace, PartitionHandle, PersistMode};
+use fjall2::{PersistMode, TransactionalKeyspace, TransactionalPartitionHandle};
 
 use super::Height;
 
@@ -18,13 +18,13 @@ pub struct StoreMeta {
 
 impl StoreMeta {
     pub fn checked_open<F>(
-        keyspace: &Keyspace,
+        keyspace: &TransactionalKeyspace,
         path: &Path,
         version: Version,
         open_partition_handle: F,
-    ) -> Result<(Self, PartitionHandle)>
+    ) -> Result<(Self, TransactionalPartitionHandle)>
     where
-        F: Fn() -> Result<PartitionHandle>,
+        F: Fn() -> Result<TransactionalPartitionHandle>,
     {
         fs::create_dir_all(path)?;
 

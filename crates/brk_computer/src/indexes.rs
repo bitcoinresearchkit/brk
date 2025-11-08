@@ -123,7 +123,7 @@ impl Vecs {
                             return TxOutIndex::COINBASE;
                         }
                         txindex_to_first_txoutindex_iter
-                            .get_unwrap_at(outpoint.txindex().to_usize())
+                            .get_at_unwrap(outpoint.txindex().to_usize())
                             + outpoint.vout()
                     })
             },

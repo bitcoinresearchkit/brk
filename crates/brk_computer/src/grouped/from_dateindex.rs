@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use brk_error::Result;
 
 use brk_traversable::Traversable;
@@ -11,7 +10,7 @@ use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
 use super::{ComputedType, EagerVecsBuilder, Source, VecBuilderOptions};
 
-#[derive(Clone, Allocative)]
+#[derive(Clone)]
 pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + PartialOrd,

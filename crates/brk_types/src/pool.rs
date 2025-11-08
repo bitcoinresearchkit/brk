@@ -1,8 +1,6 @@
-use allocative::Allocative;
-
 use super::PoolId;
 
-#[derive(Debug, Allocative)]
+#[derive(Debug)]
 pub struct Pool {
     pub id: PoolId,
     pub name: &'static str,

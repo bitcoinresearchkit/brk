@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use brk_error::Result;
 
 use brk_traversable::Traversable;
@@ -16,7 +15,7 @@ use crate::{
 
 use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
 
-#[derive(Clone, Allocative)]
+#[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,

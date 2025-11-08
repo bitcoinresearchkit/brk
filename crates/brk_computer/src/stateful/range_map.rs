@@ -29,7 +29,8 @@ where
     fn from(vec: &RawVec<I, T>) -> Self {
         Self(
             vec.into_iter()
-                .map(|(i, v)| (v, i))
+                .enumerate()
+                .map(|(i, v)| (v, I::from(i)))
                 .collect::<BTreeMap<_, _>>(),
         )
     }
@@ -44,7 +45,8 @@ where
     fn from(vec: &CompressedVec<I, T>) -> Self {
         Self(
             vec.into_iter()
-                .map(|(i, v)| (v, i))
+                .enumerate()
+                .map(|(i, v)| (v, I::from(i)))
                 .collect::<BTreeMap<_, _>>(),
         )
     }

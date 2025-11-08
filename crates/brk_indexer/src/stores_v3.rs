@@ -337,7 +337,7 @@ impl Stores {
                 )
                 .filter(|((_, outputtype), _)| outputtype.is_address())
                 .for_each(|((txoutindex, addresstype), addressindex)| {
-                    let txindex = txoutindex_to_txindex_iter.get_unwrap_at(txoutindex);
+                    let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
                     self.addresstype_to_addressindex_and_txindex.remove(
                         AddressTypeAddressIndexTxIndex::from((addresstype, addressindex, txindex)),

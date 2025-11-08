@@ -18,28 +18,28 @@ impl From<ByAddressType<EagerVec<Height, StoredU64>>> for AddressTypeToHeightToA
 }
 
 impl AddressTypeToHeightToAddressCount {
-    pub fn forced_push_at(
+    pub fn forced_push(
         &mut self,
         height: Height,
         addresstype_to_usize: &AddressTypeToAddressCount,
         exit: &Exit,
     ) -> Result<()> {
         self.p2pk65
-            .forced_push_at(height, addresstype_to_usize.p2pk65.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2pk65.into(), exit)?;
         self.p2pk33
-            .forced_push_at(height, addresstype_to_usize.p2pk33.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2pk33.into(), exit)?;
         self.p2pkh
-            .forced_push_at(height, addresstype_to_usize.p2pkh.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2pkh.into(), exit)?;
         self.p2sh
-            .forced_push_at(height, addresstype_to_usize.p2sh.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2sh.into(), exit)?;
         self.p2wpkh
-            .forced_push_at(height, addresstype_to_usize.p2wpkh.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2wpkh.into(), exit)?;
         self.p2wsh
-            .forced_push_at(height, addresstype_to_usize.p2wsh.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2wsh.into(), exit)?;
         self.p2tr
-            .forced_push_at(height, addresstype_to_usize.p2tr.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2tr.into(), exit)?;
         self.p2a
-            .forced_push_at(height, addresstype_to_usize.p2a.into(), exit)?;
+            .forced_push(height, addresstype_to_usize.p2a.into(), exit)?;
 
         Ok(())
     }

@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_types::{Address, AddressBytes, OutputType, TxOutIndex, pools};
-use vecdb::{AnyIterableVec, Exit, VecIterator};
+use vecdb::{AnyIterableVec, Exit, VecIterator, VecIteratorExtended};
 
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
@@ -31,24 +31,26 @@ fn main() -> Result<()> {
             let vecs = indexer.vecs;
             let stores = indexer.stores;
 
-            let mut height_to_first_txindex_iter = vecs.height_to_first_txindex.iter();
-            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter();
+            let mut height_to_first_txindex_iter = vecs.height_to_first_txindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
             let mut txindex_to_output_count_iter = computer.indexes.txindex_to_output_count.iter();
-            let mut txoutindex_to_outputtype_iter = vecs.txoutindex_to_outputtype.iter();
-            let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.iter();
+            let mut txoutindex_to_outputtype_iter = vecs.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.iter()?;
             let mut p2pk65addressindex_to_p2pk65bytes_iter =
-                vecs.p2pk65addressindex_to_p2pk65bytes.iter();
+                vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
             let mut p2pk33addressindex_to_p2pk33bytes_iter =
-                vecs.p2pk33addressindex_to_p2pk33bytes.iter();
+                vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
             let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-                vecs.p2pkhaddressindex_to_p2pkhbytes.iter();
-            let mut p2shaddressindex_to_p2shbytes_iter = vecs.p2shaddressindex_to_p2shbytes.iter();
+                vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
+            let mut p2shaddressindex_to_p2shbytes_iter =
+                vecs.p2shaddressindex_to_p2shbytes.iter()?;
             let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-                vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter();
+                vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
             let mut p2wshaddressindex_to_p2wshbytes_iter =
-                vecs.p2wshaddressindex_to_p2wshbytes.iter();
-            let mut p2traddressindex_to_p2trbytes_iter = vecs.p2traddressindex_to_p2trbytes.iter();
-            let mut p2aaddressindex_to_p2abytes_iter = vecs.p2aaddressindex_to_p2abytes.iter();
+                vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
+            let mut p2traddressindex_to_p2trbytes_iter =
+                vecs.p2traddressindex_to_p2trbytes.iter()?;
+            let mut p2aaddressindex_to_p2abytes_iter = vecs.p2aaddressindex_to_p2abytes.iter()?;
 
             let unknown = pools.get_unknown();
 
@@ -56,50 +58,45 @@ fn main() -> Result<()> {
                 .height_to_coinbase_tag
                 .iter()
                 .for_each(|(height, coinbase_tag)| {
-                    let txindex = height_to_first_txindex_iter.unwrap_get_inner(height);
-                    let txoutindex = txindex_to_first_txoutindex_iter.unwrap_get_inner(txindex);
-                    let outputcount = txindex_to_output_count_iter.unwrap_get_inner(txindex);
+                    let txindex = height_to_first_txindex_iter.get_unwrap(height);
+                    let txoutindex = txindex_to_first_txoutindex_iter.get_unwrap(txindex);
+                    let outputcount = txindex_to_output_count_iter.get_unwrap(txindex);
 
                     let pool = (*txoutindex..(*txoutindex + *outputcount))
                         .map(TxOutIndex::from)
                         .find_map(|txoutindex| {
-                            let outputtype =
-                                txoutindex_to_outputtype_iter.unwrap_get_inner(txoutindex);
-                            let typeindex =
-                                txoutindex_to_typeindex_iter.unwrap_get_inner(txoutindex);
+                            let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
+                            let typeindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
 
                             match outputtype {
                                 OutputType::P2PK65 => Some(AddressBytes::from(
                                     p2pk65addressindex_to_p2pk65bytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                        .get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2PK33 => Some(AddressBytes::from(
                                     p2pk33addressindex_to_p2pk33bytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                        .get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2PKH => Some(AddressBytes::from(
                                     p2pkhaddressindex_to_p2pkhbytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                        .get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2SH => Some(AddressBytes::from(
-                                    p2shaddressindex_to_p2shbytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                    p2shaddressindex_to_p2shbytes_iter.get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2WPKH => Some(AddressBytes::from(
                                     p2wpkhaddressindex_to_p2wpkhbytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                        .get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2WSH => Some(AddressBytes::from(
                                     p2wshaddressindex_to_p2wshbytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                        .get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2TR => Some(AddressBytes::from(
-                                    p2traddressindex_to_p2trbytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                    p2traddressindex_to_p2trbytes_iter.get_unwrap(typeindex.into()),
                                 )),
                                 OutputType::P2A => Some(AddressBytes::from(
-                                    p2aaddressindex_to_p2abytes_iter
-                                        .unwrap_get_inner(typeindex.into()),
+                                    p2aaddressindex_to_p2abytes_iter.get_unwrap(typeindex.into()),
                                 )),
                                 _ => None,
                             }

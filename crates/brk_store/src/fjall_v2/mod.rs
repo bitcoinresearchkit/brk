@@ -3,7 +3,10 @@ use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, mem, path::Path};
 use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview6::ByteView;
-use fjall2::{InnerItem, Keyspace, PartitionCreateOptions, PartitionHandle, ValueType};
+use fjall2::{
+    InnerItem, PartitionCreateOptions, TransactionalKeyspace, TransactionalPartitionHandle,
+    ValueType,
+};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::any::AnyStore;
@@ -16,8 +19,8 @@ use meta::*;
 pub struct StoreFjallV2<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    keyspace: Keyspace,
-    partition: PartitionHandle,
+    keyspace: TransactionalKeyspace,
+    partition: TransactionalPartitionHandle,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
     mode: Mode,
@@ -25,8 +28,10 @@ pub struct StoreFjallV2<Key, Value> {
 
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
-pub fn open_keyspace(path: &Path) -> fjall2::Result<Keyspace> {
-    fjall2::Config::new(path.join("fjall")).open()
+pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
+    fjall2::Config::new(path.join("fjall"))
+        .manual_journal_persist(true)
+        .open_transactional()
 }
 
 impl<K, V> StoreFjallV2<K, V>
@@ -36,23 +41,25 @@ where
     ByteView: From<K> + From<V>,
 {
     fn open_partition_handle(
-        keyspace: &Keyspace,
+        keyspace: &TransactionalKeyspace,
         name: &str,
         mode: Mode,
-    ) -> Result<PartitionHandle> {
+    ) -> Result<TransactionalPartitionHandle> {
         let mut options = PartitionCreateOptions::default().manual_journal_persist(true);
 
         if mode.is_unique_push_only() {
             options = options.bloom_filter_bits(Some(7));
         } else {
-            options = options.bloom_filter_bits(None);
+            options = options
+                .max_memtable_size(8 * 1024 * 1024)
+                .bloom_filter_bits(None);
         }
 
         keyspace.open_partition(name, options).map_err(|e| e.into())
     }
 
     pub fn import(
-        keyspace: &Keyspace,
+        keyspace: &TransactionalKeyspace,
         path: &Path,
         name: &str,
         version: Version,
@@ -98,12 +105,16 @@ where
     }
 
     pub fn is_empty(&self) -> Result<bool> {
-        self.partition.is_empty().map_err(|e| e.into())
+        self.keyspace
+            .read_tx()
+            .is_empty(&self.partition)
+            .map_err(|e| e.into())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.partition
-            .iter()
+        self.keyspace
+            .read_tx()
+            .iter(&self.partition)
             .map(|res| res.unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
@@ -195,8 +206,8 @@ where
             .collect::<Vec<_>>();
         items.sort_unstable();
 
-        self.keyspace.batch().commit_partition(
-            &self.partition,
+        self.keyspace.inner().batch().commit_partition(
+            self.partition.inner(),
             items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
         )?;
         // }

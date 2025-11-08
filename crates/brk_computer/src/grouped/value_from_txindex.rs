@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
@@ -12,7 +11,7 @@ use crate::{Indexes, grouped::Source, indexes, price};
 
 use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
-#[derive(Clone, Traversable, Allocative)]
+#[derive(Clone, Traversable)]
 pub struct ComputedValueVecsFromTxindex {
     pub sats: ComputedVecsFromTxindex<Sats>,
     pub bitcoin_txindex: LazyVecFrom1<TxIndex, Bitcoin, TxIndex, Sats>,
@@ -59,8 +58,8 @@ impl ComputedValueVecsFromTxindex {
             version + VERSION,
             source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
-                iter.next_at(txindex.to_usize())
-                    .map(|(_, sats)| Bitcoin::from(sats))
+                iter.get_at(txindex.to_usize())
+                    .map(|sats| Bitcoin::from(sats))
             },
         );
 
@@ -85,14 +84,12 @@ impl ComputedValueVecsFromTxindex {
                  txindex_to_height_iter,
                  height_to_price_close_iter| {
                     let txindex = txindex.to_usize();
-                    txindex_to_btc_iter.next_at(txindex).and_then(|(_, btc)| {
-                        txindex_to_height_iter
-                            .next_at(txindex)
-                            .and_then(|(_, height)| {
-                                height_to_price_close_iter
-                                    .next_at(height.to_usize())
-                                    .map(|(_, close)| *close * btc)
-                            })
+                    txindex_to_btc_iter.get_at(txindex).and_then(|btc| {
+                        txindex_to_height_iter.get_at(txindex).and_then(|height| {
+                            height_to_price_close_iter
+                                .get_at(height.to_usize())
+                                .map(|close| *close * btc)
+                        })
                     })
                 },
             )

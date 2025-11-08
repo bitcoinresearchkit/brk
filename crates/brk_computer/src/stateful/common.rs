@@ -5,7 +5,7 @@ use brk_types::{
 };
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
-    Format, GenericStoredVec, VecIterator,
+    Format, GenericStoredVec, VecIteratorExtended,
 };
 
 use crate::{
@@ -1338,15 +1338,15 @@ impl Vecs {
                 prev_height = state.import_at_or_before(prev_height)?;
             }
 
-            state.supply.value = self.height_to_supply.into_iter().unsafe_get(prev_height);
+            state.supply.value = self.height_to_supply.into_iter().get_unwrap(prev_height);
             state.supply.utxo_count = *self
                 .height_to_utxo_count
                 .into_iter()
-                .unsafe_get(prev_height);
+                .get_unwrap(prev_height);
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
                 state.realized.as_mut().unwrap().cap =
-                    height_to_realized_cap.into_iter().unsafe_get(prev_height);
+                    height_to_realized_cap.into_iter().get_unwrap(prev_height);
             }
 
             Ok(prev_height.incremented())
@@ -1571,22 +1571,19 @@ impl Vecs {
         state: &CohortState,
     ) -> Result<()> {
         self.height_to_supply
-            .forced_push_at(height, state.supply.value, exit)?;
+            .forced_push(height, state.supply.value, exit)?;
 
-        self.height_to_utxo_count.forced_push_at(
+        self.height_to_utxo_count.forced_push(
             height,
             StoredU64::from(state.supply.utxo_count),
             exit,
         )?;
 
-        self.height_to_satblocks_destroyed.forced_push_at(
-            height,
-            state.satblocks_destroyed,
-            exit,
-        )?;
+        self.height_to_satblocks_destroyed
+            .forced_push(height, state.satblocks_destroyed, exit)?;
 
         self.height_to_satdays_destroyed
-            .forced_push_at(height, state.satdays_destroyed, exit)?;
+            .forced_push(height, state.satdays_destroyed, exit)?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             let realized = state.realized.as_ref().unwrap_or_else(|| {
@@ -1594,34 +1591,36 @@ impl Vecs {
                 panic!();
             });
 
-            height_to_realized_cap.forced_push_at(height, realized.cap, exit)?;
+            height_to_realized_cap.forced_push(height, realized.cap, exit)?;
 
             self.height_to_realized_profit
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, realized.profit, exit)?;
-            self.height_to_realized_loss
-                .as_mut()
-                .unwrap()
-                .forced_push_at(height, realized.loss, exit)?;
-            self.height_to_value_created
-                .as_mut()
-                .unwrap()
-                .forced_push_at(height, realized.value_created, exit)?;
+                .forced_push(height, realized.profit, exit)?;
+            self.height_to_realized_loss.as_mut().unwrap().forced_push(
+                height,
+                realized.loss,
+                exit,
+            )?;
+            self.height_to_value_created.as_mut().unwrap().forced_push(
+                height,
+                realized.value_created,
+                exit,
+            )?;
             self.height_to_value_destroyed
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, realized.value_destroyed, exit)?;
+                .forced_push(height, realized.value_destroyed, exit)?;
 
             if self.height_to_adjusted_value_created.is_some() {
                 self.height_to_adjusted_value_created
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(height, realized.adj_value_created, exit)?;
+                    .forced_push(height, realized.adj_value_created, exit)?;
                 self.height_to_adjusted_value_destroyed
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(height, realized.adj_value_destroyed, exit)?;
+                    .forced_push(height, realized.adj_value_destroyed, exit)?;
             }
         }
         Ok(())
@@ -1640,7 +1639,7 @@ impl Vecs {
             self.height_to_min_price_paid
                 .as_mut()
                 .unwrap()
-                .forced_push_at(
+                .forced_push(
                     height,
                     state
                         .price_to_amount_first_key_value()
@@ -1651,7 +1650,7 @@ impl Vecs {
             self.height_to_max_price_paid
                 .as_mut()
                 .unwrap()
-                .forced_push_at(
+                .forced_push(
                     height,
                     state
                         .price_to_amount_last_key_value()
@@ -1666,19 +1665,19 @@ impl Vecs {
             self.height_to_supply_in_profit
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, height_unrealized_state.supply_in_profit, exit)?;
+                .forced_push(height, height_unrealized_state.supply_in_profit, exit)?;
             self.height_to_supply_in_loss
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, height_unrealized_state.supply_in_loss, exit)?;
+                .forced_push(height, height_unrealized_state.supply_in_loss, exit)?;
             self.height_to_unrealized_profit
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, height_unrealized_state.unrealized_profit, exit)?;
+                .forced_push(height, height_unrealized_state.unrealized_profit, exit)?;
             self.height_to_unrealized_loss
                 .as_mut()
                 .unwrap()
-                .forced_push_at(height, height_unrealized_state.unrealized_loss, exit)?;
+                .forced_push(height, height_unrealized_state.unrealized_loss, exit)?;
 
             if let Some(date_unrealized_state) = date_unrealized_state {
                 let dateindex = dateindex.unwrap();
@@ -1686,19 +1685,19 @@ impl Vecs {
                 self.dateindex_to_supply_in_profit
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(dateindex, date_unrealized_state.supply_in_profit, exit)?;
+                    .forced_push(dateindex, date_unrealized_state.supply_in_profit, exit)?;
                 self.dateindex_to_supply_in_loss
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(dateindex, date_unrealized_state.supply_in_loss, exit)?;
+                    .forced_push(dateindex, date_unrealized_state.supply_in_loss, exit)?;
                 self.dateindex_to_unrealized_profit
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(dateindex, date_unrealized_state.unrealized_profit, exit)?;
+                    .forced_push(dateindex, date_unrealized_state.unrealized_profit, exit)?;
                 self.dateindex_to_unrealized_loss
                     .as_mut()
                     .unwrap()
-                    .forced_push_at(dateindex, date_unrealized_state.unrealized_loss, exit)?;
+                    .forced_push(dateindex, date_unrealized_state.unrealized_loss, exit)?;
             }
         }
 
@@ -2102,11 +2101,11 @@ impl Vecs {
                     starting_indexes.dateindex,
                     &indexes.dateindex_to_first_height,
                     |(i, height, ..)| {
-                        let count = dateindex_to_height_count_iter.unsafe_get(i);
+                        let count = dateindex_to_height_count_iter.get_unwrap(i);
                         if count == StoredU64::default() {
                             unreachable!()
                         }
-                        let supply = height_to_supply_iter.unsafe_get(height + (*count - 1));
+                        let supply = height_to_supply_iter.get_unwrap(height + (*count - 1));
                         (i, supply)
                     },
                     exit,

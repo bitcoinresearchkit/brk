@@ -31,7 +31,7 @@ pub use vecs::*;
 // Increment on **change _OR_ addition**
 const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(920_000);
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -261,7 +261,7 @@ impl Indexer {
 
                     let vout = Vout::from(outpoint.vout);
 
-                    let txoutindex = vecs.txindex_to_first_txoutindex.get_pushed_or_read_with(prev_txindex, &readers.txindex_to_first_txoutindex)?
+                    let txoutindex = vecs.txindex_to_first_txoutindex.get_pushed_or_read(prev_txindex, &readers.txindex_to_first_txoutindex)?
                         .ok_or(Error::Str("Expect txoutindex to not be none"))
                         .inspect_err(|_| {
                             dbg!(outpoint.txid, prev_txindex, vout);
@@ -270,7 +270,7 @@ impl Indexer {
 
                     let outpoint = OutPoint::new(prev_txindex, vout);
 
-                    let outputtype = vecs.txoutindex_to_outputtype.get_pushed_or_read_with(txoutindex, &readers.txoutindex_to_outputtype)?
+                    let outputtype = vecs.txoutindex_to_outputtype.get_pushed_or_read(txoutindex, &readers.txoutindex_to_outputtype)?
                         .ok_or(Error::Str("Expect outputtype to not be none"))?;
 
                     let mut tuple = (
@@ -285,7 +285,7 @@ impl Indexer {
                     if outputtype.is_address() {
                         let typeindex = vecs
                             .txoutindex_to_typeindex
-                            .get_pushed_or_read_with(txoutindex, &readers.txoutindex_to_typeindex)?
+                            .get_pushed_or_read(txoutindex, &readers.txoutindex_to_typeindex)?
                             .ok_or(Error::Str("Expect typeindex to not be none"))?;
                         tuple.3 = Some((outputtype, typeindex));
                     }
@@ -373,56 +373,56 @@ impl Indexer {
                             let prev_addressbytes_opt = match outputtype {
                                 OutputType::P2PK65 => vecs
                                     .p2pk65addressindex_to_p2pk65bytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pk65addressindex_to_p2pk65bytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2PK33 => vecs
                                     .p2pk33addressindex_to_p2pk33bytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pk33addressindex_to_p2pk33bytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2PKH => vecs
                                     .p2pkhaddressindex_to_p2pkhbytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2pkhaddressindex_to_p2pkhbytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2SH => vecs
                                     .p2shaddressindex_to_p2shbytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2shaddressindex_to_p2shbytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2WPKH => vecs
                                     .p2wpkhaddressindex_to_p2wpkhbytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wpkhaddressindex_to_p2wpkhbytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2WSH => vecs
                                     .p2wshaddressindex_to_p2wshbytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2wshaddressindex_to_p2wshbytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2TR => vecs
                                     .p2traddressindex_to_p2trbytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2traddressindex_to_p2trbytes,
                                     )?
                                     .map(AddressBytes::from),
                                 OutputType::P2A => vecs
                                     .p2aaddressindex_to_p2abytes
-                                    .get_pushed_or_read_with(
+                                    .get_pushed_or_read(
                                         typeindex.into(),
                                         &readers.p2aaddressindex_to_p2abytes,
                                     )?

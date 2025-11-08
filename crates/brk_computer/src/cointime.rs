@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, CheckedSub, Dollars, StoredF32, StoredF64, Version};
-use vecdb::{Database, Exit, PAGE_SIZE, VecIterator};
+use vecdb::{Database, Exit, PAGE_SIZE, VecIteratorExtended};
 
 use crate::grouped::ComputedVecsFromDateIndex;
 
@@ -339,7 +339,7 @@ impl Vecs {
                     starting_indexes.height,
                     self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
                     |(i, created, ..)| {
-                        let destroyed = coinblocks_destroyed_iter.unsafe_get(i);
+                        let destroyed = coinblocks_destroyed_iter.get_unwrap(i);
                         (i, created.checked_sub(destroyed).unwrap())
                     },
                     exit,

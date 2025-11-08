@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use allocative::Allocative;
 use serde::Serialize;
 use vecdb::StoredCompressed;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -11,16 +10,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 use super::{Sats, StoredU64};
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    StoredCompressed,
-    Allocative,
+    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, StoredCompressed,
 )]
 pub struct FeeRate(f64);
 

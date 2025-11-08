@@ -7,7 +7,7 @@ use brk_types::{
     AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
     TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
-use fjall2::{Keyspace, PersistMode};
+use fjall2::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
 
@@ -17,7 +17,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: Keyspace,
+    pub keyspace: TransactionalKeyspace,
 
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -167,7 +167,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pk65addressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2pk65addressindex_to_p2pk65bytes_iter =
                     vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
@@ -182,7 +182,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pk33addressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2pk33addressindex_to_p2pk33bytes_iter =
                     vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
@@ -197,7 +197,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2pkhaddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2pkhaddressindex_to_p2pkhbytes_iter =
                     vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
@@ -212,7 +212,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2shaddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2shaddressindex_to_p2shbytes_iter =
                     vecs.p2shaddressindex_to_p2shbytes.iter()?;
@@ -227,7 +227,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2traddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2traddressindex_to_p2trbytes_iter =
                     vecs.p2traddressindex_to_p2trbytes.iter()?;
@@ -242,7 +242,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2wpkhaddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
                     vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
@@ -257,7 +257,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2wshaddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2wshaddressindex_to_p2wshbytes_iter =
                     vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
@@ -272,7 +272,7 @@ impl Stores {
 
             if let Ok(mut index) = vecs
                 .height_to_first_p2aaddressindex
-                .read(starting_indexes.height)
+                .read_once(starting_indexes.height)
             {
                 let mut p2aaddressindex_to_p2abytes_iter =
                     vecs.p2aaddressindex_to_p2abytes.iter()?;
@@ -331,7 +331,7 @@ impl Stores {
                 )
                 .filter(|((_, outputtype), _)| outputtype.is_address())
                 .for_each(|((txoutindex, addresstype), addressindex)| {
-                    let txindex = txoutindex_to_txindex_iter.get_unwrap_at(txoutindex);
+                    let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
                     self.addresstype_to_addressindex_and_txindex.remove(
                         AddressTypeAddressIndexTxIndex::from((addresstype, addressindex, txindex)),

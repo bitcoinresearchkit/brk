@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
@@ -11,7 +10,7 @@ use crate::utils::get_percentile;
 
 use super::ComputedType;
 
-#[derive(Clone, Debug, Traversable, Allocative)]
+#[derive(Clone, Debug, Traversable)]
 pub struct EagerVecsBuilder<I, T>
 where
     I: StoredIndex,
@@ -219,11 +218,11 @@ where
         let cumulative_vec = self.cumulative.as_mut().unwrap();
 
         let mut cumulative = index.decremented().map_or(T::from(0_usize), |index| {
-            cumulative_vec.iter().unsafe_get(index)
+            cumulative_vec.iter().get_unwrap(index)
         });
         source
             .iter()
-            .skip(index)
+            .skip(index.to_usize())
             .enumerate()
             .try_for_each(|(i, v)| -> Result<()> {
                 cumulative += v;
@@ -260,17 +259,20 @@ where
 
         let mut cumulative = cumulative_vec.map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                cumulative_vec.iter().unsafe_get(index)
+                cumulative_vec.iter().get_unwrap(index)
             })
         });
 
-        first_indexes.iter().skip(index).enumerate().try_for_each(
-            |(index, first_index)| -> Result<()> {
-                let count_index = count_indexes_iter.unsafe_get(index);
+        first_indexes
+            .iter()
+            .skip(index.to_usize())
+            .enumerate()
+            .try_for_each(|(index, first_index)| -> Result<()> {
+                let count_index = count_indexes_iter.get_at_unwrap(index);
 
                 if let Some(first) = self.first.as_mut() {
                     let f = source_iter
-                        .get_inner(first_index)
+                        .get(first_index)
                         .unwrap_or_else(|| T::from(0_usize));
                     first.forced_push_at(index, f, exit)?;
                 }
@@ -281,7 +283,7 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_iter.unsafe_get(last_index);
+                    let v = source_iter.get_unwrap(last_index);
                     // .context("to work")
                     // .inspect_err(|_| {
                     //     dbg!(first_index, count_index, last_index);
@@ -304,10 +306,9 @@ where
                 let needs_values = needs_sorted || needs_average_sum_or_cumulative;
 
                 if needs_values {
-                    source_iter.set(first_index);
+                    source_iter.set_position(first_index);
                     let mut values = (&mut source_iter)
                         .take(*count_index as usize)
-                        .map(|(_, v)| v)
                         .collect::<Vec<_>>();
 
                     if needs_sorted {
@@ -385,8 +386,7 @@ where
                 }
 
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -431,16 +431,19 @@ where
 
         let mut cumulative = self.cumulative.as_mut().map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                cumulative_vec.iter().unsafe_get(index)
+                cumulative_vec.iter().get_unwrap(index)
             })
         });
 
-        first_indexes.iter().skip(index).enumerate().try_for_each(
-            |(index, first_index, ..)| -> Result<()> {
-                let count_index = count_indexes_iter.unsafe_get(index);
+        first_indexes
+            .iter()
+            .skip(index.to_usize())
+            .enumerate()
+            .try_for_each(|(index, first_index, ..)| -> Result<()> {
+                let count_index = count_indexes_iter.get_at_unwrap(index);
 
                 if let Some(first) = self.first.as_mut() {
-                    let v = source_first_iter.as_mut().unwrap().unsafe_get(first_index);
+                    let v = source_first_iter.as_mut().unwrap().get_unwrap(first_index);
                     first.forced_push_at(index, v, exit)?;
                 }
 
@@ -450,7 +453,7 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_last_iter.as_mut().unwrap().unsafe_get(last_index);
+                    let v = source_last_iter.as_mut().unwrap().get_unwrap(last_index);
                     last.forced_push_at(index, v, exit)?;
                 }
 
@@ -464,10 +467,9 @@ where
                     if needs_sorted {
                         if let Some(max) = self.max.as_mut() {
                             let source_max_iter = source_max_iter.as_mut().unwrap();
-                            source_max_iter.set(first_index);
+                            source_max_iter.set_position(first_index);
                             let mut values = source_max_iter
                                 .take(*count_index as usize)
-                                .map(|(_, v)| v)
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
                             max.forced_push_at(index, *values.last().unwrap(), exit)?;
@@ -475,10 +477,9 @@ where
 
                         if let Some(min) = self.min.as_mut() {
                             let source_min_iter = source_min_iter.as_mut().unwrap();
-                            source_min_iter.set(first_index);
+                            source_min_iter.set_position(first_index);
                             let mut values = source_min_iter
                                 .take(*count_index as usize)
-                                .map(|(_, v)| v)
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
                             min.forced_push_at(index, *values.first().unwrap(), exit)?;
@@ -488,10 +489,9 @@ where
                     if needs_average_sum_or_cumulative {
                         if let Some(average) = self.average.as_mut() {
                             let source_average_iter = source_average_iter.as_mut().unwrap();
-                            source_average_iter.set(first_index);
+                            source_average_iter.set_position(first_index);
                             let values = source_average_iter
                                 .take(*count_index as usize)
-                                .map(|(_, v)| v)
                                 .collect::<Vec<_>>();
 
                             let len = values.len();
@@ -504,10 +504,9 @@ where
 
                         if needs_sum_or_cumulative {
                             let source_sum_iter = source_sum_iter.as_mut().unwrap();
-                            source_sum_iter.set(first_index);
+                            source_sum_iter.set_position(first_index);
                             let values = source_sum_iter
                                 .take(*count_index as usize)
-                                .map(|(_, v)| v)
                                 .collect::<Vec<_>>();
 
                             let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
@@ -526,8 +525,7 @@ where
                 }
 
                 Ok(())
-            },
-        )?;
+            })?;
 
         self.safe_flush(exit)?;
 

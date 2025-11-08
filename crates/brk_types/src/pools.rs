@@ -1,14 +1,12 @@
 use std::{slice::Iter, sync::OnceLock};
 
-use allocative::Allocative;
-
 use crate::{JSONPool, PoolId};
 
 use super::Pool;
 
 const POOL_COUNT: usize = 158;
 
-#[derive(Debug, Allocative)]
+#[derive(Debug)]
 pub struct Pools([Pool; POOL_COUNT]);
 
 impl Pools {

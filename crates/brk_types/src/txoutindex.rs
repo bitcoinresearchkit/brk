@@ -1,6 +1,5 @@
 use std::ops::{Add, AddAssign};
 
-use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
@@ -27,7 +26,6 @@ use super::Vout;
     KnownLayout,
     Serialize,
     StoredCompressed,
-    Allocative,
 )]
 pub struct TxOutIndex(u64);
 

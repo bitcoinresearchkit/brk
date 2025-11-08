@@ -12,16 +12,16 @@ use log::info;
 use vecdb::{Exit, Format};
 
 mod blks;
-// mod chain;
-// mod cointime;
-// mod constants;
+mod chain;
+mod cointime;
+mod constants;
 mod fetched;
-// mod grouped;
+mod grouped;
 mod indexes;
-// mod market;
-// mod pools;
-// mod price;
-// mod stateful;
+mod market;
+mod pools;
+mod price;
+mod stateful;
 mod states;
 mod traits;
 mod utils;
@@ -35,15 +35,15 @@ use states::*;
 #[derive(Clone, Traversable)]
 pub struct Computer {
     pub blks: blks::Vecs,
-    // pub chain: chain::Vecs,
-    // pub cointime: cointime::Vecs,
-    // pub constants: constants::Vecs,
+    pub chain: chain::Vecs,
+    pub cointime: cointime::Vecs,
+    pub constants: constants::Vecs,
     pub fetched: Option<fetched::Vecs>,
     pub indexes: indexes::Vecs,
-    // pub market: market::Vecs,
-    // pub pools: pools::Vecs,
-    // pub price: Option<price::Vecs>,
-    // pub stateful: stateful::Vecs,
+    pub market: market::Vecs,
+    pub pools: pools::Vecs,
+    pub price: Option<price::Vecs>,
+    pub stateful: stateful::Vecs,
 }
 
 const VERSION: Version = Version::new(4);
@@ -81,69 +81,69 @@ impl Computer {
             Ok((indexes, fetched, blks))
         })?;
 
-        // let (price, constants, market) = thread::scope(|s| -> Result<_> {
-        //     let constants_handle = big_thread().spawn_scoped(s, || {
-        //         constants::Vecs::forced_import(&computed_path, VERSION, &indexes)
-        //     })?;
+        let (price, constants, market) = thread::scope(|s| -> Result<_> {
+            let constants_handle = big_thread().spawn_scoped(s, || {
+                constants::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
 
-        //     let market_handle = big_thread().spawn_scoped(s, || {
-        //         market::Vecs::forced_import(&computed_path, VERSION, &indexes)
-        //     })?;
+            let market_handle = big_thread().spawn_scoped(s, || {
+                market::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
 
-        //     let price = fetched
-        //         .is_some()
-        //         .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
+            let price = fetched
+                .is_some()
+                .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
 
-        //     let constants = constants_handle.join().unwrap()?;
-        //     let market = market_handle.join().unwrap()?;
+            let constants = constants_handle.join().unwrap()?;
+            let market = market_handle.join().unwrap()?;
 
-        //     Ok((price, constants, market))
-        // })?;
+            Ok((price, constants, market))
+        })?;
 
-        // let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
-        //     let chain_handle = big_thread().spawn_scoped(s, || {
-        //         chain::Vecs::forced_import(
-        //             &computed_path,
-        //             VERSION,
-        //             indexer,
-        //             &indexes,
-        //             price.as_ref(),
-        //         )
-        //     })?;
+        let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
+            let chain_handle = big_thread().spawn_scoped(s, || {
+                chain::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    indexer,
+                    &indexes,
+                    price.as_ref(),
+                )
+            })?;
 
-        //     let pools_handle = big_thread().spawn_scoped(s, || {
-        //         pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())
-        //     })?;
+            let pools_handle = big_thread().spawn_scoped(s, || {
+                pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())
+            })?;
 
-        //     let cointime =
-        //         cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
+            let cointime =
+                cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
 
-        //     let chain = chain_handle.join().unwrap()?;
-        //     let pools = pools_handle.join().unwrap()?;
+            let chain = chain_handle.join().unwrap()?;
+            let pools = pools_handle.join().unwrap()?;
 
-        //     Ok((chain, pools, cointime))
-        // })?;
+            Ok((chain, pools, cointime))
+        })?;
 
-        // // Threads inside
-        // let stateful = stateful::Vecs::forced_import(
-        //     &computed_path,
-        //     VERSION,
-        //     Format::Compressed,
-        //     &indexes,
-        //     price.as_ref(),
-        // )?;
+        // Threads inside
+        let stateful = stateful::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            Format::Compressed,
+            &indexes,
+            price.as_ref(),
+        )?;
 
         Ok(Self {
-            // constants,
-            // market,
-            // stateful,
-            // chain,
+            constants,
+            market,
+            stateful,
+            chain,
             blks,
-            // pools,
-            // cointime,
+            pools,
+            cointime,
             indexes,
             fetched,
-            // price,
+            price,
         })
     }
 
@@ -238,7 +238,7 @@ impl Computer {
 }
 
 // pub fn generate_allocation_files(monitored: &pools::Vecs) -> Result<()> {
-//     info!("Generating Allocative files...");
+//     info!("Generating allocative files...");
 
 //     let mut flamegraph = allocative::FlameGraphBuilder::default();
 //     flamegraph.visit_root(monitored);
@@ -265,7 +265,7 @@ impl Computer {
 
 //     std::fs::write(path.join("warnings.txt"), output.warnings())?;
 
-//     info!("Successfully generated Allocative files");
+//     info!("Successfully generate allocative files");
 
 //     Ok(())
 // }

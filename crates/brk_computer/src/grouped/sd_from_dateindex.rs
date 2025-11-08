@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{CheckedSub, Date, DateIndex, Dollars, StoredF32, Version};
+use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec,
     Exit, GenericStoredVec, StoredIndex,
@@ -498,12 +498,14 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let mut m2_5sd = self.m2_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
         let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
 
+        let min_date_usize = min_date.to_usize();
+
         source
             .iter()
-            .skip(starting_dateindex)
+            .skip(starting_dateindex.to_usize())
             .enumerate()
             .try_for_each(|(index, ratio)| -> Result<()> {
-                if index < min_date {
+                if index < min_date_usize {
                     self.sd.dateindex.as_mut().unwrap().forced_push_at(
                         index,
                         StoredF32::NAN,
@@ -550,9 +552,10 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 
-                    let avg = sma_iter.unsafe_get(index);
+                    let avg = sma_iter.get_at_unwrap(index);
 
-                    let population = index.checked_sub(min_date).unwrap().to_usize() as f32 + 1.0;
+                    let population =
+                        index.checked_sub(min_date_usize).unwrap().to_usize() as f32 + 1.0;
 
                     let sd = StoredF32::from(
                         (sorted.iter().map(|v| (**v - *avg).powi(2)).sum::<f32>() / population)
@@ -639,7 +642,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                         starting_indexes.dateindex,
                         price,
                         |(i, price, ..)| {
-                            let multiplier = iter.unsafe_get(i);
+                            let multiplier = iter.get_unwrap(i);
                             (i, price * multiplier)
                         },
                         exit,
