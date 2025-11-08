@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, SubAssign},
 };
 
-use allocative::Allocative;
 use bitcoin::Amount;
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -33,7 +32,6 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Serialize,
     Deserialize,
     StoredCompressed,
-    Allocative,
     JsonSchema,
 )]
 pub struct Sats(u64);

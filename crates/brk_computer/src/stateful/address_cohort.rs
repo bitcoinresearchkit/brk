@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
-    VecIterator,
+    VecIteratorExtended,
 };
 
 use crate::{
@@ -112,7 +112,7 @@ impl DynCohortVecs for Vecs {
             self.state.as_mut().unwrap().addr_count = *self
                 .height_to_addr_count
                 .into_iter()
-                .unsafe_get(prev_height);
+                .get_unwrap(prev_height);
         }
 
         Ok(starting_height)
@@ -132,7 +132,7 @@ impl DynCohortVecs for Vecs {
             return Ok(());
         }
 
-        self.height_to_addr_count.forced_push_at(
+        self.height_to_addr_count.forced_push(
             height,
             self.state.as_ref().unwrap().addr_count.into(),
             exit,

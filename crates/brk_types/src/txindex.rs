@@ -1,6 +1,5 @@
 use std::ops::{Add, AddAssign};
 
-use allocative::Allocative;
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -29,7 +28,6 @@ use super::StoredU32;
     KnownLayout,
     Serialize,
     StoredCompressed,
-    Allocative,
     JsonSchema,
     Hash,
 )]

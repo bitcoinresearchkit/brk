@@ -6,7 +6,6 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
-use allocative::Allocative;
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
@@ -28,7 +27,6 @@ use super::{Dollars, StoredF64};
     KnownLayout,
     Serialize,
     StoredCompressed,
-    Allocative,
 )]
 pub struct StoredF32(f32);
 

@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::StoredCompressed;
@@ -20,7 +19,6 @@ use crate::{TxIndex, Vout};
     IntoBytes,
     KnownLayout,
     Serialize,
-    Allocative,
     JsonSchema,
     Hash,
     StoredCompressed,

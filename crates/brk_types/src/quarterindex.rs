@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use allocative::Allocative;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -26,7 +25,6 @@ use super::MonthIndex;
     IntoBytes,
     KnownLayout,
     StoredCompressed,
-    Allocative,
 )]
 pub struct QuarterIndex(u16);
 

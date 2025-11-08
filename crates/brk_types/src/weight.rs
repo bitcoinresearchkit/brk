@@ -1,6 +1,5 @@
 use std::ops::{Add, AddAssign, Div};
 
-use allocative::Allocative;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -22,7 +21,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     FromBytes,
     Serialize,
     StoredCompressed,
-    Allocative,
     JsonSchema,
 )]
 pub struct Weight(u64);

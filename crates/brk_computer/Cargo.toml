@@ -10,7 +10,6 @@ rust-version.workspace = true
 build = "build.rs"
 
 [dependencies]
-allocative = { workspace = true }
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }

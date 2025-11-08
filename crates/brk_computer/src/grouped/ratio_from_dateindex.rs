@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, StoredIndex, VecIterator,
+    GenericStoredVec, StoredIndex, VecIteratorExtended,
 };
 
 use crate::{
@@ -383,8 +383,10 @@ impl ComputedRatioVecsFromDateIndex {
             .unwrap()
             .min(starting_indexes.dateindex);
 
+        let min_ratio_date_usize = min_ratio_date.to_usize();
+
         let mut sorted = self.ratio.dateindex.as_ref().unwrap().collect_range(
-            Some(min_ratio_date.to_usize()),
+            Some(min_ratio_date_usize),
             Some(starting_dateindex.to_usize()),
         );
 
@@ -395,10 +397,10 @@ impl ComputedRatioVecsFromDateIndex {
             .as_ref()
             .unwrap()
             .iter()
-            .skip(starting_dateindex)
+            .skip(starting_dateindex.to_usize())
             .enumerate()
             .try_for_each(|(index, ratio)| -> Result<()> {
-                if index < min_ratio_date {
+                if index < min_ratio_date_usize {
                     self.ratio_pct5
                         .as_mut()
                         .unwrap()
@@ -547,7 +549,7 @@ impl ComputedRatioVecsFromDateIndex {
                     starting_indexes.dateindex,
                     date_to_price,
                     |(i, price, ..)| {
-                        let multiplier = iter.unsafe_get(i);
+                        let multiplier = iter.get_unwrap(i);
                         (i, price * multiplier)
                     },
                     exit,
@@ -564,7 +566,7 @@ impl ComputedRatioVecsFromDateIndex {
                         starting_indexes.dateindex,
                         date_to_price,
                         |(i, price, ..)| {
-                            let multiplier = iter.unsafe_get(i);
+                            let multiplier = iter.get_unwrap(i);
                             (i, price * multiplier)
                         },
                         exit,

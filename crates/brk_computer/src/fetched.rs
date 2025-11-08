@@ -87,7 +87,7 @@ impl Vecs {
                             i.into(),
                             v,
                             i.decremented().map(|prev_i| {
-                                height_to_timestamp.into_iter().get_unwrap_at(prev_i)
+                                height_to_timestamp.into_iter().get_at_unwrap(prev_i)
                             }),
                         )
                         .unwrap(),
@@ -112,7 +112,7 @@ impl Vecs {
                     prev.replace(if i > 0 {
                         self.dateindex_to_price_ohlc_in_cents
                             .into_iter()
-                            .get_unwrap_at(i - 1)
+                            .get_at_unwrap(i - 1)
                     } else {
                         OHLCCents::default()
                     });

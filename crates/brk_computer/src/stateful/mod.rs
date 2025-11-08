@@ -18,7 +18,7 @@ use smallvec::SmallVec;
 use vecdb::{
     AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator,
     CollectableVec, Database, EagerVec, Exit, Format, GenericStoredVec, ImportOptions,
-    LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIterator,
+    LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIteratorExtended,
 };
 
 use crate::{
@@ -189,7 +189,7 @@ impl Vecs {
                         .as_ref()
                         .unwrap()
                         .boxed_clone(),
-                    |height: Height, iter| iter.next_at(height.to_usize()).map(|(_, d)| d),
+                    |height: Height, iter| iter.get(height),
                 )
             }),
             indexes_to_market_cap: compute_dollars.then(|| {
@@ -712,10 +712,10 @@ impl Vecs {
                     .enumerate()
                     .map(|(height, supply)| {
                         let height = Height::from(height);
-                        let timestamp = height_to_timestamp_fixed_iter.unsafe_get(height);
+                        let timestamp = height_to_timestamp_fixed_iter.get_unwrap(height);
                         let price = height_to_price_close_iter
                             .as_mut()
-                            .map(|i| *i.unsafe_get(height));
+                            .map(|i| *i.get_unwrap(height));
                         BlockState {
                             timestamp,
                             price,
@@ -794,14 +794,14 @@ impl Vecs {
             let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_unspendable_supply
                     .into_iter()
-                    .unsafe_get(prev_height)
+                    .get_unwrap(prev_height)
             } else {
                 Sats::ZERO
             };
             let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_opreturn_supply
                     .into_iter()
-                    .unsafe_get(prev_height)
+                    .get_unwrap(prev_height)
             } else {
                 Sats::ZERO
             };
@@ -847,18 +847,18 @@ impl Vecs {
                         v.state.as_mut().unwrap().reset_single_iteration_values()
                     });
 
-                let timestamp = height_to_timestamp_fixed_iter.unsafe_get(height);
+                let timestamp = height_to_timestamp_fixed_iter.get_unwrap(height);
                 let price = height_to_price_close_iter
                     .as_mut()
-                    .map(|i| *i.unsafe_get(height));
-                let first_txindex = height_to_first_txindex_iter.unsafe_get(height);
+                    .map(|i| *i.get_unwrap(height));
+                let first_txindex = height_to_first_txindex_iter.get_unwrap(height);
                 let first_txoutindex = height_to_first_txoutindex_iter
-                    .unsafe_get(height)
+                    .get_unwrap(height)
                     .to_usize();
-                let first_txinindex = height_to_first_txinindex_iter.unsafe_get(height).to_usize();
-                let tx_count = height_to_tx_count_iter.unsafe_get(height);
-                let output_count = height_to_output_count_iter.unsafe_get(height);
-                let input_count = height_to_input_count_iter.unsafe_get(height);
+                let first_txinindex = height_to_first_txinindex_iter.get_unwrap(height).to_usize();
+                let tx_count = height_to_tx_count_iter.get_unwrap(height);
+                let output_count = height_to_output_count_iter.get_unwrap(height);
+                let input_count = height_to_input_count_iter.get_unwrap(height);
 
                 let txoutindex_to_txindex = build_txoutindex_to_txindex(
                     first_txindex,
@@ -874,28 +874,28 @@ impl Vecs {
 
                 let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
                     p2a: height_to_first_p2aaddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2pk33: height_to_first_p2pk33addressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2pk65: height_to_first_p2pk65addressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2pkh: height_to_first_p2pkhaddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2sh: height_to_first_p2shaddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2tr: height_to_first_p2traddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2wpkh: height_to_first_p2wpkhaddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                     p2wsh: height_to_first_p2wshaddressindex_iter
-                        .unsafe_get(height)
+                        .get_unwrap(height)
                         .into(),
                 };
 
@@ -917,17 +917,17 @@ impl Vecs {
                             let txoutindex = TxOutIndex::from(i);
 
                             let value = txoutindex_to_value
-                                .unwrap_read(txoutindex, &ir.txoutindex_to_value);
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_value);
 
                             let output_type = txoutindex_to_outputtype
-                                .unwrap_read(txoutindex, &ir.txoutindex_to_outputtype);
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
 
                             if output_type.is_not_address() {
                                 return (value, output_type, None);
                             }
 
                             let typeindex = txoutindex_to_typeindex
-                                .unwrap_read(txoutindex, &ir.txoutindex_to_typeindex);
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
                             let addressdata_opt = Self::get_addressdatawithsource(
                                 output_type,
@@ -996,18 +996,18 @@ impl Vecs {
                                 let txinindex = TxInIndex::from(i);
 
                                 let outpoint = txinindex_to_outpoint
-                                    .unwrap_read(txinindex, &ir.txinindex_to_outpoint);
+                                    .read_unwrap(txinindex, &ir.txinindex_to_outpoint);
 
-                                let txoutindex = txindex_to_first_txoutindex.unwrap_read(
+                                let txoutindex = txindex_to_first_txoutindex.read_unwrap(
                                     outpoint.txindex(),
                                     &ir.txindex_to_first_txoutindex,
                                 ) + outpoint.vout();
 
                                 let value = txoutindex_to_value
-                                    .unwrap_read(txoutindex, &ir.txoutindex_to_value);
+                                    .read_unwrap(txoutindex, &ir.txoutindex_to_value);
 
                                 let input_type = txoutindex_to_outputtype
-                                    .unwrap_read(txoutindex, &ir.txoutindex_to_outputtype);
+                                    .read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
 
                                 let prev_height =
                                     *txoutindex_range_to_height.get(txoutindex).unwrap();
@@ -1017,7 +1017,7 @@ impl Vecs {
                                 }
 
                                 let typeindex = txoutindex_to_typeindex
-                                    .unwrap_read(txoutindex, &ir.txoutindex_to_typeindex);
+                                    .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
                                 let addressdata_opt = Self::get_addressdatawithsource(
                                     input_type,
@@ -1209,7 +1209,7 @@ impl Vecs {
                         .into_iter()
                         .map(|state| state.value)
                         .sum::<Sats>()
-                        + height_to_unclaimed_rewards_iter.unsafe_get(height);
+                        + height_to_unclaimed_rewards_iter.get_unwrap(height);
 
                     opreturn_supply += transacted.by_type.unspendable.opreturn.value;
 
@@ -1238,34 +1238,34 @@ impl Vecs {
                     self.utxo_cohorts.send(height_to_sent, &mut chain_state);
                 });
 
-                self.height_to_unspendable_supply.forced_push_at(
-                    height,
-                    unspendable_supply,
-                    exit,
-                )?;
+                self.height_to_unspendable_supply
+                    .forced_push(height, unspendable_supply, exit)?;
 
                 self.height_to_opreturn_supply
-                    .forced_push_at(height, opreturn_supply, exit)?;
+                    .forced_push(height, opreturn_supply, exit)?;
 
-                self.addresstype_to_height_to_addr_count.forced_push_at(
+                self.addresstype_to_height_to_addr_count.forced_push(
                     height,
                     &addresstype_to_addr_count,
                     exit,
                 )?;
 
-                self.addresstype_to_height_to_empty_addr_count
-                    .forced_push_at(height, &addresstype_to_empty_addr_count, exit)?;
+                self.addresstype_to_height_to_empty_addr_count.forced_push(
+                    height,
+                    &addresstype_to_empty_addr_count,
+                    exit,
+                )?;
 
-                let date = height_to_date_fixed_iter.unsafe_get(height);
+                let date = height_to_date_fixed_iter.get_unwrap(height);
                 let dateindex = DateIndex::try_from(date).unwrap();
-                let date_first_height = dateindex_to_first_height_iter.unsafe_get(dateindex);
-                let date_height_count = dateindex_to_height_count_iter.unsafe_get(dateindex);
+                let date_first_height = dateindex_to_first_height_iter.get_unwrap(dateindex);
+                let date_height_count = dateindex_to_height_count_iter.get_unwrap(dateindex);
                 let is_date_last_height = date_first_height
                     + Height::from(date_height_count).decremented().unwrap()
                     == height;
                 let date_price = dateindex_to_price_close_iter
                     .as_mut()
-                    .map(|v| is_date_last_height.then(|| *v.unsafe_get(dateindex)));
+                    .map(|v| is_date_last_height.then(|| *v.get_unwrap(dateindex)));
 
                 let dateindex = is_date_last_height.then_some(dateindex);
 
@@ -1519,7 +1519,7 @@ impl Vecs {
 
                 let loadedaddressdata = addresses_data
                     .loaded
-                    .get_any_or_read(loadedaddressindex, reader)
+                    .get_or_read(loadedaddressindex, reader)
                     .unwrap()
                     .unwrap();
 
@@ -1533,7 +1533,7 @@ impl Vecs {
 
                 let emptyaddressdata = addresses_data
                     .empty
-                    .get_any_or_read(emtpyaddressindex, reader)
+                    .get_or_read(emtpyaddressindex, reader)
                     .unwrap()
                     .unwrap();
 
@@ -1979,14 +1979,14 @@ impl AnyAddressIndexes {
         reader: &Reader<'static>,
     ) -> AnyAddressIndex {
         let result = match address_type {
-            OutputType::P2PK33 => self.p2pk33.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2PK65 => self.p2pk65.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2PKH => self.p2pkh.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2SH => self.p2sh.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2TR => self.p2tr.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2WPKH => self.p2wpkh.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2WSH => self.p2wsh.get_any_or_read(typeindex.into(), reader),
-            OutputType::P2A => self.p2a.get_any_or_read(typeindex.into(), reader),
+            OutputType::P2PK33 => self.p2pk33.get_or_read(typeindex.into(), reader),
+            OutputType::P2PK65 => self.p2pk65.get_or_read(typeindex.into(), reader),
+            OutputType::P2PKH => self.p2pkh.get_or_read(typeindex.into(), reader),
+            OutputType::P2SH => self.p2sh.get_or_read(typeindex.into(), reader),
+            OutputType::P2TR => self.p2tr.get_or_read(typeindex.into(), reader),
+            OutputType::P2WPKH => self.p2wpkh.get_or_read(typeindex.into(), reader),
+            OutputType::P2WSH => self.p2wsh.get_or_read(typeindex.into(), reader),
+            OutputType::P2A => self.p2a.get_or_read(typeindex.into(), reader),
             _ => unreachable!(),
         };
         result.unwrap().unwrap()
@@ -2135,7 +2135,7 @@ fn build_txoutindex_to_txindex<'a>(
     let block_first_txindex = block_first_txindex.to_usize();
     for tx_offset in 0..block_tx_count as usize {
         let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let output_count = u64::from(txindex_to_output_count.unsafe_get(txindex));
+        let output_count = u64::from(txindex_to_output_count.get_unwrap(txindex));
 
         for _ in 0..output_count {
             vec.push(txindex);
@@ -2155,7 +2155,7 @@ fn build_txinindex_to_txindex<'a>(
     let block_first_txindex = block_first_txindex.to_usize();
     for tx_offset in 0..block_tx_count as usize {
         let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let input_count = u64::from(txindex_to_input_count.unsafe_get(txindex));
+        let input_count = u64::from(txindex_to_input_count.get_unwrap(txindex));
 
         for _ in 0..input_count {
             vec.push(txindex);

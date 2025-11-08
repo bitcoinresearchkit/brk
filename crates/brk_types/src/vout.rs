@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -22,7 +21,6 @@ use crate::copy_first_2bytes;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Allocative,
     JsonSchema,
     Hash,
 )]

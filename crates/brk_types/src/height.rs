@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Rem},
 };
 
-use allocative::Allocative;
 use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -33,7 +32,6 @@ use super::StoredU64;
     IntoBytes,
     KnownLayout,
     StoredCompressed,
-    Allocative,
     JsonSchema,
     Hash,
 )]

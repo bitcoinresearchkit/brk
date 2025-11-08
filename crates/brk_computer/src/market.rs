@@ -4,8 +4,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, StoredIndex, VecIterator,
-    VecIteratorExtended,
+    Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, StoredIndex, VecIteratorExtended,
 };
 
 use crate::{
@@ -1594,12 +1593,12 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.one_shot_get_any_or_read_(i - 1).unwrap().unwrap()
+                                slf.get_or_read_at_once(i - 1).unwrap().unwrap()
                             } else {
                                 StoredU16::default()
                             });
                         }
-                        let days = if *high_iter.unsafe_get(i) == ath {
+                        let days = if *high_iter.get_unwrap(i) == ath {
                             StoredU16::default()
                         } else {
                             prev.unwrap() + StoredU16::new(1)
@@ -1625,7 +1624,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.one_shot_get_any_or_read_(i - 1)
+                                slf.get_or_read_at_unwrap_once(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });

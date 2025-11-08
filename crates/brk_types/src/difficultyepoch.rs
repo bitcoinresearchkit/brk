@@ -3,7 +3,6 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use allocative::Allocative;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -28,7 +27,6 @@ pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
     IntoBytes,
     KnownLayout,
     StoredCompressed,
-    Allocative,
 )]
 pub struct DifficultyEpoch(u16);
 

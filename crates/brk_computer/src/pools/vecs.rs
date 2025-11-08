@@ -1,8 +1,7 @@
-use allocative::Allocative;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{AnyIterableVec, Database, Exit, StoredIndex, VecIterator, Version};
+use vecdb::{AnyIterableVec, Database, Exit, GenericStoredVec, StoredIndex, Version};
 
 use crate::{
     chain,
@@ -14,7 +13,7 @@ use crate::{
     price,
 };
 
-#[derive(Clone, Traversable, Allocative)]
+#[derive(Clone, Traversable)]
 pub struct Vecs {
     id: PoolId,
 
@@ -354,7 +353,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.one_shot_get_any_or_read_(i - 1)
+                                slf.get_or_read_at_unwrap_once(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });

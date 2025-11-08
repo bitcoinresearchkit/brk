@@ -1,4 +1,3 @@
-use allocative::Allocative;
 use num_enum::{FromPrimitive, IntoPrimitive};
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -24,7 +23,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     IntoBytes,
     Immutable,
     KnownLayout,
-    Allocative,
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
