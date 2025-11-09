@@ -28,7 +28,7 @@ pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
 use crate::{
-    chain::{get_address, get_transaction_info},
+    chain::{get_address, get_transaction},
     vecs::{IndexToVec, MetricToVec},
 };
 
@@ -64,11 +64,11 @@ impl Query {
         get_address(address, self)
     }
 
-    pub fn get_transaction_info(&self, txid: TxidPath) -> Result<Transaction> {
-        get_transaction_info(txid, self)
+    pub fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
+        get_transaction(txid, self)
     }
 
-    pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&str> {
+    pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {
         self.vecs().matches(metric, limit)
     }
 

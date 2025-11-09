@@ -89,9 +89,7 @@ impl<'a> Vecs<'a> {
             .iter()
             .map(|(index, id_to_vec)| (*index, id_to_vec.keys().cloned().collect::<Vec<_>>()))
             .collect();
-        this.index_to_metrics
-            .values_mut()
-            .for_each(|ids| sort_ids(ids));
+        this.index_to_metrics.values_mut().for_each(sort_ids);
         this.catalog.replace(
             TreeNode::Branch(
                 [

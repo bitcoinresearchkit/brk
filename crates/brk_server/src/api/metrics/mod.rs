@@ -11,7 +11,7 @@ use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
 
 use crate::{
     VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
+    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
 };
 
 use super::AppState;
@@ -38,7 +38,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.metric_count(), etag)
+                    Response::new_json(state.metric_count().await, etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -59,7 +59,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.get_indexes(), etag)
+                    state.get_indexes().await.to_json_response(etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -83,7 +83,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.get_metrics(pagination), etag)
+                    Response::new_json(state.get_metrics(pagination).await, etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -101,7 +101,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.get_metrics_catalog(), etag)
+                    Response::new_json(state.get_metrics_catalog().await, etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -126,7 +126,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if headers.has_etag(etag) {
                         return Response::new_not_modified();
                     }
-                    Response::new_json(state.match_metric(&metric, limit), etag)
+                    state.match_metric(metric, limit).await.to_json_response(etag)
                 },
                 |op| op
                     .metrics_tag()
@@ -151,7 +151,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     if let Some(indexes) = state.metric_to_indexes(metric.clone()) {
                         return Response::new_json(indexes, etag)
                     }
-                    let value  = if let Some(first) = state.match_metric(&metric, Limit::MIN).first() {
+                    let value  = if let Some(first) = state.match_metric(metric, Limit::MIN).await?.first() {
                         format!("Could not find '{metric}', did you mean '{first}' ?")
                     } else {
                         format!("Could not find '{metric}'.")

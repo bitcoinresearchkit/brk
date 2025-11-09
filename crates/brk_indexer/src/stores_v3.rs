@@ -3,9 +3,9 @@ use std::{fs, path::Path};
 use brk_error::Result;
 use brk_store::{AnyStore, Kind3, Mode3, StoreFjallV3 as Store};
 use brk_types::{
-    AddressBytes, AddressBytesHash, AddressTypeAddressIndexOutPoint,
-    AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, StoredString, TxIndex,
-    TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
+    AddressBytes, AddressHash, AddressTypeAddressIndexOutPoint, AddressTypeAddressIndexTxIndex,
+    BlockHashPrefix, Height, OutPoint, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex,
+    Unit, Version, Vout,
 };
 use fjall3::{Database, PersistMode};
 use rayon::prelude::*;
@@ -19,7 +19,7 @@ use super::Vecs;
 pub struct Stores {
     pub database: Database,
 
-    pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
+    pub addresshash_to_typeindex: Store<AddressHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
@@ -56,10 +56,10 @@ impl Stores {
                 Mode3::PushOnly,
                 Kind3::Sequential,
             )?,
-            addressbyteshash_to_typeindex: Store::import(
+            addresshash_to_typeindex: Store::import(
                 database_ref,
                 path,
-                "addressbyteshash_to_typeindex",
+                "addresshash_to_typeindex",
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
@@ -112,7 +112,7 @@ impl Stores {
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
         [
-            &mut self.addressbyteshash_to_typeindex as &mut dyn AnyStore,
+            &mut self.addresshash_to_typeindex as &mut dyn AnyStore,
             &mut self.blockhashprefix_to_height,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
@@ -129,7 +129,7 @@ impl Stores {
 
     fn iter_any_store(&self) -> impl Iterator<Item = &dyn AnyStore> {
         [
-            &self.addressbyteshash_to_typeindex as &dyn AnyStore,
+            &self.addresshash_to_typeindex as &dyn AnyStore,
             &self.blockhashprefix_to_height,
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
@@ -144,7 +144,7 @@ impl Stores {
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
     ) -> Result<()> {
-        if self.addressbyteshash_to_typeindex.is_empty()?
+        if self.addresshash_to_typeindex.is_empty()?
             && self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
@@ -180,8 +180,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2pk65addressindex_to_p2pk65bytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -195,8 +195,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2pk33addressindex_to_p2pk33bytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -210,8 +210,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2pkhaddressindex_to_p2pkhbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -225,8 +225,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2shaddressindex_to_p2shbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -240,8 +240,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2traddressindex_to_p2trbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -255,8 +255,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2wpkhaddressindex_to_p2wpkhbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -270,8 +270,8 @@ impl Stores {
 
                 while let Some(typedbytes) = p2wshaddressindex_to_p2wshbytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
@@ -285,15 +285,15 @@ impl Stores {
 
                 while let Some(typedbytes) = p2aaddressindex_to_p2abytes_iter.get(index) {
                     let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressBytesHash::from(&bytes);
-                    self.addressbyteshash_to_typeindex.remove(hash);
+                    let hash = AddressHash::from(&bytes);
+                    self.addresshash_to_typeindex.remove(hash);
                     index.increment();
                 }
             }
         } else {
             unreachable!();
             // self.blockhashprefix_to_height.reset()?;
-            // self.addressbyteshash_to_typeindex.reset()?;
+            // self.addresshash_to_typeindex.reset()?;
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {

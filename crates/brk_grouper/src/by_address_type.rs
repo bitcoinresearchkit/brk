@@ -63,8 +63,8 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn get_unwrap(&self, address_type: OutputType) -> &T {
-        self.get(address_type).unwrap()
+    pub fn get_unwrap(&self, addresstype: OutputType) -> &T {
+        self.get(addresstype).unwrap()
     }
 
     #[inline]
@@ -83,8 +83,8 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn get_mut_unwrap(&mut self, address_type: OutputType) -> &mut T {
-        self.get_mut(address_type).unwrap()
+    pub fn get_mut_unwrap(&mut self, addresstype: OutputType) -> &mut T {
+        self.get_mut(addresstype).unwrap()
     }
 
     #[inline]

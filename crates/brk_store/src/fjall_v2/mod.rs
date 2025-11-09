@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview6::ByteView;
 use fjall2::{
-    InnerItem, PartitionCreateOptions, TransactionalKeyspace, TransactionalPartitionHandle,
-    ValueType,
+    CompressionType, InnerItem, PartitionCreateOptions, TransactionalKeyspace,
+    TransactionalPartitionHandle, ValueType,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -23,7 +23,6 @@ pub struct StoreFjallV2<Key, Value> {
     partition: TransactionalPartitionHandle,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
-    mode: Mode,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
@@ -44,8 +43,11 @@ where
         keyspace: &TransactionalKeyspace,
         name: &str,
         mode: Mode,
+        compression: CompressionType,
     ) -> Result<TransactionalPartitionHandle> {
-        let mut options = PartitionCreateOptions::default().manual_journal_persist(true);
+        let mut options = PartitionCreateOptions::default()
+            .compression(compression)
+            .manual_journal_persist(true);
 
         if mode.is_unique_push_only() {
             options = options.bloom_filter_bits(Some(7));
@@ -64,6 +66,7 @@ where
         name: &str,
         version: Version,
         mode: Mode,
+        compression: CompressionType,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -72,7 +75,7 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(keyspace, name, mode).inspect_err(|e| {
+                Self::open_partition_handle(keyspace, name, mode, compression).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -86,7 +89,6 @@ where
             partition,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
-            mode,
         })
     }
 
@@ -285,7 +287,7 @@ where
             Item::Tomb(key) => Self {
                 key: key.into().into(),
                 value: [].into(),
-                value_type: ValueType::WeakTombstone,
+                value_type: ValueType::Tombstone,
             },
         }
     }

@@ -17,5 +17,6 @@ fjall3 = { workspace = true }
 jiff = { workspace = true }
 minreq = { workspace = true }
 sonic-rs = { workspace = true }
+tokio = { workspace = true }
 vecdb = { workspace = true }
 zerocopy = { workspace = true }

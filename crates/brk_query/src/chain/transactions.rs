@@ -8,11 +8,11 @@ use bitcoin::consensus::Decodable;
 use brk_error::{Error, Result};
 use brk_reader::XORIndex;
 use brk_types::{Transaction, Txid, TxidPath, TxidPrefix};
-use vecdb::VecIterator;
+use vecdb::VecIteratorExtended;
 
 use crate::Query;
 
-pub fn get_transaction_info(TxidPath { txid }: TxidPath, query: &Query) -> Result<Transaction> {
+pub fn get_transaction(TxidPath { txid }: TxidPath, query: &Query) -> Result<Transaction> {
     let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
         return Err(Error::InvalidTxid);
     };
@@ -29,21 +29,13 @@ pub fn get_transaction_info(TxidPath { txid }: TxidPath, query: &Query) -> Resul
         return Err(Error::UnknownTxid);
     };
 
-    let txid = indexer.vecs.txindex_to_txid.iter().unwrap_get_inner(index);
+    let txid = indexer.vecs.txindex_to_txid.iter()?.get_unwrap(index);
 
     let reader = query.reader();
     let computer = query.computer();
 
-    let position = computer
-        .blks
-        .txindex_to_position
-        .iter()
-        .unwrap_get_inner(index);
-    let len = indexer
-        .vecs
-        .txindex_to_total_size
-        .iter()
-        .unwrap_get_inner(index);
+    let position = computer.blks.txindex_to_position.iter()?.get_unwrap(index);
+    let len = indexer.vecs.txindex_to_total_size.iter()?.get_unwrap(index);
 
     let blk_index_to_blk_path = reader.blk_index_to_blk_path();
 

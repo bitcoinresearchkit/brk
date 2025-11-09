@@ -31,14 +31,11 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(txid): Path<TxidPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height());
+                    let etag = format!("{VERSION}-{}", state.get_height().await);
                     if headers.has_etag(&etag) {
                         return Response::new_not_modified();
                     }
-                    match state.get_transaction_info(txid).with_status() {
-                        Ok(value) => Response::new_json(&value, &etag),
-                        Err((status, message)) => Response::new_json_with(status, &message, &etag)
-                    }
+                    state.get_transaction(txid).await.to_json_response(&etag)
                 },
                 |op| op
                     .transactions_tag()

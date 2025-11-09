@@ -57,10 +57,7 @@ impl ComputedValueVecsFromTxindex {
             &name_btc,
             version + VERSION,
             source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
-            |txindex: TxIndex, iter| {
-                iter.get_at(txindex.to_usize())
-                    .map(|sats| Bitcoin::from(sats))
-            },
+            |txindex: TxIndex, iter| iter.get_at(txindex.to_usize()).map(Bitcoin::from),
         );
 
         let bitcoin = ComputedVecsFromTxindex::forced_import(
