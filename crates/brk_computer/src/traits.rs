@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, StoredIndex, Version,
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, StoredIndex, Version,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -10,7 +10,7 @@ pub trait ComputeDCAStackViaLen {
     fn compute_dca_stack_via_len(
         &mut self,
         max_from: DateIndex,
-        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
         len: usize,
         exit: &Exit,
     ) -> Result<()>;
@@ -18,7 +18,7 @@ pub trait ComputeDCAStackViaLen {
     fn compute_dca_stack_via_from(
         &mut self,
         max_from: DateIndex,
-        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()>;
@@ -27,7 +27,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
     fn compute_dca_stack_via_len(
         &mut self,
         max_from: DateIndex,
-        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
@@ -82,7 +82,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
     fn compute_dca_stack_via_from(
         &mut self,
         max_from: DateIndex,
-        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
@@ -130,7 +130,7 @@ pub trait ComputeDCAAveragePriceViaLen {
     fn compute_dca_avg_price_via_len(
         &mut self,
         max_from: DateIndex,
-        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        stacks: &impl IterableVec<DateIndex, Sats>,
         len: usize,
         exit: &Exit,
     ) -> Result<()>;
@@ -138,7 +138,7 @@ pub trait ComputeDCAAveragePriceViaLen {
     fn compute_dca_avg_price_via_from(
         &mut self,
         max_from: DateIndex,
-        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        stacks: &impl IterableVec<DateIndex, Sats>,
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()>;
@@ -147,7 +147,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
     fn compute_dca_avg_price_via_len(
         &mut self,
         max_from: DateIndex,
-        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        stacks: &impl IterableVec<DateIndex, Sats>,
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
@@ -185,7 +185,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
     fn compute_dca_avg_price_via_from(
         &mut self,
         max_from: DateIndex,
-        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        stacks: &impl IterableVec<DateIndex, Sats>,
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
@@ -219,7 +219,7 @@ pub trait ComputeFromSats<I> {
     fn compute_from_sats(
         &mut self,
         max_from: I,
-        sats: &impl AnyIterableVec<I, Sats>,
+        sats: &impl IterableVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -230,7 +230,7 @@ where
     fn compute_from_sats(
         &mut self,
         max_from: I,
-        sats: &impl AnyIterableVec<I, Sats>,
+        sats: &impl IterableVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset(
@@ -256,8 +256,8 @@ pub trait ComputeFromBitcoin<I> {
     fn compute_from_bitcoin(
         &mut self,
         max_from: I,
-        bitcoin: &impl AnyIterableVec<I, Bitcoin>,
-        price: &impl AnyIterableVec<I, Close<Dollars>>,
+        bitcoin: &impl IterableVec<I, Bitcoin>,
+        price: &impl IterableVec<I, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -268,8 +268,8 @@ where
     fn compute_from_bitcoin(
         &mut self,
         max_from: I,
-        bitcoin: &impl AnyIterableVec<I, Bitcoin>,
-        price: &impl AnyIterableVec<I, Close<Dollars>>,
+        bitcoin: &impl IterableVec<I, Bitcoin>,
+        price: &impl IterableVec<I, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset(
@@ -298,8 +298,8 @@ pub trait ComputeDrawdown<I> {
     fn compute_drawdown(
         &mut self,
         max_from: I,
-        close: &impl AnyIterableVec<I, Close<Dollars>>,
-        ath: &impl AnyIterableVec<I, Dollars>,
+        close: &impl IterableVec<I, Close<Dollars>>,
+        ath: &impl IterableVec<I, Dollars>,
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -310,8 +310,8 @@ where
     fn compute_drawdown(
         &mut self,
         max_from: I,
-        close: &impl AnyIterableVec<I, Close<Dollars>>,
-        ath: &impl AnyIterableVec<I, Dollars>,
+        close: &impl IterableVec<I, Close<Dollars>>,
+        ath: &impl IterableVec<I, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset(

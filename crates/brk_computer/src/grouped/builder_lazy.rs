@@ -1,8 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{
-    AnyBoxedIterableVec, AnyCloneableIterableVec, FromCoarserIndex, LazyVecFrom2, StoredIndex,
-};
+use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, StoredIndex};
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
 
@@ -39,9 +37,9 @@ where
     pub fn forced_import(
         name: &str,
         version: Version,
-        source: Option<AnyBoxedIterableVec<S1I, T>>,
+        source: Option<IterableBoxedVec<S1I, T>>,
         source_extra: &EagerVecsBuilder<S1I, T>,
-        len_source: AnyBoxedIterableVec<I, S2T>,
+        len_source: IterableBoxedVec<I, S2T>,
         options: LazyVecBuilderOptions,
     ) -> Self {
         let only_one_active = options.is_only_one_active();

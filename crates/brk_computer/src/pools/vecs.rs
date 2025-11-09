@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{AnyIterableVec, Database, Exit, GenericStoredVec, StoredIndex, Version};
+use vecdb::{Database, Exit, GenericStoredVec, IterableVec, StoredIndex, Version};
 
 use crate::{
     chain,
@@ -164,7 +164,7 @@ impl Vecs {
         &mut self,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        height_to_pool: &impl AnyIterableVec<Height, PoolId>,
+        height_to_pool: &impl IterableVec<Height, PoolId>,
         chain: &chain::Vecs,
         price: Option<&price::Vecs>,
         exit: &Exit,

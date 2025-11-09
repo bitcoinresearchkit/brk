@@ -16,9 +16,9 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use vecdb::{
-    AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator,
-    CollectableVec, Database, EagerVec, Exit, Format, GenericStoredVec, ImportOptions,
-    LazyVecFrom1, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIteratorExtended,
+    AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit, Format,
+    GenericStoredVec, ImportOptions, IterableCloneableVec, IterableVec, LazyVecFrom1, PAGE_SIZE,
+    RawVec, Reader, Stamp, StoredIndex, TypedVecIterator,
 };
 
 use crate::{
@@ -782,8 +782,8 @@ impl Vecs {
             let mut height_to_output_count_iter = height_to_output_count.into_iter();
             let mut height_to_tx_count_iter = height_to_tx_count.into_iter();
             let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
-            let mut txindex_to_input_count_iter = txindex_to_input_count.boxed_iter();
-            let mut txindex_to_output_count_iter = txindex_to_output_count.boxed_iter();
+            let mut txindex_to_input_count_iter = txindex_to_input_count.iter();
+            let mut txindex_to_output_count_iter = txindex_to_output_count.iter();
 
             let height_to_price_close_vec =
                 height_to_price_close.map(|height_to_price_close| height_to_price_close.collect());

@@ -7,8 +7,8 @@ use brk_traversable::Traversable;
 use brk_types::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, RawVec,
-    StoredIndex, VecIteratorExtended, Version,
+    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec, PAGE_SIZE, RawVec,
+    StoredIndex, TypedVecIterator, Version,
 };
 
 mod vecs;

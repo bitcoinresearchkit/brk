@@ -1,10 +1,10 @@
-use vecdb::AnyBoxedIterableVec;
+use vecdb::IterableBoxedVec;
 
 #[derive(Clone)]
 pub enum Source<I, T> {
     Compute,
     None,
-    Vec(AnyBoxedIterableVec<I, T>),
+    Vec(IterableBoxedVec<I, T>),
 }
 
 impl<I, T> Source<I, T> {
@@ -20,7 +20,7 @@ impl<I, T> Source<I, T> {
         matches!(self, Self::Vec(_))
     }
 
-    pub fn vec(self) -> Option<AnyBoxedIterableVec<I, T>> {
+    pub fn vec(self) -> Option<IterableBoxedVec<I, T>> {
         match self {
             Self::Vec(v) => Some(v),
             _ => None,
@@ -35,16 +35,16 @@ impl<I, T> From<bool> for Source<I, T> {
     }
 }
 
-impl<I, T> From<AnyBoxedIterableVec<I, T>> for Source<I, T> {
+impl<I, T> From<IterableBoxedVec<I, T>> for Source<I, T> {
     #[inline]
-    fn from(value: AnyBoxedIterableVec<I, T>) -> Self {
+    fn from(value: IterableBoxedVec<I, T>) -> Self {
         Self::Vec(value)
     }
 }
 
-impl<I, T> From<Option<AnyBoxedIterableVec<I, T>>> for Source<I, T> {
+impl<I, T> From<Option<IterableBoxedVec<I, T>>> for Source<I, T> {
     #[inline]
-    fn from(value: Option<AnyBoxedIterableVec<I, T>>) -> Self {
+    fn from(value: Option<IterableBoxedVec<I, T>>) -> Self {
         if let Some(v) = value {
             Self::Vec(v)
         } else {

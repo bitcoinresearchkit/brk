@@ -7,7 +7,7 @@ use brk_types::{
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec, PAGE_SIZE,
     RawVec, StoredIndex,
 };
 

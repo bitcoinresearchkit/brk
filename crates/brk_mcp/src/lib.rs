@@ -8,9 +8,8 @@ use brk_rmcp::{
     service::RequestContext,
     tool, tool_handler, tool_router,
 };
+use brk_types::Metric;
 use log::info;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 pub mod route;
 
@@ -97,11 +96,11 @@ The list will be empty if the vec id isn't correct.
 ")]
     async fn get_vecid_to_indexes(
         &self,
-        Parameters(param): Parameters<IdParam>,
+        Parameters(metric): Parameters<Metric>,
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecid_to_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.metric_to_indexes(param.id).await).unwrap(),
+            Content::json(self.query.metric_to_indexes(metric).await).unwrap(),
         ]))
     }
 
@@ -169,9 +168,4 @@ An 'Index' (or indexes) is the timeframe of a dataset.
     ) -> Result<InitializeResult, McpError> {
         Ok(self.get_info())
     }
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct IdParam {
-    pub id: String,
 }

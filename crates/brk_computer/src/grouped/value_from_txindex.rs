@@ -3,8 +3,8 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use vecdb::{
-    AnyCloneableIterableVec, CollectableVec, Database, Exit, LazyVecFrom1, LazyVecFrom3,
-    StoredIndex, StoredVec,
+    CollectableVec, Database, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom3, StoredIndex,
+    StoredVec,
 };
 
 use crate::{Indexes, grouped::Source, indexes, price};

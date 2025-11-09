@@ -5,7 +5,7 @@ use brk_types::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
-use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, IterableCloneableVec, IterableVec};
 
 use crate::{
     Indexes,
@@ -152,7 +152,7 @@ where
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height_vec: Option<&impl AnyIterableVec<Height, T>>,
+        height_vec: Option<&impl IterableVec<Height, T>>,
     ) -> Result<()> {
         if let Some(height) = height_vec {
             self.height_extra
@@ -239,8 +239,8 @@ where
         .unwrap()
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(self.height_extra.iter_any_collectable());
         regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_collectable()));
         regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_collectable()));

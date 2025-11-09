@@ -10,7 +10,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
-use brk_query::Query;
+use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_server::Server;
@@ -53,7 +53,7 @@ fn run() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let query = Query::build(&reader, &indexer, &computer);
+    let query = AsyncQuery::build(&reader, &indexer, &computer);
 
     let future = async move {
         let server = Server::new(&query, None);

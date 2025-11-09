@@ -10,8 +10,8 @@ use brk_types::{
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2,
-    LazyVecFrom3, PAGE_SIZE, StoredIndex, VecIteratorExtended,
+    Database, EagerVec, Exit, IterableCloneableVec, IterableVec, LazyVecFrom1, LazyVecFrom2,
+    LazyVecFrom3, PAGE_SIZE, StoredIndex, TypedVecIterator,
 };
 
 use crate::grouped::{

@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{DifficultyEpoch, Height, Version};
-use vecdb::{Database, EagerVec, Exit};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};
 
@@ -110,8 +110,8 @@ where
         .merge_branches()
         .unwrap()
     }
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(self.height.iter_any_collectable());
         regular_iter = Box::new(regular_iter.chain(self.height_extra.iter_any_collectable()));
         regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_collectable()));

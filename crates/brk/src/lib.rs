@@ -34,7 +34,7 @@ pub use brk_indexer as indexer;
 
 #[cfg(feature = "iterator")]
 #[doc(inline)]
-pub use brk_query as iterator;
+pub use brk_iterator as iterator;
 
 #[cfg(feature = "logger")]
 #[doc(inline)]
@@ -58,7 +58,7 @@ pub use brk_reader as reader;
 
 #[cfg(feature = "rpc")]
 #[doc(inline)]
-pub use brk_rpc as reader;
+pub use brk_rpc as rpc;
 
 #[cfg(feature = "server")]
 #[doc(inline)]

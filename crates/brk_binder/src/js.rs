@@ -13,26 +13,19 @@ const AUTO_GENERATED_DISCLAIMER: &str = "//
 // File auto-generated, any modifications will be overwritten
 //";
 
-#[allow(clippy::upper_case_acronyms)]
-pub trait Bridge {
-    fn generate_js_files(&self, modules_path: &Path) -> io::Result<()>;
-}
+pub fn generate_js_files(query: &Query, modules_path: &Path) -> io::Result<()> {
+    let path = modules_path.join("brk-client");
 
-impl Bridge for Query {
-    fn generate_js_files(&self, modules_path: &Path) -> io::Result<()> {
-        let path = modules_path.join("brk-client");
-
-        if !fs::exists(&path)? {
-            return Ok(());
-        }
-
-        let path = path.join("generated");
-        fs::create_dir_all(&path)?;
-
-        generate_version_file(&path)?;
-        generate_metrics_file(self, &path)?;
-        generate_pools_file(&path)
+    if !fs::exists(&path)? {
+        return Ok(());
     }
+
+    let path = path.join("generated");
+    fs::create_dir_all(&path)?;
+
+    generate_version_file(&path)?;
+    generate_metrics_file(query, &path)?;
+    generate_pools_file(&path)
 }
 
 fn generate_version_file(parent: &Path) -> io::Result<()> {
