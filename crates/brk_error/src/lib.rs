@@ -24,6 +24,7 @@ pub enum Error {
     BitcoinFromScriptError(bitcoin::address::FromScriptError),
     BitcoinHexToArrayError(bitcoin::hex::HexToArrayError),
     SonicRS(sonic_rs::Error),
+    TokioJoin(tokio::task::JoinError),
     ZeroCopyError,
     Vecs(vecdb::Error),
 
@@ -89,6 +90,13 @@ impl From<sonic_rs::Error> for Error {
     #[inline]
     fn from(error: sonic_rs::Error) -> Self {
         Self::SonicRS(error)
+    }
+}
+
+impl From<tokio::task::JoinError> for Error {
+    #[inline]
+    fn from(error: tokio::task::JoinError) -> Self {
+        Self::TokioJoin(error)
     }
 }
 
@@ -186,6 +194,7 @@ impl fmt::Display for Error {
             Error::RawDB(error) => Display::fmt(&error, f),
             Error::SonicRS(error) => Display::fmt(&error, f),
             Error::SystemTimeError(error) => Display::fmt(&error, f),
+            Error::TokioJoin(error) => Display::fmt(&error, f),
             Error::VecDB(error) => Display::fmt(&error, f),
             Error::Vecs(error) => Display::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),

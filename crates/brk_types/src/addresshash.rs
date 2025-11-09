@@ -21,32 +21,32 @@ use super::AddressBytes;
     KnownLayout,
     Hash,
 )]
-pub struct AddressBytesHash(u64);
+pub struct AddressHash(u64);
 
-impl From<&AddressBytes> for AddressBytesHash {
+impl From<&AddressBytes> for AddressHash {
     #[inline]
     fn from(address_bytes: &AddressBytes) -> Self {
         Self(address_bytes.hash())
     }
 }
 
-impl From<ByteView> for AddressBytesHash {
+impl From<ByteView> for AddressHash {
     #[inline]
     fn from(value: ByteView) -> Self {
         Self(u64::from_be_bytes(copy_first_8bytes(&value).unwrap()))
     }
 }
 
-impl From<AddressBytesHash> for ByteView {
+impl From<AddressHash> for ByteView {
     #[inline]
-    fn from(value: AddressBytesHash) -> Self {
+    fn from(value: AddressHash) -> Self {
         Self::from(&value)
     }
 }
 
-impl From<&AddressBytesHash> for ByteView {
+impl From<&AddressHash> for ByteView {
     #[inline]
-    fn from(value: &AddressBytesHash) -> Self {
+    fn from(value: &AddressHash) -> Self {
         Self::new(&value.0.to_be_bytes())
     }
 }

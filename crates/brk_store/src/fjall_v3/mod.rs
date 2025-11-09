@@ -308,7 +308,7 @@ impl<K, V> Item<K, V> {
     //                 keyspace_id,
     //                 key: key.into().into(),
     //                 value: [].into(),
-    //                 value_type: ValueType::WeakTombstone,
+    //                 value_type: ValueType::Tombstone,
     //             },
     //         }
     //     }

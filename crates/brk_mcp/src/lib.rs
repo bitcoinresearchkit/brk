@@ -37,7 +37,7 @@ Get the count of unique metrics.
     async fn get_metric_count(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: distinct_metric_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.distinct_metric_count()).unwrap(),
+            Content::json(self.query.distinct_metric_count().await).unwrap(),
         ]))
     }
 
@@ -47,7 +47,7 @@ Get the count of all metrics. (distinct metrics multiplied by the number of inde
     async fn get_vec_count(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: total_metric_count");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.total_metric_count()).unwrap(),
+            Content::json(self.query.total_metric_count().await).unwrap(),
         ]))
     }
 
@@ -57,7 +57,7 @@ Get the list of all existing indexes and their accepted variants.
     async fn get_indexes(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.get_indexes()).unwrap(),
+            Content::json(self.query.get_indexes().await).unwrap(),
         ]))
     }
 
@@ -72,7 +72,7 @@ If the `page` param is omitted, it will default to the first page.
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_metrics");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.get_metrics(pagination)).unwrap(),
+            Content::json(self.query.get_metrics(pagination).await).unwrap(),
         ]))
     }
 
@@ -87,7 +87,7 @@ If the `page` param is omitted, it will default to the first page.
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_index_to_vecids");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.get_index_to_vecids(paginated_index)).unwrap(),
+            Content::json(self.query.get_index_to_vecids(paginated_index).await).unwrap(),
         ]))
     }
 
@@ -101,7 +101,7 @@ The list will be empty if the vec id isn't correct.
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecid_to_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.metric_to_indexes(param.id)).unwrap(),
+            Content::json(self.query.metric_to_indexes(param.id).await).unwrap(),
         ]))
     }
 
@@ -112,10 +112,13 @@ The response's format will depend on the given parameters, it will be:
 - A list: If requested only one vec and the given range returns multiple values (for example: `from=-1000&count=100` or `from=-444&to=-333`)
 - A matrix: When multiple vecs are requested, even if they each return one value.
 ")]
-    fn get_vecs(&self, Parameters(params): Parameters<Params>) -> Result<CallToolResult, McpError> {
+    async fn get_vecs(
+        &self,
+        Parameters(params): Parameters<Params>,
+    ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecs");
         Ok(CallToolResult::success(vec![Content::text(
-            match self.query.search_and_format(params) {
+            match self.query.search_and_format(params).await {
                 Ok(output) => output.to_string(),
                 Err(e) => format!("Error:\n{e}"),
             },

@@ -81,7 +81,7 @@ impl Vecs {
             .enumerate()
             .try_for_each(|(i, v)| -> Result<()> {
                 self.height_to_price_ohlc_in_cents.forced_push_at(
-                    i.into(),
+                    i,
                     self.fetcher
                         .get_height(
                             i.into(),

@@ -3,10 +3,10 @@ use std::str::FromStr;
 use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
-    Address, AddressBytes, AddressBytesHash, AddressChainStats, AddressMempoolStats, AddressStats,
+    Address, AddressBytes, AddressChainStats, AddressHash, AddressMempoolStats, AddressStats,
     AnyAddressDataIndexEnum, OutputType,
 };
-use vecdb::{AnyIterableVec, VecIterator};
+use vecdb::{AnyIterableVec, VecIteratorExtended};
 
 use crate::Query;
 
@@ -27,14 +27,17 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
         return Err(Error::InvalidAddress);
     };
 
-    let type_ = OutputType::from(&script);
-    let Ok(bytes) = AddressBytes::try_from((&script, type_)) else {
+    let outputtype = OutputType::from(&script);
+    let Ok(bytes) = AddressBytes::try_from((&script, outputtype)) else {
         return Err(Error::Str("Failed to convert the address to bytes"));
     };
-    let hash = AddressBytesHash::from(&bytes);
+    let addresstype = outputtype;
+    let hash = AddressHash::from(&bytes);
 
     let Ok(Some(type_index)) = stores
-        .addressbyteshash_to_typeindex
+        .addresstype_to_addresshash_to_addressindex
+        .get(addresstype)
+        .unwrap()
         .get(&hash)
         .map(|opt| opt.map(|cow| cow.into_owned()))
     else {
@@ -50,57 +53,63 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
             .iter()
             .last()
             .unwrap()
-            .1
-            .into_owned()
     });
 
-    let any_address_index = match type_ {
+    let any_address_index = match outputtype {
         OutputType::P2PK33 => stateful
-            .p2pk33addressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2pk33
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2PK65 => stateful
-            .p2pk65addressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2pk65
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2PKH => stateful
-            .p2pkhaddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2pkh
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2SH => stateful
-            .p2shaddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2sh
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2TR => stateful
-            .p2traddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2tr
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2WPKH => stateful
-            .p2wpkhaddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2wpkh
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2WSH => stateful
-            .p2wshaddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2wsh
+            .iter()?
+            .get_unwrap(type_index.into()),
         OutputType::P2A => stateful
-            .p2aaddressindex_to_anyaddressindex
-            .iter()
-            .unwrap_get_inner(type_index.into()),
+            .any_address_indexes
+            .p2a
+            .iter()?
+            .get_unwrap(type_index.into()),
         t => {
             return Err(Error::UnsupportedType(t.to_string()));
         }
     };
 
     let address_data = match any_address_index.to_enum() {
-        AnyAddressDataIndexEnum::Loaded(index) => stateful
-            .loadedaddressindex_to_loadedaddressdata
-            .iter()
-            .unwrap_get_inner(index),
+        AnyAddressDataIndexEnum::Loaded(index) => {
+            stateful.addresses_data.loaded.iter()?.get_unwrap(index)
+        }
         AnyAddressDataIndexEnum::Empty(index) => stateful
-            .emptyaddressindex_to_emptyaddressdata
-            .iter()
-            .unwrap_get_inner(index)
+            .addresses_data
+            .empty
+            .iter()?
+            .get_unwrap(index)
             .into(),
     };
 

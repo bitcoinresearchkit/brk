@@ -88,7 +88,7 @@ Main indexing function processing blocks from parser with collision detection.
 
 **Key-Value Stores:**
 
-- `addressbyteshash_to_typeindex`: Address hash to internal index mapping
+- `addresshash_to_typeindex`: Address hash to internal index mapping
 - `blockhashprefix_to_height`: Block hash prefix to height lookup
 - `txidprefix_to_txindex`: Transaction ID prefix to internal index
 - `addresstype_to_typeindex_with_txoutindex`: Address type to output mappings
@@ -137,7 +137,7 @@ println!("Total addresses: {}", final_indexes.total_address_count());
 
 ```rust
 use brk_indexer::Indexer;
-use brk_types::{Height, TxidPrefix, AddressBytesHash};
+use brk_types::{Height, TxidPrefix, AddressHash};
 
 let indexer = Indexer::forced_import("./blockchain_index")?;
 
@@ -154,8 +154,8 @@ if let Some(tx_index) = indexer.stores.txidprefix_to_txindex.get(&txid_prefix)? 
 }
 
 // Query address information
-let address_hash = AddressBytesHash::from(/* address bytes */);
-if let Some(type_index) = indexer.stores.addressbyteshash_to_typeindex.get(&address_hash)? {
+let address_hash = AddressHash::from(/* address bytes */);
+if let Some(type_index) = indexer.stores.addresshash_to_typeindex.get(&address_hash)? {
     println!("Address type index: {}", type_index);
 }
 ```

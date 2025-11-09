@@ -1,8 +1,13 @@
-use axum::http::StatusCode;
+use axum::{http::StatusCode, response::Response};
 use brk_error::{Error, Result};
+
+use crate::extended::ResponseExtended;
 
 pub trait ResultExtended<T> {
     fn with_status(self) -> Result<T, (StatusCode, String)>;
+    fn to_json_response(self, etag: &str) -> Response
+    where
+        T: sonic_rs::Serialize;
 }
 
 impl<T> ResultExtended<T> for Result<T> {
@@ -20,5 +25,15 @@ impl<T> ResultExtended<T> for Result<T> {
                 e.to_string(),
             )
         })
+    }
+
+    fn to_json_response(self, etag: &str) -> Response
+    where
+        T: sonic_rs::Serialize,
+    {
+        match self.with_status() {
+            Ok(value) => Response::new_json(&value, etag),
+            Err((status, message)) => Response::new_json_with(status, &message, etag),
+        }
     }
 }

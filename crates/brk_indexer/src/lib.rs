@@ -8,10 +8,9 @@ use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_store::AnyStore;
 use brk_types::{
-    AddressBytes, AddressBytesHash, AddressTypeAddressIndexOutPoint,
-    AddressTypeAddressIndexTxIndex, BlockHashPrefix, Height, OutPoint, OutputType, Sats,
-    StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex, Unit,
-    Version, Vin, Vout,
+    AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height,
+    OutPoint, OutputType, Sats, StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid,
+    TxidPrefix, TypeIndex, Unit, Version, Vin, Vout,
 };
 use log::{error, info};
 use rayon::prelude::*;
@@ -333,7 +332,7 @@ impl Indexer {
                         TxIndex,
                         Vout,
                         OutputType,
-                        Option<(AddressBytes, AddressBytesHash)>,
+                        Option<(AddressBytes, AddressHash)>,
                         Option<TypeIndex>,
                     )> {
                         let txindex = indexes.txindex + block_txindex;
@@ -349,18 +348,21 @@ impl Indexer {
                             return Ok(tuple);
                         }
 
-                        let address_bytes = AddressBytes::try_from((script, outputtype)).unwrap();
+                        let addresstype = outputtype;
 
-                        let address_hash = AddressBytesHash::from(&address_bytes);
+                        let address_bytes = AddressBytes::try_from((script, addresstype)).unwrap();
+
+                        let address_hash = AddressHash::from(&address_bytes);
 
                         let typeindex_opt = stores
-                            .addressbyteshash_to_typeindex
+                            .addresstype_to_addresshash_to_addressindex
+                            .get_unwrap(addresstype)
                             .get(&address_hash)
                             .unwrap()
                             .map(|v| *v)
                             // Checking if not in the future (in case we started before the last processed block)
                             .and_then(|typeindex_local| {
-                                (typeindex_local < indexes.to_typeindex(outputtype))
+                                (typeindex_local < indexes.to_typeindex(addresstype))
                                     .then_some(typeindex_local)
                             });
 
@@ -370,7 +372,7 @@ impl Indexer {
                         if check_collisions && let Some(typeindex) = typeindex_opt {
                             // unreachable!();
 
-                            let prev_addressbytes_opt = match outputtype {
+                            let prev_addressbytes_opt = match addresstype {
                                 OutputType::P2PK65 => vecs
                                     .p2pk65addressindex_to_p2pk65bytes
                                     .get_pushed_or_read(
@@ -437,7 +439,10 @@ impl Indexer {
 
                             let address_bytes = &tuple.5.as_ref().unwrap().0;
 
-                            if stores.addressbyteshash_to_typeindex.needs(height)
+                            if stores
+                                .addresstype_to_addresshash_to_addressindex
+                                .get_unwrap(addresstype)
+                                .needs(height)
                                 && prev_addressbytes != address_bytes
                             {
                                 let txid = tx.compute_txid();
@@ -446,14 +451,14 @@ impl Indexer {
                                     txid,
                                     vout,
                                     block_txindex,
-                                    outputtype,
+                                    addresstype,
                                     prev_addressbytes,
                                     address_bytes,
                                     &indexes,
                                     typeindex,
                                     typeindex,
                                     txout,
-                                    AddressBytesHash::from(address_bytes),
+                                    AddressHash::from(address_bytes),
                                 );
                                 panic!()
                             }
@@ -470,7 +475,7 @@ impl Indexer {
             let tx_len = block.txdata.len();
 
             // let i = Instant::now();
-            let mut already_added_addressbyteshash: FxHashMap<AddressBytesHash, TypeIndex> =
+            let mut already_added_addresshash: FxHashMap<AddressHash, TypeIndex> =
                 FxHashMap::default();
             let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
                 FxHashMap::default();
@@ -495,47 +500,27 @@ impl Indexer {
                 let typeindex = if let Some(ti) = typeindex_opt {
                     ti
                 } else if let Some((address_bytes, address_hash)) = addressbytes_opt {
-                    if let Some(&ti) = already_added_addressbyteshash.get(&address_hash) {
+                    let addresstype = outputtype;
+                    if let Some(&ti) = already_added_addresshash.get(&address_hash) {
                         ti
                     } else {
-                        let ti = match outputtype {
+                        let ti = match addresstype {
                             OutputType::P2PK65 => indexes.p2pk65addressindex.copy_then_increment(),
                             OutputType::P2PK33 => indexes.p2pk33addressindex.copy_then_increment(),
                             OutputType::P2PKH => indexes.p2pkhaddressindex.copy_then_increment(),
-                            OutputType::P2MS => {
-                                vecs.p2msoutputindex_to_txindex
-                                    .push_if_needed(indexes.p2msoutputindex, txindex)?;
-                                indexes.p2msoutputindex.copy_then_increment()
-                            }
                             OutputType::P2SH => indexes.p2shaddressindex.copy_then_increment(),
-                            OutputType::OpReturn => {
-                                vecs.opreturnindex_to_txindex
-                                    .push_if_needed(indexes.opreturnindex, txindex)?;
-                                indexes.opreturnindex.copy_then_increment()
-                            }
                             OutputType::P2WPKH => indexes.p2wpkhaddressindex.copy_then_increment(),
                             OutputType::P2WSH => indexes.p2wshaddressindex.copy_then_increment(),
                             OutputType::P2TR => indexes.p2traddressindex.copy_then_increment(),
                             OutputType::P2A => indexes.p2aaddressindex.copy_then_increment(),
-                            OutputType::Empty => {
-                                vecs.emptyoutputindex_to_txindex
-                                    .push_if_needed(indexes.emptyoutputindex, txindex)?;
-                                indexes.emptyoutputindex.copy_then_increment()
-                            }
-                            OutputType::Unknown => {
-                                vecs.unknownoutputindex_to_txindex
-                                    .push_if_needed(indexes.unknownoutputindex, txindex)?;
-                                indexes.unknownoutputindex.copy_then_increment()
-                            }
                             _ => unreachable!(),
                         };
 
-                        already_added_addressbyteshash.insert(address_hash, ti);
-                        stores.addressbyteshash_to_typeindex.insert_if_needed(
-                            address_hash,
-                            ti,
-                            height,
-                        );
+                        already_added_addresshash.insert(address_hash, ti);
+                        stores
+                            .addresstype_to_addresshash_to_addressindex
+                            .get_mut_unwrap(addresstype)
+                            .insert_if_needed(address_hash, ti, height);
                         vecs.push_bytes_if_needed(ti, address_bytes)?;
 
                         ti
@@ -577,12 +562,9 @@ impl Indexer {
 
                     stores
                         .addresstype_to_addressindex_and_txindex
+                        .get_mut_unwrap(addresstype)
                         .insert_if_needed(
-                            AddressTypeAddressIndexTxIndex::from((
-                                addresstype,
-                                addressindex,
-                                txindex,
-                            )),
+                            AddressIndexTxIndex::from((addressindex, txindex)),
                             Unit,
                             height,
                         );
@@ -598,12 +580,9 @@ impl Indexer {
 
                     stores
                         .addresstype_to_addressindex_and_unspentoutpoint
+                        .get_mut_unwrap(addresstype)
                         .insert_if_needed(
-                            AddressTypeAddressIndexOutPoint::from((
-                                addresstype,
-                                addressindex,
-                                outpoint,
-                            )),
+                            AddressIndexOutPoint::from((addressindex, outpoint)),
                             Unit,
                             height,
                         );
@@ -651,22 +630,17 @@ impl Indexer {
 
                 stores
                     .addresstype_to_addressindex_and_txindex
+                    .get_mut_unwrap(addresstype)
                     .insert_if_needed(
-                        AddressTypeAddressIndexTxIndex::from((addresstype, addressindex, txindex)),
+                        AddressIndexTxIndex::from((addressindex, txindex)),
                         Unit,
                         height,
                     );
 
                 stores
                     .addresstype_to_addressindex_and_unspentoutpoint
-                    .remove_if_needed(
-                        AddressTypeAddressIndexOutPoint::from((
-                            addresstype,
-                            addressindex,
-                            outpoint,
-                        )),
-                        height,
-                    );
+                    .get_mut_unwrap(addresstype)
+                    .remove_if_needed(AddressIndexOutPoint::from((addressindex, outpoint)), height);
             }
             // println!("txins.into_iter(): {:?}", i.elapsed());
 

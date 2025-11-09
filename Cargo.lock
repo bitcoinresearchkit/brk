@@ -679,6 +679,7 @@ dependencies = [
  "jiff",
  "minreq",
  "sonic-rs",
+ "tokio",
  "vecdb",
  "zerocopy",
 ]

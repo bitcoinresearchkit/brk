@@ -30,14 +30,11 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(address): Path<Address>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height());
+                let etag = format!("{VERSION}-{}", state.get_height().await);
                 if headers.has_etag(&etag) {
                     return Response::new_not_modified();
                 }
-                match state.get_address(address).with_status() {
-                    Ok(value) => Response::new_json(&value, &etag),
-                    Err((status, message)) => Response::new_json_with(status, &message, &etag)
-                }
+                state.get_address(address).await.to_json_response(&etag)
             }, |op| op
                 .addresses_tag()
                 .summary("Address information")

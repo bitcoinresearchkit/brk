@@ -17,7 +17,7 @@ pub struct AddressIndexOutPoint {
 
 impl Hash for AddressIndexOutPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let mut buf = [0u8; 11];
+        let mut buf = [0u8; 10];
         buf[0..8].copy_from_slice(self.addressindextxindex.as_bytes());
         buf[8..].copy_from_slice(self.vout.as_bytes());
         state.write(&buf);

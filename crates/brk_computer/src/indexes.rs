@@ -163,7 +163,7 @@ impl Vecs {
                         let start = usize::from(start);
                         let end = txindex_to_first_txinindex_iter
                             .get_at(txindex + 1)
-                            .map(|v| usize::from(v))
+                            .map(usize::from)
                             .unwrap_or_else(|| txinindex_to_txoutindex_iter.len());
                         StoredU64::from((start..end).count())
                     })
@@ -183,7 +183,7 @@ impl Vecs {
                         let start = usize::from(start);
                         let end = txindex_to_first_txoutindex_iter
                             .get_at(txindex + 1)
-                            .map(|v| usize::from(v))
+                            .map(usize::from)
                             .unwrap_or_else(|| txoutindex_to_value_iter.len());
                         StoredU64::from((start..end).count())
                     })
