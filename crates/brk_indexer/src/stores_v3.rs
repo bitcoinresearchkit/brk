@@ -9,7 +9,7 @@ use brk_types::{
 };
 use fjall3::{Database, PersistMode};
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, StoredIndex, VecIterator, VecIteratorExtended};
+use vecdb::{AnyVec, GenericStoredVec, StoredIndex, TypedVecIterator, VecIterator};
 
 use crate::Indexes;
 

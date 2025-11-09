@@ -1,5 +1,6 @@
 use brk_traversable::Traversable;
 use rayon::prelude::*;
+use vecdb::AnyCollectableVec;
 
 use crate::Filtered;
 
@@ -77,14 +78,14 @@ where
         )
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
         [
             Box::new(self.ge_amount.iter_any_collectable())
-                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+                as Box<dyn Iterator<Item = &dyn AnyCollectableVec>>,
             Box::new(self.amount_range.iter_any_collectable())
-                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+                as Box<dyn Iterator<Item = &dyn AnyCollectableVec>>,
             Box::new(self.lt_amount.iter_any_collectable())
-                as Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>>,
+                as Box<dyn Iterator<Item = &dyn AnyCollectableVec>>,
         ]
         .into_iter()
         .flatten()

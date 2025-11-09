@@ -148,7 +148,7 @@ impl<'a> Vecs<'a> {
         }
     }
 
-    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<Index>> {
+    pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.metric_to_indexes
             .get(metric.replace("-", "_").as_str())
     }

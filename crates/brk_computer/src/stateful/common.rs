@@ -4,8 +4,8 @@ use brk_types::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit,
-    Format, GenericStoredVec, VecIteratorExtended,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec, IterableCloneableVec,
+    IterableVec, TypedVecIterator,
 };
 
 use crate::{
@@ -2173,12 +2173,12 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
-        height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
-        height_to_market_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
-        height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
-        dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        height_to_supply: &impl IterableVec<Height, Bitcoin>,
+        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
+        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
+        dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         if let Some(v) = self.indexes_to_supply_rel_to_circulating_supply.as_mut() {

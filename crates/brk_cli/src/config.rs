@@ -9,7 +9,7 @@ use brk_rpc::{Auth, Client};
 use clap::Parser;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{default_bitcoin_path, default_brk_path, dot_brk_path, website::Website};
+use crate::{default_brk_path, dot_brk_path, website::Website};
 
 const DOWNLOADS: &str = "downloads";
 
@@ -197,14 +197,14 @@ Finally, you can run the program with '-h' for help."
     }
 
     pub fn rpc(&self) -> Result<Client> {
-        Ok(Client::new(
+        Client::new(
             &format!(
                 "http://{}:{}",
                 self.rpcconnect().unwrap_or(&"localhost".to_string()),
                 self.rpcport().unwrap_or(8332)
             ),
-            self.rpc_auth().unwrap(),
-        )?)
+            self.rpc_auth()?,
+        )
     }
 
     fn rpc_auth(&self) -> Result<Auth> {
@@ -233,7 +233,9 @@ Finally, you can run the program with '-h' for help."
     pub fn bitcoindir(&self) -> PathBuf {
         self.bitcoindir
             .as_ref()
-            .map_or_else(default_bitcoin_path, |s| Self::fix_user_path(s.as_ref()))
+            .map_or_else(Client::default_bitcoin_path, |s| {
+                Self::fix_user_path(s.as_ref())
+            })
     }
 
     pub fn blocksdir(&self) -> PathBuf {

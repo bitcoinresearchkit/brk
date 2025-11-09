@@ -15,7 +15,7 @@ use brk_types::{
 use log::{error, info};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, VecIteratorExtended};
+use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, TypedVecIterator};
 mod indexes;
 mod stores_v2;
 // mod stores_v3;
@@ -117,8 +117,6 @@ impl Indexer {
             let i = Instant::now();
             vecs.flush(height)?;
             info!("Flushed vecs in {}s", i.elapsed().as_secs());
-            let i = Instant::now();
-            info!("Flushed db in {}s", i.elapsed().as_secs());
             Ok(())
         };
 

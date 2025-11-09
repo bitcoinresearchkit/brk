@@ -13,8 +13,8 @@ use brk_types::{
     YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, Database, EagerVec, Exit, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
-    StoredIndex, VecIteratorExtended,
+    Database, EagerVec, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
+    StoredIndex, TypedVecIterator,
 };
 
 const VERSION: Version = Version::ZERO;

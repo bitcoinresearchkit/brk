@@ -5,7 +5,7 @@ use brk_types::{
     P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
     UnknownOutputIndex,
 };
-use vecdb::{AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw};
+use vecdb::{GenericStoredVec, IterableStoredVec, IterableVec, StoredIndex, StoredRaw};
 
 use crate::{Stores, Vecs};
 
@@ -219,8 +219,8 @@ impl From<(Height, &mut Vecs, &Stores)> for Indexes {
 }
 
 pub fn starting_index<I, T>(
-    height_to_index: &impl AnyStoredIterableVec<Height, I>,
-    index_to_else: &impl AnyIterableVec<I, T>,
+    height_to_index: &impl IterableStoredVec<Height, I>,
+    index_to_else: &impl IterableVec<I, T>,
     starting_height: Height,
 ) -> Option<I>
 where

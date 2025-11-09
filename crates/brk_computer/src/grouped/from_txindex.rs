@@ -6,8 +6,8 @@ use brk_types::{
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCloneableIterableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
-    StoredIndex, VecIteratorExtended,
+    AnyCollectableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
+    IterableCloneableVec, StoredIndex, TypedVecIterator,
 };
 
 use crate::{
@@ -521,8 +521,8 @@ where
         .unwrap()
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(self.height.iter_any_collectable());
         regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_collectable()));
         regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_collectable()));

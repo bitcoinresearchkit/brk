@@ -1,7 +1,4 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 pub fn dot_brk_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap();

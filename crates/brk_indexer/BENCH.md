@@ -2,14 +2,12 @@
 
 MBP M3 Pro
 
-0..920750
+Range: ~0..920_000
 
-Time: 13h 6mn (checked) / 12h 20mn (unchecked)
+Time: ~10h30mn
 
 RAM:
-Peak: ~12GB
-After auto compaction: ~6.5GB
+Peak: ~11GB
+At the end: ~6.5GB
 
 storage: 223GB
-
-mode: checked

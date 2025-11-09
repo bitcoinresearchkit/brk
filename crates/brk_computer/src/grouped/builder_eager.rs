@@ -2,7 +2,7 @@ use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec, IterableVec,
     StoredIndex, StoredRaw,
 };
 
@@ -204,7 +204,7 @@ where
     pub fn extend(
         &mut self,
         max_from: I,
-        source: &impl AnyIterableVec<I, T>,
+        source: &impl IterableVec<I, T>,
         exit: &Exit,
     ) -> Result<()> {
         if self.cumulative.is_none() {
@@ -238,9 +238,9 @@ where
     pub fn compute<I2>(
         &mut self,
         max_from: I,
-        source: &impl AnyIterableVec<I2, T>,
-        first_indexes: &impl AnyIterableVec<I, I2>,
-        count_indexes: &impl AnyIterableVec<I, StoredU64>,
+        source: &impl IterableVec<I2, T>,
+        first_indexes: &impl IterableVec<I, I2>,
+        count_indexes: &impl IterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -398,8 +398,8 @@ where
         &mut self,
         max_from: I,
         source: &EagerVecsBuilder<I2, T>,
-        first_indexes: &impl AnyIterableVec<I, I2>,
-        count_indexes: &impl AnyIterableVec<I, StoredU64>,
+        first_indexes: &impl IterableVec<I, I2>,
+        count_indexes: &impl IterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where

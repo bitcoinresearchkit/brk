@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{AnyCloneableIterableVec, AnyIterableVec, Database, EagerVec, Exit};
+use vecdb::{AnyCollectableVec, Database, EagerVec, Exit, IterableCloneableVec, IterableVec};
 
 use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
@@ -128,7 +128,7 @@ where
         &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
-        dateindex: Option<&impl AnyIterableVec<DateIndex, T>>,
+        dateindex: Option<&impl IterableVec<DateIndex, T>>,
     ) -> Result<()> {
         if let Some(dateindex) = dateindex {
             self.dateindex_extra
@@ -178,8 +178,8 @@ where
         .unwrap()
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn vecdb::AnyCollectableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyCollectableVec>> =
+    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
             Box::new(self.dateindex_extra.iter_any_collectable());
         regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_collectable()));
         regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_collectable()));

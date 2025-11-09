@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-#[derive(Debug, Deref, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deref, Deserialize, JsonSchema)]
 pub struct Metric {
     /// Metric name
     #[schemars(example = &"price_close", example = &"market_cap", example = &"realized_price")]

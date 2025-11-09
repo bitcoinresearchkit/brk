@@ -8,7 +8,7 @@ use bitcoin::consensus::Decodable;
 use brk_error::{Error, Result};
 use brk_reader::XORIndex;
 use brk_types::{Transaction, Txid, TxidPath, TxidPrefix};
-use vecdb::VecIteratorExtended;
+use vecdb::TypedVecIterator;
 
 use crate::Query;
 

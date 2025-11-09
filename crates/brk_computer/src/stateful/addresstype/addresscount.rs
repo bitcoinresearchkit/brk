@@ -1,7 +1,7 @@
 use brk_grouper::ByAddressType;
 use brk_types::Height;
 use derive_deref::{Deref, DerefMut};
-use vecdb::VecIteratorExtended;
+use vecdb::TypedVecIterator;
 
 use super::AddressTypeToHeightToAddressCount;
 

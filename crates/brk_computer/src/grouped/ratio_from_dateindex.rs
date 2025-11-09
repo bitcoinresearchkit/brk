@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, StoredIndex, VecIteratorExtended,
+    AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
+    StoredIndex, TypedVecIterator,
 };
 
 use crate::{
@@ -306,7 +306,7 @@ impl ComputedRatioVecsFromDateIndex {
         price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let closes = price.timeindexes_to_price_close.dateindex.as_ref().unwrap();
 

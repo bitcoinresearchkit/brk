@@ -21,8 +21,12 @@ use crate::{
 pub struct AsyncQuery(Query);
 
 impl AsyncQuery {
-    pub async fn build(reader: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
+    pub fn build(reader: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
         Self(Query::build(reader, indexer, computer))
+    }
+
+    pub fn inner(&self) -> &Query {
+        &self.0
     }
 
     pub async fn get_height(&self) -> Height {
@@ -104,7 +108,7 @@ impl AsyncQuery {
         self.0.get_index_to_vecids(paginated_index)
     }
 
-    pub async fn metric_to_indexes(&self, metric: String) -> Option<&Vec<Index>> {
+    pub async fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.0.metric_to_indexes(metric)
     }
 

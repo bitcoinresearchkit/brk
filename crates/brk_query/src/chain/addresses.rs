@@ -6,7 +6,7 @@ use brk_types::{
     Address, AddressBytes, AddressChainStats, AddressHash, AddressMempoolStats, AddressStats,
     AnyAddressDataIndexEnum, OutputType,
 };
-use vecdb::{AnyIterableVec, VecIteratorExtended};
+use vecdb::{IterableVec, TypedVecIterator};
 
 use crate::Query;
 

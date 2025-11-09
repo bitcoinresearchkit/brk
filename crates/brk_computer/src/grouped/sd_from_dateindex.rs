@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
-    AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec,
-    Exit, GenericStoredVec, StoredIndex,
+    AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit,
+    GenericStoredVec, IterableVec, StoredIndex,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes};
@@ -422,7 +422,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
@@ -449,9 +449,9 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
-        sma_opt: Option<&impl AnyIterableVec<DateIndex, StoredF32>>,
+        sma_opt: Option<&impl IterableVec<DateIndex, StoredF32>>,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let sma = sma_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.sma.as_ref().unwrap().dateindex)

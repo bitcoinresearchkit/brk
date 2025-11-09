@@ -120,15 +120,65 @@ impl Query {
         //     .collect::<Result<Vec<_>>>()
     }
 
+    fn columns_to_csv(
+        columns: &[&&dyn AnyCollectableVec],
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<String> {
+        if columns.is_empty() {
+            return Ok(String::new());
+        }
+
+        let num_rows = columns[0].range_count(from, to);
+        let num_cols = columns.len();
+
+        let estimated_size = num_cols * 10 + num_rows * num_cols * 15;
+        let mut csv = String::with_capacity(estimated_size);
+
+        // Write headers from column names
+        for (idx, col) in columns.iter().enumerate() {
+            if idx > 0 {
+                csv.push(',');
+            }
+            csv.push_str(col.name());
+        }
+        csv.push('\n');
+
+        let mut iters: Vec<_> = columns
+            .iter()
+            .map(|col| col.iter_range_strings(from, to))
+            .collect();
+
+        for _ in 0..num_rows {
+            for (index, iter) in iters.iter_mut().enumerate() {
+                if index > 0 {
+                    csv.push(',');
+                }
+                if let Some(field) = iter.next() {
+                    if field.contains(',') {
+                        csv.push('"');
+                        csv.push_str(&field);
+                        csv.push('"');
+                    } else {
+                        csv.push_str(&field);
+                    }
+                }
+            }
+            csv.push('\n');
+        }
+
+        Ok(csv)
+    }
+
     pub fn format(
         &self,
-        metrics: Vec<(String, &&dyn AnyCollectableVec)>,
+        metrics: Vec<&&dyn AnyCollectableVec>,
         params: &ParamsOpt,
     ) -> Result<Output> {
         let from = params.from().map(|from| {
             metrics
                 .iter()
-                .map(|(_, v)| v.i64_to_usize(from))
+                .map(|v| v.i64_to_usize(from))
                 .min()
                 .unwrap_or_default()
         });
@@ -136,7 +186,7 @@ impl Query {
         let to = params.to().map(|to| {
             metrics
                 .iter()
-                .map(|(_, v)| v.i64_to_usize(to))
+                .map(|v| v.i64_to_usize(to))
                 .min()
                 .unwrap_or_default()
         });
@@ -144,56 +194,15 @@ impl Query {
         let format = params.format();
 
         Ok(match format {
-            Format::CSV => {
-                let headers = metrics
-                    .iter()
-                    .map(|(id, _)| id.as_str())
-                    .collect::<Vec<_>>();
-                let mut values = metrics
-                    .iter()
-                    .map(|(_, vec)| vec.collect_range_string(from, to))
-                    .collect::<Vec<_>>();
-
-                if values.is_empty() {
-                    return Ok(Output::CSV(headers.join(",")));
-                }
-
-                let first_len = values[0].len();
-                let estimated_size = (headers.len() + values.len() * first_len) * 15;
-                let mut csv = String::with_capacity(estimated_size);
-
-                csv.push_str(&headers.join(","));
-                csv.push('\n');
-
-                for col_index in 0..first_len {
-                    let mut first = true;
-                    for vec in &mut values {
-                        if col_index < vec.len() {
-                            if !first {
-                                csv.push(',');
-                            }
-                            first = false;
-
-                            let field = std::mem::take(&mut vec[col_index]);
-
-                            if field.contains(',') {
-                                csv.push('"');
-                                csv.push_str(&field);
-                                csv.push('"');
-                            } else {
-                                csv.push_str(&field);
-                            }
-                        }
-                    }
-                    csv.push('\n');
-                }
-
-                Output::CSV(csv)
-            }
+            Format::CSV => Output::CSV(Self::columns_to_csv(
+                &metrics,
+                from.map(|v| v as i64),
+                to.map(|v| v as i64),
+            )?),
             Format::JSON => {
                 let mut values = metrics
                     .iter()
-                    .map(|(_, vec)| vec.collect_range_json_bytes(from, to))
+                    .map(|vec| vec.collect_range_json_bytes(from, to))
                     .collect::<Vec<_>>();
 
                 if values.is_empty() {
@@ -253,7 +262,7 @@ impl Query {
         self.vecs().index_to_ids(paginated_index)
     }
 
-    pub fn metric_to_indexes(&self, metric: String) -> Option<&Vec<Index>> {
+    pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.vecs().metric_to_indexes(metric)
     }
 

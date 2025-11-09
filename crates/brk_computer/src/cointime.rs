@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, CheckedSub, Dollars, StoredF32, StoredF64, Version};
-use vecdb::{Database, Exit, PAGE_SIZE, VecIteratorExtended};
+use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
 
 use crate::grouped::ComputedVecsFromDateIndex;
 

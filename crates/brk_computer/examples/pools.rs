@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_types::{Address, AddressBytes, OutputType, TxOutIndex, pools};
-use vecdb::{AnyIterableVec, Exit, VecIteratorExtended};
+use vecdb::{Exit, IterableVec, TypedVecIterator};
 
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
