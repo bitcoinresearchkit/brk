@@ -6,7 +6,7 @@ use brk_types::{
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyCollectableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
+    AnyVec, AnyWritableVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
     IterableCloneableVec, StoredIndex, TypedVecIterator,
 };
 
@@ -521,19 +521,19 @@ where
         .unwrap()
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.height.iter_any_collectable());
-        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_collectable()));
-        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_collectable()));
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
+            Box::new(self.height.iter_any_writable());
+        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_writable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_writable()));
         if let Some(ref x) = self.txindex {
-            regular_iter = Box::new(regular_iter.chain(x.iter_any_collectable()));
+            regular_iter = Box::new(regular_iter.chain(x.iter_any_writable()));
         }
         regular_iter
     }

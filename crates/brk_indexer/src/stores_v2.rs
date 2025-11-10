@@ -20,12 +20,8 @@ use super::Vecs;
 pub struct Stores {
     pub keyspace: TransactionalKeyspace,
 
-    // pub addresshash_to_typeindex: Store<AddressHash, TypeIndex>,
     pub addresstype_to_addresshash_to_addressindex: ByAddressType<Store<AddressHash, TypeIndex>>,
-    // pub addresstype_to_addressindex_and_txindex: Store<AddressTypeAddressIndexTxIndex, Unit>,
     pub addresstype_to_addressindex_and_txindex: ByAddressType<Store<AddressIndexTxIndex, Unit>>,
-    // pub addresstype_to_addressindex_and_unspentoutpoint:
-    //     Store<AddressTypeAddressIndexOutPoint, Unit>,
     pub addresstype_to_addressindex_and_unspentoutpoint:
         ByAddressType<Store<AddressIndexOutPoint, Unit>>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
@@ -94,14 +90,6 @@ impl Stores {
                 Mode::UniquePushOnly(Type::Sequential),
                 Compression::Lz4,
             )?,
-            // addresshash_to_typeindex: Store::import(
-            //     keyspace_ref,
-            //     path,
-            //     "a2t",
-            //     version,
-            //     Mode::UniquePushOnly(Type::Random),
-            //     Compression::Lz4,
-            // )?,
             addresstype_to_addresshash_to_addressindex: ByAddressType::new_with_index(
                 create_addresshash_to_addressindex_store,
             )?,
@@ -121,25 +109,9 @@ impl Stores {
                 Mode::UniquePushOnly(Type::Random),
                 Compression::Lz4,
             )?,
-            // addresstype_to_addressindex_and_txindex: Store::import(
-            //     keyspace_ref,
-            //     path,
-            //     "aat",
-            //     version,
-            //     Mode::VecLike,
-            //     Compression::Lz4,
-            // )?,
             addresstype_to_addressindex_and_txindex: ByAddressType::new_with_index(
                 create_addressindex_to_txindex_store,
             )?,
-            // addresstype_to_addressindex_and_unspentoutpoint: Store::import(
-            //     keyspace_ref,
-            //     path,
-            //     "aau",
-            //     version,
-            //     Mode::VecLike,
-            //     Compression::Lz4,
-            // )?,
             addresstype_to_addressindex_and_unspentoutpoint: ByAddressType::new_with_index(
                 create_addressindex_to_unspentoutpoint_store,
             )?,
@@ -158,13 +130,10 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        [
+        let tuples = [
             &mut self.blockhashprefix_to_height as &mut dyn AnyStore,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
-            // &mut self.addresshash_to_typeindex
-            // &mut self.addresstype_to_addressindex_and_txindex,
-            // &mut self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_par_iter()
         .chain(
@@ -182,7 +151,15 @@ impl Stores {
                 .par_iter_mut()
                 .map(|s| s as &mut dyn AnyStore),
         ) // Changed from par_iter_mut()
-        .try_for_each(|store| store.commit(height))?;
+        .map(|store| {
+            let items = store.take_all_f2();
+            store.export_meta_if_needed(height)?;
+            Ok((store.partition(), items))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+        let batch = self.keyspace.inner().batch();
+        batch.commit_partitions(tuples)?;
 
         self.keyspace
             .persist(PersistMode::SyncAll)
@@ -194,9 +171,6 @@ impl Stores {
             &self.blockhashprefix_to_height as &dyn AnyStore,
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
-            // &self.addresshash_to_typeindex,
-            // &self.addresstype_to_addressindex_and_txindex,
-            // &self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_iter()
         .chain(
@@ -224,11 +198,6 @@ impl Stores {
         if self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
-            // && self.addresshash_to_typeindex.is_empty()?
-            // && self.addresstype_to_addressindex_and_txindex.is_empty()?
-            // && self
-            //     .addresstype_to_addressindex_and_unspentoutpoint
-            //     .is_empty()?
             && self
                 .addresstype_to_addresshash_to_addressindex
                 .iter()

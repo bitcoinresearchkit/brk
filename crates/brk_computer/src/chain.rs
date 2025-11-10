@@ -1097,7 +1097,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_collectable()
+            this.iter_any_writable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

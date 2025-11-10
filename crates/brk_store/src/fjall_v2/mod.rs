@@ -169,18 +169,42 @@ where
 
 impl<K, V> AnyStore for StoreFjallV2<K, V>
 where
-    K: Debug + Clone + From<ByteView> + Ord + Eq + Hash,
-    V: Debug + Clone + From<ByteView>,
+    K: Debug + Clone + From<ByteView> + Ord + Eq + Hash + 'static,
+    V: Debug + Clone + From<ByteView> + 'static,
     ByteView: From<K> + From<V>,
     Self: Send + Sync,
 {
-    fn commit(&mut self, height: Height) -> Result<()> {
+    fn partition(&self) -> &fjall2::PartitionHandle {
+        self.partition.inner()
+    }
+
+    fn take_all_f2(&mut self) -> Vec<InnerItem> {
+        let mut items = mem::take(&mut self.puts)
+            .into_iter()
+            .map(|(key, value)| Item::Value { key, value })
+            .chain(
+                mem::take(&mut self.dels)
+                    .into_iter()
+                    .map(|key| Item::Tomb(key)),
+            )
+            .collect::<Vec<_>>();
+        items.sort_unstable();
+        items.into_iter().map(InnerItem::from).collect()
+    }
+
+    // fn take_all_f3(&mut self) -> Box<dyn Iterator<Item = Item>> {
+    //     Box::new([].into_iter())
+    // }
+
+    fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
         if self.has(height) {
             return Ok(());
         }
-
         self.meta.export(height)?;
+        Ok(())
+    }
 
+    fn commit(&mut self) -> Result<()> {
         if self.puts.is_empty() && self.dels.is_empty() {
             return Ok(());
         }
@@ -208,10 +232,10 @@ where
             .collect::<Vec<_>>();
         items.sort_unstable();
 
-        self.keyspace.inner().batch().commit_partition(
-            self.partition.inner(),
-            items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
-        )?;
+        // self.keyspace.inner().batch().commit_partition(
+        //     self.partition.inner(),
+        //     items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
+        // )?;
         // }
 
         Ok(())

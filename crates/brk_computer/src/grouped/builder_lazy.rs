@@ -209,7 +209,7 @@ where
 
     pub fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
-            self.iter_any_collectable().map(|v| v.len()).min().unwrap(),
+            self.iter_any_writable().map(|v| v.len()).min().unwrap(),
         ))
     }
 

@@ -17,7 +17,7 @@ pub use bitcoincore_rpc::Auth;
 mod inner;
 
 use inner::ClientInner;
-use log::info;
+use log::{debug, info};
 
 ///
 /// Bitcoin Core RPC Client
@@ -67,6 +67,7 @@ impl Client {
 
     /// Returns the numbers of block in the longest chain.
     pub fn get_last_height(&self) -> Result<Height> {
+        debug!("Get last height...");
         self.call(|c| c.get_block_count())
             .map(Height::from)
             .map_err(Into::into)
@@ -215,6 +216,8 @@ impl Client {
     }
 
     pub fn get_closest_valid_height(&self, hash: BlockHash) -> Result<(Height, BlockHash)> {
+        debug!("Get closest valid height...");
+
         match self.get_block_header_info(&hash) {
             Ok(block_info) => {
                 if self.is_in_main_chain(&hash)? {

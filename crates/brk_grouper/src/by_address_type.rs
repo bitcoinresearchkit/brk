@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::OutputType;
 use rayon::prelude::*;
-use vecdb::AnyCollectableVec;
+use vecdb::AnyWritableVec;
 
 use super::{Filter, Filtered};
 
@@ -308,16 +308,16 @@ impl<T: Traversable> Traversable for ByAddressType<T> {
         )
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(self.p2pk65.iter_any_collectable());
-        iter = Box::new(iter.chain(self.p2pk33.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2pkh.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2sh.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2wpkh.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2wsh.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2tr.iter_any_collectable()));
-        iter = Box::new(iter.chain(self.p2a.iter_any_collectable()));
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
+            Box::new(self.p2pk65.iter_any_writable());
+        iter = Box::new(iter.chain(self.p2pk33.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2pkh.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2sh.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2wpkh.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2wsh.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2tr.iter_any_writable()));
+        iter = Box::new(iter.chain(self.p2a.iter_any_writable()));
         iter
     }
 }

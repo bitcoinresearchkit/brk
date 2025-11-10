@@ -12,7 +12,7 @@ use brk_types::{
     OutPoint, OutputType, Sats, StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid,
     TxidPrefix, TypeIndex, Unit, Version, Vin, Vout,
 };
-use log::{error, info};
+use log::{debug, error, info};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, TypedVecIterator};
@@ -80,7 +80,11 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
+        debug!("Starting indexing...");
+
         let last_blockhash = self.vecs.height_to_blockhash.iter()?.last();
+        debug!("Last block hash found.");
+
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
             let starting_indexes =
@@ -93,15 +97,19 @@ impl Indexer {
         } else {
             (Indexes::default(), None)
         };
+        info!("Starting indexes set.");
 
         let lock = exit.lock();
         self.stores
             .rollback_if_needed(&mut self.vecs, &starting_indexes)?;
+        debug!("Rollback stores done.");
         self.vecs.rollback_if_needed(&starting_indexes)?;
+        debug!("Rollback vecs done.");
         drop(lock);
 
         // Cloned because we want to return starting indexes for the computer
         let mut indexes = starting_indexes.clone();
+        debug!("Indexes cloned.");
 
         let should_export = |height: Height, rem: bool| -> bool {
             height != 0 && (height % SNAPSHOT_BLOCK_RANGE == 0) != rem

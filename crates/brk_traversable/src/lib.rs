@@ -5,13 +5,13 @@ pub use brk_types::TreeNode;
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
 use vecdb::{
-    AnyCollectableVec, AnyVec, CompressedVec, ComputedVec, EagerVec, LazyVecFrom1, LazyVecFrom2,
+    AnyVec, AnyWritableVec, CompressedVec, ComputedVec, EagerVec, LazyVecFrom1, LazyVecFrom2,
     LazyVecFrom3, RawVec, StoredCompressed, StoredIndex, StoredRaw, StoredVec,
 };
 
 pub trait Traversable {
     fn to_tree_node(&self) -> TreeNode;
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec>;
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec>;
 }
 
 impl<I, T> Traversable for RawVec<I, T>
@@ -19,8 +19,8 @@ where
     I: StoredIndex,
     T: StoredRaw,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -33,8 +33,8 @@ where
     I: StoredIndex,
     T: StoredCompressed,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -47,8 +47,8 @@ where
     I: StoredIndex,
     T: StoredCompressed,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -61,8 +61,8 @@ where
     I: StoredIndex,
     T: StoredCompressed,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -77,8 +77,8 @@ where
     S1I: StoredIndex,
     S1T: StoredRaw,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -95,8 +95,8 @@ where
     S2I: StoredIndex,
     S2T: StoredRaw,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -116,8 +116,8 @@ where
     S3I: StoredIndex,
     S3T: StoredRaw,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -137,8 +137,8 @@ where
     S3I: StoredIndex,
     S3T: StoredCompressed,
 {
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        std::iter::once(self as &dyn AnyCollectableVec)
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -151,8 +151,8 @@ impl<T: Traversable + ?Sized> Traversable for Box<T> {
         (**self).to_tree_node()
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        (**self).iter_any_collectable()
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        (**self).iter_any_writable()
     }
 }
 
@@ -164,10 +164,11 @@ impl<T: Traversable> Traversable for Option<T> {
         }
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         match self {
-            Some(inner) => Box::new(inner.iter_any_collectable())
-                as Box<dyn Iterator<Item = &dyn AnyCollectableVec>>,
+            Some(inner) => {
+                Box::new(inner.iter_any_writable()) as Box<dyn Iterator<Item = &dyn AnyWritableVec>>
+            }
             None => Box::new(std::iter::empty()),
         }
     }
@@ -182,11 +183,10 @@ impl<K: Debug, V: Traversable> Traversable for BTreeMap<K, V> {
         TreeNode::Branch(children)
     }
 
-    fn iter_any_collectable(&self) -> impl Iterator<Item = &dyn AnyCollectableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyCollectableVec>> =
-            Box::new(std::iter::empty());
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> = Box::new(std::iter::empty());
         for v in self.values() {
-            iter = Box::new(iter.chain(v.iter_any_collectable()));
+            iter = Box::new(iter.chain(v.iter_any_writable()));
         }
         iter
     }

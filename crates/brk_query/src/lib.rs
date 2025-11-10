@@ -11,7 +11,7 @@ use brk_types::{
     Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount,
     Transaction, TxidPath,
 };
-use vecdb::{AnyCollectableVec, AnyStoredVec};
+use vecdb::{AnyStoredVec, AnyWritableVec};
 
 mod r#async;
 mod chain;
@@ -77,7 +77,7 @@ impl Query {
         metric: &str,
         index: Index,
         // params: &Params,
-    ) -> Result<Vec<(String, &&dyn AnyCollectableVec)>> {
+    ) -> Result<Vec<(String, &&dyn AnyWritableVec)>> {
         todo!();
 
         // let all_metrics = &self.vecs.metrics;
@@ -121,7 +121,7 @@ impl Query {
     }
 
     fn columns_to_csv(
-        columns: &[&&dyn AnyCollectableVec],
+        columns: &[&&dyn AnyWritableVec],
         from: Option<i64>,
         to: Option<i64>,
     ) -> Result<String> {
@@ -144,23 +144,31 @@ impl Query {
         }
         csv.push('\n');
 
-        let mut iters: Vec<_> = columns
+        // Create one writer per column
+        let mut writers: Vec<_> = columns
             .iter()
-            .map(|col| col.iter_range_strings(from, to))
+            .map(|col| col.create_writer(from, to))
             .collect();
 
         for _ in 0..num_rows {
-            for (index, iter) in iters.iter_mut().enumerate() {
+            for (index, writer) in writers.iter_mut().enumerate() {
                 if index > 0 {
                     csv.push(',');
                 }
-                if let Some(field) = iter.next() {
-                    if field.contains(',') {
+
+                // Check if we need CSV escaping
+                let start_pos = csv.len();
+
+                if writer.write_next(&mut csv)? {
+                    let end_pos = csv.len();
+
+                    // If contains comma, rewrite with quotes
+                    if csv[start_pos..end_pos].contains(',') {
+                        let value = csv[start_pos..end_pos].to_string(); // Only allocate if needed
+                        csv.truncate(start_pos);
                         csv.push('"');
-                        csv.push_str(&field);
+                        csv.push_str(&value);
                         csv.push('"');
-                    } else {
-                        csv.push_str(&field);
                     }
                 }
             }
@@ -170,11 +178,7 @@ impl Query {
         Ok(csv)
     }
 
-    pub fn format(
-        &self,
-        metrics: Vec<&&dyn AnyCollectableVec>,
-        params: &ParamsOpt,
-    ) -> Result<Output> {
+    pub fn format(&self, metrics: Vec<&&dyn AnyWritableVec>, params: &ParamsOpt) -> Result<Output> {
         let from = params.from().map(|from| {
             metrics
                 .iter()
