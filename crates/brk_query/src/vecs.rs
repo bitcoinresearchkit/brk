@@ -6,7 +6,7 @@ use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Index, IndexInfo, Limit, Metric};
 use derive_deref::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
-use vecdb::AnyCollectableVec;
+use vecdb::AnyWritableVec;
 
 use crate::pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 
@@ -31,11 +31,11 @@ impl<'a> Vecs<'a> {
 
         indexer
             .vecs
-            .iter_any_collectable()
+            .iter_any_writable()
             .for_each(|vec| this.insert(vec));
 
         computer
-            .iter_any_collectable()
+            .iter_any_writable()
             .for_each(|vec| this.insert(vec));
 
         let mut ids = this
@@ -108,7 +108,7 @@ impl<'a> Vecs<'a> {
     }
 
     // Not the most performant or type safe but only built once so that's okay
-    fn insert(&mut self, vec: &'a dyn AnyCollectableVec) {
+    fn insert(&mut self, vec: &'a dyn AnyWritableVec) {
         let name = vec.name();
         let serialized_index = vec.index_type_to_string();
         let index = Index::try_from(serialized_index)
@@ -181,7 +181,7 @@ impl<'a> Vecs<'a> {
 }
 
 #[derive(Default, Deref, DerefMut)]
-pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyCollectableVec>);
+pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyWritableVec>);
 
 #[derive(Default, Deref, DerefMut)]
-pub struct MetricToVec<'a>(BTreeMap<&'a str, &'a dyn AnyCollectableVec>);
+pub struct MetricToVec<'a>(BTreeMap<&'a str, &'a dyn AnyWritableVec>);

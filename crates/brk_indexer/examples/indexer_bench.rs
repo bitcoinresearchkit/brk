@@ -1,16 +1,11 @@
-use std::{
-    env, fs,
-    path::Path,
-    thread::sleep,
-    time::{Duration, Instant},
-};
+use std::{env, fs, path::Path, time::Instant};
 
+use brk_bencher::Bencher;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use log::debug;
 use vecdb::Exit;
 
 fn main() -> Result<()> {
@@ -29,24 +24,25 @@ fn main() -> Result<()> {
     )?;
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    debug!("Reader created.");
 
     let blocks = Blocks::new(&client, &reader);
-    debug!("Blocks created.");
 
     fs::create_dir_all(&outputs_dir)?;
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
-    debug!("Indexer imported.");
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    loop {
-        let i = Instant::now();
-        indexer.checked_index(&blocks, &client, &exit)?;
-        dbg!(i.elapsed());
+    let mut bencher = Bencher::from_cargo_env()?;
+    bencher.start()?;
 
-        sleep(Duration::from_secs(60));
-    }
+    let i = Instant::now();
+    indexer.checked_index(&blocks, &client, &exit)?;
+    dbg!(i.elapsed());
+
+    // Stop and finalize
+    bencher.stop()?;
+
+    Ok(())
 }

@@ -1,0 +1,13 @@
+[package]
+name = "brk_bencher_visualizer"
+description = "A generator of charts for brk_bencher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[dependencies]
+plotters = "0.3.7"

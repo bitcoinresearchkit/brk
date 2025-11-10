@@ -5,6 +5,7 @@ use brk_types::{
     P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
     UnknownOutputIndex,
 };
+use log::debug;
 use vecdb::{GenericStoredVec, IterableStoredVec, IterableVec, StoredIndex, StoredRaw};
 
 use crate::{Stores, Vecs};
@@ -88,6 +89,8 @@ impl Indexes {
 impl From<(Height, &mut Vecs, &Stores)> for Indexes {
     #[inline]
     fn from((min_height, vecs, stores): (Height, &mut Vecs, &Stores)) -> Self {
+        debug!("Creating indexes from vecs and stores...");
+
         // Height at which we want to start: min last saved + 1 or 0
         let vecs_starting_height = vecs.starting_height();
         let stores_starting_height = stores.starting_height();

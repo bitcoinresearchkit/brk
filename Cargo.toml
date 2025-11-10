@@ -37,6 +37,7 @@ aide = { version = "0.16.0-alpha.1", features = ["axum-json", "axum-query"] }
 axum = "0.8.6"
 bitcoin = { version = "0.32.7", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
+brk_bencher = { version = "0.0.111", path = "crates/brk_bencher" }
 brk_binder = { version = "0.0.111", path = "crates/brk_binder" }
 brk_bundler = { version = "0.0.111", path = "crates/brk_bundler" }
 brk_cli = { version = "0.0.111", path = "crates/brk_cli" }
@@ -60,12 +61,12 @@ brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_d
 byteview = "=0.6.1"
 # byteview = "~0.8.0"
 derive_deref = "1.1.1"
-fjall2 = { version = "2.11.5", package = "brk_fjall" }
-# fjall2 = { path = "../fjall2", package = "brk_fjall" }
+# fjall2 = { version = "2.11.5", package = "brk_fjall" }
+fjall2 = { path = "../fjall2", package = "brk_fjall" }
 # fjall2 = { version = "2.11.2", package = "fjall" }
-fjall3 = { version = "=3.0.0-pre.4", package = "fjall" }
-# fjall3 = { path = "../fjall3", package = "brk_fjall" }
-# fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "bb15057500dce3115d7644d268b9deeaa895b431", package = "fjall" }
+# fjall3 = { version = "=3.0.0-pre.5", package = "fjall" }
+fjall3 = { path = "../fjall3", package = "fjall" }
+# fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "f0bf96c2017b3543eb176012b8eff69c639dff1d", package = "fjall" }
 jiff = "0.2.16"
 log = "0.4.28"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }

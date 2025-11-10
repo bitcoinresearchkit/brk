@@ -1,0 +1,13 @@
+[package]
+name = "brk_bencher"
+description = "A simple benchmarker for testing other crates."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[dependencies]
+brk_error = { workspace = true }
