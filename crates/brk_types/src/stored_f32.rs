@@ -8,7 +8,7 @@ use std::{
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Close, StoredU32};
@@ -26,7 +26,7 @@ use super::{Dollars, StoredF64};
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct StoredF32(f32);
 
@@ -234,5 +234,12 @@ impl std::fmt::Display for StoredF32 {
         let mut buf = ryu::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for StoredF32 {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

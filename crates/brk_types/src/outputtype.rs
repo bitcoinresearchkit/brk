@@ -3,6 +3,7 @@ use brk_error::Error;
 use schemars::JsonSchema;
 use serde::Serialize;
 use strum::Display;
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -912,5 +913,12 @@ impl From<&[u8]> for OutputType {
     #[inline]
     fn from(value: &[u8]) -> Self {
         Self::read_from_bytes(value).unwrap()
+    }
+}
+
+impl Formattable for OutputType {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

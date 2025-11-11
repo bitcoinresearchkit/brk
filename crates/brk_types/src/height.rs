@@ -7,7 +7,7 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, PrintableIndex, Stamp, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex, Stamp};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, copy_first_4bytes};
@@ -31,7 +31,7 @@ use super::StoredU64;
     Immutable,
     IntoBytes,
     KnownLayout,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
     Hash,
 )]
@@ -276,5 +276,12 @@ impl std::fmt::Display for Height {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Height {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

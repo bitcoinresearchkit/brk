@@ -1,11 +1,11 @@
 use std::ops::Add;
 
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
-    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, StoredCompressed,
+    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, Compressable,
 )]
 pub struct BlkPosition(u64);
 
@@ -35,5 +35,12 @@ impl std::fmt::Display for BlkPosition {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for BlkPosition {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

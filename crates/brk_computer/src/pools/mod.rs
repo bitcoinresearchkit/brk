@@ -8,7 +8,7 @@ use brk_types::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutI
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec, PAGE_SIZE, RawVec,
-    StoredIndex, TypedVecIterator, Version,
+    TypedVecIterator, VecIndex, Version,
 };
 
 mod vecs;

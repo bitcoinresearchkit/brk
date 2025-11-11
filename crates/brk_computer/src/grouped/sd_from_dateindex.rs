@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, IterableVec, StoredIndex,
+    GenericStoredVec, IterableVec, VecIndex,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes};

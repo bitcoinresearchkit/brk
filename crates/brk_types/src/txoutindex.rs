@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_8bytes;
@@ -25,7 +25,7 @@ use super::Vout;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct TxOutIndex(u64);
 
@@ -138,5 +138,12 @@ impl std::fmt::Display for TxOutIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for TxOutIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

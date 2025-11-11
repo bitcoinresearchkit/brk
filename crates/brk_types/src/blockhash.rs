@@ -5,6 +5,7 @@ use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 /// Block hash
@@ -68,5 +69,12 @@ impl Serialize for BlockHash {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl Formattable for BlockHash {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

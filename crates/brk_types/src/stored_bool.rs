@@ -1,6 +1,6 @@
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{PrintableIndex, StoredCompressed};
+use vecdb::{Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -18,7 +18,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct StoredBool(u16);
 
@@ -66,5 +66,12 @@ impl std::fmt::Display for StoredBool {
         } else {
             f.write_str("false")
         }
+    }
+}
+
+impl Formattable for StoredBool {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

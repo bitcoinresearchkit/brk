@@ -8,7 +8,7 @@ use std::{
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Low, Open};
@@ -27,7 +27,7 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
     KnownLayout,
     Serialize,
     Deserialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct Dollars(f64);
@@ -406,5 +406,12 @@ impl std::fmt::Display for Dollars {
         let mut buf = ryu::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Dollars {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

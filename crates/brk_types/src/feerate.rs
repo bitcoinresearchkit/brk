@@ -4,13 +4,13 @@ use std::{
 };
 
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredU64};
 
 #[derive(
-    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, StoredCompressed,
+    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, Compressable,
 )]
 pub struct FeeRate(f64);
 
@@ -100,5 +100,12 @@ impl std::fmt::Display for FeeRate {
         let mut buf = ryu::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for FeeRate {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

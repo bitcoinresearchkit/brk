@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{TxIndex, Vout};
@@ -21,7 +21,7 @@ use crate::{TxIndex, Vout};
     Serialize,
     JsonSchema,
     Hash,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct OutPoint(u64);
 
@@ -50,5 +50,12 @@ impl OutPoint {
 impl std::fmt::Display for OutPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "txindex: {}, vout: {}", self.txindex(), self.vout())
+    }
+}
+
+impl Formattable for OutPoint {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

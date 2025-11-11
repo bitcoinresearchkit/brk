@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div, Mul};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
@@ -26,7 +26,7 @@ use super::{
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct StoredU32(u32);
 
@@ -236,5 +236,12 @@ impl std::fmt::Display for StoredU32 {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for StoredU32 {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

@@ -710,6 +710,7 @@ dependencies = [
  "jiff",
  "log",
  "owo-colors",
+ "parking_lot",
 ]
 
 [[package]]

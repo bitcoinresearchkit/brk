@@ -11,7 +11,7 @@ use brk_types::{
 };
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
-use vecdb::{Database, Exit, Format, IterableVec, StoredIndex};
+use vecdb::{Database, Exit, Format, IterableVec, VecIndex};
 
 use crate::{
     Indexes, indexes, price,

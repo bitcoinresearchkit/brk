@@ -1,11 +1,12 @@
 use std::{
+    fmt::Display,
     iter::Sum,
     ops::{Add, AddAssign, Div},
 };
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -59,13 +60,20 @@ impl Serialize for OHLCCents {
     }
 }
 
-impl std::fmt::Display for OHLCCents {
+impl Display for OHLCCents {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}, {}, {}, {}",
             self.open, self.high, self.low, self.close
         )
+    }
+}
+
+impl Formattable for OHLCCents {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }
 
@@ -135,13 +143,20 @@ impl From<&OHLCCents> for OHLCDollars {
     }
 }
 
-impl std::fmt::Display for OHLCDollars {
+impl Display for OHLCDollars {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}, {}, {}, {}",
             self.open, self.high, self.low, self.close
         )
+    }
+}
+
+impl Formattable for OHLCDollars {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }
 
@@ -192,13 +207,20 @@ impl From<Close<Sats>> for OHLCSats {
     }
 }
 
-impl std::fmt::Display for OHLCSats {
+impl Display for OHLCSats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}, {}, {}, {}",
             self.open, self.high, self.low, self.close
         )
+    }
+}
+
+impl Formattable for OHLCSats {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }
 
@@ -218,7 +240,7 @@ impl std::fmt::Display for OHLCSats {
     Deref,
     DerefMut,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 #[repr(transparent)]
 pub struct Open<T>(T);
@@ -315,12 +337,22 @@ where
     }
 }
 
-impl<T> std::fmt::Display for Open<T>
+impl<T> Display for Open<T>
 where
-    T: std::fmt::Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl<T> Formattable for Open<T>
+where
+    T: Display,
+{
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }
 
@@ -340,7 +372,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 #[repr(transparent)]
 pub struct High<T>(T);
@@ -437,12 +469,22 @@ where
     }
 }
 
-impl<T> std::fmt::Display for High<T>
+impl<T> Display for High<T>
 where
-    T: std::fmt::Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl<T> Formattable for High<T>
+where
+    T: Display,
+{
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }
 
@@ -462,7 +504,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 #[repr(transparent)]
 pub struct Low<T>(T);
@@ -559,12 +601,22 @@ where
     }
 }
 
-impl<T> std::fmt::Display for Low<T>
+impl<T> Display for Low<T>
 where
-    T: std::fmt::Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl<T> Formattable for Low<T>
+where
+    T: Display,
+{
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }
 
@@ -584,7 +636,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 #[repr(transparent)]
 pub struct Close<T>(T);
@@ -704,11 +756,21 @@ impl Sum for Close<Dollars> {
     }
 }
 
-impl<T> std::fmt::Display for Close<T>
+impl<T> Display for Close<T>
 where
-    T: std::fmt::Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl<T> Formattable for Close<T>
+where
+    T: Display,
+{
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

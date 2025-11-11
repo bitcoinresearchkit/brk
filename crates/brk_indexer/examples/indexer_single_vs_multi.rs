@@ -9,7 +9,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::TxInIndex;
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, StoredIndex};
+use vecdb::{AnyVec, GenericStoredVec, VecIndex};
 
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;

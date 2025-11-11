@@ -34,12 +34,15 @@ fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let mut bencher = Bencher::from_cargo_env()?;
+    let mut bencher =
+        Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("indexed/stores"))?;
     bencher.start()?;
 
     let i = Instant::now();
     indexer.checked_index(&blocks, &client, &exit)?;
     dbg!(i.elapsed());
+
+    drop(indexer);
 
     // Stop and finalize
     bencher.stop()?;

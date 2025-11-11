@@ -11,7 +11,7 @@ use brk_types::{
 };
 use vecdb::{
     Database, EagerVec, Exit, IterableCloneableVec, IterableVec, LazyVecFrom1, LazyVecFrom2,
-    LazyVecFrom3, PAGE_SIZE, StoredIndex, TypedVecIterator,
+    LazyVecFrom3, PAGE_SIZE, TypedVecIterator, VecIndex,
 };
 
 use crate::grouped::{

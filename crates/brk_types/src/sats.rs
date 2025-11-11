@@ -7,7 +7,7 @@ use bitcoin::Amount;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -31,7 +31,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
     KnownLayout,
     Serialize,
     Deserialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct Sats(u64);
@@ -282,5 +282,12 @@ impl std::fmt::Display for Sats {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Sats {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

@@ -1,7 +1,7 @@
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::StoredU16;
@@ -21,7 +21,7 @@ use super::StoredU16;
     KnownLayout,
     FromBytes,
     Serialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct TxVersion(u16);
@@ -64,5 +64,12 @@ impl std::fmt::Display for TxVersion {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for TxVersion {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

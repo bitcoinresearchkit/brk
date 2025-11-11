@@ -1,7 +1,7 @@
 use bitcoin::{absolute::LockTime, locktime::absolute::LOCK_TIME_THRESHOLD};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 /// Transaction locktime
@@ -14,7 +14,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     FromBytes,
     Serialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct RawLockTime(u32);
@@ -46,5 +46,12 @@ impl std::fmt::Display for RawLockTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lock_time = LockTime::from(*self);
         f.write_str(&lock_time.to_string())
+    }
+}
+
+impl Formattable for RawLockTime {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

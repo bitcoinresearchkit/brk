@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{Database, Exit, GenericStoredVec, IterableVec, StoredIndex, Version};
+use vecdb::{Database, Exit, GenericStoredVec, IterableVec, VecIndex, Version};
 
 use crate::{
     chain,

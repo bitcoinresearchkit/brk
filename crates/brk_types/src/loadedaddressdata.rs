@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use serde::Serialize;
-use vecdb::CheckedSub;
+use vecdb::{CheckedSub, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
@@ -137,5 +137,12 @@ impl std::fmt::Display for LoadedAddressData {
             self.sent,
             self.realized_cap,
         )
+    }
+}
+
+impl Formattable for LoadedAddressData {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

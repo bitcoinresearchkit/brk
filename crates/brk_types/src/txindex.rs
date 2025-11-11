@@ -4,7 +4,7 @@ use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
@@ -27,7 +27,7 @@ use super::StoredU32;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
     Hash,
 )]
@@ -162,5 +162,12 @@ impl std::fmt::Display for TxIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for TxIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

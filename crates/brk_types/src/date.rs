@@ -1,6 +1,6 @@
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::ONE_DAY_IN_SEC_F64;
@@ -19,7 +19,7 @@ use super::{DateIndex, Timestamp};
     Immutable,
     IntoBytes,
     KnownLayout,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct Date(u32);
 
@@ -121,6 +121,15 @@ impl From<DateIndex> for Date {
     }
 }
 
+impl Serialize for Date {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 impl std::fmt::Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = itoa::Buffer::new();
@@ -144,11 +153,9 @@ impl std::fmt::Display for Date {
     }
 }
 
-impl Serialize for Date {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
+impl Formattable for Date {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }
