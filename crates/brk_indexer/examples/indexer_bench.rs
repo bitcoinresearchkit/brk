@@ -1,4 +1,4 @@
-use std::{env, fs, io::Write, path::Path, time::Instant};
+use std::{env, fs, path::Path, time::Instant};
 
 use brk_bencher::Bencher;
 use brk_error::Result;
@@ -15,7 +15,7 @@ fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
-    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk");
+    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk/benches");
     fs::create_dir_all(&outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 

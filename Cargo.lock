@@ -1273,7 +1273,7 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "brk_error",
- "byteview 0.8.0",
+ "byteview 0.6.1",
  "derive_deref",
  "itoa",
  "jiff",

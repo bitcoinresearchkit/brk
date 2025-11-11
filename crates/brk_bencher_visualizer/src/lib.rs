@@ -2,11 +2,15 @@ use plotters::prelude::*;
 use std::{
     fs,
     path::{Path, PathBuf},
+    slice,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 const FONT: &str = "monospace";
+const FONT_SIZE: i32 = 20;
+const FONT_SIZE_BIG: i32 = 30;
+const SIZE: (u32, u32) = (2000, 1000);
 
 macro_rules! configure_chart_mesh {
     ($chart:expr, $x_desc:expr, $y_desc:expr, $y_formatter:expr) => {
@@ -19,8 +23,8 @@ macro_rules! configure_chart_mesh {
             .y_label_formatter(&$y_formatter)
             .x_labels(12)
             .y_labels(10)
-            .x_label_style((FONT, 16).into_font().color(&TEXT_COLOR.mix(0.7)))
-            .y_label_style((FONT, 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .x_label_style((FONT, FONT_SIZE).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .y_label_style((FONT, FONT_SIZE).into_font().color(&TEXT_COLOR.mix(0.7)))
             .axis_style(TEXT_COLOR.mix(0.3))
             .draw()?
     };
@@ -32,7 +36,7 @@ struct DataPoint {
     value: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct BenchmarkRun {
     run_id: String,
     data: Vec<DataPoint>,
@@ -103,6 +107,7 @@ impl Visualizer {
         let memory_runs = self.read_benchmark_runs(crate_path, "memory.csv")?;
         let progress_runs = self.read_benchmark_runs(crate_path, "progress.csv")?;
 
+        // Generate combined charts (all runs together)
         if !disk_runs.is_empty() {
             self.generate_disk_chart(crate_path, crate_name, &disk_runs)?;
         }
@@ -113,6 +118,22 @@ impl Visualizer {
 
         if !progress_runs.is_empty() {
             self.generate_progress_chart(crate_path, crate_name, &progress_runs)?;
+        }
+
+        // Generate individual charts for each run
+        for run in &disk_runs {
+            let run_path = crate_path.join(&run.run_id);
+            self.generate_disk_chart(&run_path, crate_name, slice::from_ref(run))?;
+        }
+
+        for run in &memory_runs {
+            let run_path = crate_path.join(&run.run_id);
+            self.generate_memory_chart(&run_path, crate_name, slice::from_ref(run))?;
+        }
+
+        for run in &progress_runs {
+            let run_path = crate_path.join(&run.run_id);
+            self.generate_progress_chart(&run_path, crate_name, slice::from_ref(run))?;
         }
 
         Ok(())
@@ -291,7 +312,7 @@ impl Visualizer {
         chart
             .configure_series_labels()
             .position(SeriesLabelPosition::UpperLeft)
-            .label_font((FONT, 16).into_font().color(&TEXT_COLOR.mix(0.9)))
+            .label_font((FONT, FONT_SIZE).into_font().color(&TEXT_COLOR.mix(0.9)))
             .background_style(BG_COLOR.mix(0.98))
             .border_style(BG_COLOR)
             .margin(10)
@@ -308,7 +329,7 @@ impl Visualizer {
         runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("disk_chart.svg");
-        let root = SVGBackend::new(&output_path, (1200, 700)).into_drawing_area();
+        let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
         // Calculate time window based on shortest run + buffer
@@ -328,7 +349,7 @@ impl Visualizer {
         let mut chart = ChartBuilder::on(&root)
             .caption(
                 format!("{} — Disk Usage", crate_name),
-                (FONT, 24).into_font().color(&TEXT_COLOR),
+                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
             )
             .margin(20)
             .x_label_area_size(50)
@@ -372,7 +393,7 @@ impl Visualizer {
         runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("memory_chart.svg");
-        let root = SVGBackend::new(&output_path, (1200, 700)).into_drawing_area();
+        let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
         // Calculate time window based on shortest run + buffer
@@ -412,7 +433,7 @@ impl Visualizer {
         let mut chart = ChartBuilder::on(&root)
             .caption(
                 format!("{} — Memory", crate_name),
-                (FONT, 24).into_font().color(&TEXT_COLOR),
+                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
             )
             .margin(20)
             .x_label_area_size(50)
@@ -492,7 +513,15 @@ impl Visualizer {
         let mut enhanced_runs = Vec::new();
 
         for run in runs {
-            let csv_path = crate_path.join(&run.run_id).join("memory.csv");
+            // For individual charts, crate_path is already the run folder
+            // For combined charts, we need to append run_id
+            let direct_path = crate_path.join("memory.csv");
+            let nested_path = crate_path.join(&run.run_id).join("memory.csv");
+            let csv_path = if direct_path.exists() {
+                direct_path
+            } else {
+                nested_path
+            };
             if let Ok(content) = fs::read_to_string(&csv_path) {
                 let mut footprint_data = Vec::new();
                 let mut peak_data = Vec::new();
@@ -535,7 +564,7 @@ impl Visualizer {
         runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("progress_chart.svg");
-        let root = SVGBackend::new(&output_path, (1200, 700)).into_drawing_area();
+        let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
         // Calculate time window based on shortest run + buffer
@@ -553,7 +582,7 @@ impl Visualizer {
         let mut chart = ChartBuilder::on(&root)
             .caption(
                 format!("{} — Progress", crate_name),
-                (FONT, 24).into_font().color(&TEXT_COLOR),
+                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
             )
             .margin(20)
             .x_label_area_size(50)
@@ -570,8 +599,8 @@ impl Visualizer {
             .y_label_formatter(&|y| Self::format_axis_number(*y))
             .x_labels(12)
             .y_labels(10)
-            .x_label_style((FONT, 16).into_font().color(&TEXT_COLOR.mix(0.7)))
-            .y_label_style((FONT, 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .x_label_style((FONT, FONT_SIZE).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .y_label_style((FONT, FONT_SIZE).into_font().color(&TEXT_COLOR.mix(0.7)))
             .axis_style(TEXT_COLOR.mix(0.3))
             .draw()?;
 

@@ -17,13 +17,13 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, TypedVecIterator};
 mod indexes;
-// mod stores_v2;
-mod stores_v3;
+mod stores_v2;
+// mod stores_v3;
 mod vecs;
 
 pub use indexes::*;
-// pub use stores_v2::*;
-pub use stores_v3::*;
+pub use stores_v2::*;
+// pub use stores_v3::*;
 pub use vecs::*;
 
 // One version for all data sources
@@ -46,13 +46,15 @@ impl Indexer {
 
         let (vecs, stores) = thread::scope(|s| -> Result<_> {
             let vecs = s.spawn(|| -> Result<_> {
+                let i = Instant::now();
                 let vecs = Vecs::forced_import(&path, VERSION)?;
-                info!("Imported vecs");
+                info!("Imported vecs in {:?}", i.elapsed());
                 Ok(vecs)
             });
 
+            let i = Instant::now();
             let stores = Stores::forced_import(&path, VERSION)?;
-            info!("Imported stores");
+            info!("Imported stores in {:?}", i.elapsed());
 
             Ok((vecs.join().unwrap()?, stores))
         })?;
@@ -97,7 +99,7 @@ impl Indexer {
         } else {
             (Indexes::default(), None)
         };
-        info!("Starting indexes set.");
+        debug!("Starting indexes set.");
 
         let lock = exit.lock();
         self.stores
@@ -121,10 +123,10 @@ impl Indexer {
             let _lock = exit.lock();
             let i = Instant::now();
             stores.commit(height).unwrap();
-            info!("Commited stores in {}s", i.elapsed().as_secs());
+            debug!("Commited stores in {}s", i.elapsed().as_secs());
             let i = Instant::now();
             vecs.flush(height)?;
-            info!("Flushed vecs in {}s", i.elapsed().as_secs());
+            debug!("Flushed vecs in {}s", i.elapsed().as_secs());
             Ok(())
         };
 
