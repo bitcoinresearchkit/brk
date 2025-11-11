@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::Serialize;
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredF64};
@@ -19,7 +19,7 @@ use super::{Sats, StoredF64};
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct Bitcoin(f64);
 
@@ -148,5 +148,12 @@ impl std::fmt::Display for Bitcoin {
         let mut buf = ryu::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Bitcoin {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

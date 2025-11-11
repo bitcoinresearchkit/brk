@@ -3,7 +3,7 @@ use std::ops::Add;
 use byteview::ByteView;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
@@ -24,7 +24,7 @@ use crate::copy_first_4bytes;
     KnownLayout,
     Serialize,
     Deserialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
     Hash,
 )]
@@ -148,5 +148,12 @@ impl std::fmt::Display for TypeIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for TypeIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

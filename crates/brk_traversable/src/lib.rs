@@ -5,8 +5,8 @@ pub use brk_types::TreeNode;
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
 use vecdb::{
-    AnyVec, AnyWritableVec, CompressedVec, ComputedVec, EagerVec, LazyVecFrom1, LazyVecFrom2,
-    LazyVecFrom3, RawVec, StoredCompressed, StoredIndex, StoredRaw, StoredVec,
+    AnyVec, AnyWritableVec, Compressable, CompressedVec, ComputedVec, EagerVec, Formattable,
+    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawVec, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -16,8 +16,8 @@ pub trait Traversable {
 
 impl<I, T> Traversable for RawVec<I, T>
 where
-    I: StoredIndex,
-    T: StoredRaw,
+    I: VecIndex,
+    T: VecValue + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -30,8 +30,8 @@ where
 
 impl<I, T> Traversable for CompressedVec<I, T>
 where
-    I: StoredIndex,
-    T: StoredCompressed,
+    I: VecIndex,
+    T: Compressable + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -44,8 +44,8 @@ where
 
 impl<I, T> Traversable for StoredVec<I, T>
 where
-    I: StoredIndex,
-    T: StoredCompressed,
+    I: VecIndex,
+    T: Compressable + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -58,8 +58,8 @@ where
 
 impl<I, T> Traversable for EagerVec<I, T>
 where
-    I: StoredIndex,
-    T: StoredCompressed,
+    I: VecIndex,
+    T: Compressable + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -72,10 +72,10 @@ where
 
 impl<I, T, S1I, S1T> Traversable for LazyVecFrom1<I, T, S1I, S1T>
 where
-    I: StoredIndex,
-    T: StoredRaw,
-    S1I: StoredIndex,
-    S1T: StoredRaw,
+    I: VecIndex,
+    T: VecValue + Formattable,
+    S1I: VecIndex,
+    S1T: VecValue,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -88,12 +88,12 @@ where
 
 impl<I, T, S1I, S1T, S2I, S2T> Traversable for LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>
 where
-    I: StoredIndex,
-    T: StoredRaw,
-    S1I: StoredIndex,
-    S1T: StoredRaw,
-    S2I: StoredIndex,
-    S2T: StoredRaw,
+    I: VecIndex,
+    T: VecValue + Formattable,
+    S1I: VecIndex,
+    S1T: VecValue,
+    S2I: VecIndex,
+    S2T: VecValue,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -107,14 +107,14 @@ where
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
     for LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
-    I: StoredIndex,
-    T: StoredRaw,
-    S1I: StoredIndex,
-    S1T: StoredRaw,
-    S2I: StoredIndex,
-    S2T: StoredRaw,
-    S3I: StoredIndex,
-    S3T: StoredRaw,
+    I: VecIndex,
+    T: VecValue + Formattable,
+    S1I: VecIndex,
+    S1T: VecValue,
+    S2I: VecIndex,
+    S2T: VecValue,
+    S3I: VecIndex,
+    S3T: VecValue,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -128,14 +128,14 @@ where
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
     for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
-    I: StoredIndex,
-    T: StoredCompressed,
-    S1I: StoredIndex,
-    S1T: StoredCompressed,
-    S2I: StoredIndex,
-    S2T: StoredCompressed,
-    S3I: StoredIndex,
-    S3T: StoredCompressed,
+    I: VecIndex,
+    T: Compressable + Formattable,
+    S1I: VecIndex,
+    S1T: Compressable,
+    S2I: VecIndex,
+    S2T: Compressable,
+    S3I: VecIndex,
+    S3T: Compressable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)

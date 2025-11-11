@@ -1,4 +1,5 @@
 use serde::Serialize;
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{LoadedAddressData, Sats};
@@ -44,5 +45,12 @@ impl std::fmt::Display for EmptyAddressData {
             "tx_count: {}, funded_txo_count: {}, transfered: {}",
             self.tx_count, self.funded_txo_count, self.transfered
         )
+    }
+}
+
+impl Formattable for EmptyAddressData {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

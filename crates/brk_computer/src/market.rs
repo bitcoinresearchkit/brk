@@ -3,7 +3,7 @@ use std::{path::Path, thread};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
-use vecdb::{Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, StoredIndex, TypedVecIterator};
+use vecdb::{Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, TypedVecIterator, VecIndex};
 
 use crate::{
     grouped::{ComputedStandardDeviationVecsFromDateIndex, Source, StandardDeviationVecsOptions},

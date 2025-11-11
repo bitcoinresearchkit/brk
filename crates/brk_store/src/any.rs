@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_types::{Height, Version};
 use fjall2::{InnerItem, PartitionHandle};
+use fjall3::Item;
 
 pub trait AnyStore: Send + Sync {
     fn name(&self) -> &'static str;
@@ -11,6 +12,6 @@ pub trait AnyStore: Send + Sync {
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()>;
     fn partition(&self) -> &PartitionHandle;
     fn take_all_f2(&mut self) -> Vec<InnerItem>;
-    fn commit(&mut self) -> Result<()>;
+    fn take_all_f3(&mut self) -> Vec<Item>;
     // fn take_all_f3(&mut self) -> Box<dyn Iterator<Item = Item>>;
 }

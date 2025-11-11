@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, StoredIndex};
+use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
 
@@ -10,9 +10,9 @@ use super::ComputedType;
 #[derive(Clone, Traversable)]
 pub struct LazyVecsBuilder<I, T, S1I, S2T>
 where
-    I: StoredIndex,
+    I: VecIndex,
     T: ComputedType,
-    S1I: StoredIndex,
+    S1I: VecIndex,
     S2T: ComputedType,
 {
     pub first: Option<Box<LazyVecFrom2<I, T, S1I, T, I, S2T>>>,
@@ -28,9 +28,9 @@ const VERSION: Version = Version::ZERO;
 
 impl<I, T, S1I, S2T> LazyVecsBuilder<I, T, S1I, S2T>
 where
-    I: StoredIndex,
+    I: VecIndex,
     T: ComputedType + 'static,
-    S1I: StoredIndex + 'static + FromCoarserIndex<I>,
+    S1I: VecIndex + 'static + FromCoarserIndex<I>,
     S2T: ComputedType,
 {
     #[allow(clippy::too_many_arguments)]

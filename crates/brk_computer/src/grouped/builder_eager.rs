@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec, IterableVec,
-    StoredIndex, StoredRaw,
+    VecIndex, VecValue,
 };
 
 use crate::utils::get_percentile;
@@ -13,7 +13,7 @@ use super::ComputedType;
 #[derive(Clone, Debug, Traversable)]
 pub struct EagerVecsBuilder<I, T>
 where
-    I: StoredIndex,
+    I: VecIndex,
     T: ComputedType,
 {
     pub first: Option<Box<EagerVec<I, T>>>,
@@ -34,7 +34,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<I, T> EagerVecsBuilder<I, T>
 where
-    I: StoredIndex,
+    I: VecIndex,
     T: ComputedType,
 {
     pub fn forced_import_compressed(
@@ -244,7 +244,7 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: StoredIndex + StoredRaw + CheckedSub<I2>,
+        I2: VecIndex + VecValue + CheckedSub<I2>,
     {
         self.validate_computed_version_or_reset(
             source.version() + first_indexes.version() + count_indexes.version(),
@@ -403,7 +403,7 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: StoredIndex + StoredRaw + CheckedSub<I2>,
+        I2: VecIndex + VecValue + CheckedSub<I2>,
     {
         if self.pct90.is_some()
             || self.pct75.is_some()

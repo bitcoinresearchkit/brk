@@ -1,5 +1,3 @@
-use std::fmt;
-
 use bitcoin::ScriptBuf;
 use brk_error::Error;
 
@@ -36,12 +34,6 @@ impl AddressBytes {
 
     pub fn hash(&self) -> u64 {
         rapidhash::v3::rapidhash_v3(self.as_slice()).to_le()
-    }
-}
-
-impl fmt::Display for AddressBytes {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&super::Address::try_from(self).unwrap().to_string())
     }
 }
 

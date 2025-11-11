@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
@@ -53,5 +54,12 @@ impl From<&LoadedAddressData> for SupplyState {
 impl std::fmt::Display for SupplyState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "utxos: {}, value: {}", self.utxo_count, self.value)
+    }
+}
+
+impl Formattable for SupplyState {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex, MonthIndex};
@@ -24,7 +24,7 @@ use super::{Date, DateIndex, MonthIndex};
     Immutable,
     IntoBytes,
     KnownLayout,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct YearIndex(u16);
 
@@ -134,5 +134,12 @@ impl std::fmt::Display for YearIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for YearIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

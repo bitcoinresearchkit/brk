@@ -4,10 +4,7 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use byteview8::ByteView;
 use fjall3::{
-    Database,
-    Keyspace,
-    KeyspaceCreateOptions,
-    // ValueType,
+    Database, Keyspace, KeyspaceCreateOptions, ValueType,
     config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PinningPolicy},
 };
 
@@ -22,7 +19,6 @@ use crate::any::AnyStore;
 pub struct StoreFjallV3<Key, Value> {
     meta: StoreMeta,
     name: &'static str,
-    database: Database,
     keyspace: Keyspace,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
@@ -67,7 +63,6 @@ where
         Ok(Self {
             meta,
             name: Box::leak(Box::new(name.to_string())),
-            database: database.clone(),
             keyspace,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
@@ -188,37 +183,7 @@ where
         panic!()
     }
 
-    // fn take_all_f3(&mut self) -> Box<dyn Iterator<Item = Item>> {
-    //     Box::new([].into_iter())
-    // }
-
-    fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
-        if self.has(height) {
-            return Ok(());
-        }
-        self.meta.export(height)?;
-        Ok(())
-    }
-
-    fn commit(&mut self) -> Result<()> {
-        if self.puts.is_empty() && self.dels.is_empty() {
-            return Ok(());
-        }
-
-        // if self.mode.is_push_only() {
-        //     if !self.dels.is_empty() {
-        //         unreachable!();
-        //     }
-        //     let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
-        //     puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
-        //     // dbg!(&puts);
-        //     self.keyspace.ingest(
-        //         puts.into_iter()
-        //             .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
-        //     )?;
-        // } else {
-        let mut batch = self.database.batch();
-        // let mut batch = self.database.inner().batch();
+    fn take_all_f3(&mut self) -> Vec<fjall3::Item> {
         let mut items = mem::take(&mut self.puts)
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
@@ -229,31 +194,17 @@ where
             )
             .collect::<Vec<_>>();
         items.sort_unstable();
-        items.into_iter().for_each(|item| match item {
-            Item::Value { key, value } => {
-                batch.insert(&self.keyspace, ByteView::from(key), ByteView::from(value))
-            }
-            Item::Tomb(key) => batch.remove(&self.keyspace, ByteView::from(key)),
-        });
-        batch.commit()?;
-        // }
+        items
+            .into_iter()
+            .map(|v| v.fjalled(&self.keyspace))
+            .collect()
+    }
 
-        // batch.ingest(
-        //     items
-        //         .into_iter()
-        //         .map(|i| i.fjalled(&self.keyspace))
-        //         .collect::<Vec<_>>(),
-        // );
-        // batch.commit_keyspace(&self.keyspace)?;
-        // batch.ingest(
-        //     items
-        //         .into_iter()
-        //         .map(|i| i.fjalled(&self.keyspace))
-        //         .collect::<Vec<_>>(),
-        // );
-        // batch.commit_keyspace(&self.keyspace)?;
-        // batch.commit_keyspace(self.keyspace.inner())?;
-
+    fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
+        if self.has(height) {
+            return Ok(());
+        }
+        self.meta.export(height)?;
         Ok(())
     }
 
@@ -278,7 +229,7 @@ where
     }
 }
 
-enum Item<K, V> {
+pub enum Item<K, V> {
     Value { key: K, value: V },
     Tomb(K),
 }
@@ -310,28 +261,28 @@ impl<K, V> Item<K, V> {
         }
     }
 
-    //     pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
-    //     where
-    //         K: Into<ByteView>,
-    //         V: Into<ByteView>,
-    //     {
-    //         let keyspace_id = keyspace.id;
-    //         // let keyspace_id = keyspace.inner().id;
-    //         match self {
-    //             Item::Value { key, value } => fjall3::Item {
-    //                 keyspace_id,
-    //                 key: key.into().into(),
-    //                 value: value.into().into(),
-    //                 value_type: ValueType::Value,
-    //             },
-    //             Item::Tomb(key) => fjall3::Item {
-    //                 keyspace_id,
-    //                 key: key.into().into(),
-    //                 value: [].into(),
-    //                 value_type: ValueType::Tombstone,
-    //             },
-    //         }
-    //     }
+    pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
+    where
+        K: Into<ByteView>,
+        V: Into<ByteView>,
+    {
+        let keyspace_id = keyspace.id;
+        // let keyspace_id = keyspace.inner().id;
+        match self {
+            Item::Value { key, value } => fjall3::Item {
+                keyspace_id,
+                key: key.into().into(),
+                value: value.into().into(),
+                value_type: ValueType::Value,
+            },
+            Item::Tomb(key) => fjall3::Item {
+                keyspace_id,
+                key: key.into().into(),
+                value: [].into(),
+                value_type: ValueType::Tombstone,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

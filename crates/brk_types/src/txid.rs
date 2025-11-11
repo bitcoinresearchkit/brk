@@ -4,6 +4,7 @@ use bitcoin::hashes::Hash;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 /// Transaction ID (hash)
@@ -75,5 +76,12 @@ impl Serialize for Txid {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl Formattable for Txid {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

@@ -1,14 +1,14 @@
 use std::collections::BTreeMap;
 
-use vecdb::{CompressedVec, RawVec, StoredCompressed, StoredIndex, StoredRaw};
+use vecdb::{Compressable, CompressedVec, RawVec, VecIndex, VecValue};
 
 #[derive(Debug)]
 pub struct RangeMap<I, T>(BTreeMap<I, T>);
 
 impl<I, T> RangeMap<I, T>
 where
-    I: StoredIndex,
-    T: StoredIndex,
+    I: VecIndex,
+    T: VecIndex,
 {
     pub fn get(&self, key: I) -> Option<&T> {
         self.0.range(..=key).next_back().map(|(&min, value)| {
@@ -22,8 +22,8 @@ where
 
 impl<I, T> From<&RawVec<I, T>> for RangeMap<T, I>
 where
-    I: StoredIndex,
-    T: StoredIndex + StoredRaw,
+    I: VecIndex,
+    T: VecIndex + VecValue,
 {
     #[inline]
     fn from(vec: &RawVec<I, T>) -> Self {
@@ -38,8 +38,8 @@ where
 
 impl<I, T> From<&CompressedVec<I, T>> for RangeMap<T, I>
 where
-    I: StoredIndex,
-    T: StoredIndex + StoredCompressed,
+    I: VecIndex,
+    T: VecIndex + Compressable,
 {
     #[inline]
     fn from(vec: &CompressedVec<I, T>) -> Self {

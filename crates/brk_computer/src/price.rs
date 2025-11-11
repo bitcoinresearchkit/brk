@@ -8,7 +8,7 @@ use brk_types::{
 };
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec, PAGE_SIZE,
-    RawVec, StoredIndex,
+    RawVec, VecIndex,
 };
 
 use crate::{fetched, grouped::Source};

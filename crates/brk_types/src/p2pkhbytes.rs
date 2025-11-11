@@ -2,6 +2,7 @@ use std::fmt;
 
 use derive_deref::Deref;
 use serde::Serialize;
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::U8x20;
@@ -40,5 +41,12 @@ impl From<U8x20> for P2PKHBytes {
 impl fmt::Display for P2PKHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
+    }
+}
+
+impl Formattable for P2PKHBytes {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        true
     }
 }

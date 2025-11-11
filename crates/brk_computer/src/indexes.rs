@@ -14,7 +14,7 @@ use brk_types::{
 };
 use vecdb::{
     Database, EagerVec, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
-    StoredIndex, TypedVecIterator,
+    TypedVecIterator, VecIndex,
 };
 
 const VERSION: Version = Version::ZERO;

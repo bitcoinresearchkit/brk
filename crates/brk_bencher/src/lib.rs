@@ -15,6 +15,7 @@ use brk_error::Result;
 
 pub struct Bencher {
     bench_dir: PathBuf,
+    monitored_path: PathBuf,
     stop_flag: Arc<AtomicBool>,
     monitor_thread: Option<JoinHandle<Result<()>>>,
 }
@@ -22,7 +23,7 @@ pub struct Bencher {
 impl Bencher {
     /// Create a new bencher for the given crate name
     /// Creates directory structure: workspace_root/benches/{crate_name}/{timestamp}/
-    pub fn new(crate_name: &str, workspace_root: &Path) -> Result<Self> {
+    pub fn new(crate_name: &str, workspace_root: &Path, monitored_path: &Path) -> Result<Self> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
         let bench_dir = workspace_root
@@ -34,18 +35,36 @@ impl Bencher {
 
         Ok(Self {
             bench_dir,
+            monitored_path: monitored_path.to_path_buf(),
             stop_flag: Arc::new(AtomicBool::new(false)),
             monitor_thread: None,
         })
     }
 
     /// Create a bencher using CARGO_MANIFEST_DIR to find workspace root
-    pub fn from_cargo_env() -> Result<Self> {
-        let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .ok_or("Failed to find workspace root")?;
-        let crate_name = env!("CARGO_PKG_NAME");
-        Self::new(crate_name, workspace_root)
+    pub fn from_cargo_env(crate_name: &str, monitored_path: &Path) -> Result<Self> {
+        let mut current = std::env::current_dir()
+            .map_err(|e| format!("Failed to get current directory: {}", e))
+            .unwrap();
+
+        let workspace_root = loop {
+            let cargo_toml = current.join("Cargo.toml");
+            if cargo_toml.exists() {
+                let contents = std::fs::read_to_string(&cargo_toml)
+                    .map_err(|e| format!("Failed to read Cargo.toml: {}", e))
+                    .unwrap();
+                if contents.contains("[workspace]") {
+                    break current;
+                }
+            }
+
+            current = current
+                .parent()
+                .ok_or("Workspace root not found")?
+                .to_path_buf();
+        };
+
+        Self::new(crate_name, &workspace_root, monitored_path)
     }
 
     /// Start monitoring disk usage and memory footprint
@@ -56,8 +75,10 @@ impl Bencher {
 
         let stop_flag = self.stop_flag.clone();
         let bench_dir = self.bench_dir.clone();
+        let monitored_path = self.monitored_path.clone();
 
-        let handle = thread::spawn(move || monitor_resources(&bench_dir, stop_flag));
+        let handle =
+            thread::spawn(move || monitor_resources(&monitored_path, &bench_dir, stop_flag));
 
         self.monitor_thread = Some(handle);
         Ok(())
@@ -189,7 +210,11 @@ fn get_memory_usage(pid: u32) -> Result<(f64, f64)> {
     }
 }
 
-fn monitor_resources(bench_dir: &Path, stop_flag: Arc<AtomicBool>) -> Result<()> {
+fn monitor_resources(
+    monitored_path: &Path,
+    bench_dir: &Path,
+    stop_flag: Arc<AtomicBool>,
+) -> Result<()> {
     let disk_file = bench_dir.join("disk_usage.csv");
     let memory_file = bench_dir.join("memory_footprint.csv");
 
@@ -210,23 +235,21 @@ fn monitor_resources(bench_dir: &Path, stop_flag: Arc<AtomicBool>) -> Result<()>
 
         // Get disk usage
         if let Ok(output) = Command::new("du")
-            .args(["-sh", bench_dir.to_str().unwrap()])
+            .args(["-sh", monitored_path.to_str().unwrap()])
             .output()
             && let Ok(stdout) = String::from_utf8(output.stdout)
             && let Some(size_str) = stdout.split_whitespace().next()
             && let Some(size_mb) = parse_du_output(size_str)
         {
             writeln!(disk_writer, "{},{}", elapsed_ms, size_mb)?;
-            disk_writer.flush()?;
         }
 
         // Get memory footprint (cross-platform)
         if let Ok((footprint, peak)) = get_memory_usage(pid) {
             writeln!(memory_writer, "{},{},{}", elapsed_ms, footprint, peak)?;
-            memory_writer.flush()?;
         }
 
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(5));
     }
 
     Ok(())

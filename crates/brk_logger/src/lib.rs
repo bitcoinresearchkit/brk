@@ -5,26 +5,27 @@ use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
     path::Path,
+    sync::OnceLock,
 };
 
 use env_logger::{Builder, Env};
 use jiff::{Timestamp, tz};
 pub use owo_colors::OwoColorize;
+use parking_lot::Mutex;
+
+static LOG_FILE: OnceLock<Mutex<fs::File>> = OnceLock::new();
 
 #[inline]
 pub fn init(path: Option<&Path>) -> io::Result<()> {
-    let file = path.map(|path| {
+    if let Some(path) = path {
         let _ = fs::remove_file(path);
-        OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-            .unwrap()
-    });
+        let file = OpenOptions::new().create(true).append(true).open(path)?;
+        LOG_FILE.set(Mutex::new(file)).ok();
+    }
 
     Builder::from_env(Env::default().default_filter_or(
-        // "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,lsm-tree=off,rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,brk_aide=off",
-        "debug,bitcoin=off,bitcoincore-rpc=off,rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,brk_aide=off",
+        "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,lsm-tree=off,rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,brk_aide=off",
+        // "debug,fjall=trace,bitcoin=off,bitcoincore-rpc=off,rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,brk_aide=off",
     ))
     .format(move |buf, record| {
         let date_time = Timestamp::now()
@@ -37,15 +38,8 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
         let dash = "-";
         let args = record.args();
 
-        if let Some(file) = file.as_ref() {
-            let _ = write(
-                file.try_clone().unwrap(),
-                &date_time,
-                target,
-                &level,
-                dash,
-                args,
-            );
+        if let Some(file) = LOG_FILE.get() {
+            let _ = write(&mut *file.lock(), &date_time, target, &level, dash, args);
         }
 
         let colored_date_time = date_time.bright_black();

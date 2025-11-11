@@ -18,6 +18,18 @@ struct BenchmarkRun {
     data: Vec<DataPoint>,
 }
 
+// Dark theme colors
+const BG_COLOR: RGBColor = RGBColor(18, 18, 24);
+const TEXT_COLOR: RGBColor = RGBColor(230, 230, 240);
+const CHART_COLORS: [RGBColor; 6] = [
+    RGBColor(255, 99, 132),  // Pink/Red
+    RGBColor(54, 162, 235),  // Blue
+    RGBColor(75, 192, 192),  // Teal
+    RGBColor(255, 206, 86),  // Yellow
+    RGBColor(153, 102, 255), // Purple
+    RGBColor(255, 159, 64),  // Orange
+];
+
 pub struct Visualizer {
     workspace_root: PathBuf,
 }
@@ -32,6 +44,7 @@ impl Visualizer {
     pub fn from_cargo_env() -> Result<Self> {
         let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
+            .and_then(|p| p.parent())
             .ok_or("Failed to find workspace root")?
             .to_path_buf();
         Ok(Self { workspace_root })
@@ -141,10 +154,10 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("disk_usage_chart.png");
+        let output_path = crate_path.join("disk_usage_chart.svg");
 
-        let root = BitMapBackend::new(&output_path, (1200, 800)).into_drawing_area();
-        root.fill(&WHITE)?;
+        let root = SVGBackend::new(&output_path, (1200, 700)).into_drawing_area();
+        root.fill(&BG_COLOR)?;
 
         let max_time = runs
             .iter()
@@ -157,40 +170,59 @@ impl Visualizer {
             .flat_map(|r| r.data.iter().map(|d| d.value))
             .fold(0.0_f64, f64::max);
 
+        // Convert to seconds and GB
+        let max_time_s = (max_time as f64) / 1000.0;
+        let max_value_gb = max_value / 1024.0;
+
         let mut chart = ChartBuilder::on(&root)
             .caption(
-                format!("{} - Disk Usage", crate_name),
-                ("sans-serif", 40).into_font(),
+                format!("{} — Disk Usage", crate_name),
+                ("SF Mono", 24).into_font().color(&TEXT_COLOR),
             )
-            .margin(10)
-            .x_label_area_size(40)
-            .y_label_area_size(60)
-            .build_cartesian_2d(0u64..max_time, 0.0..max_value * 1.1)?;
+            .margin(20)
+            .x_label_area_size(55)
+            .y_label_area_size(75)
+            .build_cartesian_2d(0.0..max_time_s * 1.05, 0.0..max_value_gb * 1.1)?;
 
         chart
             .configure_mesh()
-            .x_desc("Time (ms)")
-            .y_desc("Disk Usage (MB)")
+            .disable_mesh()
+            .x_desc("Time (s)")
+            .y_desc("Disk Usage (GB)")
+            .x_label_offset(10)
+            .y_label_offset(10)
+            .x_label_formatter(&|x| format!("{:.1}", x))
+            .y_label_formatter(&|y| format!("{:.2}", y))
+            .x_labels(8)
+            .y_labels(6)
+            .x_label_style(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .y_label_style(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .axis_style(TEXT_COLOR.mix(0.3))
             .draw()?;
 
-        let colors = [&RED, &BLUE, &GREEN, &CYAN, &MAGENTA, &YELLOW];
-
         for (idx, run) in runs.iter().enumerate() {
-            let color = colors[idx % colors.len()];
+            let color = CHART_COLORS[idx % CHART_COLORS.len()];
 
             chart
                 .draw_series(LineSeries::new(
-                    run.data.iter().map(|d| (d.timestamp_ms, d.value)),
-                    color,
+                    run.data
+                        .iter()
+                        .map(|d| (d.timestamp_ms as f64 / 1000.0, d.value / 1024.0)),
+                    color.stroke_width(2),
                 ))?
                 .label(&run.run_id)
-                .legend(move |(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], color));
+                .legend(move |(x, y)| {
+                    PathElement::new(vec![(x, y), (x + 20, y)], color.stroke_width(2))
+                });
         }
 
         chart
             .configure_series_labels()
-            .background_style(WHITE.mix(0.8))
-            .border_style(BLACK)
+            .position(SeriesLabelPosition::UpperLeft)
+            .label_font(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.9)))
+            .background_style(BG_COLOR.mix(0.98))
+            .border_style(BG_COLOR)
+            .margin(10)
             .draw()?;
 
         root.present()?;
@@ -205,10 +237,10 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("memory_footprint_chart.png");
+        let output_path = crate_path.join("memory_footprint_chart.svg");
 
-        let root = BitMapBackend::new(&output_path, (1200, 800)).into_drawing_area();
-        root.fill(&WHITE)?;
+        let root = SVGBackend::new(&output_path, (1200, 700)).into_drawing_area();
+        root.fill(&BG_COLOR)?;
 
         // Read memory CSV files which have 3 columns: timestamp, footprint, peak
         let mut enhanced_runs = Vec::new();
@@ -259,55 +291,87 @@ impl Visualizer {
             .flat_map(|(_, f, p)| f.iter().chain(p.iter()).map(|d| d.value))
             .fold(0.0_f64, f64::max);
 
+        // Convert to seconds and GB
+        let max_time_s = (max_time as f64) / 1000.0;
+        let max_value_gb = max_value / 1024.0;
+
         let mut chart = ChartBuilder::on(&root)
             .caption(
-                format!("{} - Memory Footprint", crate_name),
-                ("sans-serif", 40).into_font(),
+                format!("{} — Memory Footprint", crate_name),
+                ("SF Mono", 24).into_font().color(&TEXT_COLOR),
             )
-            .margin(10)
-            .x_label_area_size(40)
-            .y_label_area_size(60)
-            .build_cartesian_2d(0u64..max_time, 0.0..max_value * 1.1)?;
+            .margin(20)
+            .x_label_area_size(55)
+            .y_label_area_size(75)
+            .build_cartesian_2d(0.0..max_time_s * 1.05, 0.0..max_value_gb * 1.1)?;
 
         chart
             .configure_mesh()
-            .x_desc("Time (ms)")
-            .y_desc("Memory (MB)")
+            .disable_mesh()
+            .x_desc("Time (s)")
+            .y_desc("Memory (GB)")
+            .x_label_offset(10)
+            .y_label_offset(10)
+            .x_label_formatter(&|x| format!("{:.1}", x))
+            .y_label_formatter(&|y| format!("{:.2}", y))
+            .x_labels(8)
+            .y_labels(6)
+            .x_label_style(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .y_label_style(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.7)))
+            .axis_style(TEXT_COLOR.mix(0.3))
             .draw()?;
 
-        let colors = [&RED, &BLUE, &GREEN, &CYAN, &MAGENTA, &YELLOW];
-
         for (idx, (run_id, footprint_data, peak_data)) in enhanced_runs.iter().enumerate() {
-            let color = colors[idx % colors.len()];
+            let color = CHART_COLORS[idx % CHART_COLORS.len()];
 
             // Draw footprint line (solid)
             chart
                 .draw_series(LineSeries::new(
-                    footprint_data.iter().map(|d| (d.timestamp_ms, d.value)),
-                    color,
+                    footprint_data
+                        .iter()
+                        .map(|d| (d.timestamp_ms as f64 / 1000.0, d.value / 1024.0)),
+                    color.stroke_width(2),
                 ))?
                 .label(format!("{} (current)", run_id))
-                .legend(move |(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], color));
+                .legend(move |(x, y)| {
+                    PathElement::new(vec![(x, y), (x + 20, y)], color.stroke_width(2))
+                });
 
-            // Draw peak line (dashed)
+            // Draw peak line (dashed, slightly transparent)
+            let dashed_color = color.mix(0.5);
             chart
-                .draw_series(LineSeries::new(
-                    peak_data.iter().map(|d| (d.timestamp_ms, d.value)),
-                    color.stroke_width(2).filled(),
-                ))?
+                .draw_series(
+                    peak_data
+                        .iter()
+                        .map(|d| (d.timestamp_ms as f64 / 1000.0, d.value / 1024.0))
+                        .zip(
+                            peak_data
+                                .iter()
+                                .skip(1)
+                                .map(|d| (d.timestamp_ms as f64 / 1000.0, d.value / 1024.0)),
+                        )
+                        .enumerate()
+                        .filter(|(i, _)| i % 2 == 0) // Create dashed effect
+                        .map(|(_, (p1, p2))| {
+                            PathElement::new(vec![p1, p2], dashed_color.stroke_width(2))
+                        }),
+                )?
                 .label(format!("{} (peak)", run_id))
                 .legend(move |(x, y)| {
                     PathElement::new(
                         vec![(x, y), (x + 10, y), (x + 20, y)],
-                        color.stroke_width(2),
+                        dashed_color.stroke_width(2),
                     )
                 });
         }
 
         chart
             .configure_series_labels()
-            .background_style(WHITE.mix(0.8))
-            .border_style(BLACK)
+            .position(SeriesLabelPosition::UpperLeft)
+            .label_font(("SF Mono", 16).into_font().color(&TEXT_COLOR.mix(0.9)))
+            .background_style(BG_COLOR.mix(0.98))
+            .border_style(BG_COLOR)
+            .margin(10)
             .draw()?;
 
         root.present()?;

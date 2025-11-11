@@ -1,7 +1,7 @@
 use std::ops::{Add, Div, Mul};
 
 use serde::Serialize;
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Dollars;
@@ -20,7 +20,7 @@ use super::Dollars;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct Cents(i64);
 
@@ -181,5 +181,12 @@ impl std::fmt::Display for Cents {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Cents {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

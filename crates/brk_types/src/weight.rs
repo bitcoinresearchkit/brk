@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::StoredCompressed;
+use vecdb::{Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -20,7 +20,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     FromBytes,
     Serialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct Weight(u64);
@@ -92,5 +92,12 @@ impl std::fmt::Display for Weight {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Weight {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

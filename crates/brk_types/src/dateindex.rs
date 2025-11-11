@@ -3,7 +3,7 @@ use std::ops::{Add, Rem};
 use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
-use vecdb::{CheckedSub, FromCoarserIndex, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, FromCoarserIndex, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
@@ -24,7 +24,7 @@ use super::Date;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct DateIndex(u16);
 
@@ -95,24 +95,6 @@ impl Rem<usize> for DateIndex {
     type Output = Self;
     fn rem(self, rhs: usize) -> Self::Output {
         Self(self.0 % rhs as u16)
-    }
-}
-
-impl std::fmt::Display for DateIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
-        let str = buf.format(self.0);
-        f.write_str(str)
-    }
-}
-
-impl PrintableIndex for DateIndex {
-    fn to_string() -> &'static str {
-        "dateindex"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["d", "date", "dateindex"]
     }
 }
 
@@ -245,5 +227,30 @@ impl FromCoarserIndex<DecadeIndex> for DateIndex {
         Self::try_from(Date::new(2009 + (10 * coarser), 12, 31))
             .unwrap()
             .into()
+    }
+}
+
+impl PrintableIndex for DateIndex {
+    fn to_string() -> &'static str {
+        "dateindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["d", "date", "dateindex"]
+    }
+}
+
+impl std::fmt::Display for DateIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = itoa::Buffer::new();
+        let str = buf.format(self.0);
+        f.write_str(str)
+    }
+}
+
+impl Formattable for DateIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

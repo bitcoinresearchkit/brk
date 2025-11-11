@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 pub type StoredPhantom = StoredU8;
@@ -119,5 +119,12 @@ impl std::fmt::Display for StoredU8 {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for StoredU8 {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

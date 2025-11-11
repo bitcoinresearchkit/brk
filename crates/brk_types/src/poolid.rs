@@ -1,6 +1,7 @@
 use num_enum::{FromPrimitive, IntoPrimitive};
 use serde::{Deserialize, Serialize};
 use strum::Display;
+use vecdb::Formattable;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 // Created from the list in `pools.rs`
@@ -285,4 +286,11 @@ pub enum PoolId {
     Dummy253,
     Dummy254,
     Dummy255,
+}
+
+impl Formattable for PoolId {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
+    }
 }

@@ -6,7 +6,7 @@ use brk_types::{
     UnknownOutputIndex,
 };
 use log::debug;
-use vecdb::{GenericStoredVec, IterableStoredVec, IterableVec, StoredIndex, StoredRaw};
+use vecdb::{GenericStoredVec, IterableStoredVec, IterableVec, VecIndex, VecValue};
 
 use crate::{Stores, Vecs};
 
@@ -227,8 +227,8 @@ pub fn starting_index<I, T>(
     starting_height: Height,
 ) -> Option<I>
 where
-    I: StoredRaw + StoredIndex + From<usize>,
-    T: StoredRaw,
+    I: VecValue + VecIndex + From<usize>,
+    T: VecValue,
 {
     let h = Height::from(height_to_index.stamp());
     if h.is_zero() {

@@ -18,7 +18,7 @@ use smallvec::SmallVec;
 use vecdb::{
     AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit, Format,
     GenericStoredVec, ImportOptions, IterableCloneableVec, IterableVec, LazyVecFrom1, PAGE_SIZE,
-    RawVec, Reader, Stamp, StoredIndex, TypedVecIterator,
+    RawVec, Reader, Stamp, TypedVecIterator, VecIndex,
 };
 
 use crate::{

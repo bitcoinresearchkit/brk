@@ -192,52 +192,15 @@ where
         items.into_iter().map(InnerItem::from).collect()
     }
 
-    // fn take_all_f3(&mut self) -> Box<dyn Iterator<Item = Item>> {
-    //     Box::new([].into_iter())
-    // }
+    fn take_all_f3(&mut self) -> Vec<fjall3::Item> {
+        panic!()
+    }
 
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
         if self.has(height) {
             return Ok(());
         }
         self.meta.export(height)?;
-        Ok(())
-    }
-
-    fn commit(&mut self) -> Result<()> {
-        if self.puts.is_empty() && self.dels.is_empty() {
-            return Ok(());
-        }
-
-        // if self.mode.is_unique_push_only() {
-        //     if !self.dels.is_empty() {
-        //         unreachable!();
-        //     }
-        //     let mut puts = mem::take(&mut self.puts).into_iter().collect::<Vec<_>>();
-        //     puts.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
-        //     dbg!(&puts);
-        //     self.partition.ingest(
-        //         puts.into_iter()
-        //             .map(|(k, v)| (ByteView::from(k), ByteView::from(v))),
-        //     )?;
-        // } else {
-        let mut items = mem::take(&mut self.puts)
-            .into_iter()
-            .map(|(key, value)| Item::Value { key, value })
-            .chain(
-                mem::take(&mut self.dels)
-                    .into_iter()
-                    .map(|key| Item::Tomb(key)),
-            )
-            .collect::<Vec<_>>();
-        items.sort_unstable();
-
-        // self.keyspace.inner().batch().commit_partition(
-        //     self.partition.inner(),
-        //     items.into_iter().map(InnerItem::from).collect::<Vec<_>>(),
-        // )?;
-        // }
-
         Ok(())
     }
 

@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -23,7 +23,7 @@ use crate::TypeIndex;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct P2PK33AddressIndex(TypeIndex);
 impl From<TypeIndex> for P2PK33AddressIndex {
@@ -93,5 +93,12 @@ impl PrintableIndex for P2PK33AddressIndex {
 impl std::fmt::Display for P2PK33AddressIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl Formattable for P2PK33AddressIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

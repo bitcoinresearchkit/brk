@@ -8,9 +8,9 @@ use brk_types::{
     OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
     Vout,
 };
-use fjall3::{Database, PersistMode};
+use fjall3::{Database, PersistMode, WriteBatch};
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, StoredIndex, TypedVecIterator, VecIterator};
+use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, VecIndex, VecIterator};
 
 use crate::Indexes;
 
@@ -158,13 +158,10 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        [
+        let items = [
             &mut self.blockhashprefix_to_height as &mut dyn AnyStore,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
-            // &mut self.addresshash_to_typeindex
-            // &mut self.addresstype_to_addressindex_and_txindex,
-            // &mut self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_par_iter()
         .chain(
@@ -182,7 +179,19 @@ impl Stores {
                 .par_iter_mut()
                 .map(|s| s as &mut dyn AnyStore),
         ) // Changed from par_iter_mut()
-        .try_for_each(|store| store.commit(height))?;
+        .map(|store| {
+            let items = store.take_all_f3();
+            store.export_meta_if_needed(height)?;
+            Ok(items)
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+        let capacity = items.iter().map(|v| v.len()).sum();
+        let mut batch = WriteBatch::with_capacity(self.database.clone(), capacity);
+        items.into_iter().for_each(|items| {
+            batch.ingest(items);
+        });
+        batch.commit()?;
 
         self.database
             .persist(PersistMode::SyncAll)

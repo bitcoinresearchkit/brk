@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, PrintableIndex, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::MonthIndex;
@@ -24,7 +24,7 @@ use super::MonthIndex;
     Immutable,
     IntoBytes,
     KnownLayout,
-    StoredCompressed,
+    Compressable,
 )]
 pub struct QuarterIndex(u16);
 
@@ -113,5 +113,12 @@ impl std::fmt::Display for QuarterIndex {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for QuarterIndex {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

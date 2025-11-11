@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{CheckedSub, StoredCompressed};
+use vecdb::{CheckedSub, Compressable, Formattable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Date;
@@ -24,7 +24,7 @@ use super::Date;
     IntoBytes,
     KnownLayout,
     Serialize,
-    StoredCompressed,
+    Compressable,
     JsonSchema,
 )]
 pub struct Timestamp(u32);
@@ -173,5 +173,12 @@ impl std::fmt::Display for Timestamp {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
+    }
+}
+
+impl Formattable for Timestamp {
+    #[inline(always)]
+    fn may_need_escaping() -> bool {
+        false
     }
 }

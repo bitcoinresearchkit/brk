@@ -155,22 +155,7 @@ impl Query {
                 if index > 0 {
                     csv.push(',');
                 }
-
-                // Check if we need CSV escaping
-                let start_pos = csv.len();
-
-                if writer.write_next(&mut csv)? {
-                    let end_pos = csv.len();
-
-                    // If contains comma, rewrite with quotes
-                    if csv[start_pos..end_pos].contains(',') {
-                        let value = csv[start_pos..end_pos].to_string(); // Only allocate if needed
-                        csv.truncate(start_pos);
-                        csv.push('"');
-                        csv.push_str(&value);
-                        csv.push('"');
-                    }
-                }
+                writer.write_next(&mut csv)?;
             }
             csv.push('\n');
         }

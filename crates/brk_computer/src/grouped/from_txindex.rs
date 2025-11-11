@@ -7,7 +7,7 @@ use brk_types::{
 };
 use vecdb::{
     AnyVec, AnyWritableVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
-    IterableCloneableVec, StoredIndex, TypedVecIterator,
+    IterableCloneableVec, TypedVecIterator, VecIndex,
 };
 
 use crate::{

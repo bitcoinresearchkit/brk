@@ -10,7 +10,7 @@ use brk_types::{
 };
 use fjall2::{CompressionType as Compression, PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, StoredIndex, TypedVecIterator, VecIterator};
+use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, VecIndex, VecIterator};
 
 use crate::Indexes;
 

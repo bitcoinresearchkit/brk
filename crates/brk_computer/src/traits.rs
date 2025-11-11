@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, StoredIndex, Version,
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, VecIndex, Version,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -225,7 +225,7 @@ pub trait ComputeFromSats<I> {
 }
 impl<I> ComputeFromSats<I> for EagerVec<I, Bitcoin>
 where
-    I: StoredIndex,
+    I: VecIndex,
 {
     fn compute_from_sats(
         &mut self,
@@ -263,7 +263,7 @@ pub trait ComputeFromBitcoin<I> {
 }
 impl<I> ComputeFromBitcoin<I> for EagerVec<I, Dollars>
 where
-    I: StoredIndex,
+    I: VecIndex,
 {
     fn compute_from_bitcoin(
         &mut self,
@@ -305,7 +305,7 @@ pub trait ComputeDrawdown<I> {
 }
 impl<I> ComputeDrawdown<I> for EagerVec<I, StoredF32>
 where
-    I: StoredIndex,
+    I: VecIndex,
 {
     fn compute_drawdown(
         &mut self,
