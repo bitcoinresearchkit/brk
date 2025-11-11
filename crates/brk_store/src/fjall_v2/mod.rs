@@ -174,6 +174,10 @@ where
     ByteView: From<K> + From<V>,
     Self: Send + Sync,
 {
+    fn keyspace(&self) -> &fjall3::Keyspace {
+        panic!()
+    }
+
     fn partition(&self) -> &fjall2::PartitionHandle {
         self.partition.inner()
     }
@@ -192,7 +196,7 @@ where
         items.into_iter().map(InnerItem::from).collect()
     }
 
-    fn take_all_f3(&mut self) -> Vec<fjall3::Item> {
+    fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem> {
         panic!()
     }
 

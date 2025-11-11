@@ -119,14 +119,34 @@ impl Stores {
     }
 
     pub fn starting_height(&self) -> Height {
-        self.iter_any_store()
-            .map(|store| {
-                // let height =
-                store.height().map(Height::incremented).unwrap_or_default()
-                // dbg!((height, store.name()));
-            })
-            .min()
-            .unwrap()
+        [
+            &self.blockhashprefix_to_height as &dyn AnyStore,
+            &self.height_to_coinbase_tag,
+            &self.txidprefix_to_txindex,
+        ]
+        .into_iter()
+        .chain(
+            self.addresstype_to_addresshash_to_addressindex
+                .iter()
+                .map(|s| s as &dyn AnyStore),
+        )
+        .chain(
+            self.addresstype_to_addressindex_and_txindex
+                .iter()
+                .map(|s| s as &dyn AnyStore),
+        )
+        .chain(
+            self.addresstype_to_addressindex_and_unspentoutpoint
+                .iter()
+                .map(|s| s as &dyn AnyStore),
+        )
+        .map(|store| {
+            // let height =
+            store.height().map(Height::incremented).unwrap_or_default()
+            // dbg!((height, store.name()));
+        })
+        .min()
+        .unwrap()
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
@@ -158,36 +178,11 @@ impl Stores {
         })
         .collect::<Result<Vec<_>>>()?;
 
-        let batch = self.keyspace.inner().batch();
-        batch.commit_partitions(tuples)?;
+        self.keyspace.inner().batch().commit_partitions(tuples)?;
 
         self.keyspace
             .persist(PersistMode::SyncAll)
             .map_err(|e| e.into())
-    }
-
-    fn iter_any_store(&self) -> impl Iterator<Item = &dyn AnyStore> {
-        [
-            &self.blockhashprefix_to_height as &dyn AnyStore,
-            &self.height_to_coinbase_tag,
-            &self.txidprefix_to_txindex,
-        ]
-        .into_iter()
-        .chain(
-            self.addresstype_to_addresshash_to_addressindex
-                .iter()
-                .map(|s| s as &dyn AnyStore),
-        )
-        .chain(
-            self.addresstype_to_addressindex_and_txindex
-                .iter()
-                .map(|s| s as &dyn AnyStore),
-        )
-        .chain(
-            self.addresstype_to_addressindex_and_unspentoutpoint
-                .iter()
-                .map(|s| s as &dyn AnyStore),
-        )
     }
 
     pub fn rollback_if_needed(

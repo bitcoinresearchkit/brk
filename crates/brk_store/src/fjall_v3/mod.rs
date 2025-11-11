@@ -175,6 +175,10 @@ where
     ByteView: From<K> + From<V>,
     Self: Send + Sync,
 {
+    fn keyspace(&self) -> &fjall3::Keyspace {
+        &self.keyspace
+    }
+
     fn take_all_f2(&mut self) -> Vec<fjall2::InnerItem> {
         vec![]
     }
@@ -183,7 +187,7 @@ where
         panic!()
     }
 
-    fn take_all_f3(&mut self) -> Vec<fjall3::Item> {
+    fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem> {
         let mut items = mem::take(&mut self.puts)
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
@@ -194,10 +198,7 @@ where
             )
             .collect::<Vec<_>>();
         items.sort_unstable();
-        items
-            .into_iter()
-            .map(|v| v.fjalled(&self.keyspace))
-            .collect()
+        items.into_iter().map(|v| v.fjalled()).collect()
     }
 
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
@@ -261,22 +262,18 @@ impl<K, V> Item<K, V> {
         }
     }
 
-    pub fn fjalled(self, keyspace: &Keyspace) -> fjall3::Item
+    pub fn fjalled(self) -> fjall3::InnerItem
     where
         K: Into<ByteView>,
         V: Into<ByteView>,
     {
-        let keyspace_id = keyspace.id;
-        // let keyspace_id = keyspace.inner().id;
         match self {
-            Item::Value { key, value } => fjall3::Item {
-                keyspace_id,
+            Item::Value { key, value } => fjall3::InnerItem {
                 key: key.into().into(),
                 value: value.into().into(),
                 value_type: ValueType::Value,
             },
-            Item::Tomb(key) => fjall3::Item {
-                keyspace_id,
+            Item::Tomb(key) => fjall3::InnerItem {
                 key: key.into().into(),
                 value: [].into(),
                 value_type: ValueType::Tombstone,
