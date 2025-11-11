@@ -8,7 +8,7 @@ use brk_types::{
     OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
     Vout,
 };
-use fjall3::{Database, PersistMode, WriteBatch};
+use fjall3::{Database, PersistMode};
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, VecIndex, VecIterator};
 
@@ -158,7 +158,7 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        let items = [
+        let tuples = [
             &mut self.blockhashprefix_to_height as &mut dyn AnyStore,
             &mut self.height_to_coinbase_tag,
             &mut self.txidprefix_to_txindex,
@@ -182,16 +182,11 @@ impl Stores {
         .map(|store| {
             let items = store.take_all_f3();
             store.export_meta_if_needed(height)?;
-            Ok(items)
+            Ok((store.keyspace(), items))
         })
         .collect::<Result<Vec<_>>>()?;
 
-        let capacity = items.iter().map(|v| v.len()).sum();
-        let mut batch = WriteBatch::with_capacity(self.database.clone(), capacity);
-        items.into_iter().for_each(|items| {
-            batch.ingest(items);
-        });
-        batch.commit()?;
+        self.database.batch().commit_partitions(tuples)?;
 
         self.database
             .persist(PersistMode::SyncAll)
@@ -203,9 +198,6 @@ impl Stores {
             &self.blockhashprefix_to_height as &dyn AnyStore,
             &self.height_to_coinbase_tag,
             &self.txidprefix_to_txindex,
-            // &self.addresshash_to_typeindex,
-            // &self.addresstype_to_addressindex_and_txindex,
-            // &self.addresstype_to_addressindex_and_unspentoutpoint,
         ]
         .into_iter()
         .chain(
@@ -233,11 +225,6 @@ impl Stores {
         if self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?
             && self.height_to_coinbase_tag.is_empty()?
-            // && self.addresshash_to_typeindex.is_empty()?
-            // && self.addresstype_to_addressindex_and_txindex.is_empty()?
-            // && self
-            //     .addresstype_to_addressindex_and_unspentoutpoint
-            //     .is_empty()?
             && self
                 .addresstype_to_addresshash_to_addressindex
                 .iter()

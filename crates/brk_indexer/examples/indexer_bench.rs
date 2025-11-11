@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path, time::Instant};
+use std::{env, fs, io::Write, path::Path, time::Instant};
 
 use brk_bencher::Bencher;
 use brk_error::Result;
@@ -6,10 +6,11 @@ use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
+use log::debug;
 use vecdb::Exit;
 
 fn main() -> Result<()> {
-    brk_logger::init(Some(Path::new(".log")))?;
+    brk_logger::init(None)?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
@@ -31,21 +32,24 @@ fn main() -> Result<()> {
 
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let exit = Exit::new();
-    exit.set_ctrlc_handler();
-
     let mut bencher =
         Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("indexed/stores"))?;
     bencher.start()?;
+
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
+    let bencher_clone = bencher.clone();
+    exit.register_cleanup(move || {
+        let _ = bencher_clone.stop();
+        debug!("Bench stopped.");
+    });
 
     let i = Instant::now();
     indexer.checked_index(&blocks, &client, &exit)?;
     dbg!(i.elapsed());
 
+    // We want to benchmark the drop too
     drop(indexer);
-
-    // Stop and finalize
-    bencher.stop()?;
 
     Ok(())
 }

@@ -11,3 +11,5 @@ build = "build.rs"
 
 [dependencies]
 brk_error = { workspace = true }
+brk_logger = { workspace = true }
+parking_lot = { workspace = true }
