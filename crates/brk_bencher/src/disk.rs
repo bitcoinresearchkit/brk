@@ -1,24 +1,34 @@
 use std::collections::HashMap;
-use std::fs;
-use std::io;
+use std::fs::{self, File};
+use std::io::{self, Write};
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 pub struct DiskMonitor {
     cache: HashMap<PathBuf, (u64, SystemTime)>, // path -> (bytes_used, mtime)
+    monitored_path: PathBuf,
+    writer: File,
 }
 
 impl DiskMonitor {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(monitored_path: &Path, csv_path: &Path) -> io::Result<Self> {
+        let mut writer = File::create(csv_path)?;
+        writeln!(writer, "timestamp_ms,disk_usage")?;
+
+        Ok(Self {
             cache: HashMap::new(),
-        }
+            monitored_path: monitored_path.to_path_buf(),
+            writer,
+        })
     }
 
-    /// Get disk usage in bytes (matches `du` and Finder)
-    pub fn get_disk_usage(&mut self, path: &Path) -> io::Result<u64> {
-        self.scan_recursive(path)
+    /// Record disk usage at the given timestamp
+    pub fn record(&mut self, elapsed_ms: u128) -> io::Result<()> {
+        if let Ok(bytes) = self.scan_recursive(&self.monitored_path.clone()) {
+            writeln!(self.writer, "{},{}", elapsed_ms, bytes)?;
+        }
+        Ok(())
     }
 
     fn scan_recursive(&mut self, path: &Path) -> io::Result<u64> {

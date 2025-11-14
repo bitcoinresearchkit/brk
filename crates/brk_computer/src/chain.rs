@@ -10,8 +10,8 @@ use brk_types::{
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, IterableCloneableVec, IterableVec, LazyVecFrom1, LazyVecFrom2,
-    LazyVecFrom3, PAGE_SIZE, TypedVecIterator, VecIndex,
+    AnyVec, Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, IterableVec,
+    LazyVecFrom1, LazyVecFrom2, PAGE_SIZE, TypedVecIterator, VecIndex, unlikely,
 };
 
 use crate::grouped::{
@@ -71,13 +71,11 @@ pub struct Vecs {
     pub indexes_to_fee: ComputedValueVecsFromTxindex,
     pub indexes_to_fee_rate: ComputedVecsFromTxindex<FeeRate>,
     /// Value == 0 when Coinbase
-    pub txindex_to_input_value:
-        LazyVecFrom3<TxIndex, Sats, TxIndex, TxInIndex, TxIndex, StoredU64, TxInIndex, Sats>,
+    pub txindex_to_input_value: EagerVec<TxIndex, Sats>,
     pub indexes_to_sent: ComputedValueVecsFromHeight,
     // pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU64>,
-    pub txindex_to_output_value:
-        LazyVecFrom3<TxIndex, Sats, TxIndex, TxOutIndex, TxIndex, StoredU64, TxOutIndex, Sats>,
+    pub txindex_to_output_value: EagerVec<TxIndex, Sats>,
     // pub indexes_to_output_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_p2a_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_p2ms_count: ComputedVecsFromHeight<StoredU64>,
@@ -151,7 +149,7 @@ impl Vecs {
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join("chain"))?;
-        db.set_min_len(PAGE_SIZE * 10_000_000)?;
+        db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version + Version::ZERO;
 
@@ -202,82 +200,11 @@ impl Vecs {
             },
         );
 
-        let txindex_to_input_value = LazyVecFrom3::init(
-            "input_value",
-            version + Version::ZERO,
-            indexer.vecs.txindex_to_first_txinindex.boxed_clone(),
-            indexes.txindex_to_input_count.boxed_clone(),
-            txinindex_to_value.boxed_clone(),
-            |index: TxIndex,
-             txindex_to_first_txinindex_iter,
-             txindex_to_input_count_iter,
-             txinindex_to_value_iter| {
-                let txindex = index.to_usize();
-                txindex_to_first_txinindex_iter
-                    .get_at(txindex)
-                    .map(|first_index| {
-                        let first_index = usize::from(first_index);
-                        let count = *txindex_to_input_count_iter.get_at_unwrap(txindex);
-                        let range = first_index..first_index + count as usize;
-                        range.into_iter().fold(Sats::ZERO, |total, txinindex| {
-                            total + txinindex_to_value_iter.get_at_unwrap(txinindex)
-                        })
-                    })
-            },
-        );
+        let txindex_to_input_value =
+            EagerVec::forced_import_compressed(&db, "input_value", version + Version::ZERO)?;
 
-        // let indexes_to_input_value: ComputedVecsFromTxindex<Sats> =
-        //     ComputedVecsFromTxindex::forced_import(
-        //         db,
-        //         "input_value",
-        //         true,
-        //         version + Version::ZERO,
-        //         format,
-        // computation,
-        // StorableVecGeneatorOptions::default()
-        //             .add_average()
-        //             .add_sum()
-        //             .add_cumulative(),
-        //     )?;
-
-        let txindex_to_output_value = LazyVecFrom3::init(
-            "output_value",
-            version + Version::ZERO,
-            indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
-            indexes.txindex_to_output_count.boxed_clone(),
-            indexer.vecs.txoutindex_to_value.boxed_clone(),
-            |index: TxIndex,
-             txindex_to_first_txoutindex_iter,
-             txindex_to_output_count_iter,
-             txoutindex_to_value_iter| {
-                let txindex = index.to_usize();
-                txindex_to_first_txoutindex_iter
-                    .get_at(txindex)
-                    .map(|first_index| {
-                        let first_index = usize::from(first_index);
-                        let count = *txindex_to_output_count_iter.get_at_unwrap(txindex);
-                        let range = first_index..first_index + count as usize;
-                        range.into_iter().fold(Sats::ZERO, |total, txoutindex| {
-                            let v = txoutindex_to_value_iter.get_at_unwrap(txoutindex);
-                            total + v
-                        })
-                    })
-            },
-        );
-
-        // let indexes_to_output_value: ComputedVecsFromTxindex<Sats> =
-        //     ComputedVecsFromTxindex::forced_import(
-        //         db,
-        //         "output_value",
-        //         true,
-        //         version + Version::ZERO,
-        //         format,
-        // computation,
-        // StorableVecGeneatorOptions::default()
-        //             .add_average()
-        //             .add_sum()
-        //             .add_cumulative(),
-        //     )?;
+        let txindex_to_output_value =
+            EagerVec::forced_import_compressed(&db, "output_value", version + Version::ZERO)?;
 
         let txindex_to_fee =
             EagerVec::forced_import_compressed(&db, "fee", version + Version::ZERO)?;
@@ -1084,8 +1011,6 @@ impl Vecs {
 
             txindex_to_is_coinbase,
             txinindex_to_value,
-            // indexes_to_input_value,
-            // indexes_to_output_value,
             txindex_to_input_value,
             txindex_to_output_value,
             txindex_to_fee,
@@ -1101,6 +1026,8 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
+
+        this.db.compact()?;
 
         Ok(this)
     }
@@ -1365,7 +1292,9 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        let mut txoutindex_to_value_iter = indexer.vecs.txoutindex_to_value.into_iter();
+        // Because random reads are needed, reading directly from the mmap is faster than using buffered iterators
+        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
+        let txoutindex_to_value_reader = indexer.vecs.txoutindex_to_value.create_reader();
         self.txinindex_to_value.compute_transform(
             starting_indexes.txinindex,
             &indexes.txinindex_to_txoutindex,
@@ -1373,64 +1302,56 @@ impl Vecs {
                 let value = if txoutindex == TxOutIndex::COINBASE {
                     Sats::MAX
                 } else {
-                    txoutindex_to_value_iter.get_unwrap(txoutindex)
+                    txoutindex_to_value
+                        .unchecked_read(txoutindex, &txoutindex_to_value_reader)
+                        .unwrap()
                 };
                 (txinindex, value)
             },
             exit,
         )?;
 
-        // indexes.txinindex_to_txoutindex.boxed_clone(),
-        // indexer.vecs.txoutindex_to_value.boxed_clone(),
-        // |index: TxInIndex, txinindex_to_txoutindex_iter, txoutindex_to_value_iter| {
-        //     txinindex_to_txoutindex_iter.get_unwrap(index.to_usize()).map(
-        //         |(txinindex, txoutindex)| {
-        //             let txoutindex = txoutindex;
-        //             if txoutindex == TxOutIndex::COINBASE {
-        //                 Sats::MAX
-        //             } else if let Some((_, value)) =
-        //                 txoutindex_to_value_iter.get_unwrap(txoutindex.to_usize())
-        //             {
-        //                 value
-        //             } else {
-        //                 dbg!(txinindex, txoutindex);
-        //                 panic!()
-        //             }
-        //         },
-        //     )
-        // },
+        // Debug: verify the computed txinindex_to_value
+        dbg!("txinindex_to_value first 20:");
+        for i in 0..20.min(self.txinindex_to_value.len()) {
+            let val = self.txinindex_to_value.read_at_unwrap_once(i);
+            dbg!((TxInIndex::from(i), val));
+        }
 
-        // self.indexes_to_output_value.compute_all(
-        //     indexer,
-        //     indexes,
-        //     starting_indexes,
-        //     exit,
-        //     |vec| {
-        //         vec.compute_sum_from_indexes(
-        //             starting_indexes.txindex,
-        //             &indexer.vecs.txindex_to_first_txoutindex,
-        //             self.indexes_to_output_count.txindex.as_ref().unwrap(),
-        //             &indexer.vecs.txoutindex_to_value,
-        //             exit,
-        //         )
-        //     },
-        // )?;
+        // Debug: verify the computed txindex_to_input_count
+        dbg!("txindex_to_input_count first 20:");
+        for i in 0..20.min(indexes.txindex_to_input_count.len()) {
+            let val = indexes.txindex_to_input_count.read_at_unwrap_once(i);
+            dbg!((TxInIndex::from(i), val));
+        }
 
-        // self.indexes_to_input_value.compute_all(
-        //     indexer,
-        //     indexes,
-        //     starting_indexes,
-        //     exit,
-        //     |vec| {
-        //         vec.compute_sum_from_indexes(
-        //             starting_indexes.txindex,
-        //             &indexer.vecs.txindex_to_first_txinindex,
-        //             self.indexes_to_input_count.txindex.as_ref().unwrap(),
-        //             &self.txinindex_to_value,
-        //             exit,
-        //         )
-        //     },
-        // )?;
+        self.txindex_to_input_value.compute_sum_from_indexes(
+            starting_indexes.txindex,
+            &indexer.vecs.txindex_to_first_txinindex,
+            &indexes.txindex_to_input_count,
+            &self.txinindex_to_value,
+            exit,
+        )?;
+
+        // Debug: verify the computed input values
+        for i in 0..10.min(self.txindex_to_input_value.len()) {
+            let val = self.txindex_to_input_value.read_at_unwrap_once(i);
+            dbg!((TxIndex::from(i), "input_value", val));
+        }
+
+        self.txindex_to_output_value.compute_sum_from_indexes(
+            starting_indexes.txindex,
+            &indexer.vecs.txindex_to_first_txoutindex,
+            &indexes.txindex_to_output_count,
+            &indexer.vecs.txoutindex_to_value,
+            exit,
+        )?;
+
+        // Debug: verify the computed output values
+        for i in 0..10.min(self.txindex_to_output_value.len()) {
+            let val = self.txindex_to_output_value.read_at_unwrap_once(i);
+            dbg!((TxIndex::from(i), "output_value", val));
+        }
 
         self.txindex_to_fee.compute_transform2(
             starting_indexes.txindex,
@@ -1439,9 +1360,10 @@ impl Vecs {
             |(i, input, output, ..)| {
                 (
                     i,
-                    if input.is_max() {
+                    if unlikely(input.is_max()) {
                         Sats::ZERO
                     } else {
+                        dbg!((i, input, output));
                         input.checked_sub(output).unwrap()
                     },
                 )

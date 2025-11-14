@@ -110,6 +110,7 @@ where
         .merge_branches()
         .unwrap()
     }
+
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
             Box::new(self.height.iter_any_writable());

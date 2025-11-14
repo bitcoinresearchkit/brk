@@ -7,7 +7,7 @@ use brk_traversable::Traversable;
 use brk_types::{DateIndex, Height, OHLCCents, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec, PAGE_SIZE, RawVec,
-    VecIndex, VecIterator,
+    TypedVecIterator, VecIndex,
 };
 
 use super::{Indexes, indexes};
@@ -49,6 +49,8 @@ impl Vecs {
                 .collect(),
         )?;
 
+        this.db.compact()?;
+
         Ok(this)
     }
 
@@ -75,24 +77,22 @@ impl Vecs {
         let index = starting_indexes
             .height
             .min(Height::from(self.height_to_price_ohlc_in_cents.len()));
+        let mut prev_timestamp = index
+            .decremented()
+            .map(|prev_i| height_to_timestamp.iter().unwrap().get_unwrap(prev_i));
         height_to_timestamp
             .iter()?
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, v)| -> Result<()> {
                 self.height_to_price_ohlc_in_cents.forced_push_at(
                     i,
                     self.fetcher
-                        .get_height(
-                            i.into(),
-                            v,
-                            i.decremented().map(|prev_i| {
-                                height_to_timestamp.into_iter().get_at_unwrap(prev_i)
-                            }),
-                        )
+                        .get_height(i.into(), v, prev_timestamp)
                         .unwrap(),
                     exit,
                 )?;
+                prev_timestamp = Some(v);
                 Ok(())
             })?;
         self.height_to_price_ohlc_in_cents.safe_flush(exit)?;
@@ -100,24 +100,18 @@ impl Vecs {
         let index = starting_indexes
             .dateindex
             .min(DateIndex::from(self.dateindex_to_price_ohlc_in_cents.len()));
-        let mut prev = None;
+        let mut prev = Some(index.decremented().map_or(OHLCCents::default(), |prev_i| {
+            self.dateindex_to_price_ohlc_in_cents
+                .iter()
+                .unwrap()
+                .get_unwrap(prev_i)
+        }));
         indexes
             .dateindex_to_date
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, d)| -> Result<()> {
-                if prev.is_none() {
-                    let i = i.to_usize();
-                    prev.replace(if i > 0 {
-                        self.dateindex_to_price_ohlc_in_cents
-                            .into_iter()
-                            .get_at_unwrap(i - 1)
-                    } else {
-                        OHLCCents::default()
-                    });
-                }
-
                 let ohlc = if i.to_usize() + 100 >= self.dateindex_to_price_ohlc_in_cents.len()
                     && let Ok(mut ohlc) = self.fetcher.get_date(d)
                 {

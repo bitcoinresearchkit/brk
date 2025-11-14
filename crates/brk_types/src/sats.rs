@@ -7,7 +7,7 @@ use bitcoin::Amount;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable};
+use vecdb::{CheckedSub, Compressable, Formattable, SaturatingAdd};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -97,7 +97,7 @@ impl AddAssign for Sats {
     }
 }
 
-impl CheckedSub<Sats> for Sats {
+impl CheckedSub for Sats {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
@@ -106,6 +106,12 @@ impl CheckedSub<Sats> for Sats {
 impl CheckedSub<usize> for Sats {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         self.0.checked_sub(rhs as u64).map(Self::from)
+    }
+}
+
+impl SaturatingAdd for Sats {
+    fn saturating_add(self, rhs: Self) -> Self {
+        Self(self.0.saturating_add(rhs.0))
     }
 }
 

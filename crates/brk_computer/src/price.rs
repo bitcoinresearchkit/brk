@@ -6,10 +6,7 @@ use brk_types::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec, PAGE_SIZE,
-    RawVec, VecIndex,
-};
+use vecdb::{Database, EagerVec, Exit, PAGE_SIZE};
 
 use crate::{fetched, grouped::Source};
 
@@ -26,14 +23,14 @@ pub struct Vecs {
     pub dateindex_to_price_close_in_cents: EagerVec<DateIndex, Close<Cents>>,
     pub dateindex_to_price_high_in_cents: EagerVec<DateIndex, High<Cents>>,
     pub dateindex_to_price_low_in_cents: EagerVec<DateIndex, Low<Cents>>,
-    pub dateindex_to_price_ohlc: RawVec<DateIndex, OHLCDollars>,
-    pub dateindex_to_price_ohlc_in_sats: RawVec<DateIndex, OHLCSats>,
+    pub dateindex_to_price_ohlc: EagerVec<DateIndex, OHLCDollars>,
+    pub dateindex_to_price_ohlc_in_sats: EagerVec<DateIndex, OHLCSats>,
     pub dateindex_to_price_open_in_cents: EagerVec<DateIndex, Open<Cents>>,
     pub height_to_price_close_in_cents: EagerVec<Height, Close<Cents>>,
     pub height_to_price_high_in_cents: EagerVec<Height, High<Cents>>,
     pub height_to_price_low_in_cents: EagerVec<Height, Low<Cents>>,
-    pub height_to_price_ohlc: RawVec<Height, OHLCDollars>,
-    pub height_to_price_ohlc_in_sats: RawVec<Height, OHLCSats>,
+    pub height_to_price_ohlc: EagerVec<Height, OHLCDollars>,
+    pub height_to_price_ohlc_in_sats: EagerVec<Height, OHLCSats>,
     pub height_to_price_open_in_cents: EagerVec<Height, Open<Cents>>,
     pub timeindexes_to_price_close: ComputedVecsFromDateIndex<Close<Dollars>>,
     pub timeindexes_to_price_high: ComputedVecsFromDateIndex<High<Dollars>>,
@@ -51,22 +48,22 @@ pub struct Vecs {
     pub chainindexes_to_price_high_in_sats: ComputedVecsFromHeightStrict<High<Sats>>,
     pub chainindexes_to_price_low_in_sats: ComputedVecsFromHeightStrict<Low<Sats>>,
     pub chainindexes_to_price_close_in_sats: ComputedVecsFromHeightStrict<Close<Sats>>,
-    pub weekindex_to_price_ohlc: RawVec<WeekIndex, OHLCDollars>,
-    pub weekindex_to_price_ohlc_in_sats: RawVec<WeekIndex, OHLCSats>,
-    pub difficultyepoch_to_price_ohlc: RawVec<DifficultyEpoch, OHLCDollars>,
-    pub difficultyepoch_to_price_ohlc_in_sats: RawVec<DifficultyEpoch, OHLCSats>,
-    pub monthindex_to_price_ohlc: RawVec<MonthIndex, OHLCDollars>,
-    pub monthindex_to_price_ohlc_in_sats: RawVec<MonthIndex, OHLCSats>,
-    pub quarterindex_to_price_ohlc: RawVec<QuarterIndex, OHLCDollars>,
-    pub quarterindex_to_price_ohlc_in_sats: RawVec<QuarterIndex, OHLCSats>,
-    pub semesterindex_to_price_ohlc: RawVec<SemesterIndex, OHLCDollars>,
-    pub semesterindex_to_price_ohlc_in_sats: RawVec<SemesterIndex, OHLCSats>,
-    pub yearindex_to_price_ohlc: RawVec<YearIndex, OHLCDollars>,
-    pub yearindex_to_price_ohlc_in_sats: RawVec<YearIndex, OHLCSats>,
+    pub weekindex_to_price_ohlc: EagerVec<WeekIndex, OHLCDollars>,
+    pub weekindex_to_price_ohlc_in_sats: EagerVec<WeekIndex, OHLCSats>,
+    pub difficultyepoch_to_price_ohlc: EagerVec<DifficultyEpoch, OHLCDollars>,
+    pub difficultyepoch_to_price_ohlc_in_sats: EagerVec<DifficultyEpoch, OHLCSats>,
+    pub monthindex_to_price_ohlc: EagerVec<MonthIndex, OHLCDollars>,
+    pub monthindex_to_price_ohlc_in_sats: EagerVec<MonthIndex, OHLCSats>,
+    pub quarterindex_to_price_ohlc: EagerVec<QuarterIndex, OHLCDollars>,
+    pub quarterindex_to_price_ohlc_in_sats: EagerVec<QuarterIndex, OHLCSats>,
+    pub semesterindex_to_price_ohlc: EagerVec<SemesterIndex, OHLCDollars>,
+    pub semesterindex_to_price_ohlc_in_sats: EagerVec<SemesterIndex, OHLCSats>,
+    pub yearindex_to_price_ohlc: EagerVec<YearIndex, OHLCDollars>,
+    pub yearindex_to_price_ohlc_in_sats: EagerVec<YearIndex, OHLCSats>,
     // pub halvingepoch_to_price_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
     // pub halvingepoch_to_price_ohlc_in_sats: StorableVec<Halvingepoch, OHLCSats>,
-    pub decadeindex_to_price_ohlc: RawVec<DecadeIndex, OHLCDollars>,
-    pub decadeindex_to_price_ohlc_in_sats: RawVec<DecadeIndex, OHLCSats>,
+    pub decadeindex_to_price_ohlc: EagerVec<DecadeIndex, OHLCDollars>,
+    pub decadeindex_to_price_ohlc_in_sats: EagerVec<DecadeIndex, OHLCSats>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -78,12 +75,12 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let this = Self {
-            dateindex_to_price_ohlc: RawVec::forced_import(
+            dateindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            dateindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            dateindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -108,12 +105,12 @@ impl Vecs {
                 "price_open_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_ohlc: RawVec::forced_import(
+            height_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_ohlc_in_sats: RawVec::forced_import(
+            height_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -250,74 +247,74 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 VecBuilderOptions::default().add_last(),
             )?,
-            weekindex_to_price_ohlc: RawVec::forced_import(
+            weekindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            weekindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            weekindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            difficultyepoch_to_price_ohlc: RawVec::forced_import(
+            difficultyepoch_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            difficultyepoch_to_price_ohlc_in_sats: RawVec::forced_import(
+            difficultyepoch_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            monthindex_to_price_ohlc: RawVec::forced_import(
+            monthindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            monthindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            monthindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            quarterindex_to_price_ohlc: RawVec::forced_import(
+            quarterindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            quarterindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            quarterindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            semesterindex_to_price_ohlc: RawVec::forced_import(
+            semesterindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            semesterindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            semesterindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            yearindex_to_price_ohlc: RawVec::forced_import(
+            yearindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            yearindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            yearindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
             // halvingepoch_to_price_ohlc: StorableVec::forced_import(db,
             // "halvingepoch_to_price_ohlc"), version + VERSION + Version::ZERO, format)?,
-            decadeindex_to_price_ohlc: RawVec::forced_import(
+            decadeindex_to_price_ohlc: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            decadeindex_to_price_ohlc_in_sats: RawVec::forced_import(
+            decadeindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -331,6 +328,8 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
+
+        this.db.compact()?;
 
         Ok(this)
     }
@@ -382,20 +381,12 @@ impl Vecs {
             exit,
         )?;
 
-        let index = starting_indexes
-            .height
-            .min(Height::from(self.height_to_price_ohlc.len()));
-        fetched
-            .height_to_price_ohlc_in_cents
-            .iter()?
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, v)| -> Result<()> {
-                self.height_to_price_ohlc
-                    .forced_push_at(i, OHLCDollars::from(v), exit)?;
-                Ok(())
-            })?;
-        self.height_to_price_ohlc.safe_flush(exit)?;
+        self.height_to_price_ohlc.compute_transform(
+            starting_indexes.height,
+            &fetched.height_to_price_ohlc_in_cents,
+            |(h, cents, ..)| (h, OHLCDollars::from(cents)),
+            exit,
+        )?;
 
         self.dateindex_to_price_open_in_cents.compute_transform(
             starting_indexes.dateindex,
@@ -425,20 +416,12 @@ impl Vecs {
             exit,
         )?;
 
-        let index = starting_indexes
-            .dateindex
-            .min(DateIndex::from(self.dateindex_to_price_ohlc.len()));
-        fetched
-            .dateindex_to_price_ohlc_in_cents
-            .iter()?
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, v)| -> Result<()> {
-                self.dateindex_to_price_ohlc
-                    .forced_push_at(i, OHLCDollars::from(v), exit)?;
-                Ok(())
-            })?;
-        self.dateindex_to_price_ohlc.safe_flush(exit)?;
+        self.dateindex_to_price_ohlc.compute_transform(
+            starting_indexes.dateindex,
+            &fetched.dateindex_to_price_ohlc_in_cents,
+            |(di, cents, ..)| (di, OHLCDollars::from(cents)),
+            exit,
+        )?;
 
         self.timeindexes_to_price_close
             .compute_all(starting_indexes, exit, |v| {
@@ -489,7 +472,7 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.close),
+                    |(h, ohlc, ..)| (h, ohlc.close),
                     exit,
                 )?;
                 Ok(())
@@ -500,7 +483,7 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.high),
+                    |(h, ohlc, ..)| (h, ohlc.high),
                     exit,
                 )?;
                 Ok(())
@@ -511,7 +494,7 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.low),
+                    |(h, ohlc, ..)| (h, ohlc.low),
                     exit,
                 )?;
                 Ok(())
@@ -522,33 +505,20 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.open),
+                    |(h, ohlc, ..)| (h, ohlc.open),
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        let mut weekindex_first_iter = self
-            .timeindexes_to_price_open
-            .weekindex
-            .unwrap_first()
-            .iter();
-        let mut weekindex_max_iter = self.timeindexes_to_price_high.weekindex.unwrap_max().iter();
-        let mut weekindex_min_iter = self.timeindexes_to_price_low.weekindex.unwrap_min().iter();
-        let index = starting_indexes
-            .weekindex
-            .min(WeekIndex::from(self.weekindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .weekindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = weekindex_first_iter.get_at_unwrap(i);
-                let high = weekindex_max_iter.get_at_unwrap(i);
-                let low = weekindex_min_iter.get_at_unwrap(i);
-                self.weekindex_to_price_ohlc.forced_push_at(
+        self.weekindex_to_price_ohlc.compute_transform4(
+            starting_indexes.weekindex,
+            self.timeindexes_to_price_open.weekindex.unwrap_first(),
+            self.timeindexes_to_price_high.weekindex.unwrap_max(),
+            self.timeindexes_to_price_low.weekindex.unwrap_min(),
+            self.timeindexes_to_price_close.weekindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -556,41 +526,23 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.weekindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut difficultyepoch_first_iter = self
-            .chainindexes_to_price_open
-            .difficultyepoch
-            .unwrap_first()
-            .iter();
-        let mut difficultyepoch_max_iter = self
-            .chainindexes_to_price_high
-            .difficultyepoch
-            .unwrap_max()
-            .iter();
-        let mut difficultyepoch_min_iter = self
-            .chainindexes_to_price_low
-            .difficultyepoch
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.difficultyepoch.min(DifficultyEpoch::from(
-            self.difficultyepoch_to_price_ohlc.len(),
-        ));
-        self.chainindexes_to_price_close
-            .difficultyepoch
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = difficultyepoch_first_iter.get_at_unwrap(i);
-                let high = difficultyepoch_max_iter.get_at_unwrap(i);
-                let low = difficultyepoch_min_iter.get_at_unwrap(i);
-                self.difficultyepoch_to_price_ohlc.forced_push_at(
+        self.difficultyepoch_to_price_ohlc.compute_transform4(
+            starting_indexes.difficultyepoch,
+            self.chainindexes_to_price_open
+                .difficultyepoch
+                .unwrap_first(),
+            self.chainindexes_to_price_high.difficultyepoch.unwrap_max(),
+            self.chainindexes_to_price_low.difficultyepoch.unwrap_min(),
+            self.chainindexes_to_price_close
+                .difficultyepoch
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -598,37 +550,19 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.difficultyepoch_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut monthindex_first_iter = self
-            .timeindexes_to_price_open
-            .monthindex
-            .unwrap_first()
-            .iter();
-        let mut monthindex_max_iter = self
-            .timeindexes_to_price_high
-            .monthindex
-            .unwrap_max()
-            .iter();
-        let mut monthindex_min_iter = self.timeindexes_to_price_low.monthindex.unwrap_min().iter();
-        let index = starting_indexes
-            .monthindex
-            .min(MonthIndex::from(self.monthindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .monthindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = monthindex_first_iter.get_at_unwrap(i);
-                let high = monthindex_max_iter.get_at_unwrap(i);
-                let low = monthindex_min_iter.get_at_unwrap(i);
-                self.monthindex_to_price_ohlc.forced_push_at(
+        self.monthindex_to_price_ohlc.compute_transform4(
+            starting_indexes.monthindex,
+            self.timeindexes_to_price_open.monthindex.unwrap_first(),
+            self.timeindexes_to_price_high.monthindex.unwrap_max(),
+            self.timeindexes_to_price_low.monthindex.unwrap_min(),
+            self.timeindexes_to_price_close.monthindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -636,41 +570,19 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.monthindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut quarterindex_first_iter = self
-            .timeindexes_to_price_open
-            .quarterindex
-            .unwrap_first()
-            .iter();
-        let mut quarterindex_max_iter = self
-            .timeindexes_to_price_high
-            .quarterindex
-            .unwrap_max()
-            .iter();
-        let mut quarterindex_min_iter = self
-            .timeindexes_to_price_low
-            .quarterindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes
-            .quarterindex
-            .min(QuarterIndex::from(self.quarterindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .quarterindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = quarterindex_first_iter.get_at_unwrap(i);
-                let high = quarterindex_max_iter.get_at_unwrap(i);
-                let low = quarterindex_min_iter.get_at_unwrap(i);
-                self.quarterindex_to_price_ohlc.forced_push_at(
+        self.quarterindex_to_price_ohlc.compute_transform4(
+            starting_indexes.quarterindex,
+            self.timeindexes_to_price_open.quarterindex.unwrap_first(),
+            self.timeindexes_to_price_high.quarterindex.unwrap_max(),
+            self.timeindexes_to_price_low.quarterindex.unwrap_min(),
+            self.timeindexes_to_price_close.quarterindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -678,41 +590,19 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.quarterindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut semesterindex_first_iter = self
-            .timeindexes_to_price_open
-            .semesterindex
-            .unwrap_first()
-            .iter();
-        let mut semesterindex_max_iter = self
-            .timeindexes_to_price_high
-            .semesterindex
-            .unwrap_max()
-            .iter();
-        let mut semesterindex_min_iter = self
-            .timeindexes_to_price_low
-            .semesterindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes
-            .semesterindex
-            .min(SemesterIndex::from(self.semesterindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .semesterindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = semesterindex_first_iter.get_at_unwrap(i);
-                let high = semesterindex_max_iter.get_at_unwrap(i);
-                let low = semesterindex_min_iter.get_at_unwrap(i);
-                self.semesterindex_to_price_ohlc.forced_push_at(
+        self.semesterindex_to_price_ohlc.compute_transform4(
+            starting_indexes.semesterindex,
+            self.timeindexes_to_price_open.semesterindex.unwrap_first(),
+            self.timeindexes_to_price_high.semesterindex.unwrap_max(),
+            self.timeindexes_to_price_low.semesterindex.unwrap_min(),
+            self.timeindexes_to_price_close.semesterindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -720,33 +610,19 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.semesterindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut yearindex_first_iter = self
-            .timeindexes_to_price_open
-            .yearindex
-            .unwrap_first()
-            .iter();
-        let mut yearindex_max_iter = self.timeindexes_to_price_high.yearindex.unwrap_max().iter();
-        let mut yearindex_min_iter = self.timeindexes_to_price_low.yearindex.unwrap_min().iter();
-        let index = starting_indexes
-            .yearindex
-            .min(YearIndex::from(self.yearindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .yearindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = yearindex_first_iter.get_at_unwrap(i);
-                let high = yearindex_max_iter.get_at_unwrap(i);
-                let low = yearindex_min_iter.get_at_unwrap(i);
-                self.yearindex_to_price_ohlc.forced_push_at(
+        self.yearindex_to_price_ohlc.compute_transform4(
+            starting_indexes.yearindex,
+            self.timeindexes_to_price_open.yearindex.unwrap_first(),
+            self.timeindexes_to_price_high.yearindex.unwrap_max(),
+            self.timeindexes_to_price_low.yearindex.unwrap_min(),
+            self.timeindexes_to_price_close.yearindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -754,44 +630,22 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.yearindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
         // self.halvingepoch_to_price_ohlc
         //     .compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
 
-        let mut decadeindex_first_iter = self
-            .timeindexes_to_price_open
-            .decadeindex
-            .unwrap_first()
-            .iter();
-        let mut decadeindex_max_iter = self
-            .timeindexes_to_price_high
-            .decadeindex
-            .unwrap_max()
-            .iter();
-        let mut decadeindex_min_iter = self
-            .timeindexes_to_price_low
-            .decadeindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes
-            .decadeindex
-            .min(DecadeIndex::from(self.decadeindex_to_price_ohlc.len()));
-        self.timeindexes_to_price_close
-            .decadeindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                let open = decadeindex_first_iter.get_at_unwrap(i);
-                let high = decadeindex_max_iter.get_at_unwrap(i);
-                let low = decadeindex_min_iter.get_at_unwrap(i);
-                self.decadeindex_to_price_ohlc.forced_push_at(
+        self.decadeindex_to_price_ohlc.compute_transform4(
+            starting_indexes.decadeindex,
+            self.timeindexes_to_price_open.decadeindex.unwrap_first(),
+            self.timeindexes_to_price_high.decadeindex.unwrap_max(),
+            self.timeindexes_to_price_low.decadeindex.unwrap_min(),
+            self.timeindexes_to_price_close.decadeindex.unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCDollars {
                         open,
@@ -799,11 +653,10 @@ impl Vecs {
                         low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.decadeindex_to_price_ohlc.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
         self.chainindexes_to_price_open_in_sats
             .compute(indexes, starting_indexes, exit, |v| {
@@ -893,351 +746,254 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let mut height_first_iter = self.chainindexes_to_price_open_in_sats.height.iter();
-        let mut height_max_iter = self.chainindexes_to_price_high_in_sats.height.iter();
-        let mut height_min_iter = self.chainindexes_to_price_low_in_sats.height.iter();
-        let index = starting_indexes
-            .height
-            .min(Height::from(self.height_to_price_ohlc_in_sats.len()));
-        self.chainindexes_to_price_close_in_sats
-            .height
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.height_to_price_ohlc_in_sats.forced_push_at(
+        self.height_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.height,
+            &self.chainindexes_to_price_open_in_sats.height,
+            &self.chainindexes_to_price_high_in_sats.height,
+            &self.chainindexes_to_price_low_in_sats.height,
+            &self.chainindexes_to_price_close_in_sats.height,
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: height_first_iter.get_at_unwrap(i),
-                        high: height_max_iter.get_at_unwrap(i),
-                        low: height_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.height_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut dateindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .dateindex
-            .as_ref()
-            .unwrap()
-            .iter();
-        let mut dateindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .dateindex
-            .as_ref()
-            .unwrap()
-            .iter();
-        let mut dateindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .dateindex
-            .as_ref()
-            .unwrap()
-            .iter();
-        let index = starting_indexes
-            .dateindex
-            .min(DateIndex::from(self.dateindex_to_price_ohlc_in_sats.len()));
-        self.timeindexes_to_price_close_in_sats
-            .dateindex
-            .as_ref()
-            .unwrap()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.dateindex_to_price_ohlc_in_sats.forced_push_at(
+        self.dateindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.dateindex,
+            self.timeindexes_to_price_open_in_sats
+                .dateindex
+                .as_ref()
+                .unwrap(),
+            self.timeindexes_to_price_high_in_sats
+                .dateindex
+                .as_ref()
+                .unwrap(),
+            self.timeindexes_to_price_low_in_sats
+                .dateindex
+                .as_ref()
+                .unwrap(),
+            self.timeindexes_to_price_close_in_sats
+                .dateindex
+                .as_ref()
+                .unwrap(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: dateindex_first_iter.get_at_unwrap(i),
-                        high: dateindex_max_iter.get_at_unwrap(i),
-                        low: dateindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.dateindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut weekindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .weekindex
-            .unwrap_first()
-            .iter();
-        let mut weekindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .weekindex
-            .unwrap_max()
-            .iter();
-        let mut weekindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .weekindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes
-            .weekindex
-            .min(WeekIndex::from(self.weekindex_to_price_ohlc_in_sats.len()));
-        self.timeindexes_to_price_close_in_sats
-            .weekindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.weekindex_to_price_ohlc_in_sats.forced_push_at(
+        self.weekindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.weekindex,
+            self.timeindexes_to_price_open_in_sats
+                .weekindex
+                .unwrap_first(),
+            self.timeindexes_to_price_high_in_sats
+                .weekindex
+                .unwrap_max(),
+            self.timeindexes_to_price_low_in_sats.weekindex.unwrap_min(),
+            self.timeindexes_to_price_close_in_sats
+                .weekindex
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: weekindex_first_iter.get_at_unwrap(i),
-                        high: weekindex_max_iter.get_at_unwrap(i),
-                        low: weekindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.weekindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut difficultyepoch_first_iter = self
-            .chainindexes_to_price_open_in_sats
-            .difficultyepoch
-            .unwrap_first()
-            .iter();
-        let mut difficultyepoch_max_iter = self
-            .chainindexes_to_price_high_in_sats
-            .difficultyepoch
-            .unwrap_max()
-            .iter();
-        let mut difficultyepoch_min_iter = self
-            .chainindexes_to_price_low_in_sats
-            .difficultyepoch
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.difficultyepoch.min(DifficultyEpoch::from(
-            self.difficultyepoch_to_price_ohlc_in_sats.len(),
-        ));
-        self.chainindexes_to_price_close_in_sats
-            .difficultyepoch
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.difficultyepoch_to_price_ohlc_in_sats.forced_push_at(
-                    i,
-                    OHLCSats {
-                        open: difficultyepoch_first_iter.get_at_unwrap(i),
-                        high: difficultyepoch_max_iter.get_at_unwrap(i),
-                        low: difficultyepoch_min_iter.get_at_unwrap(i),
-                        close,
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
         self.difficultyepoch_to_price_ohlc_in_sats
-            .safe_flush(exit)?;
+            .compute_transform4(
+                starting_indexes.difficultyepoch,
+                self.chainindexes_to_price_open_in_sats
+                    .difficultyepoch
+                    .unwrap_first(),
+                self.chainindexes_to_price_high_in_sats
+                    .difficultyepoch
+                    .unwrap_max(),
+                self.chainindexes_to_price_low_in_sats
+                    .difficultyepoch
+                    .unwrap_min(),
+                self.chainindexes_to_price_close_in_sats
+                    .difficultyepoch
+                    .unwrap_last(),
+                |(i, open, high, low, close, _)| {
+                    (
+                        i,
+                        OHLCSats {
+                            open,
+                            high,
+                            low,
+                            close,
+                        },
+                    )
+                },
+                exit,
+            )?;
 
-        let mut monthindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .monthindex
-            .unwrap_first()
-            .iter();
-        let mut monthindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .monthindex
-            .unwrap_max()
-            .iter();
-        let mut monthindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .monthindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.monthindex.min(MonthIndex::from(
-            self.monthindex_to_price_ohlc_in_sats.len(),
-        ));
-        self.timeindexes_to_price_close_in_sats
-            .monthindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.monthindex_to_price_ohlc_in_sats.forced_push_at(
+        self.monthindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.monthindex,
+            self.timeindexes_to_price_open_in_sats
+                .monthindex
+                .unwrap_first(),
+            self.timeindexes_to_price_high_in_sats
+                .monthindex
+                .unwrap_max(),
+            self.timeindexes_to_price_low_in_sats
+                .monthindex
+                .unwrap_min(),
+            self.timeindexes_to_price_close_in_sats
+                .monthindex
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: monthindex_first_iter.get_at_unwrap(i),
-                        high: monthindex_max_iter.get_at_unwrap(i),
-                        low: monthindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.monthindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut quarterindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .quarterindex
-            .unwrap_first()
-            .iter();
-        let mut quarterindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .quarterindex
-            .unwrap_max()
-            .iter();
-        let mut quarterindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .quarterindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.quarterindex.min(QuarterIndex::from(
-            self.quarterindex_to_price_ohlc_in_sats.len(),
-        ));
-        self.timeindexes_to_price_close_in_sats
-            .quarterindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.quarterindex_to_price_ohlc_in_sats.forced_push_at(
+        self.quarterindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.quarterindex,
+            self.timeindexes_to_price_open_in_sats
+                .quarterindex
+                .unwrap_first(),
+            self.timeindexes_to_price_high_in_sats
+                .quarterindex
+                .unwrap_max(),
+            self.timeindexes_to_price_low_in_sats
+                .quarterindex
+                .unwrap_min(),
+            self.timeindexes_to_price_close_in_sats
+                .quarterindex
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: quarterindex_first_iter.get_at_unwrap(i),
-                        high: quarterindex_max_iter.get_at_unwrap(i),
-                        low: quarterindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.quarterindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
-        let mut semesterindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .semesterindex
-            .unwrap_first()
-            .iter();
-        let mut semesterindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .semesterindex
-            .unwrap_max()
-            .iter();
-        let mut semesterindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .semesterindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.semesterindex.min(SemesterIndex::from(
-            self.semesterindex_to_price_ohlc_in_sats.len(),
-        ));
-        self.timeindexes_to_price_close_in_sats
-            .semesterindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.semesterindex_to_price_ohlc_in_sats.forced_push_at(
+        self.semesterindex_to_price_ohlc_in_sats
+            .compute_transform4(
+                starting_indexes.semesterindex,
+                self.timeindexes_to_price_open_in_sats
+                    .semesterindex
+                    .unwrap_first(),
+                self.timeindexes_to_price_high_in_sats
+                    .semesterindex
+                    .unwrap_max(),
+                self.timeindexes_to_price_low_in_sats
+                    .semesterindex
+                    .unwrap_min(),
+                self.timeindexes_to_price_close_in_sats
+                    .semesterindex
+                    .unwrap_last(),
+                |(i, open, high, low, close, _)| {
+                    (
+                        i,
+                        OHLCSats {
+                            open,
+                            high,
+                            low,
+                            close,
+                        },
+                    )
+                },
+                exit,
+            )?;
+
+        self.yearindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.yearindex,
+            self.timeindexes_to_price_open_in_sats
+                .yearindex
+                .unwrap_first(),
+            self.timeindexes_to_price_high_in_sats
+                .yearindex
+                .unwrap_max(),
+            self.timeindexes_to_price_low_in_sats.yearindex.unwrap_min(),
+            self.timeindexes_to_price_close_in_sats
+                .yearindex
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: semesterindex_first_iter.get_at_unwrap(i),
-                        high: semesterindex_max_iter.get_at_unwrap(i),
-                        low: semesterindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.semesterindex_to_price_ohlc_in_sats.safe_flush(exit)?;
-
-        let mut yearindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .yearindex
-            .unwrap_first()
-            .iter();
-        let mut yearindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .yearindex
-            .unwrap_max()
-            .iter();
-        let mut yearindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .yearindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes
-            .yearindex
-            .min(YearIndex::from(self.yearindex_to_price_ohlc_in_sats.len()));
-        self.timeindexes_to_price_close_in_sats
-            .yearindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.yearindex_to_price_ohlc_in_sats.forced_push_at(
-                    i,
-                    OHLCSats {
-                        open: yearindex_first_iter.get_at_unwrap(i),
-                        high: yearindex_max_iter.get_at_unwrap(i),
-                        low: yearindex_min_iter.get_at_unwrap(i),
-                        close,
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.yearindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
         // self.halvingepoch_to_price_ohlc
         //     _in_sats.compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
 
-        let mut decadeindex_first_iter = self
-            .timeindexes_to_price_open_in_sats
-            .decadeindex
-            .unwrap_first()
-            .iter();
-        let mut decadeindex_max_iter = self
-            .timeindexes_to_price_high_in_sats
-            .decadeindex
-            .unwrap_max()
-            .iter();
-        let mut decadeindex_min_iter = self
-            .timeindexes_to_price_low_in_sats
-            .decadeindex
-            .unwrap_min()
-            .iter();
-        let index = starting_indexes.decadeindex.min(DecadeIndex::from(
-            self.decadeindex_to_price_ohlc_in_sats.len(),
-        ));
-        self.timeindexes_to_price_close_in_sats
-            .decadeindex
-            .unwrap_last()
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, close)| -> Result<()> {
-                self.decadeindex_to_price_ohlc_in_sats.forced_push_at(
+        self.decadeindex_to_price_ohlc_in_sats.compute_transform4(
+            starting_indexes.decadeindex,
+            self.timeindexes_to_price_open_in_sats
+                .decadeindex
+                .unwrap_first(),
+            self.timeindexes_to_price_high_in_sats
+                .decadeindex
+                .unwrap_max(),
+            self.timeindexes_to_price_low_in_sats
+                .decadeindex
+                .unwrap_min(),
+            self.timeindexes_to_price_close_in_sats
+                .decadeindex
+                .unwrap_last(),
+            |(i, open, high, low, close, _)| {
+                (
                     i,
                     OHLCSats {
-                        open: decadeindex_first_iter.get_at_unwrap(i),
-                        high: decadeindex_max_iter.get_at_unwrap(i),
-                        low: decadeindex_min_iter.get_at_unwrap(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.decadeindex_to_price_ohlc_in_sats.safe_flush(exit)?;
+                )
+            },
+            exit,
+        )?;
 
         Ok(())
     }

@@ -1,6 +1,5 @@
 use std::{
     fs,
-    io::{self, Write},
     path::{Path, PathBuf},
     sync::{
         Arc,
@@ -13,10 +12,12 @@ use std::{
 use brk_error::Result;
 
 mod disk;
+mod io;
 mod memory;
 mod progression;
 
 use disk::*;
+use io::*;
 use memory::*;
 use parking_lot::Mutex;
 use progression::*;
@@ -53,7 +54,7 @@ impl Bencher {
         brk_logger::register_hook(move |message| {
             progression_clone.check_and_record(message);
         })
-        .map_err(|e| io::Error::new(io::ErrorKind::AlreadyExists, e))?;
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::AlreadyExists, e))?;
 
         Ok(Self(Arc::new(BencherInner {
             bench_dir,
@@ -132,36 +133,20 @@ fn monitor_resources(
     bench_dir: &Path,
     stop_flag: Arc<AtomicBool>,
 ) -> Result<()> {
-    let disk_file = bench_dir.join("disk.csv");
-    let memory_file = bench_dir.join("memory.csv");
-
-    let mut disk_writer = fs::File::create(disk_file)?;
-    let mut memory_writer = fs::File::create(memory_file)?;
-
-    writeln!(disk_writer, "timestamp_ms,disk_usage")?;
-    writeln!(
-        memory_writer,
-        "timestamp_ms,phys_footprint,phys_footprint_peak"
-    )?;
-
     let pid = std::process::id();
     let start = Instant::now();
 
-    let mut disk_monitor = DiskMonitor::new();
-    let memory_monitor = MemoryMonitor::new(pid);
+    let mut disk_monitor = DiskMonitor::new(monitored_path, &bench_dir.join("disk.csv"))?;
+    let mut memory_monitor = MemoryMonitor::new(pid, &bench_dir.join("memory.csv"))?;
+    let mut io_monitor = IoMonitor::new(pid, &bench_dir.join("io.csv"))?;
 
     'l: loop {
         let elapsed_ms = start.elapsed().as_millis();
 
-        if let Ok(bytes) = disk_monitor.get_disk_usage(monitored_path) {
-            writeln!(disk_writer, "{},{}", elapsed_ms, bytes)?;
-        }
+        disk_monitor.record(elapsed_ms)?;
+        memory_monitor.record(elapsed_ms)?;
+        io_monitor.record(elapsed_ms)?;
 
-        if let Ok((footprint, peak)) = memory_monitor.get_memory_usage() {
-            writeln!(memory_writer, "{},{},{}", elapsed_ms, footprint, peak)?;
-        }
-
-        // Best version
         for _ in 0..50 {
             // 50 * 100ms = 5 seconds
             if stop_flag.load(Ordering::Relaxed) {

@@ -23,6 +23,7 @@ pub trait ComputeDCAStackViaLen {
         exit: &Exit,
     ) -> Result<()>;
 }
+
 impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
     fn compute_dca_stack_via_len(
         &mut self,
@@ -35,41 +36,40 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
             Version::ZERO + self.inner_version() + closes.version(),
         )?;
 
-        let mut other_iter = closes.iter();
-        let mut prev = None;
-
         let index = max_from.to_usize().min(self.len());
+
+        // Initialize prev before the loop to avoid checking on every iteration
+        let mut prev = if index == 0 {
+            Sats::ZERO
+        } else {
+            self.read_at_unwrap_once(index - 1)
+        };
+
+        let mut lookback = closes.create_lookback(index, len, 0);
+
         closes
             .iter()
-            .skip(index)
             .enumerate()
+            .skip(index)
             .try_for_each(|(i, closes)| {
                 let price = *closes;
                 let i_usize = i.to_usize();
-                if prev.is_none() {
-                    if i_usize == 0 {
-                        prev.replace(Sats::ZERO);
-                    } else {
-                        prev.replace(self.read_at_unwrap_once(i_usize - 1));
-                    }
-                }
 
                 let mut stack = Sats::ZERO;
 
                 if price != Dollars::ZERO {
-                    stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+                    stack = prev + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
 
-                    if i_usize >= len {
-                        let prev_price = *other_iter.get_at_unwrap(i_usize - len);
-                        if prev_price != Dollars::ZERO {
-                            stack = stack
-                                .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
-                                .unwrap();
-                        }
+                    let prev_price =
+                        *lookback.get_and_push(i_usize, Close::new(price), Close::default());
+                    if prev_price != Dollars::ZERO {
+                        stack = stack
+                            .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
+                            .unwrap();
                     }
                 }
 
-                prev.replace(stack);
+                prev = stack;
 
                 self.forced_push_at(i, stack, exit)
             })?;
@@ -90,32 +90,30 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
             Version::ZERO + self.inner_version() + closes.version(),
         )?;
 
-        let mut prev = None;
         let from = from.to_usize();
         let index = max_from.min(DateIndex::from(self.len()));
 
+        // Initialize prev before the loop to avoid checking on every iteration
+        let mut prev = if index.to_usize() == 0 {
+            Sats::ZERO
+        } else {
+            self.read_at_unwrap_once(index.to_usize() - 1)
+        };
+
         closes
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, closes)| {
                 let price = *closes;
-                let i_usize = i.to_usize();
-                if prev.is_none() {
-                    if i_usize == 0 {
-                        prev.replace(Sats::ZERO);
-                    } else {
-                        prev.replace(self.read_at_unwrap_once(i_usize - 1));
-                    }
-                }
 
                 let mut stack = Sats::ZERO;
 
                 if price != Dollars::ZERO && i >= from {
-                    stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+                    stack = prev + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
                 }
 
-                prev.replace(stack);
+                prev = stack;
 
                 self.forced_push_at(i, stack, exit)
             })?;
@@ -143,6 +141,7 @@ pub trait ComputeDCAAveragePriceViaLen {
         exit: &Exit,
     ) -> Result<()>;
 }
+
 impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
     fn compute_dca_avg_price_via_len(
         &mut self,
@@ -163,8 +162,8 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         stacks
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, stack)| {
                 let mut avg_price = Dollars::from(f64::NAN);
                 if i > first_price_date {
@@ -199,8 +198,8 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
 
         stacks
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, stack)| {
                 let mut avg_price = Dollars::from(f64::NAN);
                 if i >= from {
@@ -223,6 +222,7 @@ pub trait ComputeFromSats<I> {
         exit: &Exit,
     ) -> Result<()>;
 }
+
 impl<I> ComputeFromSats<I> for EagerVec<I, Bitcoin>
 where
     I: VecIndex,
@@ -233,21 +233,12 @@ where
         sats: &impl IterableVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + sats.version(),
+        self.compute_transform(
+            max_from,
+            sats,
+            |(i, sats, _)| (i, Bitcoin::from(sats)),
+            exit,
         )?;
-
-        let index = max_from.min(I::from(self.len()));
-        sats.iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, sats)| {
-                let (i, v) = (i, Bitcoin::from(sats));
-                self.forced_push_at(i, v, exit)
-            })?;
-
-        self.safe_flush(exit)?;
-
         Ok(())
     }
 }
@@ -261,6 +252,7 @@ pub trait ComputeFromBitcoin<I> {
         exit: &Exit,
     ) -> Result<()>;
 }
+
 impl<I> ComputeFromBitcoin<I> for EagerVec<I, Dollars>
 where
     I: VecIndex,
@@ -272,24 +264,13 @@ where
         price: &impl IterableVec<I, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + bitcoin.version(),
+        self.compute_transform2(
+            max_from,
+            bitcoin,
+            price,
+            |(i, bitcoin, price, _)| (i, *price * bitcoin),
+            exit,
         )?;
-
-        let mut price_iter = price.iter();
-        let index = max_from.min(I::from(self.len()));
-        bitcoin
-            .iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, bitcoin)| {
-                let dollars = price_iter.get_at_unwrap(i);
-                let (i, v) = (i, *dollars * bitcoin);
-                self.forced_push_at(i, v, exit)
-            })?;
-
-        self.safe_flush(exit)?;
-
         Ok(())
     }
 }
@@ -303,6 +284,7 @@ pub trait ComputeDrawdown<I> {
         exit: &Exit,
     ) -> Result<()>;
 }
+
 impl<I> ComputeDrawdown<I> for EagerVec<I, StoredF32>
 where
     I: VecIndex,
@@ -314,27 +296,20 @@ where
         ath: &impl IterableVec<I, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + ath.version() + close.version(),
-        )?;
-
-        let index = max_from.min(I::from(self.len()));
-        let mut close_iter = close.iter();
-        ath.iter()
-            .skip(index.to_usize())
-            .enumerate()
-            .try_for_each(|(i, ath)| {
+        self.compute_transform2(
+            max_from,
+            ath,
+            close,
+            |(i, ath, close, _)| {
                 if ath == Dollars::ZERO {
-                    self.forced_push_at(i, StoredF32::default(), exit)
+                    (i, StoredF32::default())
                 } else {
-                    let close = *close_iter.get_at_unwrap(i);
-                    let drawdown = StoredF32::from((*ath - *close) / *ath * -100.0);
-                    self.forced_push_at(i, drawdown, exit)
+                    let drawdown = StoredF32::from((*ath - **close) / *ath * -100.0);
+                    (i, drawdown)
                 }
-            })?;
-
-        self.safe_flush(exit)?;
-
+            },
+            exit,
+        )?;
         Ok(())
     }
 }

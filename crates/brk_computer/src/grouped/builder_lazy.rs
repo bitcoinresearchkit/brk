@@ -65,7 +65,7 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
                         source.get_at(S1I::min_from(i))
@@ -90,10 +90,10 @@ where
                     ),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        source.get_at(S1I::max_from(i, source.len()))
+                        source.get_at(S1I::max_from(i, source.vec_len()))
                     },
                 ))
             }),
@@ -107,10 +107,10 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        S1I::inclusive_range_from(i, source.len())
+                        S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
                             .min()
                     },
@@ -126,10 +126,10 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        S1I::inclusive_range_from(i, source.len())
+                        S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
                             .max()
                     },
@@ -145,10 +145,10 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        let vec = S1I::inclusive_range_from(i, source.len())
+                        let vec = S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
                             .collect::<Vec<_>>();
                         if vec.is_empty() {
@@ -175,10 +175,10 @@ where
                         .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        let vec = S1I::inclusive_range_from(i, source.len())
+                        let vec = S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
                             .collect::<Vec<_>>();
                         if vec.is_empty() {
@@ -197,10 +197,10 @@ where
                     source_extra.cumulative.as_ref().unwrap().boxed_clone(),
                     len_source.clone(),
                     |i: I, source, len_source| {
-                        if i.to_usize() >= len_source.len() {
+                        if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        source.get_at(S1I::max_from(i, source.len()))
+                        source.get_at(S1I::max_from(i, source.vec_len()))
                     },
                 ))
             }),

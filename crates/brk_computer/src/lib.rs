@@ -174,35 +174,35 @@ impl Computer {
         self.blks
             .compute(indexer, &starting_indexes, parser, exit)?;
 
-        std::thread::scope(|scope| -> Result<()> {
-            let constants = scope.spawn(|| -> Result<()> {
-                info!("Computing constants...");
-                self.constants
-                    .compute(&self.indexes, &starting_indexes, exit)?;
-                Ok(())
-            });
+        // std::thread::scope(|scope| -> Result<()> {
+        // let constants = scope.spawn(|| -> Result<()> {
+        info!("Computing constants...");
+        self.constants
+            .compute(&self.indexes, &starting_indexes, exit)?;
+        //     Ok(())
+        // });
 
-            let chain = scope.spawn(|| -> Result<()> {
-                info!("Computing chain...");
-                self.chain.compute(
-                    indexer,
-                    &self.indexes,
-                    &starting_indexes,
-                    self.price.as_ref(),
-                    exit,
-                )?;
-                Ok(())
-            });
+        // let chain = scope.spawn(|| -> Result<()> {
+        info!("Computing chain...");
+        self.chain.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes,
+            self.price.as_ref(),
+            exit,
+        )?;
+        //     Ok(())
+        // });
 
-            if let Some(price) = self.price.as_ref() {
-                info!("Computing market...");
-                self.market.compute(price, &starting_indexes, exit)?;
-            }
+        if let Some(price) = self.price.as_ref() {
+            info!("Computing market...");
+            self.market.compute(price, &starting_indexes, exit)?;
+        }
 
-            constants.join().unwrap()?;
-            chain.join().unwrap()?;
-            Ok(())
-        })?;
+        // constants.join().unwrap()?;
+        // chain.join().unwrap()?;
+        // Ok(())
+        // })?;
 
         self.pools.compute(
             indexer,
@@ -212,6 +212,8 @@ impl Computer {
             self.price.as_ref(),
             exit,
         )?;
+
+        return Ok(());
 
         info!("Computing stateful...");
         self.stateful.compute(

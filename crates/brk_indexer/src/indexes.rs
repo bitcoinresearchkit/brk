@@ -96,6 +96,7 @@ impl From<(Height, &mut Vecs, &Stores)> for Indexes {
         let stores_starting_height = stores.starting_height();
         let height = vecs_starting_height.min(stores_starting_height);
         if height < min_height {
+            dbg!(height, min_height);
             unreachable!()
         }
 

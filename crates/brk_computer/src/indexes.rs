@@ -13,8 +13,8 @@ use brk_types::{
     YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom2, PAGE_SIZE,
-    TypedVecIterator, VecIndex,
+    Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, LazyVecFrom1, PAGE_SIZE,
+    TypedVecIterator, unlikely,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -79,14 +79,11 @@ pub struct Vecs {
     pub semesterindex_to_first_monthindex: EagerVec<SemesterIndex, MonthIndex>,
     pub semesterindex_to_monthindex_count: EagerVec<SemesterIndex, StoredU64>,
     pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
-    pub txindex_to_input_count:
-        LazyVecFrom2<TxIndex, StoredU64, TxIndex, TxInIndex, TxInIndex, TxOutIndex>,
-    pub txindex_to_output_count:
-        LazyVecFrom2<TxIndex, StoredU64, TxIndex, TxOutIndex, TxOutIndex, Sats>,
+    pub txindex_to_input_count: EagerVec<TxIndex, StoredU64>,
+    pub txindex_to_output_count: EagerVec<TxIndex, StoredU64>,
     pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub txinindex_to_txinindex: LazyVecFrom1<TxInIndex, TxInIndex, TxInIndex, OutPoint>,
-    pub txinindex_to_txoutindex:
-        LazyVecFrom2<TxInIndex, TxOutIndex, TxInIndex, OutPoint, TxIndex, TxOutIndex>,
+    pub txinindex_to_txoutindex: EagerVec<TxInIndex, TxOutIndex>,
     pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
     pub unknownoutputindex_to_unknownoutputindex:
         LazyVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
@@ -110,179 +107,112 @@ impl Vecs {
 
         let version = parent_version + VERSION;
 
-        let txinindex_to_txoutindex = LazyVecFrom2::init(
-            "txoutindex",
-            version,
-            indexer.vecs.txinindex_to_outpoint.boxed_clone(),
-            indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
-            |index: TxInIndex, txinindex_to_outpoint_iter, txindex_to_first_txoutindex_iter| {
-                txinindex_to_outpoint_iter
-                    .get_at(index.to_usize())
-                    .map(|outpoint| {
-                        if outpoint.is_coinbase() {
-                            return TxOutIndex::COINBASE;
-                        }
-                        txindex_to_first_txoutindex_iter
-                            .get_at_unwrap(outpoint.txindex().to_usize())
-                            + outpoint.vout()
-                    })
-            },
-        );
-
-        let txoutindex_to_txoutindex = LazyVecFrom1::init(
-            "txoutindex",
-            version + Version::ZERO,
-            indexer.vecs.txoutindex_to_value.boxed_clone(),
-            |index, _| Some(index),
-        );
-
-        let txinindex_to_txinindex = LazyVecFrom1::init(
-            "txinindex",
-            version + Version::ZERO,
-            indexer.vecs.txinindex_to_outpoint.boxed_clone(),
-            |index, _| Some(index),
-        );
-
-        let txindex_to_txindex = LazyVecFrom1::init(
-            "txindex",
-            version + Version::ZERO,
-            indexer.vecs.txindex_to_txid.boxed_clone(),
-            |index, _| Some(index),
-        );
-
-        let txindex_to_input_count = LazyVecFrom2::init(
-            "input_count",
-            version + Version::ZERO,
-            indexer.vecs.txindex_to_first_txinindex.boxed_clone(),
-            txinindex_to_txoutindex.boxed_clone(),
-            |index: TxIndex, txindex_to_first_txinindex_iter, txinindex_to_txoutindex_iter| {
-                let txindex = index.to_usize();
-                txindex_to_first_txinindex_iter
-                    .get_at(txindex)
-                    .map(|start| {
-                        let start = usize::from(start);
-                        let end = txindex_to_first_txinindex_iter
-                            .get_at(txindex + 1)
-                            .map(usize::from)
-                            .unwrap_or_else(|| txinindex_to_txoutindex_iter.len());
-                        StoredU64::from((start..end).count())
-                    })
-            },
-        );
-
-        let txindex_to_output_count = LazyVecFrom2::init(
-            "output_count",
-            version + Version::ZERO,
-            indexer.vecs.txindex_to_first_txoutindex.boxed_clone(),
-            indexer.vecs.txoutindex_to_value.boxed_clone(),
-            |index: TxIndex, txindex_to_first_txoutindex_iter, txoutindex_to_value_iter| {
-                let txindex = index.to_usize();
-                txindex_to_first_txoutindex_iter
-                    .get_at(txindex)
-                    .map(|start| {
-                        let start = usize::from(start);
-                        let end = txindex_to_first_txoutindex_iter
-                            .get_at(txindex + 1)
-                            .map(usize::from)
-                            .unwrap_or_else(|| txoutindex_to_value_iter.len());
-                        StoredU64::from((start..end).count())
-                    })
-            },
-        );
-
-        let p2pk33addressindex_to_p2pk33addressindex = LazyVecFrom1::init(
-            "p2pk33addressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2pk33addressindex_to_p2pk33bytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2pk65addressindex_to_p2pk65addressindex = LazyVecFrom1::init(
-            "p2pk65addressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2pk65addressindex_to_p2pk65bytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2pkhaddressindex_to_p2pkhaddressindex = LazyVecFrom1::init(
-            "p2pkhaddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2shaddressindex_to_p2shaddressindex = LazyVecFrom1::init(
-            "p2shaddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2shaddressindex_to_p2shbytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2traddressindex_to_p2traddressindex = LazyVecFrom1::init(
-            "p2traddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2traddressindex_to_p2trbytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2wpkhaddressindex_to_p2wpkhaddressindex = LazyVecFrom1::init(
-            "p2wpkhaddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2wshaddressindex_to_p2wshaddressindex = LazyVecFrom1::init(
-            "p2wshaddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2wshaddressindex_to_p2wshbytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2aaddressindex_to_p2aaddressindex = LazyVecFrom1::init(
-            "p2aaddressindex",
-            version + Version::ZERO,
-            indexer.vecs.p2aaddressindex_to_p2abytes.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let p2msoutputindex_to_p2msoutputindex = LazyVecFrom1::init(
-            "p2msoutputindex",
-            version + Version::ZERO,
-            indexer.vecs.p2msoutputindex_to_txindex.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let emptyoutputindex_to_emptyoutputindex = LazyVecFrom1::init(
-            "emptyoutputindex",
-            version + Version::ZERO,
-            indexer.vecs.emptyoutputindex_to_txindex.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let unknownoutputindex_to_unknownoutputindex = LazyVecFrom1::init(
-            "unknownoutputindex",
-            version + Version::ZERO,
-            indexer.vecs.unknownoutputindex_to_txindex.boxed_clone(),
-            |index, _| Some(index),
-        );
-        let opreturnindex_to_opreturnindex = LazyVecFrom1::init(
-            "opreturnindex",
-            version + Version::ZERO,
-            indexer.vecs.opreturnindex_to_txindex.boxed_clone(),
-            |index, _| Some(index),
-        );
-
         let this = Self {
-            txinindex_to_txoutindex,
-            emptyoutputindex_to_emptyoutputindex,
-            txinindex_to_txinindex,
-            opreturnindex_to_opreturnindex,
-            txoutindex_to_txoutindex,
-            p2aaddressindex_to_p2aaddressindex,
-            p2msoutputindex_to_p2msoutputindex,
-            p2pk33addressindex_to_p2pk33addressindex,
-            p2pk65addressindex_to_p2pk65addressindex,
-            p2pkhaddressindex_to_p2pkhaddressindex,
-            p2shaddressindex_to_p2shaddressindex,
-            p2traddressindex_to_p2traddressindex,
-            p2wpkhaddressindex_to_p2wpkhaddressindex,
-            p2wshaddressindex_to_p2wshaddressindex,
-            txindex_to_input_count,
-            txindex_to_output_count,
-            txindex_to_txindex,
-            unknownoutputindex_to_unknownoutputindex,
-
+            txinindex_to_txoutindex: EagerVec::forced_import_compressed(
+                &db,
+                "txoutindex",
+                version,
+            )?,
+            txoutindex_to_txoutindex: LazyVecFrom1::init(
+                "txoutindex",
+                version + Version::ZERO,
+                indexer.vecs.txoutindex_to_value.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            txinindex_to_txinindex: LazyVecFrom1::init(
+                "txinindex",
+                version + Version::ZERO,
+                indexer.vecs.txinindex_to_outpoint.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2pk33addressindex_to_p2pk33addressindex: LazyVecFrom1::init(
+                "p2pk33addressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2pk33addressindex_to_p2pk33bytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2pk65addressindex_to_p2pk65addressindex: LazyVecFrom1::init(
+                "p2pk65addressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2pk65addressindex_to_p2pk65bytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2pkhaddressindex_to_p2pkhaddressindex: LazyVecFrom1::init(
+                "p2pkhaddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2shaddressindex_to_p2shaddressindex: LazyVecFrom1::init(
+                "p2shaddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2shaddressindex_to_p2shbytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2traddressindex_to_p2traddressindex: LazyVecFrom1::init(
+                "p2traddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2traddressindex_to_p2trbytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2wpkhaddressindex_to_p2wpkhaddressindex: LazyVecFrom1::init(
+                "p2wpkhaddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2wshaddressindex_to_p2wshaddressindex: LazyVecFrom1::init(
+                "p2wshaddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2wshaddressindex_to_p2wshbytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2aaddressindex_to_p2aaddressindex: LazyVecFrom1::init(
+                "p2aaddressindex",
+                version + Version::ZERO,
+                indexer.vecs.p2aaddressindex_to_p2abytes.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            p2msoutputindex_to_p2msoutputindex: LazyVecFrom1::init(
+                "p2msoutputindex",
+                version + Version::ZERO,
+                indexer.vecs.p2msoutputindex_to_txindex.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            emptyoutputindex_to_emptyoutputindex: LazyVecFrom1::init(
+                "emptyoutputindex",
+                version + Version::ZERO,
+                indexer.vecs.emptyoutputindex_to_txindex.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            unknownoutputindex_to_unknownoutputindex: LazyVecFrom1::init(
+                "unknownoutputindex",
+                version + Version::ZERO,
+                indexer.vecs.unknownoutputindex_to_txindex.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            opreturnindex_to_opreturnindex: LazyVecFrom1::init(
+                "opreturnindex",
+                version + Version::ZERO,
+                indexer.vecs.opreturnindex_to_txindex.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            txindex_to_txindex: LazyVecFrom1::init(
+                "txindex",
+                version + Version::ZERO,
+                indexer.vecs.txindex_to_txid.boxed_clone(),
+                |index, _| Some(index),
+            ),
+            txindex_to_input_count: EagerVec::forced_import_compressed(
+                &db,
+                "input_count",
+                version + Version::ZERO,
+            )?,
+            txindex_to_output_count: EagerVec::forced_import_compressed(
+                &db,
+                "output_count",
+                version + Version::ZERO,
+            )?,
             dateindex_to_date: EagerVec::forced_import_compressed(
                 &db,
                 "date",
@@ -497,6 +427,8 @@ impl Vecs {
                 .collect(),
         )?;
 
+        this.db.compact()?;
+
         Ok(this)
     }
 
@@ -518,8 +450,44 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         // ---
+        // TxInIndex
+        // ---
+
+        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
+        let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
+        self.txinindex_to_txoutindex.compute_transform(
+            starting_indexes.txinindex,
+            &indexer.vecs.txinindex_to_outpoint,
+            |(txinindex, outpoint, ..)| {
+                if unlikely(outpoint.is_coinbase()) {
+                    (txinindex, TxOutIndex::COINBASE)
+                } else {
+                    let txoutindex = txindex_to_first_txoutindex
+                        .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
+                        + outpoint.vout();
+                    (txinindex, txoutindex)
+                }
+            },
+            exit,
+        )?;
+
+        // ---
         // TxIndex
         // ---
+
+        self.txindex_to_input_count.compute_count_from_indexes(
+            starting_indexes.txindex,
+            &indexer.vecs.txindex_to_first_txinindex,
+            &self.txinindex_to_txoutindex,
+            exit,
+        )?;
+
+        self.txindex_to_output_count.compute_count_from_indexes(
+            starting_indexes.txindex,
+            &indexer.vecs.txindex_to_first_txoutindex,
+            &indexer.vecs.txoutindex_to_value,
+            exit,
+        )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,
@@ -928,6 +896,7 @@ impl Vecs {
     }
 }
 
+#[derive(Debug)]
 pub struct Indexes {
     indexes: brk_indexer::Indexes,
     pub dateindex: DateIndex,
