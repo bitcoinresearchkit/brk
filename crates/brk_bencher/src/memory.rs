@@ -1,4 +1,6 @@
-use std::io;
+use std::fs::File;
+use std::io::{self, Write};
+use std::path::Path;
 
 #[cfg(target_os = "linux")]
 use std::fs;
@@ -8,16 +10,28 @@ use std::process::Command;
 
 pub struct MemoryMonitor {
     pid: u32,
+    writer: File,
 }
 
 impl MemoryMonitor {
-    pub fn new(pid: u32) -> Self {
-        Self { pid }
+    pub fn new(pid: u32, csv_path: &Path) -> io::Result<Self> {
+        let mut writer = File::create(csv_path)?;
+        writeln!(writer, "timestamp_ms,phys_footprint,phys_footprint_peak")?;
+
+        Ok(Self { pid, writer })
+    }
+
+    /// Record memory usage at the given timestamp
+    pub fn record(&mut self, elapsed_ms: u128) -> io::Result<()> {
+        if let Ok((footprint, peak)) = self.get_memory_usage() {
+            writeln!(self.writer, "{},{},{}", elapsed_ms, footprint, peak)?;
+        }
+        Ok(())
     }
 
     /// Get memory usage in bytes
     /// Returns (current_bytes, peak_bytes)
-    pub fn get_memory_usage(&self) -> io::Result<(u64, u64)> {
+    fn get_memory_usage(&self) -> io::Result<(u64, u64)> {
         #[cfg(target_os = "linux")]
         {
             self.get_memory_usage_linux()

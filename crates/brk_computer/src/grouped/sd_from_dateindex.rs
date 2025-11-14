@@ -483,8 +483,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         sorted.sort_unstable();
 
-        let mut sma_iter = sma.iter();
-
         let mut p0_5sd = self.p0_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
         let mut p1sd = self.p1sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
         let mut p1_5sd = self.p1_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
@@ -499,11 +497,12 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
 
         let min_date_usize = min_date.to_usize();
+        let mut sma_iter = sma.iter().skip(starting_dateindex.to_usize());
 
         source
             .iter()
-            .skip(starting_dateindex.to_usize())
             .enumerate()
+            .skip(starting_dateindex.to_usize())
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_date_usize {
                     self.sd.dateindex.as_mut().unwrap().forced_push_at(
@@ -548,11 +547,13 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     if let Some(v) = m3sd.as_mut() {
                         v.forced_push_at(index, StoredF32::NAN, exit)?
                     }
+                    // Advance iterator to stay in sync
+                    sma_iter.next();
                 } else {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 
-                    let avg = sma_iter.get_at_unwrap(index);
+                    let avg = sma_iter.next().unwrap();
 
                     let population =
                         index.checked_sub(min_date_usize).unwrap().to_usize() as f32 + 1.0;

@@ -1,4 +1,8 @@
-use std::{env, fs, path::Path, time::Instant};
+use std::{
+    env, fs,
+    path::Path,
+    time::{Duration, Instant},
+};
 
 use brk_bencher::Bencher;
 use brk_error::Result;
@@ -6,7 +10,7 @@ use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use log::debug;
+use log::{debug, info};
 use vecdb::Exit;
 
 fn main() -> Result<()> {
@@ -33,7 +37,7 @@ fn main() -> Result<()> {
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let mut bencher =
-        Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("indexed/stores"))?;
+        Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("indexed"))?;
     bencher.start()?;
 
     let exit = Exit::new();
@@ -46,10 +50,12 @@ fn main() -> Result<()> {
 
     let i = Instant::now();
     indexer.checked_index(&blocks, &client, &exit)?;
-    dbg!(i.elapsed());
+    info!("Done in {:?}", i.elapsed());
 
     // We want to benchmark the drop too
     drop(indexer);
+
+    std::thread::sleep(Duration::from_secs(10));
 
     Ok(())
 }

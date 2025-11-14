@@ -3,6 +3,7 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
+use serde::Serialize;
 
 use super::header_map::HeaderMapExtended;
 
@@ -13,10 +14,10 @@ where
     fn new_not_modified() -> Self;
     fn new_json<T>(value: T, etag: &str) -> Self
     where
-        T: sonic_rs::Serialize;
+        T: Serialize;
     fn new_json_with<T>(status: StatusCode, value: T, etag: &str) -> Self
     where
-        T: sonic_rs::Serialize;
+        T: Serialize;
 }
 
 impl ResponseExtended for Response<Body> {
@@ -29,16 +30,16 @@ impl ResponseExtended for Response<Body> {
 
     fn new_json<T>(value: T, etag: &str) -> Self
     where
-        T: sonic_rs::Serialize,
+        T: Serialize,
     {
         Self::new_json_with(StatusCode::default(), value, etag)
     }
 
     fn new_json_with<T>(status: StatusCode, value: T, etag: &str) -> Self
     where
-        T: sonic_rs::Serialize,
+        T: Serialize,
     {
-        let bytes = sonic_rs::to_vec(&value).unwrap();
+        let bytes = serde_json::to_vec(&value).unwrap();
         let mut response = Response::builder().body(bytes.into()).unwrap();
         *response.status_mut() = status;
         let headers = response.headers_mut();

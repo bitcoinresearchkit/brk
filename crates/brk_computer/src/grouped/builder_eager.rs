@@ -222,8 +222,8 @@ where
         });
         source
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(i, v)| -> Result<()> {
                 cumulative += v;
                 cumulative_vec.forced_push_at(i, cumulative, exit)?;
@@ -252,7 +252,6 @@ where
 
         let index = self.starting_index(max_from);
 
-        let mut count_indexes_iter = count_indexes.iter();
         let mut source_iter = source.iter();
 
         let cumulative_vec = self.cumulative.as_mut();
@@ -263,12 +262,14 @@ where
             })
         });
 
+        let mut count_indexes_iter = count_indexes.iter().skip(index.to_usize());
+
         first_indexes
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(index, first_index)| -> Result<()> {
-                let count_index = count_indexes_iter.get_at_unwrap(index);
+                let count_index = count_indexes_iter.next().unwrap();
 
                 if let Some(first) = self.first.as_mut() {
                     let f = source_iter
@@ -420,8 +421,6 @@ where
 
         let index = self.starting_index(max_from);
 
-        let mut count_indexes_iter = count_indexes.iter();
-
         let mut source_first_iter = source.first.as_ref().map(|f| f.iter());
         let mut source_last_iter = source.last.as_ref().map(|f| f.iter());
         let mut source_max_iter = source.max.as_ref().map(|f| f.iter());
@@ -435,12 +434,14 @@ where
             })
         });
 
+        let mut count_indexes_iter = count_indexes.iter().skip(index.to_usize());
+
         first_indexes
             .iter()
-            .skip(index.to_usize())
             .enumerate()
+            .skip(index.to_usize())
             .try_for_each(|(index, first_index, ..)| -> Result<()> {
-                let count_index = count_indexes_iter.get_at_unwrap(index);
+                let count_index = count_indexes_iter.next().unwrap();
 
                 if let Some(first) = self.first.as_mut() {
                     let v = source_first_iter.as_mut().unwrap().get_unwrap(first_index);

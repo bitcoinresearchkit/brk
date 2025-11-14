@@ -48,6 +48,8 @@ impl Vecs {
                 .collect(),
         )?;
 
+        this.db.compact()?;
+
         Ok(this)
     }
 

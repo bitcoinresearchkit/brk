@@ -397,8 +397,8 @@ impl ComputedRatioVecsFromDateIndex {
             .as_ref()
             .unwrap()
             .iter()
-            .skip(starting_dateindex.to_usize())
             .enumerate()
+            .skip(starting_dateindex.to_usize())
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_ratio_date_usize {
                     self.ratio_pct5
@@ -611,28 +611,25 @@ impl ComputedRatioVecsFromDateIndex {
     }
 
     fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<DateIndex, StoredF32>> {
-        [
-            self.ratio_pct1
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-            self.ratio_pct2
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-            self.ratio_pct5
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-            self.ratio_pct95
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-            self.ratio_pct98
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-            self.ratio_pct99
-                .as_mut()
-                .map_or(vec![], |v| vec![v.dateindex.as_mut().unwrap()]),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
+        let mut vecs = Vec::with_capacity(6);
+        if let Some(v) = self.ratio_pct1.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        if let Some(v) = self.ratio_pct2.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        if let Some(v) = self.ratio_pct5.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        if let Some(v) = self.ratio_pct95.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        if let Some(v) = self.ratio_pct98.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        if let Some(v) = self.ratio_pct99.as_mut() {
+            vecs.push(v.dateindex.as_mut().unwrap());
+        }
+        vecs
     }
 }

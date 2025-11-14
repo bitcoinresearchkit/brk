@@ -54,8 +54,8 @@ const CHART_COLORS: [RGBColor; 6] = [
     RGBColor(255, 159, 64),  // Orange
 ];
 
-// Time window buffer in milliseconds (5 seconds)
-const TIME_BUFFER_MS: u64 = 5000;
+// Time window buffer in milliseconds
+const TIME_BUFFER_MS: u64 = 10_000;
 
 pub struct Visualizer {
     workspace_root: PathBuf,
@@ -106,6 +106,7 @@ impl Visualizer {
         let disk_runs = self.read_benchmark_runs(crate_path, "disk.csv")?;
         let memory_runs = self.read_benchmark_runs(crate_path, "memory.csv")?;
         let progress_runs = self.read_benchmark_runs(crate_path, "progress.csv")?;
+        let io_runs = self.read_benchmark_runs(crate_path, "io.csv")?;
 
         // Generate combined charts (all runs together)
         if !disk_runs.is_empty() {
@@ -118,6 +119,11 @@ impl Visualizer {
 
         if !progress_runs.is_empty() {
             self.generate_progress_chart(crate_path, crate_name, &progress_runs)?;
+        }
+
+        if !io_runs.is_empty() {
+            self.generate_io_read_chart(crate_path, crate_name, &io_runs)?;
+            self.generate_io_write_chart(crate_path, crate_name, &io_runs)?;
         }
 
         // Generate individual charts for each run
@@ -134,6 +140,12 @@ impl Visualizer {
         for run in &progress_runs {
             let run_path = crate_path.join(&run.run_id);
             self.generate_progress_chart(&run_path, crate_name, slice::from_ref(run))?;
+        }
+
+        for run in &io_runs {
+            let run_path = crate_path.join(&run.run_id);
+            self.generate_io_read_chart(&run_path, crate_name, slice::from_ref(run))?;
+            self.generate_io_write_chart(&run_path, crate_name, slice::from_ref(run))?;
         }
 
         Ok(())
@@ -153,8 +165,8 @@ impl Visualizer {
                     .ok_or("Invalid run ID")?
                     .to_string();
 
-                // Skip directories that start with underscore
-                if run_id.starts_with('_') {
+                // Skip directories that start with underscore or contain only numbers
+                if run_id.starts_with('_') || run_id.chars().all(|c| c.is_ascii_digit()) {
                     continue;
                 }
 
@@ -555,6 +567,223 @@ impl Visualizer {
         }
 
         Ok(enhanced_runs)
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn read_io_data(
+        &self,
+        crate_path: &Path,
+        runs: &[BenchmarkRun],
+    ) -> Result<Vec<(String, Vec<DataPoint>, Vec<DataPoint>)>> {
+        let mut io_runs = Vec::new();
+
+        for run in runs {
+            // For individual charts, crate_path is already the run folder
+            // For combined charts, we need to append run_id
+            let direct_path = crate_path.join("io.csv");
+            let nested_path = crate_path.join(&run.run_id).join("io.csv");
+            let csv_path = if direct_path.exists() {
+                direct_path
+            } else {
+                nested_path
+            };
+            if let Ok(content) = fs::read_to_string(&csv_path) {
+                let mut read_data = Vec::new();
+                let mut write_data = Vec::new();
+
+                for (i, line) in content.lines().enumerate() {
+                    if i == 0 {
+                        continue;
+                    }
+
+                    let parts: Vec<&str> = line.split(',').collect();
+                    if parts.len() >= 3
+                        && let (Ok(timestamp_ms), Ok(bytes_read), Ok(bytes_written)) = (
+                            parts[0].parse::<u64>(),
+                            parts[1].parse::<f64>(),
+                            parts[2].parse::<f64>(),
+                        )
+                    {
+                        read_data.push(DataPoint {
+                            timestamp_ms,
+                            value: bytes_read,
+                        });
+                        write_data.push(DataPoint {
+                            timestamp_ms,
+                            value: bytes_written,
+                        });
+                    }
+                }
+
+                io_runs.push((run.run_id.clone(), read_data, write_data));
+            }
+        }
+
+        Ok(io_runs)
+    }
+
+    fn generate_io_read_chart(
+        &self,
+        crate_path: &Path,
+        crate_name: &str,
+        runs: &[BenchmarkRun],
+    ) -> Result<()> {
+        let output_path = crate_path.join("io_read_chart.svg");
+        let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
+        root.fill(&BG_COLOR)?;
+
+        // Calculate time window based on shortest run + buffer
+        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+        let max_time_s = (min_max_time_ms as f64) / 1000.0;
+
+        // Read I/O CSV files which have 3 columns: timestamp, bytes_read, bytes_written
+        let io_runs = self.read_io_data(crate_path, runs)?;
+
+        // Trim I/O runs to the same time window and extract only read data
+        let trimmed_io_runs: Vec<_> = io_runs
+            .into_iter()
+            .map(|(run_id, read_data, _write_data)| {
+                let trimmed_read: Vec<_> = read_data
+                    .into_iter()
+                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .collect();
+                (run_id, trimmed_read)
+            })
+            .collect();
+
+        let max_value = trimmed_io_runs
+            .iter()
+            .flat_map(|(_, data)| data.iter().map(|d| d.value))
+            .fold(0.0_f64, f64::max);
+
+        let (max_value_scaled, unit) = Self::format_bytes(max_value);
+        let scale_factor = max_value / max_value_scaled;
+
+        // Format time based on duration
+        let (max_time_scaled, _time_unit, time_label) = Self::format_time(max_time_s);
+
+        let mut chart = ChartBuilder::on(&root)
+            .caption(
+                format!("{} — I/O Read", crate_name),
+                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
+            )
+            .margin(20)
+            .x_label_area_size(50)
+            .margin_left(50)
+            .right_y_label_area_size(75)
+            .build_cartesian_2d(0.0..max_time_scaled * 1.025, 0.0..max_value_scaled * 1.1)?;
+
+        configure_chart_mesh!(
+            chart,
+            time_label,
+            format!("Bytes Read ({})", unit),
+            |y: &f64| format!("{:.2}", y)
+        );
+
+        let time_divisor = max_time_s / max_time_scaled;
+
+        for (idx, (run_id, read_data)) in trimmed_io_runs.iter().enumerate() {
+            let color = CHART_COLORS[idx % CHART_COLORS.len()];
+
+            Self::draw_line_series(
+                &mut chart,
+                read_data.iter().map(|d| {
+                    (
+                        d.timestamp_ms as f64 / 1000.0 / time_divisor,
+                        d.value / scale_factor,
+                    )
+                }),
+                run_id,
+                color,
+            )?;
+        }
+
+        Self::configure_series_labels(&mut chart)?;
+        root.present()?;
+        println!("Generated: {}", output_path.display());
+        Ok(())
+    }
+
+    fn generate_io_write_chart(
+        &self,
+        crate_path: &Path,
+        crate_name: &str,
+        runs: &[BenchmarkRun],
+    ) -> Result<()> {
+        let output_path = crate_path.join("io_write_chart.svg");
+        let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
+        root.fill(&BG_COLOR)?;
+
+        // Calculate time window based on shortest run + buffer
+        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+        let max_time_s = (min_max_time_ms as f64) / 1000.0;
+
+        // Read I/O CSV files which have 3 columns: timestamp, bytes_read, bytes_written
+        let io_runs = self.read_io_data(crate_path, runs)?;
+
+        // Trim I/O runs to the same time window and extract only write data
+        let trimmed_io_runs: Vec<_> = io_runs
+            .into_iter()
+            .map(|(run_id, _read_data, write_data)| {
+                let trimmed_write: Vec<_> = write_data
+                    .into_iter()
+                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .collect();
+                (run_id, trimmed_write)
+            })
+            .collect();
+
+        let max_value = trimmed_io_runs
+            .iter()
+            .flat_map(|(_, data)| data.iter().map(|d| d.value))
+            .fold(0.0_f64, f64::max);
+
+        let (max_value_scaled, unit) = Self::format_bytes(max_value);
+        let scale_factor = max_value / max_value_scaled;
+
+        // Format time based on duration
+        let (max_time_scaled, _time_unit, time_label) = Self::format_time(max_time_s);
+
+        let mut chart = ChartBuilder::on(&root)
+            .caption(
+                format!("{} — I/O Write", crate_name),
+                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
+            )
+            .margin(20)
+            .x_label_area_size(50)
+            .margin_left(50)
+            .right_y_label_area_size(75)
+            .build_cartesian_2d(0.0..max_time_scaled * 1.025, 0.0..max_value_scaled * 1.1)?;
+
+        configure_chart_mesh!(
+            chart,
+            time_label,
+            format!("Bytes Written ({})", unit),
+            |y: &f64| format!("{:.2}", y)
+        );
+
+        let time_divisor = max_time_s / max_time_scaled;
+
+        for (idx, (run_id, write_data)) in trimmed_io_runs.iter().enumerate() {
+            let color = CHART_COLORS[idx % CHART_COLORS.len()];
+
+            Self::draw_line_series(
+                &mut chart,
+                write_data.iter().map(|d| {
+                    (
+                        d.timestamp_ms as f64 / 1000.0 / time_divisor,
+                        d.value / scale_factor,
+                    )
+                }),
+                run_id,
+                color,
+            )?;
+        }
+
+        Self::configure_series_labels(&mut chart)?;
+        root.present()?;
+        println!("Generated: {}", output_path.display());
+        Ok(())
     }
 
     fn generate_progress_chart(

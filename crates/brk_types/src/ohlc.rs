@@ -6,7 +6,7 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
-use vecdb::{Compressable, Formattable};
+use vecdb::{Compressable, Formattable, TransparentCompressable};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -77,7 +77,7 @@ impl Formattable for OHLCCents {
     }
 }
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCDollars {
     pub open: Open<Dollars>,
@@ -86,17 +86,24 @@ pub struct OHLCDollars {
     pub close: Close<Dollars>,
 }
 
+// This is FAKE, just to be able to use EagerVec
+// Need to find a better way
+impl Compressable for OHLCDollars {
+    type NumberType = u64;
+}
+impl TransparentCompressable<u64> for OHLCDollars {}
+
 impl Serialize for OHLCDollars {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut tup = serializer.serialize_tuple(4)?;
-        tup.serialize_element(&self.open)?;
-        tup.serialize_element(&self.high)?;
-        tup.serialize_element(&self.low)?;
-        tup.serialize_element(&self.close)?;
-        tup.end()
+        let mut tuple = serializer.serialize_tuple(4)?;
+        tuple.serialize_element(&self.open)?;
+        tuple.serialize_element(&self.high)?;
+        tuple.serialize_element(&self.low)?;
+        tuple.serialize_element(&self.close)?;
+        tuple.end()
     }
 }
 
@@ -160,7 +167,7 @@ impl Formattable for OHLCDollars {
     }
 }
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCSats {
     pub open: Open<Sats>,
@@ -169,17 +176,24 @@ pub struct OHLCSats {
     pub close: Close<Sats>,
 }
 
+// This is FAKE, just to be able to use EagerVec
+// Need to find a better way
+impl Compressable for OHLCSats {
+    type NumberType = u64;
+}
+impl TransparentCompressable<u64> for OHLCSats {}
+
 impl Serialize for OHLCSats {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut tup = serializer.serialize_tuple(4)?;
-        tup.serialize_element(&self.open)?;
-        tup.serialize_element(&self.high)?;
-        tup.serialize_element(&self.low)?;
-        tup.serialize_element(&self.close)?;
-        tup.end()
+        let mut tuple = serializer.serialize_tuple(4)?;
+        tuple.serialize_element(&self.open)?;
+        tuple.serialize_element(&self.high)?;
+        tuple.serialize_element(&self.low)?;
+        tuple.serialize_element(&self.close)?;
+        tuple.end()
     }
 }
 

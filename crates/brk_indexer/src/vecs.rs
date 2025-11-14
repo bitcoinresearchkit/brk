@@ -18,6 +18,7 @@ use crate::Indexes;
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
+
     pub emptyoutputindex_to_txindex: CompressedVec<EmptyOutputIndex, TxIndex>,
     pub height_to_blockhash: RawVec<Height, BlockHash>,
     pub height_to_difficulty: CompressedVec<Height, StoredF64>,
@@ -52,7 +53,7 @@ pub struct Vecs {
     pub p2wshaddressindex_to_p2wshbytes: RawVec<P2WSHAddressIndex, P2WSHBytes>,
     pub txindex_to_base_size: CompressedVec<TxIndex, StoredU32>,
     pub txindex_to_first_txinindex: CompressedVec<TxIndex, TxInIndex>,
-    pub txindex_to_first_txoutindex: CompressedVec<TxIndex, TxOutIndex>,
+    pub txindex_to_first_txoutindex: RawVec<TxIndex, TxOutIndex>,
     pub txindex_to_height: CompressedVec<TxIndex, Height>,
     pub txindex_to_is_explicitly_rbf: CompressedVec<TxIndex, StoredBool>,
     pub txindex_to_rawlocktime: CompressedVec<TxIndex, RawLockTime>,
@@ -167,11 +168,7 @@ impl Vecs {
                 "first_txinindex",
                 version,
             )?,
-            txindex_to_first_txoutindex: CompressedVec::forced_import(
-                &db,
-                "first_txoutindex",
-                version,
-            )?,
+            txindex_to_first_txoutindex: RawVec::forced_import(&db, "first_txoutindex", version)?,
             txindex_to_is_explicitly_rbf: CompressedVec::forced_import(
                 &db,
                 "is_explicitly_rbf",
@@ -196,6 +193,8 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
+
+        this.db.compact()?;
 
         Ok(this)
     }
@@ -419,5 +418,9 @@ impl Vecs {
             &mut self.unknownoutputindex_to_txindex,
         ]
         .into_iter()
+    }
+
+    pub fn db(&self) -> &Database {
+        &self.db
     }
 }

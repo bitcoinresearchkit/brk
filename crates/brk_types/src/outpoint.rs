@@ -34,14 +34,17 @@ impl OutPoint {
         Self(txindex_bits | vout_bits)
     }
 
+    #[inline(always)]
     pub fn txindex(self) -> TxIndex {
         TxIndex::from((self.0 >> 32) as u32)
     }
 
+    #[inline(always)]
     pub fn vout(self) -> Vout {
         Vout::from(self.0 as u32)
     }
 
+    #[inline(always)]
     pub fn is_coinbase(self) -> bool {
         self == Self::COINBASE
     }

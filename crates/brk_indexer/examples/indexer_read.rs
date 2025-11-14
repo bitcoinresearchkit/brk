@@ -11,15 +11,27 @@ fn main() -> Result<()> {
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let mut sum = Sats::ZERO;
-    let mut count: usize = 0;
+    // let mut sum = Sats::ZERO;
+    // let mut count: usize = 0;
 
-    for value in indexer.vecs.txoutindex_to_value.clean_iter().unwrap() {
-        sum += value;
-        count += 1;
-    }
+    // for value in indexer.vecs.txoutindex_to_value.clean_iter()? {
+    //     sum += value;
+    //     count += 1;
+    // }
 
-    println!("sum = {sum}, count = {count}");
+    // println!("sum = {sum}, count = {count}");
+
+    dbg!(
+        indexer
+            .vecs
+            .txoutindex_to_value
+            .iter()?
+            .enumerate()
+            .take(200)
+            // .filter(|(_, op)| !op.is_coinbase())
+            // .map(|(i, op)| (i, op.txindex(), op.vout()))
+            .collect::<Vec<_>>()
+    );
 
     Ok(())
 }

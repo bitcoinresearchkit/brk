@@ -186,7 +186,7 @@ impl Stores {
         })
         .collect::<Result<Vec<_>>>()?;
 
-        self.database.batch().commit_partitions(tuples)?;
+        self.database.batch().commit_keyspaces(tuples)?;
 
         self.database
             .persist(PersistMode::SyncAll)
