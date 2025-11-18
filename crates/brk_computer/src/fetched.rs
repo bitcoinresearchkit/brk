@@ -85,12 +85,11 @@ impl Vecs {
             .enumerate()
             .skip(index.to_usize())
             .try_for_each(|(i, v)| -> Result<()> {
-                self.height_to_price_ohlc_in_cents.forced_push_at(
+                self.height_to_price_ohlc_in_cents.truncate_push_at(
                     i,
                     self.fetcher
                         .get_height(i.into(), v, prev_timestamp)
                         .unwrap(),
-                    exit,
                 )?;
                 prev_timestamp = Some(v);
                 Ok(())
@@ -127,7 +126,7 @@ impl Vecs {
                 prev.replace(ohlc.clone());
 
                 self.dateindex_to_price_ohlc_in_cents
-                    .forced_push_at(i, ohlc, exit)?;
+                    .truncate_push_at(i, ohlc)?;
 
                 Ok(())
             })?;

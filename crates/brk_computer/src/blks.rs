@@ -97,7 +97,7 @@ impl Vecs {
                 let height = block.height();
 
                 self.height_to_position
-                    .forced_push(height, block.metadata().position(), exit)?;
+                    .truncate_push(height, block.metadata().position())?;
 
                 let txindex = height_to_first_txindex_iter.get_unwrap(height);
 
@@ -105,7 +105,7 @@ impl Vecs {
                     |(index, metadata)| -> Result<()> {
                         let txindex = txindex + index;
                         self.txindex_to_position
-                            .forced_push(txindex, metadata.position(), exit)?;
+                            .truncate_push(txindex, metadata.position())?;
                         Ok(())
                     },
                 )?;

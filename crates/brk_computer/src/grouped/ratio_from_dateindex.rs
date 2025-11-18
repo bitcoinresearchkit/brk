@@ -407,42 +407,42 @@ impl ComputedRatioVecsFromDateIndex {
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                     self.ratio_pct2
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                     self.ratio_pct1
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                     self.ratio_pct95
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                     self.ratio_pct98
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                     self.ratio_pct99
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, StoredF32::NAN, exit)?;
+                        .truncate_push_at(index, StoredF32::NAN)?;
                 } else {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
@@ -453,42 +453,42 @@ impl ComputedRatioVecsFromDateIndex {
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.01), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.01))?;
                     self.ratio_pct2
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.02), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.02))?;
                     self.ratio_pct5
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.05), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.05))?;
                     self.ratio_pct95
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.95), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.95))?;
                     self.ratio_pct98
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.98), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.98))?;
                     self.ratio_pct99
                         .as_mut()
                         .unwrap()
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, get_percentile(&sorted, 0.99), exit)?;
+                        .truncate_push_at(index, get_percentile(&sorted, 0.99))?;
                 }
 
                 Ok(())

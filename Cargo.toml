@@ -34,7 +34,7 @@ inherits = "release"
 
 [workspace.dependencies]
 aide = { version = "0.16.0-alpha.1", features = ["axum-json", "axum-query"] }
-axum = "0.8.6"
+axum = "0.8.7"
 bitcoin = { version = "0.32.7", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_bencher = { version = "0.0.111", path = "crates/brk_bencher" }
@@ -58,11 +58,11 @@ brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_types = { version = "0.0.111", path = "crates/brk_types" }
 brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
-# byteview = "=0.6.1"
-byteview = "~0.8.0"
+byteview = "=0.6.1"
+# byteview = "~0.8.0"
 derive_deref = "1.1.1"
-# fjall2 = { version = "2.11.5", package = "brk_fjall" }
-fjall2 = { path = "../fjall2", package = "brk_fjall" }
+fjall2 = { version = "2.11.8", package = "brk_fjall" }
+# fjall2 = { path = "../fjall2", package = "brk_fjall" }
 # fjall2 = { version = "2.11.2", package = "fjall" }
 # fjall3 = { version = "=3.0.0-pre.5", package = "fjall" }
 fjall3 = { path = "../fjall3", package = "fjall" }

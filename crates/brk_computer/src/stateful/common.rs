@@ -1564,26 +1564,18 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn forced_pushed_at(
-        &mut self,
-        height: Height,
-        exit: &Exit,
-        state: &CohortState,
-    ) -> Result<()> {
+    pub fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
         self.height_to_supply
-            .forced_push(height, state.supply.value, exit)?;
+            .truncate_push(height, state.supply.value)?;
 
-        self.height_to_utxo_count.forced_push(
-            height,
-            StoredU64::from(state.supply.utxo_count),
-            exit,
-        )?;
+        self.height_to_utxo_count
+            .truncate_push(height, StoredU64::from(state.supply.utxo_count))?;
 
         self.height_to_satblocks_destroyed
-            .forced_push(height, state.satblocks_destroyed, exit)?;
+            .truncate_push(height, state.satblocks_destroyed)?;
 
         self.height_to_satdays_destroyed
-            .forced_push(height, state.satdays_destroyed, exit)?;
+            .truncate_push(height, state.satdays_destroyed)?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             let realized = state.realized.as_ref().unwrap_or_else(|| {
@@ -1591,72 +1583,67 @@ impl Vecs {
                 panic!();
             });
 
-            height_to_realized_cap.forced_push(height, realized.cap, exit)?;
+            height_to_realized_cap.truncate_push(height, realized.cap)?;
 
             self.height_to_realized_profit
                 .as_mut()
                 .unwrap()
-                .forced_push(height, realized.profit, exit)?;
-            self.height_to_realized_loss.as_mut().unwrap().forced_push(
-                height,
-                realized.loss,
-                exit,
-            )?;
-            self.height_to_value_created.as_mut().unwrap().forced_push(
-                height,
-                realized.value_created,
-                exit,
-            )?;
+                .truncate_push(height, realized.profit)?;
+            self.height_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .truncate_push(height, realized.loss)?;
+            self.height_to_value_created
+                .as_mut()
+                .unwrap()
+                .truncate_push(height, realized.value_created)?;
             self.height_to_value_destroyed
                 .as_mut()
                 .unwrap()
-                .forced_push(height, realized.value_destroyed, exit)?;
+                .truncate_push(height, realized.value_destroyed)?;
 
             if self.height_to_adjusted_value_created.is_some() {
                 self.height_to_adjusted_value_created
                     .as_mut()
                     .unwrap()
-                    .forced_push(height, realized.adj_value_created, exit)?;
+                    .truncate_push(height, realized.adj_value_created)?;
                 self.height_to_adjusted_value_destroyed
                     .as_mut()
                     .unwrap()
-                    .forced_push(height, realized.adj_value_destroyed, exit)?;
+                    .truncate_push(height, realized.adj_value_destroyed)?;
             }
         }
         Ok(())
     }
 
-    pub fn compute_then_force_push_unrealized_states(
+    pub fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
         height_price: Option<Dollars>,
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
-        exit: &Exit,
         state: &CohortState,
     ) -> Result<()> {
         if let Some(height_price) = height_price {
             self.height_to_min_price_paid
                 .as_mut()
                 .unwrap()
-                .forced_push(
+                .truncate_push(
                     height,
                     state
                         .price_to_amount_first_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
-                    exit,
                 )?;
             self.height_to_max_price_paid
                 .as_mut()
                 .unwrap()
-                .forced_push(
+                .truncate_push(
                     height,
                     state
                         .price_to_amount_last_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
-                    exit,
                 )?;
 
             let (height_unrealized_state, date_unrealized_state) =
@@ -1665,19 +1652,19 @@ impl Vecs {
             self.height_to_supply_in_profit
                 .as_mut()
                 .unwrap()
-                .forced_push(height, height_unrealized_state.supply_in_profit, exit)?;
+                .truncate_push(height, height_unrealized_state.supply_in_profit)?;
             self.height_to_supply_in_loss
                 .as_mut()
                 .unwrap()
-                .forced_push(height, height_unrealized_state.supply_in_loss, exit)?;
+                .truncate_push(height, height_unrealized_state.supply_in_loss)?;
             self.height_to_unrealized_profit
                 .as_mut()
                 .unwrap()
-                .forced_push(height, height_unrealized_state.unrealized_profit, exit)?;
+                .truncate_push(height, height_unrealized_state.unrealized_profit)?;
             self.height_to_unrealized_loss
                 .as_mut()
                 .unwrap()
-                .forced_push(height, height_unrealized_state.unrealized_loss, exit)?;
+                .truncate_push(height, height_unrealized_state.unrealized_loss)?;
 
             if let Some(date_unrealized_state) = date_unrealized_state {
                 let dateindex = dateindex.unwrap();
@@ -1685,19 +1672,19 @@ impl Vecs {
                 self.dateindex_to_supply_in_profit
                     .as_mut()
                     .unwrap()
-                    .forced_push(dateindex, date_unrealized_state.supply_in_profit, exit)?;
+                    .truncate_push(dateindex, date_unrealized_state.supply_in_profit)?;
                 self.dateindex_to_supply_in_loss
                     .as_mut()
                     .unwrap()
-                    .forced_push(dateindex, date_unrealized_state.supply_in_loss, exit)?;
+                    .truncate_push(dateindex, date_unrealized_state.supply_in_loss)?;
                 self.dateindex_to_unrealized_profit
                     .as_mut()
                     .unwrap()
-                    .forced_push(dateindex, date_unrealized_state.unrealized_profit, exit)?;
+                    .truncate_push(dateindex, date_unrealized_state.unrealized_profit)?;
                 self.dateindex_to_unrealized_loss
                     .as_mut()
                     .unwrap()
-                    .forced_push(dateindex, date_unrealized_state.unrealized_loss, exit)?;
+                    .truncate_push(dateindex, date_unrealized_state.unrealized_loss)?;
             }
         }
 

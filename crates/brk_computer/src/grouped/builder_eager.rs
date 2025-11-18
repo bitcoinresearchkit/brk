@@ -226,7 +226,7 @@ where
             .skip(index.to_usize())
             .try_for_each(|(i, v)| -> Result<()> {
                 cumulative += v;
-                cumulative_vec.forced_push_at(i, cumulative, exit)?;
+                cumulative_vec.truncate_push_at(i, cumulative)?;
                 Ok(())
             })?;
 
@@ -246,6 +246,10 @@ where
     where
         I2: VecIndex + VecValue + CheckedSub<I2>,
     {
+        dbg!(source.len());
+        dbg!(first_indexes.len());
+        dbg!(count_indexes.len());
+
         self.validate_computed_version_or_reset(
             source.version() + first_indexes.version() + count_indexes.version(),
         )?;
@@ -275,7 +279,7 @@ where
                     let f = source_iter
                         .get(first_index)
                         .unwrap_or_else(|| T::from(0_usize));
-                    first.forced_push_at(index, f, exit)?;
+                    first.truncate_push_at(index, f)?;
                 }
 
                 if let Some(last) = self.last.as_mut() {
@@ -291,7 +295,7 @@ where
                     // })
                     // .unwrap()
                     // ;
-                    last.forced_push_at(index, v, exit)?;
+                    last.truncate_push_at(index, v)?;
                 }
 
                 let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
@@ -316,7 +320,7 @@ where
                         values.sort_unstable();
 
                         if let Some(max) = self.max.as_mut() {
-                            max.forced_push_at(
+                            max.truncate_push_at(
                                 index,
                                 *values
                                     .last()
@@ -325,6 +329,7 @@ where
                                         dbg!(
                                             &values,
                                             max.name(),
+                                            index,
                                             first_indexes.name(),
                                             first_index,
                                             count_indexes.name(),
@@ -334,32 +339,31 @@ where
                                         );
                                     })
                                     .unwrap(),
-                                exit,
                             )?;
                         }
 
                         if let Some(pct90) = self.pct90.as_mut() {
-                            pct90.forced_push_at(index, get_percentile(&values, 0.90), exit)?;
+                            pct90.truncate_push_at(index, get_percentile(&values, 0.90))?;
                         }
 
                         if let Some(pct75) = self.pct75.as_mut() {
-                            pct75.forced_push_at(index, get_percentile(&values, 0.75), exit)?;
+                            pct75.truncate_push_at(index, get_percentile(&values, 0.75))?;
                         }
 
                         if let Some(median) = self.median.as_mut() {
-                            median.forced_push_at(index, get_percentile(&values, 0.50), exit)?;
+                            median.truncate_push_at(index, get_percentile(&values, 0.50))?;
                         }
 
                         if let Some(pct25) = self.pct25.as_mut() {
-                            pct25.forced_push_at(index, get_percentile(&values, 0.25), exit)?;
+                            pct25.truncate_push_at(index, get_percentile(&values, 0.25))?;
                         }
 
                         if let Some(pct10) = self.pct10.as_mut() {
-                            pct10.forced_push_at(index, get_percentile(&values, 0.10), exit)?;
+                            pct10.truncate_push_at(index, get_percentile(&values, 0.10))?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
-                            min.forced_push_at(index, *values.first().unwrap(), exit)?;
+                            min.truncate_push_at(index, *values.first().unwrap())?;
                         }
                     }
 
@@ -369,18 +373,18 @@ where
 
                         if let Some(average) = self.average.as_mut() {
                             let avg = sum / len;
-                            average.forced_push_at(index, avg, exit)?;
+                            average.truncate_push_at(index, avg)?;
                         }
 
                         if needs_sum_or_cumulative {
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(index, sum, exit)?;
+                                sum_vec.truncate_push_at(index, sum)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
                                 let t = cumulative.unwrap() + sum;
                                 cumulative.replace(t);
-                                cumulative_vec.forced_push_at(index, t, exit)?;
+                                cumulative_vec.truncate_push_at(index, t)?;
                             }
                         }
                     }
@@ -445,7 +449,7 @@ where
 
                 if let Some(first) = self.first.as_mut() {
                     let v = source_first_iter.as_mut().unwrap().get_unwrap(first_index);
-                    first.forced_push_at(index, v, exit)?;
+                    first.truncate_push_at(index, v)?;
                 }
 
                 if let Some(last) = self.last.as_mut() {
@@ -455,7 +459,7 @@ where
                     }
                     let last_index = first_index + (count_index - 1);
                     let v = source_last_iter.as_mut().unwrap().get_unwrap(last_index);
-                    last.forced_push_at(index, v, exit)?;
+                    last.truncate_push_at(index, v)?;
                 }
 
                 let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
@@ -473,7 +477,7 @@ where
                                 .take(*count_index as usize)
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            max.forced_push_at(index, *values.last().unwrap(), exit)?;
+                            max.truncate_push_at(index, *values.last().unwrap())?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
@@ -483,7 +487,7 @@ where
                                 .take(*count_index as usize)
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            min.forced_push_at(index, *values.first().unwrap(), exit)?;
+                            min.truncate_push_at(index, *values.first().unwrap())?;
                         }
                     }
 
@@ -500,7 +504,7 @@ where
                             // TODO: Multiply by count then divide by cumulative
                             // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
                             let avg = cumulative / len;
-                            average.forced_push_at(index, avg, exit)?;
+                            average.truncate_push_at(index, avg)?;
                         }
 
                         if needs_sum_or_cumulative {
@@ -513,13 +517,13 @@ where
                             let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(index, sum, exit)?;
+                                sum_vec.truncate_push_at(index, sum)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
                                 let t = cumulative.unwrap() + sum;
                                 cumulative.replace(t);
-                                cumulative_vec.forced_push_at(index, t, exit)?;
+                                cumulative_vec.truncate_push_at(index, t)?;
                             }
                         }
                     }

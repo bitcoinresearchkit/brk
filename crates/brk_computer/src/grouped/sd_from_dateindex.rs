@@ -505,47 +505,47 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             .skip(starting_dateindex.to_usize())
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_date_usize {
-                    self.sd.dateindex.as_mut().unwrap().forced_push_at(
-                        index,
-                        StoredF32::NAN,
-                        exit,
-                    )?;
+                    self.sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .truncate_push_at(index, StoredF32::NAN)?;
 
                     if let Some(v) = p0_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = p1sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = p1_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = p2sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = p2_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = p3sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m0_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m1sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m1_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m2sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m2_5sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     if let Some(v) = m3sd.as_mut() {
-                        v.forced_push_at(index, StoredF32::NAN, exit)?
+                        v.truncate_push_at(index, StoredF32::NAN)?
                     }
                     // Advance iterator to stay in sync
                     sma_iter.next();
@@ -567,42 +567,42 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                         .dateindex
                         .as_mut()
                         .unwrap()
-                        .forced_push_at(index, sd, exit)?;
+                        .truncate_push_at(index, sd)?;
                     if let Some(v) = p0_5sd.as_mut() {
-                        v.forced_push_at(index, avg + StoredF32::from(0.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg + StoredF32::from(0.5 * *sd))?
                     }
                     if let Some(v) = p1sd.as_mut() {
-                        v.forced_push_at(index, avg + sd, exit)?
+                        v.truncate_push_at(index, avg + sd)?
                     }
                     if let Some(v) = p1_5sd.as_mut() {
-                        v.forced_push_at(index, avg + StoredF32::from(1.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg + StoredF32::from(1.5 * *sd))?
                     }
                     if let Some(v) = p2sd.as_mut() {
-                        v.forced_push_at(index, avg + 2 * sd, exit)?
+                        v.truncate_push_at(index, avg + 2 * sd)?
                     }
                     if let Some(v) = p2_5sd.as_mut() {
-                        v.forced_push_at(index, avg + StoredF32::from(2.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg + StoredF32::from(2.5 * *sd))?
                     }
                     if let Some(v) = p3sd.as_mut() {
-                        v.forced_push_at(index, avg + 3 * sd, exit)?
+                        v.truncate_push_at(index, avg + 3 * sd)?
                     }
                     if let Some(v) = m0_5sd.as_mut() {
-                        v.forced_push_at(index, avg - StoredF32::from(0.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg - StoredF32::from(0.5 * *sd))?
                     }
                     if let Some(v) = m1sd.as_mut() {
-                        v.forced_push_at(index, avg - sd, exit)?
+                        v.truncate_push_at(index, avg - sd)?
                     }
                     if let Some(v) = m1_5sd.as_mut() {
-                        v.forced_push_at(index, avg - StoredF32::from(1.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg - StoredF32::from(1.5 * *sd))?
                     }
                     if let Some(v) = m2sd.as_mut() {
-                        v.forced_push_at(index, avg - 2 * sd, exit)?
+                        v.truncate_push_at(index, avg - 2 * sd)?
                     }
                     if let Some(v) = m2_5sd.as_mut() {
-                        v.forced_push_at(index, avg - StoredF32::from(2.5 * *sd), exit)?
+                        v.truncate_push_at(index, avg - StoredF32::from(2.5 * *sd))?
                     }
                     if let Some(v) = m3sd.as_mut() {
-                        v.forced_push_at(index, avg - 3 * sd, exit)?
+                        v.truncate_push_at(index, avg - 3 * sd)?
                     }
                 }
 

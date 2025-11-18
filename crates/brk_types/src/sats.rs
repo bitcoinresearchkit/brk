@@ -197,6 +197,13 @@ impl Div<usize> for Sats {
     }
 }
 
+impl From<u8> for Sats {
+    #[inline]
+    fn from(value: u8) -> Self {
+        Self(value as u64)
+    }
+}
+
 impl From<u64> for Sats {
     #[inline]
     fn from(value: u64) -> Self {

@@ -4,7 +4,7 @@ use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
-use brk_indexer::Indexer;
+use brk_indexer::{Indexer, Indexes};
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
@@ -58,7 +58,8 @@ fn run() -> Result<()> {
     });
 
     let i = Instant::now();
-    let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
+    // let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
+    let starting_indexes = Indexes::default();
     info!("Done in {:?}", i.elapsed());
 
     let i = Instant::now();

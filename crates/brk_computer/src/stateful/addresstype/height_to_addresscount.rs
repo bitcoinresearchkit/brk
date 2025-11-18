@@ -3,7 +3,7 @@ use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64};
 use derive_deref::{Deref, DerefMut};
-use vecdb::{EagerVec, Exit, GenericStoredVec};
+use vecdb::{EagerVec, GenericStoredVec};
 
 use super::AddressTypeToAddressCount;
 
@@ -18,28 +18,27 @@ impl From<ByAddressType<EagerVec<Height, StoredU64>>> for AddressTypeToHeightToA
 }
 
 impl AddressTypeToHeightToAddressCount {
-    pub fn forced_push(
+    pub fn truncate_push(
         &mut self,
         height: Height,
         addresstype_to_usize: &AddressTypeToAddressCount,
-        exit: &Exit,
     ) -> Result<()> {
         self.p2pk65
-            .forced_push(height, addresstype_to_usize.p2pk65.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2pk65.into())?;
         self.p2pk33
-            .forced_push(height, addresstype_to_usize.p2pk33.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2pk33.into())?;
         self.p2pkh
-            .forced_push(height, addresstype_to_usize.p2pkh.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2pkh.into())?;
         self.p2sh
-            .forced_push(height, addresstype_to_usize.p2sh.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2sh.into())?;
         self.p2wpkh
-            .forced_push(height, addresstype_to_usize.p2wpkh.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2wpkh.into())?;
         self.p2wsh
-            .forced_push(height, addresstype_to_usize.p2wsh.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2wsh.into())?;
         self.p2tr
-            .forced_push(height, addresstype_to_usize.p2tr.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2tr.into())?;
         self.p2a
-            .forced_push(height, addresstype_to_usize.p2a.into(), exit)?;
+            .truncate_push(height, addresstype_to_usize.p2a.into())?;
 
         Ok(())
     }
