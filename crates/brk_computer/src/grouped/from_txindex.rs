@@ -252,84 +252,73 @@ impl ComputedVecsFromTxindex<Bitcoin> {
             .map(Height::from)
             .try_for_each(|height| -> Result<()> {
                 if let Some(first) = self.height.first.as_mut() {
-                    first.forced_push(
+                    first.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_first().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(average) = self.height.average.as_mut() {
-                    average.forced_push(
+                    average.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_average().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(sum) = self.height.sum.as_mut() {
-                    sum.forced_push(
+                    sum.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_sum().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(max) = self.height.max.as_mut() {
-                    max.forced_push(
+                    max.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_max().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(pct90) = self.height.pct90.as_mut() {
-                    pct90.forced_push(
+                    pct90.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_pct90().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(pct75) = self.height.pct75.as_mut() {
-                    pct75.forced_push(
+                    pct75.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_pct75().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(median) = self.height.median.as_mut() {
-                    median.forced_push(
+                    median.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_median().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(pct25) = self.height.pct25.as_mut() {
-                    pct25.forced_push(
+                    pct25.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_pct25().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(pct10) = self.height.pct10.as_mut() {
-                    pct10.forced_push(
+                    pct10.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_pct10().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(min) = self.height.min.as_mut() {
-                    min.forced_push(
+                    min.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_min().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(last) = self.height.last.as_mut() {
-                    last.forced_push(
+                    last.truncate_push(
                         height,
                         Bitcoin::from(sats.height.unwrap_last().into_iter().get_unwrap(height)),
-                        exit,
                     )?;
                 }
                 if let Some(cumulative) = self.height.cumulative.as_mut() {
-                    cumulative.forced_push(
+                    cumulative.truncate_push(
                         height,
                         Bitcoin::from(
                             sats.height
@@ -337,7 +326,6 @@ impl ComputedVecsFromTxindex<Bitcoin> {
                                 .into_iter()
                                 .get_unwrap(height),
                         ),
-                        exit,
                     )?;
                 }
                 Ok(())
@@ -380,14 +368,13 @@ impl ComputedVecsFromTxindex<Dollars> {
                 let price = *close_iter.get_unwrap(height);
 
                 if let Some(first) = self.height.first.as_mut() {
-                    first.forced_push(
+                    first.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_first().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(average) = self.height.average.as_mut() {
-                    average.forced_push(
+                    average.truncate_push(
                         height,
                         price
                             * bitcoin
@@ -395,39 +382,34 @@ impl ComputedVecsFromTxindex<Dollars> {
                                 .unwrap_average()
                                 .into_iter()
                                 .get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(sum) = self.height.sum.as_mut() {
-                    sum.forced_push(
+                    sum.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_sum().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(max) = self.height.max.as_mut() {
-                    max.forced_push(
+                    max.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_max().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(pct90) = self.height.pct90.as_mut() {
-                    pct90.forced_push(
+                    pct90.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_pct90().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(pct75) = self.height.pct75.as_mut() {
-                    pct75.forced_push(
+                    pct75.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_pct75().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(median) = self.height.median.as_mut() {
-                    median.forced_push(
+                    median.truncate_push(
                         height,
                         price
                             * bitcoin
@@ -435,39 +417,34 @@ impl ComputedVecsFromTxindex<Dollars> {
                                 .unwrap_median()
                                 .into_iter()
                                 .get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(pct25) = self.height.pct25.as_mut() {
-                    pct25.forced_push(
+                    pct25.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_pct25().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(pct10) = self.height.pct10.as_mut() {
-                    pct10.forced_push(
+                    pct10.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_pct10().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(min) = self.height.min.as_mut() {
-                    min.forced_push(
+                    min.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_min().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(last) = self.height.last.as_mut() {
-                    last.forced_push(
+                    last.truncate_push(
                         height,
                         price * bitcoin.height.unwrap_last().into_iter().get_unwrap(height),
-                        exit,
                     )?;
                 }
                 if let Some(cumulative) = self.height.cumulative.as_mut() {
-                    cumulative.forced_push(
+                    cumulative.truncate_push(
                         height,
                         price
                             * bitcoin
@@ -475,7 +452,6 @@ impl ComputedVecsFromTxindex<Dollars> {
                                 .unwrap_cumulative()
                                 .into_iter()
                                 .get_unwrap(height),
-                        exit,
                     )?;
                 }
                 Ok(())

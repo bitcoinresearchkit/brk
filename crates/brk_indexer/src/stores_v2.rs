@@ -181,7 +181,7 @@ impl Stores {
         self.keyspace.inner().batch().commit_partitions(tuples)?;
 
         self.keyspace
-            .persist(PersistMode::SyncAll)
+            .persist(PersistMode::SyncData)
             .map_err(|e| e.into())
     }
 

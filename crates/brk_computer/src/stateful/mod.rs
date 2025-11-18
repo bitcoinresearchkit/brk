@@ -1241,22 +1241,16 @@ impl Vecs {
                 });
 
                 self.height_to_unspendable_supply
-                    .forced_push(height, unspendable_supply, exit)?;
+                    .truncate_push(height, unspendable_supply)?;
 
                 self.height_to_opreturn_supply
-                    .forced_push(height, opreturn_supply, exit)?;
+                    .truncate_push(height, opreturn_supply)?;
 
-                self.addresstype_to_height_to_addr_count.forced_push(
-                    height,
-                    &addresstype_to_addr_count,
-                    exit,
-                )?;
+                self.addresstype_to_height_to_addr_count
+                    .truncate_push(height, &addresstype_to_addr_count)?;
 
-                self.addresstype_to_height_to_empty_addr_count.forced_push(
-                    height,
-                    &addresstype_to_empty_addr_count,
-                    exit,
-                )?;
+                self.addresstype_to_height_to_empty_addr_count
+                    .truncate_push(height, &addresstype_to_empty_addr_count)?;
 
                 let date = height_to_date_fixed_iter.get_unwrap(height);
                 let dateindex = DateIndex::try_from(date).unwrap();
@@ -1280,9 +1274,9 @@ impl Vecs {
                             .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs),
                     )
                     .try_for_each(|v| {
-                        v.forced_pushed_at(height, exit)?;
-                        v.compute_then_force_push_unrealized_states(
-                            height, price, dateindex, date_price, exit,
+                        v.truncate_push(height)?;
+                        v.compute_then_truncate_push_unrealized_states(
+                            height, price, dateindex, date_price,
                         )
                     })?;
 

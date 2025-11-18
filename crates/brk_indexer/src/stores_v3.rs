@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, time::Instant};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
@@ -8,7 +8,8 @@ use brk_types::{
     OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
     Vout,
 };
-use fjall3::{Database, PersistMode};
+use fjall3::{AbstractTree, Database, PersistMode};
+use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, VecIndex, VecIterator};
 
@@ -18,7 +19,7 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub database: Database,
+    pub db: Database,
 
     pub addresstype_to_addresshash_to_addressindex: ByAddressType<Store<AddressHash, TypeIndex>>,
     pub addresstype_to_addressindex_and_txindex: ByAddressType<Store<AddressIndexTxIndex, Unit>>,
@@ -84,7 +85,7 @@ impl Stores {
         };
 
         Ok(Self {
-            database: database.clone(),
+            db: database.clone(),
 
             height_to_coinbase_tag: Store::import(
                 database_ref,
@@ -103,14 +104,6 @@ impl Stores {
             addresstype_to_addressindex_and_unspentoutpoint: ByAddressType::new_with_index(
                 create_addressindex_to_unspentoutpoint_store,
             )?,
-            // addresshash_to_typeindex: Store::import(
-            //     database_ref,
-            //     path,
-            //     "addresshash_to_typeindex",
-            //     version,
-            //     Mode3::PushOnly,
-            //     Kind3::Random,
-            // )?,
             blockhashprefix_to_height: Store::import(
                 database_ref,
                 path,
@@ -127,22 +120,6 @@ impl Stores {
                 Mode3::PushOnly,
                 Kind3::Random,
             )?,
-            // addresstype_to_addressindex_and_txindex: Store::import(
-            //     database_ref,
-            //     path,
-            //     "addresstype_to_addressindex_and_txindex",
-            //     version,
-            //     Mode3::PushOnly,
-            //     Kind3::Vec,
-            // )?,
-            // addresstype_to_addressindex_and_unspentoutpoint: Store::import(
-            //     database_ref,
-            //     path,
-            //     "addresstype_to_addressindex_and_unspentoutpoint",
-            //     version,
-            //     Mode3::Any,
-            //     Kind3::Vec,
-            // )?,
         })
     }
 
@@ -158,6 +135,12 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
+        info!(
+            "self.db.config.cache.size = {}",
+            self.db.config.cache.size()
+        );
+
+        let i = Instant::now();
         let tuples = [
             &mut self.blockhashprefix_to_height as &mut dyn AnyStore,
             &mut self.height_to_coinbase_tag,
@@ -185,12 +168,32 @@ impl Stores {
             Ok((store.keyspace(), items))
         })
         .collect::<Result<Vec<_>>>()?;
+        info!("Store items collected in {:?}", i.elapsed());
 
-        self.database.batch().commit_keyspaces(tuples)?;
+        let version_memtable_size_sum = tuples
+            .iter()
+            .map(|(keyspace, _)| keyspace.tree.version_memtable_size_sum())
+            .collect::<Vec<_>>();
+        // let sum = version_memtable_size_sum.iter().sum::<usize>();
+        println!(
+            "version_memtable_size_sum = {:?} = ",
+            version_memtable_size_sum
+        );
 
-        self.database
-            .persist(PersistMode::SyncAll)
-            .map_err(|e| e.into())
+        let i = Instant::now();
+        self.db.batch().commit_keyspaces(tuples)?;
+        info!("Batch done in {:?}", i.elapsed());
+
+        let i = Instant::now();
+        self.db.persist(PersistMode::SyncData)?;
+        info!("Stores persisted in {:?}", i.elapsed());
+
+        info!(
+            "self.db.config.cache.size = {}",
+            self.db.config.cache.size()
+        );
+
+        Ok(())
     }
 
     fn iter_any_store(&self) -> impl Iterator<Item = &dyn AnyStore> {

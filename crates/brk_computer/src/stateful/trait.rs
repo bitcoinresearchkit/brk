@@ -12,15 +12,14 @@ pub trait DynCohortVecs: Send + Sync {
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
 
-    fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()>;
+    fn truncate_push(&mut self, height: Height) -> Result<()>;
 
-    fn compute_then_force_push_unrealized_states(
+    fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
         height_price: Option<Dollars>,
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
-        exit: &Exit,
     ) -> Result<()>;
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;

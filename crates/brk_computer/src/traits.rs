@@ -71,7 +71,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
 
                 prev = stack;
 
-                self.forced_push_at(i, stack, exit)
+                self.truncate_push_at(i, stack)
             })?;
 
         self.safe_flush(exit)?;
@@ -115,7 +115,7 @@ impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
 
                 prev = stack;
 
-                self.forced_push_at(i, stack, exit)
+                self.truncate_push_at(i, stack)
             })?;
 
         self.safe_flush(exit)?;
@@ -173,7 +173,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
                             .min(i.checked_sub(first_price_date).unwrap().to_usize() + 1)
                         / Bitcoin::from(stack);
                 }
-                self.forced_push_at(i, avg_price, exit)
+                self.truncate_push_at(i, avg_price)
             })?;
 
         self.safe_flush(exit)?;
@@ -205,7 +205,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
                 if i >= from {
                     avg_price = DCA_AMOUNT * (i.to_usize() + 1 - from) / Bitcoin::from(stack);
                 }
-                self.forced_push_at(i, avg_price, exit)
+                self.truncate_push_at(i, avg_price)
             })?;
 
         self.safe_flush(exit)?;

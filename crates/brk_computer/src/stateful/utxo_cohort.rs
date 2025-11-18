@@ -89,29 +89,27 @@ impl DynCohortVecs for Vecs {
         self.inner.validate_computed_versions(base_version)
     }
 
-    fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
+    fn truncate_push(&mut self, height: Height) -> Result<()> {
         if self.state_starting_height.unwrap() > height {
             return Ok(());
         }
 
         self.inner
-            .forced_pushed_at(height, exit, self.state.as_ref().unwrap())
+            .truncate_push(height, self.state.as_ref().unwrap())
     }
 
-    fn compute_then_force_push_unrealized_states(
+    fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
         height_price: Option<Dollars>,
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
-        exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_then_force_push_unrealized_states(
+        self.inner.compute_then_truncate_push_unrealized_states(
             height,
             height_price,
             dateindex,
             date_price,
-            exit,
             self.state.as_mut().unwrap(),
         )
     }

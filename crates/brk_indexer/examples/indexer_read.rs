@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Sats;
+// use brk_types::Sats;
 use std::{fs, path::Path};
 
 fn main() -> Result<()> {

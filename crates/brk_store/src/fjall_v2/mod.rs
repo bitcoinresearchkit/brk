@@ -30,6 +30,7 @@ const MAJOR_FJALL_VERSION: Version = Version::TWO;
 pub fn open_keyspace(path: &Path) -> fjall2::Result<TransactionalKeyspace> {
     fjall2::Config::new(path.join("fjall"))
         .manual_journal_persist(true)
+        .max_write_buffer_size(256 * 1_024 * 1_024)
         .open_transactional()
 }
 

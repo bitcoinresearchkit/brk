@@ -2,7 +2,7 @@ use std::{
     cmp::Ordering,
     f64,
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul},
+    ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
 use derive_deref::Deref;
@@ -45,6 +45,13 @@ impl From<f32> for StoredF64 {
     }
 }
 
+impl From<u8> for StoredF64 {
+    #[inline]
+    fn from(value: u8) -> Self {
+        Self(value as f64)
+    }
+}
+
 impl From<usize> for StoredF64 {
     #[inline]
     fn from(value: usize) -> Self {
@@ -65,7 +72,14 @@ impl Mul<usize> for StoredF64 {
     }
 }
 
-impl Mul<StoredF64> for StoredF64 {
+impl Sub for StoredF64 {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl Mul for StoredF64 {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0 * rhs.0)
@@ -86,7 +100,7 @@ impl Div<usize> for StoredF64 {
     }
 }
 
-impl Div<StoredF64> for StoredF64 {
+impl Div for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0 / rhs.0)
