@@ -340,7 +340,7 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("disk_chart.svg");
+        let output_path = crate_path.join("disk.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
@@ -404,7 +404,7 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("memory_chart.svg");
+        let output_path = crate_path.join("memory.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
@@ -628,7 +628,7 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("io_read_chart.svg");
+        let output_path = crate_path.join("io_read.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
@@ -710,7 +710,7 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("io_write_chart.svg");
+        let output_path = crate_path.join("io_write.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
@@ -792,7 +792,7 @@ impl Visualizer {
         crate_name: &str,
         runs: &[BenchmarkRun],
     ) -> Result<()> {
-        let output_path = crate_path.join("progress_chart.svg");
+        let output_path = crate_path.join("progress.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 

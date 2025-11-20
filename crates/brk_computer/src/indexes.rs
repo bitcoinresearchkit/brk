@@ -438,9 +438,9 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> Result<Indexes> {
-        let idxs = self.compute_(indexer, starting_indexes, exit)?;
+        let indexes = self.compute_(indexer, starting_indexes, exit)?;
         self.db.compact()?;
-        Ok(idxs)
+        Ok(indexes)
     }
 
     fn compute_(
@@ -460,13 +460,12 @@ impl Vecs {
             &indexer.vecs.txinindex_to_outpoint,
             |(txinindex, outpoint, ..)| {
                 if unlikely(outpoint.is_coinbase()) {
-                    (txinindex, TxOutIndex::COINBASE)
-                } else {
-                    let txoutindex = txindex_to_first_txoutindex
-                        .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
-                        + outpoint.vout();
-                    (txinindex, txoutindex)
+                    return (txinindex, TxOutIndex::COINBASE);
                 }
+                let txoutindex = txindex_to_first_txoutindex
+                    .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
+                    + outpoint.vout();
+                (txinindex, txoutindex)
             },
             exit,
         )?;

@@ -157,8 +157,6 @@ impl Computer {
         info!("Computing indexes...");
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
-        return Ok(());
-
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
             fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
@@ -200,6 +198,8 @@ impl Computer {
             info!("Computing market...");
             self.market.compute(price, &starting_indexes, exit)?;
         }
+
+        return Ok(());
 
         // constants.join().unwrap()?;
         // chain.join().unwrap()?;

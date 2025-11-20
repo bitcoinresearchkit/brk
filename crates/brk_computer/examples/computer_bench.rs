@@ -5,7 +5,6 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::{Indexer, Indexes};
-use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
@@ -37,9 +36,7 @@ fn run() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(&client, &reader);
-
-    let mut indexer = Indexer::forced_import(&outputs_dir)?;
+    let indexer = Indexer::forced_import(&outputs_dir)?;
 
     let fetcher = Fetcher::import(true, None)?;
 
