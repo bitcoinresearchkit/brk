@@ -235,21 +235,17 @@ where
         Ok(())
     }
 
-    pub fn compute<I2>(
+    pub fn compute<A>(
         &mut self,
         max_from: I,
-        source: &impl IterableVec<I2, T>,
-        first_indexes: &impl IterableVec<I, I2>,
+        source: &impl IterableVec<A, T>,
+        first_indexes: &impl IterableVec<I, A>,
         count_indexes: &impl IterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: VecIndex + VecValue + CheckedSub<I2>,
+        A: VecIndex + VecValue + CheckedSub<A>,
     {
-        dbg!(source.len());
-        dbg!(first_indexes.len());
-        dbg!(count_indexes.len());
-
         self.validate_computed_version_or_reset(
             source.version() + first_indexes.version() + count_indexes.version(),
         )?;
@@ -399,16 +395,16 @@ where
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn from_aligned<I2>(
+    pub fn from_aligned<A>(
         &mut self,
         max_from: I,
-        source: &EagerVecsBuilder<I2, T>,
-        first_indexes: &impl IterableVec<I, I2>,
+        source: &EagerVecsBuilder<A, T>,
+        first_indexes: &impl IterableVec<I, A>,
         count_indexes: &impl IterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: VecIndex + VecValue + CheckedSub<I2>,
+        A: VecIndex + VecValue + CheckedSub<A>,
     {
         if self.pct90.is_some()
             || self.pct75.is_some()

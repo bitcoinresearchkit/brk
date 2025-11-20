@@ -3,7 +3,7 @@
 use std::{collections::BTreeMap, sync::Arc};
 
 use brk_computer::Computer;
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_indexer::Indexer;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
@@ -191,8 +191,8 @@ impl Query {
             Format::JSON => {
                 let mut values = metrics
                     .iter()
-                    .map(|vec| vec.collect_range_json_bytes(from, to))
-                    .collect::<Vec<_>>();
+                    .map(|vec| vec.collect_range_json_bytes(from, to).map_err(Error::from))
+                    .collect::<Result<Vec<_>>>()?;
 
                 if values.is_empty() {
                     return Ok(Output::default(format));

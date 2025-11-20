@@ -10,12 +10,10 @@ rust-version.workspace = true
 build = "build.rs"
 
 [features]
-default = ["cli"]
 full = [
     "bencher",
     "binder",
     "bundler",
-    "cli",
     "computer",
     "error",
     "fetcher",
@@ -36,7 +34,6 @@ full = [
 bencher = ["brk_bencher"]
 binder = ["brk_binder"]
 bundler = ["brk_bundler"]
-cli = ["brk_cli"]
 computer = ["brk_computer"]
 error = ["brk_error"]
 fetcher = ["brk_fetcher"]
@@ -58,7 +55,6 @@ types = ["brk_types"]
 brk_bencher = { workspace = true, optional = true }
 brk_binder = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
-brk_cli = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_error = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }

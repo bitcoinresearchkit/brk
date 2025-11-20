@@ -1,6 +1,6 @@
 use std::{
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, SubAssign},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
 use bitcoin::Amount;
@@ -78,16 +78,14 @@ impl Sats {
 impl Add for Sats {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Self::from(self.0 + rhs.0)
-        // Self::from(
-        //     self.0
-        //         .checked_add(rhs.0)
-        //         .or_else(|| {
-        //             dbg!(rhs);
-        //             panic!();
-        //         })
-        //         .unwrap(),
-        // )
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl Sub for Sats {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
     }
 }
 

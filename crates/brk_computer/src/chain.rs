@@ -10,8 +10,8 @@ use brk_types::{
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
-    AnyVec, Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, IterableVec,
-    LazyVecFrom1, LazyVecFrom2, PAGE_SIZE, TypedVecIterator, VecIndex, unlikely,
+    Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, LazyVecFrom1,
+    LazyVecFrom2, PAGE_SIZE, TypedVecIterator, VecIndex, unlikely,
 };
 
 use crate::grouped::{
@@ -1311,20 +1311,6 @@ impl Vecs {
             exit,
         )?;
 
-        // Debug: verify the computed txinindex_to_value
-        dbg!("txinindex_to_value first 20:");
-        for i in 0..20.min(self.txinindex_to_value.len()) {
-            let val = self.txinindex_to_value.read_at_unwrap_once(i);
-            dbg!((TxInIndex::from(i), val));
-        }
-
-        // Debug: verify the computed txindex_to_input_count
-        dbg!("txindex_to_input_count first 20:");
-        for i in 0..20.min(indexes.txindex_to_input_count.len()) {
-            let val = indexes.txindex_to_input_count.read_at_unwrap_once(i);
-            dbg!((TxInIndex::from(i), val));
-        }
-
         self.txindex_to_input_value.compute_sum_from_indexes(
             starting_indexes.txindex,
             &indexer.vecs.txindex_to_first_txinindex,
@@ -1332,12 +1318,6 @@ impl Vecs {
             &self.txinindex_to_value,
             exit,
         )?;
-
-        // Debug: verify the computed input values
-        for i in 0..10.min(self.txindex_to_input_value.len()) {
-            let val = self.txindex_to_input_value.read_at_unwrap_once(i);
-            dbg!((TxIndex::from(i), "input_value", val));
-        }
 
         self.txindex_to_output_value.compute_sum_from_indexes(
             starting_indexes.txindex,
@@ -1347,26 +1327,17 @@ impl Vecs {
             exit,
         )?;
 
-        // Debug: verify the computed output values
-        for i in 0..10.min(self.txindex_to_output_value.len()) {
-            let val = self.txindex_to_output_value.read_at_unwrap_once(i);
-            dbg!((TxIndex::from(i), "output_value", val));
-        }
-
         self.txindex_to_fee.compute_transform2(
             starting_indexes.txindex,
             &self.txindex_to_input_value,
             &self.txindex_to_output_value,
             |(i, input, output, ..)| {
-                (
-                    i,
-                    if unlikely(input.is_max()) {
-                        Sats::ZERO
-                    } else {
-                        dbg!((i, input, output));
-                        input.checked_sub(output).unwrap()
-                    },
-                )
+                let fee = if unlikely(input.is_max()) {
+                    Sats::ZERO
+                } else {
+                    input - output
+                };
+                (i, fee)
             },
             exit,
         )?;
@@ -1381,11 +1352,12 @@ impl Vecs {
 
         self.indexes_to_sent
             .compute_all(indexes, price, starting_indexes, exit, |v| {
-                v.compute_sum_from_indexes(
+                v.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.height_to_first_txindex,
                     &indexes.height_to_txindex_count,
                     &self.txindex_to_input_value,
+                    |sats| !sats.is_max(),
                     exit,
                 )?;
                 Ok(())
@@ -1472,6 +1444,8 @@ impl Vecs {
             },
             exit,
         )?;
+        drop(height_to_coinbase_iter);
+
         if let Some(mut height_to_coinbase_iter) = self
             .indexes_to_coinbase
             .dollars
@@ -1493,18 +1467,20 @@ impl Vecs {
             )?;
         }
 
-        drop(height_to_coinbase_iter);
-
         self.indexes_to_subsidy
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
-                let mut indexes_to_fee_sum_iter =
-                    self.indexes_to_fee.sats.height.unwrap_sum().iter();
-                vec.compute_transform(
+                vec.compute_transform2(
                     starting_indexes.height,
                     self.indexes_to_coinbase.sats.height.as_ref().unwrap(),
-                    |(height, coinbase, ..)| {
-                        let fees = indexes_to_fee_sum_iter.get_unwrap(height);
-                        (height, coinbase.checked_sub(fees).unwrap())
+                    self.indexes_to_fee.sats.height.unwrap_sum(),
+                    |(height, coinbase, fees, ..)| {
+                        (
+                            height,
+                            coinbase.checked_sub(fees).unwrap_or_else(|| {
+                                dbg!(height, coinbase, fees);
+                                panic!()
+                            }),
+                        )
                     },
                     exit,
                 )?;

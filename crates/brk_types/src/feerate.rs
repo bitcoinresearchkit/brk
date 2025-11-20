@@ -17,9 +17,12 @@ pub struct FeeRate(f64);
 impl From<(Sats, StoredU64)> for FeeRate {
     #[inline]
     fn from((sats, vsize): (Sats, StoredU64)) -> Self {
+        if sats.is_zero() {
+            return Self(0.0);
+        }
         let sats = u64::from(sats);
         let vsize = u64::from(vsize);
-        Self(((sats * 1000 + vsize.checked_sub(1).unwrap()) / vsize) as f64 / 1000.0)
+        Self((sats * 1000).div_ceil(vsize) as f64 / 1000.0)
     }
 }
 

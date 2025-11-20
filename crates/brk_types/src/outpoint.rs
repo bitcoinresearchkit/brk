@@ -48,6 +48,11 @@ impl OutPoint {
     pub fn is_coinbase(self) -> bool {
         self == Self::COINBASE
     }
+
+    #[inline(always)]
+    pub fn is_not_coinbase(self) -> bool {
+        self != Self::COINBASE
+    }
 }
 
 impl std::fmt::Display for OutPoint {
