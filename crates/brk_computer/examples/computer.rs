@@ -17,7 +17,7 @@ use vecdb::Exit;
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
-        .stack_size(512 * 1024 * 1024)
+        .stack_size(1024 * 1024 * 1024)
         .spawn(run)?
         .join()
         .unwrap()

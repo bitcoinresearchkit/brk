@@ -33,14 +33,20 @@ impl From<String> for Address {
 impl TryFrom<&ScriptBuf> for Address {
     type Error = Error;
     fn try_from(script: &ScriptBuf) -> Result<Self, Self::Error> {
-        Self::try_from(&AddressBytes::try_from(script)?)
+        Self::try_from((script, OutputType::from(script)))
     }
 }
 
 impl TryFrom<(&ScriptBuf, OutputType)> for Address {
     type Error = Error;
-    fn try_from(tuple: (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
-        Self::try_from(&AddressBytes::try_from(tuple)?)
+    fn try_from((script, outputtype): (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
+        if outputtype.is_address() {
+            Ok(Self {
+                address: script.to_hex_string(),
+            })
+        } else {
+            Err(Error::InvalidAddress)
+        }
     }
 }
 

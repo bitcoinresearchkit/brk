@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::Path, thread};
+use std::{path::Path, thread, time::Instant};
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
@@ -151,61 +151,79 @@ impl Computer {
         &mut self,
         indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
-        parser: &Reader,
+        reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
         info!("Computing indexes...");
+        let i = Instant::now();
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
+        info!("Computed indexes in {:?}", i.elapsed());
 
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
+            let i = Instant::now();
             fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
+            info!("Computed fetched in {:?}", i.elapsed());
 
             info!("Computing prices...");
+            let i = Instant::now();
             self.price.as_mut().unwrap().compute(
                 &self.indexes,
                 &starting_indexes,
                 fetched,
                 exit,
             )?;
+            info!("Computed prices in {:?}", i.elapsed());
         }
 
-        info!("Computing BLKs metadata...");
-        self.blks
-            .compute(indexer, &starting_indexes, parser, exit)?;
+        std::thread::scope(|scope| -> Result<()> {
+            let blks = scope.spawn(|| -> Result<()> {
+                info!("Computing BLKs metadata...");
+                let i = Instant::now();
+                self.blks
+                    .compute(indexer, &starting_indexes, reader, exit)?;
+                info!("Computed blk in {:?}", i.elapsed());
+                Ok(())
+            });
 
-        // std::thread::scope(|scope| -> Result<()> {
-        // let constants = scope.spawn(|| -> Result<()> {
-        info!("Computing constants...");
-        self.constants
-            .compute(&self.indexes, &starting_indexes, exit)?;
-        //     Ok(())
-        // });
+            let constants = scope.spawn(|| -> Result<()> {
+                info!("Computing constants...");
+                let i = Instant::now();
+                self.constants
+                    .compute(&self.indexes, &starting_indexes, exit)?;
+                info!("Computed constants in {:?}", i.elapsed());
+                Ok(())
+            });
 
-        // let chain = scope.spawn(|| -> Result<()> {
-        info!("Computing chain...");
-        self.chain.compute(
-            indexer,
-            &self.indexes,
-            &starting_indexes,
-            self.price.as_ref(),
-            exit,
-        )?;
-        //     Ok(())
-        // });
+            let chain = scope.spawn(|| -> Result<()> {
+                info!("Computing chain...");
+                let i = Instant::now();
+                self.chain.compute(
+                    indexer,
+                    &self.indexes,
+                    &starting_indexes,
+                    self.price.as_ref(),
+                    exit,
+                )?;
+                info!("Computed chain in {:?}", i.elapsed());
+                Ok(())
+            });
 
-        if let Some(price) = self.price.as_ref() {
-            info!("Computing market...");
-            self.market.compute(price, &starting_indexes, exit)?;
-        }
+            if let Some(price) = self.price.as_ref() {
+                info!("Computing market...");
+                let i = Instant::now();
+                self.market.compute(price, &starting_indexes, exit)?;
+                info!("Computed market in {:?}", i.elapsed());
+            }
 
-        return Ok(());
+            blks.join().unwrap()?;
+            constants.join().unwrap()?;
+            chain.join().unwrap()?;
+            Ok(())
+        })?;
 
-        // constants.join().unwrap()?;
-        // chain.join().unwrap()?;
-        // Ok(())
-        // })?;
-
+        info!("Computing pools...");
+        let i = Instant::now();
         self.pools.compute(
             indexer,
             &self.indexes,
@@ -214,6 +232,7 @@ impl Computer {
             self.price.as_ref(),
             exit,
         )?;
+        info!("Computed pools in {:?}", i.elapsed());
 
         info!("Computing stateful...");
         self.stateful.compute(

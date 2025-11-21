@@ -534,6 +534,7 @@ impl Vecs {
         let height_to_first_p2wpkhaddressindex = &indexer.vecs.height_to_first_p2wpkhaddressindex;
         let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
         let height_to_first_txindex = &indexer.vecs.height_to_first_txindex;
+        let height_to_txindex_count = chain.indexes_to_tx_count.height.as_ref().unwrap();
         let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
         let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
@@ -578,6 +579,7 @@ impl Vecs {
             + height_to_first_p2wpkhaddressindex.version()
             + height_to_first_p2wshaddressindex.version()
             + height_to_first_txindex.version()
+            + height_to_txindex_count.version()
             + height_to_first_txinindex.version()
             + height_to_first_txoutindex.version()
             + height_to_input_count.version()
@@ -778,6 +780,7 @@ impl Vecs {
             let mut height_to_first_p2wshaddressindex_iter =
                 height_to_first_p2wshaddressindex.into_iter();
             let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
+            let mut height_to_txindex_count_iter = height_to_txindex_count.into_iter();
             let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
             let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
             let mut height_to_input_count_iter = height_to_input_count.into_iter();
