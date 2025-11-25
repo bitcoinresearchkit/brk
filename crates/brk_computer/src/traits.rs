@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_types::{Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Sats, StoredF32};
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, VecIndex, Version,
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, IterableVec, PcoVec, VecIndex, Version,
 };
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
@@ -24,7 +24,7 @@ pub trait ComputeDCAStackViaLen {
     ) -> Result<()>;
 }
 
-impl ComputeDCAStackViaLen for EagerVec<DateIndex, Sats> {
+impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
     fn compute_dca_stack_via_len(
         &mut self,
         max_from: DateIndex,
@@ -142,7 +142,7 @@ pub trait ComputeDCAAveragePriceViaLen {
     ) -> Result<()>;
 }
 
-impl ComputeDCAAveragePriceViaLen for EagerVec<DateIndex, Dollars> {
+impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
     fn compute_dca_avg_price_via_len(
         &mut self,
         max_from: DateIndex,
@@ -223,7 +223,7 @@ pub trait ComputeFromSats<I> {
     ) -> Result<()>;
 }
 
-impl<I> ComputeFromSats<I> for EagerVec<I, Bitcoin>
+impl<I> ComputeFromSats<I> for EagerVec<PcoVec<I, Bitcoin>>
 where
     I: VecIndex,
 {
@@ -253,7 +253,7 @@ pub trait ComputeFromBitcoin<I> {
     ) -> Result<()>;
 }
 
-impl<I> ComputeFromBitcoin<I> for EagerVec<I, Dollars>
+impl<I> ComputeFromBitcoin<I> for EagerVec<PcoVec<I, Dollars>>
 where
     I: VecIndex,
 {
@@ -285,7 +285,7 @@ pub trait ComputeDrawdown<I> {
     ) -> Result<()>;
 }
 
-impl<I> ComputeDrawdown<I> for EagerVec<I, StoredF32>
+impl<I> ComputeDrawdown<I> for EagerVec<PcoVec<I, StoredF32>>
 where
     I: VecIndex,
 {

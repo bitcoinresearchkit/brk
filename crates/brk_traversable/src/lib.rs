@@ -4,24 +4,25 @@ pub use brk_types::TreeNode;
 
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
+use serde::Serialize;
 use vecdb::{
-    AnyVec, AnyWritableVec, BytesVec, BytesVecValue, EagerVec, Formattable, LazyVecFrom1,
+    AnyExportableVec, AnyVec, BytesVec, BytesVecValue, EagerVec, Formattable, LazyVecFrom1,
     LazyVecFrom2, LazyVecFrom3, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
     fn to_tree_node(&self) -> TreeNode;
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec>;
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec>;
 }
 
 // BytesVec implementation
 impl<I, T> Traversable for BytesVec<I, T>
 where
     I: VecIndex,
-    T: BytesVecValue + Formattable,
+    T: BytesVecValue + Formattable + Serialize,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -36,8 +37,8 @@ where
     I: VecIndex,
     T: vecdb::ZeroCopyVecValue + Formattable,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -50,10 +51,10 @@ where
 impl<I, T> Traversable for vecdb::PcoVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::PcoVecValue + Formattable,
+    T: vecdb::PcoVecValue + Formattable + Serialize,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -68,8 +69,8 @@ where
     I: VecIndex,
     T: vecdb::LZ4VecValue + Formattable,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -84,8 +85,8 @@ where
     I: VecIndex,
     T: vecdb::ZstdVecValue + Formattable,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -97,10 +98,10 @@ where
 impl<V> Traversable for EagerVec<V>
 where
     V: StoredVec,
-    V::T: Formattable,
+    V::T: Formattable + Serialize,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -111,12 +112,12 @@ where
 impl<I, T, S1I, S1T> Traversable for LazyVecFrom1<I, T, S1I, S1T>
 where
     I: VecIndex,
-    T: VecValue + Formattable,
+    T: VecValue + Formattable + Serialize,
     S1I: VecIndex,
     S1T: VecValue,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -127,14 +128,14 @@ where
 impl<I, T, S1I, S1T, S2I, S2T> Traversable for LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>
 where
     I: VecIndex,
-    T: VecValue + Formattable,
+    T: VecValue + Formattable + Serialize,
     S1I: VecIndex,
     S1T: VecValue,
     S2I: VecIndex,
     S2T: VecValue,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -146,7 +147,7 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
     for LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: VecIndex,
-    T: VecValue + Formattable,
+    T: VecValue + Formattable + Serialize,
     S1I: VecIndex,
     S1T: VecValue,
     S2I: VecIndex,
@@ -154,8 +155,8 @@ where
     S3I: VecIndex,
     S3T: VecValue,
 {
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -168,8 +169,8 @@ impl<T: Traversable + ?Sized> Traversable for Box<T> {
         (**self).to_tree_node()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        (**self).iter_any_writable()
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        (**self).iter_any_exportable()
     }
 }
 
@@ -181,11 +182,10 @@ impl<T: Traversable> Traversable for Option<T> {
         }
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         match self {
-            Some(inner) => {
-                Box::new(inner.iter_any_writable()) as Box<dyn Iterator<Item = &dyn AnyWritableVec>>
-            }
+            Some(inner) => Box::new(inner.iter_any_exportable())
+                as Box<dyn Iterator<Item = &dyn AnyExportableVec>>,
             None => Box::new(std::iter::empty()),
         }
     }
@@ -200,10 +200,11 @@ impl<K: Debug, V: Traversable> Traversable for BTreeMap<K, V> {
         TreeNode::Branch(children)
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> = Box::new(std::iter::empty());
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(std::iter::empty());
         for v in self.values() {
-            iter = Box::new(iter.chain(v.iter_any_writable()));
+            iter = Box::new(iter.chain(v.iter_any_exportable()));
         }
         iter
     }

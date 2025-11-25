@@ -5,7 +5,7 @@ use brk_grouper::{AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanA
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
-use vecdb::{Database, Exit, Format, IterableVec};
+use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
     Indexes, indexes, price,
@@ -24,7 +24,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        format: Format,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: &Path,
@@ -35,7 +34,6 @@ impl Vecs {
                     _0sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_with_0sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -45,7 +43,6 @@ impl Vecs {
                     _1sat_to_10sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1sat_under_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -55,7 +52,6 @@ impl Vecs {
                     _10sats_to_100sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10sats_under_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -65,7 +61,6 @@ impl Vecs {
                     _100sats_to_1k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100sats_under_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -75,7 +70,6 @@ impl Vecs {
                     _1k_sats_to_10k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1k_sats_under_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -85,7 +79,6 @@ impl Vecs {
                     _10k_sats_to_100k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10k_sats_under_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -95,7 +88,6 @@ impl Vecs {
                     _100k_sats_to_1m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100k_sats_under_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -105,7 +97,6 @@ impl Vecs {
                     _1m_sats_to_10m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1m_sats_under_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -115,7 +106,6 @@ impl Vecs {
                     _10m_sats_to_1btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10m_sats_under_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -125,7 +115,6 @@ impl Vecs {
                     _1btc_to_10btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1btc_under_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -135,7 +124,6 @@ impl Vecs {
                     _10btc_to_100btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10btc_under_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -145,7 +133,6 @@ impl Vecs {
                     _100btc_to_1k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100btc_under_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -155,7 +142,6 @@ impl Vecs {
                     _1k_btc_to_10k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1k_btc_under_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -165,7 +151,6 @@ impl Vecs {
                     _10k_btc_to_100k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10k_btc_under_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -175,7 +160,6 @@ impl Vecs {
                     _100k_btc_or_more: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -187,7 +171,6 @@ impl Vecs {
                     _10sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -197,7 +180,6 @@ impl Vecs {
                     _100sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -207,7 +189,6 @@ impl Vecs {
                     _1k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -217,7 +198,6 @@ impl Vecs {
                     _10k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -227,7 +207,6 @@ impl Vecs {
                     _100k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -237,7 +216,6 @@ impl Vecs {
                     _1m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -247,7 +225,6 @@ impl Vecs {
                     _10m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -257,7 +234,6 @@ impl Vecs {
                     _1btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -267,7 +243,6 @@ impl Vecs {
                     _10btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -277,7 +252,6 @@ impl Vecs {
                     _100btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -287,7 +261,6 @@ impl Vecs {
                     _1k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -297,7 +270,6 @@ impl Vecs {
                     _10k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -307,7 +279,6 @@ impl Vecs {
                     _100k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_under_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -319,7 +290,6 @@ impl Vecs {
                     _1sat: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1sat"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -329,7 +299,6 @@ impl Vecs {
                     _10sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -339,7 +308,6 @@ impl Vecs {
                     _100sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -349,7 +317,6 @@ impl Vecs {
                     _1k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -359,7 +326,6 @@ impl Vecs {
                     _10k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -369,7 +335,6 @@ impl Vecs {
                     _100k_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -379,7 +344,6 @@ impl Vecs {
                     _1m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -389,7 +353,6 @@ impl Vecs {
                     _10m_sats: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -399,7 +362,6 @@ impl Vecs {
                     _1btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -409,7 +371,6 @@ impl Vecs {
                     _10btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -419,7 +380,6 @@ impl Vecs {
                     _100btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -429,7 +389,6 @@ impl Vecs {
                     _1k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -439,7 +398,6 @@ impl Vecs {
                     _10k_btc: address_cohort::Vecs::forced_import(
                         db,
                         Some("addrs_above_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,

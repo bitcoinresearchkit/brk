@@ -4,8 +4,8 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec, IterableVec,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, Importable, IterableVec,
+    PcoVec, TypedVecIterator,
 };
 
 use crate::{
@@ -31,7 +31,7 @@ pub struct Vecs {
     #[traversable(flatten)]
     pub inner: common::Vecs,
 
-    pub height_to_addr_count: EagerVec<Height, StoredU64>,
+    pub height_to_addr_count: EagerVec<PcoVec<Height, StoredU64>>,
     pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
 }
 
@@ -40,7 +40,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         cohort_name: Option<&str>,
-        format: Format,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -64,7 +63,6 @@ impl Vecs {
                 db,
                 &suffix("addr_count"),
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 db,
@@ -77,7 +75,6 @@ impl Vecs {
             inner: common::Vecs::forced_import(
                 db,
                 cohort_name,
-                format,
                 version,
                 indexes,
                 price,

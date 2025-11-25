@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use vecdb::{
-    CollectableVec, Database, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom3, StoredVec,
+    CollectableVec, Database, Exit, IterableCloneableVec, LazyVecFrom1, LazyVecFrom3, PcoVec,
     VecIndex,
 };
 
@@ -122,7 +122,7 @@ impl ComputedValueVecsFromTxindex {
     // ) -> Result<()>
     // where
     //     F: FnMut(
-    //         &mut EagerVec<TxIndex, Sats>,
+    //         &mut EagerVec<PcoVec<TxIndex, Sats>>,
     //         &Indexer,
     //         &indexes::Vecs,
     //         &Indexes,
@@ -137,7 +137,7 @@ impl ComputedValueVecsFromTxindex {
     //         exit,
     //     )?;
 
-    //     let txindex: Option<&StoredVec<TxIndex, Sats>> = None;
+    //     let txindex: Option<&PcoVec<TxIndex, Sats>> = None;
     //     self.compute_rest(
     //         indexer,
     //         indexes,
@@ -163,7 +163,7 @@ impl ComputedValueVecsFromTxindex {
             self.sats
                 .compute_rest(indexer, indexes, starting_indexes, exit, Some(txindex))?;
         } else {
-            let txindex: Option<&StoredVec<TxIndex, Sats>> = None;
+            let txindex: Option<&PcoVec<TxIndex, Sats>> = None;
             self.sats
                 .compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
         }

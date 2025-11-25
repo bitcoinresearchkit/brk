@@ -13,8 +13,8 @@ use brk_types::{
     YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, LazyVecFrom1, PAGE_SIZE,
-    TypedVecIterator, unlikely,
+    Database, EagerVec, Exit, GenericStoredVec, Importable, IterableCloneableVec, LazyVecFrom1,
+    PAGE_SIZE, PcoVec, TypedVecIterator, unlikely,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -23,36 +23,36 @@ const VERSION: Version = Version::ZERO;
 pub struct Vecs {
     db: Database,
 
-    pub dateindex_to_date: EagerVec<DateIndex, Date>,
-    pub dateindex_to_dateindex: EagerVec<DateIndex, DateIndex>,
-    pub dateindex_to_first_height: EagerVec<DateIndex, Height>,
-    pub dateindex_to_height_count: EagerVec<DateIndex, StoredU64>,
-    pub dateindex_to_monthindex: EagerVec<DateIndex, MonthIndex>,
-    pub dateindex_to_weekindex: EagerVec<DateIndex, WeekIndex>,
-    pub decadeindex_to_decadeindex: EagerVec<DecadeIndex, DecadeIndex>,
-    pub decadeindex_to_first_yearindex: EagerVec<DecadeIndex, YearIndex>,
-    pub decadeindex_to_yearindex_count: EagerVec<DecadeIndex, StoredU64>,
-    pub difficultyepoch_to_difficultyepoch: EagerVec<DifficultyEpoch, DifficultyEpoch>,
-    pub difficultyepoch_to_first_height: EagerVec<DifficultyEpoch, Height>,
-    pub difficultyepoch_to_height_count: EagerVec<DifficultyEpoch, StoredU64>,
+    pub dateindex_to_date: EagerVec<PcoVec<DateIndex, Date>>,
+    pub dateindex_to_dateindex: EagerVec<PcoVec<DateIndex, DateIndex>>,
+    pub dateindex_to_first_height: EagerVec<PcoVec<DateIndex, Height>>,
+    pub dateindex_to_height_count: EagerVec<PcoVec<DateIndex, StoredU64>>,
+    pub dateindex_to_monthindex: EagerVec<PcoVec<DateIndex, MonthIndex>>,
+    pub dateindex_to_weekindex: EagerVec<PcoVec<DateIndex, WeekIndex>>,
+    pub decadeindex_to_decadeindex: EagerVec<PcoVec<DecadeIndex, DecadeIndex>>,
+    pub decadeindex_to_first_yearindex: EagerVec<PcoVec<DecadeIndex, YearIndex>>,
+    pub decadeindex_to_yearindex_count: EagerVec<PcoVec<DecadeIndex, StoredU64>>,
+    pub difficultyepoch_to_difficultyepoch: EagerVec<PcoVec<DifficultyEpoch, DifficultyEpoch>>,
+    pub difficultyepoch_to_first_height: EagerVec<PcoVec<DifficultyEpoch, Height>>,
+    pub difficultyepoch_to_height_count: EagerVec<PcoVec<DifficultyEpoch, StoredU64>>,
     pub emptyoutputindex_to_emptyoutputindex:
         LazyVecFrom1<EmptyOutputIndex, EmptyOutputIndex, EmptyOutputIndex, TxIndex>,
-    pub halvingepoch_to_first_height: EagerVec<HalvingEpoch, Height>,
-    pub halvingepoch_to_halvingepoch: EagerVec<HalvingEpoch, HalvingEpoch>,
-    pub height_to_date: EagerVec<Height, Date>,
-    pub height_to_date_fixed: EagerVec<Height, Date>,
-    pub height_to_dateindex: EagerVec<Height, DateIndex>,
-    pub height_to_difficultyepoch: EagerVec<Height, DifficultyEpoch>,
-    pub height_to_halvingepoch: EagerVec<Height, HalvingEpoch>,
-    pub height_to_height: EagerVec<Height, Height>,
-    pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
-    pub height_to_txindex_count: EagerVec<Height, StoredU64>,
-    pub monthindex_to_dateindex_count: EagerVec<MonthIndex, StoredU64>,
-    pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
-    pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
-    pub monthindex_to_quarterindex: EagerVec<MonthIndex, QuarterIndex>,
-    pub monthindex_to_semesterindex: EagerVec<MonthIndex, SemesterIndex>,
-    pub monthindex_to_yearindex: EagerVec<MonthIndex, YearIndex>,
+    pub halvingepoch_to_first_height: EagerVec<PcoVec<HalvingEpoch, Height>>,
+    pub halvingepoch_to_halvingepoch: EagerVec<PcoVec<HalvingEpoch, HalvingEpoch>>,
+    pub height_to_date: EagerVec<PcoVec<Height, Date>>,
+    pub height_to_date_fixed: EagerVec<PcoVec<Height, Date>>,
+    pub height_to_dateindex: EagerVec<PcoVec<Height, DateIndex>>,
+    pub height_to_difficultyepoch: EagerVec<PcoVec<Height, DifficultyEpoch>>,
+    pub height_to_halvingepoch: EagerVec<PcoVec<Height, HalvingEpoch>>,
+    pub height_to_height: EagerVec<PcoVec<Height, Height>>,
+    pub height_to_timestamp_fixed: EagerVec<PcoVec<Height, Timestamp>>,
+    pub height_to_txindex_count: EagerVec<PcoVec<Height, StoredU64>>,
+    pub monthindex_to_dateindex_count: EagerVec<PcoVec<MonthIndex, StoredU64>>,
+    pub monthindex_to_first_dateindex: EagerVec<PcoVec<MonthIndex, DateIndex>>,
+    pub monthindex_to_monthindex: EagerVec<PcoVec<MonthIndex, MonthIndex>>,
+    pub monthindex_to_quarterindex: EagerVec<PcoVec<MonthIndex, QuarterIndex>>,
+    pub monthindex_to_semesterindex: EagerVec<PcoVec<MonthIndex, SemesterIndex>>,
+    pub monthindex_to_yearindex: EagerVec<PcoVec<MonthIndex, YearIndex>>,
     pub opreturnindex_to_opreturnindex:
         LazyVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
     pub p2aaddressindex_to_p2aaddressindex:
@@ -73,27 +73,27 @@ pub struct Vecs {
         LazyVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
     pub p2wshaddressindex_to_p2wshaddressindex:
         LazyVecFrom1<P2WSHAddressIndex, P2WSHAddressIndex, P2WSHAddressIndex, P2WSHBytes>,
-    pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
-    pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredU64>,
-    pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
-    pub semesterindex_to_first_monthindex: EagerVec<SemesterIndex, MonthIndex>,
-    pub semesterindex_to_monthindex_count: EagerVec<SemesterIndex, StoredU64>,
-    pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
-    pub txindex_to_input_count: EagerVec<TxIndex, StoredU64>,
-    pub txindex_to_output_count: EagerVec<TxIndex, StoredU64>,
+    pub quarterindex_to_first_monthindex: EagerVec<PcoVec<QuarterIndex, MonthIndex>>,
+    pub quarterindex_to_monthindex_count: EagerVec<PcoVec<QuarterIndex, StoredU64>>,
+    pub quarterindex_to_quarterindex: EagerVec<PcoVec<QuarterIndex, QuarterIndex>>,
+    pub semesterindex_to_first_monthindex: EagerVec<PcoVec<SemesterIndex, MonthIndex>>,
+    pub semesterindex_to_monthindex_count: EagerVec<PcoVec<SemesterIndex, StoredU64>>,
+    pub semesterindex_to_semesterindex: EagerVec<PcoVec<SemesterIndex, SemesterIndex>>,
+    pub txindex_to_input_count: EagerVec<PcoVec<TxIndex, StoredU64>>,
+    pub txindex_to_output_count: EagerVec<PcoVec<TxIndex, StoredU64>>,
     pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub txinindex_to_txinindex: LazyVecFrom1<TxInIndex, TxInIndex, TxInIndex, OutPoint>,
-    pub txinindex_to_txoutindex: EagerVec<TxInIndex, TxOutIndex>,
+    pub txinindex_to_txoutindex: EagerVec<PcoVec<TxInIndex, TxOutIndex>>,
     pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
     pub unknownoutputindex_to_unknownoutputindex:
         LazyVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
-    pub weekindex_to_dateindex_count: EagerVec<WeekIndex, StoredU64>,
-    pub weekindex_to_first_dateindex: EagerVec<WeekIndex, DateIndex>,
-    pub weekindex_to_weekindex: EagerVec<WeekIndex, WeekIndex>,
-    pub yearindex_to_decadeindex: EagerVec<YearIndex, DecadeIndex>,
-    pub yearindex_to_first_monthindex: EagerVec<YearIndex, MonthIndex>,
-    pub yearindex_to_monthindex_count: EagerVec<YearIndex, StoredU64>,
-    pub yearindex_to_yearindex: EagerVec<YearIndex, YearIndex>,
+    pub weekindex_to_dateindex_count: EagerVec<PcoVec<WeekIndex, StoredU64>>,
+    pub weekindex_to_first_dateindex: EagerVec<PcoVec<WeekIndex, DateIndex>>,
+    pub weekindex_to_weekindex: EagerVec<PcoVec<WeekIndex, WeekIndex>>,
+    pub yearindex_to_decadeindex: EagerVec<PcoVec<YearIndex, DecadeIndex>>,
+    pub yearindex_to_first_monthindex: EagerVec<PcoVec<YearIndex, MonthIndex>>,
+    pub yearindex_to_monthindex_count: EagerVec<PcoVec<YearIndex, StoredU64>>,
+    pub yearindex_to_yearindex: EagerVec<PcoVec<YearIndex, YearIndex>>,
 }
 
 impl Vecs {
@@ -108,11 +108,7 @@ impl Vecs {
         let version = parent_version + VERSION;
 
         let this = Self {
-            txinindex_to_txoutindex: EagerVec::forced_import_compressed(
-                &db,
-                "txoutindex",
-                version,
-            )?,
+            txinindex_to_txoutindex: EagerVec::forced_import(&db, "txoutindex", version)?,
             txoutindex_to_txoutindex: LazyVecFrom1::init(
                 "txoutindex",
                 version + Version::ZERO,
@@ -203,217 +199,205 @@ impl Vecs {
                 indexer.vecs.txindex_to_txid.boxed_clone(),
                 |index, _| Some(index),
             ),
-            txindex_to_input_count: EagerVec::forced_import_compressed(
+            txindex_to_input_count: EagerVec::forced_import(
                 &db,
                 "input_count",
                 version + Version::ZERO,
             )?,
-            txindex_to_output_count: EagerVec::forced_import_compressed(
+            txindex_to_output_count: EagerVec::forced_import(
                 &db,
                 "output_count",
                 version + Version::ZERO,
             )?,
-            dateindex_to_date: EagerVec::forced_import_compressed(
-                &db,
-                "date",
-                version + Version::ZERO,
-            )?,
-            dateindex_to_dateindex: EagerVec::forced_import_compressed(
+            dateindex_to_date: EagerVec::forced_import(&db, "date", version + Version::ZERO)?,
+            dateindex_to_dateindex: EagerVec::forced_import(
                 &db,
                 "dateindex",
                 version + Version::ZERO,
             )?,
-            dateindex_to_first_height: EagerVec::forced_import_compressed(
+            dateindex_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + Version::ZERO,
             )?,
-            dateindex_to_monthindex: EagerVec::forced_import_compressed(
+            dateindex_to_monthindex: EagerVec::forced_import(
                 &db,
                 "monthindex",
                 version + Version::ZERO,
             )?,
-            dateindex_to_weekindex: EagerVec::forced_import_compressed(
+            dateindex_to_weekindex: EagerVec::forced_import(
                 &db,
                 "weekindex",
                 version + Version::ZERO,
             )?,
-            decadeindex_to_decadeindex: EagerVec::forced_import_compressed(
+            decadeindex_to_decadeindex: EagerVec::forced_import(
                 &db,
                 "decadeindex",
                 version + Version::ZERO,
             )?,
-            decadeindex_to_first_yearindex: EagerVec::forced_import_compressed(
+            decadeindex_to_first_yearindex: EagerVec::forced_import(
                 &db,
                 "first_yearindex",
                 version + Version::ZERO,
             )?,
-            difficultyepoch_to_difficultyepoch: EagerVec::forced_import_compressed(
+            difficultyepoch_to_difficultyepoch: EagerVec::forced_import(
                 &db,
                 "difficultyepoch",
                 version + Version::ZERO,
             )?,
-            difficultyepoch_to_first_height: EagerVec::forced_import_compressed(
+            difficultyepoch_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + Version::ZERO,
             )?,
-            halvingepoch_to_first_height: EagerVec::forced_import_compressed(
+            halvingepoch_to_first_height: EagerVec::forced_import(
                 &db,
                 "first_height",
                 version + Version::ZERO,
             )?,
-            halvingepoch_to_halvingepoch: EagerVec::forced_import_compressed(
+            halvingepoch_to_halvingepoch: EagerVec::forced_import(
                 &db,
                 "halvingepoch",
                 version + Version::ZERO,
             )?,
-            height_to_date: EagerVec::forced_import_compressed(
-                &db,
-                "date",
-                version + Version::ZERO,
-            )?,
-            height_to_difficultyepoch: EagerVec::forced_import_compressed(
+            height_to_date: EagerVec::forced_import(&db, "date", version + Version::ZERO)?,
+            height_to_difficultyepoch: EagerVec::forced_import(
                 &db,
                 "difficultyepoch",
                 version + Version::ZERO,
             )?,
-            height_to_halvingepoch: EagerVec::forced_import_compressed(
+            height_to_halvingepoch: EagerVec::forced_import(
                 &db,
                 "halvingepoch",
                 version + Version::ZERO,
             )?,
-            height_to_height: EagerVec::forced_import_compressed(
-                &db,
-                "height",
-                version + Version::ZERO,
-            )?,
-            monthindex_to_first_dateindex: EagerVec::forced_import_compressed(
+            height_to_height: EagerVec::forced_import(&db, "height", version + Version::ZERO)?,
+            monthindex_to_first_dateindex: EagerVec::forced_import(
                 &db,
                 "first_dateindex",
                 version + Version::ZERO,
             )?,
-            monthindex_to_monthindex: EagerVec::forced_import_compressed(
+            monthindex_to_monthindex: EagerVec::forced_import(
                 &db,
                 "monthindex",
                 version + Version::ZERO,
             )?,
-            monthindex_to_quarterindex: EagerVec::forced_import_compressed(
+            monthindex_to_quarterindex: EagerVec::forced_import(
                 &db,
                 "quarterindex",
                 version + Version::ZERO,
             )?,
-            monthindex_to_semesterindex: EagerVec::forced_import_compressed(
+            monthindex_to_semesterindex: EagerVec::forced_import(
                 &db,
                 "semesterindex",
                 version + Version::ZERO,
             )?,
-            monthindex_to_yearindex: EagerVec::forced_import_compressed(
+            monthindex_to_yearindex: EagerVec::forced_import(
                 &db,
                 "yearindex",
                 version + Version::ZERO,
             )?,
-            quarterindex_to_first_monthindex: EagerVec::forced_import_compressed(
+            quarterindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + Version::ZERO,
             )?,
-            semesterindex_to_first_monthindex: EagerVec::forced_import_compressed(
+            semesterindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + Version::ZERO,
             )?,
-            weekindex_to_first_dateindex: EagerVec::forced_import_compressed(
+            weekindex_to_first_dateindex: EagerVec::forced_import(
                 &db,
                 "first_dateindex",
                 version + Version::ZERO,
             )?,
-            yearindex_to_first_monthindex: EagerVec::forced_import_compressed(
+            yearindex_to_first_monthindex: EagerVec::forced_import(
                 &db,
                 "first_monthindex",
                 version + Version::ZERO,
             )?,
-            quarterindex_to_quarterindex: EagerVec::forced_import_compressed(
+            quarterindex_to_quarterindex: EagerVec::forced_import(
                 &db,
                 "quarterindex",
                 version + Version::ZERO,
             )?,
-            semesterindex_to_semesterindex: EagerVec::forced_import_compressed(
+            semesterindex_to_semesterindex: EagerVec::forced_import(
                 &db,
                 "semesterindex",
                 version + Version::ZERO,
             )?,
-            weekindex_to_weekindex: EagerVec::forced_import_compressed(
+            weekindex_to_weekindex: EagerVec::forced_import(
                 &db,
                 "weekindex",
                 version + Version::ZERO,
             )?,
-            yearindex_to_decadeindex: EagerVec::forced_import_compressed(
+            yearindex_to_decadeindex: EagerVec::forced_import(
                 &db,
                 "decadeindex",
                 version + Version::ZERO,
             )?,
-            yearindex_to_yearindex: EagerVec::forced_import_compressed(
+            yearindex_to_yearindex: EagerVec::forced_import(
                 &db,
                 "yearindex",
                 version + Version::ZERO,
             )?,
-            height_to_date_fixed: EagerVec::forced_import_compressed(
+            height_to_date_fixed: EagerVec::forced_import(
                 &db,
                 "date_fixed",
                 version + Version::ZERO,
             )?,
-            height_to_dateindex: EagerVec::forced_import_compressed(
+            height_to_dateindex: EagerVec::forced_import(
                 &db,
                 "dateindex",
                 version + Version::ZERO,
             )?,
-            height_to_timestamp_fixed: EagerVec::forced_import_compressed(
+            height_to_timestamp_fixed: EagerVec::forced_import(
                 &db,
                 "timestamp_fixed",
                 version + Version::ZERO,
             )?,
-            height_to_txindex_count: EagerVec::forced_import_compressed(
+            height_to_txindex_count: EagerVec::forced_import(
                 &db,
                 "txindex_count",
                 version + Version::ZERO,
             )?,
-            dateindex_to_height_count: EagerVec::forced_import_compressed(
+            dateindex_to_height_count: EagerVec::forced_import(
                 &db,
                 "height_count",
                 version + Version::ZERO,
             )?,
-            weekindex_to_dateindex_count: EagerVec::forced_import_compressed(
+            weekindex_to_dateindex_count: EagerVec::forced_import(
                 &db,
                 "dateindex_count",
                 version + Version::ZERO,
             )?,
-            difficultyepoch_to_height_count: EagerVec::forced_import_compressed(
+            difficultyepoch_to_height_count: EagerVec::forced_import(
                 &db,
                 "height_count",
                 version + Version::ZERO,
             )?,
-            monthindex_to_dateindex_count: EagerVec::forced_import_compressed(
+            monthindex_to_dateindex_count: EagerVec::forced_import(
                 &db,
                 "dateindex_count",
                 version + Version::ZERO,
             )?,
-            quarterindex_to_monthindex_count: EagerVec::forced_import_compressed(
+            quarterindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + Version::ZERO,
             )?,
-            semesterindex_to_monthindex_count: EagerVec::forced_import_compressed(
+            semesterindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + Version::ZERO,
             )?,
-            yearindex_to_monthindex_count: EagerVec::forced_import_compressed(
+            yearindex_to_monthindex_count: EagerVec::forced_import(
                 &db,
                 "monthindex_count",
                 version + Version::ZERO,
             )?,
-            decadeindex_to_yearindex_count: EagerVec::forced_import_compressed(
+            decadeindex_to_yearindex_count: EagerVec::forced_import(
                 &db,
                 "yearindex_count",
                 version + Version::ZERO,
@@ -422,7 +406,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

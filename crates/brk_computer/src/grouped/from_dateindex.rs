@@ -4,7 +4,10 @@ use brk_traversable::Traversable;
 use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{AnyWritableVec, Database, EagerVec, Exit, IterableCloneableVec, IterableVec};
+use vecdb::{
+    AnyExportableVec, Database, EagerVec, Exit, Importable, IterableCloneableVec, IterableVec,
+    PcoVec,
+};
 
 use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
@@ -15,7 +18,7 @@ pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedVecValue + PartialOrd,
 {
-    pub dateindex: Option<EagerVec<DateIndex, T>>,
+    pub dateindex: Option<EagerVec<PcoVec<DateIndex, T>>>,
     pub dateindex_extra: EagerVecsBuilder<DateIndex, T>,
     pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
     pub monthindex: LazyVecsBuilder<MonthIndex, T, DateIndex, MonthIndex>,
@@ -40,11 +43,11 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let dateindex = source.is_compute().then(|| {
-            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO).unwrap()
-        });
+        let dateindex = source
+            .is_compute()
+            .then(|| EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap());
 
-        let dateindex_extra = EagerVecsBuilder::forced_import_compressed(
+        let dateindex_extra = EagerVecsBuilder::forced_import(
             db,
             name,
             version + VERSION + Version::ZERO,
@@ -116,11 +119,11 @@ where
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<DateIndex, T>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<DateIndex, T>>) -> Result<()>,
     {
         compute(self.dateindex.as_mut().unwrap())?;
 
-        let dateindex: Option<&EagerVec<DateIndex, T>> = None;
+        let dateindex: Option<&EagerVec<PcoVec<DateIndex, T>>> = None;
         self.compute_rest(starting_indexes, exit, dateindex)
     }
 
@@ -178,17 +181,17 @@ where
         .unwrap()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
-            Box::new(self.dateindex_extra.iter_any_writable());
-        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_writable()));
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(self.dateindex_extra.iter_any_exportable());
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_exportable()));
         if let Some(ref x) = self.dateindex {
-            regular_iter = Box::new(regular_iter.chain(x.iter_any_writable()));
+            regular_iter = Box::new(regular_iter.chain(x.iter_any_exportable()));
         }
         regular_iter
     }

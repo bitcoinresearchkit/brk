@@ -11,7 +11,7 @@ use brk_types::{
     Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount,
     Transaction, TxidPath,
 };
-use vecdb::{AnyStoredVec, AnyWritableVec};
+use vecdb::{AnyExportableVec, AnyStoredVec};
 
 mod r#async;
 mod chain;
@@ -77,7 +77,7 @@ impl Query {
         metric: &str,
         index: Index,
         // params: &Params,
-    ) -> Result<Vec<(String, &&dyn AnyWritableVec)>> {
+    ) -> Result<Vec<(String, &&dyn AnyExportableVec)>> {
         todo!();
 
         // let all_metrics = &self.vecs.metrics;
@@ -121,7 +121,7 @@ impl Query {
     }
 
     fn columns_to_csv(
-        columns: &[&&dyn AnyWritableVec],
+        columns: &[&&dyn AnyExportableVec],
         from: Option<i64>,
         to: Option<i64>,
     ) -> Result<String> {
@@ -163,7 +163,11 @@ impl Query {
         Ok(csv)
     }
 
-    pub fn format(&self, metrics: Vec<&&dyn AnyWritableVec>, params: &ParamsOpt) -> Result<Output> {
+    pub fn format(
+        &self,
+        metrics: Vec<&&dyn AnyExportableVec>,
+        params: &ParamsOpt,
+    ) -> Result<Output> {
         let from = params.from().map(|from| {
             metrics
                 .iter()

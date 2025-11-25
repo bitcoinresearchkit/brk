@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use rayon::prelude::*;
-use vecdb::AnyWritableVec;
+use vecdb::AnyExportableVec;
 
 use crate::Filtered;
 
@@ -78,14 +78,14 @@ where
         )
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         [
-            Box::new(self.ge_amount.iter_any_writable())
-                as Box<dyn Iterator<Item = &dyn AnyWritableVec>>,
-            Box::new(self.amount_range.iter_any_writable())
-                as Box<dyn Iterator<Item = &dyn AnyWritableVec>>,
-            Box::new(self.lt_amount.iter_any_writable())
-                as Box<dyn Iterator<Item = &dyn AnyWritableVec>>,
+            Box::new(self.ge_amount.iter_any_exportable())
+                as Box<dyn Iterator<Item = &dyn AnyExportableVec>>,
+            Box::new(self.amount_range.iter_any_exportable())
+                as Box<dyn Iterator<Item = &dyn AnyExportableVec>>,
+            Box::new(self.lt_amount.iter_any_exportable())
+                as Box<dyn Iterator<Item = &dyn AnyExportableVec>>,
         ]
         .into_iter()
         .flatten()

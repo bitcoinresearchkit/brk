@@ -6,7 +6,7 @@ use brk_types::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{Database, EagerVec, Exit, PAGE_SIZE};
+use vecdb::{BytesVec, Database, EagerVec, Exit, Importable, PAGE_SIZE, PcoVec};
 
 use crate::{fetched, grouped::Source};
 
@@ -20,18 +20,18 @@ use super::{
 pub struct Vecs {
     db: Database,
 
-    pub dateindex_to_price_close_in_cents: EagerVec<DateIndex, Close<Cents>>,
-    pub dateindex_to_price_high_in_cents: EagerVec<DateIndex, High<Cents>>,
-    pub dateindex_to_price_low_in_cents: EagerVec<DateIndex, Low<Cents>>,
-    pub dateindex_to_price_ohlc: EagerVec<DateIndex, OHLCDollars>,
-    pub dateindex_to_price_ohlc_in_sats: EagerVec<DateIndex, OHLCSats>,
-    pub dateindex_to_price_open_in_cents: EagerVec<DateIndex, Open<Cents>>,
-    pub height_to_price_close_in_cents: EagerVec<Height, Close<Cents>>,
-    pub height_to_price_high_in_cents: EagerVec<Height, High<Cents>>,
-    pub height_to_price_low_in_cents: EagerVec<Height, Low<Cents>>,
-    pub height_to_price_ohlc: EagerVec<Height, OHLCDollars>,
-    pub height_to_price_ohlc_in_sats: EagerVec<Height, OHLCSats>,
-    pub height_to_price_open_in_cents: EagerVec<Height, Open<Cents>>,
+    pub dateindex_to_price_close_in_cents: EagerVec<PcoVec<DateIndex, Close<Cents>>>,
+    pub dateindex_to_price_high_in_cents: EagerVec<PcoVec<DateIndex, High<Cents>>>,
+    pub dateindex_to_price_low_in_cents: EagerVec<PcoVec<DateIndex, Low<Cents>>>,
+    pub dateindex_to_price_ohlc: EagerVec<BytesVec<DateIndex, OHLCDollars>>,
+    pub dateindex_to_price_ohlc_in_sats: EagerVec<BytesVec<DateIndex, OHLCSats>>,
+    pub dateindex_to_price_open_in_cents: EagerVec<PcoVec<DateIndex, Open<Cents>>>,
+    pub height_to_price_close_in_cents: EagerVec<PcoVec<Height, Close<Cents>>>,
+    pub height_to_price_high_in_cents: EagerVec<PcoVec<Height, High<Cents>>>,
+    pub height_to_price_low_in_cents: EagerVec<PcoVec<Height, Low<Cents>>>,
+    pub height_to_price_ohlc: EagerVec<BytesVec<Height, OHLCDollars>>,
+    pub height_to_price_ohlc_in_sats: EagerVec<BytesVec<Height, OHLCSats>>,
+    pub height_to_price_open_in_cents: EagerVec<PcoVec<Height, Open<Cents>>>,
     pub timeindexes_to_price_close: ComputedVecsFromDateIndex<Close<Dollars>>,
     pub timeindexes_to_price_high: ComputedVecsFromDateIndex<High<Dollars>>,
     pub timeindexes_to_price_low: ComputedVecsFromDateIndex<Low<Dollars>>,
@@ -48,22 +48,22 @@ pub struct Vecs {
     pub chainindexes_to_price_high_in_sats: ComputedVecsFromHeightStrict<High<Sats>>,
     pub chainindexes_to_price_low_in_sats: ComputedVecsFromHeightStrict<Low<Sats>>,
     pub chainindexes_to_price_close_in_sats: ComputedVecsFromHeightStrict<Close<Sats>>,
-    pub weekindex_to_price_ohlc: EagerVec<WeekIndex, OHLCDollars>,
-    pub weekindex_to_price_ohlc_in_sats: EagerVec<WeekIndex, OHLCSats>,
-    pub difficultyepoch_to_price_ohlc: EagerVec<DifficultyEpoch, OHLCDollars>,
-    pub difficultyepoch_to_price_ohlc_in_sats: EagerVec<DifficultyEpoch, OHLCSats>,
-    pub monthindex_to_price_ohlc: EagerVec<MonthIndex, OHLCDollars>,
-    pub monthindex_to_price_ohlc_in_sats: EagerVec<MonthIndex, OHLCSats>,
-    pub quarterindex_to_price_ohlc: EagerVec<QuarterIndex, OHLCDollars>,
-    pub quarterindex_to_price_ohlc_in_sats: EagerVec<QuarterIndex, OHLCSats>,
-    pub semesterindex_to_price_ohlc: EagerVec<SemesterIndex, OHLCDollars>,
-    pub semesterindex_to_price_ohlc_in_sats: EagerVec<SemesterIndex, OHLCSats>,
-    pub yearindex_to_price_ohlc: EagerVec<YearIndex, OHLCDollars>,
-    pub yearindex_to_price_ohlc_in_sats: EagerVec<YearIndex, OHLCSats>,
+    pub weekindex_to_price_ohlc: EagerVec<BytesVec<WeekIndex, OHLCDollars>>,
+    pub weekindex_to_price_ohlc_in_sats: EagerVec<BytesVec<WeekIndex, OHLCSats>>,
+    pub difficultyepoch_to_price_ohlc: EagerVec<BytesVec<DifficultyEpoch, OHLCDollars>>,
+    pub difficultyepoch_to_price_ohlc_in_sats: EagerVec<BytesVec<DifficultyEpoch, OHLCSats>>,
+    pub monthindex_to_price_ohlc: EagerVec<BytesVec<MonthIndex, OHLCDollars>>,
+    pub monthindex_to_price_ohlc_in_sats: EagerVec<BytesVec<MonthIndex, OHLCSats>>,
+    pub quarterindex_to_price_ohlc: EagerVec<BytesVec<QuarterIndex, OHLCDollars>>,
+    pub quarterindex_to_price_ohlc_in_sats: EagerVec<BytesVec<QuarterIndex, OHLCSats>>,
+    pub semesterindex_to_price_ohlc: EagerVec<BytesVec<SemesterIndex, OHLCDollars>>,
+    pub semesterindex_to_price_ohlc_in_sats: EagerVec<BytesVec<SemesterIndex, OHLCSats>>,
+    pub yearindex_to_price_ohlc: EagerVec<BytesVec<YearIndex, OHLCDollars>>,
+    pub yearindex_to_price_ohlc_in_sats: EagerVec<BytesVec<YearIndex, OHLCSats>>,
     // pub halvingepoch_to_price_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
     // pub halvingepoch_to_price_ohlc_in_sats: StorableVec<Halvingepoch, OHLCSats>,
-    pub decadeindex_to_price_ohlc: EagerVec<DecadeIndex, OHLCDollars>,
-    pub decadeindex_to_price_ohlc_in_sats: EagerVec<DecadeIndex, OHLCSats>,
+    pub decadeindex_to_price_ohlc: EagerVec<BytesVec<DecadeIndex, OHLCDollars>>,
+    pub decadeindex_to_price_ohlc_in_sats: EagerVec<BytesVec<DecadeIndex, OHLCSats>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -75,62 +75,62 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let this = Self {
-            dateindex_to_price_ohlc: EagerVec::forced_import_raw(
+            dateindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            dateindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            dateindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            dateindex_to_price_close_in_cents: EagerVec::forced_import_compressed(
+            dateindex_to_price_close_in_cents: EagerVec::forced_import(
                 &db,
                 "price_close_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            dateindex_to_price_high_in_cents: EagerVec::forced_import_compressed(
+            dateindex_to_price_high_in_cents: EagerVec::forced_import(
                 &db,
                 "price_high_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            dateindex_to_price_low_in_cents: EagerVec::forced_import_compressed(
+            dateindex_to_price_low_in_cents: EagerVec::forced_import(
                 &db,
                 "price_low_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            dateindex_to_price_open_in_cents: EagerVec::forced_import_compressed(
+            dateindex_to_price_open_in_cents: EagerVec::forced_import(
                 &db,
                 "price_open_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_ohlc: EagerVec::forced_import_raw(
+            height_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            height_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            height_to_price_close_in_cents: EagerVec::forced_import_compressed(
+            height_to_price_close_in_cents: EagerVec::forced_import(
                 &db,
                 "price_close_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_high_in_cents: EagerVec::forced_import_compressed(
+            height_to_price_high_in_cents: EagerVec::forced_import(
                 &db,
                 "price_high_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_low_in_cents: EagerVec::forced_import_compressed(
+            height_to_price_low_in_cents: EagerVec::forced_import(
                 &db,
                 "price_low_in_cents",
                 version + VERSION + Version::ZERO,
             )?,
-            height_to_price_open_in_cents: EagerVec::forced_import_compressed(
+            height_to_price_open_in_cents: EagerVec::forced_import(
                 &db,
                 "price_open_in_cents",
                 version + VERSION + Version::ZERO,
@@ -247,74 +247,74 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 VecBuilderOptions::default().add_last(),
             )?,
-            weekindex_to_price_ohlc: EagerVec::forced_import_raw(
+            weekindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            weekindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            weekindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            difficultyepoch_to_price_ohlc: EagerVec::forced_import_raw(
+            difficultyepoch_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            difficultyepoch_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            difficultyepoch_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            monthindex_to_price_ohlc: EagerVec::forced_import_raw(
+            monthindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            monthindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            monthindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            quarterindex_to_price_ohlc: EagerVec::forced_import_raw(
+            quarterindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            quarterindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            quarterindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            semesterindex_to_price_ohlc: EagerVec::forced_import_raw(
+            semesterindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            semesterindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            semesterindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
-            yearindex_to_price_ohlc: EagerVec::forced_import_raw(
+            yearindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            yearindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            yearindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
             )?,
             // halvingepoch_to_price_ohlc: StorableVec::forced_import(db,
             // "halvingepoch_to_price_ohlc"), version + VERSION + Version::ZERO, format)?,
-            decadeindex_to_price_ohlc: EagerVec::forced_import_raw(
+            decadeindex_to_price_ohlc: EagerVec::forced_import(
                 &db,
                 "price_ohlc",
                 version + VERSION + Version::ZERO,
             )?,
-            decadeindex_to_price_ohlc_in_sats: EagerVec::forced_import_raw(
+            decadeindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 &db,
                 "price_ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -324,7 +324,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

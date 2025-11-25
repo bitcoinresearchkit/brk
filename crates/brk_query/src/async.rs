@@ -53,14 +53,14 @@ impl AsyncQuery {
     //     metric: &str,
     //     index: Index,
     //     // params: &Params,
-    // ) -> Result<Vec<(String, &&dyn AnyWritableVec)>> {
+    // ) -> Result<Vec<(String, &&dyn AnyExportableVec)>> {
     //     let query = self.0.clone();
     //     spawn_blocking(move || query.search_metric_with_index(metric, index)).await?
     // }
 
     // pub async fn format(
     //     &self,
-    //     metrics: Vec<(String, &&dyn AnyWritableVec)>,
+    //     metrics: Vec<(String, &&dyn AnyExportableVec)>,
     //     params: &ParamsOpt,
     // ) -> Result<Output> {
     //     let query = self.0.clone();

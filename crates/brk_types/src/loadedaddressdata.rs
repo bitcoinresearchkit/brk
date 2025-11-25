@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use serde::Serialize;
-use vecdb::{CheckedSub, Formattable};
+use vecdb::{Bytes, CheckedSub, Formattable};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
@@ -143,5 +143,45 @@ impl Formattable for LoadedAddressData {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         true
+    }
+}
+
+impl Bytes for LoadedAddressData {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.tx_count.to_bytes());
+        bytes.extend_from_slice(&self.funded_txo_count.to_bytes());
+        bytes.extend_from_slice(&self.spent_txo_count.to_bytes());
+        bytes.extend_from_slice(&self.padding.to_bytes());
+        bytes.extend_from_slice(&self.received.to_bytes());
+        bytes.extend_from_slice(&self.sent.to_bytes());
+        bytes.extend_from_slice(&self.realized_cap.to_bytes());
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        let mut offset = 0;
+        let tx_count = u32::from_bytes(&bytes[offset..])?;
+        offset += tx_count.to_bytes().len();
+        let funded_txo_count = u32::from_bytes(&bytes[offset..])?;
+        offset += funded_txo_count.to_bytes().len();
+        let spent_txo_count = u32::from_bytes(&bytes[offset..])?;
+        offset += spent_txo_count.to_bytes().len();
+        let padding = u32::from_bytes(&bytes[offset..])?;
+        offset += padding.to_bytes().len();
+        let received = Sats::from_bytes(&bytes[offset..])?;
+        offset += received.to_bytes().len();
+        let sent = Sats::from_bytes(&bytes[offset..])?;
+        offset += sent.to_bytes().len();
+        let realized_cap = Dollars::from_bytes(&bytes[offset..])?;
+        Ok(Self {
+            tx_count,
+            funded_txo_count,
+            spent_txo_count,
+            padding,
+            received,
+            sent,
+            realized_cap,
+        })
     }
 }

@@ -6,8 +6,8 @@ use brk_types::{
     Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyVec, AnyWritableVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
-    IterableCloneableVec, TypedVecIterator, VecIndex,
+    AnyExportableVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec,
+    Importable, IterableCloneableVec, PcoVec, TypedVecIterator, VecIndex,
 };
 
 use crate::{
@@ -23,7 +23,7 @@ pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedVecValue + PartialOrd,
 {
-    pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
+    pub txindex: Option<Box<EagerVec<PcoVec<TxIndex, T>>>>,
     pub height: EagerVecsBuilder<Height, T>,
     pub dateindex: EagerVecsBuilder<DateIndex, T>,
     pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
@@ -53,27 +53,16 @@ where
         options: VecBuilderOptions,
     ) -> Result<Self> {
         let txindex = source.is_compute().then(|| {
-            Box::new(
-                EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO)
-                    .unwrap(),
-            )
+            Box::new(EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap())
         });
 
-        let height = EagerVecsBuilder::forced_import_compressed(
-            db,
-            name,
-            version + VERSION + Version::ZERO,
-            options,
-        )?;
+        let height =
+            EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
 
         let options = options.remove_percentiles();
 
-        let dateindex = EagerVecsBuilder::forced_import_compressed(
-            db,
-            name,
-            version + VERSION + Version::ZERO,
-            options,
-        )?;
+        let dateindex =
+            EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
 
         Ok(Self {
             weekindex: LazyVecsBuilder::forced_import(
@@ -128,7 +117,7 @@ where
             txindex,
             height,
             dateindex,
-            difficultyepoch: EagerVecsBuilder::forced_import_compressed(
+            difficultyepoch: EagerVecsBuilder::forced_import(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
@@ -149,7 +138,7 @@ where
     // ) -> Result<()>
     // where
     //     F: FnMut(
-    //         &mut EagerVec<TxIndex, T>,
+    //         &mut EagerVec<PcoVec<TxIndex, T>>,
     //         &Indexer,
     //         &indexes::Vecs,
     //         &Indexes,
@@ -497,19 +486,19 @@ where
         .unwrap()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
-            Box::new(self.height.iter_any_writable());
-        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_writable()));
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(self.height.iter_any_exportable());
+        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_exportable()));
         if let Some(ref x) = self.txindex {
-            regular_iter = Box::new(regular_iter.chain(x.iter_any_writable()));
+            regular_iter = Box::new(regular_iter.chain(x.iter_any_exportable()));
         }
         regular_iter
     }

@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use serde::Serialize;
 use vecdb::{Formattable, PcoVecValue};
 
 pub trait ComputedVecValue
@@ -10,7 +11,8 @@ where
         + Add<Output = Self>
         + AddAssign
         + Ord
-        + Formattable,
+        + Formattable
+        + Serialize,
 {
 }
 impl<T> ComputedVecValue for T where
@@ -21,5 +23,6 @@ impl<T> ComputedVecValue for T where
         + AddAssign
         + Ord
         + Formattable
+        + Serialize
 {
 }

@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{DifficultyEpoch, Height, Version};
-use vecdb::{AnyWritableVec, Database, EagerVec, Exit};
+use vecdb::{AnyExportableVec, Database, EagerVec, Exit, Importable, PcoVec};
 
 use crate::{Indexes, indexes};
 
@@ -13,7 +13,7 @@ pub struct ComputedVecsFromHeightStrict<T>
 where
     T: ComputedVecValue + PartialOrd,
 {
-    pub height: EagerVec<Height, T>,
+    pub height: EagerVec<PcoVec<Height, T>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
     pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
@@ -32,10 +32,9 @@ where
         version: Version,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let height =
-            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO)?;
+        let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO)?;
 
-        let height_extra = EagerVecsBuilder::forced_import_compressed(
+        let height_extra = EagerVecsBuilder::forced_import(
             db,
             name,
             version + VERSION + Version::ZERO,
@@ -47,7 +46,7 @@ where
         Ok(Self {
             height,
             height_extra,
-            difficultyepoch: EagerVecsBuilder::forced_import_compressed(
+            difficultyepoch: EagerVecsBuilder::forced_import(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
@@ -65,7 +64,7 @@ where
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, T>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     {
         compute(&mut self.height)?;
 
@@ -111,11 +110,11 @@ where
         .unwrap()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
-            Box::new(self.height.iter_any_writable());
-        regular_iter = Box::new(regular_iter.chain(self.height_extra.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_writable()));
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(self.height.iter_any_exportable());
+        regular_iter = Box::new(regular_iter.chain(self.height_extra.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_exportable()));
         regular_iter
     }
 }

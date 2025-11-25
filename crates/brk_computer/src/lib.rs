@@ -9,7 +9,7 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::Version;
 use log::info;
-use vecdb::{Exit, Format};
+use vecdb::Exit;
 
 mod blks;
 mod chain;
@@ -125,13 +125,8 @@ impl Computer {
         })?;
 
         // Threads inside
-        let stateful = stateful::Vecs::forced_import(
-            &computed_path,
-            VERSION,
-            Format::Compressed,
-            &indexes,
-            price.as_ref(),
-        )?;
+        let stateful =
+            stateful::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
 
         Ok(Self {
             constants,

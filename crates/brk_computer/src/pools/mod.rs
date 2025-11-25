@@ -7,8 +7,8 @@ use brk_traversable::Traversable;
 use brk_types::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec, PAGE_SIZE, RawVec,
-    TypedVecIterator, VecIndex, Version,
+    AnyStoredVec, AnyVec, BytesVec, Database, Exit, GenericStoredVec, Importable, IterableVec,
+    PAGE_SIZE, TypedVecIterator, VecIndex, Version,
 };
 
 mod vecs;
@@ -24,7 +24,7 @@ pub struct Vecs {
     db: Database,
     pools: &'static Pools,
 
-    pub height_to_pool: RawVec<Height, PoolId>,
+    pub height_to_pool: BytesVec<Height, PoolId>,
     pub vecs: BTreeMap<PoolId, vecs::Vecs>,
 }
 
@@ -42,7 +42,7 @@ impl Vecs {
         let version = parent_version + Version::new(3) + Version::new(pools.len() as u64);
 
         let this = Self {
-            height_to_pool: RawVec::forced_import(&db, "pool", version + Version::ZERO)?,
+            height_to_pool: BytesVec::forced_import(&db, "pool", version + Version::ZERO)?,
             vecs: pools
                 .iter()
                 .map(|pool| {
@@ -62,7 +62,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

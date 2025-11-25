@@ -11,7 +11,7 @@ use brk_types::{
 };
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
-use vecdb::{Database, Exit, Format, IterableVec, VecIndex};
+use vecdb::{Database, Exit, IterableVec, VecIndex};
 
 use crate::{
     Indexes, indexes, price,
@@ -30,7 +30,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        format: Format,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: &Path,
@@ -40,7 +39,6 @@ impl Vecs {
                 all: utxo_cohort::Vecs::forced_import(
                     db,
                     None,
-                    format,
                     version + VERSION + Version::ONE,
                     indexes,
                     price,
@@ -53,7 +51,6 @@ impl Vecs {
                     short: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("sth"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -65,7 +62,6 @@ impl Vecs {
                     long: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("lth"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -79,7 +75,6 @@ impl Vecs {
                     _0: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("epoch_0"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -91,7 +86,6 @@ impl Vecs {
                     _1: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("epoch_1"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -103,7 +97,6 @@ impl Vecs {
                     _2: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("epoch_2"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -115,7 +108,6 @@ impl Vecs {
                     _3: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("epoch_3"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -127,7 +119,6 @@ impl Vecs {
                     _4: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("epoch_4"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -141,7 +132,6 @@ impl Vecs {
                     p2pk65: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2pk65"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -153,7 +143,6 @@ impl Vecs {
                     p2pk33: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2pk33"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -165,7 +154,6 @@ impl Vecs {
                     p2pkh: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2pkh"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -177,7 +165,6 @@ impl Vecs {
                     p2sh: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2sh"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -189,7 +176,6 @@ impl Vecs {
                     p2wpkh: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2wpkh"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -201,7 +187,6 @@ impl Vecs {
                     p2wsh: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2wsh"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -213,7 +198,6 @@ impl Vecs {
                     p2tr: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2tr"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -225,7 +209,6 @@ impl Vecs {
                     p2a: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2a"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -237,7 +220,6 @@ impl Vecs {
                     p2ms: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("p2ms_outputs"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -249,7 +231,6 @@ impl Vecs {
                     empty: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("empty_outputs"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -261,7 +242,6 @@ impl Vecs {
                     unknown: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("unknown_outputs"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -275,7 +255,6 @@ impl Vecs {
                     _1w: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_1w_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -287,7 +266,6 @@ impl Vecs {
                     _1m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_1m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -299,7 +277,6 @@ impl Vecs {
                     _2m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_2m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -311,7 +288,6 @@ impl Vecs {
                     _3m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_3m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -323,7 +299,6 @@ impl Vecs {
                     _4m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_4m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -335,7 +310,6 @@ impl Vecs {
                     _5m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_5m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -347,7 +321,6 @@ impl Vecs {
                     _6m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_6m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -359,7 +332,6 @@ impl Vecs {
                     _1y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_1y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -371,7 +343,6 @@ impl Vecs {
                     _2y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_2y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -383,7 +354,6 @@ impl Vecs {
                     _3y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_3y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -395,7 +365,6 @@ impl Vecs {
                     _4y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_4y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -407,7 +376,6 @@ impl Vecs {
                     _5y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_5y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -419,7 +387,6 @@ impl Vecs {
                     _6y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_6y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -431,7 +398,6 @@ impl Vecs {
                     _7y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_7y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -443,7 +409,6 @@ impl Vecs {
                     _8y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_8y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -455,7 +420,6 @@ impl Vecs {
                     _10y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_10y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -467,7 +431,6 @@ impl Vecs {
                     _12y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_12y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -479,7 +442,6 @@ impl Vecs {
                     _15y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_15y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -493,7 +455,6 @@ impl Vecs {
                     _1d: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1d_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -505,7 +466,6 @@ impl Vecs {
                     _1w: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1w_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -517,7 +477,6 @@ impl Vecs {
                     _1m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -529,7 +488,6 @@ impl Vecs {
                     _2m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_2m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -541,7 +499,6 @@ impl Vecs {
                     _3m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_3m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -553,7 +510,6 @@ impl Vecs {
                     _4m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_4m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -565,7 +521,6 @@ impl Vecs {
                     _5m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_5m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -577,7 +532,6 @@ impl Vecs {
                     _6m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_6m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -589,7 +543,6 @@ impl Vecs {
                     _1y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -601,7 +554,6 @@ impl Vecs {
                     _2y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_2y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -613,7 +565,6 @@ impl Vecs {
                     _3y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_3y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -625,7 +576,6 @@ impl Vecs {
                     _4y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_4y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -637,7 +587,6 @@ impl Vecs {
                     _5y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_5y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -649,7 +598,6 @@ impl Vecs {
                     _6y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_6y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -661,7 +609,6 @@ impl Vecs {
                     _7y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_7y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -673,7 +620,6 @@ impl Vecs {
                     _8y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_8y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -685,7 +631,6 @@ impl Vecs {
                     _10y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_10y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -697,7 +642,6 @@ impl Vecs {
                     _12y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_12y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -711,7 +655,6 @@ impl Vecs {
                     up_to_1d: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_up_to_1d_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -723,7 +666,6 @@ impl Vecs {
                     _1d_to_1w: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1d_up_to_1w_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -735,7 +677,6 @@ impl Vecs {
                     _1w_to_1m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1w_up_to_1m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -747,7 +688,6 @@ impl Vecs {
                     _1m_to_2m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1m_up_to_2m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -759,7 +699,6 @@ impl Vecs {
                     _2m_to_3m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_2m_up_to_3m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -771,7 +710,6 @@ impl Vecs {
                     _3m_to_4m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_3m_up_to_4m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -783,7 +721,6 @@ impl Vecs {
                     _4m_to_5m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_4m_up_to_5m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -795,7 +732,6 @@ impl Vecs {
                     _5m_to_6m: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_5m_up_to_6m_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -807,7 +743,6 @@ impl Vecs {
                     _6m_to_1y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_6m_up_to_1y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -819,7 +754,6 @@ impl Vecs {
                     _1y_to_2y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_1y_up_to_2y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -831,7 +765,6 @@ impl Vecs {
                     _2y_to_3y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_2y_up_to_3y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -843,7 +776,6 @@ impl Vecs {
                     _3y_to_4y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_3y_up_to_4y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -855,7 +787,6 @@ impl Vecs {
                     _4y_to_5y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_4y_up_to_5y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -867,7 +798,6 @@ impl Vecs {
                     _5y_to_6y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_5y_up_to_6y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -879,7 +809,6 @@ impl Vecs {
                     _6y_to_7y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_6y_up_to_7y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -891,7 +820,6 @@ impl Vecs {
                     _7y_to_8y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_7y_up_to_8y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -903,7 +831,6 @@ impl Vecs {
                     _8y_to_10y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_8y_up_to_10y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -915,7 +842,6 @@ impl Vecs {
                     _10y_to_12y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_10y_up_to_12y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -927,7 +853,6 @@ impl Vecs {
                     _12y_to_15y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_12y_up_to_15y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -939,7 +864,6 @@ impl Vecs {
                     from_15y: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_at_least_15y_old"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -953,7 +877,6 @@ impl Vecs {
                     _0sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_with_0sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -965,7 +888,6 @@ impl Vecs {
                     _1sat_to_10sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1sat_under_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -977,7 +899,6 @@ impl Vecs {
                     _10sats_to_100sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10sats_under_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -989,7 +910,6 @@ impl Vecs {
                     _100sats_to_1k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100sats_under_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1001,7 +921,6 @@ impl Vecs {
                     _1k_sats_to_10k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1k_sats_under_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1013,7 +932,6 @@ impl Vecs {
                     _10k_sats_to_100k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10k_sats_under_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1025,7 +943,6 @@ impl Vecs {
                     _100k_sats_to_1m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100k_sats_under_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1037,7 +954,6 @@ impl Vecs {
                     _1m_sats_to_10m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1m_sats_under_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1049,7 +965,6 @@ impl Vecs {
                     _10m_sats_to_1btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10m_sats_under_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1061,7 +976,6 @@ impl Vecs {
                     _1btc_to_10btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1btc_under_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1073,7 +987,6 @@ impl Vecs {
                     _10btc_to_100btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10btc_under_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1085,7 +998,6 @@ impl Vecs {
                     _100btc_to_1k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100btc_under_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1097,7 +1009,6 @@ impl Vecs {
                     _1k_btc_to_10k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1k_btc_under_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1109,7 +1020,6 @@ impl Vecs {
                     _10k_btc_to_100k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10k_btc_under_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1121,7 +1031,6 @@ impl Vecs {
                     _100k_btc_or_more: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1135,7 +1044,6 @@ impl Vecs {
                     _10sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1147,7 +1055,6 @@ impl Vecs {
                     _100sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1159,7 +1066,6 @@ impl Vecs {
                     _1k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1171,7 +1077,6 @@ impl Vecs {
                     _10k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1183,7 +1088,6 @@ impl Vecs {
                     _100k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1195,7 +1099,6 @@ impl Vecs {
                     _1m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1207,7 +1110,6 @@ impl Vecs {
                     _10m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1219,7 +1121,6 @@ impl Vecs {
                     _1btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1231,7 +1132,6 @@ impl Vecs {
                     _10btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1243,7 +1143,6 @@ impl Vecs {
                     _100btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1255,7 +1154,6 @@ impl Vecs {
                     _1k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1267,7 +1165,6 @@ impl Vecs {
                     _10k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1279,7 +1176,6 @@ impl Vecs {
                     _100k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_under_100k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1293,7 +1189,6 @@ impl Vecs {
                     _1sat: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1sat"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1305,7 +1200,6 @@ impl Vecs {
                     _10sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1317,7 +1211,6 @@ impl Vecs {
                     _100sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1329,7 +1222,6 @@ impl Vecs {
                     _1k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1341,7 +1233,6 @@ impl Vecs {
                     _10k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1353,7 +1244,6 @@ impl Vecs {
                     _100k_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100k_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1365,7 +1255,6 @@ impl Vecs {
                     _1m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1377,7 +1266,6 @@ impl Vecs {
                     _10m_sats: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10m_sats"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1389,7 +1277,6 @@ impl Vecs {
                     _1btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1401,7 +1288,6 @@ impl Vecs {
                     _10btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1413,7 +1299,6 @@ impl Vecs {
                     _100btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_100btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1425,7 +1310,6 @@ impl Vecs {
                     _1k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_1k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,
@@ -1437,7 +1321,6 @@ impl Vecs {
                     _10k_btc: utxo_cohort::Vecs::forced_import(
                         db,
                         Some("utxos_above_10k_btc"),
-                        format,
                         version + VERSION + Version::ZERO,
                         indexes,
                         price,

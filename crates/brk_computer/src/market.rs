@@ -3,7 +3,10 @@ use std::{path::Path, thread};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
-use vecdb::{Database, EagerVec, Exit, GenericStoredVec, PAGE_SIZE, TypedVecIterator, VecIndex};
+use vecdb::{
+    Database, EagerVec, Exit, GenericStoredVec, Importable, PAGE_SIZE, PcoVec, TypedVecIterator,
+    VecIndex,
+};
 
 use crate::{
     grouped::{ComputedStandardDeviationVecsFromDateIndex, Source, StandardDeviationVecsOptions},
@@ -21,8 +24,8 @@ use super::{
 pub struct Vecs {
     db: Database,
 
-    pub height_to_price_ath: EagerVec<Height, Dollars>,
-    pub height_to_price_drawdown: EagerVec<Height, StoredF32>,
+    pub height_to_price_ath: EagerVec<PcoVec<Height, Dollars>>,
+    pub height_to_price_drawdown: EagerVec<PcoVec<Height, StoredF32>>,
     pub indexes_to_price_ath: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_price_drawdown: ComputedVecsFromDateIndex<StoredF32>,
     pub indexes_to_days_since_price_ath: ComputedVecsFromDateIndex<StoredU16>,
@@ -45,8 +48,8 @@ pub struct Vecs {
     pub indexes_to_price_1y_min: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_price_1y_max: ComputedVecsFromDateIndex<Dollars>,
 
-    pub dateindex_to_price_true_range: EagerVec<DateIndex, StoredF32>,
-    pub dateindex_to_price_true_range_2w_sum: EagerVec<DateIndex, StoredF32>,
+    pub dateindex_to_price_true_range: EagerVec<PcoVec<DateIndex, StoredF32>>,
+    pub dateindex_to_price_true_range_2w_sum: EagerVec<PcoVec<DateIndex, StoredF32>>,
     pub indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex<StoredF32>,
 
     pub indexes_to_price_1w_sma: ComputedRatioVecsFromDateIndex,
@@ -210,12 +213,12 @@ impl Vecs {
         let version = parent_version + Version::ZERO;
 
         let this = Self {
-            height_to_price_ath: EagerVec::forced_import_compressed(
+            height_to_price_ath: EagerVec::forced_import(
                 &db,
                 "price_ath",
                 version + Version::ZERO,
             )?,
-            height_to_price_drawdown: EagerVec::forced_import_compressed(
+            height_to_price_drawdown: EagerVec::forced_import(
                 &db,
                 "price_drawdown",
                 version + Version::ZERO,
@@ -1431,12 +1434,12 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
-            dateindex_to_price_true_range: EagerVec::forced_import_compressed(
+            dateindex_to_price_true_range: EagerVec::forced_import(
                 &db,
                 "price_true_range",
                 version + Version::ZERO,
             )?,
-            dateindex_to_price_true_range_2w_sum: EagerVec::forced_import_compressed(
+            dateindex_to_price_true_range_2w_sum: EagerVec::forced_import(
                 &db,
                 "price_true_range_2w_sum",
                 version + Version::ZERO,
@@ -1517,7 +1520,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -1593,7 +1596,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.get_or_read_at_once(i - 1).unwrap().unwrap()
+                                slf.get_pushed_or_read_at_unwrap_once(i - 1)
                             } else {
                                 StoredU16::default()
                             });
@@ -1624,7 +1627,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.get_or_read_at_unwrap_once(i - 1)
+                                slf.get_pushed_or_read_at_unwrap_once(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });
@@ -2137,19 +2140,19 @@ impl Vecs {
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
-            None as Option<&EagerVec<DateIndex, Dollars>>,
+            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
         self.indexes_to_1d_returns_1m_sd.compute_all(
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
-            None as Option<&EagerVec<DateIndex, Dollars>>,
+            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
         self.indexes_to_1d_returns_1y_sd.compute_all(
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.as_ref().unwrap(),
-            None as Option<&EagerVec<DateIndex, Dollars>>,
+            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
 
         self.indexes_to_price_1w_volatility
