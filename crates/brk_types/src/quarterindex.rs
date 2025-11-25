@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::MonthIndex;
@@ -24,7 +24,7 @@ use super::MonthIndex;
     Immutable,
     IntoBytes,
     KnownLayout,
-    Compressable,
+    Pco,
 )]
 pub struct QuarterIndex(u16);
 

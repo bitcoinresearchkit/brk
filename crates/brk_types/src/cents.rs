@@ -1,7 +1,7 @@
 use std::ops::{Add, Div, Mul};
 
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable};
+use vecdb::{CheckedSub, Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Dollars;
@@ -20,7 +20,7 @@ use super::Dollars;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct Cents(i64);
 

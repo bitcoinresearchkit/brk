@@ -8,12 +8,12 @@ use vecdb::{AnyWritableVec, Database, EagerVec, Exit, IterableCloneableVec, Iter
 
 use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
 
-use super::{ComputedType, EagerVecsBuilder, Source, VecBuilderOptions};
+use super::{ComputedVecValue, EagerVecsBuilder, Source, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromDateIndex<T>
 where
-    T: ComputedType + PartialOrd,
+    T: ComputedVecValue + PartialOrd,
 {
     pub dateindex: Option<EagerVec<DateIndex, T>>,
     pub dateindex_extra: EagerVecsBuilder<DateIndex, T>,
@@ -29,7 +29,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromDateIndex<T>
 where
-    T: ComputedType + 'static,
+    T: ComputedVecValue + 'static,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
@@ -146,7 +146,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromDateIndex<T>
 where
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let dateindex_extra_node = self.dateindex_extra.to_tree_node();

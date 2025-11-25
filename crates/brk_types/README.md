@@ -244,7 +244,7 @@ Storage types provide space optimization:
 **Financial Types**: Multi-denomination OHLC support with automatic conversions \
 **Address System**: Complete Bitcoin script type classification with 280 enum variants \
 **Time Indexing**: Hierarchical calendar system from daily to decade-level granularity \
-**Storage Integration**: `vecdb::Compressable` traits for efficient database operations \
+**Storage Integration**: `vecdb::Pco` traits for efficient database operations \
 **Architecture**: Type-driven design prioritizing memory efficiency and domain correctness
 
 ---

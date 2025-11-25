@@ -1,6 +1,6 @@
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{Compressable, Formattable, PrintableIndex};
+use vecdb::{Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -18,7 +18,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct StoredBool(u16);
 

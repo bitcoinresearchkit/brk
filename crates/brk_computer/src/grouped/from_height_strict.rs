@@ -6,12 +6,12 @@ use vecdb::{AnyWritableVec, Database, EagerVec, Exit};
 
 use crate::{Indexes, indexes};
 
-use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
+use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedType + PartialOrd,
+    T: ComputedVecValue + PartialOrd,
 {
     pub height: EagerVec<Height, T>,
     pub height_extra: EagerVecsBuilder<Height, T>,
@@ -23,7 +23,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedType + Ord + From<f64>,
+    T: ComputedVecValue + Ord + From<f64>,
     f64: From<T>,
 {
     pub fn forced_import(
@@ -86,7 +86,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();

@@ -5,8 +5,8 @@ pub use brk_types::TreeNode;
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
 use vecdb::{
-    AnyVec, AnyWritableVec, Compressable, CompressedVec, ComputedVec, EagerVec, Formattable,
-    LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawVec, StoredVec, VecIndex, VecValue,
+    AnyVec, AnyWritableVec, CompressedVec, ComputedVec, EagerVec, Formattable, LazyVecFrom1,
+    LazyVecFrom2, LazyVecFrom3, Pco, RawVec, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -31,7 +31,7 @@ where
 impl<I, T> Traversable for CompressedVec<I, T>
 where
     I: VecIndex,
-    T: Compressable + Formattable,
+    T: Pco + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -45,7 +45,7 @@ where
 impl<I, T> Traversable for StoredVec<I, T>
 where
     I: VecIndex,
-    T: Compressable + Formattable,
+    T: Pco + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -59,7 +59,7 @@ where
 impl<I, T> Traversable for EagerVec<I, T>
 where
     I: VecIndex,
-    T: Compressable + Formattable,
+    T: Pco + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -129,13 +129,13 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
     for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: VecIndex,
-    T: Compressable + Formattable,
+    T: Pco + Formattable,
     S1I: VecIndex,
-    S1T: Compressable,
+    S1T: Pco,
     S2I: VecIndex,
-    S2T: Compressable,
+    S2T: Pco,
     S3I: VecIndex,
-    S3T: Compressable,
+    S3T: Pco,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)

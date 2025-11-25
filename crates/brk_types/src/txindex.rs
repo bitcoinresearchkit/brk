@@ -4,7 +4,7 @@ use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
@@ -27,7 +27,7 @@ use super::StoredU32;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
     JsonSchema,
     Hash,
 )]

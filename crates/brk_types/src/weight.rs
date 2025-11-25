@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -20,7 +20,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     FromBytes,
     Serialize,
-    Compressable,
+    Pco,
     JsonSchema,
 )]
 pub struct Weight(u64);

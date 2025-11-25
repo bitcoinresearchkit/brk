@@ -197,9 +197,9 @@ where
         items.into_iter().map(InnerItem::from).collect()
     }
 
-    fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem> {
-        panic!()
-    }
+    // fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem> {
+    //     panic!()
+    // }
 
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
         if self.has(height) {

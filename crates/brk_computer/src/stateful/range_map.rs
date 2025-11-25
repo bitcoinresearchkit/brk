@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use vecdb::{Compressable, CompressedVec, RawVec, VecIndex, VecValue};
+use vecdb::{CompressedVec, Pco, RawVec, VecIndex, VecValue};
 
 #[derive(Debug)]
 pub struct RangeMap<I, T>(BTreeMap<I, T>);
@@ -39,7 +39,7 @@ where
 impl<I, T> From<&CompressedVec<I, T>> for RangeMap<T, I>
 where
     I: VecIndex,
-    T: VecIndex + Compressable,
+    T: VecIndex + Pco,
 {
     #[inline]
     fn from(vec: &CompressedVec<I, T>) -> Self {

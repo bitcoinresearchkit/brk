@@ -1,10 +1,10 @@
 use std::ops::{Add, AddAssign, Div};
 
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 
-pub trait ComputedType
+pub trait ComputedVecValue
 where
-    Self: Compressable
+    Self: Pco
         + From<usize>
         + Div<usize, Output = Self>
         + Add<Output = Self>
@@ -13,8 +13,8 @@ where
         + Formattable,
 {
 }
-impl<T> ComputedType for T where
-    T: Compressable
+impl<T> ComputedVecValue for T where
+    T: Pco
         + From<usize>
         + Div<usize, Output = Self>
         + Add<Output = Self>

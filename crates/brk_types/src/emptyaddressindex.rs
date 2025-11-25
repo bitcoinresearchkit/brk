@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::TypeIndex;
@@ -22,7 +22,7 @@ use crate::TypeIndex;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct EmptyAddressIndex(TypeIndex);
 

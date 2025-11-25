@@ -16,12 +16,12 @@ use crate::{
     indexes, price,
 };
 
-use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
+use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromTxindex<T>
 where
-    T: ComputedType + PartialOrd,
+    T: ComputedVecValue + PartialOrd,
 {
     pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
     pub height: EagerVecsBuilder<Height, T>,
@@ -40,7 +40,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromTxindex<T>
 where
-    T: ComputedType + Ord + From<f64> + 'static,
+    T: ComputedVecValue + Ord + From<f64> + 'static,
     f64: From<T>,
 {
     #[allow(clippy::too_many_arguments)]
@@ -465,7 +465,7 @@ impl ComputedVecsFromTxindex<Dollars> {
 
 impl<T> Traversable for ComputedVecsFromTxindex<T>
 where
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         brk_traversable::TreeNode::Branch(

@@ -1,21 +1,12 @@
 use bitcoin::{absolute::LockTime, locktime::absolute::LOCK_TIME_THRESHOLD};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 /// Transaction locktime
 #[derive(
-    Debug,
-    Immutable,
-    Clone,
-    Copy,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Compressable,
-    JsonSchema,
+    Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, FromBytes, Serialize, Pco, JsonSchema,
 )]
 pub struct RawLockTime(u32);
 

@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{TxIndex, Vout};
@@ -21,7 +21,7 @@ use crate::{TxIndex, Vout};
     Serialize,
     JsonSchema,
     Hash,
-    Compressable,
+    Pco,
 )]
 pub struct OutPoint(u64);
 

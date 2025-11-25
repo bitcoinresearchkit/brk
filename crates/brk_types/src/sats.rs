@@ -7,7 +7,7 @@ use bitcoin::Amount;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable, SaturatingAdd};
+use vecdb::{CheckedSub, Formattable, Pco, SaturatingAdd};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -31,7 +31,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
     KnownLayout,
     Serialize,
     Deserialize,
-    Compressable,
+    Pco,
     JsonSchema,
 )]
 pub struct Sats(u64);

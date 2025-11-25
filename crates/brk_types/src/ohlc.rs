@@ -6,7 +6,7 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
-use vecdb::{Compressable, Formattable, TransparentCompressable};
+use vecdb::{Formattable, Pco, TransparentPco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
@@ -88,10 +88,10 @@ pub struct OHLCDollars {
 
 // This is FAKE, just to be able to use EagerVec
 // Need to find a better way
-impl Compressable for OHLCDollars {
+impl Pco for OHLCDollars {
     type NumberType = u64;
 }
-impl TransparentCompressable<u64> for OHLCDollars {}
+impl TransparentPco<u64> for OHLCDollars {}
 
 impl Serialize for OHLCDollars {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -178,10 +178,10 @@ pub struct OHLCSats {
 
 // This is FAKE, just to be able to use EagerVec
 // Need to find a better way
-impl Compressable for OHLCSats {
+impl Pco for OHLCSats {
     type NumberType = u64;
 }
-impl TransparentCompressable<u64> for OHLCSats {}
+impl TransparentPco<u64> for OHLCSats {}
 
 impl Serialize for OHLCSats {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -254,7 +254,7 @@ impl Formattable for OHLCSats {
     Deref,
     DerefMut,
     Serialize,
-    Compressable,
+    Pco,
 )]
 #[repr(transparent)]
 pub struct Open<T>(T);
@@ -386,7 +386,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    Compressable,
+    Pco,
 )]
 #[repr(transparent)]
 pub struct High<T>(T);
@@ -518,7 +518,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    Compressable,
+    Pco,
 )]
 #[repr(transparent)]
 pub struct Low<T>(T);
@@ -650,7 +650,7 @@ where
     Deref,
     DerefMut,
     Serialize,
-    Compressable,
+    Pco,
 )]
 #[repr(transparent)]
 pub struct Close<T>(T);

@@ -3,7 +3,7 @@ use std::ops::{Add, Rem};
 use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, FromCoarserIndex, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
@@ -24,7 +24,7 @@ use super::Date;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct DateIndex(u16);
 

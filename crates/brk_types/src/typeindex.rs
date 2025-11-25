@@ -3,7 +3,7 @@ use std::ops::Add;
 use byteview::ByteView;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable};
+use vecdb::{CheckedSub, Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_4bytes;
@@ -24,7 +24,7 @@ use crate::copy_first_4bytes;
     KnownLayout,
     Serialize,
     Deserialize,
-    Compressable,
+    Pco,
     JsonSchema,
     Hash,
 )]

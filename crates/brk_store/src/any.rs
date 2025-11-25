@@ -11,6 +11,6 @@ pub trait AnyStore: Send + Sync {
     fn keyspace(&self) -> &fjall3::Keyspace;
     fn partition(&self) -> &fjall2::PartitionHandle;
     fn take_all_f2(&mut self) -> Vec<fjall2::InnerItem>;
-    fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem>;
+    // fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem>;
     // fn take_all_f3(&mut self) -> Box<dyn Iterator<Item = Item>>;
 }
