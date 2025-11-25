@@ -3,26 +3,10 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 pub type StoredPhantom = StoredU8;
 
-#[derive(
-    Default,
-    Debug,
-    Deref,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-)]
+#[derive(Default, Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct StoredU8(u8);
 
 impl StoredU8 {

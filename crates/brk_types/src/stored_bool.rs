@@ -1,25 +1,8 @@
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(
-    Debug,
-    Deref,
-    Clone,
-    Default,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct StoredBool(u16);
 
 impl StoredBool {

@@ -2,28 +2,11 @@ use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::StoredU16;
 
 /// Transaction version number
-#[derive(
-    Debug,
-    Deref,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Pco,
-    JsonSchema,
-)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct TxVersion(u16);
 
 impl TxVersion {

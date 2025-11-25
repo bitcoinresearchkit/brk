@@ -5,9 +5,6 @@ use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_4bytes;
 
 use super::StoredU32;
 
@@ -22,10 +19,6 @@ use super::StoredU32;
     Deref,
     DerefMut,
     Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
     Serialize,
     Pco,
     JsonSchema,
@@ -123,7 +116,7 @@ impl From<TxIndex> for usize {
 impl From<ByteView> for TxIndex {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self(u32::from_be_bytes(copy_first_4bytes(&value).unwrap()))
+        Self(u32::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 impl From<TxIndex> for ByteView {
@@ -137,13 +130,6 @@ impl From<TxIndex> for StoredU32 {
     #[inline]
     fn from(value: TxIndex) -> Self {
         Self::from(value.0)
-    }
-}
-
-impl From<&[u8]> for TxIndex {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self(u32::from_be_bytes(copy_first_4bytes(value).unwrap()))
     }
 }
 

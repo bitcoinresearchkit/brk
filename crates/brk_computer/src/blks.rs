@@ -6,8 +6,7 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, CompressedVec, Database, Exit, GenericStoredVec, PAGE_SIZE,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, PcoVec, TypedVecIterator,
 };
 
 use super::Indexes;
@@ -16,8 +15,8 @@ use super::Indexes;
 pub struct Vecs {
     db: Database,
 
-    pub height_to_position: CompressedVec<Height, BlkPosition>,
-    pub txindex_to_position: CompressedVec<TxIndex, BlkPosition>,
+    pub height_to_position: PcoVec<Height, BlkPosition>,
+    pub txindex_to_position: PcoVec<TxIndex, BlkPosition>,
 }
 
 impl Vecs {
@@ -28,16 +27,8 @@ impl Vecs {
         let version = parent_version + Version::ZERO;
 
         let this = Self {
-            height_to_position: CompressedVec::forced_import(
-                &db,
-                "position",
-                version + Version::TWO,
-            )?,
-            txindex_to_position: CompressedVec::forced_import(
-                &db,
-                "position",
-                version + Version::TWO,
-            )?,
+            height_to_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
+            txindex_to_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
 
             db,
         };

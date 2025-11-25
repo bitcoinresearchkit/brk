@@ -756,47 +756,39 @@ enum InputSource<'a> {
 }
 
 struct Readers {
-    txindex_to_first_txoutindex: Reader<'static>,
-    txoutindex_to_outputtype: Reader<'static>,
-    txoutindex_to_typeindex: Reader<'static>,
-    p2pk65addressindex_to_p2pk65bytes: Reader<'static>,
-    p2pk33addressindex_to_p2pk33bytes: Reader<'static>,
-    p2pkhaddressindex_to_p2pkhbytes: Reader<'static>,
-    p2shaddressindex_to_p2shbytes: Reader<'static>,
-    p2wpkhaddressindex_to_p2wpkhbytes: Reader<'static>,
-    p2wshaddressindex_to_p2wshbytes: Reader<'static>,
-    p2traddressindex_to_p2trbytes: Reader<'static>,
-    p2aaddressindex_to_p2abytes: Reader<'static>,
+    txindex_to_first_txoutindex: Reader,
+    txoutindex_to_outputtype: Reader,
+    txoutindex_to_typeindex: Reader,
+    p2pk65addressindex_to_p2pk65bytes: Reader,
+    p2pk33addressindex_to_p2pk33bytes: Reader,
+    p2pkhaddressindex_to_p2pkhbytes: Reader,
+    p2shaddressindex_to_p2shbytes: Reader,
+    p2wpkhaddressindex_to_p2wpkhbytes: Reader,
+    p2wshaddressindex_to_p2wshbytes: Reader,
+    p2traddressindex_to_p2trbytes: Reader,
+    p2aaddressindex_to_p2abytes: Reader,
 }
 
 impl Readers {
     fn new(vecs: &Vecs) -> Self {
         Self {
-            txindex_to_first_txoutindex: vecs.txindex_to_first_txoutindex.create_static_reader(),
-            txoutindex_to_outputtype: vecs.txoutindex_to_outputtype.create_static_reader(),
-            txoutindex_to_typeindex: vecs.txoutindex_to_typeindex.create_static_reader(),
+            txindex_to_first_txoutindex: vecs.txindex_to_first_txoutindex.create_reader(),
+            txoutindex_to_outputtype: vecs.txoutindex_to_outputtype.create_reader(),
+            txoutindex_to_typeindex: vecs.txoutindex_to_typeindex.create_reader(),
             p2pk65addressindex_to_p2pk65bytes: vecs
                 .p2pk65addressindex_to_p2pk65bytes
-                .create_static_reader(),
+                .create_reader(),
             p2pk33addressindex_to_p2pk33bytes: vecs
                 .p2pk33addressindex_to_p2pk33bytes
-                .create_static_reader(),
-            p2pkhaddressindex_to_p2pkhbytes: vecs
-                .p2pkhaddressindex_to_p2pkhbytes
-                .create_static_reader(),
-            p2shaddressindex_to_p2shbytes: vecs
-                .p2shaddressindex_to_p2shbytes
-                .create_static_reader(),
+                .create_reader(),
+            p2pkhaddressindex_to_p2pkhbytes: vecs.p2pkhaddressindex_to_p2pkhbytes.create_reader(),
+            p2shaddressindex_to_p2shbytes: vecs.p2shaddressindex_to_p2shbytes.create_reader(),
             p2wpkhaddressindex_to_p2wpkhbytes: vecs
                 .p2wpkhaddressindex_to_p2wpkhbytes
-                .create_static_reader(),
-            p2wshaddressindex_to_p2wshbytes: vecs
-                .p2wshaddressindex_to_p2wshbytes
-                .create_static_reader(),
-            p2traddressindex_to_p2trbytes: vecs
-                .p2traddressindex_to_p2trbytes
-                .create_static_reader(),
-            p2aaddressindex_to_p2abytes: vecs.p2aaddressindex_to_p2abytes.create_static_reader(),
+                .create_reader(),
+            p2wshaddressindex_to_p2wshbytes: vecs.p2wshaddressindex_to_p2wshbytes.create_reader(),
+            p2traddressindex_to_p2trbytes: vecs.p2traddressindex_to_p2trbytes.create_reader(),
+            p2aaddressindex_to_p2abytes: vecs.p2aaddressindex_to_p2abytes.create_reader(),
         }
     }
 }

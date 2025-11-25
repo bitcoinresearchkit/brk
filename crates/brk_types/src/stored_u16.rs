@@ -3,7 +3,6 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
     EmptyOutputIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
@@ -11,23 +10,7 @@ use super::{
     P2WSHAddressIndex, UnknownOutputIndex,
 };
 
-#[derive(
-    Debug,
-    Deref,
-    Clone,
-    Default,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct StoredU16(u16);
 
 impl StoredU16 {

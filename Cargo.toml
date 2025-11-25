@@ -56,7 +56,7 @@ brk_rpc = { version = "0.0.111", path = "crates/brk_rpc" }
 brk_server = { version = "0.0.111", path = "crates/brk_server" }
 brk_store = { version = "0.0.111", path = "crates/brk_store" }
 brk_types = { version = "0.0.111", path = "crates/brk_types" }
-brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["derive"] }
+brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", features = ["pco", "derive"] }
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
 byteview = "=0.6.1"
 # byteview = "~0.8.0"
@@ -81,7 +81,6 @@ serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
 vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco"] }
 # vecdb = { version = "0.3.20", features = ["derive"] }
-zerocopy = { version = "0.8.30", features = ["derive"] }
 
 [workspace.metadata.release]
 shared-version = true

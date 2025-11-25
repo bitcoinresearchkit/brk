@@ -1,10 +1,7 @@
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_2bytes;
+use vecdb::{Bytes, Formattable};
 
 /// Index of the output being spent in the previous transaction
 #[derive(
@@ -17,12 +14,9 @@ use crate::copy_first_2bytes;
     Eq,
     PartialOrd,
     Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
     Serialize,
     JsonSchema,
+    Bytes,
     Hash,
 )]
 pub struct Vout(u16);
@@ -91,13 +85,6 @@ impl From<Vout> for usize {
     #[inline]
     fn from(value: Vout) -> Self {
         value.0 as usize
-    }
-}
-
-impl From<&[u8]> for Vout {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self(u16::from_be_bytes(copy_first_2bytes(value).unwrap()))
     }
 }
 

@@ -3,7 +3,6 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{
     DateIndex, EmptyOutputIndex, Height, MonthIndex, OpReturnIndex, P2AAddressIndex,
@@ -12,23 +11,7 @@ use super::{
     UnknownOutputIndex, YearIndex,
 };
 
-#[derive(
-    Debug,
-    Default,
-    Deref,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Default, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct StoredU64(u64);
 
 impl StoredU64 {

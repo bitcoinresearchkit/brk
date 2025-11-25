@@ -9,27 +9,12 @@ use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Low, Open};
 
 use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    Deref,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
-)]
+#[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct Dollars(f64);
 
 impl Dollars {

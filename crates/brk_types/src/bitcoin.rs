@@ -5,13 +5,10 @@ use std::{
 
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredF64};
 
-#[derive(
-    Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize, Pco,
-)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Pco)]
 pub struct Bitcoin(f64);
 
 impl Add for Bitcoin {

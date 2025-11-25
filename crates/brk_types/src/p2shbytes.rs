@@ -2,26 +2,11 @@ use std::fmt;
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use vecdb::{Bytes, Formattable};
 
 use crate::U8x20;
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct P2SHBytes(U8x20);
 
 impl From<&[u8]> for P2SHBytes {

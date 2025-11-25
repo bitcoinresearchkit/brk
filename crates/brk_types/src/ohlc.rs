@@ -7,13 +7,12 @@ use std::{
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
 use vecdb::{Formattable, Pco, TransparentPco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
 
 use super::{Cents, Dollars, Sats};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone)]
 #[repr(C)]
 pub struct OHLCCents {
     pub open: Open<Cents>,
@@ -77,7 +76,7 @@ impl Formattable for OHLCCents {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone, Copy)]
 #[repr(C)]
 pub struct OHLCDollars {
     pub open: Open<Dollars>,
@@ -167,7 +166,7 @@ impl Formattable for OHLCDollars {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone, Copy)]
 #[repr(C)]
 pub struct OHLCSats {
     pub open: Open<Sats>,
@@ -239,22 +238,7 @@ impl Formattable for OHLCSats {
 }
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Deref,
-    DerefMut,
-    Serialize,
-    Pco,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
 )]
 #[repr(transparent)]
 pub struct Open<T>(T);
@@ -371,22 +355,7 @@ where
 }
 
 #[derive(
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Deref,
-    DerefMut,
-    Serialize,
-    Pco,
+    Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Serialize, Pco,
 )]
 #[repr(transparent)]
 pub struct High<T>(T);
@@ -503,22 +472,7 @@ where
 }
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Deref,
-    DerefMut,
-    Serialize,
-    Pco,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
 )]
 #[repr(transparent)]
 pub struct Low<T>(T);
@@ -635,22 +589,7 @@ where
 }
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Deref,
-    DerefMut,
-    Serialize,
-    Pco,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
 )]
 #[repr(transparent)]
 pub struct Close<T>(T);

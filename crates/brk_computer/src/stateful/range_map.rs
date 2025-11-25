@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use vecdb::{CompressedVec, Pco, RawVec, VecIndex, VecValue};
+use vecdb::{BytesVec, BytesVecValue, PcoVec, PcoVecValue, VecIndex};
 
 #[derive(Debug)]
 pub struct RangeMap<I, T>(BTreeMap<I, T>);
@@ -20,13 +20,13 @@ where
     }
 }
 
-impl<I, T> From<&RawVec<I, T>> for RangeMap<T, I>
+impl<I, T> From<&BytesVec<I, T>> for RangeMap<T, I>
 where
     I: VecIndex,
-    T: VecIndex + VecValue,
+    T: VecIndex + BytesVecValue,
 {
     #[inline]
-    fn from(vec: &RawVec<I, T>) -> Self {
+    fn from(vec: &BytesVec<I, T>) -> Self {
         Self(
             vec.into_iter()
                 .enumerate()
@@ -36,13 +36,13 @@ where
     }
 }
 
-impl<I, T> From<&CompressedVec<I, T>> for RangeMap<T, I>
+impl<I, T> From<&PcoVec<I, T>> for RangeMap<T, I>
 where
     I: VecIndex,
-    T: VecIndex + Pco,
+    T: VecIndex + PcoVecValue,
 {
     #[inline]
-    fn from(vec: &CompressedVec<I, T>) -> Self {
+    fn from(vec: &PcoVec<I, T>) -> Self {
         Self(
             vec.into_iter()
                 .enumerate()

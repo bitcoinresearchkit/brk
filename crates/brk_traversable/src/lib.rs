@@ -5,8 +5,8 @@ pub use brk_types::TreeNode;
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
 use vecdb::{
-    AnyVec, AnyWritableVec, CompressedVec, ComputedVec, EagerVec, Formattable, LazyVecFrom1,
-    LazyVecFrom2, LazyVecFrom3, Pco, RawVec, StoredVec, VecIndex, VecValue,
+    AnyVec, AnyWritableVec, BytesVec, BytesVecValue, EagerVec, Formattable, LazyVecFrom1,
+    LazyVecFrom2, LazyVecFrom3, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -14,10 +14,11 @@ pub trait Traversable {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec>;
 }
 
-impl<I, T> Traversable for RawVec<I, T>
+// BytesVec implementation
+impl<I, T> Traversable for BytesVec<I, T>
 where
     I: VecIndex,
-    T: VecValue + Formattable,
+    T: BytesVecValue + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -28,10 +29,12 @@ where
     }
 }
 
-impl<I, T> Traversable for CompressedVec<I, T>
+// ZeroCopyVec implementation (only if zerocopy feature enabled)
+#[cfg(feature = "zerocopy")]
+impl<I, T> Traversable for vecdb::ZeroCopyVec<I, T>
 where
     I: VecIndex,
-    T: Pco + Formattable,
+    T: vecdb::ZeroCopyVecValue + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -42,10 +45,12 @@ where
     }
 }
 
-impl<I, T> Traversable for StoredVec<I, T>
+// PcoVec implementation (only if pco feature enabled)
+#[cfg(feature = "pco")]
+impl<I, T> Traversable for vecdb::PcoVec<I, T>
 where
     I: VecIndex,
-    T: Pco + Formattable,
+    T: vecdb::PcoVecValue + Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -56,10 +61,43 @@ where
     }
 }
 
-impl<I, T> Traversable for EagerVec<I, T>
+// LZ4Vec implementation (only if lz4 feature enabled)
+#[cfg(feature = "lz4")]
+impl<I, T> Traversable for vecdb::LZ4Vec<I, T>
 where
     I: VecIndex,
-    T: Pco + Formattable,
+    T: vecdb::LZ4VecValue + Formattable,
+{
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Leaf(self.name().to_string())
+    }
+}
+
+// ZstdVec implementation (only if zstd feature enabled)
+#[cfg(feature = "zstd")]
+impl<I, T> Traversable for vecdb::ZstdVec<I, T>
+where
+    I: VecIndex,
+    T: vecdb::ZstdVecValue + Formattable,
+{
+    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
+        std::iter::once(self as &dyn AnyWritableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Leaf(self.name().to_string())
+    }
+}
+
+// EagerVec implementation (wraps any stored vector)
+impl<V> Traversable for EagerVec<V>
+where
+    V: StoredVec,
+    V::T: Formattable,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)
@@ -115,27 +153,6 @@ where
     S2T: VecValue,
     S3I: VecIndex,
     S3T: VecValue,
-{
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        std::iter::once(self as &dyn AnyWritableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
-    }
-}
-
-impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
-    for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
-where
-    I: VecIndex,
-    T: Pco + Formattable,
-    S1I: VecIndex,
-    S1T: Pco,
-    S2I: VecIndex,
-    S2T: Pco,
-    S3I: VecIndex,
-    S3T: Pco,
 {
     fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
         std::iter::once(self as &dyn AnyWritableVec)

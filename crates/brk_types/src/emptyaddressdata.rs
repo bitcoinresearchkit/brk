@@ -1,11 +1,10 @@
 use serde::Serialize;
 use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{LoadedAddressData, Sats};
 
 /// Data of an empty address
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
+#[derive(Debug, Default, Clone, Serialize)]
 #[repr(C)]
 pub struct EmptyAddressData {
     /// Total transaction count

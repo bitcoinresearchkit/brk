@@ -8,13 +8,10 @@ use std::{
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars};
 
-#[derive(
-    Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize, Pco,
-)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco)]
 pub struct StoredF64(f64);
 
 impl StoredF64 {

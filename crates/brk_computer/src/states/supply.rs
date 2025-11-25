@@ -3,9 +3,8 @@ use std::ops::{Add, AddAssign, SubAssign};
 use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
 use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct SupplyState {
     pub utxo_count: u64,
     pub value: Sats,

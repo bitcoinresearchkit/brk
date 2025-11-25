@@ -2,27 +2,11 @@ use std::hash::Hash;
 
 use byteview::ByteView;
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_8bytes;
+use vecdb::Bytes;
 
 use super::{TxIndex, TypeIndex};
 
-#[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    Serialize,
-    FromBytes,
-    IntoBytes,
-    Immutable,
-    KnownLayout,
-    Hash,
-)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Bytes, Hash)]
 pub struct AddressIndexTxIndex(u64);
 
 impl AddressIndexTxIndex {
@@ -45,14 +29,7 @@ impl From<(TypeIndex, TxIndex)> for AddressIndexTxIndex {
 impl From<ByteView> for AddressIndexTxIndex {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self::from(&*value)
-    }
-}
-
-impl From<&[u8]> for AddressIndexTxIndex {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self(u64::from_be_bytes(copy_first_8bytes(value).unwrap()))
+        Self(u64::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 

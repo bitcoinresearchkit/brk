@@ -1,27 +1,11 @@
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{TxIndex, Vout};
 
 #[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    JsonSchema,
-    Hash,
-    Pco,
+    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Serialize, JsonSchema, Hash, Pco,
 )]
 pub struct OutPoint(u64);
 
