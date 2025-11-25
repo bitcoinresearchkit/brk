@@ -2,7 +2,6 @@ use num_enum::{FromPrimitive, IntoPrimitive};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 // Created from the list in `pools.rs`
 // Can be used as index for said list
@@ -20,10 +19,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Deserialize,
     FromPrimitive,
     IntoPrimitive,
-    FromBytes,
-    IntoBytes,
-    Immutable,
-    KnownLayout,
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]

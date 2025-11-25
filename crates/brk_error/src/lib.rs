@@ -163,20 +163,6 @@ impl From<&'static str> for Error {
     }
 }
 
-impl<A, B, C> From<zerocopy::error::ConvertError<A, B, C>> for Error {
-    #[inline]
-    fn from(_: zerocopy::error::ConvertError<A, B, C>) -> Self {
-        Self::ZeroCopyError
-    }
-}
-
-impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
-    #[inline]
-    fn from(_: zerocopy::error::SizeError<A, B>) -> Self {
-        Self::ZeroCopyError
-    }
-}
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

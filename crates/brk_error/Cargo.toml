@@ -19,4 +19,3 @@ minreq = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 vecdb = { workspace = true }
-zerocopy = { workspace = true }

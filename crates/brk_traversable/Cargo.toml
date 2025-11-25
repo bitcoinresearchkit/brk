@@ -11,6 +11,10 @@ build = "build.rs"
 
 [features]
 derive = ["brk_traversable_derive"]
+pco = ["vecdb/pco"]
+zerocopy = ["vecdb/zerocopy"]
+lz4 = ["vecdb/lz4"]
+zstd = ["vecdb/zstd"]
 
 [dependencies]
 brk_types = { workspace = true }

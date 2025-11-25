@@ -5,28 +5,13 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
 
 pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Default,
-    Serialize,
-    Deserialize,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Pco,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize, Pco,
 )]
 pub struct DifficultyEpoch(u16);
 

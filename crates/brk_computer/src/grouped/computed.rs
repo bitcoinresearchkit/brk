@@ -1,10 +1,10 @@
 use std::ops::{Add, AddAssign, Div};
 
-use vecdb::{Formattable, Pco};
+use vecdb::{Formattable, PcoVecValue};
 
 pub trait ComputedVecValue
 where
-    Self: Pco
+    Self: PcoVecValue
         + From<usize>
         + Div<usize, Output = Self>
         + Add<Output = Self>
@@ -14,7 +14,7 @@ where
 {
 }
 impl<T> ComputedVecValue for T where
-    T: Pco
+    T: PcoVecValue
         + From<usize>
         + Div<usize, Output = Self>
         + Add<Output = Self>

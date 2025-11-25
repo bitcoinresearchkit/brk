@@ -4,9 +4,6 @@ use byteview::ByteView;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_4bytes;
 
 /// Index within its type (e.g., 0 for first P2WPKH address)
 #[derive(
@@ -18,10 +15,6 @@ use crate::copy_first_4bytes;
     Clone,
     Copy,
     Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
     Serialize,
     Deserialize,
     Pco,
@@ -117,17 +110,10 @@ impl Add<TypeIndex> for TypeIndex {
     }
 }
 
-impl From<&[u8]> for TypeIndex {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self(u32::from_be_bytes(copy_first_4bytes(value).unwrap()))
-    }
-}
-
 impl From<ByteView> for TypeIndex {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self::from(value.as_bytes())
+        Self::from(u32::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 impl From<TypeIndex> for ByteView {

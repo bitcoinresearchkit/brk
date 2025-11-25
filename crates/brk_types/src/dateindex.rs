@@ -4,28 +4,12 @@ use brk_error::Error;
 use jiff::Span;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
 
 use super::Date;
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct DateIndex(u16);
 
 impl DateIndex {

@@ -3,29 +3,11 @@ use std::ops::{Add, AddAssign};
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_8bytes;
 
 use super::Vout;
 
 #[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    Deref,
-    DerefMut,
-    Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
+    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco,
 )]
 pub struct TxOutIndex(u64);
 
@@ -113,13 +95,6 @@ impl From<TxOutIndex> for usize {
     #[inline]
     fn from(value: TxOutIndex) -> Self {
         value.0 as usize
-    }
-}
-
-impl From<&[u8]> for TxOutIndex {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self(u64::from_be_bytes(copy_first_8bytes(value).unwrap()))
     }
 }
 

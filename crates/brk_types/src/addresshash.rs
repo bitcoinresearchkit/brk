@@ -1,26 +1,10 @@
 use byteview::ByteView;
 use derive_deref::Deref;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::copy_first_8bytes;
+use vecdb::Bytes;
 
 use super::AddressBytes;
 
-#[derive(
-    Debug,
-    Deref,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Hash,
-)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash)]
 pub struct AddressHash(u64);
 
 impl From<&AddressBytes> for AddressHash {
@@ -33,7 +17,7 @@ impl From<&AddressBytes> for AddressHash {
 impl From<ByteView> for AddressHash {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self(u64::from_be_bytes(copy_first_8bytes(&value).unwrap()))
+        Self(u64::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 

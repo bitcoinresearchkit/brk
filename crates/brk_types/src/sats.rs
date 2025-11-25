@@ -8,7 +8,6 @@ use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, SaturatingAdd};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::StoredF64;
 
@@ -25,10 +24,6 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Copy,
     Deref,
     Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
     Serialize,
     Deserialize,
     Pco,

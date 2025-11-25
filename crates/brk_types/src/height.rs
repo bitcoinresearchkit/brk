@@ -7,10 +7,9 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use vecdb::{Bytes, CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
 
-use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, copy_first_4bytes};
+use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING};
 
 use super::StoredU64;
 
@@ -27,10 +26,6 @@ use super::StoredU64;
     Default,
     Serialize,
     Deserialize,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
     Pco,
     JsonSchema,
     Hash,
@@ -46,7 +41,7 @@ impl Height {
     }
 
     pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
-        std::fs::write(path, self.as_bytes())
+        std::fs::write(path, self.to_bytes())
     }
 
     pub fn increment(&mut self) {
@@ -227,14 +222,14 @@ impl From<bitcoin::locktime::absolute::Height> for Height {
 impl TryFrom<&std::path::Path> for Height {
     type Error = brk_error::Error;
     fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(std::fs::read(value)?.as_slice())?.to_owned())
+        Ok(Self::from_bytes(std::fs::read(value)?.as_slice())?.to_owned())
     }
 }
 
 impl From<ByteView> for Height {
     #[inline]
     fn from(value: ByteView) -> Self {
-        Self(u32::from_be_bytes(copy_first_4bytes(&value).unwrap()))
+        Self(u32::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 

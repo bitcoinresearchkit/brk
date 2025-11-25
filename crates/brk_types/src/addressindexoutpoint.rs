@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use byteview::ByteView;
 use serde::Serialize;
-use zerocopy::IntoBytes;
+use vecdb::Bytes;
 
 use crate::{AddressIndexTxIndex, Vout};
 
@@ -18,8 +18,8 @@ pub struct AddressIndexOutPoint {
 impl Hash for AddressIndexOutPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let mut buf = [0u8; 10];
-        buf[0..8].copy_from_slice(self.addressindextxindex.as_bytes());
-        buf[8..].copy_from_slice(self.vout.as_bytes());
+        buf[0..8].copy_from_slice(&self.addressindextxindex.to_bytes());
+        buf[8..].copy_from_slice(&self.vout.to_bytes());
         state.write(&buf);
     }
 }
@@ -38,8 +38,8 @@ impl From<ByteView> for AddressIndexOutPoint {
     #[inline]
     fn from(value: ByteView) -> Self {
         Self {
-            addressindextxindex: AddressIndexTxIndex::from(&value[0..8]),
-            vout: Vout::from(&value[8..]),
+            addressindextxindex: AddressIndexTxIndex::from_bytes(&value[0..8]).unwrap(),
+            vout: Vout::from_bytes(&value[8..]).unwrap(),
         }
     }
 }

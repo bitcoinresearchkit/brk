@@ -3,25 +3,8 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(
-    Debug,
-    Deref,
-    Clone,
-    Default,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct StoredI16(i16);
 
 impl StoredI16 {

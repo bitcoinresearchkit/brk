@@ -1,14 +1,11 @@
 use serde::Serialize;
 use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
-#[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout,
-)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct AnyAddressIndex(TypeIndex);
 
 impl AnyAddressIndex {
@@ -74,12 +71,3 @@ impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
         }
     }
 }
-
-// impl std::fmt::Display for AnyAddressDataIndexEnum {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-
-//         }
-//         self.0.fmt(f)
-//     }
-// }

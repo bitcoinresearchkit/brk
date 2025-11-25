@@ -633,7 +633,6 @@ dependencies = [
  "serde",
  "smallvec",
  "vecdb",
- "zerocopy",
 ]
 
 [[package]]
@@ -649,7 +648,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "vecdb",
- "zerocopy",
 ]
 
 [[package]]
@@ -1296,7 +1294,6 @@ dependencies = [
  "serde_json",
  "strum",
  "vecdb",
- "zerocopy",
 ]
 
 [[package]]
@@ -2121,7 +2118,7 @@ dependencies = [
  "flume",
  "log",
  "lsm-tree 3.0.0-rc.0",
- "lz4_flex",
+ "lz4_flex 0.11.5",
  "tempfile",
  "xxhash-rust",
 ]
@@ -2998,7 +2995,7 @@ dependencies = [
  "guardian",
  "interval-heap",
  "log",
- "lz4_flex",
+ "lz4_flex 0.11.5",
  "path-absolutize",
  "quick_cache",
  "rustc-hash",
@@ -3021,7 +3018,7 @@ dependencies = [
  "enum_dispatch",
  "interval-heap",
  "log",
- "lz4_flex",
+ "lz4_flex 0.11.5",
  "quick_cache",
  "rustc-hash",
  "self_cell",
@@ -3039,6 +3036,12 @@ checksum = "08ab2867e3eeeca90e844d1940eab391c9dc5228783db2ed999acbc0a9ed375a"
 dependencies = [
  "twox-hash",
 ]
+
+[[package]]
+name = "lz4_flex"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab6473172471198271ff72e9379150e9dfd70d8e533e0752a27e515b48dd375e"
 
 [[package]]
 name = "matchit"
@@ -5440,6 +5443,7 @@ version = "0.3.20"
 dependencies = [
  "ctrlc",
  "log",
+ "lz4_flex 0.12.0",
  "parking_lot",
  "pco",
  "rawdb",
@@ -5447,6 +5451,8 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.17",
  "vecdb_derive",
+ "zerocopy",
+ "zstd",
 ]
 
 [[package]]

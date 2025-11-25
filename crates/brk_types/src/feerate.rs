@@ -5,11 +5,10 @@ use std::{
 
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredU64};
 
-#[derive(Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, Pco)]
+#[derive(Debug, Clone, Copy, Serialize, Pco)]
 pub struct FeeRate(f64);
 
 impl From<(Sats, StoredU64)> for FeeRate {

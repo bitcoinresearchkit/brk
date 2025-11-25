@@ -3,25 +3,10 @@ use brk_error::Error;
 use schemars::JsonSchema;
 use serde::Serialize;
 use strum::Display;
-use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use vecdb::{Bytes, Formattable};
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Display,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    JsonSchema,
-    Hash,
+    Debug, Clone, Copy, Display, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema, Hash,
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
@@ -909,16 +894,27 @@ impl TryFrom<OutputType> for AddressType {
     }
 }
 
-impl From<&[u8]> for OutputType {
-    #[inline]
-    fn from(value: &[u8]) -> Self {
-        Self::read_from_bytes(value).unwrap()
-    }
-}
-
 impl Formattable for OutputType {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         false
+    }
+}
+
+impl Bytes for OutputType {
+    #[inline]
+    fn to_bytes(&self) -> Vec<u8> {
+        vec![*self as u8]
+    }
+
+    #[inline]
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        if bytes.len() != 1 {
+            return Err(vecdb::Error::WrongLength);
+        }
+        // SAFETY: OutputType is repr(u8) and we're transmuting from u8
+        // All values 0-255 are valid (includes dummy variants)
+        let s: Self = unsafe { std::mem::transmute(bytes[0]) };
+        Ok(s)
     }
 }

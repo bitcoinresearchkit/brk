@@ -2,26 +2,10 @@ use std::ops::{Add, Div, Mul};
 
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Dollars;
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-    Pco,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
 pub struct Cents(i64);
 
 impl Cents {

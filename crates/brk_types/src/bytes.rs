@@ -1,23 +1,8 @@
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use vecdb::Bytes;
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct U8x2([u8; 2]);
 impl From<&[u8]> for U8x2 {
     #[inline]
@@ -28,22 +13,7 @@ impl From<&[u8]> for U8x2 {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct U8x20([u8; 20]);
 impl From<&[u8]> for U8x20 {
     #[inline]
@@ -54,22 +24,7 @@ impl From<&[u8]> for U8x20 {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct U8x32([u8; 32]);
 impl From<&[u8]> for U8x32 {
     #[inline]
@@ -80,22 +35,7 @@ impl From<&[u8]> for U8x32 {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct U8x33(#[serde(with = "serde_bytes")] [u8; 33]);
 impl From<&[u8]> for U8x33 {
     #[inline]
@@ -106,22 +46,7 @@ impl From<&[u8]> for U8x33 {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    FromBytes,
-    Serialize,
-    Hash,
-)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
 pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
 impl From<&[u8]> for U8x65 {
     #[inline]

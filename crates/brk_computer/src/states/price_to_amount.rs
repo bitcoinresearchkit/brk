@@ -9,7 +9,7 @@ use brk_types::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
-use zerocopy::{FromBytes, IntoBytes};
+use vecdb::Bytes;
 
 use crate::states::SupplyState;
 
@@ -143,8 +143,8 @@ impl State {
         let compressed_values = simpler_compress(&values, COMPRESSION_LEVEL)?;
 
         let mut buffer = Vec::new();
-        buffer.extend(keys.len().as_bytes());
-        buffer.extend(compressed_keys.len().as_bytes());
+        buffer.extend(keys.len().to_bytes());
+        buffer.extend(compressed_keys.len().to_bytes());
         buffer.extend(compressed_keys);
         buffer.extend(compressed_values);
 
@@ -152,8 +152,8 @@ impl State {
     }
 
     fn deserialize(data: &[u8]) -> vecdb::Result<Self> {
-        let entry_count = usize::read_from_bytes(&data[0..8])?;
-        let keys_len = usize::read_from_bytes(&data[8..16])?;
+        let entry_count = usize::from_bytes(&data[0..8])?;
+        let keys_len = usize::from_bytes(&data[8..16])?;
 
         let keys: Vec<f64> = simple_decompress(&data[16..16 + keys_len])?;
         let values: Vec<u64> = simple_decompress(&data[16 + keys_len..])?;

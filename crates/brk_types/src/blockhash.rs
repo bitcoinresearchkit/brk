@@ -5,13 +5,10 @@ use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
-use vecdb::Formattable;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use vecdb::{Bytes, Formattable};
 
 /// Block hash
-#[derive(
-    Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, JsonSchema,
-)]
+#[derive(Debug, Deref, Clone, PartialEq, Eq, Bytes, JsonSchema)]
 #[repr(C)]
 pub struct BlockHash([u8; 32]);
 

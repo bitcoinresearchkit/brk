@@ -9,15 +9,12 @@ use std::{
 use derive_deref::Deref;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
-#[derive(
-    Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize, Pco,
-)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco)]
 pub struct StoredF32(f32);
 
 impl StoredF32 {

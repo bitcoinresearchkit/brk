@@ -1,12 +1,11 @@
 use brk_error::{Error, Result};
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
 /// Data for a loaded (non-empty) address with current balance
-#[derive(Debug, Default, Clone, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Default, Clone, Serialize)]
 #[repr(C)]
 pub struct LoadedAddressData {
     /// Total transaction count
