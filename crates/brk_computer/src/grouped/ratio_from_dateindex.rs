@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
-use vecdb::{
+use vecdb::{PcoVec, 
     AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
     TypedVecIterator, VecIndex,
 };
@@ -290,14 +290,14 @@ impl ComputedRatioVecsFromDateIndex {
         compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<DateIndex, Dollars>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<DateIndex, Dollars>>) -> Result<()>,
     {
         self.price
             .as_mut()
             .unwrap()
             .compute_all(starting_indexes, exit, compute)?;
 
-        let date_to_price_opt: Option<&EagerVec<DateIndex, Dollars>> = None;
+        let date_to_price_opt: Option<&EagerVec<PcoVec<DateIndex, Dollars>>> = None;
         self.compute_rest(price, starting_indexes, exit, date_to_price_opt)
     }
 
@@ -501,32 +501,32 @@ impl ComputedRatioVecsFromDateIndex {
         self.ratio_pct1.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
         self.ratio_pct2.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
         self.ratio_pct5.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
         self.ratio_pct95.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
         self.ratio_pct98.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
         self.ratio_pct99.as_mut().unwrap().compute_rest(
             starting_indexes,
             exit,
-            None as Option<&EagerVec<_, _>>,
+            None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
 
         let date_to_price = price_opt.unwrap_or_else(|| unsafe {
@@ -610,7 +610,7 @@ impl ComputedRatioVecsFromDateIndex {
         Ok(())
     }
 
-    fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<DateIndex, StoredF32>> {
+    fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
         let mut vecs = Vec::with_capacity(6);
         if let Some(v) = self.ratio_pct1.as_mut() {
             vecs.push(v.dateindex.as_mut().unwrap());

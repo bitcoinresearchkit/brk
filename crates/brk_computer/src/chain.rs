@@ -10,8 +10,8 @@ use brk_types::{
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, LazyVecFrom1,
-    LazyVecFrom2, PAGE_SIZE, TypedVecIterator, VecIndex, unlikely,
+    Database, EagerVec, Exit, GenericStoredVec, Importable, IterableCloneableVec, IterableVec,
+    LazyVecFrom1, LazyVecFrom2, PAGE_SIZE, PcoVec, TypedVecIterator, VecIndex, unlikely,
 };
 
 use crate::grouped::{
@@ -47,13 +47,13 @@ pub struct Vecs {
     pub yearindex_to_block_count_target: LazyVecFrom1<YearIndex, StoredU64, YearIndex, YearIndex>,
     pub decadeindex_to_block_count_target:
         LazyVecFrom1<DecadeIndex, StoredU64, DecadeIndex, DecadeIndex>,
-    pub height_to_interval: EagerVec<Height, Timestamp>,
-    pub height_to_24h_block_count: EagerVec<Height, StoredU32>,
-    pub height_to_24h_coinbase_sum: EagerVec<Height, Sats>,
-    pub height_to_24h_coinbase_usd_sum: EagerVec<Height, Dollars>,
-    pub height_to_vbytes: EagerVec<Height, StoredU64>,
-    pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
-    pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
+    pub height_to_interval: EagerVec<PcoVec<Height, Timestamp>>,
+    pub height_to_24h_block_count: EagerVec<PcoVec<Height, StoredU32>>,
+    pub height_to_24h_coinbase_sum: EagerVec<PcoVec<Height, Sats>>,
+    pub height_to_24h_coinbase_usd_sum: EagerVec<PcoVec<Height, Dollars>>,
+    pub height_to_vbytes: EagerVec<PcoVec<Height, StoredU64>>,
+    pub difficultyepoch_to_timestamp: EagerVec<PcoVec<DifficultyEpoch, Timestamp>>,
+    pub halvingepoch_to_timestamp: EagerVec<PcoVec<HalvingEpoch, Timestamp>>,
     pub timeindexes_to_timestamp: ComputedVecsFromDateIndex<Timestamp>,
     pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_1w_block_count: ComputedVecsFromDateIndex<StoredU32>,
@@ -71,11 +71,11 @@ pub struct Vecs {
     pub indexes_to_fee: ComputedValueVecsFromTxindex,
     pub indexes_to_fee_rate: ComputedVecsFromTxindex<FeeRate>,
     /// Value == 0 when Coinbase
-    pub txindex_to_input_value: EagerVec<TxIndex, Sats>,
+    pub txindex_to_input_value: EagerVec<PcoVec<TxIndex, Sats>>,
     pub indexes_to_sent: ComputedValueVecsFromHeight,
     // pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU64>,
-    pub txindex_to_output_value: EagerVec<TxIndex, Sats>,
+    pub txindex_to_output_value: EagerVec<PcoVec<TxIndex, Sats>>,
     // pub indexes_to_output_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_p2a_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_p2ms_count: ComputedVecsFromHeight<StoredU64>,
@@ -95,17 +95,17 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredU64>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
-    pub txinindex_to_value: EagerVec<TxInIndex, Sats>,
+    pub txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_vsize: LazyVecFrom1<TxIndex, StoredU64, TxIndex, Weight>,
     pub txindex_to_weight: LazyVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
-    pub txindex_to_fee: EagerVec<TxIndex, Sats>,
-    pub txindex_to_fee_rate: EagerVec<TxIndex, FeeRate>,
+    pub txindex_to_fee: EagerVec<PcoVec<TxIndex, Sats>>,
+    pub txindex_to_fee_rate: EagerVec<PcoVec<TxIndex, FeeRate>>,
     pub indexes_to_exact_utxo_count: ComputedVecsFromHeight<StoredU64>,
-    pub dateindex_to_fee_dominance: EagerVec<DateIndex, StoredF32>,
-    pub dateindex_to_subsidy_dominance: EagerVec<DateIndex, StoredF32>,
+    pub dateindex_to_fee_dominance: EagerVec<PcoVec<DateIndex, StoredF32>>,
+    pub dateindex_to_subsidy_dominance: EagerVec<PcoVec<DateIndex, StoredF32>>,
     pub indexes_to_subsidy_usd_1y_sma: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_puell_multiple: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub indexes_to_hash_rate: ComputedVecsFromHeight<StoredF64>,
@@ -155,8 +155,8 @@ impl Vecs {
 
         let compute_dollars = price.is_some();
 
-        let txinindex_to_value: EagerVec<TxInIndex, Sats> =
-            EagerVec::forced_import_compressed(&db, "value", version + Version::ZERO)?;
+        let txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>> =
+            EagerVec::forced_import(&db, "value", version + Version::ZERO)?;
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
@@ -201,16 +201,15 @@ impl Vecs {
         );
 
         let txindex_to_input_value =
-            EagerVec::forced_import_compressed(&db, "input_value", version + Version::ZERO)?;
+            EagerVec::forced_import(&db, "input_value", version + Version::ZERO)?;
 
         let txindex_to_output_value =
-            EagerVec::forced_import_compressed(&db, "output_value", version + Version::ZERO)?;
+            EagerVec::forced_import(&db, "output_value", version + Version::ZERO)?;
 
-        let txindex_to_fee =
-            EagerVec::forced_import_compressed(&db, "fee", version + Version::ZERO)?;
+        let txindex_to_fee = EagerVec::forced_import(&db, "fee", version + Version::ZERO)?;
 
         let txindex_to_fee_rate =
-            EagerVec::forced_import_compressed(&db, "fee_rate", version + Version::ZERO)?;
+            EagerVec::forced_import(&db, "fee_rate", version + Version::ZERO)?;
 
         let dateindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
@@ -263,11 +262,7 @@ impl Vecs {
             semesterindex_to_block_count_target,
             yearindex_to_block_count_target,
             decadeindex_to_block_count_target,
-            height_to_interval: EagerVec::forced_import_compressed(
-                &db,
-                "interval",
-                version + Version::ZERO,
-            )?,
+            height_to_interval: EagerVec::forced_import(&db, "interval", version + Version::ZERO)?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 &db,
                 "timestamp",
@@ -345,22 +340,18 @@ impl Vecs {
                     .add_percentiles()
                     .add_cumulative(),
             )?,
-            height_to_vbytes: EagerVec::forced_import_compressed(
-                &db,
-                "vbytes",
-                version + Version::ZERO,
-            )?,
-            height_to_24h_block_count: EagerVec::forced_import_compressed(
+            height_to_vbytes: EagerVec::forced_import(&db, "vbytes", version + Version::ZERO)?,
+            height_to_24h_block_count: EagerVec::forced_import(
                 &db,
                 "24h_block_count",
                 version + Version::ZERO,
             )?,
-            height_to_24h_coinbase_sum: EagerVec::forced_import_compressed(
+            height_to_24h_coinbase_sum: EagerVec::forced_import(
                 &db,
                 "24h_coinbase_sum",
                 version + Version::ZERO,
             )?,
-            height_to_24h_coinbase_usd_sum: EagerVec::forced_import_compressed(
+            height_to_24h_coinbase_usd_sum: EagerVec::forced_import(
                 &db,
                 "24h_coinbase_usd_sum",
                 version + Version::ZERO,
@@ -378,23 +369,23 @@ impl Vecs {
                     .add_percentiles()
                     .add_cumulative(),
             )?,
-            difficultyepoch_to_timestamp: EagerVec::forced_import_compressed(
+            difficultyepoch_to_timestamp: EagerVec::forced_import(
                 &db,
                 "timestamp",
                 version + Version::ZERO,
             )?,
-            halvingepoch_to_timestamp: EagerVec::forced_import_compressed(
+            halvingepoch_to_timestamp: EagerVec::forced_import(
                 &db,
                 "timestamp",
                 version + Version::ZERO,
             )?,
 
-            dateindex_to_fee_dominance: EagerVec::forced_import_compressed(
+            dateindex_to_fee_dominance: EagerVec::forced_import(
                 &db,
                 "fee_dominance",
                 version + Version::ZERO,
             )?,
-            dateindex_to_subsidy_dominance: EagerVec::forced_import_compressed(
+            dateindex_to_subsidy_dominance: EagerVec::forced_import(
                 &db,
                 "subsidy_dominance",
                 version + Version::ZERO,
@@ -1022,7 +1013,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

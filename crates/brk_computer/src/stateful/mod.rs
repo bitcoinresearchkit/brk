@@ -16,9 +16,9 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use vecdb::{
-    AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit, Format,
-    GenericStoredVec, ImportOptions, IterableCloneableVec, IterableVec, LazyVecFrom1, PAGE_SIZE,
-    RawVec, Reader, Stamp, TypedVecIterator, VecIndex,
+    AnyStoredVec, AnyVec, BoxedVecIterator, BytesVec, CollectableVec, Database, EagerVec, Exit,
+    GenericStoredVec, ImportOptions, Importable, IterableCloneableVec, IterableVec, LazyVecFrom1,
+    PAGE_SIZE, PcoVec, Reader, Stamp, TypedVecIterator, VecIndex,
 };
 
 use crate::{
@@ -56,14 +56,14 @@ pub struct Vecs {
     // ---
     // States
     // ---
-    pub chain_state: RawVec<Height, SupplyState>,
+    pub chain_state: BytesVec<Height, SupplyState>,
     pub any_address_indexes: AnyAddressIndexes,
     pub addresses_data: AddressesData,
     pub utxo_cohorts: utxo_cohorts::Vecs,
     pub address_cohorts: address_cohorts::Vecs,
 
-    pub height_to_unspendable_supply: EagerVec<Height, Sats>,
-    pub height_to_opreturn_supply: EagerVec<Height, Sats>,
+    pub height_to_unspendable_supply: EagerVec<PcoVec<Height, Sats>>,
+    pub height_to_opreturn_supply: EagerVec<PcoVec<Height, Sats>>,
     pub addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount,
     pub addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount,
 
@@ -90,7 +90,6 @@ impl Vecs {
     pub fn forced_import(
         parent: &Path,
         version: Version,
-        format: Format,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
@@ -104,13 +103,13 @@ impl Vecs {
         let compute_dollars = price.is_some();
 
         let utxo_cohorts =
-            utxo_cohorts::Vecs::forced_import(&db, version, format, indexes, price, &states_path)?;
+            utxo_cohorts::Vecs::forced_import(&db, version, indexes, price, &states_path)?;
 
-        let loadedaddressindex_to_loadedaddressdata = RawVec::forced_import_with(
+        let loadedaddressindex_to_loadedaddressdata = BytesVec::forced_import_with(
             ImportOptions::new(&db, "loadedaddressdata", version + VERSION + Version::ZERO)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
-        let emptyaddressindex_to_emptyaddressdata = RawVec::forced_import_with(
+        let emptyaddressindex_to_emptyaddressdata = BytesVec::forced_import_with(
             ImportOptions::new(&db, "emptyaddressdata", version + VERSION + Version::ZERO)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
@@ -128,12 +127,12 @@ impl Vecs {
         );
 
         let this = Self {
-            chain_state: RawVec::forced_import_with(
+            chain_state: BytesVec::forced_import_with(
                 ImportOptions::new(&db, "chain", version + VERSION + Version::ZERO)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            height_to_unspendable_supply: EagerVec::forced_import_compressed(
+            height_to_unspendable_supply: EagerVec::forced_import(
                 &db,
                 "unspendable_supply",
                 version + VERSION + Version::ZERO,
@@ -147,7 +146,7 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            height_to_opreturn_supply: EagerVec::forced_import_compressed(
+            height_to_opreturn_supply: EagerVec::forced_import(
                 &db,
                 "opreturn_supply",
                 version + VERSION + Version::ZERO,
@@ -205,42 +204,42 @@ impl Vecs {
             }),
             addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
-                    p2pk65: EagerVec::forced_import_compressed(
+                    p2pk65: EagerVec::forced_import(
                         &db,
                         "p2pk65_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2pk33: EagerVec::forced_import_compressed(
+                    p2pk33: EagerVec::forced_import(
                         &db,
                         "p2pk33_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2pkh: EagerVec::forced_import_compressed(
+                    p2pkh: EagerVec::forced_import(
                         &db,
                         "p2pkh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2sh: EagerVec::forced_import_compressed(
+                    p2sh: EagerVec::forced_import(
                         &db,
                         "p2sh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2wpkh: EagerVec::forced_import_compressed(
+                    p2wpkh: EagerVec::forced_import(
                         &db,
                         "p2wpkh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2wsh: EagerVec::forced_import_compressed(
+                    p2wsh: EagerVec::forced_import(
                         &db,
                         "p2wsh_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2tr: EagerVec::forced_import_compressed(
+                    p2tr: EagerVec::forced_import(
                         &db,
                         "p2tr_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2a: EagerVec::forced_import_compressed(
+                    p2a: EagerVec::forced_import(
                         &db,
                         "p2a_addr_count",
                         version + VERSION + Version::ZERO,
@@ -249,42 +248,42 @@ impl Vecs {
             ),
             addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
-                    p2pk65: EagerVec::forced_import_compressed(
+                    p2pk65: EagerVec::forced_import(
                         &db,
                         "p2pk65_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2pk33: EagerVec::forced_import_compressed(
+                    p2pk33: EagerVec::forced_import(
                         &db,
                         "p2pk33_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2pkh: EagerVec::forced_import_compressed(
+                    p2pkh: EagerVec::forced_import(
                         &db,
                         "p2pkh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2sh: EagerVec::forced_import_compressed(
+                    p2sh: EagerVec::forced_import(
                         &db,
                         "p2sh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2wpkh: EagerVec::forced_import_compressed(
+                    p2wpkh: EagerVec::forced_import(
                         &db,
                         "p2wpkh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2wsh: EagerVec::forced_import_compressed(
+                    p2wsh: EagerVec::forced_import(
                         &db,
                         "p2wsh_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2tr: EagerVec::forced_import_compressed(
+                    p2tr: EagerVec::forced_import(
                         &db,
                         "p2tr_empty_addr_count",
                         version + VERSION + Version::ZERO,
                     )?,
-                    p2a: EagerVec::forced_import_compressed(
+                    p2a: EagerVec::forced_import(
                         &db,
                         "p2a_empty_addr_count",
                         version + VERSION + Version::ZERO,
@@ -431,42 +430,41 @@ impl Vecs {
             address_cohorts: address_cohorts::Vecs::forced_import(
                 &db,
                 version,
-                format,
                 indexes,
                 price,
                 &states_path,
             )?,
 
             any_address_indexes: AnyAddressIndexes {
-                p2a: RawVec::forced_import_with(
+                p2a: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2pk33: RawVec::forced_import_with(
+                p2pk33: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2pk65: RawVec::forced_import_with(
+                p2pk65: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2pkh: RawVec::forced_import_with(
+                p2pkh: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2sh: RawVec::forced_import_with(
+                p2sh: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2tr: RawVec::forced_import_with(
+                p2tr: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2wpkh: RawVec::forced_import_with(
+                p2wpkh: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
-                p2wsh: RawVec::forced_import_with(
+                p2wsh: BytesVec::forced_import_with(
                     ImportOptions::new(&db, "anyaddressindex", version + VERSION + Version::ZERO)
                         .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                 )?,
@@ -482,7 +480,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
@@ -1518,9 +1516,7 @@ impl Vecs {
 
                 let loadedaddressdata = addresses_data
                     .loaded
-                    .get_or_read(loadedaddressindex, reader)
-                    .unwrap()
-                    .unwrap();
+                    .get_pushed_or_read_unwrap(loadedaddressindex, reader);
 
                 WithAddressDataSource::FromLoadedAddressDataVec((
                     loadedaddressindex,
@@ -1532,9 +1528,7 @@ impl Vecs {
 
                 let emptyaddressdata = addresses_data
                     .empty
-                    .get_or_read(emtpyaddressindex, reader)
-                    .unwrap()
-                    .unwrap();
+                    .get_pushed_or_read_unwrap(emtpyaddressindex, reader);
 
                 WithAddressDataSource::FromEmptyAddressDataVec((
                     emtpyaddressindex,
@@ -1923,14 +1917,14 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
 #[derive(Clone, Traversable)]
 pub struct AnyAddressIndexes {
-    pub p2pk33: RawVec<P2PK33AddressIndex, AnyAddressIndex>,
-    pub p2pk65: RawVec<P2PK65AddressIndex, AnyAddressIndex>,
-    pub p2pkh: RawVec<P2PKHAddressIndex, AnyAddressIndex>,
-    pub p2sh: RawVec<P2SHAddressIndex, AnyAddressIndex>,
-    pub p2tr: RawVec<P2TRAddressIndex, AnyAddressIndex>,
-    pub p2wpkh: RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
-    pub p2wsh: RawVec<P2WSHAddressIndex, AnyAddressIndex>,
-    pub p2a: RawVec<P2AAddressIndex, AnyAddressIndex>,
+    pub p2pk33: BytesVec<P2PK33AddressIndex, AnyAddressIndex>,
+    pub p2pk65: BytesVec<P2PK65AddressIndex, AnyAddressIndex>,
+    pub p2pkh: BytesVec<P2PKHAddressIndex, AnyAddressIndex>,
+    pub p2sh: BytesVec<P2SHAddressIndex, AnyAddressIndex>,
+    pub p2tr: BytesVec<P2TRAddressIndex, AnyAddressIndex>,
+    pub p2wpkh: BytesVec<P2WPKHAddressIndex, AnyAddressIndex>,
+    pub p2wsh: BytesVec<P2WSHAddressIndex, AnyAddressIndex>,
+    pub p2a: BytesVec<P2AAddressIndex, AnyAddressIndex>,
 }
 
 impl AnyAddressIndexes {
@@ -1975,20 +1969,35 @@ impl AnyAddressIndexes {
         &self,
         address_type: OutputType,
         typeindex: TypeIndex,
-        reader: &Reader<'static>,
+        reader: &Reader,
     ) -> AnyAddressIndex {
-        let result = match address_type {
-            OutputType::P2PK33 => self.p2pk33.get_or_read(typeindex.into(), reader),
-            OutputType::P2PK65 => self.p2pk65.get_or_read(typeindex.into(), reader),
-            OutputType::P2PKH => self.p2pkh.get_or_read(typeindex.into(), reader),
-            OutputType::P2SH => self.p2sh.get_or_read(typeindex.into(), reader),
-            OutputType::P2TR => self.p2tr.get_or_read(typeindex.into(), reader),
-            OutputType::P2WPKH => self.p2wpkh.get_or_read(typeindex.into(), reader),
-            OutputType::P2WSH => self.p2wsh.get_or_read(typeindex.into(), reader),
-            OutputType::P2A => self.p2a.get_or_read(typeindex.into(), reader),
+        match address_type {
+            OutputType::P2PK33 => self
+                .p2pk33
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2PK65 => self
+                .p2pk65
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2PKH => self
+                .p2pkh
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2SH => self
+                .p2sh
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2TR => self
+                .p2tr
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2WPKH => self
+                .p2wpkh
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2WSH => self
+                .p2wsh
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
+            OutputType::P2A => self
+                .p2a
+                .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
             _ => unreachable!(),
-        };
-        result.unwrap().unwrap()
+        }
     }
 
     fn update_or_push(
@@ -2040,8 +2049,8 @@ impl AnyAddressIndexes {
 
 #[derive(Clone, Traversable)]
 pub struct AddressesData {
-    pub loaded: RawVec<LoadedAddressIndex, LoadedAddressData>,
-    pub empty: RawVec<EmptyAddressIndex, EmptyAddressData>,
+    pub loaded: BytesVec<LoadedAddressIndex, LoadedAddressData>,
+    pub empty: BytesVec<EmptyAddressIndex, EmptyAddressData>,
 }
 
 impl AddressesData {
@@ -2073,16 +2082,16 @@ impl AddressesData {
     }
 }
 
-struct IndexerReaders<'a> {
-    txinindex_to_outpoint: Reader<'a>,
-    txindex_to_first_txoutindex: Reader<'a>,
-    txoutindex_to_value: Reader<'a>,
-    txoutindex_to_outputtype: Reader<'a>,
-    txoutindex_to_typeindex: Reader<'a>,
+struct IndexerReaders {
+    txinindex_to_outpoint: Reader,
+    txindex_to_first_txoutindex: Reader,
+    txoutindex_to_value: Reader,
+    txoutindex_to_outputtype: Reader,
+    txoutindex_to_typeindex: Reader,
 }
 
-impl<'a> IndexerReaders<'a> {
-    fn new(indexer: &'a Indexer) -> Self {
+impl IndexerReaders {
+    fn new(indexer: &Indexer) -> Self {
         Self {
             txinindex_to_outpoint: indexer.vecs.txinindex_to_outpoint.create_reader(),
             txindex_to_first_txoutindex: indexer.vecs.txindex_to_first_txoutindex.create_reader(),
@@ -2094,31 +2103,31 @@ impl<'a> IndexerReaders<'a> {
 }
 
 struct VecsReaders {
-    addresstypeindex_to_anyaddressindex: ByAddressType<Reader<'static>>,
-    anyaddressindex_to_anyaddressdata: ByAnyAddress<Reader<'static>>,
+    addresstypeindex_to_anyaddressindex: ByAddressType<Reader>,
+    anyaddressindex_to_anyaddressdata: ByAnyAddress<Reader>,
 }
 
 impl VecsReaders {
     fn new(vecs: &Vecs) -> Self {
         Self {
             addresstypeindex_to_anyaddressindex: ByAddressType {
-                p2pk33: vecs.any_address_indexes.p2pk33.create_static_reader(),
-                p2pk65: vecs.any_address_indexes.p2pk65.create_static_reader(),
-                p2pkh: vecs.any_address_indexes.p2pkh.create_static_reader(),
-                p2sh: vecs.any_address_indexes.p2sh.create_static_reader(),
-                p2tr: vecs.any_address_indexes.p2tr.create_static_reader(),
-                p2wpkh: vecs.any_address_indexes.p2wpkh.create_static_reader(),
-                p2wsh: vecs.any_address_indexes.p2wsh.create_static_reader(),
-                p2a: vecs.any_address_indexes.p2a.create_static_reader(),
+                p2pk33: vecs.any_address_indexes.p2pk33.create_reader(),
+                p2pk65: vecs.any_address_indexes.p2pk65.create_reader(),
+                p2pkh: vecs.any_address_indexes.p2pkh.create_reader(),
+                p2sh: vecs.any_address_indexes.p2sh.create_reader(),
+                p2tr: vecs.any_address_indexes.p2tr.create_reader(),
+                p2wpkh: vecs.any_address_indexes.p2wpkh.create_reader(),
+                p2wsh: vecs.any_address_indexes.p2wsh.create_reader(),
+                p2a: vecs.any_address_indexes.p2a.create_reader(),
             },
             anyaddressindex_to_anyaddressdata: ByAnyAddress {
-                loaded: vecs.addresses_data.loaded.create_static_reader(),
-                empty: vecs.addresses_data.empty.create_static_reader(),
+                loaded: vecs.addresses_data.loaded.create_reader(),
+                empty: vecs.addresses_data.empty.create_reader(),
             },
         }
     }
 
-    fn get_anyaddressindex_reader(&self, address_type: OutputType) -> &Reader<'static> {
+    fn get_anyaddressindex_reader(&self, address_type: OutputType) -> &Reader {
         self.addresstypeindex_to_anyaddressindex
             .get_unwrap(address_type)
     }

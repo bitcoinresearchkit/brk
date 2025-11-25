@@ -1,7 +1,7 @@
 use num_enum::{FromPrimitive, IntoPrimitive};
 use serde::{Deserialize, Serialize};
 use strum::Display;
-use vecdb::Formattable;
+use vecdb::{Bytes, Formattable};
 
 // Created from the list in `pools.rs`
 // Can be used as index for said list
@@ -287,5 +287,23 @@ impl Formattable for PoolId {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         false
+    }
+}
+
+impl Bytes for PoolId {
+    #[inline]
+    fn to_bytes(&self) -> Vec<u8> {
+        vec![*self as u8]
+    }
+
+    #[inline]
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        if bytes.len() != 1 {
+            return Err(vecdb::Error::WrongLength);
+        }
+        // SAFETY: OutputType is repr(u8) and we're transmuting from u8
+        // All values 0-255 are valid (includes dummy variants)
+        let s: Self = unsafe { std::mem::transmute(bytes[0]) };
+        Ok(s)
     }
 }

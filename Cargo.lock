@@ -1263,6 +1263,7 @@ version = "0.0.111"
 dependencies = [
  "brk_traversable_derive",
  "brk_types",
+ "serde",
  "vecdb",
 ]
 

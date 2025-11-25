@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
-use vecdb::Formattable;
+use vecdb::{Bytes, Formattable};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct SupplyState {
@@ -60,5 +60,22 @@ impl Formattable for SupplyState {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         true
+    }
+}
+
+impl Bytes for SupplyState {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.utxo_count.to_bytes());
+        bytes.extend_from_slice(&self.value.to_bytes());
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        let mut offset = 0;
+        let utxo_count = u64::from_bytes(&bytes[offset..])?;
+        offset += utxo_count.to_bytes().len();
+        let value = Sats::from_bytes(&bytes[offset..])?;
+        Ok(Self { utxo_count, value })
     }
 }

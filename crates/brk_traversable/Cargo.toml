@@ -19,4 +19,5 @@ zstd = ["vecdb/zstd"]
 [dependencies]
 brk_types = { workspace = true }
 brk_traversable_derive = { workspace = true, optional = true }
+serde = { workspace = true }
 vecdb = { workspace = true }

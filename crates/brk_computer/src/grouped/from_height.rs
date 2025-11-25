@@ -5,7 +5,10 @@ use brk_types::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
-use vecdb::{AnyWritableVec, Database, EagerVec, Exit, IterableCloneableVec, IterableVec};
+use vecdb::{
+    AnyExportableVec, Database, EagerVec, Exit, Importable, IterableCloneableVec, IterableVec,
+    PcoVec,
+};
 
 use crate::{
     Indexes,
@@ -20,7 +23,7 @@ pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedVecValue + PartialOrd,
 {
-    pub height: Option<EagerVec<Height, T>>,
+    pub height: Option<EagerVec<PcoVec<Height, T>>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
     pub dateindex: EagerVecsBuilder<DateIndex, T>,
     pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
@@ -49,23 +52,19 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let height = source.is_compute().then(|| {
-            EagerVec::forced_import_compressed(db, name, version + VERSION + Version::ZERO).unwrap()
-        });
+        let height = source
+            .is_compute()
+            .then(|| EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap());
 
-        let height_extra = EagerVecsBuilder::forced_import_compressed(
+        let height_extra = EagerVecsBuilder::forced_import(
             db,
             name,
             version + VERSION + Version::ZERO,
             options.copy_self_extra(),
         )?;
 
-        let dateindex = EagerVecsBuilder::forced_import_compressed(
-            db,
-            name,
-            version + VERSION + Version::ZERO,
-            options,
-        )?;
+        let dateindex =
+            EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
 
         let options = options.remove_percentiles();
 
@@ -122,7 +121,7 @@ where
             height,
             height_extra,
             dateindex,
-            difficultyepoch: EagerVecsBuilder::forced_import_compressed(
+            difficultyepoch: EagerVecsBuilder::forced_import(
                 db,
                 name,
                 version + VERSION + Version::ZERO,
@@ -139,11 +138,11 @@ where
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, T>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     {
         compute(self.height.as_mut().unwrap())?;
 
-        let height: Option<&EagerVec<Height, T>> = None;
+        let height: Option<&EagerVec<PcoVec<Height, T>>> = None;
         self.compute_rest(indexes, starting_indexes, exit, height)
     }
 
@@ -239,19 +238,19 @@ where
         .unwrap()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyWritableVec>> =
-            Box::new(self.height_extra.iter_any_writable());
-        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_writable()));
-        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_writable()));
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(self.height_extra.iter_any_exportable());
+        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.difficultyepoch.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_exportable()));
         if let Some(ref x) = self.height {
-            regular_iter = Box::new(regular_iter.chain(x.iter_any_writable()));
+            regular_iter = Box::new(regular_iter.chain(x.iter_any_exportable()));
         }
         regular_iter
     }

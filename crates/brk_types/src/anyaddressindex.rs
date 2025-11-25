@@ -1,11 +1,11 @@
 use serde::Serialize;
-use vecdb::Formattable;
+use vecdb::{Bytes, Formattable};
 
 use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes)]
 pub struct AnyAddressIndex(TypeIndex);
 
 impl AnyAddressIndex {

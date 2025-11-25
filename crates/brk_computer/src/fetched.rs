@@ -6,8 +6,8 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Height, OHLCCents, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec, PAGE_SIZE, RawVec,
-    TypedVecIterator, VecIndex,
+    AnyStoredVec, AnyVec, BytesVec, Database, Exit, GenericStoredVec, Importable, IterableVec,
+    PAGE_SIZE, TypedVecIterator, VecIndex,
 };
 
 use super::{Indexes, indexes};
@@ -17,8 +17,8 @@ pub struct Vecs {
     db: Database,
     fetcher: Fetcher,
 
-    pub dateindex_to_price_ohlc_in_cents: RawVec<DateIndex, OHLCCents>,
-    pub height_to_price_ohlc_in_cents: RawVec<Height, OHLCCents>,
+    pub dateindex_to_price_ohlc_in_cents: BytesVec<DateIndex, OHLCCents>,
+    pub height_to_price_ohlc_in_cents: BytesVec<Height, OHLCCents>,
 }
 
 impl Vecs {
@@ -29,12 +29,12 @@ impl Vecs {
         let this = Self {
             fetcher,
 
-            dateindex_to_price_ohlc_in_cents: RawVec::forced_import(
+            dateindex_to_price_ohlc_in_cents: BytesVec::forced_import(
                 &db,
                 "price_ohlc_in_cents",
                 version + Version::ZERO,
             )?,
-            height_to_price_ohlc_in_cents: RawVec::forced_import(
+            height_to_price_ohlc_in_cents: BytesVec::forced_import(
                 &db,
                 "price_ohlc_in_cents",
                 version + Version::ZERO,
@@ -44,7 +44,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

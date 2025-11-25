@@ -3,7 +3,7 @@ use std::{ops::Deref, path::Path};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{Database, Exit, Format, IterableVec};
+use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
     Indexes, UTXOCohortState, indexes, price,
@@ -29,7 +29,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         cohort_name: Option<&str>,
-        format: Format,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -54,7 +53,6 @@ impl Vecs {
             inner: common::Vecs::forced_import(
                 db,
                 cohort_name,
-                format,
                 version,
                 indexes,
                 price,

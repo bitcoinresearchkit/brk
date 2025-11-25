@@ -29,8 +29,8 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
                     self.0.to_tree_node()
                 }
 
-                fn iter_any_writable(&self) -> impl Iterator<Item = &dyn vecdb::AnyWritableVec> {
-                    self.0.iter_any_writable()
+                fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                    self.0.iter_any_exportable()
                 }
             }
         });
@@ -44,7 +44,7 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
                     brk_traversable::TreeNode::Branch(std::collections::BTreeMap::new())
                 }
 
-                fn iter_any_writable(&self) -> impl Iterator<Item = &dyn vecdb::AnyWritableVec> {
+                fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
                     std::iter::empty()
                 }
             }
@@ -281,7 +281,7 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
 
     if regular_fields.is_empty() && option_fields.is_empty() {
         return quote! {
-            fn iter_any_writable(&self) -> impl Iterator<Item = &dyn vecdb::AnyWritableVec> {
+            fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
                 std::iter::empty()
             }
         };
@@ -290,17 +290,17 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
     let (init_part, chain_part) = if let Some((&first, rest)) = regular_fields.split_first() {
         (
             quote! {
-                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyWritableVec>> =
-                    Box::new(self.#first.iter_any_writable());
+                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
+                    Box::new(self.#first.iter_any_exportable());
             },
             quote! {
-                #(regular_iter = Box::new(regular_iter.chain(self.#rest.iter_any_writable()));)*
+                #(regular_iter = Box::new(regular_iter.chain(self.#rest.iter_any_exportable()));)*
             },
         )
     } else {
         (
             quote! {
-                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyWritableVec>> =
+                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
                     Box::new(std::iter::empty());
             },
             quote! {},
@@ -311,7 +311,7 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
         let chains = option_fields.iter().map(|f| {
             quote! {
                 if let Some(ref x) = self.#f {
-                    regular_iter = Box::new(regular_iter.chain(x.iter_any_writable()));
+                    regular_iter = Box::new(regular_iter.chain(x.iter_any_exportable()));
                 }
             }
         });
@@ -321,7 +321,7 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        fn iter_any_writable(&self) -> impl Iterator<Item = &dyn vecdb::AnyWritableVec> {
+        fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
             #init_part
             #chain_part
             #option_part

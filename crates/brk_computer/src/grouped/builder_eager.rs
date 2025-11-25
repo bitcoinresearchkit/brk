@@ -2,8 +2,8 @@ use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Format, GenericStoredVec, IterableVec,
-    VecIndex, VecValue,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, Importable, IterableVec,
+    PcoVec, VecIndex, VecValue,
 };
 
 use crate::utils::get_percentile;
@@ -16,18 +16,18 @@ where
     I: VecIndex,
     T: ComputedVecValue,
 {
-    pub first: Option<Box<EagerVec<I, T>>>,
-    pub average: Option<Box<EagerVec<I, T>>>,
-    pub sum: Option<Box<EagerVec<I, T>>>,
-    pub max: Option<Box<EagerVec<I, T>>>,
-    pub pct90: Option<Box<EagerVec<I, T>>>,
-    pub pct75: Option<Box<EagerVec<I, T>>>,
-    pub median: Option<Box<EagerVec<I, T>>>,
-    pub pct25: Option<Box<EagerVec<I, T>>>,
-    pub pct10: Option<Box<EagerVec<I, T>>>,
-    pub min: Option<Box<EagerVec<I, T>>>,
-    pub last: Option<Box<EagerVec<I, T>>>,
-    pub cumulative: Option<Box<EagerVec<I, T>>>,
+    pub first: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub average: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub sum: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub max: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub pct90: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub pct75: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub median: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub pct25: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub pct10: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub min: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub last: Option<Box<EagerVec<PcoVec<I, T>>>>,
+    pub cumulative: Option<Box<EagerVec<PcoVec<I, T>>>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -37,20 +37,10 @@ where
     I: VecIndex,
     T: ComputedVecValue,
 {
-    pub fn forced_import_compressed(
-        db: &Database,
-        name: &str,
-        version: Version,
-        options: VecBuilderOptions,
-    ) -> Result<Self> {
-        Self::forced_import(db, name, version, Format::Compressed, options)
-    }
-
     pub fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
-        format: Format,
         options: VecBuilderOptions,
     ) -> Result<Self> {
         let only_one_active = options.is_only_one_active();
@@ -72,15 +62,12 @@ where
                         db,
                         &maybe_suffix("first"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
             }),
             last: options.last.then(|| {
-                Box::new(
-                    EagerVec::forced_import(db, name, version + Version::ZERO, format).unwrap(),
-                )
+                Box::new(EagerVec::forced_import(db, name, version + Version::ZERO).unwrap())
             }),
             min: options.min.then(|| {
                 Box::new(
@@ -88,7 +75,6 @@ where
                         db,
                         &maybe_suffix("min"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -99,7 +85,6 @@ where
                         db,
                         &maybe_suffix("max"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -110,7 +95,6 @@ where
                         db,
                         &maybe_suffix("median"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -121,7 +105,6 @@ where
                         db,
                         &maybe_suffix("avg"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -136,7 +119,6 @@ where
                             maybe_suffix("sum")
                         }),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -147,7 +129,6 @@ where
                         db,
                         &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -158,7 +139,6 @@ where
                         db,
                         &maybe_suffix("pct90"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -169,7 +149,6 @@ where
                         db,
                         &maybe_suffix("pct75"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -180,7 +159,6 @@ where
                         db,
                         &maybe_suffix("pct25"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -191,7 +169,6 @@ where
                         db,
                         &maybe_suffix("pct10"),
                         version + VERSION + Version::ZERO,
-                        format,
                     )
                     .unwrap(),
                 )
@@ -535,51 +512,51 @@ where
 
     pub fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
-            self.iter_any_writable().map(|v| v.len()).min().unwrap(),
+            self.iter_any_exportable().map(|v| v.len()).min().unwrap(),
         ))
     }
 
-    pub fn unwrap_first(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_first(&self) -> &EagerVec<PcoVec<I, T>> {
         self.first.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_average(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_average(&self) -> &EagerVec<PcoVec<I, T>> {
         self.average.as_ref().unwrap()
     }
-    pub fn unwrap_sum(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_sum(&self) -> &EagerVec<PcoVec<I, T>> {
         self.sum.as_ref().unwrap()
     }
-    pub fn unwrap_max(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_max(&self) -> &EagerVec<PcoVec<I, T>> {
         self.max.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_pct90(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_pct90(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct90.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_pct75(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_pct75(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct75.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_median(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_median(&self) -> &EagerVec<PcoVec<I, T>> {
         self.median.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_pct25(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_pct25(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct25.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_pct10(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_pct10(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct10.as_ref().unwrap()
     }
-    pub fn unwrap_min(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_min(&self) -> &EagerVec<PcoVec<I, T>> {
         self.min.as_ref().unwrap()
     }
-    pub fn unwrap_last(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_last(&self) -> &EagerVec<PcoVec<I, T>> {
         self.last.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_cumulative(&self) -> &EagerVec<I, T> {
+    pub fn unwrap_cumulative(&self) -> &EagerVec<PcoVec<I, T>> {
         self.cumulative.as_ref().unwrap()
     }
 

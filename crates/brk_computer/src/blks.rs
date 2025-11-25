@@ -6,7 +6,8 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, PAGE_SIZE, PcoVec, TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, Importable, PAGE_SIZE, PcoVec,
+    TypedVecIterator,
 };
 
 use super::Indexes;
@@ -34,7 +35,7 @@ impl Vecs {
         };
 
         this.db.retain_regions(
-            this.iter_any_writable()
+            this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;

@@ -353,7 +353,7 @@ impl Vecs {
                         if prev.is_none() {
                             let i = i.to_usize();
                             prev.replace(if i > 0 {
-                                slf.get_or_read_at_unwrap_once(i - 1)
+                                slf.get_pushed_or_read_at_unwrap_once(i - 1)
                             } else {
                                 StoredU16::ZERO
                             });

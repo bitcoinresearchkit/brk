@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{HalvingEpoch, OutputType};
-use vecdb::AnyWritableVec;
+use vecdb::AnyExportableVec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
@@ -82,7 +82,7 @@ impl<T: Traversable> Traversable for Filtered<T> {
         self.1.to_tree_node()
     }
 
-    fn iter_any_writable(&self) -> impl Iterator<Item = &dyn AnyWritableVec> {
-        self.1.iter_any_writable()
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        self.1.iter_any_exportable()
     }
 }

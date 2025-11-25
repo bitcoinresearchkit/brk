@@ -3,16 +3,16 @@ use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64};
 use derive_deref::{Deref, DerefMut};
-use vecdb::{EagerVec, GenericStoredVec};
+use vecdb::{PcoVec, EagerVec, GenericStoredVec};
 
 use super::AddressTypeToAddressCount;
 
 #[derive(Debug, Clone, Deref, DerefMut, Traversable)]
-pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<Height, StoredU64>>);
+pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<PcoVec<Height, StoredU64>>>);
 
-impl From<ByAddressType<EagerVec<Height, StoredU64>>> for AddressTypeToHeightToAddressCount {
+impl From<ByAddressType<EagerVec<PcoVec<Height, StoredU64>>>> for AddressTypeToHeightToAddressCount {
     #[inline]
-    fn from(value: ByAddressType<EagerVec<Height, StoredU64>>) -> Self {
+    fn from(value: ByAddressType<EagerVec<PcoVec<Height, StoredU64>>>) -> Self {
         Self(value)
     }
 }

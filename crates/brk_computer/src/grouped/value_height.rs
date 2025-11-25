@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, Format, StoredVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, Importable, PcoVec};
 
 use crate::{
     Indexes,
@@ -12,9 +12,9 @@ use crate::{
 
 #[derive(Clone, Traversable)]
 pub struct ComputedHeightValueVecs {
-    pub sats: Option<EagerVec<Height, Sats>>,
-    pub bitcoin: EagerVec<Height, Bitcoin>,
-    pub dollars: Option<EagerVec<Height, Dollars>>,
+    pub sats: Option<EagerVec<PcoVec<Height, Sats>>>,
+    pub bitcoin: EagerVec<PcoVec<Height, Bitcoin>>,
+    pub dollars: Option<EagerVec<PcoVec<Height, Dollars>>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -25,26 +25,22 @@ impl ComputedHeightValueVecs {
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
-        format: Format,
         compute_dollars: bool,
     ) -> Result<Self> {
         Ok(Self {
             sats: source.is_compute().then(|| {
-                EagerVec::forced_import(db, name, version + VERSION + Version::ZERO, format)
-                    .unwrap()
+                EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap()
             }),
             bitcoin: EagerVec::forced_import(
                 db,
                 &format!("{name}_btc"),
                 version + VERSION + Version::ZERO,
-                format,
             )?,
             dollars: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     db,
                     &format!("{name}_usd"),
                     version + VERSION + Version::ZERO,
-                    format,
                 )
                 .unwrap()
             }),
@@ -59,11 +55,11 @@ impl ComputedHeightValueVecs {
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, Sats>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     {
         compute(self.sats.as_mut().unwrap())?;
 
-        let height: Option<&StoredVec<Height, Sats>> = None;
+        let height: Option<&PcoVec<Height, Sats>> = None;
         self.compute_rest(price, starting_indexes, exit, height)?;
 
         Ok(())

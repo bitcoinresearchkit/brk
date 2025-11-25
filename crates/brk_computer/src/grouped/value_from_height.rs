@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, PcoVec};
 
 use crate::{
     Indexes,
@@ -72,11 +72,11 @@ impl ComputedValueVecsFromHeight {
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<Height, Sats>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     {
         compute(self.sats.height.as_mut().unwrap())?;
 
-        let height: Option<&StoredVec<Height, Sats>> = None;
+        let height: Option<&PcoVec<Height, Sats>> = None;
         self.compute_rest(indexes, price, starting_indexes, exit, height)?;
 
         Ok(())
@@ -99,7 +99,7 @@ impl ComputedValueVecsFromHeight {
                     v.compute_from_sats(starting_indexes.height, height, exit)
                 })?;
         } else {
-            let height: Option<&StoredVec<Height, Sats>> = None;
+            let height: Option<&PcoVec<Height, Sats>> = None;
 
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, height)?;

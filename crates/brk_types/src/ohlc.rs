@@ -6,7 +6,7 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
-use vecdb::{Formattable, Pco, TransparentPco};
+use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
 use crate::StoredF64;
 
@@ -73,6 +73,34 @@ impl Formattable for OHLCCents {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         true
+    }
+}
+
+impl Bytes for OHLCCents {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.open.to_bytes());
+        bytes.extend_from_slice(&self.high.to_bytes());
+        bytes.extend_from_slice(&self.low.to_bytes());
+        bytes.extend_from_slice(&self.close.to_bytes());
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        let mut offset = 0;
+        let open = Open::<Cents>::from_bytes(&bytes[offset..])?;
+        offset += open.to_bytes().len();
+        let high = High::<Cents>::from_bytes(&bytes[offset..])?;
+        offset += high.to_bytes().len();
+        let low = Low::<Cents>::from_bytes(&bytes[offset..])?;
+        offset += low.to_bytes().len();
+        let close = Close::<Cents>::from_bytes(&bytes[offset..])?;
+        Ok(Self {
+            open,
+            high,
+            low,
+            close,
+        })
     }
 }
 
@@ -166,6 +194,34 @@ impl Formattable for OHLCDollars {
     }
 }
 
+impl Bytes for OHLCDollars {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.open.to_bytes());
+        bytes.extend_from_slice(&self.high.to_bytes());
+        bytes.extend_from_slice(&self.low.to_bytes());
+        bytes.extend_from_slice(&self.close.to_bytes());
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        let mut offset = 0;
+        let open = Open::<Dollars>::from_bytes(&bytes[offset..])?;
+        offset += open.to_bytes().len();
+        let high = High::<Dollars>::from_bytes(&bytes[offset..])?;
+        offset += high.to_bytes().len();
+        let low = Low::<Dollars>::from_bytes(&bytes[offset..])?;
+        offset += low.to_bytes().len();
+        let close = Close::<Dollars>::from_bytes(&bytes[offset..])?;
+        Ok(Self {
+            open,
+            high,
+            low,
+            close,
+        })
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 #[repr(C)]
 pub struct OHLCSats {
@@ -234,6 +290,34 @@ impl Formattable for OHLCSats {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         true
+    }
+}
+
+impl Bytes for OHLCSats {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.open.to_bytes());
+        bytes.extend_from_slice(&self.high.to_bytes());
+        bytes.extend_from_slice(&self.low.to_bytes());
+        bytes.extend_from_slice(&self.close.to_bytes());
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+        let mut offset = 0;
+        let open = Open::<Sats>::from_bytes(&bytes[offset..])?;
+        offset += open.to_bytes().len();
+        let high = High::<Sats>::from_bytes(&bytes[offset..])?;
+        offset += high.to_bytes().len();
+        let low = Low::<Sats>::from_bytes(&bytes[offset..])?;
+        offset += low.to_bytes().len();
+        let close = Close::<Sats>::from_bytes(&bytes[offset..])?;
+        Ok(Self {
+            open,
+            high,
+            low,
+            close,
+        })
     }
 }
 

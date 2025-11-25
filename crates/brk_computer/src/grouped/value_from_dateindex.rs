@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, StoredVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, PcoVec};
 
 use crate::{
     Indexes,
@@ -71,11 +71,11 @@ impl ComputedValueVecsFromDateIndex {
         mut compute: F,
     ) -> Result<()>
     where
-        F: FnMut(&mut EagerVec<DateIndex, Sats>) -> Result<()>,
+        F: FnMut(&mut EagerVec<PcoVec<DateIndex, Sats>>) -> Result<()>,
     {
         compute(self.sats.dateindex.as_mut().unwrap())?;
 
-        let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
+        let dateindex: Option<&PcoVec<DateIndex, Sats>> = None;
         self.compute_rest(price, starting_indexes, exit, dateindex)?;
 
         Ok(())
@@ -96,7 +96,7 @@ impl ComputedValueVecsFromDateIndex {
                 v.compute_from_sats(starting_indexes.dateindex, dateindex, exit)
             })?;
         } else {
-            let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
+            let dateindex: Option<&PcoVec<DateIndex, Sats>> = None;
 
             self.sats.compute_rest(starting_indexes, exit, dateindex)?;
 
