@@ -4,16 +4,16 @@ use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFro
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
 
-use super::ComputedType;
+use super::ComputedVecValue;
 
 #[allow(clippy::type_complexity)]
 #[derive(Clone, Traversable)]
 pub struct LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: VecIndex,
-    T: ComputedType,
+    T: ComputedVecValue,
     S1I: VecIndex,
-    S2T: ComputedType,
+    S2T: ComputedVecValue,
 {
     pub first: Option<Box<LazyVecFrom2<I, T, S1I, T, I, S2T>>>,
     pub average: Option<Box<LazyVecFrom2<I, T, S1I, T, I, S2T>>>,
@@ -29,9 +29,9 @@ const VERSION: Version = Version::ZERO;
 impl<I, T, S1I, S2T> LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: VecIndex,
-    T: ComputedType + 'static,
+    T: ComputedVecValue + 'static,
     S1I: VecIndex + 'static + FromCoarserIndex<I>,
-    S2T: ComputedType,
+    S2T: ComputedVecValue,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(

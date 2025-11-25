@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable};
+use vecdb::{CheckedSub, Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Date;
@@ -24,7 +24,7 @@ use super::Date;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
     JsonSchema,
 )]
 pub struct Timestamp(u32);

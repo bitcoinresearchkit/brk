@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
@@ -26,7 +26,7 @@ pub const BLOCKS_PER_HALVING: u32 = 210_000;
     Immutable,
     IntoBytes,
     KnownLayout,
-    Compressable,
+    Pco,
 )]
 pub struct HalvingEpoch(u16);
 

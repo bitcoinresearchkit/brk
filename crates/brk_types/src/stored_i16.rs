@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -20,7 +20,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct StoredI16(i16);
 

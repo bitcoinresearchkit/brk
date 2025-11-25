@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Date, DateIndex, MonthIndex};
@@ -24,7 +24,7 @@ use super::{Date, DateIndex, MonthIndex};
     Immutable,
     IntoBytes,
     KnownLayout,
-    Compressable,
+    Pco,
 )]
 pub struct YearIndex(u16);
 

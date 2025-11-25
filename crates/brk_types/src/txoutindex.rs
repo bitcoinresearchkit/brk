@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::copy_first_8bytes;
@@ -25,7 +25,7 @@ use super::Vout;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct TxOutIndex(u64);
 

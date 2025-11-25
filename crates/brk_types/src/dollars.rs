@@ -8,7 +8,7 @@ use std::{
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable};
+use vecdb::{CheckedSub, Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Low, Open};
@@ -27,7 +27,7 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
     KnownLayout,
     Serialize,
     Deserialize,
-    Compressable,
+    Pco,
     JsonSchema,
 )]
 pub struct Dollars(f64);

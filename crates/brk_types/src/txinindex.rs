@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Vin;
@@ -23,7 +23,7 @@ use super::Vin;
     IntoBytes,
     KnownLayout,
     Serialize,
-    Compressable,
+    Pco,
 )]
 pub struct TxInIndex(u64);
 

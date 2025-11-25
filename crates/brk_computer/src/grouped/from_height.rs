@@ -13,12 +13,12 @@ use crate::{
     indexes,
 };
 
-use super::{ComputedType, EagerVecsBuilder, VecBuilderOptions};
+use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
 where
-    T: ComputedType + PartialOrd,
+    T: ComputedVecValue + PartialOrd,
 {
     pub height: Option<EagerVec<Height, T>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
@@ -37,7 +37,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromHeight<T>
 where
-    T: ComputedType + Ord + From<f64> + 'static,
+    T: ComputedVecValue + Ord + From<f64> + 'static,
     f64: From<T>,
 {
     #[allow(clippy::too_many_arguments)]
@@ -202,7 +202,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromHeight<T>
 where
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();

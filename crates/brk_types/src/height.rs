@@ -7,7 +7,7 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Compressable, Formattable, PrintableIndex, Stamp};
+use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, copy_first_4bytes};
@@ -31,7 +31,7 @@ use super::StoredU64;
     Immutable,
     IntoBytes,
     KnownLayout,
-    Compressable,
+    Pco,
     JsonSchema,
     Hash,
 )]

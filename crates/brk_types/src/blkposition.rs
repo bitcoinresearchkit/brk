@@ -1,12 +1,10 @@
 use std::ops::Add;
 
 use serde::Serialize;
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(
-    Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, Compressable,
-)]
+#[derive(Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout, Pco)]
 pub struct BlkPosition(u64);
 
 impl BlkPosition {

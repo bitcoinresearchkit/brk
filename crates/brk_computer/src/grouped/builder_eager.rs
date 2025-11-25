@@ -8,13 +8,13 @@ use vecdb::{
 
 use crate::utils::get_percentile;
 
-use super::ComputedType;
+use super::ComputedVecValue;
 
 #[derive(Clone, Debug, Traversable)]
 pub struct EagerVecsBuilder<I, T>
 where
     I: VecIndex,
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     pub first: Option<Box<EagerVec<I, T>>>,
     pub average: Option<Box<EagerVec<I, T>>>,
@@ -35,7 +35,7 @@ const VERSION: Version = Version::ZERO;
 impl<I, T> EagerVecsBuilder<I, T>
 where
     I: VecIndex,
-    T: ComputedType,
+    T: ComputedVecValue,
 {
     pub fn forced_import_compressed(
         db: &Database,

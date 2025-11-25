@@ -1,7 +1,7 @@
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Compressable, Formattable};
+use vecdb::{Formattable, Pco};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::StoredU16;
@@ -21,7 +21,7 @@ use super::StoredU16;
     KnownLayout,
     FromBytes,
     Serialize,
-    Compressable,
+    Pco,
     JsonSchema,
 )]
 pub struct TxVersion(u16);
