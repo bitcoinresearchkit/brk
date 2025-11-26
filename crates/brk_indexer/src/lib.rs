@@ -30,7 +30,7 @@ pub use vecs::*;
 // Increment on **change _OR_ addition**
 const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(920_000);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
 
 #[derive(Clone)]
 pub struct Indexer {

@@ -16,7 +16,9 @@ impl From<BlockHash> for BlockHashPrefix {
 impl From<&BlockHash> for BlockHashPrefix {
     #[inline]
     fn from(value: &BlockHash) -> Self {
-        Self(u64::from_ne_bytes(value.as_slice().try_into().unwrap()))
+        Self(u64::from_ne_bytes(
+            value.as_slice()[0..8].try_into().unwrap(),
+        ))
     }
 }
 

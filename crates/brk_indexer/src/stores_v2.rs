@@ -1,12 +1,12 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, str::FromStr};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Mode, StoreFjallV2 as Store, Type};
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height,
-    OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
-    Vout,
+    OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex, Unit,
+    Version, Vout,
 };
 use fjall2::{CompressionType as Compression, PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
@@ -366,6 +366,12 @@ impl Stores {
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
+            let txidprefix_dup1 = TxidPrefix::from(Txid::from(bitcoin::Txid::from_str(
+                "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
+            )?));
+            let txidprefix_dup2 = TxidPrefix::from(Txid::from(bitcoin::Txid::from_str(
+                "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
+            )?));
             vecs.txindex_to_txid
                 .iter()?
                 .enumerate()
@@ -375,13 +381,11 @@ impl Stores {
 
                     let txidprefix = TxidPrefix::from(&txid);
 
-                    // "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599"
-                    let is_not_first_dup = txindex != TxIndex::new(142783)
-                        || txidprefix != TxidPrefix::from([153, 133, 216, 41, 84, 225, 15, 34]);
+                    let is_not_first_dup =
+                        txindex != TxIndex::new(142783) || txidprefix != txidprefix_dup1;
 
-                    // "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468"
-                    let is_not_second_dup = txindex != TxIndex::new(142841)
-                        || txidprefix != TxidPrefix::from([104, 180, 95, 88, 182, 116, 233, 78]);
+                    let is_not_second_dup =
+                        txindex != TxIndex::new(142841) || txidprefix != txidprefix_dup2;
 
                     if is_not_first_dup && is_not_second_dup {
                         self.txidprefix_to_txindex.remove(txidprefix);
