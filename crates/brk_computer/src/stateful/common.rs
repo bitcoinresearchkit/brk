@@ -4,7 +4,7 @@ use brk_types::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, Importable,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
     IterableCloneableVec, IterableVec, PcoVec, TypedVecIterator,
 };
 

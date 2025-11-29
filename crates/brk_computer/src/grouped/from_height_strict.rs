@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{DifficultyEpoch, Height, Version};
-use vecdb::{AnyExportableVec, Database, EagerVec, Exit, Importable, PcoVec};
+use vecdb::{AnyExportableVec, Database, EagerVec, Exit, ImportableVec, PcoVec};
 
 use crate::{Indexes, indexes};
 

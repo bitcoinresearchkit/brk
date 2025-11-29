@@ -6,7 +6,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Height, OHLCCents, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Database, Exit, GenericStoredVec, Importable, IterableVec,
+    AnyStoredVec, AnyVec, BytesVec, Database, Exit, GenericStoredVec, ImportableVec, IterableVec,
     PAGE_SIZE, TypedVecIterator, VecIndex,
 };
 

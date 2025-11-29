@@ -35,7 +35,7 @@ where
 impl<I, T> Traversable for vecdb::ZeroCopyVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::ZeroCopyVecValue + Formattable,
+    T: vecdb::ZeroCopyVecValue + Formattable + Serialize,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
@@ -67,7 +67,7 @@ where
 impl<I, T> Traversable for vecdb::LZ4Vec<I, T>
 where
     I: VecIndex,
-    T: vecdb::LZ4VecValue + Formattable,
+    T: vecdb::LZ4VecValue + Formattable + Serialize,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
@@ -83,7 +83,7 @@ where
 impl<I, T> Traversable for vecdb::ZstdVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::ZstdVecValue + Formattable,
+    T: vecdb::ZstdVecValue + Formattable + Serialize,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)

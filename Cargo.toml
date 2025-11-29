@@ -8,7 +8,6 @@ package.version = "0.0.111"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 package.readme = "README.md"
-package.rust-version = "1.90"
 
 [profile.dev]
 lto = "thin"
@@ -64,7 +63,7 @@ derive_deref = "1.1.1"
 fjall2 = { version = "2.11.8", package = "brk_fjall" }
 # fjall2 = { path = "../fjall2", package = "brk_fjall" }
 # fjall2 = { version = "2.11.2", package = "fjall" }
-fjall3 = { version = "3.0.0-rc.0", package = "fjall" }
+fjall3 = { version = "3.0.0-rc.2", package = "fjall" }
 # fjall3 = { path = "../fjall3", package = "fjall" }
 # fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "f0bf96c2017b3543eb176012b8eff69c639dff1d", package = "fjall" }
 jiff = "0.2.16"

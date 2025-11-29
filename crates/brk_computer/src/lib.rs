@@ -229,6 +229,8 @@ impl Computer {
         )?;
         info!("Computed pools in {:?}", i.elapsed());
 
+        return Ok(());
+
         info!("Computing stateful...");
         self.stateful.compute(
             indexer,

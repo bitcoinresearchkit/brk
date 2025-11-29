@@ -902,14 +902,16 @@ impl Formattable for OutputType {
 }
 
 impl Bytes for OutputType {
+    type Array = [u8; size_of::<Self>()];
+
     #[inline]
-    fn to_bytes(&self) -> Vec<u8> {
-        vec![*self as u8]
+    fn to_bytes(&self) -> Self::Array {
+        [*self as u8]
     }
 
     #[inline]
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        if bytes.len() != 1 {
+        if bytes.is_empty() {
             return Err(vecdb::Error::WrongLength);
         }
         // SAFETY: OutputType is repr(u8) and we're transmuting from u8

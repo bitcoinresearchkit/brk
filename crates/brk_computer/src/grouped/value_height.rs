@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, Importable, PcoVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, ImportableVec, PcoVec};
 
 use crate::{
     Indexes,

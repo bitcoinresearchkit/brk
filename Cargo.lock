@@ -2109,16 +2109,16 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "fjall"
-version = "3.0.0-rc.0"
+version = "3.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91e1ca518f9bb71f845bcd3d8d556c202f9f9c75195deff725cd85b2421aa84a"
+checksum = "01bb8eb92dbc28a7d88067f8cea62efb55077c71fcc49768f89e71932872de0d"
 dependencies = [
  "byteorder-lite",
  "byteview 0.9.1",
  "dashmap",
  "flume",
  "log",
- "lsm-tree 3.0.0-rc.0",
+ "lsm-tree 3.0.0-rc.2",
  "lz4_flex 0.11.5",
  "tempfile",
  "xxhash-rust",
@@ -2462,9 +2462,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hex-conservative"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5313b072ce3c597065a808dbf612c4c8e8590bdbf8b579508bf7a762c5eae6cd"
+checksum = "fda06d18ac606267c40c04e41b9947729bf8b9efe74bd4e82b61a5f26a510b9f"
 dependencies = [
  "arrayvec",
 ]
@@ -3009,9 +3009,9 @@ dependencies = [
 
 [[package]]
 name = "lsm-tree"
-version = "3.0.0-rc.0"
+version = "3.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f963f5e7b4f8f79fbb28d0fd49ab5f04939b31d1e65cb99577e17805fe25dde2"
+checksum = "a30a998e3e8165bcc466e6c13a1e7de6c8431dd41a78a60f5cf426720241aef8"
 dependencies = [
  "byteorder-lite",
  "byteview 0.9.1",
@@ -3020,6 +3020,7 @@ dependencies = [
  "interval-heap",
  "log",
  "lz4_flex 0.11.5",
+ "mutants",
  "quick_cache",
  "rustc-hash",
  "self_cell",
@@ -3111,6 +3112,12 @@ dependencies = [
  "wasi",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "mutants"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc0287524726960e07b119cebd01678f852f147742ae0d925e6a520dca956126"
 
 [[package]]
 name = "nibble_vec"
@@ -5181,9 +5188,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.30"
+version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81383ab64e72a7a8b8e13130c49e3dab29def6d0c7d76a03087b3cf71c5c6903"
+checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5203,9 +5210,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.34"
+version = "0.1.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9d12581f227e93f094d3af2ae690a574abb8a2b9b7a96e7cfe9647b2b617678"
+checksum = "7a04e24fab5c89c6a36eb8558c9656f30d81de51dfa4d3b45f26b21d61fa0a6c"
 dependencies = [
  "once_cell",
  "valuable",
@@ -5882,9 +5889,9 @@ checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
 
 [[package]]
 name = "winnow"
-version = "0.7.13"
+version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
+checksum = "5a5364e9d77fcdeeaa6062ced926ee3381faa2ee02d3eb83a5c27a8825540829"
 dependencies = [
  "memchr",
 ]

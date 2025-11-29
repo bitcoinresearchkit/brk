@@ -13,7 +13,7 @@ use brk_types::{
     YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, Importable, IterableCloneableVec, LazyVecFrom1,
+    Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, LazyVecFrom1,
     PAGE_SIZE, PcoVec, TypedVecIterator, unlikely,
 };
 

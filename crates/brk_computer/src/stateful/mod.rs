@@ -17,8 +17,8 @@ use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use vecdb::{
     AnyStoredVec, AnyVec, BoxedVecIterator, BytesVec, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, ImportOptions, Importable, IterableCloneableVec, IterableVec, LazyVecFrom1,
-    PAGE_SIZE, PcoVec, Reader, Stamp, TypedVecIterator, VecIndex,
+    GenericStoredVec, ImportOptions, ImportableVec, IterableCloneableVec, IterableVec,
+    LazyVecFrom1, PAGE_SIZE, PcoVec, Reader, Stamp, TypedVecIterator, VecIndex,
 };
 
 use crate::{
