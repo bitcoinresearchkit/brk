@@ -54,9 +54,12 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
                     67 => &bytes[1..66],
-                    _ => {
+                    len => {
                         dbg!(bytes);
-                        return Err(Error::WrongLength);
+                        return Err(Error::WrongLength {
+                            expected: 67,
+                            received: len,
+                        });
                     }
                 };
                 Ok(Self::P2PK65(Box::new(P2PK65Bytes::from(bytes))))
@@ -65,9 +68,12 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
                     35 => &bytes[1..34],
-                    _ => {
+                    len => {
                         dbg!(bytes);
-                        return Err(Error::WrongLength);
+                        return Err(Error::WrongLength {
+                            expected: 35,
+                            received: len,
+                        });
                     }
                 };
                 Ok(Self::P2PK33(Box::new(P2PK33Bytes::from(bytes))))

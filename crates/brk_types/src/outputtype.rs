@@ -911,9 +911,12 @@ impl Bytes for OutputType {
 
     #[inline]
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        if bytes.is_empty() {
-            return Err(vecdb::Error::WrongLength);
-        }
+        if bytes.len() != size_of::<Self>() {
+            return Err(vecdb::Error::WrongLength {
+                expected: size_of::<Self>(),
+                received: bytes.len(),
+            });
+        };
         // SAFETY: OutputType is repr(u8) and we're transmuting from u8
         // All values 0-255 are valid (includes dummy variants)
         let s: Self = unsafe { std::mem::transmute(bytes[0]) };
