@@ -90,10 +90,10 @@ impl Bytes for OHLCCents {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            open: Open::<Cents>::from_bytes(&bytes[0..])?,
-            high: High::<Cents>::from_bytes(&bytes[8..])?,
-            low: Low::<Cents>::from_bytes(&bytes[16..])?,
-            close: Close::<Cents>::from_bytes(&bytes[24..])?,
+            open: Open::<Cents>::from_bytes(&bytes[0..8])?,
+            high: High::<Cents>::from_bytes(&bytes[8..16])?,
+            low: Low::<Cents>::from_bytes(&bytes[16..24])?,
+            close: Close::<Cents>::from_bytes(&bytes[24..32])?,
         })
     }
 }
@@ -202,10 +202,10 @@ impl Bytes for OHLCDollars {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            open: Open::<Dollars>::from_bytes(&bytes[0..])?,
-            high: High::<Dollars>::from_bytes(&bytes[8..])?,
-            low: Low::<Dollars>::from_bytes(&bytes[16..])?,
-            close: Close::<Dollars>::from_bytes(&bytes[24..])?,
+            open: Open::<Dollars>::from_bytes(&bytes[0..8])?,
+            high: High::<Dollars>::from_bytes(&bytes[8..16])?,
+            low: Low::<Dollars>::from_bytes(&bytes[16..24])?,
+            close: Close::<Dollars>::from_bytes(&bytes[24..32])?,
         })
     }
 }
@@ -295,10 +295,10 @@ impl Bytes for OHLCSats {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            open: Open::<Sats>::from_bytes(&bytes[0..])?,
-            high: High::<Sats>::from_bytes(&bytes[8..])?,
-            low: Low::<Sats>::from_bytes(&bytes[16..])?,
-            close: Close::<Sats>::from_bytes(&bytes[24..])?,
+            open: Open::<Sats>::from_bytes(&bytes[0..8])?,
+            high: High::<Sats>::from_bytes(&bytes[8..16])?,
+            low: Low::<Sats>::from_bytes(&bytes[16..24])?,
+            close: Close::<Sats>::from_bytes(&bytes[24..32])?,
         })
     }
 }

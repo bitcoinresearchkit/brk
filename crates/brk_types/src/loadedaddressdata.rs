@@ -163,13 +163,13 @@ impl Bytes for LoadedAddressData {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            tx_count: u32::from_bytes(&bytes[0..])?,
-            funded_txo_count: u32::from_bytes(&bytes[4..])?,
-            spent_txo_count: u32::from_bytes(&bytes[8..])?,
-            padding: u32::from_bytes(&bytes[12..])?,
-            received: Sats::from_bytes(&bytes[16..])?,
-            sent: Sats::from_bytes(&bytes[24..])?,
-            realized_cap: Dollars::from_bytes(&bytes[32..])?,
+            tx_count: u32::from_bytes(&bytes[0..4])?,
+            funded_txo_count: u32::from_bytes(&bytes[4..8])?,
+            spent_txo_count: u32::from_bytes(&bytes[8..12])?,
+            padding: u32::from_bytes(&bytes[12..16])?,
+            received: Sats::from_bytes(&bytes[16..24])?,
+            sent: Sats::from_bytes(&bytes[24..32])?,
+            realized_cap: Dollars::from_bytes(&bytes[32..40])?,
         })
     }
 }

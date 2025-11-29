@@ -28,7 +28,7 @@ pub enum Error {
     ZeroCopyError,
     Vecs(vecdb::Error),
 
-    WrongLength,
+    WrongLength { expected: usize, received: usize },
     WrongAddressType,
     UnindexableDate,
     QuickCacheError,
@@ -184,8 +184,10 @@ impl fmt::Display for Error {
             Error::VecDB(error) => Display::fmt(&error, f),
             Error::Vecs(error) => Display::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
-
-            Error::WrongLength => write!(f, "Wrong length"),
+            Error::WrongLength { expected, received } => write!(
+                f,
+                "Wrong length, expected: {expected}, received: {received}"
+            ),
             Error::QuickCacheError => write!(f, "Quick cache error"),
             Error::WrongAddressType => write!(f, "Wrong address type"),
             Error::UnindexableDate => write!(

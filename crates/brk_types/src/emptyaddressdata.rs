@@ -67,9 +67,9 @@ impl Bytes for EmptyAddressData {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            tx_count: u32::from_bytes(&bytes[0..])?,
-            funded_txo_count: u32::from_bytes(&bytes[4..])?,
-            transfered: Sats::from_bytes(&bytes[8..])?,
+            tx_count: u32::from_bytes(&bytes[0..4])?,
+            funded_txo_count: u32::from_bytes(&bytes[4..8])?,
+            transfered: Sats::from_bytes(&bytes[8..16])?,
         })
     }
 }

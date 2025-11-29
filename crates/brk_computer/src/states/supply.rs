@@ -75,8 +75,8 @@ impl Bytes for SupplyState {
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self {
-            utxo_count: u64::from_bytes(&bytes[0..])?,
-            value: Sats::from_bytes(&bytes[8..])?,
+            utxo_count: u64::from_bytes(&bytes[0..8])?,
+            value: Sats::from_bytes(&bytes[8..16])?,
         })
     }
 }
