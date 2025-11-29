@@ -77,29 +77,23 @@ impl Formattable for OHLCCents {
 }
 
 impl Bytes for OHLCCents {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.open.to_bytes());
-        bytes.extend_from_slice(&self.high.to_bytes());
-        bytes.extend_from_slice(&self.low.to_bytes());
-        bytes.extend_from_slice(&self.close.to_bytes());
-        bytes
+    type Array = [u8; size_of::<Self>()];
+
+    fn to_bytes(&self) -> Self::Array {
+        let mut arr = [0u8; size_of::<Self>()];
+        arr[0..8].copy_from_slice(self.open.to_bytes().as_ref());
+        arr[8..16].copy_from_slice(self.high.to_bytes().as_ref());
+        arr[16..24].copy_from_slice(self.low.to_bytes().as_ref());
+        arr[24..32].copy_from_slice(self.close.to_bytes().as_ref());
+        arr
     }
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let mut offset = 0;
-        let open = Open::<Cents>::from_bytes(&bytes[offset..])?;
-        offset += open.to_bytes().len();
-        let high = High::<Cents>::from_bytes(&bytes[offset..])?;
-        offset += high.to_bytes().len();
-        let low = Low::<Cents>::from_bytes(&bytes[offset..])?;
-        offset += low.to_bytes().len();
-        let close = Close::<Cents>::from_bytes(&bytes[offset..])?;
         Ok(Self {
-            open,
-            high,
-            low,
-            close,
+            open: Open::<Cents>::from_bytes(&bytes[0..])?,
+            high: High::<Cents>::from_bytes(&bytes[8..])?,
+            low: Low::<Cents>::from_bytes(&bytes[16..])?,
+            close: Close::<Cents>::from_bytes(&bytes[24..])?,
         })
     }
 }
@@ -195,29 +189,23 @@ impl Formattable for OHLCDollars {
 }
 
 impl Bytes for OHLCDollars {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.open.to_bytes());
-        bytes.extend_from_slice(&self.high.to_bytes());
-        bytes.extend_from_slice(&self.low.to_bytes());
-        bytes.extend_from_slice(&self.close.to_bytes());
-        bytes
+    type Array = [u8; size_of::<Self>()];
+
+    fn to_bytes(&self) -> Self::Array {
+        let mut arr = [0u8; size_of::<Self>()];
+        arr[0..8].copy_from_slice(self.open.to_bytes().as_ref());
+        arr[8..16].copy_from_slice(self.high.to_bytes().as_ref());
+        arr[16..24].copy_from_slice(self.low.to_bytes().as_ref());
+        arr[24..32].copy_from_slice(self.close.to_bytes().as_ref());
+        arr
     }
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let mut offset = 0;
-        let open = Open::<Dollars>::from_bytes(&bytes[offset..])?;
-        offset += open.to_bytes().len();
-        let high = High::<Dollars>::from_bytes(&bytes[offset..])?;
-        offset += high.to_bytes().len();
-        let low = Low::<Dollars>::from_bytes(&bytes[offset..])?;
-        offset += low.to_bytes().len();
-        let close = Close::<Dollars>::from_bytes(&bytes[offset..])?;
         Ok(Self {
-            open,
-            high,
-            low,
-            close,
+            open: Open::<Dollars>::from_bytes(&bytes[0..])?,
+            high: High::<Dollars>::from_bytes(&bytes[8..])?,
+            low: Low::<Dollars>::from_bytes(&bytes[16..])?,
+            close: Close::<Dollars>::from_bytes(&bytes[24..])?,
         })
     }
 }
@@ -294,29 +282,23 @@ impl Formattable for OHLCSats {
 }
 
 impl Bytes for OHLCSats {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.open.to_bytes());
-        bytes.extend_from_slice(&self.high.to_bytes());
-        bytes.extend_from_slice(&self.low.to_bytes());
-        bytes.extend_from_slice(&self.close.to_bytes());
-        bytes
+    type Array = [u8; size_of::<Self>()];
+
+    fn to_bytes(&self) -> Self::Array {
+        let mut arr = [0u8; size_of::<Self>()];
+        arr[0..8].copy_from_slice(self.open.to_bytes().as_ref());
+        arr[8..16].copy_from_slice(self.high.to_bytes().as_ref());
+        arr[16..24].copy_from_slice(self.low.to_bytes().as_ref());
+        arr[24..32].copy_from_slice(self.close.to_bytes().as_ref());
+        arr
     }
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let mut offset = 0;
-        let open = Open::<Sats>::from_bytes(&bytes[offset..])?;
-        offset += open.to_bytes().len();
-        let high = High::<Sats>::from_bytes(&bytes[offset..])?;
-        offset += high.to_bytes().len();
-        let low = Low::<Sats>::from_bytes(&bytes[offset..])?;
-        offset += low.to_bytes().len();
-        let close = Close::<Sats>::from_bytes(&bytes[offset..])?;
         Ok(Self {
-            open,
-            high,
-            low,
-            close,
+            open: Open::<Sats>::from_bytes(&bytes[0..])?,
+            high: High::<Sats>::from_bytes(&bytes[8..])?,
+            low: Low::<Sats>::from_bytes(&bytes[16..])?,
+            close: Close::<Sats>::from_bytes(&bytes[24..])?,
         })
     }
 }

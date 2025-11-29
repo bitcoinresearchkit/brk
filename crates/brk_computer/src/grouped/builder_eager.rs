@@ -2,7 +2,7 @@ use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, Importable, IterableVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec,
     PcoVec, VecIndex, VecValue,
 };
 

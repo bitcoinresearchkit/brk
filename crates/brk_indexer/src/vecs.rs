@@ -12,7 +12,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, GenericStoredVec, Importable, PAGE_SIZE, PcoVec, Stamp,
+    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PAGE_SIZE, PcoVec, Stamp,
 };
 
 use crate::Indexes;

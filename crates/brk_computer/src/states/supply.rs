@@ -64,18 +64,19 @@ impl Formattable for SupplyState {
 }
 
 impl Bytes for SupplyState {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.utxo_count.to_bytes());
-        bytes.extend_from_slice(&self.value.to_bytes());
-        bytes
+    type Array = [u8; size_of::<Self>()];
+
+    fn to_bytes(&self) -> Self::Array {
+        let mut arr = [0u8; size_of::<Self>()];
+        arr[0..8].copy_from_slice(self.utxo_count.to_bytes().as_ref());
+        arr[8..16].copy_from_slice(self.value.to_bytes().as_ref());
+        arr
     }
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let mut offset = 0;
-        let utxo_count = u64::from_bytes(&bytes[offset..])?;
-        offset += utxo_count.to_bytes().len();
-        let value = Sats::from_bytes(&bytes[offset..])?;
-        Ok(Self { utxo_count, value })
+        Ok(Self {
+            utxo_count: u64::from_bytes(&bytes[0..])?,
+            value: Sats::from_bytes(&bytes[8..])?,
+        })
     }
 }

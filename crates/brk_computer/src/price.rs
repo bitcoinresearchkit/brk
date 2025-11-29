@@ -6,7 +6,7 @@ use brk_types::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
-use vecdb::{BytesVec, Database, EagerVec, Exit, Importable, PAGE_SIZE, PcoVec};
+use vecdb::{BytesVec, Database, EagerVec, Exit, ImportableVec, PAGE_SIZE, PcoVec};
 
 use crate::{fetched, grouped::Source};
 

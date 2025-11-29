@@ -10,7 +10,7 @@ use brk_types::{
     TxVersion, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, Importable, IterableCloneableVec, IterableVec,
+    Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, IterableVec,
     LazyVecFrom1, LazyVecFrom2, PAGE_SIZE, PcoVec, TypedVecIterator, VecIndex, unlikely,
 };
 

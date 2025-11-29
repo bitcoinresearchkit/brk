@@ -6,7 +6,7 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::{BlkPosition, Height, TxIndex, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, Importable, PAGE_SIZE, PcoVec,
+    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, ImportableVec, PAGE_SIZE, PcoVec,
     TypedVecIterator,
 };
 

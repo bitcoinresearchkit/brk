@@ -291,17 +291,19 @@ impl Formattable for PoolId {
 }
 
 impl Bytes for PoolId {
+    type Array = [u8; size_of::<Self>()];
+
     #[inline]
-    fn to_bytes(&self) -> Vec<u8> {
-        vec![*self as u8]
+    fn to_bytes(&self) -> Self::Array {
+        [*self as u8]
     }
 
     #[inline]
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        if bytes.len() != 1 {
+        if bytes.is_empty() {
             return Err(vecdb::Error::WrongLength);
         }
-        // SAFETY: OutputType is repr(u8) and we're transmuting from u8
+        // SAFETY: PoolId is repr(u8) and we're transmuting from u8
         // All values 0-255 are valid (includes dummy variants)
         let s: Self = unsafe { std::mem::transmute(bytes[0]) };
         Ok(s)

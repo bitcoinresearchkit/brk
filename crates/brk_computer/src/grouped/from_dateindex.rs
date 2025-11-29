@@ -5,7 +5,7 @@ use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
 use vecdb::{
-    AnyExportableVec, Database, EagerVec, Exit, Importable, IterableCloneableVec, IterableVec,
+    AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, IterableVec,
     PcoVec,
 };
 

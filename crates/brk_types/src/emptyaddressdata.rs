@@ -55,25 +55,21 @@ impl Formattable for EmptyAddressData {
 }
 
 impl Bytes for EmptyAddressData {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.tx_count.to_bytes());
-        bytes.extend_from_slice(&self.funded_txo_count.to_bytes());
-        bytes.extend_from_slice(&self.transfered.to_bytes());
-        bytes
+    type Array = [u8; size_of::<Self>()];
+
+    fn to_bytes(&self) -> Self::Array {
+        let mut arr = [0u8; size_of::<Self>()];
+        arr[0..4].copy_from_slice(self.tx_count.to_bytes().as_ref());
+        arr[4..8].copy_from_slice(self.funded_txo_count.to_bytes().as_ref());
+        arr[8..16].copy_from_slice(self.transfered.to_bytes().as_ref());
+        arr
     }
 
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let mut offset = 0;
-        let tx_count = u32::from_bytes(&bytes[offset..])?;
-        offset += tx_count.to_bytes().len();
-        let funded_txo_count = u32::from_bytes(&bytes[offset..])?;
-        offset += funded_txo_count.to_bytes().len();
-        let transfered = Sats::from_bytes(&bytes[offset..])?;
         Ok(Self {
-            tx_count,
-            funded_txo_count,
-            transfered,
+            tx_count: u32::from_bytes(&bytes[0..])?,
+            funded_txo_count: u32::from_bytes(&bytes[4..])?,
+            transfered: Sats::from_bytes(&bytes[8..])?,
         })
     }
 }
