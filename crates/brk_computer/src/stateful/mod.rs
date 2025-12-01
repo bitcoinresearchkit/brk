@@ -778,7 +778,6 @@ impl Vecs {
             let mut height_to_first_p2wshaddressindex_iter =
                 height_to_first_p2wshaddressindex.into_iter();
             let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
-            let mut height_to_txindex_count_iter = height_to_txindex_count.into_iter();
             let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
             let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
             let mut height_to_input_count_iter = height_to_input_count.into_iter();
@@ -908,16 +907,20 @@ impl Vecs {
                     mut height_to_sent,
                     addresstype_to_typedindex_to_sent_data,
                     mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
+                    mut combined_txindex_vecs,
                 ) = thread::scope(|scope| {
                     scope.spawn(|| {
                         self.utxo_cohorts
                             .tick_tock_next_block(&chain_state, timestamp);
                     });
 
-                    let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_txoutindex..first_txoutindex + usize::from(output_count))
+                    let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource, output_txindex_vecs) = (first_txoutindex..first_txoutindex + usize::from(output_count))
                         .into_par_iter()
                         .map(|i| {
                             let txoutindex = TxOutIndex::from(i);
+
+                            let local_idx = i - first_txoutindex;
+                            let txindex = txoutindex_to_txindex[local_idx];
 
                             let value = txoutindex_to_value
                                 .read_unwrap(txoutindex, &ir.txoutindex_to_value);
@@ -926,7 +929,7 @@ impl Vecs {
                                 .read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
 
                             if output_type.is_not_address() {
-                                return (value, output_type, None);
+                                return (txindex, value, output_type, None);
                             }
 
                             let typeindex = txoutindex_to_typeindex
@@ -943,17 +946,19 @@ impl Vecs {
                                 &self.addresses_data,
                             );
 
-                            (value, output_type, Some((typeindex, addressdata_opt)))
+                            (txindex, value, output_type, Some(( typeindex, addressdata_opt)))
                         }).fold(
                         || {
                             (
                                 Transacted::default(),
                                 AddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                AddressTypeToTypeIndexMap::default()
+                                AddressTypeToTypeIndexMap::default(),
+                                AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
                             )
                         },
-                        |(mut transacted, mut addresstype_to_typedindex_to_data, mut addresstype_to_typeindex_to_addressdatawithsource),
+                        |(mut transacted, mut addresstype_to_typedindex_to_data, mut addresstype_to_typeindex_to_addressdatawithsource, mut txindex_vecs),
                             (
+                            txindex,
                             value,
                             output_type,
                             typeindex_with_addressdata_opt,
@@ -967,23 +972,33 @@ impl Vecs {
                                         .insert_for_type(output_type, typeindex, addressdata);
                                 }
 
+                                let addr_type = output_type;
+
                                 addresstype_to_typedindex_to_data
-                                    .get_mut(output_type)
+                                    .get_mut(addr_type)
                                     .unwrap()
                                     .push((typeindex, value));
+
+                                txindex_vecs
+                                    .get_mut(addr_type)
+                                    .unwrap()
+                                    .entry(typeindex)
+                                    .or_insert_with(TxIndexVec::new)
+                                    .push(txindex);
                             }
 
-                            (transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource)
+                            (transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource, txindex_vecs)
                         }).reduce(
                             || {
                                 (
                                     Transacted::default(),
                                     AddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                    AddressTypeToTypeIndexMap::default()
+                                    AddressTypeToTypeIndexMap::default(),
+                                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
                                 )
                             },
-                            |(transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource), (transacted2, addresstype_to_typedindex_to_data2, addresstype_to_typeindex_to_addressdatawithsource2)| {
-                                (transacted + transacted2, addresstype_to_typedindex_to_data.merge(addresstype_to_typedindex_to_data2), addresstype_to_typeindex_to_addressdatawithsource.merge(addresstype_to_typeindex_to_addressdatawithsource2))
+                            |(transacted, addresstype_to_typedindex_to_data, addresstype_to_typeindex_to_addressdatawithsource, txindex_vecs), (transacted2, addresstype_to_typedindex_to_data2, addresstype_to_typeindex_to_addressdatawithsource2, txindex_vecs2)| {
+                                (transacted + transacted2, addresstype_to_typedindex_to_data.merge(addresstype_to_typedindex_to_data2), addresstype_to_typeindex_to_addressdatawithsource.merge(addresstype_to_typeindex_to_addressdatawithsource2), txindex_vecs.merge_vec(txindex_vecs2))
                             },
                         );
 
@@ -992,175 +1007,190 @@ impl Vecs {
                         height_to_sent,
                         addresstype_to_typedindex_to_sent_data,
                         sending_addresstype_to_typeindex_to_addressdatawithsource,
-                    ) =
-                        (first_txinindex + 1..first_txinindex + usize::from(input_count))
-                            .into_par_iter()
-                            .map(|i| {
-                                let txinindex = TxInIndex::from(i);
+                        input_txindex_vecs,
+                    ) = (first_txinindex + 1..first_txinindex + usize::from(input_count))
+                        .into_par_iter()
+                        .map(|i| {
+                            let txinindex = TxInIndex::from(i);
 
-                                let outpoint = txinindex_to_outpoint
-                                    .read_unwrap(txinindex, &ir.txinindex_to_outpoint);
+                            let local_idx = i - first_txinindex;
+                            let txindex = txinindex_to_txindex[local_idx];
 
-                                let txoutindex = txindex_to_first_txoutindex.read_unwrap(
-                                    outpoint.txindex(),
-                                    &ir.txindex_to_first_txoutindex,
-                                ) + outpoint.vout();
+                            let outpoint = txinindex_to_outpoint
+                                .read_unwrap(txinindex, &ir.txinindex_to_outpoint);
 
-                                let value = txoutindex_to_value
-                                    .read_unwrap(txoutindex, &ir.txoutindex_to_value);
+                            let txoutindex = txindex_to_first_txoutindex
+                                .read_unwrap(outpoint.txindex(), &ir.txindex_to_first_txoutindex)
+                                + outpoint.vout();
 
-                                let input_type = txoutindex_to_outputtype
-                                    .read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
+                            let value = txoutindex_to_value
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_value);
 
-                                let prev_height =
-                                    *txoutindex_range_to_height.get(txoutindex).unwrap();
+                            let input_type = txoutindex_to_outputtype
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
 
-                                if input_type.is_not_address() {
-                                    return (prev_height, value, input_type, None);
-                                }
+                            let prev_height = *txoutindex_range_to_height.get(txoutindex).unwrap();
 
-                                let typeindex = txoutindex_to_typeindex
-                                    .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
+                            if input_type.is_not_address() {
+                                return (txindex, prev_height, value, input_type, None);
+                            }
 
-                                let addressdata_opt = Self::get_addressdatawithsource(
-                                    input_type,
-                                    typeindex,
-                                    &first_addressindexes,
-                                    &addresstype_to_typeindex_to_loadedaddressdata,
-                                    &addresstype_to_typeindex_to_emptyaddressdata,
-                                    &vr,
-                                    &self.any_address_indexes,
-                                    &self.addresses_data,
-                                );
+                            let typeindex = txoutindex_to_typeindex
+                                .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
+                            let addressdata_opt = Self::get_addressdatawithsource(
+                                input_type,
+                                typeindex,
+                                &first_addressindexes,
+                                &addresstype_to_typeindex_to_loadedaddressdata,
+                                &addresstype_to_typeindex_to_emptyaddressdata,
+                                &vr,
+                                &self.any_address_indexes,
+                                &self.addresses_data,
+                            );
+
+                            (
+                                txindex,
+                                prev_height,
+                                value,
+                                input_type,
+                                Some((typeindex, addressdata_opt)),
+                            )
+                        })
+                        .fold(
+                            || {
                                 (
-                                    prev_height,
-                                    value,
-                                    input_type,
-                                    Some((typeindex, addressdata_opt)),
+                                    FxHashMap::<Height, Transacted>::default(),
+                                    HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
+                                    AddressTypeToTypeIndexMap::default(),
+                                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
                                 )
-                            })
-                            .fold(
-                                || {
-                                    (
-                                        FxHashMap::<Height, Transacted>::default(),
-                                        HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                        AddressTypeToTypeIndexMap::default(),
-                                    )
-                                },
-                                |(
-                                    mut height_to_transacted,
-                                    mut height_to_addresstype_to_typedindex_to_data,
-                                    mut addresstype_to_typeindex_to_addressdatawithsource,
-                                ),
-                                 (
-                                    prev_height,
-                                    value,
-                                    output_type,
-                                    typeindex_with_addressdata_opt,
-                                )| {
-                                    height_to_transacted
-                                        .entry(prev_height)
-                                        .or_default()
-                                        .iterate(value, output_type);
+                            },
+                            |(
+                                mut height_to_transacted,
+                                mut height_to_addresstype_to_typedindex_to_data,
+                                mut addresstype_to_typeindex_to_addressdatawithsource,
+                                mut txindex_vecs,
+                            ),
+                             (
+                                txindex,
+                                prev_height,
+                                value,
+                                output_type,
+                                typeindex_with_addressdata_opt,
+                            )| {
+                                height_to_transacted
+                                    .entry(prev_height)
+                                    .or_default()
+                                    .iterate(value, output_type);
 
-                                    if let Some((typeindex, addressdata_opt)) =
-                                        typeindex_with_addressdata_opt
-                                    {
-                                        if let Some(addressdata) = addressdata_opt {
-                                            addresstype_to_typeindex_to_addressdatawithsource
-                                                .insert_for_type(
-                                                    output_type,
-                                                    typeindex,
-                                                    addressdata,
-                                                );
-                                        }
-
-                                        height_to_addresstype_to_typedindex_to_data
-                                            .entry(prev_height)
-                                            .or_default()
-                                            .get_mut(output_type)
-                                            .unwrap()
-                                            .push((typeindex, value));
+                                if let Some((typeindex, addressdata_opt)) =
+                                    typeindex_with_addressdata_opt
+                                {
+                                    if let Some(addressdata) = addressdata_opt {
+                                        addresstype_to_typeindex_to_addressdatawithsource
+                                            .insert_for_type(output_type, typeindex, addressdata);
                                     }
 
+                                    let addr_type = output_type;
+
+                                    height_to_addresstype_to_typedindex_to_data
+                                        .entry(prev_height)
+                                        .or_default()
+                                        .get_mut(addr_type)
+                                        .unwrap()
+                                        .push((typeindex, value));
+
+                                    txindex_vecs
+                                        .get_mut(addr_type)
+                                        .unwrap()
+                                        .entry(typeindex)
+                                        .or_insert_with(TxIndexVec::new)
+                                        .push(txindex);
+                                }
+
+                                (
+                                    height_to_transacted,
+                                    height_to_addresstype_to_typedindex_to_data,
+                                    addresstype_to_typeindex_to_addressdatawithsource,
+                                    txindex_vecs,
+                                )
+                            },
+                        )
+                        .reduce(
+                            || {
+                                (
+                                    FxHashMap::<Height, Transacted>::default(),
+                                    HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
+                                    AddressTypeToTypeIndexMap::default(),
+                                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
+                                )
+                            },
+                            |(
+                                height_to_transacted,
+                                addresstype_to_typedindex_to_data,
+                                addresstype_to_typeindex_to_addressdatawithsource,
+                                txindex_vecs,
+                            ),
+                             (
+                                height_to_transacted2,
+                                addresstype_to_typedindex_to_data2,
+                                addresstype_to_typeindex_to_addressdatawithsource2,
+                                txindex_vecs2,
+                            )| {
+                                let (mut height_to_transacted, height_to_transacted_consumed) =
+                                    if height_to_transacted.len() > height_to_transacted2.len() {
+                                        (height_to_transacted, height_to_transacted2)
+                                    } else {
+                                        (height_to_transacted2, height_to_transacted)
+                                    };
+                                height_to_transacted_consumed
+                                    .into_iter()
+                                    .for_each(|(k, v)| {
+                                        *height_to_transacted.entry(k).or_default() += v;
+                                    });
+
+                                let (
+                                    mut addresstype_to_typedindex_to_data,
+                                    addresstype_to_typedindex_to_data_consumed,
+                                ) = if addresstype_to_typedindex_to_data.len()
+                                    > addresstype_to_typedindex_to_data2.len()
+                                {
                                     (
-                                        height_to_transacted,
-                                        height_to_addresstype_to_typedindex_to_data,
-                                        addresstype_to_typeindex_to_addressdatawithsource,
+                                        addresstype_to_typedindex_to_data,
+                                        addresstype_to_typedindex_to_data2,
                                     )
-                                },
-                            )
-                            .reduce(
-                                || {
+                                } else {
                                     (
-                                        FxHashMap::<Height, Transacted>::default(),
-                                        HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
-                                        AddressTypeToTypeIndexMap::default(),
+                                        addresstype_to_typedindex_to_data2,
+                                        addresstype_to_typedindex_to_data,
                                     )
-                                },
-                                |(
+                                };
+                                addresstype_to_typedindex_to_data_consumed
+                                    .0
+                                    .into_iter()
+                                    .for_each(|(k, v)| {
+                                        addresstype_to_typedindex_to_data
+                                            .entry(k)
+                                            .or_default()
+                                            .merge_mut(v);
+                                    });
+
+                                (
                                     height_to_transacted,
                                     addresstype_to_typedindex_to_data,
-                                    addresstype_to_typeindex_to_addressdatawithsource,
-                                ),
-                                 (
-                                    height_to_transacted2,
-                                    addresstype_to_typedindex_to_data2,
-                                    addresstype_to_typeindex_to_addressdatawithsource2,
-                                )| {
-                                    let (mut height_to_transacted, height_to_transacted_consumed) =
-                                        if height_to_transacted.len() > height_to_transacted2.len()
-                                        {
-                                            (height_to_transacted, height_to_transacted2)
-                                        } else {
-                                            (height_to_transacted2, height_to_transacted)
-                                        };
-                                    height_to_transacted_consumed
-                                        .into_iter()
-                                        .for_each(|(k, v)| {
-                                            *height_to_transacted.entry(k).or_default() += v;
-                                        });
-
-                                    let (
-                                        mut addresstype_to_typedindex_to_data,
-                                        addresstype_to_typedindex_to_data_consumed,
-                                    ) = if addresstype_to_typedindex_to_data.len()
-                                        > addresstype_to_typedindex_to_data2.len()
-                                    {
-                                        (
-                                            addresstype_to_typedindex_to_data,
-                                            addresstype_to_typedindex_to_data2,
-                                        )
-                                    } else {
-                                        (
-                                            addresstype_to_typedindex_to_data2,
-                                            addresstype_to_typedindex_to_data,
-                                        )
-                                    };
-                                    addresstype_to_typedindex_to_data_consumed
-                                        .0
-                                        .into_iter()
-                                        .for_each(|(k, v)| {
-                                            addresstype_to_typedindex_to_data
-                                                .entry(k)
-                                                .or_default()
-                                                .merge_mut(v);
-                                        });
-
-                                    (
-                                        height_to_transacted,
-                                        addresstype_to_typedindex_to_data,
-                                        addresstype_to_typeindex_to_addressdatawithsource.merge(
-                                            addresstype_to_typeindex_to_addressdatawithsource2,
-                                        ),
-                                    )
-                                },
-                            );
+                                    addresstype_to_typeindex_to_addressdatawithsource
+                                        .merge(addresstype_to_typeindex_to_addressdatawithsource2),
+                                    txindex_vecs.merge_vec(txindex_vecs2),
+                                )
+                            },
+                        );
 
                     let addresstype_to_typeindex_to_addressdatawithsource =
                         receiving_addresstype_to_typeindex_to_addressdatawithsource
                             .merge(sending_addresstype_to_typeindex_to_addressdatawithsource);
+
+                    let combined_txindex_vecs = output_txindex_vecs.merge_vec(input_txindex_vecs);
 
                     (
                         transacted,
@@ -1168,8 +1198,38 @@ impl Vecs {
                         height_to_sent,
                         addresstype_to_typedindex_to_sent_data,
                         addresstype_to_typeindex_to_addressdatawithsource,
+                        combined_txindex_vecs,
                     )
                 });
+
+                combined_txindex_vecs
+                    .par_values_mut()
+                    .flat_map(|typeindex_to_txindexes| typeindex_to_txindexes.par_iter_mut())
+                    .map(|(_, v)| v)
+                    .filter(|txindex_vec| txindex_vec.len() > 1)
+                    .for_each(|txindex_vec| {
+                        txindex_vec.sort_unstable();
+                        txindex_vec.dedup();
+                    });
+
+                for (address_type, typeindex, txindex_vec) in combined_txindex_vecs
+                    .into_iter()
+                    .flat_map(|(t, m)| m.into_iter().map(move |(i, v)| (t, i, v)))
+                {
+                    let tx_count = txindex_vec.len() as u32;
+
+                    if let Some(addressdata) = addresstype_to_typeindex_to_loadedaddressdata
+                        .get_mut_unwrap(address_type)
+                        .get_mut(&typeindex)
+                    {
+                        addressdata.deref_mut().tx_count += tx_count;
+                    } else if let Some(addressdata) = addresstype_to_typeindex_to_emptyaddressdata
+                        .get_mut_unwrap(address_type)
+                        .get_mut(&typeindex)
+                    {
+                        addressdata.deref_mut().tx_count += tx_count;
+                    }
+                }
 
                 thread::scope(|scope| {
                     scope.spawn(|| {
@@ -1331,7 +1391,7 @@ impl Vecs {
                     starting_indexes.height,
                     &self
                         .addresstype_to_height_to_addr_count
-                        .iter_typed()
+                        .iter()
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
@@ -1345,7 +1405,7 @@ impl Vecs {
                     starting_indexes.height,
                     &self
                         .addresstype_to_height_to_empty_addr_count
-                        .iter_typed()
+                        .iter()
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
@@ -1562,10 +1622,10 @@ impl Vecs {
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
         self.addresstype_to_height_to_addr_count
-            .iter_mut()
+            .values_mut()
             .try_for_each(|v| v.safe_flush(exit))?;
         self.addresstype_to_height_to_empty_addr_count
-            .iter_mut()
+            .values_mut()
             .try_for_each(|v| v.safe_flush(exit))?;
 
         let mut addresstype_to_typeindex_to_new_or_updated_anyaddressindex =
@@ -1713,7 +1773,7 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<LoadedAddressData>,
         >,
     ) {
-        self.unwrap().into_iter_typed().for_each(|(_type, vec)| {
+        self.unwrap().into_iter().for_each(|(_type, vec)| {
             vec.into_iter().for_each(|(type_index, value)| {
                 let mut is_new = false;
                 let mut from_any_empty = false;
@@ -1832,7 +1892,7 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                 .unwrap()
                 .is_more_than_hour();
 
-            v.unwrap().into_iter_typed().try_for_each(|(_type, vec)| {
+            v.unwrap().into_iter().try_for_each(|(_type, vec)| {
                 vec.into_iter().try_for_each(|(type_index, value)| {
                     let typeindex_to_loadedaddressdata =
                         addresstype_to_typeindex_to_loadedaddressdata.get_mut_unwrap(_type);

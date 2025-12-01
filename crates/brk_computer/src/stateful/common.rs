@@ -12,7 +12,8 @@ use crate::{
     Indexes,
     grouped::{
         ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex, ComputedValueVecsFromDateIndex,
-        ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions,
+        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
+        PricePercentiles, Source, VecBuilderOptions,
     },
     indexes, price,
     states::CohortState,
@@ -41,9 +42,11 @@ pub struct Vecs {
     pub height_to_unrealized_profit: Option<EagerVec<PcoVec<Height, Dollars>>>,
     pub height_to_value_created: Option<EagerVec<PcoVec<Height, Dollars>>>,
     pub height_to_value_destroyed: Option<EagerVec<PcoVec<Height, Dollars>>>,
+    pub height_to_sent: EagerVec<PcoVec<Height, Sats>>,
     pub height_to_satblocks_destroyed: EagerVec<PcoVec<Height, Sats>>,
     pub height_to_satdays_destroyed: EagerVec<PcoVec<Height, Sats>>,
 
+    pub indexes_to_sent: ComputedValueVecsFromHeight,
     pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub dateindex_to_sopr: Option<EagerVec<PcoVec<DateIndex, StoredF64>>>,
@@ -79,6 +82,7 @@ pub struct Vecs {
     pub indexes_to_total_realized_pnl: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_max_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
+    pub price_percentiles: Option<PricePercentiles>,
     pub height_to_supply_half_value: ComputedHeightValueVecs,
     pub indexes_to_supply_half: ComputedValueVecsFromDateIndex,
     pub height_to_neg_unrealized_loss: Option<EagerVec<PcoVec<Height, Dollars>>>,
@@ -353,6 +357,16 @@ impl Vecs {
                     version + Version::ZERO,
                     indexes,
                     VecBuilderOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            price_percentiles: (compute_dollars && extended).then(|| {
+                PricePercentiles::forced_import(
+                    db,
+                    &suffix(""),
+                    version + Version::ZERO,
+                    indexes,
+                    true,
                 )
                 .unwrap()
             }),
@@ -1075,6 +1089,11 @@ impl Vecs {
                     )
                     .unwrap()
                 }),
+            height_to_sent: EagerVec::forced_import(
+                db,
+                &suffix("sent"),
+                version + Version::ZERO,
+            )?,
             height_to_satblocks_destroyed: EagerVec::forced_import(
                 db,
                 &suffix("satblocks_destroyed"),
@@ -1084,6 +1103,15 @@ impl Vecs {
                 db,
                 &suffix("satdays_destroyed"),
                 version + Version::ZERO,
+            )?,
+            indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
+                db,
+                &suffix("sent"),
+                Source::Compute,
+                version + Version::ZERO,
+                VecBuilderOptions::default().add_sum(),
+                compute_dollars,
+                indexes,
             )?,
             indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
                 db,
@@ -1190,6 +1218,7 @@ impl Vecs {
             self.height_to_max_price_paid
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
+            self.height_to_sent.len(),
             self.height_to_satdays_destroyed.len(),
             self.height_to_satblocks_destroyed.len(),
         ]
@@ -1233,6 +1262,11 @@ impl Vecs {
         self.height_to_utxo_count
             .validate_computed_version_or_reset(
                 base_version + self.height_to_utxo_count.inner_version(),
+            )?;
+
+        self.height_to_sent
+            .validate_computed_version_or_reset(
+                base_version + self.height_to_sent.inner_version(),
             )?;
 
         self.height_to_satblocks_destroyed
@@ -1441,6 +1475,8 @@ impl Vecs {
         self.height_to_utxo_count
             .truncate_push(height, StoredU64::from(state.supply.utxo_count))?;
 
+        self.height_to_sent.truncate_push(height, state.sent)?;
+
         self.height_to_satblocks_destroyed
             .truncate_push(height, state.satblocks_destroyed)?;
 
@@ -1569,6 +1605,7 @@ impl Vecs {
     ) -> Result<()> {
         self.height_to_supply.safe_flush(exit)?;
         self.height_to_utxo_count.safe_flush(exit)?;
+        self.height_to_sent.safe_flush(exit)?;
         self.height_to_satdays_destroyed.safe_flush(exit)?;
         self.height_to_satblocks_destroyed.safe_flush(exit)?;
 
@@ -1668,6 +1705,15 @@ impl Vecs {
             others
                 .iter()
                 .map(|v| &v.height_to_utxo_count)
+                .collect::<Vec<_>>()
+                .as_slice(),
+            exit,
+        )?;
+        self.height_to_sent.compute_sum_of_others(
+            starting_indexes.height,
+            others
+                .iter()
+                .map(|v| &v.height_to_sent)
                 .collect::<Vec<_>>()
                 .as_slice(),
             exit,
@@ -1998,6 +2044,9 @@ impl Vecs {
                 )?;
                 Ok(())
             })?;
+
+        self.indexes_to_sent
+            .compute_rest(indexes, price, starting_indexes, exit, Some(&self.height_to_sent))?;
 
         self.indexes_to_coinblocks_destroyed
             .compute_all(indexes, starting_indexes, exit, |v| {

@@ -229,8 +229,6 @@ impl Computer {
         )?;
         info!("Computed pools in {:?}", i.elapsed());
 
-        return Ok(());
-
         info!("Computing stateful...");
         self.stateful.compute(
             indexer,
@@ -240,6 +238,8 @@ impl Computer {
             &mut starting_indexes,
             exit,
         )?;
+
+        return Ok(());
 
         info!("Computing cointime...");
         self.cointime.compute(
