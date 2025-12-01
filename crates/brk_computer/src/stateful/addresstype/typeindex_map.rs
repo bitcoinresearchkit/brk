@@ -1,9 +1,10 @@
-use std::mem;
+use std::{collections::hash_map::Entry, mem};
 
 use brk_grouper::ByAddressType;
 use brk_types::{OutputType, TypeIndex};
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
+use smallvec::{Array, SmallVec};
 
 #[derive(Debug, Deref, DerefMut)]
 pub struct AddressTypeToTypeIndexMap<T>(ByAddressType<FxHashMap<TypeIndex, T>>);
@@ -44,11 +45,16 @@ impl<T> AddressTypeToTypeIndexMap<T> {
     }
 
     pub fn into_sorted_iter(self) -> impl Iterator<Item = (OutputType, Vec<(TypeIndex, T)>)> {
-        self.0.into_iter_typed().map(|(output_type, map)| {
+        self.0.into_iter().map(|(output_type, map)| {
             let mut sorted: Vec<_> = map.into_iter().collect();
             sorted.sort_unstable_by_key(|(typeindex, _)| *typeindex);
             (output_type, sorted)
         })
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    pub fn into_iter(self) -> impl Iterator<Item = (OutputType, FxHashMap<TypeIndex, T>)> {
+        self.0.into_iter()
     }
 }
 
@@ -67,23 +73,26 @@ impl<T> Default for AddressTypeToTypeIndexMap<T> {
     }
 }
 
-impl<T> AddressTypeToTypeIndexMap<Vec<T>>
+impl<T> AddressTypeToTypeIndexMap<SmallVec<T>>
 where
-    T: Copy,
+    T: Array,
 {
     pub fn merge_vec(mut self, other: Self) -> Self {
-        for (address_type, other_map) in other.0.into_iter_typed() {
+        for (address_type, other_map) in other.0.into_iter() {
             let self_map = self.0.get_mut_unwrap(address_type);
             for (typeindex, mut other_vec) in other_map {
-                self_map
-                    .entry(typeindex)
-                    .and_modify(|self_vec| {
+                match self_map.entry(typeindex) {
+                    Entry::Occupied(mut entry) => {
+                        let self_vec = entry.get_mut();
                         if other_vec.len() > self_vec.len() {
                             mem::swap(self_vec, &mut other_vec);
                         }
-                        self_vec.extend(other_vec.iter().copied());
-                    })
-                    .or_insert(other_vec);
+                        self_vec.extend(other_vec);
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(other_vec);
+                    }
+                }
             }
         }
         self

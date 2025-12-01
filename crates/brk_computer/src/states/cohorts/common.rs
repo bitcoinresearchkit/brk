@@ -3,13 +3,17 @@ use std::{cmp::Ordering, path::Path};
 use brk_error::Result;
 use brk_types::{CheckedSub, Dollars, Height, Sats};
 
-use crate::{PriceToAmount, RealizedState, SupplyState, UnrealizedState};
+use crate::{
+    grouped::{PERCENTILES, PERCENTILES_LEN},
+    PriceToAmount, RealizedState, SupplyState, UnrealizedState,
+};
 
 #[derive(Clone)]
 pub struct CohortState {
     pub supply: SupplyState,
 
     pub realized: Option<RealizedState>,
+    pub sent: Sats,
     pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
 
@@ -21,6 +25,7 @@ impl CohortState {
         Self {
             supply: SupplyState::default(),
             realized: compute_dollars.then_some(RealizedState::NAN),
+            sent: Sats::ZERO,
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
             price_to_amount: compute_dollars.then_some(PriceToAmount::create(path, name)),
@@ -52,6 +57,7 @@ impl CohortState {
     }
 
     pub fn reset_single_iteration_values(&mut self) {
+        self.sent = Sats::ZERO;
         self.satdays_destroyed = Sats::ZERO;
         self.satblocks_destroyed = Sats::ZERO;
         if let Some(realized) = self.realized.as_mut() {
@@ -211,8 +217,8 @@ impl CohortState {
         self.supply -= supply_state;
 
         if supply_state.value > Sats::ZERO {
+            self.sent += supply_state.value;
             self.satblocks_destroyed += supply_state.value * blocks_old;
-
             self.satdays_destroyed +=
                 Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
 
@@ -238,6 +244,42 @@ impl CohortState {
                 }
             }
         }
+    }
+
+    /// Computes prices at PERCENTILES in a single pass.
+    /// Returns an array of prices corresponding to each percentile.
+    pub fn compute_percentile_prices(&self) -> [Dollars; PERCENTILES_LEN] {
+        let mut result = [Dollars::NAN; PERCENTILES_LEN];
+
+        let price_to_amount = match self.price_to_amount.as_ref() {
+            Some(p) => p,
+            None => return result,
+        };
+
+        if price_to_amount.is_empty() || self.supply.value == Sats::ZERO {
+            return result;
+        }
+
+        let total = u64::from(self.supply.value);
+        let targets = PERCENTILES.map(|p| total * u64::from(p) / 100);
+
+        let mut accumulated = 0u64;
+        let mut pct_idx = 0;
+
+        for (&price, &sats) in price_to_amount.iter() {
+            accumulated += u64::from(sats);
+
+            while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
+                result[pct_idx] = price;
+                pct_idx += 1;
+            }
+
+            if pct_idx >= PERCENTILES_LEN {
+                break;
+            }
+        }
+
+        result
     }
 
     pub fn compute_unrealized_states(

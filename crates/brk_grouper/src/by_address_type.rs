@@ -103,7 +103,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub fn values(&self) -> impl Iterator<Item = &T> {
         [
             &self.p2pk65,
             &self.p2pk33,
@@ -118,7 +118,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self.p2pk65,
             &mut self.p2pk33,
@@ -133,7 +133,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn par_iter(&mut self) -> impl ParallelIterator<Item = &T>
+    pub fn par_values(&mut self) -> impl ParallelIterator<Item = &T>
     where
         T: Send + Sync,
     {
@@ -151,7 +151,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    pub fn par_values_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
     where
         T: Send + Sync,
     {
@@ -169,7 +169,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
+    pub fn iter(&self) -> impl Iterator<Item = (OutputType, &T)> {
         [
             (OutputType::P2PK65, &self.p2pk65),
             (OutputType::P2PK33, &self.p2pk33),
@@ -184,7 +184,8 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn into_iter_typed(self) -> impl Iterator<Item = (OutputType, T)> {
+    #[allow(clippy::should_implement_trait)]
+    pub fn into_iter(self) -> impl Iterator<Item = (OutputType, T)> {
         [
             (OutputType::P2PK65, self.p2pk65),
             (OutputType::P2PK33, self.p2pk33),
@@ -199,7 +200,7 @@ impl<T> ByAddressType<T> {
     }
 
     #[inline]
-    pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
         [
             (OutputType::P2PK65, &mut self.p2pk65),
             (OutputType::P2PK33, &mut self.p2pk33),
@@ -283,7 +284,7 @@ where
 
 impl<T> ByAddressType<Option<T>> {
     pub fn take(&mut self) {
-        self.iter_mut().for_each(|opt| {
+        self.values_mut().for_each(|opt| {
             opt.take();
         });
     }

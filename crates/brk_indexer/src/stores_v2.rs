@@ -127,17 +127,17 @@ impl Stores {
         .into_iter()
         .chain(
             self.addresstype_to_addresshash_to_addressindex
-                .iter()
+                .values()
                 .map(|s| s as &dyn AnyStore),
         )
         .chain(
             self.addresstype_to_addressindex_and_txindex
-                .iter()
+                .values()
                 .map(|s| s as &dyn AnyStore),
         )
         .chain(
             self.addresstype_to_addressindex_and_unspentoutpoint
-                .iter()
+                .values()
                 .map(|s| s as &dyn AnyStore),
         )
         .map(|store| {
@@ -158,17 +158,17 @@ impl Stores {
         .into_par_iter()
         .chain(
             self.addresstype_to_addresshash_to_addressindex
-                .par_iter_mut()
+                .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
         )
         .chain(
             self.addresstype_to_addressindex_and_txindex
-                .par_iter_mut()
+                .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
         )
         .chain(
             self.addresstype_to_addressindex_and_unspentoutpoint
-                .par_iter_mut()
+                .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
         ) // Changed from par_iter_mut()
         .map(|store| {
@@ -195,15 +195,15 @@ impl Stores {
             && self.height_to_coinbase_tag.is_empty()?
             && self
                 .addresstype_to_addresshash_to_addressindex
-                .iter()
+                .values()
                 .try_fold(true, |acc, s| s.is_empty().map(|empty| acc && empty))?
             && self
                 .addresstype_to_addressindex_and_txindex
-                .iter()
+                .values()
                 .try_fold(true, |acc, s| s.is_empty().map(|empty| acc && empty))?
             && self
                 .addresstype_to_addressindex_and_unspentoutpoint
-                .iter()
+                .values()
                 .try_fold(true, |acc, s| s.is_empty().map(|empty| acc && empty))?
         {
             return Ok(());
