@@ -314,7 +314,7 @@ impl Vecs {
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let circulating_supply = &stateful.utxo_cohorts.all.1.height_to_supply;
+        let circulating_supply = &stateful.utxo_cohorts.all.inner.height_to_supply;
 
         self.indexes_to_coinblocks_created
             .compute_all(indexes, starting_indexes, exit, |vec| {
@@ -328,7 +328,7 @@ impl Vecs {
             })?;
 
         let indexes_to_coinblocks_destroyed =
-            &stateful.utxo_cohorts.all.1.indexes_to_coinblocks_destroyed;
+            &stateful.utxo_cohorts.all.inner.indexes_to_coinblocks_destroyed;
 
         self.indexes_to_coinblocks_stored
             .compute_all(indexes, starting_indexes, exit, |vec| {
@@ -454,7 +454,7 @@ impl Vecs {
             let realized_cap = stateful
                 .utxo_cohorts
                 .all
-                .1
+                .inner
                 .height_to_realized_cap
                 .as_ref()
                 .unwrap();
@@ -462,7 +462,7 @@ impl Vecs {
             let realized_price = stateful
                 .utxo_cohorts
                 .all
-                .1
+                .inner
                 .indexes_to_realized_price
                 .as_ref()
                 .unwrap()

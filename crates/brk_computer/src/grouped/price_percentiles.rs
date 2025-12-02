@@ -1,14 +1,14 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Dollars, Height, Version};
-use vecdb::{AnyExportableVec, Database, EagerVec, Exit, PcoVec};
+use vecdb::{AnyExportableVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
 
-use crate::{indexes, Indexes};
+use crate::{Indexes, indexes};
 
 use super::{ComputedVecsFromHeight, Source, VecBuilderOptions};
 
-pub const PERCENTILES: [u8; 21] = [
-    0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+pub const PERCENTILES: [u8; 19] = [
+    5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
 ];
 pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
@@ -51,7 +51,10 @@ impl PricePercentiles {
     ) -> Result<()> {
         for (i, vec) in self.vecs.iter_mut().enumerate() {
             if let Some(v) = vec {
-                v.height.as_mut().unwrap().truncate_push(height, percentile_prices[i])?;
+                v.height
+                    .as_mut()
+                    .unwrap()
+                    .truncate_push(height, percentile_prices[i])?;
             }
         }
         Ok(())
@@ -64,7 +67,12 @@ impl PricePercentiles {
         exit: &Exit,
     ) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
-            vec.compute_rest(indexes, starting_indexes, exit, None::<&EagerVec<PcoVec<Height, Dollars>>>)?;
+            vec.compute_rest(
+                indexes,
+                starting_indexes,
+                exit,
+                None::<&EagerVec<PcoVec<Height, Dollars>>>,
+            )?;
         }
         Ok(())
     }
@@ -89,6 +97,9 @@ impl Traversable for PricePercentiles {
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.vecs.iter().flatten().flat_map(|p| p.iter_any_exportable())
+        self.vecs
+            .iter()
+            .flatten()
+            .flat_map(|p| p.iter_any_exportable())
     }
 }

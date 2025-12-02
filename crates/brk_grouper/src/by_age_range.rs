@@ -1,9 +1,7 @@
 use brk_traversable::Traversable;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use crate::Filtered;
-
-use super::Filter;
+use super::{Filter, TimeFilter};
 
 #[derive(Default, Clone, Traversable)]
 pub struct ByAgeRange<T> {
@@ -29,35 +27,35 @@ pub struct ByAgeRange<T> {
     pub from_15y: T,
 }
 
-impl<T> From<ByAgeRange<T>> for ByAgeRange<Filtered<T>> {
-    #[inline]
-    fn from(value: ByAgeRange<T>) -> Self {
+impl<T> ByAgeRange<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
         Self {
-            up_to_1d: (Filter::LowerThan(1), value.up_to_1d).into(),
-            _1d_to_1w: (Filter::Range(1..7), value._1d_to_1w).into(),
-            _1w_to_1m: (Filter::Range(7..30), value._1w_to_1m).into(),
-            _1m_to_2m: (Filter::Range(30..2 * 30), value._1m_to_2m).into(),
-            _2m_to_3m: (Filter::Range(2 * 30..3 * 30), value._2m_to_3m).into(),
-            _3m_to_4m: (Filter::Range(3 * 30..4 * 30), value._3m_to_4m).into(),
-            _4m_to_5m: (Filter::Range(4 * 30..5 * 30), value._4m_to_5m).into(),
-            _5m_to_6m: (Filter::Range(5 * 30..6 * 30), value._5m_to_6m).into(),
-            _6m_to_1y: (Filter::Range(6 * 30..365), value._6m_to_1y).into(),
-            _1y_to_2y: (Filter::Range(365..2 * 365), value._1y_to_2y).into(),
-            _2y_to_3y: (Filter::Range(2 * 365..3 * 365), value._2y_to_3y).into(),
-            _3y_to_4y: (Filter::Range(3 * 365..4 * 365), value._3y_to_4y).into(),
-            _4y_to_5y: (Filter::Range(4 * 365..5 * 365), value._4y_to_5y).into(),
-            _5y_to_6y: (Filter::Range(5 * 365..6 * 365), value._5y_to_6y).into(),
-            _6y_to_7y: (Filter::Range(6 * 365..7 * 365), value._6y_to_7y).into(),
-            _7y_to_8y: (Filter::Range(7 * 365..8 * 365), value._7y_to_8y).into(),
-            _8y_to_10y: (Filter::Range(8 * 365..10 * 365), value._8y_to_10y).into(),
-            _10y_to_12y: (Filter::Range(10 * 365..12 * 365), value._10y_to_12y).into(),
-            _12y_to_15y: (Filter::Range(12 * 365..15 * 365), value._12y_to_15y).into(),
-            from_15y: (Filter::GreaterOrEqual(15 * 365), value.from_15y).into(),
+            up_to_1d: create(Filter::Time(TimeFilter::Range(0..1))),
+            _1d_to_1w: create(Filter::Time(TimeFilter::Range(1..7))),
+            _1w_to_1m: create(Filter::Time(TimeFilter::Range(7..30))),
+            _1m_to_2m: create(Filter::Time(TimeFilter::Range(30..2 * 30))),
+            _2m_to_3m: create(Filter::Time(TimeFilter::Range(2 * 30..3 * 30))),
+            _3m_to_4m: create(Filter::Time(TimeFilter::Range(3 * 30..4 * 30))),
+            _4m_to_5m: create(Filter::Time(TimeFilter::Range(4 * 30..5 * 30))),
+            _5m_to_6m: create(Filter::Time(TimeFilter::Range(5 * 30..6 * 30))),
+            _6m_to_1y: create(Filter::Time(TimeFilter::Range(6 * 30..365))),
+            _1y_to_2y: create(Filter::Time(TimeFilter::Range(365..2 * 365))),
+            _2y_to_3y: create(Filter::Time(TimeFilter::Range(2 * 365..3 * 365))),
+            _3y_to_4y: create(Filter::Time(TimeFilter::Range(3 * 365..4 * 365))),
+            _4y_to_5y: create(Filter::Time(TimeFilter::Range(4 * 365..5 * 365))),
+            _5y_to_6y: create(Filter::Time(TimeFilter::Range(5 * 365..6 * 365))),
+            _6y_to_7y: create(Filter::Time(TimeFilter::Range(6 * 365..7 * 365))),
+            _7y_to_8y: create(Filter::Time(TimeFilter::Range(7 * 365..8 * 365))),
+            _8y_to_10y: create(Filter::Time(TimeFilter::Range(8 * 365..10 * 365))),
+            _10y_to_12y: create(Filter::Time(TimeFilter::Range(10 * 365..12 * 365))),
+            _12y_to_15y: create(Filter::Time(TimeFilter::Range(12 * 365..15 * 365))),
+            from_15y: create(Filter::Time(TimeFilter::GreaterOrEqual(15 * 365))),
         }
     }
-}
 
-impl<T> ByAgeRange<T> {
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
             &self.up_to_1d,
@@ -140,30 +138,3 @@ impl<T> ByAgeRange<T> {
     }
 }
 
-impl<T> ByAgeRange<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [
-            &self.up_to_1d.1,
-            &self._1d_to_1w.1,
-            &self._1w_to_1m.1,
-            &self._1m_to_2m.1,
-            &self._2m_to_3m.1,
-            &self._3m_to_4m.1,
-            &self._4m_to_5m.1,
-            &self._5m_to_6m.1,
-            &self._6m_to_1y.1,
-            &self._1y_to_2y.1,
-            &self._2y_to_3y.1,
-            &self._3y_to_4y.1,
-            &self._4y_to_5y.1,
-            &self._5y_to_6y.1,
-            &self._6y_to_7y.1,
-            &self._7y_to_8y.1,
-            &self._8y_to_10y.1,
-            &self._10y_to_12y.1,
-            &self._12y_to_15y.1,
-            &self.from_15y.1,
-        ]
-        .into_iter()
-    }
-}

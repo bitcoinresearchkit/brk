@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
+use brk_grouper::{CohortContext, Filter, Filtered};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use vecdb::{
@@ -39,7 +40,7 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
-        cohort_name: Option<&str>,
+        filter: Filter,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -48,16 +49,19 @@ impl Vecs {
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
-        let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
+        let full_name = filter.to_full_name(CohortContext::Address);
+        let suffix = |s: &str| {
+            if full_name.is_empty() {
+                s.to_string()
+            } else {
+                format!("{full_name}_{s}")
+            }
+        };
 
         Ok(Self {
             starting_height: None,
             state: states_path.map(|states_path| {
-                AddressCohortState::new(
-                    states_path,
-                    cohort_name.unwrap_or_default(),
-                    compute_dollars,
-                )
+                AddressCohortState::new(states_path, &full_name, compute_dollars)
             }),
             height_to_addr_count: EagerVec::forced_import(
                 db,
@@ -74,7 +78,8 @@ impl Vecs {
             )?,
             inner: common::Vecs::forced_import(
                 db,
-                cohort_name,
+                filter,
+                CohortContext::Address,
                 version,
                 indexes,
                 price,
@@ -228,5 +233,11 @@ impl CohortVecs for Vecs {
             dateindex_to_realized_cap,
             exit,
         )
+    }
+}
+
+impl Filtered for Vecs {
+    fn filter(&self) -> &Filter {
+        &self.inner.filter
     }
 }

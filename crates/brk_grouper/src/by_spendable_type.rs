@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::OutputType;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use super::{Filter, Filtered};
+use super::Filter;
 
 #[derive(Default, Clone, Debug, Traversable)]
 pub struct BySpendableType<T> {
@@ -22,6 +22,25 @@ pub struct BySpendableType<T> {
 }
 
 impl<T> BySpendableType<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
+        Self {
+            p2pk65: create(Filter::Type(OutputType::P2PK65)),
+            p2pk33: create(Filter::Type(OutputType::P2PK33)),
+            p2pkh: create(Filter::Type(OutputType::P2PKH)),
+            p2ms: create(Filter::Type(OutputType::P2MS)),
+            p2sh: create(Filter::Type(OutputType::P2SH)),
+            p2wpkh: create(Filter::Type(OutputType::P2WPKH)),
+            p2wsh: create(Filter::Type(OutputType::P2WSH)),
+            p2tr: create(Filter::Type(OutputType::P2TR)),
+            p2a: create(Filter::Type(OutputType::P2A)),
+            unknown: create(Filter::Type(OutputType::Unknown)),
+            empty: create(Filter::Type(OutputType::Empty)),
+        }
+    }
+
     pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
         match output_type {
             OutputType::P2PK65 => &mut self.p2pk65,
@@ -37,6 +56,23 @@ impl<T> BySpendableType<T> {
             OutputType::Empty => &mut self.empty,
             _ => unreachable!(),
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [
+            &self.p2pk65,
+            &self.p2pk33,
+            &self.p2pkh,
+            &self.p2ms,
+            &self.p2sh,
+            &self.p2wpkh,
+            &self.p2wsh,
+            &self.p2tr,
+            &self.p2a,
+            &self.unknown,
+            &self.empty,
+        ]
+        .into_iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
@@ -91,44 +127,6 @@ impl<T> BySpendableType<T> {
             (OutputType::Empty, &self.empty),
         ]
         .into_iter()
-    }
-}
-
-impl<T> BySpendableType<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [
-            &self.p2pk65.1,
-            &self.p2pk33.1,
-            &self.p2pkh.1,
-            &self.p2ms.1,
-            &self.p2sh.1,
-            &self.p2wpkh.1,
-            &self.p2wsh.1,
-            &self.p2tr.1,
-            &self.p2a.1,
-            &self.unknown.1,
-            &self.empty.1,
-        ]
-        .into_iter()
-    }
-}
-
-impl<T> From<BySpendableType<T>> for BySpendableType<Filtered<T>> {
-    #[inline]
-    fn from(value: BySpendableType<T>) -> Self {
-        Self {
-            p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),
-            p2pk33: (Filter::Type(OutputType::P2PK33), value.p2pk33).into(),
-            p2pkh: (Filter::Type(OutputType::P2PKH), value.p2pkh).into(),
-            p2ms: (Filter::Type(OutputType::P2MS), value.p2ms).into(),
-            p2sh: (Filter::Type(OutputType::P2SH), value.p2sh).into(),
-            p2wpkh: (Filter::Type(OutputType::P2WPKH), value.p2wpkh).into(),
-            p2wsh: (Filter::Type(OutputType::P2WSH), value.p2wsh).into(),
-            p2tr: (Filter::Type(OutputType::P2TR), value.p2tr).into(),
-            p2a: (Filter::Type(OutputType::P2A), value.p2a).into(),
-            unknown: (Filter::Type(OutputType::Unknown), value.unknown).into(),
-            empty: (Filter::Type(OutputType::Empty), value.empty).into(),
-        }
     }
 }
 

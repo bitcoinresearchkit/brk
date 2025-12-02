@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::Sats;
 use rayon::prelude::*;
 
-use super::{Filter, Filtered};
+use super::{AmountFilter, Filter};
 
 #[derive(Debug, Default, Clone, Traversable)]
 pub struct ByAmountRange<T> {
@@ -25,87 +25,30 @@ pub struct ByAmountRange<T> {
     pub _100k_btc_or_more: T,
 }
 
-impl<T> From<ByAmountRange<T>> for ByAmountRange<Filtered<T>> {
-    #[inline]
-    fn from(value: ByAmountRange<T>) -> Self {
-        #[allow(clippy::inconsistent_digit_grouping)]
+impl<T> ByAmountRange<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
         Self {
-            _0sats: (Filter::LowerThan(Sats::_1.into()), value._0sats).into(),
-            _1sat_to_10sats: (
-                Filter::Range(Sats::_1.into()..Sats::_10.into()),
-                value._1sat_to_10sats,
-            )
-                .into(),
-            _10sats_to_100sats: (
-                Filter::Range(Sats::_10.into()..Sats::_100.into()),
-                value._10sats_to_100sats,
-            )
-                .into(),
-            _100sats_to_1k_sats: (
-                Filter::Range(Sats::_100.into()..Sats::_1K.into()),
-                value._100sats_to_1k_sats,
-            )
-                .into(),
-            _1k_sats_to_10k_sats: (
-                Filter::Range(Sats::_1K.into()..Sats::_10K.into()),
-                value._1k_sats_to_10k_sats,
-            )
-                .into(),
-            _10k_sats_to_100k_sats: (
-                Filter::Range(Sats::_10K.into()..Sats::_100K.into()),
-                value._10k_sats_to_100k_sats,
-            )
-                .into(),
-            _100k_sats_to_1m_sats: (
-                Filter::Range(Sats::_100K.into()..Sats::_1M.into()),
-                value._100k_sats_to_1m_sats,
-            )
-                .into(),
-            _1m_sats_to_10m_sats: (
-                Filter::Range(Sats::_1M.into()..Sats::_10M.into()),
-                value._1m_sats_to_10m_sats,
-            )
-                .into(),
-            _10m_sats_to_1btc: (
-                Filter::Range(Sats::_10M.into()..Sats::_1BTC.into()),
-                value._10m_sats_to_1btc,
-            )
-                .into(),
-            _1btc_to_10btc: (
-                Filter::Range(Sats::_1BTC.into()..Sats::_10BTC.into()),
-                value._1btc_to_10btc,
-            )
-                .into(),
-            _10btc_to_100btc: (
-                Filter::Range(Sats::_10BTC.into()..Sats::_100BTC.into()),
-                value._10btc_to_100btc,
-            )
-                .into(),
-            _100btc_to_1k_btc: (
-                Filter::Range(Sats::_100BTC.into()..Sats::_1K_BTC.into()),
-                value._100btc_to_1k_btc,
-            )
-                .into(),
-            _1k_btc_to_10k_btc: (
-                Filter::Range(Sats::_1K_BTC.into()..Sats::_10K_BTC.into()),
-                value._1k_btc_to_10k_btc,
-            )
-                .into(),
-            _10k_btc_to_100k_btc: (
-                Filter::Range(Sats::_10K_BTC.into()..Sats::_100K_BTC.into()),
-                value._10k_btc_to_100k_btc,
-            )
-                .into(),
-            _100k_btc_or_more: (
-                Filter::GreaterOrEqual(Sats::_100K_BTC.into()),
-                value._100k_btc_or_more,
-            )
-                .into(),
+            _0sats: create(Filter::Amount(AmountFilter::LowerThan(Sats::_1))),
+            _1sat_to_10sats: create(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10))),
+            _10sats_to_100sats: create(Filter::Amount(AmountFilter::Range(Sats::_10..Sats::_100))),
+            _100sats_to_1k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100..Sats::_1K))),
+            _1k_sats_to_10k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_1K..Sats::_10K))),
+            _10k_sats_to_100k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_10K..Sats::_100K))),
+            _100k_sats_to_1m_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100K..Sats::_1M))),
+            _1m_sats_to_10m_sats: create(Filter::Amount(AmountFilter::Range(Sats::_1M..Sats::_10M))),
+            _10m_sats_to_1btc: create(Filter::Amount(AmountFilter::Range(Sats::_10M..Sats::_1BTC))),
+            _1btc_to_10btc: create(Filter::Amount(AmountFilter::Range(Sats::_1BTC..Sats::_10BTC))),
+            _10btc_to_100btc: create(Filter::Amount(AmountFilter::Range(Sats::_10BTC..Sats::_100BTC))),
+            _100btc_to_1k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_100BTC..Sats::_1K_BTC))),
+            _1k_btc_to_10k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_1K_BTC..Sats::_10K_BTC))),
+            _10k_btc_to_100k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_10K_BTC..Sats::_100K_BTC))),
+            _100k_btc_or_more: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100K_BTC))),
         }
     }
-}
 
-impl<T> ByAmountRange<T> {
     #[allow(clippy::inconsistent_digit_grouping)]
     pub fn get_mut(&mut self, value: Sats) -> &mut T {
         if value == Sats::ZERO {
@@ -226,29 +169,6 @@ impl<T> ByAmountRange<T> {
             &mut self._100k_btc_or_more,
         ]
         .into_par_iter()
-    }
-}
-
-impl<T> ByAmountRange<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._0sats.1,
-            &self._1sat_to_10sats.1,
-            &self._10sats_to_100sats.1,
-            &self._100sats_to_1k_sats.1,
-            &self._1k_sats_to_10k_sats.1,
-            &self._10k_sats_to_100k_sats.1,
-            &self._100k_sats_to_1m_sats.1,
-            &self._1m_sats_to_10m_sats.1,
-            &self._10m_sats_to_1btc.1,
-            &self._1btc_to_10btc.1,
-            &self._10btc_to_100btc.1,
-            &self._100btc_to_1k_btc.1,
-            &self._1k_btc_to_10k_btc.1,
-            &self._10k_btc_to_100k_btc.1,
-            &self._100k_btc_or_more.1,
-        ]
-        .into_iter()
     }
 }
 

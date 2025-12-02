@@ -182,7 +182,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     utxo_cohorts
                         .all
-                        .1
+                        .inner
                         .height_to_supply_value
                         .dollars
                         .as_ref()
@@ -604,10 +604,10 @@ impl Vecs {
 
         separate_utxo_vecs
             .par_iter_mut()
-            .try_for_each(|Filtered(_, v)| v.validate_computed_versions(base_version))?;
+            .try_for_each(|v| v.validate_computed_versions(base_version))?;
         separate_address_vecs
             .par_iter_mut()
-            .try_for_each(|Filtered(_, v)| v.validate_computed_versions(base_version))?;
+            .try_for_each(|v| v.validate_computed_versions(base_version))?;
         self.height_to_unspendable_supply
             .validate_computed_version_or_reset(
                 base_version + self.height_to_unspendable_supply.inner_version(),
@@ -620,13 +620,13 @@ impl Vecs {
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
         let stateful_starting_height = match separate_utxo_vecs
             .par_iter_mut()
-            .map(|Filtered(_, v)| Height::from(v.min_height_vecs_len()))
+            .map(|v| Height::from(v.min_height_vecs_len()))
             .min()
             .unwrap_or_default()
             .min(
                 separate_address_vecs
                     .par_iter_mut()
-                    .map(|Filtered(_, v)| Height::from(v.min_height_vecs_len()))
+                    .map(|v| Height::from(v.min_height_vecs_len()))
                     .min()
                     .unwrap_or_default(),
             )
@@ -683,7 +683,7 @@ impl Vecs {
             let starting_height = if starting_height.is_not_zero()
                 && separate_utxo_vecs
                     .iter_mut()
-                    .map(|Filtered(_, v)| v.import_state(starting_height).unwrap_or_default())
+                    .map(|v| v.import_state(starting_height).unwrap_or_default())
                     .all(|h| h == starting_height)
             {
                 starting_height
@@ -695,13 +695,14 @@ impl Vecs {
             let starting_height = if starting_height.is_not_zero()
                 && separate_address_vecs
                     .iter_mut()
-                    .map(|Filtered(_, v)| v.import_state(starting_height).unwrap_or_default())
+                    .map(|v| v.import_state(starting_height).unwrap_or_default())
                     .all(|h| h == starting_height)
             {
                 starting_height
             } else {
                 Height::ZERO
             };
+
 
             // info!("starting_height = {starting_height}");
 
@@ -737,14 +738,17 @@ impl Vecs {
 
                 separate_utxo_vecs
                     .par_iter_mut()
-                    .try_for_each(|Filtered(_, v)| {
+                    .try_for_each(|v| {
                         v.reset_state_starting_height();
                         v.state.as_mut().unwrap().reset_price_to_amount_if_needed()
                     })?;
 
+                // Reset aggregate cohorts' price_to_amount
+                self.utxo_cohorts.reset_aggregate_price_to_amount()?;
+
                 separate_address_vecs
                     .par_iter_mut()
-                    .try_for_each(|Filtered(_, v)| {
+                    .try_for_each(|v| {
                         v.reset_state_starting_height();
                         v.state.as_mut().unwrap().reset_price_to_amount_if_needed()
                     })?;
@@ -839,13 +843,13 @@ impl Vecs {
 
                 self.utxo_cohorts
                     .iter_separate_mut()
-                    .for_each(|Filtered(_, v)| {
+                    .for_each(|v| {
                         v.state.as_mut().unwrap().reset_single_iteration_values()
                     });
 
                 self.address_cohorts
                     .iter_separate_mut()
-                    .for_each(|Filtered(_, v)| {
+                    .for_each(|v| {
                         v.state.as_mut().unwrap().reset_single_iteration_values()
                     });
 
@@ -1328,11 +1332,11 @@ impl Vecs {
 
                 self.utxo_cohorts
                     .par_iter_separate_mut()
-                    .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs)
+                    .map(|v| v as &mut dyn DynCohortVecs)
                     .chain(
                         self.address_cohorts
                             .par_iter_separate_mut()
-                            .map(|Filtered(_, v)| v as &mut dyn DynCohortVecs),
+                            .map(|v| v as &mut dyn DynCohortVecs),
                     )
                     .try_for_each(|v| {
                         v.truncate_push(height)?;
@@ -1340,6 +1344,10 @@ impl Vecs {
                             height, price, dateindex, date_price,
                         )
                     })?;
+
+                // Compute and push percentiles for aggregate cohorts (all, sth, lth)
+                self.utxo_cohorts
+                    .truncate_push_aggregate_percentiles(height)?;
 
                 if height != last_height
                     && height != Height::ZERO
@@ -1454,7 +1462,7 @@ impl Vecs {
                     starting_indexes.dateindex,
                     self.utxo_cohorts
                         .all
-                        .1
+                        .inner
                         .indexes_to_supply
                         .dollars
                         .as_ref()
@@ -1474,14 +1482,14 @@ impl Vecs {
         let height_to_supply = &self
             .utxo_cohorts
             .all
-            .1
+            .inner
             .height_to_supply_value
             .bitcoin
             .clone();
         let dateindex_to_supply = self
             .utxo_cohorts
             .all
-            .1
+            .inner
             .indexes_to_supply
             .bitcoin
             .dateindex
@@ -1491,11 +1499,11 @@ impl Vecs {
             .indexes_to_market_cap
             .as_ref()
             .map(|v| v.dateindex.as_ref().unwrap().clone());
-        let height_to_realized_cap = self.utxo_cohorts.all.1.height_to_realized_cap.clone();
+        let height_to_realized_cap = self.utxo_cohorts.all.inner.height_to_realized_cap.clone();
         let dateindex_to_realized_cap = self
             .utxo_cohorts
             .all
-            .1
+            .inner
             .indexes_to_realized_cap
             .as_ref()
             .map(|v| v.dateindex.unwrap_last().clone());
@@ -1615,10 +1623,10 @@ impl Vecs {
 
         self.utxo_cohorts
             .par_iter_separate_mut()
-            .try_for_each(|Filtered(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
+            .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
         self.address_cohorts
             .par_iter_separate_mut()
-            .try_for_each(|Filtered(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
+            .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
         self.addresstype_to_height_to_addr_count
@@ -1816,13 +1824,12 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                 if is_new
                     || from_any_empty
-                    || vecs.amount_range.get_mut(amount).0.clone()
-                        != vecs.amount_range.get_mut(prev_amount).0.clone()
+                    || vecs.amount_range.get_mut(amount).filter().clone()
+                        != vecs.amount_range.get_mut(prev_amount).filter().clone()
                 {
                     if !is_new && !from_any_empty {
                         vecs.amount_range
                             .get_mut(prev_amount)
-                            .1
                             .state
                             .as_mut()
                             .unwrap()
@@ -1833,7 +1840,6 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                     vecs.amount_range
                         .get_mut(amount)
-                        .1
                         .state
                         .as_mut()
                         .unwrap()
@@ -1841,7 +1847,6 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                 } else {
                     vecs.amount_range
                         .get_mut(amount)
-                        .1
                         .state
                         .as_mut()
                         .unwrap()
@@ -1913,12 +1918,11 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                     let will_be_empty = addressdata.has_1_utxos();
 
                     if will_be_empty
-                        || vecs.amount_range.get_mut(amount).0.clone()
-                            != vecs.amount_range.get_mut(prev_amount).0.clone()
+                        || vecs.amount_range.get_mut(amount).filter().clone()
+                            != vecs.amount_range.get_mut(prev_amount).filter().clone()
                     {
                         vecs.amount_range
                             .get_mut(prev_amount)
-                            .1
                             .state
                             .as_mut()
                             .unwrap()
@@ -1944,7 +1948,6 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                         } else {
                             vecs.amount_range
                                 .get_mut(amount)
-                                .1
                                 .state
                                 .as_mut()
                                 .unwrap()
@@ -1953,7 +1956,6 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                     } else {
                         vecs.amount_range
                             .get_mut(amount)
-                            .1
                             .state
                             .as_mut()
                             .unwrap()

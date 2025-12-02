@@ -239,8 +239,6 @@ impl Computer {
             exit,
         )?;
 
-        return Ok(());
-
         info!("Computing cointime...");
         self.cointime.compute(
             &self.indexes,

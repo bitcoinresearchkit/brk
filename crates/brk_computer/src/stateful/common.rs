@@ -1,4 +1,5 @@
 use brk_error::{Error, Result};
+use brk_grouper::{CohortContext, Filter};
 use brk_traversable::Traversable;
 use brk_types::{
     Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
@@ -21,6 +22,9 @@ use crate::{
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
+    #[traversable(skip)]
+    pub filter: Filter,
+
     // Cumulative
     pub height_to_realized_cap: Option<EagerVec<PcoVec<Height, Dollars>>>,
     pub height_to_supply: EagerVec<PcoVec<Height, Sats>>,
@@ -167,7 +171,8 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
-        cohort_name: Option<&str>,
+        filter: Filter,
+        context: CohortContext,
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -179,9 +184,14 @@ impl Vecs {
 
         let version = parent_version + Version::ZERO;
 
-        // let prefix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{s}_{name}"));
-
-        let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
+        let name_prefix = filter.to_full_name(context);
+        let suffix = |s: &str| {
+            if name_prefix.is_empty() {
+                s.to_string()
+            } else {
+                format!("{name_prefix}_{s}")
+            }
+        };
 
         let dateindex_to_supply_in_profit = compute_dollars.then(|| {
             EagerVec::forced_import(db, &suffix("supply_in_profit"), version + Version::ZERO)
@@ -203,6 +213,8 @@ impl Vecs {
         });
 
         Ok(Self {
+            filter,
+
             height_to_supply_in_profit: compute_dollars.then(|| {
                 EagerVec::forced_import(db, &suffix("supply_in_profit"), version + Version::ZERO)
                     .unwrap()
@@ -1591,6 +1603,12 @@ impl Vecs {
                     .as_mut()
                     .unwrap()
                     .truncate_push(dateindex, date_unrealized_state.unrealized_loss)?;
+            }
+
+            // Compute and push price percentiles
+            if let Some(price_percentiles) = self.price_percentiles.as_mut() {
+                let percentile_prices = state.compute_percentile_prices();
+                price_percentiles.truncate_push(height, &percentile_prices)?;
             }
         }
 

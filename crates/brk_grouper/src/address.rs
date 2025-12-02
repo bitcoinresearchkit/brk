@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use rayon::prelude::*;
 use vecdb::AnyExportableVec;
 
-use crate::Filtered;
+use crate::Filter;
 
 use super::{ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount};
 
@@ -14,6 +14,24 @@ pub struct AddressGroups<T> {
 }
 
 impl<T> AddressGroups<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
+        Self {
+            ge_amount: ByGreatEqualAmount::new(&mut create),
+            amount_range: ByAmountRange::new(&mut create),
+            lt_amount: ByLowerThanAmount::new(&mut create),
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.ge_amount
+            .iter()
+            .chain(self.amount_range.iter())
+            .chain(self.lt_amount.iter())
+    }
+
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.ge_amount
             .iter_mut()
@@ -34,26 +52,6 @@ impl<T> AddressGroups<T> {
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.lt_amount.iter_mut().chain(self.ge_amount.iter_mut())
-    }
-}
-
-impl<T> AddressGroups<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        self.amount_range
-            .iter_right()
-            .chain(self.lt_amount.iter_right())
-            .chain(self.ge_amount.iter_right())
-    }
-}
-
-impl<T> From<AddressGroups<T>> for AddressGroups<Filtered<T>> {
-    #[inline]
-    fn from(value: AddressGroups<T>) -> Self {
-        Self {
-            amount_range: ByAmountRange::from(value.amount_range),
-            lt_amount: ByLowerThanAmount::from(value.lt_amount),
-            ge_amount: ByGreatEqualAmount::from(value.ge_amount),
-        }
     }
 }
 
