@@ -1,8 +1,6 @@
 use brk_traversable::Traversable;
 
-use crate::Filtered;
-
-use super::Filter;
+use super::{Filter, TimeFilter};
 
 #[derive(Default, Clone, Traversable)]
 pub struct ByMinAge<T> {
@@ -27,6 +25,56 @@ pub struct ByMinAge<T> {
 }
 
 impl<T> ByMinAge<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
+        Self {
+            _1d: create(Filter::Time(TimeFilter::GreaterOrEqual(1))),
+            _1w: create(Filter::Time(TimeFilter::GreaterOrEqual(7))),
+            _1m: create(Filter::Time(TimeFilter::GreaterOrEqual(30))),
+            _2m: create(Filter::Time(TimeFilter::GreaterOrEqual(2 * 30))),
+            _3m: create(Filter::Time(TimeFilter::GreaterOrEqual(3 * 30))),
+            _4m: create(Filter::Time(TimeFilter::GreaterOrEqual(4 * 30))),
+            _5m: create(Filter::Time(TimeFilter::GreaterOrEqual(5 * 30))),
+            _6m: create(Filter::Time(TimeFilter::GreaterOrEqual(6 * 30))),
+            _1y: create(Filter::Time(TimeFilter::GreaterOrEqual(365))),
+            _2y: create(Filter::Time(TimeFilter::GreaterOrEqual(2 * 365))),
+            _3y: create(Filter::Time(TimeFilter::GreaterOrEqual(3 * 365))),
+            _4y: create(Filter::Time(TimeFilter::GreaterOrEqual(4 * 365))),
+            _5y: create(Filter::Time(TimeFilter::GreaterOrEqual(5 * 365))),
+            _6y: create(Filter::Time(TimeFilter::GreaterOrEqual(6 * 365))),
+            _7y: create(Filter::Time(TimeFilter::GreaterOrEqual(7 * 365))),
+            _8y: create(Filter::Time(TimeFilter::GreaterOrEqual(8 * 365))),
+            _10y: create(Filter::Time(TimeFilter::GreaterOrEqual(10 * 365))),
+            _12y: create(Filter::Time(TimeFilter::GreaterOrEqual(12 * 365))),
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [
+            &self._1d,
+            &self._1w,
+            &self._1m,
+            &self._2m,
+            &self._3m,
+            &self._4m,
+            &self._5m,
+            &self._6m,
+            &self._1y,
+            &self._2y,
+            &self._3y,
+            &self._4y,
+            &self._5y,
+            &self._6y,
+            &self._7y,
+            &self._8y,
+            &self._10y,
+            &self._12y,
+        ]
+        .into_iter()
+    }
+
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
             &mut self._1d,
@@ -49,57 +97,5 @@ impl<T> ByMinAge<T> {
             &mut self._12y,
         ]
         .into_iter()
-    }
-}
-
-impl<T> ByMinAge<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._1d.1,
-            &self._1w.1,
-            &self._1m.1,
-            &self._2m.1,
-            &self._3m.1,
-            &self._4m.1,
-            &self._5m.1,
-            &self._6m.1,
-            &self._1y.1,
-            &self._2y.1,
-            &self._3y.1,
-            &self._4y.1,
-            &self._5y.1,
-            &self._6y.1,
-            &self._7y.1,
-            &self._8y.1,
-            &self._10y.1,
-            &self._12y.1,
-        ]
-        .into_iter()
-    }
-}
-
-impl<T> From<ByMinAge<T>> for ByMinAge<Filtered<T>> {
-    #[inline]
-    fn from(value: ByMinAge<T>) -> Self {
-        Self {
-            _1d: (Filter::GreaterOrEqual(1), value._1d).into(),
-            _1w: (Filter::GreaterOrEqual(7), value._1w).into(),
-            _1m: (Filter::GreaterOrEqual(30), value._1m).into(),
-            _2m: (Filter::GreaterOrEqual(2 * 30), value._2m).into(),
-            _3m: (Filter::GreaterOrEqual(3 * 30), value._3m).into(),
-            _4m: (Filter::GreaterOrEqual(4 * 30), value._4m).into(),
-            _5m: (Filter::GreaterOrEqual(5 * 30), value._5m).into(),
-            _6m: (Filter::GreaterOrEqual(6 * 30), value._6m).into(),
-            _1y: (Filter::GreaterOrEqual(365), value._1y).into(),
-            _2y: (Filter::GreaterOrEqual(2 * 365), value._2y).into(),
-            _3y: (Filter::GreaterOrEqual(3 * 365), value._3y).into(),
-            _4y: (Filter::GreaterOrEqual(4 * 365), value._4y).into(),
-            _5y: (Filter::GreaterOrEqual(5 * 365), value._5y).into(),
-            _6y: (Filter::GreaterOrEqual(6 * 365), value._6y).into(),
-            _7y: (Filter::GreaterOrEqual(7 * 365), value._7y).into(),
-            _8y: (Filter::GreaterOrEqual(8 * 365), value._8y).into(),
-            _10y: (Filter::GreaterOrEqual(10 * 365), value._10y).into(),
-            _12y: (Filter::GreaterOrEqual(12 * 365), value._12y).into(),
-        }
     }
 }

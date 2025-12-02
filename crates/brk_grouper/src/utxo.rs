@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use crate::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
-    BySpendableType, ByTerm, Filter, Filtered,
+    BySpendableType, ByTerm, Filter,
 };
 
 #[derive(Default, Clone, Traversable)]
@@ -15,12 +15,44 @@ pub struct UTXOGroups<T> {
     pub ge_amount: ByGreatEqualAmount<T>,
     pub amount_range: ByAmountRange<T>,
     pub term: ByTerm<T>,
-    pub _type: BySpendableType<T>,
+    pub type_: BySpendableType<T>,
     pub max_age: ByMaxAge<T>,
     pub lt_amount: ByLowerThanAmount<T>,
 }
 
 impl<T> UTXOGroups<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
+        Self {
+            all: create(Filter::All),
+            age_range: ByAgeRange::new(&mut create),
+            epoch: ByEpoch::new(&mut create),
+            min_age: ByMinAge::new(&mut create),
+            ge_amount: ByGreatEqualAmount::new(&mut create),
+            amount_range: ByAmountRange::new(&mut create),
+            term: ByTerm::new(&mut create),
+            type_: BySpendableType::new(&mut create),
+            max_age: ByMaxAge::new(&mut create),
+            lt_amount: ByLowerThanAmount::new(&mut create),
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [&self.all]
+            .into_iter()
+            .chain(self.term.iter())
+            .chain(self.max_age.iter())
+            .chain(self.min_age.iter())
+            .chain(self.ge_amount.iter())
+            .chain(self.age_range.iter())
+            .chain(self.epoch.iter())
+            .chain(self.amount_range.iter())
+            .chain(self.lt_amount.iter())
+            .chain(self.type_.iter())
+    }
+
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [&mut self.all]
             .into_iter()
@@ -32,7 +64,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.epoch.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self.lt_amount.iter_mut())
-            .chain(self._type.iter_mut())
+            .chain(self.type_.iter_mut())
     }
 
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
@@ -40,7 +72,7 @@ impl<T> UTXOGroups<T> {
             .iter_mut()
             .chain(self.epoch.iter_mut())
             .chain(self.amount_range.iter_mut())
-            .chain(self._type.iter_mut())
+            .chain(self.type_.iter_mut())
     }
 
     pub fn par_iter_separate_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
@@ -51,7 +83,7 @@ impl<T> UTXOGroups<T> {
             .par_iter_mut()
             .chain(self.epoch.par_iter_mut())
             .chain(self.amount_range.par_iter_mut())
-            .chain(self._type.par_iter_mut())
+            .chain(self.type_.par_iter_mut())
     }
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
@@ -62,39 +94,5 @@ impl<T> UTXOGroups<T> {
             .chain(self.min_age.iter_mut())
             .chain(self.lt_amount.iter_mut())
             .chain(self.ge_amount.iter_mut())
-    }
-}
-
-impl<T> UTXOGroups<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [&self.all.1]
-            .into_iter()
-            .chain(self.term.iter_right())
-            .chain(self.max_age.iter_right())
-            .chain(self.min_age.iter_right())
-            .chain(self.age_range.iter_right())
-            .chain(self.epoch.iter_right())
-            .chain(self.amount_range.iter_right())
-            .chain(self._type.iter_right())
-            .chain(self.lt_amount.iter_right())
-            .chain(self.ge_amount.iter_right())
-    }
-}
-
-impl<T> From<UTXOGroups<T>> for UTXOGroups<Filtered<T>> {
-    #[inline]
-    fn from(value: UTXOGroups<T>) -> Self {
-        Self {
-            all: (Filter::All, value.all).into(),
-            term: ByTerm::from(value.term),
-            max_age: ByMaxAge::from(value.max_age),
-            min_age: ByMinAge::from(value.min_age),
-            age_range: ByAgeRange::from(value.age_range),
-            epoch: ByEpoch::from(value.epoch),
-            amount_range: ByAmountRange::from(value.amount_range),
-            lt_amount: ByLowerThanAmount::from(value.lt_amount),
-            ge_amount: ByGreatEqualAmount::from(value.ge_amount),
-            _type: BySpendableType::from(value._type),
-        }
     }
 }

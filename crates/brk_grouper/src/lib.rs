@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 mod address;
+mod amount_filter;
 mod by_address_type;
 mod by_age_range;
 mod by_amount_range;
@@ -14,10 +15,16 @@ mod by_spendable_type;
 mod by_term;
 mod by_type;
 mod by_unspendable_type;
+mod cohort_context;
 mod filter;
+mod filtered;
+mod state_level;
+mod term;
+mod time_filter;
 mod utxo;
 
 pub use address::*;
+pub use amount_filter::*;
 pub use by_address_type::*;
 pub use by_age_range::*;
 pub use by_amount_range::*;
@@ -31,5 +38,10 @@ pub use by_spendable_type::*;
 pub use by_term::*;
 pub use by_type::*;
 pub use by_unspendable_type::*;
+pub use cohort_context::*;
 pub use filter::*;
+pub use filtered::*;
+pub use state_level::*;
+pub use term::*;
+pub use time_filter::*;
 pub use utxo::*;

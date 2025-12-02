@@ -1,12 +1,15 @@
 use std::{ops::Deref, path::Path};
 
 use brk_error::Result;
+use brk_grouper::{CohortContext, Filter, Filtered, StateLevel};
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
-    Indexes, UTXOCohortState, indexes, price,
+    Indexes, PriceToAmount, UTXOCohortState,
+    grouped::PERCENTILES_LEN,
+    indexes, price,
     stateful::{
         common,
         r#trait::{CohortVecs, DynCohortVecs},
@@ -20,6 +23,10 @@ pub struct Vecs {
     #[traversable(skip)]
     pub state: Option<UTXOCohortState>,
 
+    /// For aggregate cohorts (all, sth, lth) that only need price_to_amount for percentiles
+    #[traversable(skip)]
+    pub price_to_amount: Option<PriceToAmount>,
+
     #[traversable(flatten)]
     pub inner: common::Vecs,
 }
@@ -28,31 +35,39 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
-        cohort_name: Option<&str>,
+        filter: Filter,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        states_path: Option<&Path>,
+        states_path: &Path,
+        state_level: StateLevel,
         extended: bool,
         compute_rel_to_all: bool,
         compute_adjusted: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
+        let full_name = filter.to_full_name(CohortContext::Utxo);
+
         Ok(Self {
             state_starting_height: None,
 
-            state: states_path.map(|states_path| {
-                UTXOCohortState::new(
-                    states_path,
-                    cohort_name.unwrap_or_default(),
-                    compute_dollars,
-                )
-            }),
+            state: if state_level.is_full() {
+                Some(UTXOCohortState::new(states_path, &full_name, compute_dollars))
+            } else {
+                None
+            },
+
+            price_to_amount: if state_level.is_price_only() && compute_dollars {
+                Some(PriceToAmount::create(states_path, &full_name))
+            } else {
+                None
+            },
 
             inner: common::Vecs::forced_import(
                 db,
-                cohort_name,
+                filter,
+                CohortContext::Utxo,
                 version,
                 indexes,
                 price,
@@ -173,9 +188,55 @@ impl CohortVecs for Vecs {
     }
 }
 
+impl Vecs {
+    /// Compute percentile prices for aggregate cohorts that have standalone price_to_amount.
+    /// Returns NaN array if price_to_amount is None or empty.
+    pub fn compute_percentile_prices_from_standalone(&self, supply: Sats) -> [Dollars; PERCENTILES_LEN] {
+        use crate::grouped::PERCENTILES;
+
+        let mut result = [Dollars::NAN; PERCENTILES_LEN];
+
+        let price_to_amount = match self.price_to_amount.as_ref() {
+            Some(p) => p,
+            None => return result,
+        };
+
+        if price_to_amount.is_empty() || supply == Sats::ZERO {
+            return result;
+        }
+
+        let total = u64::from(supply);
+        let targets = PERCENTILES.map(|p| total * u64::from(p) / 100);
+
+        let mut accumulated = 0u64;
+        let mut pct_idx = 0;
+
+        for (&price, &sats) in price_to_amount.iter() {
+            accumulated += u64::from(sats);
+
+            while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
+                result[pct_idx] = price;
+                pct_idx += 1;
+            }
+
+            if pct_idx >= PERCENTILES_LEN {
+                break;
+            }
+        }
+
+        result
+    }
+}
+
 impl Deref for Vecs {
     type Target = common::Vecs;
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+impl Filtered for Vecs {
+    fn filter(&self) -> &Filter {
+        &self.inner.filter
     }
 }

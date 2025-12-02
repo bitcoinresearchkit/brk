@@ -6,7 +6,7 @@ use brk_types::OutputType;
 use rayon::prelude::*;
 use vecdb::AnyExportableVec;
 
-use super::{Filter, Filtered};
+use super::Filter;
 
 pub const P2PK65: &str = "p2pk65";
 pub const P2PK33: &str = "p2pk33";
@@ -30,6 +30,22 @@ pub struct ByAddressType<T> {
 }
 
 impl<T> ByAddressType<T> {
+    pub fn new<F>(mut create: F) -> Self
+    where
+        F: FnMut(Filter) -> T,
+    {
+        Self {
+            p2pk65: create(Filter::Type(OutputType::P2PK65)),
+            p2pk33: create(Filter::Type(OutputType::P2PK33)),
+            p2pkh: create(Filter::Type(OutputType::P2PKH)),
+            p2sh: create(Filter::Type(OutputType::P2SH)),
+            p2wpkh: create(Filter::Type(OutputType::P2WPKH)),
+            p2wsh: create(Filter::Type(OutputType::P2WSH)),
+            p2tr: create(Filter::Type(OutputType::P2TR)),
+            p2a: create(Filter::Type(OutputType::P2A)),
+        }
+    }
+
     pub fn new_with_name<F>(f: F) -> Result<Self>
     where
         F: Fn(&'static str) -> Result<T>,
@@ -212,38 +228,6 @@ impl<T> ByAddressType<T> {
             (OutputType::P2A, &mut self.p2a),
         ]
         .into_iter()
-    }
-}
-
-impl<T> ByAddressType<Filtered<T>> {
-    pub fn iter_right(&self) -> impl Iterator<Item = &T> {
-        [
-            &self.p2pk65.1,
-            &self.p2pk33.1,
-            &self.p2pkh.1,
-            &self.p2sh.1,
-            &self.p2wpkh.1,
-            &self.p2wsh.1,
-            &self.p2tr.1,
-            &self.p2a.1,
-        ]
-        .into_iter()
-    }
-}
-
-impl<T> From<ByAddressType<T>> for ByAddressType<Filtered<T>> {
-    #[inline]
-    fn from(value: ByAddressType<T>) -> Self {
-        Self {
-            p2pk65: (Filter::Type(OutputType::P2PK65), value.p2pk65).into(),
-            p2pk33: (Filter::Type(OutputType::P2PK33), value.p2pk33).into(),
-            p2pkh: (Filter::Type(OutputType::P2PKH), value.p2pkh).into(),
-            p2sh: (Filter::Type(OutputType::P2SH), value.p2sh).into(),
-            p2wpkh: (Filter::Type(OutputType::P2WPKH), value.p2wpkh).into(),
-            p2wsh: (Filter::Type(OutputType::P2WSH), value.p2wsh).into(),
-            p2tr: (Filter::Type(OutputType::P2TR), value.p2tr).into(),
-            p2a: (Filter::Type(OutputType::P2A), value.p2a).into(),
-        }
     }
 }
 
