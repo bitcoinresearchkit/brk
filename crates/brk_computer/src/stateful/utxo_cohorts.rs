@@ -1458,10 +1458,14 @@ impl Vecs {
         let prev_timestamp = chain_state.last().unwrap().timestamp;
 
         let mut vecs = self
+            .0
             .age_range
             .iter_mut()
             .map(|v| (v.filter().clone(), &mut v.state))
             .collect::<Vec<_>>();
+
+        let mut sth_p2a = self.0.term.short.price_to_amount.as_mut();
+        let mut lth_p2a = self.0.term.long.price_to_amount.as_mut();
 
         let _ = chain_state
             .iter()
@@ -1490,6 +1494,21 @@ impl Vecs {
                             .decrement(&block_state.supply, block_state.price);
                     }
                 });
+
+                // Handle STH -> LTH transitions for price_to_amount
+                let prev_was_sth = prev_days_old < Term::THRESHOLD_DAYS;
+                let now_is_sth = days_old < Term::THRESHOLD_DAYS;
+
+                if prev_was_sth && !now_is_sth {
+                    if let Some(price) = block_state.price {
+                        if let Some(p2a) = sth_p2a.as_mut() {
+                            p2a.decrement(price, &block_state.supply);
+                        }
+                        if let Some(p2a) = lth_p2a.as_mut() {
+                            p2a.increment(price, &block_state.supply);
+                        }
+                    }
+                }
 
                 ControlFlow::Continue(())
             });
