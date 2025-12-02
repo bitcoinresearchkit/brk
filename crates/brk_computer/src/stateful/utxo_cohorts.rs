@@ -1457,15 +1457,32 @@ impl Vecs {
 
         let prev_timestamp = chain_state.last().unwrap().timestamp;
 
-        let mut vecs = self
-            .0
-            .age_range
+        // Extract all mutable references upfront to avoid borrow checker issues
+        // Use a single destructuring to get non-overlapping mutable borrows
+        let UTXOGroups {
+            all,
+            term,
+            age_range,
+            ..
+        } = &mut self.0;
+
+        let mut vecs = age_range
             .iter_mut()
             .map(|v| (v.filter().clone(), &mut v.state))
             .collect::<Vec<_>>();
 
-        let mut sth_p2a = self.0.term.short.price_to_amount.as_mut();
-        let mut lth_p2a = self.0.term.long.price_to_amount.as_mut();
+        // Collect aggregate cohorts' filter and p2a for age transitions
+        let mut aggregate_p2a: Vec<(Filter, Option<&mut crate::PriceToAmount>)> = vec![
+            (all.filter().clone(), all.price_to_amount.as_mut()),
+            (
+                term.short.filter().clone(),
+                term.short.price_to_amount.as_mut(),
+            ),
+            (
+                term.long.filter().clone(),
+                term.long.price_to_amount.as_mut(),
+            ),
+        ];
 
         let _ = chain_state
             .iter()
@@ -1495,19 +1512,23 @@ impl Vecs {
                     }
                 });
 
-                // Handle STH -> LTH transitions for price_to_amount
-                let prev_was_sth = prev_days_old < Term::THRESHOLD_DAYS;
-                let now_is_sth = days_old < Term::THRESHOLD_DAYS;
+                // Handle age transitions for aggregate cohorts' price_to_amount
+                // Check which cohorts the UTXO was in vs is now in, and increment/decrement accordingly
+                if let Some(price) = block_state.price {
+                    aggregate_p2a.iter_mut().for_each(|(filter, p2a)| {
+                        let is = filter.contains_time(days_old);
+                        let was = filter.contains_time(prev_days_old);
 
-                if prev_was_sth && !now_is_sth {
-                    if let Some(price) = block_state.price {
-                        if let Some(p2a) = sth_p2a.as_mut() {
-                            p2a.decrement(price, &block_state.supply);
+                        if is && !was {
+                            if let Some(p2a) = p2a.as_mut() {
+                                p2a.increment(price, &block_state.supply);
+                            }
+                        } else if was && !is {
+                            if let Some(p2a) = p2a.as_mut() {
+                                p2a.decrement(price, &block_state.supply);
+                            }
                         }
-                        if let Some(p2a) = lth_p2a.as_mut() {
-                            p2a.increment(price, &block_state.supply);
-                        }
-                    }
+                    });
                 }
 
                 ControlFlow::Continue(())
@@ -1519,12 +1540,31 @@ impl Vecs {
         height_to_sent: FxHashMap<Height, Transacted>,
         chain_state: &mut [BlockState],
     ) {
-        let mut time_based_vecs = self
-            .0
-            .age_range
-            .iter_mut()
-            .chain(self.0.epoch.iter_mut())
-            .collect::<Vec<_>>();
+        // Extract all mutable references upfront to avoid borrow checker issues
+        let UTXOGroups {
+            all,
+            term,
+            age_range,
+            epoch,
+            type_,
+            amount_range,
+            ..
+        } = &mut self.0;
+
+        let mut time_based_vecs = age_range.iter_mut().chain(epoch.iter_mut()).collect::<Vec<_>>();
+
+        // Collect aggregate cohorts' filter and p2a for iteration
+        let mut aggregate_p2a: Vec<(Filter, Option<&mut crate::PriceToAmount>)> = vec![
+            (all.filter().clone(), all.price_to_amount.as_mut()),
+            (
+                term.short.filter().clone(),
+                term.short.price_to_amount.as_mut(),
+            ),
+            (
+                term.long.filter().clone(),
+                term.long.price_to_amount.as_mut(),
+            ),
+        ];
 
         let last_timestamp = chain_state.last().unwrap().timestamp;
         let current_price = chain_state.last().unwrap().price;
@@ -1573,8 +1613,7 @@ impl Vecs {
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    self.0
-                        .type_
+                    type_
                         .get_mut(output_type)
                         .state
                         .as_mut()
@@ -1592,8 +1631,7 @@ impl Vecs {
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    self.0
-                        .amount_range
+                    amount_range
                         .get_mut(group)
                         .state
                         .as_mut()
@@ -1608,23 +1646,17 @@ impl Vecs {
                         );
                 });
 
-            // Update aggregate cohorts' price_to_amount
-            // All sends decrement from "all", and either from "sth" or "lth" based on age
+            // Update aggregate cohorts' price_to_amount using filter.contains_time()
             if let Some(prev_price) = prev_price {
                 let supply_state = &sent.spendable_supply;
                 if supply_state.value.is_not_zero() {
-                    const STH_THRESHOLD: usize = Term::THRESHOLD_DAYS;
-
-                    if let Some(p2a) = self.0.all.price_to_amount.as_mut() {
-                        p2a.decrement(prev_price, supply_state);
-                    }
-                    if days_old < STH_THRESHOLD {
-                        if let Some(p2a) = self.0.term.short.price_to_amount.as_mut() {
-                            p2a.decrement(prev_price, supply_state);
+                    aggregate_p2a.iter_mut().for_each(|(filter, p2a)| {
+                        if filter.contains_time(days_old) {
+                            if let Some(p2a) = p2a.as_mut() {
+                                p2a.decrement(prev_price, supply_state);
+                            }
                         }
-                    } else if let Some(p2a) = self.0.term.long.price_to_amount.as_mut() {
-                        p2a.decrement(prev_price, supply_state);
-                    }
+                    });
                 }
             }
         });
@@ -1643,16 +1675,17 @@ impl Vecs {
         });
 
         // Update aggregate cohorts' price_to_amount
-        // New UTXOs are always part of "all" and are always < 150 days old (so part of "sth")
+        // New UTXOs have days_old = 0, so use filter.contains_time(0) to check applicability
         if let Some(price) = price
             && supply_state.value.is_not_zero()
         {
-            if let Some(p2a) = self.0.all.price_to_amount.as_mut() {
-                p2a.increment(price, &supply_state);
-            }
-            if let Some(p2a) = self.0.term.short.price_to_amount.as_mut() {
-                p2a.increment(price, &supply_state);
-            }
+            self.0.iter_aggregate_mut().for_each(|v| {
+                if v.filter().contains_time(0) {
+                    if let Some(p2a) = v.price_to_amount.as_mut() {
+                        p2a.increment(price, &supply_state);
+                    }
+                }
+            });
         }
 
         self.type_.iter_mut().for_each(|vecs| {
@@ -1791,81 +1824,58 @@ impl Vecs {
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
 
         // Flush aggregate cohorts' price_to_amount
-        if let Some(p2a) = self.0.all.price_to_amount.as_mut() {
-            p2a.flush(height)?;
-        }
-        if let Some(p2a) = self.0.term.short.price_to_amount.as_mut() {
-            p2a.flush(height)?;
-        }
-        if let Some(p2a) = self.0.term.long.price_to_amount.as_mut() {
-            p2a.flush(height)?;
-        }
-
-        Ok(())
+        self.0.iter_aggregate_mut().try_for_each(|v| {
+            if let Some(p2a) = v.price_to_amount.as_mut() {
+                p2a.flush(height)?;
+            }
+            Ok(())
+        })
     }
 
     /// Reset aggregate cohorts' price_to_amount when starting from scratch
     pub fn reset_aggregate_price_to_amount(&mut self) -> Result<()> {
-        if let Some(p2a) = self.0.all.price_to_amount.as_mut() {
-            p2a.clean()?;
-            p2a.init();
-        }
-        if let Some(p2a) = self.0.term.short.price_to_amount.as_mut() {
-            p2a.clean()?;
-            p2a.init();
-        }
-        if let Some(p2a) = self.0.term.long.price_to_amount.as_mut() {
-            p2a.clean()?;
-            p2a.init();
-        }
-        Ok(())
+        self.0.iter_aggregate_mut().try_for_each(|v| {
+            if let Some(p2a) = v.price_to_amount.as_mut() {
+                p2a.clean()?;
+                p2a.init();
+            }
+            Ok(())
+        })
     }
 
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
     /// Must be called after receive()/send() when price_to_amount is up to date.
     pub fn truncate_push_aggregate_percentiles(&mut self, height: Height) -> Result<()> {
-        // Helper to compute supply by summing age_range cohorts matching a filter
-        let compute_supply = |filter: &Filter| -> Sats {
-            self.0
-                .age_range
-                .iter()
-                .filter(|v| filter.includes(v.filter()))
-                .map(|v| v.state.as_ref().unwrap().supply.value)
-                .fold(Sats::ZERO, |acc, v| acc + v)
-        };
+        // First, compute supplies for each aggregate cohort by summing age_range sub-cohorts
+        let supplies: Vec<(Filter, Sats)> = self
+            .0
+            .iter_aggregate()
+            .map(|v| {
+                let filter = v.filter().clone();
+                let supply = self
+                    .0
+                    .age_range
+                    .iter()
+                    .filter(|sub| filter.includes(sub.filter()))
+                    .map(|sub| sub.state.as_ref().unwrap().supply.value)
+                    .fold(Sats::ZERO, |acc, v| acc + v);
+                (filter, supply)
+            })
+            .collect();
 
-        // Compute and push percentiles for "all"
-        if self.0.all.price_to_amount.is_some() {
-            let supply = compute_supply(self.0.all.filter());
-            let percentiles = self.0.all.compute_percentile_prices_from_standalone(supply);
-            if let Some(pp) = self.0.all.inner.price_percentiles.as_mut() {
-                pp.truncate_push(height, &percentiles)?;
-            }
-        }
-
-        // Compute and push percentiles for "sth"
-        if self.0.term.short.price_to_amount.is_some() {
-            let supply = compute_supply(self.0.term.short.filter());
-            let percentiles = self
+        // Then, compute and push percentiles for each aggregate cohort
+        for (filter, supply) in supplies {
+            let v = self
                 .0
-                .term
-                .short
-                .compute_percentile_prices_from_standalone(supply);
-            if let Some(pp) = self.0.term.short.inner.price_percentiles.as_mut() {
-                pp.truncate_push(height, &percentiles)?;
-            }
-        }
+                .iter_aggregate_mut()
+                .find(|v| v.filter() == &filter)
+                .unwrap();
 
-        // Compute and push percentiles for "lth"
-        if self.0.term.long.price_to_amount.is_some() {
-            let supply = compute_supply(self.0.term.long.filter());
-            let percentiles = self
-                .0
-                .term
-                .long
-                .compute_percentile_prices_from_standalone(supply);
-            if let Some(pp) = self.0.term.long.inner.price_percentiles.as_mut() {
-                pp.truncate_push(height, &percentiles)?;
+            if v.price_to_amount.is_some() {
+                let percentiles = v.compute_percentile_prices_from_standalone(supply);
+                if let Some(pp) = v.inner.price_percentiles.as_mut() {
+                    pp.truncate_push(height, &percentiles)?;
+                }
             }
         }
 

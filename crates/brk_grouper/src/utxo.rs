@@ -95,4 +95,18 @@ impl<T> UTXOGroups<T> {
             .chain(self.lt_amount.iter_mut())
             .chain(self.ge_amount.iter_mut())
     }
+
+    /// Iterator over aggregate cohorts (all, sth, lth) that compute values from sub-cohorts.
+    /// These are cohorts with StateLevel::PriceOnly that derive values from stateful sub-cohorts.
+    pub fn iter_aggregate(&self) -> impl Iterator<Item = &T> {
+        [&self.all].into_iter().chain(self.term.iter())
+    }
+
+    /// Iterator over aggregate cohorts (all, sth, lth) that compute values from sub-cohorts.
+    /// These are cohorts with StateLevel::PriceOnly that derive values from stateful sub-cohorts.
+    pub fn iter_aggregate_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [&mut self.all]
+            .into_iter()
+            .chain(self.term.iter_mut())
+    }
 }
