@@ -11,6 +11,7 @@ use crate::{
     },
     indexes::{self, Indexes},
     price,
+    utils::OptionExt,
 };
 
 #[derive(Clone, Traversable)]
@@ -47,115 +48,40 @@ impl Vecs {
         let compute_dollars = price.is_some();
         let version = parent_version + Version::ZERO;
 
+        let last = VecBuilderOptions::default().add_last();
+        let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
+
+        macro_rules! import_di {
+            ($name:expr) => {
+                ComputedVecsFromDateIndex::forced_import(
+                    db, &suffix($name), Source::Compute, version, indexes, last.clone(),
+                )?
+            };
+        }
+
         Ok(Self {
             id,
             indexes_to_blocks_mined: ComputedVecsFromHeight::forced_import(
-                db,
-                &suffix("blocks_mined"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
+                db, &suffix("blocks_mined"), Source::Compute, version, indexes, sum_cum.clone(),
             )?,
-            indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1w_blocks_mined"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1m_blocks_mined: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1m_blocks_mined"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1y_blocks_mined: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1y_blocks_mined"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
+            indexes_to_1w_blocks_mined: import_di!("1w_blocks_mined"),
+            indexes_to_1m_blocks_mined: import_di!("1m_blocks_mined"),
+            indexes_to_1y_blocks_mined: import_di!("1y_blocks_mined"),
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
-                db,
-                &suffix("subsidy"),
-                Source::Compute,
-                version + Version::ZERO,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-                compute_dollars,
-                indexes,
+                db, &suffix("subsidy"), Source::Compute, version, sum_cum.clone(), compute_dollars, indexes,
             )?,
             indexes_to_fee: ComputedValueVecsFromHeight::forced_import(
-                db,
-                &suffix("fee"),
-                Source::Compute,
-                version + Version::ZERO,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-                compute_dollars,
-                indexes,
+                db, &suffix("fee"), Source::Compute, version, sum_cum.clone(), compute_dollars, indexes,
             )?,
             indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
-                db,
-                &suffix("coinbase"),
-                Source::Compute,
-                version + Version::ZERO,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-                compute_dollars,
-                indexes,
+                db, &suffix("coinbase"), Source::Compute, version, sum_cum, compute_dollars, indexes,
             )?,
-            indexes_to_dominance: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("dominance"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1d_dominance: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1d_dominance"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1w_dominance: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1w_dominance"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1m_dominance: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1m_dominance"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1y_dominance: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("1y_dominance"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_days_since_block: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &suffix("days_since_block"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
+            indexes_to_dominance: import_di!("dominance"),
+            indexes_to_1d_dominance: import_di!("1d_dominance"),
+            indexes_to_1w_dominance: import_di!("1w_dominance"),
+            indexes_to_1m_dominance: import_di!("1m_dominance"),
+            indexes_to_1y_dominance: import_di!("1y_dominance"),
+            indexes_to_days_since_block: import_di!("days_since_block"),
         })
     }
 
@@ -222,14 +148,14 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let height_to_blocks_mined = self.indexes_to_blocks_mined.height.as_ref().unwrap();
+        let height_to_blocks_mined = self.indexes_to_blocks_mined.height.u();
 
         self.indexes_to_subsidy
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     height_to_blocks_mined,
-                    chain.indexes_to_subsidy.sats.height.as_ref().unwrap(),
+                    chain.indexes_to_subsidy.sats.height.u(),
                     |(h, mined, sats, ..)| {
                         (
                             h,
@@ -271,7 +197,7 @@ impl Vecs {
                 vec.compute_transform2(
                     starting_indexes.height,
                     height_to_blocks_mined,
-                    chain.indexes_to_coinbase.sats.height.as_ref().unwrap(),
+                    chain.indexes_to_coinbase.sats.height.u(),
                     |(h, mined, sats, ..)| {
                         (
                             h,
@@ -313,8 +239,8 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
-                    self.indexes_to_1w_blocks_mined.dateindex.as_ref().unwrap(),
-                    chain.indexes_to_1w_block_count.dateindex.as_ref().unwrap(),
+                    self.indexes_to_1w_blocks_mined.dateindex.u(),
+                    chain.indexes_to_1w_block_count.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -324,8 +250,8 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
-                    self.indexes_to_1m_blocks_mined.dateindex.as_ref().unwrap(),
-                    chain.indexes_to_1m_block_count.dateindex.as_ref().unwrap(),
+                    self.indexes_to_1m_blocks_mined.dateindex.u(),
+                    chain.indexes_to_1m_block_count.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -335,8 +261,8 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |vec| {
                 vec.compute_percentage(
                     starting_indexes.dateindex,
-                    self.indexes_to_1y_blocks_mined.dateindex.as_ref().unwrap(),
-                    chain.indexes_to_1y_block_count.dateindex.as_ref().unwrap(),
+                    self.indexes_to_1y_blocks_mined.dateindex.u(),
+                    chain.indexes_to_1y_block_count.dateindex.u(),
                     exit,
                 )?;
                 Ok(())

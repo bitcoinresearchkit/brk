@@ -7,7 +7,7 @@ use vecdb::{
     VecIndex,
 };
 
-use crate::{Indexes, grouped::Source, indexes, price};
+use crate::{Indexes, grouped::Source, indexes, price, utils::OptionExt};
 
 use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
@@ -56,7 +56,7 @@ impl ComputedValueVecsFromTxindex {
         let bitcoin_txindex = LazyVecFrom1::init(
             &name_btc,
             version + VERSION,
-            source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
+            source_vec.map_or_else(|| sats.txindex.u().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| iter.get_at(txindex.to_usize()).map(Bitcoin::from),
         );
 
@@ -130,7 +130,7 @@ impl ComputedValueVecsFromTxindex {
     //     ) -> Result<()>,
     // {
     //     compute(
-    //         self.sats.txindex.as_mut().unwrap(),
+    //         self.sats.txindex.um(),
     //         indexer,
     //         indexes,
     //         starting_indexes,
@@ -178,7 +178,7 @@ impl ComputedValueVecsFromTxindex {
         )?;
 
         if let Some(dollars) = self.dollars.as_mut() {
-            let dollars_txindex = self.dollars_txindex.as_mut().unwrap();
+            let dollars_txindex = self.dollars_txindex.um();
 
             dollars.compute_rest_from_bitcoin(
                 indexer,
@@ -187,7 +187,7 @@ impl ComputedValueVecsFromTxindex {
                 exit,
                 &self.bitcoin,
                 Some(dollars_txindex),
-                price.as_ref().unwrap(),
+                price.u(),
             )?;
         }
 

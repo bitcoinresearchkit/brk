@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, CheckedSub, Dollars, StoredF32, StoredF64, Version};
 use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
 
-use crate::grouped::ComputedVecsFromDateIndex;
+use crate::{grouped::ComputedVecsFromDateIndex, utils::OptionExt};
 
 use super::{
     Indexes, chain,
@@ -60,220 +60,63 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
+        let v0 = parent_version;
+        let v1 = parent_version + Version::ONE;
 
-        let version = parent_version + Version::ZERO;
+        let last = || VecBuilderOptions::default().add_last();
+        let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
+
+        macro_rules! computed_h {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromHeight::forced_import(&db, $name, Source::Compute, v0, indexes, $opts)?
+            };
+            ($name:expr, $v:expr, $opts:expr) => {
+                ComputedVecsFromHeight::forced_import(&db, $name, Source::Compute, $v, indexes, $opts)?
+            };
+        }
+        macro_rules! computed_di {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v0, indexes, $opts)?
+            };
+        }
+        macro_rules! ratio_di {
+            ($name:expr) => {
+                ComputedRatioVecsFromDateIndex::forced_import(&db, $name, Source::None, v0, indexes, true)?
+            };
+        }
+        macro_rules! value_h {
+            ($name:expr) => {
+                ComputedValueVecsFromHeight::forced_import(&db, $name, Source::Compute, v1, last(), compute_dollars, indexes)?
+            };
+        }
 
         let this = Self {
-            indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(
-                &db,
-                "coinblocks_created",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_coinblocks_stored: ComputedVecsFromHeight::forced_import(
-                &db,
-                "coinblocks_stored",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_liveliness: ComputedVecsFromHeight::forced_import(
-                &db,
-                "liveliness",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_vaultedness: ComputedVecsFromHeight::forced_import(
-                &db,
-                "vaultedness",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_activity_to_vaultedness_ratio: ComputedVecsFromHeight::forced_import(
-                &db,
-                "activity_to_vaultedness_ratio",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_vaulted_supply: ComputedValueVecsFromHeight::forced_import(
-                &db,
-                "vaulted_supply",
-                Source::Compute,
-                version + Version::ONE,
-                VecBuilderOptions::default().add_last(),
-                compute_dollars,
-                indexes,
-            )?,
-            indexes_to_active_supply: ComputedValueVecsFromHeight::forced_import(
-                &db,
-                "active_supply",
-                Source::Compute,
-                version + Version::ONE,
-                VecBuilderOptions::default().add_last(),
-                compute_dollars,
-                indexes,
-            )?,
-            indexes_to_thermo_cap: ComputedVecsFromHeight::forced_import(
-                &db,
-                "thermo_cap",
-                Source::Compute,
-                version + Version::ONE,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_investor_cap: ComputedVecsFromHeight::forced_import(
-                &db,
-                "investor_cap",
-                Source::Compute,
-                version + Version::ONE,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_vaulted_cap: ComputedVecsFromHeight::forced_import(
-                &db,
-                "vaulted_cap",
-                Source::Compute,
-                version + Version::ONE,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_active_cap: ComputedVecsFromHeight::forced_import(
-                &db,
-                "active_cap",
-                Source::Compute,
-                version + Version::ONE,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_vaulted_price: ComputedVecsFromHeight::forced_import(
-                &db,
-                "vaulted_price",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_vaulted_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "vaulted_price",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_active_price: ComputedVecsFromHeight::forced_import(
-                &db,
-                "active_price",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_active_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "active_price",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_true_market_mean: ComputedVecsFromHeight::forced_import(
-                &db,
-                "true_market_mean",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_true_market_mean_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "true_market_mean",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_cointime_value_destroyed: ComputedVecsFromHeight::forced_import(
-                &db,
-                "cointime_value_destroyed",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_cointime_value_created: ComputedVecsFromHeight::forced_import(
-                &db,
-                "cointime_value_created",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_cointime_value_stored: ComputedVecsFromHeight::forced_import(
-                &db,
-                "cointime_value_stored",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_cointime_price: ComputedVecsFromHeight::forced_import(
-                &db,
-                "cointime_price",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_cointime_cap: ComputedVecsFromHeight::forced_import(
-                &db,
-                "cointime_cap",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                &db,
-                "cointime_price",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                true,
-            )?,
-            indexes_to_cointime_adj_inflation_rate: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "cointime_adj_inflation_rate",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_cointime_adj_tx_btc_velocity: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "cointime_adj_tx_btc_velocity",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_cointime_adj_tx_usd_velocity: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "cointime_adj_tx_usd_velocity",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
+            indexes_to_coinblocks_created: computed_h!("coinblocks_created", sum_cum()),
+            indexes_to_coinblocks_stored: computed_h!("coinblocks_stored", sum_cum()),
+            indexes_to_liveliness: computed_h!("liveliness", last()),
+            indexes_to_vaultedness: computed_h!("vaultedness", last()),
+            indexes_to_activity_to_vaultedness_ratio: computed_h!("activity_to_vaultedness_ratio", last()),
+            indexes_to_vaulted_supply: value_h!("vaulted_supply"),
+            indexes_to_active_supply: value_h!("active_supply"),
+            indexes_to_thermo_cap: computed_h!("thermo_cap", v1, last()),
+            indexes_to_investor_cap: computed_h!("investor_cap", v1, last()),
+            indexes_to_vaulted_cap: computed_h!("vaulted_cap", v1, last()),
+            indexes_to_active_cap: computed_h!("active_cap", v1, last()),
+            indexes_to_vaulted_price: computed_h!("vaulted_price", last()),
+            indexes_to_vaulted_price_ratio: ratio_di!("vaulted_price"),
+            indexes_to_active_price: computed_h!("active_price", last()),
+            indexes_to_active_price_ratio: ratio_di!("active_price"),
+            indexes_to_true_market_mean: computed_h!("true_market_mean", last()),
+            indexes_to_true_market_mean_ratio: ratio_di!("true_market_mean"),
+            indexes_to_cointime_value_destroyed: computed_h!("cointime_value_destroyed", sum_cum()),
+            indexes_to_cointime_value_created: computed_h!("cointime_value_created", sum_cum()),
+            indexes_to_cointime_value_stored: computed_h!("cointime_value_stored", sum_cum()),
+            indexes_to_cointime_price: computed_h!("cointime_price", last()),
+            indexes_to_cointime_cap: computed_h!("cointime_cap", last()),
+            indexes_to_cointime_price_ratio: ratio_di!("cointime_price"),
+            indexes_to_cointime_adj_inflation_rate: computed_di!("cointime_adj_inflation_rate", last()),
+            indexes_to_cointime_adj_tx_btc_velocity: computed_di!("cointime_adj_tx_btc_velocity", last()),
+            indexes_to_cointime_adj_tx_usd_velocity: computed_di!("cointime_adj_tx_usd_velocity", last()),
 
             db,
         };
@@ -339,7 +182,7 @@ impl Vecs {
                     .into_iter();
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
+                    self.indexes_to_coinblocks_created.height.u(),
                     |(i, created, ..)| {
                         let destroyed = coinblocks_destroyed_iter.get_unwrap(i);
                         (i, created.checked_sub(destroyed).unwrap())
@@ -369,7 +212,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    liveliness.height.as_ref().unwrap(),
+                    liveliness.height.u(),
                     |(i, v, ..)| (i, StoredF64::from(1.0).checked_sub(v).unwrap()),
                     exit,
                 )?;
@@ -384,8 +227,8 @@ impl Vecs {
             |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
-                    liveliness.height.as_ref().unwrap(),
-                    vaultedness.height.as_ref().unwrap(),
+                    liveliness.height.u(),
+                    vaultedness.height.u(),
                     exit,
                 )?;
                 Ok(())
@@ -401,7 +244,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    vaultedness.height.as_ref().unwrap(),
+                    vaultedness.height.u(),
                     exit,
                 )?;
                 Ok(())
@@ -417,7 +260,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    liveliness.height.as_ref().unwrap(),
+                    liveliness.height.u(),
                     exit,
                 )?;
                 Ok(())
@@ -431,7 +274,7 @@ impl Vecs {
                     self.indexes_to_activity_to_vaultedness_ratio
                         .dateindex
                         .unwrap_last(),
-                    chain.indexes_to_inflation_rate.dateindex.as_ref().unwrap(),
+                    chain.indexes_to_inflation_rate.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -444,7 +287,7 @@ impl Vecs {
                     self.indexes_to_activity_to_vaultedness_ratio
                         .dateindex
                         .unwrap_last(),
-                    chain.indexes_to_tx_btc_velocity.dateindex.as_ref().unwrap(),
+                    chain.indexes_to_tx_btc_velocity.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -492,7 +335,7 @@ impl Vecs {
                     vec.compute_subtract(
                         starting_indexes.height,
                         realized_cap,
-                        self.indexes_to_thermo_cap.height.as_ref().unwrap(),
+                        self.indexes_to_thermo_cap.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -503,7 +346,7 @@ impl Vecs {
                     vec.compute_divide(
                         starting_indexes.height,
                         realized_cap,
-                        self.indexes_to_vaultedness.height.as_ref().unwrap(),
+                        self.indexes_to_vaultedness.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -514,7 +357,7 @@ impl Vecs {
                     vec.compute_multiply(
                         starting_indexes.height,
                         realized_cap,
-                        self.indexes_to_liveliness.height.as_ref().unwrap(),
+                        self.indexes_to_liveliness.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -525,7 +368,7 @@ impl Vecs {
                     vec.compute_divide(
                         starting_indexes.height,
                         realized_price,
-                        self.indexes_to_vaultedness.height.as_ref().unwrap(),
+                        self.indexes_to_vaultedness.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -543,7 +386,7 @@ impl Vecs {
                     vec.compute_multiply(
                         starting_indexes.height,
                         realized_price,
-                        self.indexes_to_liveliness.height.as_ref().unwrap(),
+                        self.indexes_to_liveliness.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -563,7 +406,7 @@ impl Vecs {
                 |vec| {
                     vec.compute_divide(
                         starting_indexes.height,
-                        self.indexes_to_investor_cap.height.as_ref().unwrap(),
+                        self.indexes_to_investor_cap.height.u(),
                         self.indexes_to_active_supply
                             .bitcoin
                             .height
@@ -592,7 +435,7 @@ impl Vecs {
                     vec.compute_multiply(
                         starting_indexes.height,
                         &price.chainindexes_to_price_close.height,
-                        indexes_to_coinblocks_destroyed.height.as_ref().unwrap(),
+                        indexes_to_coinblocks_destroyed.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -607,7 +450,7 @@ impl Vecs {
                     vec.compute_multiply(
                         starting_indexes.height,
                         &price.chainindexes_to_price_close.height,
-                        self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
+                        self.indexes_to_coinblocks_created.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -622,7 +465,7 @@ impl Vecs {
                     vec.compute_multiply(
                         starting_indexes.height,
                         &price.chainindexes_to_price_close.height,
-                        self.indexes_to_coinblocks_stored.height.as_ref().unwrap(),
+                        self.indexes_to_coinblocks_stored.height.u(),
                         exit,
                     )?;
                     Ok(())
@@ -648,7 +491,7 @@ impl Vecs {
                 .compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_multiply(
                         starting_indexes.height,
-                        self.indexes_to_cointime_price.height.as_ref().unwrap(),
+                        self.indexes_to_cointime_price.height.u(),
                         circulating_supply,
                         exit,
                     )?;
@@ -671,7 +514,7 @@ impl Vecs {
                         self.indexes_to_activity_to_vaultedness_ratio
                             .dateindex
                             .unwrap_last(),
-                        chain.indexes_to_tx_usd_velocity.dateindex.as_ref().unwrap(),
+                        chain.indexes_to_tx_usd_velocity.dateindex.u(),
                         exit,
                     )?;
                     Ok(())

@@ -6,7 +6,7 @@ use vecdb::{
     PcoVec, VecIndex, VecValue,
 };
 
-use crate::utils::get_percentile;
+use crate::utils::{get_percentile, OptionExt};
 
 use super::ComputedVecValue;
 
@@ -44,135 +44,34 @@ where
         options: VecBuilderOptions,
     ) -> Result<Self> {
         let only_one_active = options.is_only_one_active();
-
         let suffix = |s: &str| format!("{name}_{s}");
+        let maybe_suffix = |s: &str| if only_one_active { name.to_string() } else { suffix(s) };
+        let v = version + VERSION;
 
-        let maybe_suffix = |s: &str| {
-            if only_one_active {
-                name.to_string()
-            } else {
-                suffix(s)
-            }
-        };
+        macro_rules! import {
+            ($s:expr) => { Box::new(EagerVec::forced_import(db, &maybe_suffix($s), v).unwrap()) };
+        }
 
         let s = Self {
-            first: options.first.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("first"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            last: options.last.then(|| {
-                Box::new(EagerVec::forced_import(db, name, version + Version::ZERO).unwrap())
-            }),
-            min: options.min.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("min"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            max: options.max.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("max"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            median: options.median.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("median"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            average: options.average.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("avg"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
+            first: options.first.then(|| import!("first")),
+            last: options.last.then(|| Box::new(EagerVec::forced_import(db, name, v).unwrap())),
+            min: options.min.then(|| import!("min")),
+            max: options.max.then(|| import!("max")),
+            median: options.median.then(|| import!("median")),
+            average: options.average.then(|| import!("avg")),
             sum: options.sum.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &(if !options.last && !options.average && !options.min && !options.max {
-                            name.to_string()
-                        } else {
-                            maybe_suffix("sum")
-                        }),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
+                let sum_name = if !options.last && !options.average && !options.min && !options.max {
+                    name.to_string()
+                } else {
+                    maybe_suffix("sum")
+                };
+                Box::new(EagerVec::forced_import(db, &sum_name, v).unwrap())
             }),
-            cumulative: options.cumulative.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &suffix("cumulative"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            pct90: options.pct90.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("pct90"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            pct75: options.pct75.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("pct75"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            pct25: options.pct25.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("pct25"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
-            pct10: options.pct10.then(|| {
-                Box::new(
-                    EagerVec::forced_import(
-                        db,
-                        &maybe_suffix("pct10"),
-                        version + VERSION + Version::ZERO,
-                    )
-                    .unwrap(),
-                )
-            }),
+            cumulative: options.cumulative.then(|| Box::new(EagerVec::forced_import(db, &suffix("cumulative"), v).unwrap())),
+            pct90: options.pct90.then(|| import!("pct90")),
+            pct75: options.pct75.then(|| import!("pct75")),
+            pct25: options.pct25.then(|| import!("pct25")),
+            pct10: options.pct10.then(|| import!("pct10")),
         };
 
         Ok(s)
@@ -192,7 +91,7 @@ where
 
         let index = self.starting_index(max_from);
 
-        let cumulative_vec = self.cumulative.as_mut().unwrap();
+        let cumulative_vec = self.cumulative.um();
 
         let mut cumulative = index.decremented().map_or(T::from(0_usize), |index| {
             cumulative_vec.iter().get_unwrap(index)
@@ -421,7 +320,7 @@ where
                 let count_index = count_indexes_iter.next().unwrap();
 
                 if let Some(first) = self.first.as_mut() {
-                    let v = source_first_iter.as_mut().unwrap().get_unwrap(first_index);
+                    let v = source_first_iter.um().get_unwrap(first_index);
                     first.truncate_push_at(index, v)?;
                 }
 
@@ -431,7 +330,7 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_last_iter.as_mut().unwrap().get_unwrap(last_index);
+                    let v = source_last_iter.um().get_unwrap(last_index);
                     last.truncate_push_at(index, v)?;
                 }
 
@@ -444,7 +343,7 @@ where
                 if needs_values {
                     if needs_sorted {
                         if let Some(max) = self.max.as_mut() {
-                            let source_max_iter = source_max_iter.as_mut().unwrap();
+                            let source_max_iter = source_max_iter.um();
                             source_max_iter.set_position(first_index);
                             let mut values = source_max_iter
                                 .take(*count_index as usize)
@@ -454,7 +353,7 @@ where
                         }
 
                         if let Some(min) = self.min.as_mut() {
-                            let source_min_iter = source_min_iter.as_mut().unwrap();
+                            let source_min_iter = source_min_iter.um();
                             source_min_iter.set_position(first_index);
                             let mut values = source_min_iter
                                 .take(*count_index as usize)
@@ -466,7 +365,7 @@ where
 
                     if needs_average_sum_or_cumulative {
                         if let Some(average) = self.average.as_mut() {
-                            let source_average_iter = source_average_iter.as_mut().unwrap();
+                            let source_average_iter = source_average_iter.um();
                             source_average_iter.set_position(first_index);
                             let values = source_average_iter
                                 .take(*count_index as usize)
@@ -481,7 +380,7 @@ where
                         }
 
                         if needs_sum_or_cumulative {
-                            let source_sum_iter = source_sum_iter.as_mut().unwrap();
+                            let source_sum_iter = source_sum_iter.um();
                             source_sum_iter.set_position(first_index);
                             let values = source_sum_iter
                                 .take(*count_index as usize)
@@ -517,47 +416,47 @@ where
     }
 
     pub fn unwrap_first(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.first.as_ref().unwrap()
+        self.first.u()
     }
     #[allow(unused)]
     pub fn unwrap_average(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.average.as_ref().unwrap()
+        self.average.u()
     }
     pub fn unwrap_sum(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.sum.as_ref().unwrap()
+        self.sum.u()
     }
     pub fn unwrap_max(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.max.as_ref().unwrap()
+        self.max.u()
     }
     #[allow(unused)]
     pub fn unwrap_pct90(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.pct90.as_ref().unwrap()
+        self.pct90.u()
     }
     #[allow(unused)]
     pub fn unwrap_pct75(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.pct75.as_ref().unwrap()
+        self.pct75.u()
     }
     #[allow(unused)]
     pub fn unwrap_median(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.median.as_ref().unwrap()
+        self.median.u()
     }
     #[allow(unused)]
     pub fn unwrap_pct25(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.pct25.as_ref().unwrap()
+        self.pct25.u()
     }
     #[allow(unused)]
     pub fn unwrap_pct10(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.pct10.as_ref().unwrap()
+        self.pct10.u()
     }
     pub fn unwrap_min(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.min.as_ref().unwrap()
+        self.min.u()
     }
     pub fn unwrap_last(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.last.as_ref().unwrap()
+        self.last.u()
     }
     #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &EagerVec<PcoVec<I, T>> {
-        self.cumulative.as_ref().unwrap()
+        self.cumulative.u()
     }
 
     pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {

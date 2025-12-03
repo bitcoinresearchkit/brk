@@ -27,6 +27,7 @@ mod traits;
 mod utils;
 
 use indexes::Indexes;
+use utils::OptionExt;
 
 // pub use pools::*;
 pub use states::PriceToAmount;
@@ -162,7 +163,7 @@ impl Computer {
 
             info!("Computing prices...");
             let i = Instant::now();
-            self.price.as_mut().unwrap().compute(
+            self.price.um().compute(
                 &self.indexes,
                 &starting_indexes,
                 fetched,

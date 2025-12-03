@@ -106,4 +106,35 @@ impl Filter {
             _ => false,
         }
     }
+
+    /// Whether to compute extended metrics (realized cap ratios, profit/loss ratios, percentiles)
+    /// For UTXO context: false for Type and Amount filters
+    /// For Address context: always false
+    pub fn is_extended(&self, context: CohortContext) -> bool {
+        match context {
+            CohortContext::Address => false,
+            CohortContext::Utxo => !matches!(self, Filter::Type(_) | Filter::Amount(_)),
+        }
+    }
+
+    /// Whether to compute metrics relative to the "all" baseline
+    /// False only for All itself (it IS the baseline)
+    pub fn compute_rel_to_all(&self) -> bool {
+        !matches!(self, Filter::All)
+    }
+
+    /// Whether to compute adjusted metrics (adjusted SOPR, adjusted value created/destroyed)
+    /// For UTXO context: true for All, Term, max_age (LowerThan), and up_to_1d age range
+    /// For Address context: always false
+    pub fn compute_adjusted(&self, context: CohortContext) -> bool {
+        match context {
+            CohortContext::Address => false,
+            CohortContext::Utxo => match self {
+                Filter::All | Filter::Term(_) => true,
+                Filter::Time(TimeFilter::LowerThan(_)) => true,
+                Filter::Time(TimeFilter::Range(r)) if r.start == 0 => true,
+                _ => false,
+            },
+        }
+    }
 }

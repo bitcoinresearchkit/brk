@@ -10,7 +10,7 @@ use vecdb::{
     PAGE_SIZE, TypedVecIterator, VecIndex,
 };
 
-use super::{Indexes, indexes};
+use super::{Indexes, indexes, utils::OptionExt};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -114,7 +114,7 @@ impl Vecs {
                 let ohlc = if i.to_usize() + 100 >= self.dateindex_to_price_ohlc_in_cents.len()
                     && let Ok(mut ohlc) = self.fetcher.get_date(d)
                 {
-                    let prev_open = *prev.as_ref().unwrap().close;
+                    let prev_open = *prev.u().close;
                     *ohlc.open = prev_open;
                     *ohlc.high = (*ohlc.high).max(prev_open);
                     *ohlc.low = (*ohlc.low).min(prev_open);

@@ -9,7 +9,7 @@ use vecdb::{
     PcoVec,
 };
 
-use crate::{Indexes, grouped::LazyVecsBuilder, indexes};
+use crate::{Indexes, grouped::LazyVecsBuilder, indexes, utils::OptionExt};
 
 use super::{ComputedVecValue, EagerVecsBuilder, Source, VecBuilderOptions};
 
@@ -121,7 +121,7 @@ where
     where
         F: FnMut(&mut EagerVec<PcoVec<DateIndex, T>>) -> Result<()>,
     {
-        compute(self.dateindex.as_mut().unwrap())?;
+        compute(self.dateindex.um())?;
 
         let dateindex: Option<&EagerVec<PcoVec<DateIndex, T>>> = None;
         self.compute_rest(starting_indexes, exit, dateindex)
@@ -137,7 +137,7 @@ where
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;
         } else {
-            let dateindex = self.dateindex.as_ref().unwrap();
+            let dateindex = self.dateindex.u();
 
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;

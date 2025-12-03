@@ -14,6 +14,7 @@ use crate::{
     Indexes,
     grouped::{LazyVecsBuilder, Source},
     indexes,
+    utils::OptionExt,
 };
 
 use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
@@ -140,7 +141,7 @@ where
     where
         F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     {
-        compute(self.height.as_mut().unwrap())?;
+        compute(self.height.um())?;
 
         let height: Option<&EagerVec<PcoVec<Height, T>>> = None;
         self.compute_rest(indexes, starting_indexes, exit, height)
@@ -173,7 +174,7 @@ where
                 exit,
             )?;
         } else {
-            let height = self.height.as_ref().unwrap();
+            let height = self.height.u();
 
             self.height_extra
                 .extend(starting_indexes.height, height, exit)?;

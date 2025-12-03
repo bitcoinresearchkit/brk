@@ -18,6 +18,7 @@ use crate::{
         r#trait::{CohortVecs, DynCohortVecs},
     },
     states::AddressCohortState,
+    utils::OptionExt,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -37,7 +38,6 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
         filter: Filter,
@@ -45,7 +45,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: Option<&Path>,
-        compute_rel_to_all: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
@@ -83,9 +82,6 @@ impl Vecs {
                 version,
                 indexes,
                 price,
-                false,
-                compute_rel_to_all,
-                false,
             )?,
         })
     }
@@ -106,12 +102,12 @@ impl DynCohortVecs for Vecs {
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
         let starting_height = self
             .inner
-            .import_state(starting_height, &mut self.state.as_mut().unwrap().inner)?;
+            .import_state(starting_height, &mut self.state.um().inner)?;
 
         self.starting_height = Some(starting_height);
 
         if let Some(prev_height) = starting_height.decremented() {
-            self.state.as_mut().unwrap().addr_count = *self
+            self.state.um().addr_count = *self
                 .height_to_addr_count
                 .into_iter()
                 .get_unwrap(prev_height);
@@ -135,10 +131,10 @@ impl DynCohortVecs for Vecs {
         }
 
         self.height_to_addr_count
-            .truncate_push(height, self.state.as_ref().unwrap().addr_count.into())?;
+            .truncate_push(height, self.state.u().addr_count.into())?;
 
         self.inner
-            .truncate_push(height, &self.state.as_ref().unwrap().inner)
+            .truncate_push(height, &self.state.u().inner)
     }
 
     fn compute_then_truncate_push_unrealized_states(
@@ -153,7 +149,7 @@ impl DynCohortVecs for Vecs {
             height_price,
             dateindex,
             date_price,
-            &self.state.as_ref().unwrap().inner,
+            &self.state.u().inner,
         )
     }
 
@@ -161,7 +157,7 @@ impl DynCohortVecs for Vecs {
         self.height_to_addr_count.safe_flush(exit)?;
 
         self.inner
-            .safe_flush_stateful_vecs(height, exit, &mut self.state.as_mut().unwrap().inner)
+            .safe_flush_stateful_vecs(height, exit, &mut self.state.um().inner)
     }
 
     #[allow(clippy::too_many_arguments)]

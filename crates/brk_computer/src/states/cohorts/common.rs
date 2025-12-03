@@ -5,6 +5,7 @@ use brk_types::{CheckedSub, Dollars, Height, Sats};
 
 use crate::{
     grouped::{PERCENTILES, PERCENTILES_LEN},
+    utils::OptionExt,
     PriceToAmount, RealizedState, SupplyState, UnrealizedState,
 };
 
@@ -49,11 +50,11 @@ impl CohortState {
     }
 
     pub fn price_to_amount_first_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.price_to_amount.as_ref().unwrap().first_key_value()
+        self.price_to_amount.u().first_key_value()
     }
 
     pub fn price_to_amount_last_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.price_to_amount.as_ref().unwrap().last_key_value()
+        self.price_to_amount.u().last_key_value()
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -287,7 +288,7 @@ impl CohortState {
         height_price: Dollars,
         date_price: Option<Dollars>,
     ) -> (UnrealizedState, Option<UnrealizedState>) {
-        if self.price_to_amount.as_ref().unwrap().is_empty() {
+        if self.price_to_amount.u().is_empty() {
             return (
                 UnrealizedState::NAN,
                 date_price.map(|_| UnrealizedState::NAN),
@@ -340,7 +341,7 @@ impl CohortState {
                         price,
                         date_price,
                         sats,
-                        date_unrealized_state.as_mut().unwrap(),
+                        date_unrealized_state.um(),
                     )
                 }
             });

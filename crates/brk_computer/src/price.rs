@@ -8,7 +8,7 @@ use brk_types::{
 };
 use vecdb::{BytesVec, Database, EagerVec, Exit, ImportableVec, PAGE_SIZE, PcoVec};
 
-use crate::{fetched, grouped::Source};
+use crate::{fetched, grouped::Source, utils::OptionExt};
 
 use super::{
     Indexes,
@@ -74,251 +74,85 @@ impl Vecs {
         let db = Database::open(&parent.join("price"))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
+        let v = version + VERSION;
+        let v_sats = version + VERSION + VERSION_IN_SATS;
+
+        macro_rules! eager {
+            ($name:expr) => { EagerVec::forced_import(&db, $name, v)? };
+        }
+        macro_rules! eager_sats {
+            ($name:expr) => { EagerVec::forced_import(&db, $name, v_sats)? };
+        }
+        macro_rules! computed_di {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v, indexes, $opts)?
+            };
+        }
+        macro_rules! computed_di_sats {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v_sats, indexes, $opts)?
+            };
+        }
+        macro_rules! computed_h {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromHeightStrict::forced_import(&db, $name, v, $opts)?
+            };
+        }
+        macro_rules! computed_h_sats {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromHeightStrict::forced_import(&db, $name, v_sats, $opts)?
+            };
+        }
+        let first = || VecBuilderOptions::default().add_first();
+        let last = || VecBuilderOptions::default().add_last();
+        let min = || VecBuilderOptions::default().add_min();
+        let max = || VecBuilderOptions::default().add_max();
+
         let this = Self {
-            dateindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            dateindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            dateindex_to_price_close_in_cents: EagerVec::forced_import(
-                &db,
-                "price_close_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            dateindex_to_price_high_in_cents: EagerVec::forced_import(
-                &db,
-                "price_high_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            dateindex_to_price_low_in_cents: EagerVec::forced_import(
-                &db,
-                "price_low_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            dateindex_to_price_open_in_cents: EagerVec::forced_import(
-                &db,
-                "price_open_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            height_to_price_close_in_cents: EagerVec::forced_import(
-                &db,
-                "price_close_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_price_high_in_cents: EagerVec::forced_import(
-                &db,
-                "price_high_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_price_low_in_cents: EagerVec::forced_import(
-                &db,
-                "price_low_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            height_to_price_open_in_cents: EagerVec::forced_import(
-                &db,
-                "price_open_in_cents",
-                version + VERSION + Version::ZERO,
-            )?,
-            timeindexes_to_price_open: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_open",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_first(),
-            )?,
-            timeindexes_to_price_high: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_high",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_max(),
-            )?,
-            timeindexes_to_price_low: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_low",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_min(),
-            )?,
-            timeindexes_to_price_close: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_close",
-                Source::Compute,
-                version + VERSION + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            timeindexes_to_price_open_in_sats: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_open_in_sats",
-                Source::Compute,
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_first(),
-            )?,
-            timeindexes_to_price_high_in_sats: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_high_in_sats",
-                Source::Compute,
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_max(),
-            )?,
-            timeindexes_to_price_low_in_sats: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_low_in_sats",
-                Source::Compute,
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_min(),
-            )?,
-            timeindexes_to_price_close_in_sats: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "price_close_in_sats",
-                Source::Compute,
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            chainindexes_to_price_open: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_open",
-                version + VERSION + Version::ZERO,
-                VecBuilderOptions::default().add_first(),
-            )?,
-            chainindexes_to_price_high: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_high",
-                version + VERSION + Version::ZERO,
-                VecBuilderOptions::default().add_max(),
-            )?,
-            chainindexes_to_price_low: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_low",
-                version + VERSION + Version::ZERO,
-                VecBuilderOptions::default().add_min(),
-            )?,
-            chainindexes_to_price_close: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_close",
-                version + VERSION + Version::ZERO,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            chainindexes_to_price_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_open_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                VecBuilderOptions::default().add_first(),
-            )?,
-            chainindexes_to_price_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_high_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                VecBuilderOptions::default().add_max(),
-            )?,
-            chainindexes_to_price_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_low_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                VecBuilderOptions::default().add_min(),
-            )?,
-            chainindexes_to_price_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                &db,
-                "price_close_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            weekindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            weekindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            difficultyepoch_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            difficultyepoch_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            monthindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            monthindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            quarterindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            quarterindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            semesterindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            semesterindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
-            yearindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            yearindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
+            dateindex_to_price_ohlc: eager!("price_ohlc"),
+            dateindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            dateindex_to_price_close_in_cents: eager!("price_close_in_cents"),
+            dateindex_to_price_high_in_cents: eager!("price_high_in_cents"),
+            dateindex_to_price_low_in_cents: eager!("price_low_in_cents"),
+            dateindex_to_price_open_in_cents: eager!("price_open_in_cents"),
+            height_to_price_ohlc: eager!("price_ohlc"),
+            height_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            height_to_price_close_in_cents: eager!("price_close_in_cents"),
+            height_to_price_high_in_cents: eager!("price_high_in_cents"),
+            height_to_price_low_in_cents: eager!("price_low_in_cents"),
+            height_to_price_open_in_cents: eager!("price_open_in_cents"),
+            timeindexes_to_price_open: computed_di!("price_open", first()),
+            timeindexes_to_price_high: computed_di!("price_high", max()),
+            timeindexes_to_price_low: computed_di!("price_low", min()),
+            timeindexes_to_price_close: computed_di!("price_close", last()),
+            timeindexes_to_price_open_in_sats: computed_di_sats!("price_open_in_sats", first()),
+            timeindexes_to_price_high_in_sats: computed_di_sats!("price_high_in_sats", max()),
+            timeindexes_to_price_low_in_sats: computed_di_sats!("price_low_in_sats", min()),
+            timeindexes_to_price_close_in_sats: computed_di_sats!("price_close_in_sats", last()),
+            chainindexes_to_price_open: computed_h!("price_open", first()),
+            chainindexes_to_price_high: computed_h!("price_high", max()),
+            chainindexes_to_price_low: computed_h!("price_low", min()),
+            chainindexes_to_price_close: computed_h!("price_close", last()),
+            chainindexes_to_price_open_in_sats: computed_h_sats!("price_open_in_sats", first()),
+            chainindexes_to_price_high_in_sats: computed_h_sats!("price_high_in_sats", max()),
+            chainindexes_to_price_low_in_sats: computed_h_sats!("price_low_in_sats", min()),
+            chainindexes_to_price_close_in_sats: computed_h_sats!("price_close_in_sats", last()),
+            weekindex_to_price_ohlc: eager!("price_ohlc"),
+            weekindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            difficultyepoch_to_price_ohlc: eager!("price_ohlc"),
+            difficultyepoch_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            monthindex_to_price_ohlc: eager!("price_ohlc"),
+            monthindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            quarterindex_to_price_ohlc: eager!("price_ohlc"),
+            quarterindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            semesterindex_to_price_ohlc: eager!("price_ohlc"),
+            semesterindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
+            yearindex_to_price_ohlc: eager!("price_ohlc"),
+            yearindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
             // halvingepoch_to_price_ohlc: StorableVec::forced_import(db,
             // "halvingepoch_to_price_ohlc"), version + VERSION + Version::ZERO, format)?,
-            decadeindex_to_price_ohlc: EagerVec::forced_import(
-                &db,
-                "price_ohlc",
-                version + VERSION + Version::ZERO,
-            )?,
-            decadeindex_to_price_ohlc_in_sats: EagerVec::forced_import(
-                &db,
-                "price_ohlc_in_sats",
-                version + VERSION + VERSION_IN_SATS + Version::ZERO,
-            )?,
+            decadeindex_to_price_ohlc: eager!("price_ohlc"),
+            decadeindex_to_price_ohlc_in_sats: eager_sats!("price_ohlc_in_sats"),
 
             db,
         };
@@ -706,7 +540,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_price_open.dateindex.as_ref().unwrap(),
+                    self.timeindexes_to_price_open.dateindex.u(),
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )?;
@@ -717,7 +551,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_price_low.dateindex.as_ref().unwrap(),
+                    self.timeindexes_to_price_low.dateindex.u(),
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )?;
@@ -728,7 +562,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_price_high.dateindex.as_ref().unwrap(),
+                    self.timeindexes_to_price_high.dateindex.u(),
                     |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
                     exit,
                 )?;
@@ -739,7 +573,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_price_close.dateindex.as_ref().unwrap(),
+                    self.timeindexes_to_price_close.dateindex.u(),
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )?;
