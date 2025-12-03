@@ -703,6 +703,25 @@ impl Vecs {
                 Height::ZERO
             };
 
+            // Import aggregate cohorts' price_to_amount
+            // We need to drop the borrows first to access utxo_cohorts directly
+            drop(separate_utxo_vecs);
+            drop(separate_address_vecs);
+            let starting_height = if starting_height.is_not_zero()
+                && self
+                    .utxo_cohorts
+                    .import_aggregate_price_to_amount(starting_height)?
+                    == starting_height
+            {
+                starting_height
+            } else {
+                Height::ZERO
+            };
+            // Re-collect the separate vecs
+            let mut separate_utxo_vecs =
+                self.utxo_cohorts.iter_separate_mut().collect::<Vec<_>>();
+            let mut separate_address_vecs =
+                self.address_cohorts.iter_separate_mut().collect::<Vec<_>>();
 
             // info!("starting_height = {starting_height}");
 
