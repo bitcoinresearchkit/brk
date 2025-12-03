@@ -1,4 +1,4 @@
-use std::{ops::ControlFlow, path::Path};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_grouper::{
@@ -9,7 +9,7 @@ use brk_grouper::{
 use brk_traversable::Traversable;
 use brk_types::{
     Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Timestamp,
-    Version,
+    Version, ONE_DAY_IN_SEC,
 };
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -214,6 +214,11 @@ impl Vecs {
 
         let prev_timestamp = chain_state.last().unwrap().timestamp;
 
+        // Only blocks whose age % ONE_DAY >= threshold can cross a day boundary.
+        // Saves 1 subtraction + 2 divisions per block vs computing days_old directly.
+        let elapsed = (*timestamp).saturating_sub(*prev_timestamp);
+        let threshold = ONE_DAY_IN_SEC.saturating_sub(elapsed);
+
         // Extract all mutable references upfront to avoid borrow checker issues
         // Use a single destructuring to get non-overlapping mutable borrows
         let UTXOGroups {
@@ -241,15 +246,19 @@ impl Vecs {
             ),
         ];
 
-        let _ = chain_state
+        chain_state
             .iter()
-            .try_for_each(|block_state| -> ControlFlow<()> {
+            .filter(|block_state| {
+                let age = (*prev_timestamp).saturating_sub(*block_state.timestamp);
+                age % ONE_DAY_IN_SEC >= threshold
+            })
+            .for_each(|block_state| {
                 let prev_days_old =
                     prev_timestamp.difference_in_days_between(block_state.timestamp);
                 let days_old = timestamp.difference_in_days_between(block_state.timestamp);
 
                 if prev_days_old == days_old {
-                    return ControlFlow::Continue(());
+                    return;
                 }
 
                 vecs.iter_mut().for_each(|(filter, state)| {
@@ -286,8 +295,6 @@ impl Vecs {
                         }
                     });
                 }
-
-                ControlFlow::Continue(())
             });
     }
 
@@ -325,8 +332,9 @@ impl Vecs {
             ),
         ];
 
-        let last_timestamp = chain_state.last().unwrap().timestamp;
-        let current_price = chain_state.last().unwrap().price;
+        let last_block = chain_state.last().unwrap();
+        let last_timestamp = last_block.timestamp;
+        let current_price = last_block.price;
 
         let chain_state_len = chain_state.len();
 

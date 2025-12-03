@@ -55,6 +55,12 @@ type TxIndexVec = SmallVec<[TxIndex; 4]>;
 
 const VERSION: Version = Version::new(21);
 
+const BIP30_DUPLICATE_COINBASE_HEIGHT_1: u32 = 91_842;
+const BIP30_DUPLICATE_COINBASE_HEIGHT_2: u32 = 91_880;
+const BIP30_ORIGINAL_COINBASE_HEIGHT_1: u32 = 91_812;
+const BIP30_ORIGINAL_COINBASE_HEIGHT_2: u32 = 91_722;
+const FLUSH_INTERVAL: usize = 10_000;
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -461,18 +467,9 @@ impl Vecs {
             Ordering::Less => Height::ZERO,
         };
 
-        // info!("stateful_starting_height = {stateful_starting_height}");
-        // let stateful_starting_height = stateful_starting_height
-        //     .checked_sub(Height::new(1))
-        //     .unwrap_or_default();
-        // info!("stateful_starting_height = {stateful_starting_height}");
-
         let starting_height = starting_indexes.height.min(stateful_starting_height);
-        // info!("starting_height = {starting_height}");
         let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
-        // info!("last_height = {last_height}");
         if starting_height <= last_height {
-            // info!("starting_height = {starting_height}");
 
             let stamp = starting_height.into();
             let starting_height = if starting_height.is_not_zero() {
@@ -480,12 +477,6 @@ impl Vecs {
                     .into_iter()
                     .chain(self.any_address_indexes.rollback_before(stamp)?)
                     .chain(self.addresses_data.rollback_before(stamp)?)
-                    // .enumerate()
-                    // .map(|(i, s)| {
-                    //     let h = Height::from(s).incremented();
-                    //     // dbg!((i, s, h));
-                    //     h
-                    // })
                     .map(Height::from)
                     .map(Height::incremented)
                     .collect::<BTreeSet<Height>>();
@@ -509,7 +500,6 @@ impl Vecs {
             } else {
                 Height::ZERO
             };
-            // info!("starting_height = {starting_height}");
 
             let starting_height = if starting_height.is_not_zero()
                 && separate_address_vecs
@@ -543,8 +533,6 @@ impl Vecs {
                 result
             };
 
-            // info!("starting_height = {starting_height}");
-
             let mut chain_state: Vec<BlockState>;
             if starting_height.is_not_zero() {
                 chain_state = self
@@ -567,8 +555,6 @@ impl Vecs {
                     .collect::<Vec<_>>();
             } else {
                 info!("Starting processing utxos from the start");
-
-                // std::process::exit(0);
 
                 chain_state = vec![];
 
@@ -769,6 +755,15 @@ impl Vecs {
 
                             let typeindex = txoutindex_to_typeindex
                                 .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
+
+                            let typeindex_usize: usize = typeindex.into();
+                            if output_type == OutputType::P2SH && typeindex_usize > 100_000_000 {
+                                let txoutindex_usize: usize = txoutindex.into();
+                                eprintln!(
+                                    "DEBUG P2SH bad typeindex at read: txoutindex={}, typeindex={}, txindex={}",
+                                    txoutindex_usize, typeindex_usize, txindex.to_usize()
+                                );
+                            }
 
                             let addressdata_opt = Self::get_addressdatawithsource(
                                 output_type,
@@ -1095,34 +1090,34 @@ impl Vecs {
                             .unwrap();
                     });
 
-                    if chain_state_starting_height > height {
-                        dbg!(chain_state_starting_height, height);
-                        panic!("temp, just making sure")
-                    }
+                    debug_assert!(
+                        chain_state_starting_height <= height,
+                        "chain_state_starting_height ({chain_state_starting_height}) > height ({height})"
+                    );
 
-                    unspendable_supply += transacted
-                        .by_type
-                        .unspendable
-                        .as_vec()
-                        .into_iter()
-                        .map(|state| state.value)
-                        .sum::<Sats>()
+                    // NOTE: If ByUnspendableType gains more fields, change to .as_vec().into_iter().map(|s| s.value).sum()
+                    unspendable_supply += transacted.by_type.unspendable.opreturn.value
                         + height_to_unclaimed_rewards_iter.get_unwrap(height);
 
                     opreturn_supply += transacted.by_type.unspendable.opreturn.value;
 
-                    if height == Height::new(0) {
+                    if height == Height::ZERO {
                         transacted = Transacted::default();
                         unspendable_supply += Sats::FIFTY_BTC;
-                    } else if height == Height::new(91_842) || height == Height::new(91_880) {
-                        // Need to destroy invalid coinbases due to duplicate txids
-                        if height == Height::new(91_842) {
-                            height_to_sent.entry(Height::new(91_812)).or_default()
+                    } else if height == Height::new(BIP30_DUPLICATE_COINBASE_HEIGHT_1)
+                        || height == Height::new(BIP30_DUPLICATE_COINBASE_HEIGHT_2)
+                    {
+                        if height == Height::new(BIP30_DUPLICATE_COINBASE_HEIGHT_1) {
+                            height_to_sent
+                                .entry(Height::new(BIP30_ORIGINAL_COINBASE_HEIGHT_1))
+                                .or_default()
                         } else {
-                            height_to_sent.entry(Height::new(91_722)).or_default()
+                            height_to_sent
+                                .entry(Height::new(BIP30_ORIGINAL_COINBASE_HEIGHT_2))
+                                .or_default()
                         }
                         .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
-                    };
+                    }
 
                     // Push current block state before processing sends and receives
                     chain_state.push(BlockState {
@@ -1182,7 +1177,7 @@ impl Vecs {
 
                 if height != last_height
                     && height != Height::ZERO
-                    && height.to_usize() % 10_000 == 0
+                    && height.to_usize() % FLUSH_INTERVAL == 0
                 {
                     let _lock = exit.lock();
 
@@ -1388,7 +1383,16 @@ impl Vecs {
         any_address_indexes: &AnyAddressIndexesVecs,
         addresses_data: &AddressesDataVecs,
     ) -> Option<WithAddressDataSource<LoadedAddressData>> {
-        if *first_addressindexes.get(address_type).unwrap() <= typeindex {
+        let first = *first_addressindexes.get(address_type).unwrap();
+        if first <= typeindex {
+            let typeindex_usize: usize = typeindex.into();
+            let first_usize: usize = first.into();
+            if typeindex_usize > 100_000_000 {
+                eprintln!(
+                    "DEBUG get_addressdatawithsource NEW: address_type={:?}, typeindex={}, first_addressindex={}",
+                    address_type, typeindex_usize, first_usize
+                );
+            }
             return Some(WithAddressDataSource::New(LoadedAddressData::default()));
         }
 
@@ -1474,6 +1478,13 @@ impl Vecs {
             addresstype_to_typeindex_to_emptyaddressdata.into_sorted_iter()
         {
             for (typeindex, emptyaddressdata_with_source) in sorted.into_iter() {
+                let typeindex_usize: usize = typeindex.into();
+                if typeindex_usize > 100_000_000 {
+                    eprintln!(
+                        "DEBUG emptyaddressdata: address_type={:?}, typeindex={}, variant={:?}",
+                        address_type, typeindex_usize, std::mem::discriminant(&emptyaddressdata_with_source)
+                    );
+                }
                 match emptyaddressdata_with_source {
                     WithAddressDataSource::New(emptyaddressdata) => {
                         let emptyaddressindex = self
@@ -1521,6 +1532,13 @@ impl Vecs {
             addresstype_to_typeindex_to_loadedaddressdata.into_sorted_iter()
         {
             for (typeindex, loadedaddressdata_with_source) in sorted.into_iter() {
+                let typeindex_usize: usize = typeindex.into();
+                if typeindex_usize > 100_000_000 {
+                    eprintln!(
+                        "DEBUG loadedaddressdata: address_type={:?}, typeindex={}, variant={:?}",
+                        address_type, typeindex_usize, std::mem::discriminant(&loadedaddressdata_with_source)
+                    );
+                }
                 match loadedaddressdata_with_source {
                     WithAddressDataSource::New(loadedaddressdata) => {
                         let loadedaddressindex = self

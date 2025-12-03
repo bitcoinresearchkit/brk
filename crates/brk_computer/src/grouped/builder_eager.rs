@@ -2,13 +2,15 @@ use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec,
-    PcoVec, VecIndex, VecValue,
+    AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec,
+    VecIndex, VecValue,
 };
 
-use crate::utils::{get_percentile, OptionExt};
+use crate::utils::{OptionExt, get_percentile};
 
 use super::ComputedVecValue;
+
+const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Debug, Traversable)]
 pub struct EagerVecsBuilder<I, T>
@@ -30,8 +32,6 @@ where
     pub cumulative: Option<Box<EagerVec<PcoVec<I, T>>>>,
 }
 
-const VERSION: Version = Version::ZERO;
-
 impl<I, T> EagerVecsBuilder<I, T>
 where
     I: VecIndex,
@@ -45,29 +45,42 @@ where
     ) -> Result<Self> {
         let only_one_active = options.is_only_one_active();
         let suffix = |s: &str| format!("{name}_{s}");
-        let maybe_suffix = |s: &str| if only_one_active { name.to_string() } else { suffix(s) };
+        let maybe_suffix = |s: &str| {
+            if only_one_active {
+                name.to_string()
+            } else {
+                suffix(s)
+            }
+        };
         let v = version + VERSION;
 
         macro_rules! import {
-            ($s:expr) => { Box::new(EagerVec::forced_import(db, &maybe_suffix($s), v).unwrap()) };
+            ($s:expr) => {
+                Box::new(EagerVec::forced_import(db, &maybe_suffix($s), v).unwrap())
+            };
         }
 
         let s = Self {
             first: options.first.then(|| import!("first")),
-            last: options.last.then(|| Box::new(EagerVec::forced_import(db, name, v).unwrap())),
+            last: options
+                .last
+                .then(|| Box::new(EagerVec::forced_import(db, name, v).unwrap())),
             min: options.min.then(|| import!("min")),
             max: options.max.then(|| import!("max")),
             median: options.median.then(|| import!("median")),
             average: options.average.then(|| import!("avg")),
             sum: options.sum.then(|| {
-                let sum_name = if !options.last && !options.average && !options.min && !options.max {
+                let sum_name = if !options.last && !options.average && !options.min && !options.max
+                {
                     name.to_string()
                 } else {
                     maybe_suffix("sum")
                 };
                 Box::new(EagerVec::forced_import(db, &sum_name, v).unwrap())
             }),
-            cumulative: options.cumulative.then(|| Box::new(EagerVec::forced_import(db, &suffix("cumulative"), v).unwrap())),
+            cumulative: options
+                .cumulative
+                .then(|| Box::new(EagerVec::forced_import(db, &suffix("cumulative"), v).unwrap())),
             pct90: options.pct90.then(|| import!("pct90")),
             pct75: options.pct75.then(|| import!("pct75")),
             pct25: options.pct25.then(|| import!("pct25")),
@@ -75,6 +88,125 @@ where
         };
 
         Ok(s)
+    }
+
+    #[inline]
+    fn needs_percentiles(&self) -> bool {
+        self.pct90.is_some()
+            || self.pct75.is_some()
+            || self.median.is_some()
+            || self.pct25.is_some()
+            || self.pct10.is_some()
+    }
+
+    #[inline]
+    fn needs_minmax(&self) -> bool {
+        self.max.is_some() || self.min.is_some()
+    }
+
+    #[inline]
+    fn needs_sum_or_cumulative(&self) -> bool {
+        self.sum.is_some() || self.cumulative.is_some()
+    }
+
+    #[inline]
+    fn needs_average_sum_or_cumulative(&self) -> bool {
+        self.needs_sum_or_cumulative() || self.average.is_some()
+    }
+
+    /// Compute min/max in O(n) without sorting or collecting
+    #[inline]
+    fn compute_minmax_streaming(
+        &mut self,
+        index: usize,
+        iter: impl Iterator<Item = T>,
+    ) -> Result<()> {
+        let mut min_val: Option<T> = None;
+        let mut max_val: Option<T> = None;
+        let need_min = self.min.is_some();
+        let need_max = self.max.is_some();
+
+        for val in iter {
+            if need_min {
+                min_val = Some(min_val.map_or(val, |m| if val < m { val } else { m }));
+            }
+            if need_max {
+                max_val = Some(max_val.map_or(val, |m| if val > m { val } else { m }));
+            }
+        }
+
+        if let Some(min) = self.min.as_mut() {
+            min.truncate_push_at(index, min_val.unwrap())?;
+        }
+        if let Some(max) = self.max.as_mut() {
+            max.truncate_push_at(index, max_val.unwrap())?;
+        }
+        Ok(())
+    }
+
+    /// Compute min/max from collected values in O(n) without sorting
+    #[inline]
+    fn compute_minmax_from_slice(&mut self, index: usize, values: &[T]) -> Result<()> {
+        if let Some(min) = self.min.as_mut() {
+            min.truncate_push_at(index, *values.iter().min().unwrap())?;
+        }
+        if let Some(max) = self.max.as_mut() {
+            max.truncate_push_at(index, *values.iter().max().unwrap())?;
+        }
+        Ok(())
+    }
+
+    /// Compute percentiles from sorted values (assumes values is already sorted)
+    fn compute_percentiles_from_sorted(&mut self, index: usize, values: &[T]) -> Result<()> {
+        if let Some(max) = self.max.as_mut() {
+            max.truncate_push_at(index, *values.last().ok_or(Error::Str("expect some"))?)?;
+        }
+        if let Some(pct90) = self.pct90.as_mut() {
+            pct90.truncate_push_at(index, get_percentile(values, 0.90))?;
+        }
+        if let Some(pct75) = self.pct75.as_mut() {
+            pct75.truncate_push_at(index, get_percentile(values, 0.75))?;
+        }
+        if let Some(median) = self.median.as_mut() {
+            median.truncate_push_at(index, get_percentile(values, 0.50))?;
+        }
+        if let Some(pct25) = self.pct25.as_mut() {
+            pct25.truncate_push_at(index, get_percentile(values, 0.25))?;
+        }
+        if let Some(pct10) = self.pct10.as_mut() {
+            pct10.truncate_push_at(index, get_percentile(values, 0.10))?;
+        }
+        if let Some(min) = self.min.as_mut() {
+            min.truncate_push_at(index, *values.first().unwrap())?;
+        }
+        Ok(())
+    }
+
+    /// Compute sum, average, and cumulative from values
+    fn compute_aggregates(
+        &mut self,
+        index: usize,
+        values: Vec<T>,
+        cumulative: &mut Option<T>,
+    ) -> Result<()> {
+        let len = values.len();
+        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
+
+        if let Some(average) = self.average.as_mut() {
+            average.truncate_push_at(index, sum / len)?;
+        }
+
+        if self.needs_sum_or_cumulative() {
+            if let Some(sum_vec) = self.sum.as_mut() {
+                sum_vec.truncate_push_at(index, sum)?;
+            }
+            if let Some(cumulative_vec) = self.cumulative.as_mut() {
+                let t = cumulative.unwrap() + sum;
+                cumulative.replace(t);
+                cumulative_vec.truncate_push_at(index, t)?;
+            }
+        }
+        Ok(())
     }
 
     pub fn extend(
@@ -170,95 +302,33 @@ where
                     last.truncate_push_at(index, v)?;
                 }
 
-                let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
-                let needs_average_sum_or_cumulative =
-                    needs_sum_or_cumulative || self.average.is_some();
-                let needs_sorted = self.max.is_some()
-                    || self.pct90.is_some()
-                    || self.pct75.is_some()
-                    || self.median.is_some()
-                    || self.pct25.is_some()
-                    || self.pct10.is_some()
-                    || self.min.is_some();
-                let needs_values = needs_sorted || needs_average_sum_or_cumulative;
+                let needs_percentiles = self.needs_percentiles();
+                let needs_minmax = self.needs_minmax();
+                let needs_aggregates = self.needs_average_sum_or_cumulative();
 
-                if needs_values {
+                // Fast path: only min/max needed, no sorting or allocation required
+                if needs_minmax && !needs_percentiles && !needs_aggregates {
+                    source_iter.set_position(first_index);
+                    self.compute_minmax_streaming(
+                        index,
+                        (&mut source_iter).take(*count_index as usize),
+                    )?;
+                } else if needs_percentiles || needs_aggregates {
                     source_iter.set_position(first_index);
                     let mut values = (&mut source_iter)
                         .take(*count_index as usize)
                         .collect::<Vec<_>>();
 
-                    if needs_sorted {
+                    if needs_percentiles {
                         values.sort_unstable();
-
-                        if let Some(max) = self.max.as_mut() {
-                            max.truncate_push_at(
-                                index,
-                                *values
-                                    .last()
-                                    .ok_or(Error::Str("expect some"))
-                                    .inspect_err(|_| {
-                                        dbg!(
-                                            &values,
-                                            max.name(),
-                                            index,
-                                            first_indexes.name(),
-                                            first_index,
-                                            count_indexes.name(),
-                                            count_index,
-                                            source.len(),
-                                            source.name()
-                                        );
-                                    })
-                                    .unwrap(),
-                            )?;
-                        }
-
-                        if let Some(pct90) = self.pct90.as_mut() {
-                            pct90.truncate_push_at(index, get_percentile(&values, 0.90))?;
-                        }
-
-                        if let Some(pct75) = self.pct75.as_mut() {
-                            pct75.truncate_push_at(index, get_percentile(&values, 0.75))?;
-                        }
-
-                        if let Some(median) = self.median.as_mut() {
-                            median.truncate_push_at(index, get_percentile(&values, 0.50))?;
-                        }
-
-                        if let Some(pct25) = self.pct25.as_mut() {
-                            pct25.truncate_push_at(index, get_percentile(&values, 0.25))?;
-                        }
-
-                        if let Some(pct10) = self.pct10.as_mut() {
-                            pct10.truncate_push_at(index, get_percentile(&values, 0.10))?;
-                        }
-
-                        if let Some(min) = self.min.as_mut() {
-                            min.truncate_push_at(index, *values.first().unwrap())?;
-                        }
+                        self.compute_percentiles_from_sorted(index, &values)?;
+                    } else if needs_minmax {
+                        // We have values collected but only need min/max (along with aggregates)
+                        self.compute_minmax_from_slice(index, &values)?;
                     }
 
-                    if needs_average_sum_or_cumulative {
-                        let len = values.len();
-                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-
-                        if let Some(average) = self.average.as_mut() {
-                            let avg = sum / len;
-                            average.truncate_push_at(index, avg)?;
-                        }
-
-                        if needs_sum_or_cumulative {
-                            if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.truncate_push_at(index, sum)?;
-                            }
-
-                            if let Some(cumulative_vec) = self.cumulative.as_mut() {
-                                let t = cumulative.unwrap() + sum;
-                                cumulative.replace(t);
-                                cumulative_vec.truncate_push_at(index, t)?;
-                            }
-                        }
+                    if needs_aggregates {
+                        self.compute_aggregates(index, values, &mut cumulative)?;
                     }
                 }
 
@@ -282,13 +352,8 @@ where
     where
         A: VecIndex + VecValue + CheckedSub<A>,
     {
-        if self.pct90.is_some()
-            || self.pct75.is_some()
-            || self.median.is_some()
-            || self.pct25.is_some()
-            || self.pct10.is_some()
-        {
-            panic!("unsupported");
+        if self.needs_percentiles() {
+            panic!("percentiles unsupported in from_aligned");
         }
 
         self.validate_computed_version_or_reset(
@@ -334,59 +399,50 @@ where
                     last.truncate_push_at(index, v)?;
                 }
 
-                let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
-                let needs_average_sum_or_cumulative =
-                    needs_sum_or_cumulative || self.average.is_some();
-                let needs_sorted = self.max.is_some() || self.min.is_some();
-                let needs_values = needs_sorted || needs_average_sum_or_cumulative;
+                let needs_minmax = self.needs_minmax();
+                let needs_aggregates = self.needs_average_sum_or_cumulative();
 
-                if needs_values {
-                    if needs_sorted {
+                if needs_minmax || needs_aggregates {
+                    // Min/max: use streaming O(n) instead of sort O(n log n)
+                    if needs_minmax {
                         if let Some(max) = self.max.as_mut() {
                             let source_max_iter = source_max_iter.um();
                             source_max_iter.set_position(first_index);
-                            let mut values = source_max_iter
-                                .take(*count_index as usize)
-                                .collect::<Vec<_>>();
-                            values.sort_unstable();
-                            max.truncate_push_at(index, *values.last().unwrap())?;
+                            let max_val =
+                                source_max_iter.take(*count_index as usize).max().unwrap();
+                            max.truncate_push_at(index, max_val)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
                             let source_min_iter = source_min_iter.um();
                             source_min_iter.set_position(first_index);
-                            let mut values = source_min_iter
-                                .take(*count_index as usize)
-                                .collect::<Vec<_>>();
-                            values.sort_unstable();
-                            min.truncate_push_at(index, *values.first().unwrap())?;
+                            let min_val =
+                                source_min_iter.take(*count_index as usize).min().unwrap();
+                            min.truncate_push_at(index, min_val)?;
                         }
                     }
 
-                    if needs_average_sum_or_cumulative {
+                    if needs_aggregates {
                         if let Some(average) = self.average.as_mut() {
                             let source_average_iter = source_average_iter.um();
                             source_average_iter.set_position(first_index);
-                            let values = source_average_iter
+                            let mut len = 0usize;
+                            let sum = (&mut *source_average_iter)
                                 .take(*count_index as usize)
-                                .collect::<Vec<_>>();
-
-                            let len = values.len();
-                            let cumulative = values.into_iter().fold(T::from(0), |a, b| a + b);
+                                .inspect(|_| len += 1)
+                                .fold(T::from(0), |a, b| a + b);
                             // TODO: Multiply by count then divide by cumulative
                             // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
-                            let avg = cumulative / len;
+                            let avg = sum / len;
                             average.truncate_push_at(index, avg)?;
                         }
 
-                        if needs_sum_or_cumulative {
+                        if self.needs_sum_or_cumulative() {
                             let source_sum_iter = source_sum_iter.um();
                             source_sum_iter.set_position(first_index);
-                            let values = source_sum_iter
+                            let sum = source_sum_iter
                                 .take(*count_index as usize)
-                                .collect::<Vec<_>>();
-
-                            let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
+                                .fold(T::from(0), |a, b| a + b);
 
                             if let Some(sum_vec) = self.sum.as_mut() {
                                 sum_vec.truncate_push_at(index, sum)?;
@@ -415,45 +471,57 @@ where
         ))
     }
 
+    #[inline]
     pub fn unwrap_first(&self) -> &EagerVec<PcoVec<I, T>> {
         self.first.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_average(&self) -> &EagerVec<PcoVec<I, T>> {
         self.average.u()
     }
+    #[inline]
     pub fn unwrap_sum(&self) -> &EagerVec<PcoVec<I, T>> {
         self.sum.u()
     }
+    #[inline]
     pub fn unwrap_max(&self) -> &EagerVec<PcoVec<I, T>> {
         self.max.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_pct90(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct90.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_pct75(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct75.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_median(&self) -> &EagerVec<PcoVec<I, T>> {
         self.median.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_pct25(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct25.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_pct10(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct10.u()
     }
+    #[inline]
     pub fn unwrap_min(&self) -> &EagerVec<PcoVec<I, T>> {
         self.min.u()
     }
+    #[inline]
     pub fn unwrap_last(&self) -> &EagerVec<PcoVec<I, T>> {
         self.last.u()
     }
+    #[inline]
     #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &EagerVec<PcoVec<I, T>> {
         self.cumulative.u()

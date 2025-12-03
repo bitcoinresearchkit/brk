@@ -59,6 +59,7 @@ brk_traversable = { version = "0.0.111", path = "crates/brk_traversable", featur
 brk_traversable_derive = { version = "0.0.111", path = "crates/brk_traversable_derive" }
 byteview = "=0.6.1"
 # byteview = "~0.8.0"
+color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 fjall2 = { version = "2.11.8", package = "brk_fjall" }
 # fjall2 = { path = "../fjall2", package = "brk_fjall" }
