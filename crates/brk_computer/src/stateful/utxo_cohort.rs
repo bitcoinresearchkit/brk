@@ -14,6 +14,7 @@ use crate::{
         common,
         r#trait::{CohortVecs, DynCohortVecs},
     },
+    utils::OptionExt,
 };
 
 #[derive(Clone, Traversable)]
@@ -32,7 +33,6 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
         filter: Filter,
@@ -41,9 +41,6 @@ impl Vecs {
         price: Option<&price::Vecs>,
         states_path: &Path,
         state_level: StateLevel,
-        extended: bool,
-        compute_rel_to_all: bool,
-        compute_adjusted: bool,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
 
@@ -75,9 +72,6 @@ impl Vecs {
                 version,
                 indexes,
                 price,
-                extended,
-                compute_rel_to_all,
-                compute_adjusted,
             )?,
         })
     }
@@ -95,7 +89,7 @@ impl DynCohortVecs for Vecs {
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
         let starting_height = self
             .inner
-            .import_state(starting_height, self.state.as_mut().unwrap())?;
+            .import_state(starting_height, self.state.um())?;
 
         self.state_starting_height = Some(starting_height);
 
@@ -112,7 +106,7 @@ impl DynCohortVecs for Vecs {
         }
 
         self.inner
-            .truncate_push(height, self.state.as_ref().unwrap())
+            .truncate_push(height, self.state.u())
     }
 
     fn compute_then_truncate_push_unrealized_states(
@@ -127,13 +121,13 @@ impl DynCohortVecs for Vecs {
             height_price,
             dateindex,
             date_price,
-            self.state.as_mut().unwrap(),
+            self.state.um(),
         )
     }
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.inner
-            .safe_flush_stateful_vecs(height, exit, self.state.as_mut().unwrap())
+            .safe_flush_stateful_vecs(height, exit, self.state.um())
     }
 
     #[allow(clippy::too_many_arguments)]

@@ -41,7 +41,6 @@ impl Vecs {
                 indexes,
                 price,
                 states_path,
-                true,
             )
             .unwrap()
         })))

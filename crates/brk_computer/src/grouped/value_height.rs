@@ -8,6 +8,7 @@ use crate::{
     grouped::Source,
     price,
     traits::{ComputeFromBitcoin, ComputeFromSats},
+    utils::OptionExt,
 };
 
 #[derive(Clone, Traversable)]
@@ -57,7 +58,7 @@ impl ComputedHeightValueVecs {
     where
         F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     {
-        compute(self.sats.as_mut().unwrap())?;
+        compute(self.sats.um())?;
 
         let height: Option<&PcoVec<Height, Sats>> = None;
         self.compute_rest(price, starting_indexes, exit, height)?;
@@ -78,13 +79,13 @@ impl ComputedHeightValueVecs {
         } else {
             self.bitcoin.compute_from_sats(
                 starting_indexes.height,
-                self.sats.as_ref().unwrap(),
+                self.sats.u(),
                 exit,
             )?;
         }
 
         let height_to_bitcoin = &self.bitcoin;
-        let height_to_price_close = &price.as_ref().unwrap().chainindexes_to_price_close.height;
+        let height_to_price_close = &price.u().chainindexes_to_price_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_from_bitcoin(

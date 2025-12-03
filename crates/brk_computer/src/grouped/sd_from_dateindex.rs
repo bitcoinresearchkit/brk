@@ -6,7 +6,7 @@ use vecdb::{PcoVec,
     GenericStoredVec, IterableVec, VecIndex,
 };
 
-use crate::{Indexes, grouped::source::Source, indexes};
+use crate::{Indexes, grouped::source::Source, indexes, utils::OptionExt};
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
@@ -103,317 +103,47 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
     ) -> Result<Self> {
-        let builder_options = VecBuilderOptions::default().add_last();
-
+        let opts = VecBuilderOptions::default().add_last();
         let version = parent_version + Version::ONE;
+
+        macro_rules! import {
+            ($suffix:expr) => {
+                ComputedVecsFromDateIndex::forced_import(
+                    db, &format!("{name}_{}", $suffix), Source::Compute, version, indexes, opts,
+                ).unwrap()
+            };
+        }
 
         Ok(Self {
             days,
-            sma: sma.is_compute().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_sma"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            sd: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_sd"),
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                builder_options,
-            )?,
-            p0_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p0_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p1sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p1sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p1_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p1_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p2sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p2sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p2_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p2_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p3sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p3sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m0_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m0_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m1sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m1sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m1_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m1_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m2sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m2sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m2_5sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m2_5sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m3sd: options.bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m3sd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            _0sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_0sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p0_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p0_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p1sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p1sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p1_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p1_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p2sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p2sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p2_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p2_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            p3sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_p3sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m0_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m0_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m1sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m1sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m1_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m1_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m2sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m2sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m2_5sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m2_5sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            m3sd_usd: options.price_bands().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_m3sd_usd"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
-            zscore: options.zscore().then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &format!("{name}_zscore"),
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    builder_options,
-                )
-                .unwrap()
-            }),
+            sma: sma.is_compute().then(|| import!("sma")),
+            sd: import!("sd"),
+            p0_5sd: options.bands().then(|| import!("p0_5sd")),
+            p1sd: options.bands().then(|| import!("p1sd")),
+            p1_5sd: options.bands().then(|| import!("p1_5sd")),
+            p2sd: options.bands().then(|| import!("p2sd")),
+            p2_5sd: options.bands().then(|| import!("p2_5sd")),
+            p3sd: options.bands().then(|| import!("p3sd")),
+            m0_5sd: options.bands().then(|| import!("m0_5sd")),
+            m1sd: options.bands().then(|| import!("m1sd")),
+            m1_5sd: options.bands().then(|| import!("m1_5sd")),
+            m2sd: options.bands().then(|| import!("m2sd")),
+            m2_5sd: options.bands().then(|| import!("m2_5sd")),
+            m3sd: options.bands().then(|| import!("m3sd")),
+            _0sd_usd: options.price_bands().then(|| import!("0sd_usd")),
+            p0_5sd_usd: options.price_bands().then(|| import!("p0_5sd_usd")),
+            p1sd_usd: options.price_bands().then(|| import!("p1sd_usd")),
+            p1_5sd_usd: options.price_bands().then(|| import!("p1_5sd_usd")),
+            p2sd_usd: options.price_bands().then(|| import!("p2sd_usd")),
+            p2_5sd_usd: options.price_bands().then(|| import!("p2_5sd_usd")),
+            p3sd_usd: options.price_bands().then(|| import!("p3sd_usd")),
+            m0_5sd_usd: options.price_bands().then(|| import!("m0_5sd_usd")),
+            m1sd_usd: options.price_bands().then(|| import!("m1sd_usd")),
+            m1_5sd_usd: options.price_bands().then(|| import!("m1_5sd_usd")),
+            m2sd_usd: options.price_bands().then(|| import!("m2sd_usd")),
+            m2_5sd_usd: options.price_bands().then(|| import!("m2_5sd_usd")),
+            m3sd_usd: options.price_bands().then(|| import!("m3sd_usd")),
+            zscore: options.zscore().then(|| import!("zscore")),
         })
     }
 
@@ -454,7 +184,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let sma = sma_opt.unwrap_or_else(|| unsafe {
-            std::mem::transmute(&self.sma.as_ref().unwrap().dateindex)
+            std::mem::transmute(&self.sma.u().dateindex)
         });
 
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
@@ -483,18 +213,18 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         sorted.sort_unstable();
 
-        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut p1sd = self.p1sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut p2sd = self.p2sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut p3sd = self.p3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m1sd = self.m1sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m2sd = self.m2sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
-        let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.as_mut().unwrap());
+        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut p1sd = self.p1sd.as_mut().map(|c| c.dateindex.um());
+        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut p2sd = self.p2sd.as_mut().map(|c| c.dateindex.um());
+        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut p3sd = self.p3sd.as_mut().map(|c| c.dateindex.um());
+        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut m1sd = self.m1sd.as_mut().map(|c| c.dateindex.um());
+        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut m2sd = self.m2sd.as_mut().map(|c| c.dateindex.um());
+        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| c.dateindex.um());
+        let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.um());
 
         let min_date_usize = min_date.to_usize();
         let mut sma_iter = sma.iter().skip(starting_dateindex.to_usize());
@@ -624,7 +354,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     starting_indexes.dateindex,
                     source,
                     sma,
-                    self.sd.dateindex.as_ref().unwrap(),
+                    self.sd.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -656,9 +386,9 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             return Ok(());
         }
 
-        compute_usd(self._0sd_usd.as_mut().unwrap(), sma.iter())?;
+        compute_usd(self._0sd_usd.um(), sma.iter())?;
         compute_usd(
-            self.p0_5sd_usd.as_mut().unwrap(),
+            self.p0_5sd_usd.um(),
             self.p0_5sd
                 .as_ref()
                 .unwrap()
@@ -668,7 +398,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.p1sd_usd.as_mut().unwrap(),
+            self.p1sd_usd.um(),
             self.p1sd
                 .as_ref()
                 .unwrap()
@@ -678,7 +408,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.p1_5sd_usd.as_mut().unwrap(),
+            self.p1_5sd_usd.um(),
             self.p1_5sd
                 .as_ref()
                 .unwrap()
@@ -688,7 +418,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.p2sd_usd.as_mut().unwrap(),
+            self.p2sd_usd.um(),
             self.p2sd
                 .as_ref()
                 .unwrap()
@@ -698,7 +428,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.p2_5sd_usd.as_mut().unwrap(),
+            self.p2_5sd_usd.um(),
             self.p2_5sd
                 .as_ref()
                 .unwrap()
@@ -708,7 +438,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.p3sd_usd.as_mut().unwrap(),
+            self.p3sd_usd.um(),
             self.p3sd
                 .as_ref()
                 .unwrap()
@@ -718,7 +448,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m0_5sd_usd.as_mut().unwrap(),
+            self.m0_5sd_usd.um(),
             self.m0_5sd
                 .as_ref()
                 .unwrap()
@@ -728,7 +458,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m1sd_usd.as_mut().unwrap(),
+            self.m1sd_usd.um(),
             self.m1sd
                 .as_ref()
                 .unwrap()
@@ -738,7 +468,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m1_5sd_usd.as_mut().unwrap(),
+            self.m1_5sd_usd.um(),
             self.m1_5sd
                 .as_ref()
                 .unwrap()
@@ -748,7 +478,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m2sd_usd.as_mut().unwrap(),
+            self.m2sd_usd.um(),
             self.m2sd
                 .as_ref()
                 .unwrap()
@@ -758,7 +488,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m2_5sd_usd.as_mut().unwrap(),
+            self.m2_5sd_usd.um(),
             self.m2_5sd
                 .as_ref()
                 .unwrap()
@@ -768,7 +498,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 .iter(),
         )?;
         compute_usd(
-            self.m3sd_usd.as_mut().unwrap(),
+            self.m3sd_usd.um(),
             self.m3sd
                 .as_ref()
                 .unwrap()
@@ -807,6 +537,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
         self.mut_stateful_computed()
-            .map(|c| c.dateindex.as_mut().unwrap())
+            .map(|c| c.dateindex.um())
     }
 }

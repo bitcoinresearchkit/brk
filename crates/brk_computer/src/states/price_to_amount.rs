@@ -11,7 +11,7 @@ use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
 
-use crate::states::SupplyState;
+use crate::{states::SupplyState, utils::OptionExt};
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
@@ -41,30 +41,30 @@ impl PriceToAmount {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
-        self.state.as_ref().unwrap().iter()
+        self.state.u().iter()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.state.as_ref().unwrap().is_empty()
+        self.state.u().is_empty()
     }
 
     pub fn first_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.state.as_ref().unwrap().first_key_value()
+        self.state.u().first_key_value()
     }
 
     pub fn last_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.state.as_ref().unwrap().last_key_value()
+        self.state.u().last_key_value()
     }
 
     pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
-        *self.state.as_mut().unwrap().entry(price).or_default() += supply_state.value;
+        *self.state.um().entry(price).or_default() += supply_state.value;
     }
 
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
-        if let Some(amount) = self.state.as_mut().unwrap().get_mut(&price) {
+        if let Some(amount) = self.state.um().get_mut(&price) {
             *amount -= supply_state.value;
             if *amount == Sats::ZERO {
-                self.state.as_mut().unwrap().remove(&price);
+                self.state.um().remove(&price);
             }
         } else {
             dbg!(price, &self.pathbuf);
@@ -114,7 +114,7 @@ impl PriceToAmount {
 
         fs::write(
             self.path_state(height),
-            self.state.as_ref().unwrap().serialize()?,
+            self.state.u().serialize()?,
         )?;
 
         Ok(())

@@ -8,6 +8,7 @@ use crate::{
     grouped::ComputedVecsFromDateIndex,
     indexes, price,
     traits::{ComputeFromBitcoin, ComputeFromSats},
+    utils::OptionExt,
 };
 
 use super::{Source, VecBuilderOptions};
@@ -73,7 +74,7 @@ impl ComputedValueVecsFromDateIndex {
     where
         F: FnMut(&mut EagerVec<PcoVec<DateIndex, Sats>>) -> Result<()>,
     {
-        compute(self.sats.dateindex.as_mut().unwrap())?;
+        compute(self.sats.dateindex.um())?;
 
         let dateindex: Option<&PcoVec<DateIndex, Sats>> = None;
         self.compute_rest(price, starting_indexes, exit, dateindex)?;
@@ -103,13 +104,13 @@ impl ComputedValueVecsFromDateIndex {
             self.bitcoin.compute_all(starting_indexes, exit, |v| {
                 v.compute_from_sats(
                     starting_indexes.dateindex,
-                    self.sats.dateindex.as_ref().unwrap(),
+                    self.sats.dateindex.u(),
                     exit,
                 )
             })?;
         }
 
-        let dateindex_to_bitcoin = self.bitcoin.dateindex.as_ref().unwrap();
+        let dateindex_to_bitcoin = self.bitcoin.dateindex.u();
         let dateindex_to_price_close = price
             .as_ref()
             .unwrap()

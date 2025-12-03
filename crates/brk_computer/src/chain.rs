@@ -14,9 +14,12 @@ use vecdb::{
     LazyVecFrom1, LazyVecFrom2, PAGE_SIZE, PcoVec, TypedVecIterator, VecIndex, unlikely,
 };
 
-use crate::grouped::{
-    ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromDateIndex,
-    ComputedVecsFromHeight, ComputedVecsFromTxindex, Source, VecBuilderOptions,
+use crate::{
+    grouped::{
+        ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromDateIndex,
+        ComputedVecsFromHeight, ComputedVecsFromTxindex, Source, VecBuilderOptions,
+    },
+    utils::OptionExt,
 };
 
 use super::{Indexes, indexes, price};
@@ -154,9 +157,48 @@ impl Vecs {
         let version = parent_version + Version::ZERO;
 
         let compute_dollars = price.is_some();
+        let v0 = Version::ZERO;
+        let v2 = Version::TWO;
+        let v4 = Version::new(4);
+        let v5 = Version::new(5);
 
-        let txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>> =
-            EagerVec::forced_import(&db, "value", version + Version::ZERO)?;
+        // Helper macros for common patterns
+        macro_rules! eager {
+            ($name:expr) => {
+                EagerVec::forced_import(&db, $name, version + v0)?
+            };
+            ($name:expr, $v:expr) => {
+                EagerVec::forced_import(&db, $name, version + $v)?
+            };
+        }
+        macro_rules! computed_h {
+            ($name:expr, $source:expr, $opts:expr) => {
+                ComputedVecsFromHeight::forced_import(&db, $name, $source, version + v0, indexes, $opts)?
+            };
+            ($name:expr, $source:expr, $v:expr, $opts:expr) => {
+                ComputedVecsFromHeight::forced_import(&db, $name, $source, version + $v, indexes, $opts)?
+            };
+        }
+        macro_rules! computed_di {
+            ($name:expr, $opts:expr) => {
+                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + v0, indexes, $opts)?
+            };
+            ($name:expr, $v:expr, $opts:expr) => {
+                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + $v, indexes, $opts)?
+            };
+        }
+        macro_rules! computed_tx {
+            ($name:expr, $source:expr, $opts:expr) => {
+                ComputedVecsFromTxindex::forced_import(&db, $name, $source, version + v0, indexes, $opts)?
+            };
+        }
+        let last = || VecBuilderOptions::default().add_last();
+        let sum = || VecBuilderOptions::default().add_sum();
+        let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
+        let stats = || VecBuilderOptions::default().add_average().add_minmax().add_percentiles();
+        let full_stats = || VecBuilderOptions::default().add_average().add_minmax().add_percentiles().add_sum().add_cumulative();
+
+        let txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>> = eager!("value");
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
@@ -200,16 +242,10 @@ impl Vecs {
             },
         );
 
-        let txindex_to_input_value =
-            EagerVec::forced_import(&db, "input_value", version + Version::ZERO)?;
-
-        let txindex_to_output_value =
-            EagerVec::forced_import(&db, "output_value", version + Version::ZERO)?;
-
-        let txindex_to_fee = EagerVec::forced_import(&db, "fee", version + Version::ZERO)?;
-
-        let txindex_to_fee_rate =
-            EagerVec::forced_import(&db, "fee_rate", version + Version::ZERO)?;
+        let txindex_to_input_value = eager!("input_value");
+        let txindex_to_output_value = eager!("output_value");
+        let txindex_to_fee = eager!("fee");
+        let txindex_to_fee_rate = eager!("fee_rate");
 
         let dateindex_to_block_count_target = LazyVecFrom1::init(
             "block_count_target",
@@ -262,221 +298,34 @@ impl Vecs {
             semesterindex_to_block_count_target,
             yearindex_to_block_count_target,
             decadeindex_to_block_count_target,
-            height_to_interval: EagerVec::forced_import(&db, "interval", version + Version::ZERO)?,
-            timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "timestamp",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_first(),
-            )?,
-            indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
-                &db,
-                "block_interval",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_percentiles()
-                    .add_minmax()
-                    .add_average(),
-            )?,
-            indexes_to_block_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "block_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_1w_block_count: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "1w_block_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1m_block_count: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "1m_block_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_1y_block_count: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "1y_block_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
-                &db,
-                "block_weight",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_sum()
-                    .add_minmax()
-                    .add_average()
-                    .add_percentiles()
-                    .add_cumulative(),
-            )?,
-            indexes_to_block_size: ComputedVecsFromHeight::forced_import(
-                &db,
-                "block_size",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_sum()
-                    .add_minmax()
-                    .add_average()
-                    .add_percentiles()
-                    .add_cumulative(),
-            )?,
-            height_to_vbytes: EagerVec::forced_import(&db, "vbytes", version + Version::ZERO)?,
-            height_to_24h_block_count: EagerVec::forced_import(
-                &db,
-                "24h_block_count",
-                version + Version::ZERO,
-            )?,
-            height_to_24h_coinbase_sum: EagerVec::forced_import(
-                &db,
-                "24h_coinbase_sum",
-                version + Version::ZERO,
-            )?,
-            height_to_24h_coinbase_usd_sum: EagerVec::forced_import(
-                &db,
-                "24h_coinbase_usd_sum",
-                version + Version::ZERO,
-            )?,
-            indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
-                &db,
-                "block_vbytes",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_sum()
-                    .add_minmax()
-                    .add_average()
-                    .add_percentiles()
-                    .add_cumulative(),
-            )?,
-            difficultyepoch_to_timestamp: EagerVec::forced_import(
-                &db,
-                "timestamp",
-                version + Version::ZERO,
-            )?,
-            halvingepoch_to_timestamp: EagerVec::forced_import(
-                &db,
-                "timestamp",
-                version + Version::ZERO,
-            )?,
+            height_to_interval: eager!("interval"),
+            timeindexes_to_timestamp: computed_di!("timestamp", VecBuilderOptions::default().add_first()),
+            indexes_to_block_interval: computed_h!("block_interval", Source::None, stats()),
+            indexes_to_block_count: computed_h!("block_count", Source::Compute, sum_cum()),
+            indexes_to_1w_block_count: computed_di!("1w_block_count", last()),
+            indexes_to_1m_block_count: computed_di!("1m_block_count", last()),
+            indexes_to_1y_block_count: computed_di!("1y_block_count", last()),
+            indexes_to_block_weight: computed_h!("block_weight", Source::None, full_stats()),
+            indexes_to_block_size: computed_h!("block_size", Source::None, full_stats()),
+            height_to_vbytes: eager!("vbytes"),
+            height_to_24h_block_count: eager!("24h_block_count"),
+            height_to_24h_coinbase_sum: eager!("24h_coinbase_sum"),
+            height_to_24h_coinbase_usd_sum: eager!("24h_coinbase_usd_sum"),
+            indexes_to_block_vbytes: computed_h!("block_vbytes", Source::None, full_stats()),
+            difficultyepoch_to_timestamp: eager!("timestamp"),
+            halvingepoch_to_timestamp: eager!("timestamp"),
 
-            dateindex_to_fee_dominance: EagerVec::forced_import(
-                &db,
-                "fee_dominance",
-                version + Version::ZERO,
-            )?,
-            dateindex_to_subsidy_dominance: EagerVec::forced_import(
-                &db,
-                "subsidy_dominance",
-                version + Version::ZERO,
-            )?,
-            indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
-                &db,
-                "difficulty",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "difficultyepoch",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "halvingepoch",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_tx_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "tx_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_input_count: ComputedVecsFromTxindex::forced_import(
-                &db,
-                "input_count",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_output_count: ComputedVecsFromTxindex::forced_import(
-                &db,
-                "output_count",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
-                &db,
-                "tx_v1",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
-                &db,
-                "tx_v2",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
-            indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
-                &db,
-                "tx_v3",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum().add_cumulative(),
-            )?,
+            dateindex_to_fee_dominance: eager!("fee_dominance"),
+            dateindex_to_subsidy_dominance: eager!("subsidy_dominance"),
+            indexes_to_difficulty: computed_h!("difficulty", Source::None, last()),
+            indexes_to_difficultyepoch: computed_di!("difficultyepoch", last()),
+            indexes_to_halvingepoch: computed_di!("halvingepoch", last()),
+            indexes_to_tx_count: computed_h!("tx_count", Source::Compute, full_stats()),
+            indexes_to_input_count: computed_tx!("input_count", Source::None, full_stats()),
+            indexes_to_output_count: computed_tx!("output_count", Source::None, full_stats()),
+            indexes_to_tx_v1: computed_h!("tx_v1", Source::Compute, sum_cum()),
+            indexes_to_tx_v2: computed_h!("tx_v2", Source::Compute, sum_cum()),
+            indexes_to_tx_v3: computed_h!("tx_v3", Source::Compute, sum_cum()),
             indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "sent",
@@ -501,39 +350,9 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
             )?,
-            indexes_to_fee_rate: ComputedVecsFromTxindex::forced_import(
-                &db,
-                "fee_rate",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_percentiles()
-                    .add_minmax()
-                    .add_average(),
-            )?,
-            indexes_to_tx_vsize: ComputedVecsFromTxindex::forced_import(
-                &db,
-                "tx_vsize",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_percentiles()
-                    .add_minmax()
-                    .add_average(),
-            )?,
-            indexes_to_tx_weight: ComputedVecsFromTxindex::forced_import(
-                &db,
-                "tx_weight",
-                Source::None,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_percentiles()
-                    .add_minmax()
-                    .add_average(),
-            )?,
+            indexes_to_fee_rate: computed_tx!("fee_rate", Source::None, stats()),
+            indexes_to_tx_vsize: computed_tx!("tx_vsize", Source::None, stats()),
+            indexes_to_tx_weight: computed_tx!("tx_weight", Source::None, stats()),
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "subsidy",
@@ -571,434 +390,55 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2a_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2ms_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2ms_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2pk33_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2pk33_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2pk65_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2pk65_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2pkh_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2pkh_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2sh_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2sh_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2tr_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2tr_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2wpkh_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2wpkh_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_p2wsh_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "p2wsh_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_opreturn_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "opreturn_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_unknownoutput_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "unknownoutput_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_emptyoutput_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "emptyoutput_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default()
-                    .add_average()
-                    .add_minmax()
-                    .add_percentiles()
-                    .add_sum()
-                    .add_cumulative(),
-            )?,
-            indexes_to_exact_utxo_count: ComputedVecsFromHeight::forced_import(
-                &db,
-                "exact_utxo_count",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_subsidy_usd_1y_sma: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    &db,
-                    "subsidy_usd_1y_sma",
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    VecBuilderOptions::default().add_last(),
-                )
-                .unwrap()
-            }),
-            indexes_to_puell_multiple: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
-                    &db,
-                    "puell_multiple",
-                    Source::Compute,
-                    version + Version::ZERO,
-                    indexes,
-                    VecBuilderOptions::default().add_last(),
-                )
-                .unwrap()
-            }),
-            indexes_to_hash_rate: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_rate",
-                Source::Compute,
-                version + Version::new(5),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_rate_1w_sma: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "hash_rate_1w_sma",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_rate_1m_sma: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "hash_rate_1m_sma",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_rate_2m_sma: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "hash_rate_2m_sma",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_rate_1y_sma: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "hash_rate_1y_sma",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_difficulty_as_hash: ComputedVecsFromHeight::forced_import(
-                &db,
-                "difficulty_as_hash",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_difficulty_adjustment: ComputedVecsFromHeight::forced_import(
-                &db,
-                "difficulty_adjustment",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_sum(),
-            )?,
-            indexes_to_blocks_before_next_difficulty_adjustment:
-                ComputedVecsFromHeight::forced_import(
-                    &db,
-                    "blocks_before_next_difficulty_adjustment",
-                    Source::Compute,
-                    version + Version::TWO,
-                    indexes,
-                    VecBuilderOptions::default().add_last(),
-                )?,
-            indexes_to_days_before_next_difficulty_adjustment:
-                ComputedVecsFromHeight::forced_import(
-                    &db,
-                    "days_before_next_difficulty_adjustment",
-                    Source::Compute,
-                    version + Version::TWO,
-                    indexes,
-                    VecBuilderOptions::default().add_last(),
-                )?,
-            indexes_to_blocks_before_next_halving: ComputedVecsFromHeight::forced_import(
-                &db,
-                "blocks_before_next_halving",
-                Source::Compute,
-                version + Version::TWO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_days_before_next_halving: ComputedVecsFromHeight::forced_import(
-                &db,
-                "days_before_next_halving",
-                Source::Compute,
-                version + Version::TWO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_price_ths: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_price_ths",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_price_phs: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_price_phs",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_value_ths: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_value_ths",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_value_phs: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_value_phs",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_price_ths_min: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_price_ths_min",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_price_phs_min: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_price_phs_min",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_price_rebound: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_price_rebound",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_value_ths_min: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_value_ths_min",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_value_phs_min: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_value_phs_min",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_hash_value_rebound: ComputedVecsFromHeight::forced_import(
-                &db,
-                "hash_value_rebound",
-                Source::Compute,
-                version + Version::new(4),
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_inflation_rate: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "inflation_rate",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_annualized_volume: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "annualized_volume",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_annualized_volume_btc: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "annualized_volume_btc",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_annualized_volume_usd: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "annualized_volume_usd",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_tx_btc_velocity: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "tx_btc_velocity",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_tx_usd_velocity: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "tx_usd_velocity",
-                Source::Compute,
-                version + Version::ZERO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_tx_per_sec: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "tx_per_sec",
-                Source::Compute,
-                version + Version::TWO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_outputs_per_sec: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "outputs_per_sec",
-                Source::Compute,
-                version + Version::TWO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
-            indexes_to_inputs_per_sec: ComputedVecsFromDateIndex::forced_import(
-                &db,
-                "inputs_per_sec",
-                Source::Compute,
-                version + Version::TWO,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )?,
+            indexes_to_p2a_count: computed_h!("p2a_count", Source::Compute, full_stats()),
+            indexes_to_p2ms_count: computed_h!("p2ms_count", Source::Compute, full_stats()),
+            indexes_to_p2pk33_count: computed_h!("p2pk33_count", Source::Compute, full_stats()),
+            indexes_to_p2pk65_count: computed_h!("p2pk65_count", Source::Compute, full_stats()),
+            indexes_to_p2pkh_count: computed_h!("p2pkh_count", Source::Compute, full_stats()),
+            indexes_to_p2sh_count: computed_h!("p2sh_count", Source::Compute, full_stats()),
+            indexes_to_p2tr_count: computed_h!("p2tr_count", Source::Compute, full_stats()),
+            indexes_to_p2wpkh_count: computed_h!("p2wpkh_count", Source::Compute, full_stats()),
+            indexes_to_p2wsh_count: computed_h!("p2wsh_count", Source::Compute, full_stats()),
+            indexes_to_opreturn_count: computed_h!("opreturn_count", Source::Compute, full_stats()),
+            indexes_to_unknownoutput_count: computed_h!("unknownoutput_count", Source::Compute, full_stats()),
+            indexes_to_emptyoutput_count: computed_h!("emptyoutput_count", Source::Compute, full_stats()),
+            indexes_to_exact_utxo_count: computed_h!("exact_utxo_count", Source::Compute, last()),
+            indexes_to_subsidy_usd_1y_sma: compute_dollars
+                .then(|| ComputedVecsFromDateIndex::forced_import(&db, "subsidy_usd_1y_sma", Source::Compute, version + v0, indexes, last()))
+                .transpose()?,
+            indexes_to_puell_multiple: compute_dollars
+                .then(|| ComputedVecsFromDateIndex::forced_import(&db, "puell_multiple", Source::Compute, version + v0, indexes, last()))
+                .transpose()?,
+            indexes_to_hash_rate: computed_h!("hash_rate", Source::Compute, v5, last()),
+            indexes_to_hash_rate_1w_sma: computed_di!("hash_rate_1w_sma", last()),
+            indexes_to_hash_rate_1m_sma: computed_di!("hash_rate_1m_sma", last()),
+            indexes_to_hash_rate_2m_sma: computed_di!("hash_rate_2m_sma", last()),
+            indexes_to_hash_rate_1y_sma: computed_di!("hash_rate_1y_sma", last()),
+            indexes_to_difficulty_as_hash: computed_h!("difficulty_as_hash", Source::Compute, last()),
+            indexes_to_difficulty_adjustment: computed_h!("difficulty_adjustment", Source::Compute, sum()),
+            indexes_to_blocks_before_next_difficulty_adjustment: computed_h!("blocks_before_next_difficulty_adjustment", Source::Compute, v2, last()),
+            indexes_to_days_before_next_difficulty_adjustment: computed_h!("days_before_next_difficulty_adjustment", Source::Compute, v2, last()),
+            indexes_to_blocks_before_next_halving: computed_h!("blocks_before_next_halving", Source::Compute, v2, last()),
+            indexes_to_days_before_next_halving: computed_h!("days_before_next_halving", Source::Compute, v2, last()),
+            indexes_to_hash_price_ths: computed_h!("hash_price_ths", Source::Compute, v4, last()),
+            indexes_to_hash_price_phs: computed_h!("hash_price_phs", Source::Compute, v4, last()),
+            indexes_to_hash_value_ths: computed_h!("hash_value_ths", Source::Compute, v4, last()),
+            indexes_to_hash_value_phs: computed_h!("hash_value_phs", Source::Compute, v4, last()),
+            indexes_to_hash_price_ths_min: computed_h!("hash_price_ths_min", Source::Compute, v4, last()),
+            indexes_to_hash_price_phs_min: computed_h!("hash_price_phs_min", Source::Compute, v4, last()),
+            indexes_to_hash_price_rebound: computed_h!("hash_price_rebound", Source::Compute, v4, last()),
+            indexes_to_hash_value_ths_min: computed_h!("hash_value_ths_min", Source::Compute, v4, last()),
+            indexes_to_hash_value_phs_min: computed_h!("hash_value_phs_min", Source::Compute, v4, last()),
+            indexes_to_hash_value_rebound: computed_h!("hash_value_rebound", Source::Compute, v4, last()),
+            indexes_to_inflation_rate: computed_di!("inflation_rate", last()),
+            indexes_to_annualized_volume: computed_di!("annualized_volume", last()),
+            indexes_to_annualized_volume_btc: computed_di!("annualized_volume_btc", last()),
+            indexes_to_annualized_volume_usd: computed_di!("annualized_volume_usd", last()),
+            indexes_to_tx_btc_velocity: computed_di!("tx_btc_velocity", last()),
+            indexes_to_tx_usd_velocity: computed_di!("tx_usd_velocity", last()),
+            indexes_to_tx_per_sec: computed_di!("tx_per_sec", v2, last()),
+            indexes_to_outputs_per_sec: computed_di!("outputs_per_sec", v2, last()),
+            indexes_to_inputs_per_sec: computed_di!("inputs_per_sec", v2, last()),
 
             txindex_to_is_coinbase,
             txinindex_to_value,
@@ -1441,7 +881,7 @@ impl Vecs {
             .indexes_to_coinbase
             .dollars
             .as_ref()
-            .map(|c| c.height.as_ref().unwrap().into_iter())
+            .map(|c| c.height.u().into_iter())
         {
             self.height_to_24h_coinbase_usd_sum.compute_transform(
                 starting_indexes.height,
@@ -1462,7 +902,7 @@ impl Vecs {
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
-                    self.indexes_to_coinbase.sats.height.as_ref().unwrap(),
+                    self.indexes_to_coinbase.sats.height.u(),
                     self.indexes_to_fee.sats.height.unwrap_sum(),
                     |(height, coinbase, fees, ..)| {
                         (
@@ -1486,7 +926,7 @@ impl Vecs {
             |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_subsidy.sats.height.as_ref().unwrap(),
+                    self.indexes_to_subsidy.sats.height.u(),
                     |(height, subsidy, ..)| {
                         let halving = HalvingEpoch::from(height);
                         let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
@@ -1738,7 +1178,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &self.height_to_24h_block_count,
-                    self.indexes_to_difficulty_as_hash.height.as_ref().unwrap(),
+                    self.indexes_to_difficulty_as_hash.height.u(),
                     |(i, block_count_sum, difficulty_as_hash, ..)| {
                         (
                             i,
@@ -1916,7 +1356,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &self.height_to_24h_coinbase_usd_sum,
-                    self.indexes_to_hash_rate.height.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.height.u(),
                     |(i, coinbase_sum, hashrate, ..)| {
                         (i, (*coinbase_sum / (*hashrate / ONE_TERA_HASH)).into())
                     },
@@ -1929,7 +1369,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_ths.height.as_ref().unwrap(),
+                    self.indexes_to_hash_price_ths.height.u(),
                     |(i, price, ..)| (i, (*price * 1000.0).into()),
                     exit,
                 )?;
@@ -1941,7 +1381,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &self.height_to_24h_coinbase_sum,
-                    self.indexes_to_hash_rate.height.as_ref().unwrap(),
+                    self.indexes_to_hash_rate.height.u(),
                     |(i, coinbase_sum, hashrate, ..)| {
                         (
                             i,
@@ -1957,7 +1397,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_ths.height.as_ref().unwrap(),
+                    self.indexes_to_hash_value_ths.height.u(),
                     |(i, value, ..)| (i, (*value * 1000.0).into()),
                     exit,
                 )?;
@@ -1968,7 +1408,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_ths.height.as_ref().unwrap(),
+                    self.indexes_to_hash_price_ths.height.u(),
                     exit,
                     true,
                 )?;
@@ -1979,7 +1419,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_phs.height.as_ref().unwrap(),
+                    self.indexes_to_hash_price_phs.height.u(),
                     exit,
                     true,
                 )?;
@@ -1990,7 +1430,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_ths.height.as_ref().unwrap(),
+                    self.indexes_to_hash_value_ths.height.u(),
                     exit,
                     true,
                 )?;
@@ -2001,7 +1441,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_phs.height.as_ref().unwrap(),
+                    self.indexes_to_hash_value_phs.height.u(),
                     exit,
                     true,
                 )?;
@@ -2012,8 +1452,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_phs.height.as_ref().unwrap(),
-                    self.indexes_to_hash_price_phs_min.height.as_ref().unwrap(),
+                    self.indexes_to_hash_price_phs.height.u(),
+                    self.indexes_to_hash_price_phs_min.height.u(),
                     exit,
                 )?;
                 Ok(())
@@ -2023,8 +1463,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_phs.height.as_ref().unwrap(),
-                    self.indexes_to_hash_value_phs_min.height.as_ref().unwrap(),
+                    self.indexes_to_hash_value_phs.height.u(),
+                    self.indexes_to_hash_value_phs_min.height.u(),
                     exit,
                 )?;
                 Ok(())

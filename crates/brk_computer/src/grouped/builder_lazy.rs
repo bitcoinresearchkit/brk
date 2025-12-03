@@ -3,6 +3,7 @@ use brk_types::Version;
 use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
+use crate::utils::OptionExt;
 
 use super::ComputedVecValue;
 
@@ -62,7 +63,7 @@ where
                     source_extra
                         .first
                         .as_ref()
-                        .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
+                        .map_or_else(|| source.u().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -104,7 +105,7 @@ where
                     source_extra
                         .min
                         .as_ref()
-                        .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
+                        .map_or_else(|| source.u().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -123,7 +124,7 @@ where
                     source_extra
                         .max
                         .as_ref()
-                        .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
+                        .map_or_else(|| source.u().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -142,7 +143,7 @@ where
                     source_extra
                         .average
                         .as_ref()
-                        .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
+                        .map_or_else(|| source.u().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -172,7 +173,7 @@ where
                     source_extra
                         .sum
                         .as_ref()
-                        .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
+                        .map_or_else(|| source.u().clone(), |v| v.clone()),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -194,7 +195,7 @@ where
                 Box::new(LazyVecFrom2::init(
                     &suffix("cumulative"),
                     version + VERSION + Version::ZERO,
-                    source_extra.cumulative.as_ref().unwrap().boxed_clone(),
+                    source_extra.cumulative.u().boxed_clone(),
                     len_source.clone(),
                     |i: I, source, len_source| {
                         if i.to_usize() >= len_source.vec_len() {
@@ -214,27 +215,27 @@ where
     }
 
     pub fn unwrap_first(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.first.as_ref().unwrap()
+        self.first.u()
     }
     #[allow(unused)]
     pub fn unwrap_average(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.average.as_ref().unwrap()
+        self.average.u()
     }
     pub fn unwrap_sum(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.sum.as_ref().unwrap()
+        self.sum.u()
     }
     pub fn unwrap_max(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.max.as_ref().unwrap()
+        self.max.u()
     }
     pub fn unwrap_min(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.min.as_ref().unwrap()
+        self.min.u()
     }
     pub fn unwrap_last(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.last.as_ref().unwrap()
+        self.last.u()
     }
     #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
-        self.cumulative.as_ref().unwrap()
+        self.cumulative.u()
     }
 }
 

@@ -67,7 +67,7 @@ fjall3 = { version = "3.0.0-rc.4", package = "fjall" }
 # fjall3 = { path = "../fjall3", package = "fjall" }
 # fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "f0bf96c2017b3543eb176012b8eff69c639dff1d", package = "fjall" }
 jiff = "0.2.16"
-log = "0.4.28"
+log = "0.4.29"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"
