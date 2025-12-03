@@ -149,15 +149,17 @@ where
                         if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        let vec = S1I::inclusive_range_from(i, source.vec_len())
+                        let mut sum = T::from(0);
+                        let mut len = 0usize;
+                        for v in S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
-                            .collect::<Vec<_>>();
-                        if vec.is_empty() {
+                        {
+                            sum += v;
+                            len += 1;
+                        }
+                        if len == 0 {
                             return None;
                         }
-                        let mut sum = T::from(0);
-                        let len = vec.len();
-                        vec.into_iter().for_each(|v| sum += v);
                         Some(sum / len)
                     },
                 ))
@@ -179,14 +181,17 @@ where
                         if i.to_usize() >= len_source.vec_len() {
                             return None;
                         }
-                        let vec = S1I::inclusive_range_from(i, source.vec_len())
+                        let mut sum = T::from(0);
+                        let mut has_values = false;
+                        for v in S1I::inclusive_range_from(i, source.vec_len())
                             .flat_map(|i| source.get_at(i))
-                            .collect::<Vec<_>>();
-                        if vec.is_empty() {
+                        {
+                            sum += v;
+                            has_values = true;
+                        }
+                        if !has_values {
                             return None;
                         }
-                        let mut sum = T::from(0);
-                        vec.into_iter().for_each(|v| sum += v);
                         Some(sum)
                     },
                 ))

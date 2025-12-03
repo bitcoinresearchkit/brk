@@ -54,7 +54,12 @@ impl Vecs {
         macro_rules! import_di {
             ($name:expr) => {
                 ComputedVecsFromDateIndex::forced_import(
-                    db, &suffix($name), Source::Compute, version, indexes, last.clone(),
+                    db,
+                    &suffix($name),
+                    Source::Compute,
+                    version,
+                    indexes,
+                    last.clone(),
                 )?
             };
         }
@@ -62,19 +67,42 @@ impl Vecs {
         Ok(Self {
             id,
             indexes_to_blocks_mined: ComputedVecsFromHeight::forced_import(
-                db, &suffix("blocks_mined"), Source::Compute, version, indexes, sum_cum.clone(),
+                db,
+                &suffix("blocks_mined"),
+                Source::Compute,
+                version,
+                indexes,
+                sum_cum,
             )?,
             indexes_to_1w_blocks_mined: import_di!("1w_blocks_mined"),
             indexes_to_1m_blocks_mined: import_di!("1m_blocks_mined"),
             indexes_to_1y_blocks_mined: import_di!("1y_blocks_mined"),
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
-                db, &suffix("subsidy"), Source::Compute, version, sum_cum.clone(), compute_dollars, indexes,
+                db,
+                &suffix("subsidy"),
+                Source::Compute,
+                version,
+                sum_cum,
+                compute_dollars,
+                indexes,
             )?,
             indexes_to_fee: ComputedValueVecsFromHeight::forced_import(
-                db, &suffix("fee"), Source::Compute, version, sum_cum.clone(), compute_dollars, indexes,
+                db,
+                &suffix("fee"),
+                Source::Compute,
+                version,
+                sum_cum,
+                compute_dollars,
+                indexes,
             )?,
             indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
-                db, &suffix("coinbase"), Source::Compute, version, sum_cum, compute_dollars, indexes,
+                db,
+                &suffix("coinbase"),
+                Source::Compute,
+                version,
+                sum_cum,
+                compute_dollars,
+                indexes,
             )?,
             indexes_to_dominance: import_di!("dominance"),
             indexes_to_1d_dominance: import_di!("1d_dominance"),

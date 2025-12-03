@@ -210,6 +210,14 @@ impl ComputedRatioVecsFromDateIndex {
 
         sorted.sort_unstable();
 
+        // Cache mutable refs before the loop to avoid repeated unwrap chains
+        let pct1_vec = self.ratio_pct1.um().dateindex.um();
+        let pct2_vec = self.ratio_pct2.um().dateindex.um();
+        let pct5_vec = self.ratio_pct5.um().dateindex.um();
+        let pct95_vec = self.ratio_pct95.um().dateindex.um();
+        let pct98_vec = self.ratio_pct98.um().dateindex.um();
+        let pct99_vec = self.ratio_pct99.um().dateindex.um();
+
         self.ratio
             .dateindex
             .as_ref()
@@ -219,94 +227,22 @@ impl ComputedRatioVecsFromDateIndex {
             .skip(starting_dateindex.to_usize())
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_ratio_date_usize {
-                    self.ratio_pct5
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
-                    self.ratio_pct2
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
-                    self.ratio_pct1
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
-                    self.ratio_pct95
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
-                    self.ratio_pct98
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
-                    self.ratio_pct99
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
+                    pct1_vec.truncate_push_at(index, StoredF32::NAN)?;
+                    pct2_vec.truncate_push_at(index, StoredF32::NAN)?;
+                    pct5_vec.truncate_push_at(index, StoredF32::NAN)?;
+                    pct95_vec.truncate_push_at(index, StoredF32::NAN)?;
+                    pct98_vec.truncate_push_at(index, StoredF32::NAN)?;
+                    pct99_vec.truncate_push_at(index, StoredF32::NAN)?;
                 } else {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 
-                    self.ratio_pct1
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.01))?;
-                    self.ratio_pct2
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.02))?;
-                    self.ratio_pct5
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.05))?;
-                    self.ratio_pct95
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.95))?;
-                    self.ratio_pct98
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.98))?;
-                    self.ratio_pct99
-                        .as_mut()
-                        .unwrap()
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, get_percentile(&sorted, 0.99))?;
+                    pct1_vec.truncate_push_at(index, get_percentile(&sorted, 0.01))?;
+                    pct2_vec.truncate_push_at(index, get_percentile(&sorted, 0.02))?;
+                    pct5_vec.truncate_push_at(index, get_percentile(&sorted, 0.05))?;
+                    pct95_vec.truncate_push_at(index, get_percentile(&sorted, 0.95))?;
+                    pct98_vec.truncate_push_at(index, get_percentile(&sorted, 0.98))?;
+                    pct99_vec.truncate_push_at(index, get_percentile(&sorted, 0.99))?;
                 }
 
                 Ok(())

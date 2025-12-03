@@ -14,13 +14,17 @@ use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use vecdb::Exit;
 
-pub fn main() -> Result<()> {
+pub fn main() -> color_eyre::Result<()> {
+    color_eyre::install()?;
+
     // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
         .stack_size(512 * 1024 * 1024)
         .spawn(run)?
         .join()
-        .unwrap()
+        .unwrap()?;
+
+    Ok(())
 }
 
 fn run() -> Result<()> {

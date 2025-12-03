@@ -23,7 +23,7 @@ brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 vecdb = { workspace = true }
 clap = { version = "4.5.53", features = ["derive", "string"] }
-color-eyre = "0.6.5"
+color-eyre = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }

@@ -73,11 +73,10 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                 let amount = prev_amount + value;
 
-                if is_new
-                    || from_any_empty
-                    || vecs.amount_range.get_mut(amount).filter().clone()
-                        != vecs.amount_range.get_mut(prev_amount).filter().clone()
-                {
+                let filters_differ =
+                    vecs.amount_range.get(amount).filter() != vecs.amount_range.get(prev_amount).filter();
+
+                if is_new || from_any_empty || filters_differ {
                     if !is_new && !from_any_empty {
                         vecs.amount_range
                             .get_mut(prev_amount)
@@ -162,10 +161,10 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
                     let will_be_empty = addressdata.has_1_utxos();
 
-                    if will_be_empty
-                        || vecs.amount_range.get_mut(amount).filter().clone()
-                            != vecs.amount_range.get_mut(prev_amount).filter().clone()
-                    {
+                    let filters_differ =
+                        vecs.amount_range.get(amount).filter() != vecs.amount_range.get(prev_amount).filter();
+
+                    if will_be_empty || filters_differ {
                         vecs.amount_range
                             .get_mut(prev_amount)
                             .state.um()

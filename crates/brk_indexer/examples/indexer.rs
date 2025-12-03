@@ -5,7 +5,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
@@ -13,7 +12,9 @@ use brk_rpc::{Auth, Client};
 use log::{debug, info};
 use vecdb::Exit;
 
-fn main() -> Result<()> {
+fn main() -> color_eyre::Result<()> {
+    color_eyre::install()?;
+
     brk_logger::init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Client::default_bitcoin_path();

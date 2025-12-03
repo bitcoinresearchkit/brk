@@ -50,6 +50,41 @@ impl<T> ByAmountRange<T> {
     }
 
     #[allow(clippy::inconsistent_digit_grouping)]
+    pub fn get(&self, value: Sats) -> &T {
+        if value == Sats::ZERO {
+            &self._0sats
+        } else if value < Sats::_10 {
+            &self._1sat_to_10sats
+        } else if value < Sats::_100 {
+            &self._10sats_to_100sats
+        } else if value < Sats::_1K {
+            &self._100sats_to_1k_sats
+        } else if value < Sats::_10K {
+            &self._1k_sats_to_10k_sats
+        } else if value < Sats::_100K {
+            &self._10k_sats_to_100k_sats
+        } else if value < Sats::_1M {
+            &self._100k_sats_to_1m_sats
+        } else if value < Sats::_10M {
+            &self._1m_sats_to_10m_sats
+        } else if value < Sats::_1BTC {
+            &self._10m_sats_to_1btc
+        } else if value < Sats::_10BTC {
+            &self._1btc_to_10btc
+        } else if value < Sats::_100BTC {
+            &self._10btc_to_100btc
+        } else if value < Sats::_1K_BTC {
+            &self._100btc_to_1k_btc
+        } else if value < Sats::_10K_BTC {
+            &self._1k_btc_to_10k_btc
+        } else if value < Sats::_100K_BTC {
+            &self._10k_btc_to_100k_btc
+        } else {
+            &self._100k_btc_or_more
+        }
+    }
+
+    #[allow(clippy::inconsistent_digit_grouping)]
     pub fn get_mut(&mut self, value: Sats) -> &mut T {
         if value == Sats::ZERO {
             &mut self._0sats

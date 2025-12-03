@@ -61,13 +61,20 @@ pub fn build_txoutindex_to_txindex<'a>(
     block_tx_count: u64,
     txindex_to_output_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
-    let mut vec = Vec::new();
-
     let block_first_txindex = block_first_txindex.to_usize();
-    for tx_offset in 0..block_tx_count as usize {
-        let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let output_count = u64::from(txindex_to_output_count.get_unwrap(txindex));
 
+    let counts: Vec<_> = (0..block_tx_count as usize)
+        .map(|tx_offset| {
+            let txindex = TxIndex::from(block_first_txindex + tx_offset);
+            u64::from(txindex_to_output_count.get_unwrap(txindex))
+        })
+        .collect();
+
+    let total: u64 = counts.iter().sum();
+    let mut vec = Vec::with_capacity(total as usize);
+
+    for (tx_offset, &output_count) in counts.iter().enumerate() {
+        let txindex = TxIndex::from(block_first_txindex + tx_offset);
         for _ in 0..output_count {
             vec.push(txindex);
         }
@@ -81,13 +88,20 @@ pub fn build_txinindex_to_txindex<'a>(
     block_tx_count: u64,
     txindex_to_input_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
-    let mut vec = Vec::new();
-
     let block_first_txindex = block_first_txindex.to_usize();
-    for tx_offset in 0..block_tx_count as usize {
-        let txindex = TxIndex::from(block_first_txindex + tx_offset);
-        let input_count = u64::from(txindex_to_input_count.get_unwrap(txindex));
 
+    let counts: Vec<_> = (0..block_tx_count as usize)
+        .map(|tx_offset| {
+            let txindex = TxIndex::from(block_first_txindex + tx_offset);
+            u64::from(txindex_to_input_count.get_unwrap(txindex))
+        })
+        .collect();
+
+    let total: u64 = counts.iter().sum();
+    let mut vec = Vec::with_capacity(total as usize);
+
+    for (tx_offset, &input_count) in counts.iter().enumerate() {
+        let txindex = TxIndex::from(block_first_txindex + tx_offset);
         for _ in 0..input_count {
             vec.push(txindex);
         }
