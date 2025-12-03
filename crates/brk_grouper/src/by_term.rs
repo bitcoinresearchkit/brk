@@ -1,4 +1,5 @@
 use brk_traversable::Traversable;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::{Filter, Term};
 
@@ -25,5 +26,19 @@ impl<T> ByTerm<T> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [&mut self.short, &mut self.long].into_iter()
+    }
+
+    pub fn par_iter(&self) -> impl ParallelIterator<Item = &T>
+    where
+        T: Send + Sync,
+    {
+        [&self.short, &self.long].into_par_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [&mut self.short, &mut self.long].into_par_iter()
     }
 }

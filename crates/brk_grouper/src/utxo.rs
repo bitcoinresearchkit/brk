@@ -102,11 +102,25 @@ impl<T> UTXOGroups<T> {
         [&self.all].into_iter().chain(self.term.iter())
     }
 
+    pub fn par_iter_aggregate(&self) -> impl ParallelIterator<Item = &T>
+    where
+        T: Send + Sync,
+    {
+        [&self.all].into_par_iter().chain(self.term.par_iter())
+    }
+
     /// Iterator over aggregate cohorts (all, sth, lth) that compute values from sub-cohorts.
     /// These are cohorts with StateLevel::PriceOnly that derive values from stateful sub-cohorts.
     pub fn iter_aggregate_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [&mut self.all].into_iter().chain(self.term.iter_mut())
+    }
+
+    pub fn par_iter_aggregate_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
         [&mut self.all]
-            .into_iter()
-            .chain(self.term.iter_mut())
+            .into_par_iter()
+            .chain(self.term.par_iter_mut())
     }
 }

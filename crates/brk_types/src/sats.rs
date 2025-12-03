@@ -132,6 +132,13 @@ impl Mul<usize> for Sats {
     }
 }
 
+impl Mul<u8> for Sats {
+    type Output = Self;
+    fn mul(self, rhs: u8) -> Self::Output {
+        Sats::from(self.0.checked_mul(rhs as u64).unwrap())
+    }
+}
+
 impl Mul<u64> for Sats {
     type Output = Self;
     fn mul(self, rhs: u64) -> Self::Output {
@@ -146,10 +153,17 @@ impl Mul<Height> for Sats {
     }
 }
 
+impl Mul<f64> for Sats {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Sats::from((self.0 as f64 * rhs) as u64)
+    }
+}
+
 impl Mul<StoredF64> for Sats {
     type Output = Self;
     fn mul(self, rhs: StoredF64) -> Self::Output {
-        Sats::from((self.0 as f64 * f64::from(rhs)) as u64)
+        self * f64::from(rhs)
     }
 }
 

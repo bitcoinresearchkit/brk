@@ -8,7 +8,7 @@ use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
     Indexes, PriceToAmount, UTXOCohortState,
-    grouped::PERCENTILES_LEN,
+    grouped::{PERCENTILES, PERCENTILES_LEN},
     indexes, price,
     stateful::{
         common,
@@ -53,7 +53,11 @@ impl Vecs {
             state_starting_height: None,
 
             state: if state_level.is_full() {
-                Some(UTXOCohortState::new(states_path, &full_name, compute_dollars))
+                Some(UTXOCohortState::new(
+                    states_path,
+                    &full_name,
+                    compute_dollars,
+                ))
             } else {
                 None
             },
@@ -191,9 +195,10 @@ impl CohortVecs for Vecs {
 impl Vecs {
     /// Compute percentile prices for aggregate cohorts that have standalone price_to_amount.
     /// Returns NaN array if price_to_amount is None or empty.
-    pub fn compute_percentile_prices_from_standalone(&self, supply: Sats) -> [Dollars; PERCENTILES_LEN] {
-        use crate::grouped::PERCENTILES;
-
+    pub fn compute_percentile_prices_from_standalone(
+        &self,
+        supply: Sats,
+    ) -> [Dollars; PERCENTILES_LEN] {
         let mut result = [Dollars::NAN; PERCENTILES_LEN];
 
         let price_to_amount = match self.price_to_amount.as_ref() {
@@ -205,14 +210,14 @@ impl Vecs {
             return result;
         }
 
-        let total = u64::from(supply);
-        let targets = PERCENTILES.map(|p| total * u64::from(p) / 100);
+        let total = supply;
+        let targets = PERCENTILES.map(|p| total * p / 100);
 
-        let mut accumulated = 0u64;
+        let mut accumulated = Sats::ZERO;
         let mut pct_idx = 0;
 
         for (&price, &sats) in price_to_amount.iter() {
-            accumulated += u64::from(sats);
+            accumulated += sats;
 
             while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
                 result[pct_idx] = price;

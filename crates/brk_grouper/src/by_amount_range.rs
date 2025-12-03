@@ -31,7 +31,7 @@ impl<T> ByAmountRange<T> {
         F: FnMut(Filter) -> T,
     {
         Self {
-            _0sats: create(Filter::Amount(AmountFilter::LowerThan(Sats::_1))),
+            _0sats: create(Filter::Amount(AmountFilter::Range(Sats::ZERO..Sats::_1))),
             _1sat_to_10sats: create(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10))),
             _10sats_to_100sats: create(Filter::Amount(AmountFilter::Range(Sats::_10..Sats::_100))),
             _100sats_to_1k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100..Sats::_1K))),
@@ -45,7 +45,7 @@ impl<T> ByAmountRange<T> {
             _100btc_to_1k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_100BTC..Sats::_1K_BTC))),
             _1k_btc_to_10k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_1K_BTC..Sats::_10K_BTC))),
             _10k_btc_to_100k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_10K_BTC..Sats::_100K_BTC))),
-            _100k_btc_or_more: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100K_BTC))),
+            _100k_btc_or_more: create(Filter::Amount(AmountFilter::Range(Sats::_100K_BTC..Sats::MAX))),
         }
     }
 
