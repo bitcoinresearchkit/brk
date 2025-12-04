@@ -1,16 +1,15 @@
-use std::{fs, path::Path, str::FromStr};
+use std::{fs, path::Path};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Mode, StoreFjallV2 as Store, Type};
 use brk_types::{
-    AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height,
-    OutPoint, OutputType, StoredString, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex, Unit,
-    Version, Vout,
+    AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height, OutPoint,
+    OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall2::{CompressionType as Compression, PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
-use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, VecIndex, VecIterator};
+use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
 
 use crate::Indexes;
 
@@ -140,11 +139,7 @@ impl Stores {
                 .values()
                 .map(|s| s as &dyn AnyStore),
         )
-        .map(|store| {
-            // let height =
-            store.height().map(Height::incremented).unwrap_or_default()
-            // dbg!((height, store.name()));
-        })
+        .map(|store| store.height().map(Height::incremented).unwrap_or_default())
         .min()
         .unwrap()
     }
@@ -224,176 +219,48 @@ impl Stores {
                     self.height_to_coinbase_tag.remove(h);
                 });
 
-            if let Ok(mut index) = vecs
-                .height_to_first_p2pk65addressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2pk65addressindex_to_p2pk65bytes_iter =
-                    vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
-
-                while let Some(typedbytes) = p2pk65addressindex_to_p2pk65bytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
+            // Remove address hashes for all address types starting from rollback height
+            for address_type in [
+                OutputType::P2PK65,
+                OutputType::P2PK33,
+                OutputType::P2PKH,
+                OutputType::P2SH,
+                OutputType::P2WPKH,
+                OutputType::P2WSH,
+                OutputType::P2TR,
+                OutputType::P2A,
+            ] {
+                for hash in vecs.iter_address_hashes_from(address_type, starting_indexes.height)? {
                     self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2PK65)
+                        .get_mut_unwrap(address_type)
                         .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2pk33addressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2pk33addressindex_to_p2pk33bytes_iter =
-                    vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
-
-                while let Some(typedbytes) = p2pk33addressindex_to_p2pk33bytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2PK33)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2pkhaddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-                    vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
-
-                while let Some(typedbytes) = p2pkhaddressindex_to_p2pkhbytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2PKH)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2shaddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2shaddressindex_to_p2shbytes_iter =
-                    vecs.p2shaddressindex_to_p2shbytes.iter()?;
-
-                while let Some(typedbytes) = p2shaddressindex_to_p2shbytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2SH)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2wpkhaddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-                    vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
-
-                while let Some(typedbytes) = p2wpkhaddressindex_to_p2wpkhbytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2WPKH)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2wshaddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2wshaddressindex_to_p2wshbytes_iter =
-                    vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
-
-                while let Some(typedbytes) = p2wshaddressindex_to_p2wshbytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2WSH)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2traddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2traddressindex_to_p2trbytes_iter =
-                    vecs.p2traddressindex_to_p2trbytes.iter()?;
-
-                while let Some(typedbytes) = p2traddressindex_to_p2trbytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2TR)
-                        .remove(hash);
-                    index.increment();
-                }
-            }
-
-            if let Ok(mut index) = vecs
-                .height_to_first_p2aaddressindex
-                .read_once(starting_indexes.height)
-            {
-                let mut p2aaddressindex_to_p2abytes_iter =
-                    vecs.p2aaddressindex_to_p2abytes.iter()?;
-
-                while let Some(typedbytes) = p2aaddressindex_to_p2abytes_iter.get(index) {
-                    let bytes = AddressBytes::from(typedbytes);
-                    let hash = AddressHash::from(&bytes);
-                    self.addresstype_to_addresshash_to_addressindex
-                        .get_mut_unwrap(OutputType::P2A)
-                        .remove(hash);
-                    index.increment();
                 }
             }
         } else {
             unreachable!();
-            // self.blockhashprefix_to_height.reset()?;
-            // self.addresshash_to_typeindex.reset()?;
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
-            let txidprefix_dup1 = TxidPrefix::from(Txid::from(bitcoin::Txid::from_str(
-                "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-            )?));
-            let txidprefix_dup2 = TxidPrefix::from(Txid::from(bitcoin::Txid::from_str(
-                "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-            )?));
             vecs.txindex_to_txid
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txindex.to_usize())
                 .for_each(|(txindex, txid)| {
                     let txindex = TxIndex::from(txindex);
-
                     let txidprefix = TxidPrefix::from(&txid);
 
-                    let is_not_first_dup =
-                        txindex != TxIndex::new(142783) || txidprefix != txidprefix_dup1;
+                    let is_known_dup = crate::DUPLICATE_TXID_PREFIXES
+                        .iter()
+                        .any(|(dup_prefix, dup_txindex)| {
+                            txindex == *dup_txindex && txidprefix == *dup_prefix
+                        });
 
-                    let is_not_second_dup =
-                        txindex != TxIndex::new(142841) || txidprefix != txidprefix_dup2;
-
-                    if is_not_first_dup && is_not_second_dup {
+                    if !is_known_dup {
                         self.txidprefix_to_txindex.remove(txidprefix);
                     }
                 });
         } else {
             unreachable!();
-            // self.txidprefix_to_txindex.reset()?;
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
@@ -467,12 +334,6 @@ impl Stores {
                 });
         } else {
             unreachable!();
-            // self.addresstype_to_typeindex_and_txindex
-            //     .iter_mut()
-            //     .try_for_each(|s| s.reset())?;
-            // self.addresstype_to_typeindex_and_unspentoutpoint
-            //     .iter_mut()
-            //     .try_for_each(|s| s.reset())?;
         }
 
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;

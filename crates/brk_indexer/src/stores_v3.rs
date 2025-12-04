@@ -1,3 +1,9 @@
+//! Experimental stores implementation using fjall3.
+//!
+//! This module is currently commented out in lib.rs and not in use.
+//! It exists as a work-in-progress upgrade path from fjall2 (stores_v2) to fjall3.
+//! Do not delete - intended for future activation once fjall3 is stable and tested.
+
 use std::{fs, path::Path, time::Instant};
 
 use brk_error::Result;

@@ -3,8 +3,8 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    AddressBytes, BlockHash, EmptyOutputIndex, Height, OpReturnIndex, OutPoint, OutputType,
-    P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes,
+    AddressBytes, AddressHash, BlockHash, EmptyOutputIndex, Height, OpReturnIndex, OutPoint,
+    OutputType, P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes,
     P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
     P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes,
     RawLockTime, Sats, StoredBool, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex,
@@ -12,7 +12,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PAGE_SIZE, PcoVec, Stamp,
+    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, TypedVecIterator, PAGE_SIZE,
+    PcoVec, Stamp,
 };
 
 use crate::Indexes;
@@ -364,6 +365,70 @@ impl Vecs {
     pub fn compact(&self) -> Result<()> {
         self.db.compact()?;
         Ok(())
+    }
+
+    /// Iterate address hashes starting from a given height (for rollback).
+    /// Returns an iterator of AddressHash values for all addresses of the given type
+    /// that were added at or after the given height.
+    pub fn iter_address_hashes_from(
+        &self,
+        address_type: OutputType,
+        height: Height,
+    ) -> Result<Box<dyn Iterator<Item = AddressHash> + '_>> {
+        macro_rules! make_iter {
+            ($height_vec:expr, $bytes_vec:expr) => {{
+                match $height_vec.read_once(height) {
+                    Ok(mut index) => {
+                        let mut iter = $bytes_vec.iter()?;
+                        Ok(Box::new(std::iter::from_fn(move || {
+                            iter.get(index).map(|typedbytes| {
+                                let bytes = AddressBytes::from(typedbytes);
+                                index.increment();
+                                AddressHash::from(&bytes)
+                            })
+                        })) as Box<dyn Iterator<Item = AddressHash> + '_>)
+                    }
+                    Err(_) => Ok(Box::new(std::iter::empty())
+                        as Box<dyn Iterator<Item = AddressHash> + '_>),
+                }
+            }};
+        }
+
+        match address_type {
+            OutputType::P2PK65 => make_iter!(
+                self.height_to_first_p2pk65addressindex,
+                self.p2pk65addressindex_to_p2pk65bytes
+            ),
+            OutputType::P2PK33 => make_iter!(
+                self.height_to_first_p2pk33addressindex,
+                self.p2pk33addressindex_to_p2pk33bytes
+            ),
+            OutputType::P2PKH => make_iter!(
+                self.height_to_first_p2pkhaddressindex,
+                self.p2pkhaddressindex_to_p2pkhbytes
+            ),
+            OutputType::P2SH => make_iter!(
+                self.height_to_first_p2shaddressindex,
+                self.p2shaddressindex_to_p2shbytes
+            ),
+            OutputType::P2WPKH => make_iter!(
+                self.height_to_first_p2wpkhaddressindex,
+                self.p2wpkhaddressindex_to_p2wpkhbytes
+            ),
+            OutputType::P2WSH => make_iter!(
+                self.height_to_first_p2wshaddressindex,
+                self.p2wshaddressindex_to_p2wshbytes
+            ),
+            OutputType::P2TR => make_iter!(
+                self.height_to_first_p2traddressindex,
+                self.p2traddressindex_to_p2trbytes
+            ),
+            OutputType::P2A => make_iter!(
+                self.height_to_first_p2aaddressindex,
+                self.p2aaddressindex_to_p2abytes
+            ),
+            _ => Ok(Box::new(std::iter::empty())),
+        }
     }
 
     fn iter_mut_any_stored_vec(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {

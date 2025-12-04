@@ -4,6 +4,7 @@ use std::{path::Path, str::FromStr, thread, time::Instant};
 
 use bitcoin::{TxIn, TxOut};
 use brk_error::{Error, Result};
+use brk_grouper::ByAddressType;
 use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_store::AnyStore;
@@ -31,6 +32,31 @@ pub use vecs::*;
 const VERSION: Version = Version::new(23);
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
+
+/// Known duplicate Bitcoin transactions (BIP30)
+/// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
+/// Each entry is (txid_str, txindex) - these are coinbase txs that were duplicated.
+const DUPLICATE_TXID_STRS: [(&str, u32); 2] = [
+    ("d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599", 142783),
+    ("e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468", 142841),
+];
+
+static DUPLICATE_TXIDS: std::sync::LazyLock<[Txid; 2]> = std::sync::LazyLock::new(|| {
+    [
+        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[0].0).unwrap().into(),
+        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[1].0).unwrap().into(),
+    ]
+});
+
+static DUPLICATE_TXID_PREFIXES: std::sync::LazyLock<[(TxidPrefix, TxIndex); 2]> =
+    std::sync::LazyLock::new(|| {
+        DUPLICATE_TXID_STRS.map(|(s, txindex)| {
+            (
+                TxidPrefix::from(&Txid::from(bitcoin::Txid::from_str(s).unwrap())),
+                TxIndex::new(txindex),
+            )
+        })
+    });
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -119,7 +145,6 @@ impl Indexer {
 
         let export = move |stores: &mut Stores, vecs: &mut Vecs, height: Height| -> Result<()> {
             info!("Exporting...");
-            // std::process::exit(0);
             let _lock = exit.lock();
             let i = Instant::now();
             stores.commit(height).unwrap();
@@ -136,8 +161,6 @@ impl Indexer {
         let stores = &mut self.stores;
 
         for block in blocks.after(prev_hash)? {
-            // let i_tot = Instant::now();
-
             let height = block.height();
             let blockhash = block.hash();
 
@@ -182,7 +205,6 @@ impl Indexer {
             vecs.height_to_weight
                 .push_if_needed(height, block.weight().into())?;
 
-            // let i = Instant::now();
             let txs = block
                 .txdata
                 .par_iter()
@@ -210,9 +232,7 @@ impl Indexer {
                     ))
                 })
                 .collect::<Result<Vec<_>>>()?;
-            // println!("txs = : {:?}", i.elapsed());
 
-            // let i = Instant::now();
             let txid_prefix_to_txindex = txs
                 .iter()
                 .map(|(txindex, _, _, prefix, _)| (*prefix, txindex))
@@ -301,9 +321,7 @@ impl Indexer {
                 })
                 .collect::<Result<Vec<_>>>()?;
             drop(txid_prefix_to_txindex);
-            // println!("txinindex_and_txindata = : {:?}", i.elapsed());
 
-            // let i = Instant::now();
             let same_block_spent_outpoints: FxHashSet<OutPoint> = txins
                 .iter()
                 .filter_map(|(_, input_source)| {
@@ -317,9 +335,7 @@ impl Indexer {
                     }
                 })
                 .collect();
-            // println!("same_block_spent_outpoints = : {:?}", i.elapsed());
 
-            // let i = Instant::now();
             let txouts = block
                 .txdata
                 .iter()
@@ -476,15 +492,13 @@ impl Indexer {
                     },
                 )
                 .collect::<Result<Vec<_>>>()?;
-            // println!("txouts = : {:?}", i.elapsed());
 
             let outputs_len = txouts.len();
             let inputs_len = txins.len();
             let tx_len = block.txdata.len();
 
-            // let i = Instant::now();
-            let mut already_added_addresshash: FxHashMap<AddressHash, TypeIndex> =
-                FxHashMap::default();
+            let mut already_added_addresshash: ByAddressType<FxHashMap<AddressHash, TypeIndex>> =
+                ByAddressType::default();
             let mut same_block_output_info: FxHashMap<OutPoint, (OutputType, TypeIndex)> =
                 FxHashMap::default();
             for (txoutindex, txout, txindex, vout, outputtype, addressbytes_opt, typeindex_opt) in
@@ -509,7 +523,7 @@ impl Indexer {
                     ti
                 } else if let Some((address_bytes, address_hash)) = addressbytes_opt {
                     let addresstype = outputtype;
-                    if let Some(&ti) = already_added_addresshash.get(&address_hash) {
+                    if let Some(&ti) = already_added_addresshash.get_unwrap(addresstype).get(&address_hash) {
                         ti
                     } else {
                         let ti = match addresstype {
@@ -524,7 +538,7 @@ impl Indexer {
                             _ => unreachable!(),
                         };
 
-                        already_added_addresshash.insert(address_hash, ti);
+                        already_added_addresshash.get_mut_unwrap(addresstype).insert(address_hash, ti);
                         stores
                             .addresstype_to_addresshash_to_addressindex
                             .get_mut_unwrap(addresstype)
@@ -596,12 +610,7 @@ impl Indexer {
                         );
                 }
             }
-            // println!(
-            //     "txouts.into_iter() = : {:?}",
-            // i.elapsed()
-            // );
 
-            // let i = Instant::now();
             for (txinindex, input_source) in txins {
                 let (vin, txindex, outpoint, addresstype_addressindex_opt) = match input_source {
                     InputSource::PreviousBlock(tuple) => tuple,
@@ -650,9 +659,7 @@ impl Indexer {
                     .get_mut_unwrap(addresstype)
                     .remove_if_needed(AddressIndexOutPoint::from((addressindex, outpoint)), height);
             }
-            // println!("txins.into_iter(): {:?}", i.elapsed());
 
-            // let i = Instant::now();
             if check_collisions {
                 let mut txindex_to_txid_iter = vecs.txindex_to_txid.into_iter();
                 for (txindex, _, _, _, prev_txindex_opt) in txs.iter() {
@@ -676,20 +683,7 @@ impl Indexer {
 
                     // If another Txid needs to be added to the list
                     // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
-                    let only_known_dup_txids = [
-                        bitcoin::Txid::from_str(
-                            "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                        )
-                        .unwrap()
-                        .into(),
-                        bitcoin::Txid::from_str(
-                            "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                        )
-                        .unwrap()
-                        .into(),
-                    ];
-
-                    let is_dup = only_known_dup_txids.contains(&prev_txid);
+                    let is_dup = DUPLICATE_TXIDS.contains(&prev_txid);
 
                     if !is_dup {
                         dbg!(height, txindex, prev_txid, prev_txindex);
@@ -697,9 +691,7 @@ impl Indexer {
                     }
                 }
             }
-            // println!("txindex_to_tx_and_txid = : {:?}", i.elapsed());
 
-            // let i = Instant::now();
             for (txindex, tx, txid, txid_prefix, prev_txindex_opt) in txs {
                 if prev_txindex_opt.is_none() {
                     stores
@@ -720,13 +712,10 @@ impl Indexer {
                 vecs.txindex_to_is_explicitly_rbf
                     .push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
             }
-            // println!("txindex_to_tx_and_txid.into_iter(): {:?}", i.elapsed());
 
             indexes.txindex += TxIndex::from(tx_len);
             indexes.txinindex += TxInIndex::from(inputs_len);
             indexes.txoutindex += TxOutIndex::from(outputs_len);
-
-            // println!("full block: {:?}", i_tot.elapsed());
 
             if should_export(height, false) {
                 drop(readers);
@@ -741,9 +730,7 @@ impl Indexer {
             export(stores, vecs, indexes.height)?;
         }
 
-        // let i = Instant::now();
         self.vecs.compact()?;
-        // info!("Punched holes in db in {}s", i.elapsed().as_secs());
 
         Ok(starting_indexes)
     }
