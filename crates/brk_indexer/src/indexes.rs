@@ -37,7 +37,7 @@ impl Indexes {
             OutputType::OpReturn => *self.opreturnindex,
             OutputType::P2A => *self.p2aaddressindex,
             OutputType::P2MS => *self.p2msoutputindex,
-            OutputType::P2PK33 => *self.p2pkhaddressindex,
+            OutputType::P2PK33 => *self.p2pk33addressindex,
             OutputType::P2PK65 => *self.p2pk65addressindex,
             OutputType::P2PKH => *self.p2pkhaddressindex,
             OutputType::P2SH => *self.p2shaddressindex,
