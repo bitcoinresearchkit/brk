@@ -6,7 +6,7 @@ use brk_types::{
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
     TypeIndex,
 };
-use vecdb::{AnyStoredVec, AnyVec, BytesVec, GenericStoredVec, Reader, Stamp};
+use vecdb::{AnyStoredVec, BytesVec, GenericStoredVec, Reader, Stamp};
 
 #[derive(Clone, Traversable)]
 pub struct AnyAddressIndexesVecs {
@@ -99,24 +99,6 @@ impl AnyAddressIndexesVecs {
         typeindex: TypeIndex,
         anyaddressindex: AnyAddressIndex,
     ) -> Result<()> {
-        let vec_len = match address_type {
-            OutputType::P2PK33 => self.p2pk33.len(),
-            OutputType::P2PK65 => self.p2pk65.len(),
-            OutputType::P2PKH => self.p2pkh.len(),
-            OutputType::P2SH => self.p2sh.len(),
-            OutputType::P2TR => self.p2tr.len(),
-            OutputType::P2WPKH => self.p2wpkh.len(),
-            OutputType::P2WSH => self.p2wsh.len(),
-            OutputType::P2A => self.p2a.len(),
-            _ => unreachable!(),
-        };
-        let typeindex_usize: usize = typeindex.into();
-        if typeindex_usize > vec_len {
-            eprintln!(
-                "DEBUG update_or_push: address_type={:?}, typeindex={}, vec_len={}, anyaddressindex={:?}",
-                address_type, typeindex_usize, vec_len, anyaddressindex
-            );
-        }
         (match address_type {
             OutputType::P2PK33 => self
                 .p2pk33
