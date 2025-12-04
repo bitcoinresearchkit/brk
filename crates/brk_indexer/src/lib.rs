@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::Path, str::FromStr, thread, time::Instant};
+use std::{path::Path, thread, time::Instant};
 
 use bitcoin::{TxIn, TxOut};
 use brk_error::{Error, Result};
@@ -11,7 +11,7 @@ use brk_store::AnyStore;
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height,
     OutPoint, OutputType, Sats, StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex, Txid,
-    TxidPrefix, TypeIndex, Unit, Version, Vin, Vout,
+    TxidPrefix, TypeIndex, Unit, Vin, Vout,
 };
 use log::{debug, error, info};
 use rayon::prelude::*;
@@ -20,43 +20,14 @@ use vecdb::{AnyVec, Exit, GenericStoredVec, Reader, TypedVecIterator};
 mod indexes;
 mod stores_v2;
 // mod stores_v3;
+mod constants;
 mod vecs;
 
+use constants::*;
 pub use indexes::*;
 pub use stores_v2::*;
 // pub use stores_v3::*;
 pub use vecs::*;
-
-// One version for all data sources
-// Increment on **change _OR_ addition**
-const VERSION: Version = Version::new(23);
-const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(0);
-
-/// Known duplicate Bitcoin transactions (BIP30)
-/// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
-/// Each entry is (txid_str, txindex) - these are coinbase txs that were duplicated.
-const DUPLICATE_TXID_STRS: [(&str, u32); 2] = [
-    ("d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599", 142783),
-    ("e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468", 142841),
-];
-
-static DUPLICATE_TXIDS: std::sync::LazyLock<[Txid; 2]> = std::sync::LazyLock::new(|| {
-    [
-        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[0].0).unwrap().into(),
-        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[1].0).unwrap().into(),
-    ]
-});
-
-static DUPLICATE_TXID_PREFIXES: std::sync::LazyLock<[(TxidPrefix, TxIndex); 2]> =
-    std::sync::LazyLock::new(|| {
-        DUPLICATE_TXID_STRS.map(|(s, txindex)| {
-            (
-                TxidPrefix::from(&Txid::from(bitcoin::Txid::from_str(s).unwrap())),
-                TxIndex::new(txindex),
-            )
-        })
-    });
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -523,7 +494,10 @@ impl Indexer {
                     ti
                 } else if let Some((address_bytes, address_hash)) = addressbytes_opt {
                     let addresstype = outputtype;
-                    if let Some(&ti) = already_added_addresshash.get_unwrap(addresstype).get(&address_hash) {
+                    if let Some(&ti) = already_added_addresshash
+                        .get_unwrap(addresstype)
+                        .get(&address_hash)
+                    {
                         ti
                     } else {
                         let ti = match addresstype {
@@ -538,7 +512,9 @@ impl Indexer {
                             _ => unreachable!(),
                         };
 
-                        already_added_addresshash.get_mut_unwrap(addresstype).insert(address_hash, ti);
+                        already_added_addresshash
+                            .get_mut_unwrap(addresstype)
+                            .insert(address_hash, ti);
                         stores
                             .addresstype_to_addresshash_to_addressindex
                             .get_mut_unwrap(addresstype)
