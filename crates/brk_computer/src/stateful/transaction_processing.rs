@@ -1,16 +1,15 @@
 use brk_error::Result;
 use brk_grouper::{ByAddressType, Filtered};
-use brk_types::{CheckedSub, Dollars, EmptyAddressData, Height, LoadedAddressData, Sats, Timestamp, TypeIndex};
+use brk_types::{
+    CheckedSub, Dollars, EmptyAddressData, Height, LoadedAddressData, Sats, Timestamp, TypeIndex,
+};
 use vecdb::VecIndex;
 
 use crate::utils::OptionExt;
 
 use super::{
     address_cohorts,
-    addresstype::{
-        AddressTypeToTypeIndexMap, AddressTypeToVec,
-        HeightToAddressTypeToVec,
-    },
+    addresstype::{AddressTypeToTypeIndexMap, AddressTypeToVec, HeightToAddressTypeToVec},
     withaddressdatasource::WithAddressDataSource,
 };
 
@@ -34,6 +33,11 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
     ) {
         self.unwrap().into_iter().for_each(|(_type, vec)| {
             vec.into_iter().for_each(|(type_index, value)| {
+                let type_index_usize: usize = type_index.into();
+                if type_index_usize == 254909199 {
+                    eprintln!("DEBUG process_received EXACT: _type={:?}, type_index={}", _type, type_index_usize);
+                }
+
                 let mut is_new = false;
                 let mut from_any_empty = false;
 
@@ -48,12 +52,18 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                             .remove(&type_index)
                             .map(|ad| {
                                 from_any_empty = true;
+                                if type_index_usize == 254909199 {
+                                    eprintln!("DEBUG process_received from_empty EXACT: _type={:?}, is_new={}", _type, ad.is_new());
+                                }
                                 ad.into()
                             })
                             .unwrap_or_else(|| {
                                 let addressdata =
                                     stored_or_new_addresstype_to_typeindex_to_addressdatawithsource
                                         .remove_for_type(_type, &type_index);
+                                if type_index_usize == 254909199 {
+                                    eprintln!("DEBUG process_received from_stored_or_new EXACT: _type={:?}, is_new={}", _type, addressdata.is_new());
+                                }
                                 is_new = addressdata.is_new();
                                 from_any_empty = addressdata.is_from_emptyaddressdata();
                                 addressdata
@@ -73,14 +83,15 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                 let amount = prev_amount + value;
 
-                let filters_differ =
-                    vecs.amount_range.get(amount).filter() != vecs.amount_range.get(prev_amount).filter();
+                let filters_differ = vecs.amount_range.get(amount).filter()
+                    != vecs.amount_range.get(prev_amount).filter();
 
                 if is_new || from_any_empty || filters_differ {
                     if !is_new && !from_any_empty {
                         vecs.amount_range
                             .get_mut(prev_amount)
-                            .state.um()
+                            .state
+                            .um()
                             .subtract(addressdata);
                     }
 
@@ -88,12 +99,14 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
 
                     vecs.amount_range
                         .get_mut(amount)
-                        .state.um()
+                        .state
+                        .um()
                         .add(addressdata);
                 } else {
                     vecs.amount_range
                         .get_mut(amount)
-                        .state.um()
+                        .state
+                        .um()
                         .receive(addressdata, value, price);
                 }
             });
@@ -143,6 +156,11 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
             v.unwrap().into_iter().try_for_each(|(_type, vec)| {
                 vec.into_iter().try_for_each(|(type_index, value)| {
+                    let type_index_usize: usize = type_index.into();
+                    if type_index_usize == 254909199 {
+                        eprintln!("DEBUG process_sent EXACT: _type={:?}, type_index={}", _type, type_index_usize);
+                    }
+
                     let typeindex_to_loadedaddressdata =
                         addresstype_to_typeindex_to_loadedaddressdata.get_mut_unwrap(_type);
 
@@ -161,13 +179,14 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
                     let will_be_empty = addressdata.has_1_utxos();
 
-                    let filters_differ =
-                        vecs.amount_range.get(amount).filter() != vecs.amount_range.get(prev_amount).filter();
+                    let filters_differ = vecs.amount_range.get(amount).filter()
+                        != vecs.amount_range.get(prev_amount).filter();
 
                     if will_be_empty || filters_differ {
                         vecs.amount_range
                             .get_mut(prev_amount)
-                            .state.um()
+                            .state
+                            .um()
                             .subtract(addressdata);
 
                         addressdata.send(value, prev_price)?;
@@ -183,6 +202,9 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                             let addressdata =
                                 typeindex_to_loadedaddressdata.remove(&type_index).unwrap();
 
+                            if type_index_usize == 254909199 {
+                                eprintln!("DEBUG process_sent will_be_empty EXACT: _type={:?}", _type);
+                            }
                             addresstype_to_typeindex_to_emptyaddressdata
                                 .get_mut(_type)
                                 .unwrap()
@@ -190,22 +212,20 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                         } else {
                             vecs.amount_range
                                 .get_mut(amount)
-                                .state.um()
+                                .state
+                                .um()
                                 .add(addressdata);
                         }
                     } else {
-                        vecs.amount_range
-                            .get_mut(amount)
-                            .state.um()
-                            .send(
-                                addressdata,
-                                value,
-                                price,
-                                prev_price,
-                                blocks_old,
-                                days_old,
-                                older_than_hour,
-                            )?;
+                        vecs.amount_range.get_mut(amount).state.um().send(
+                            addressdata,
+                            value,
+                            price,
+                            prev_price,
+                            blocks_old,
+                            days_old,
+                            older_than_hour,
+                        )?;
                     }
 
                     Ok(())

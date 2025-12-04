@@ -147,11 +147,7 @@ impl Vecs {
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            height_to_unspendable_supply: EagerVec::forced_import(
-                &db,
-                "unspendable_supply",
-                v0,
-            )?,
+            height_to_unspendable_supply: EagerVec::forced_import(&db, "unspendable_supply", v0)?,
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "unspendable_supply",
@@ -161,11 +157,7 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            height_to_opreturn_supply: EagerVec::forced_import(
-                &db,
-                "opreturn_supply",
-                v0,
-            )?,
+            height_to_opreturn_supply: EagerVec::forced_import(&db, "opreturn_supply", v0)?,
             indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "opreturn_supply",
@@ -219,12 +211,20 @@ impl Vecs {
             }),
             addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType::new_with_name(|name| {
-                    Ok(EagerVec::forced_import(&db, &format!("{name}_addr_count"), v0)?)
+                    Ok(EagerVec::forced_import(
+                        &db,
+                        &format!("{name}_addr_count"),
+                        v0,
+                    )?)
                 })?,
             ),
             addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType::new_with_name(|name| {
-                    Ok(EagerVec::forced_import(&db, &format!("{name}_empty_addr_count"), v0)?)
+                    Ok(EagerVec::forced_import(
+                        &db,
+                        &format!("{name}_empty_addr_count"),
+                        v0,
+                    )?)
                 })?,
             ),
             addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount::from(
@@ -470,7 +470,6 @@ impl Vecs {
         let starting_height = starting_indexes.height.min(stateful_starting_height);
         let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
         if starting_height <= last_height {
-
             let stamp = starting_height.into();
             let starting_height = if starting_height.is_not_zero() {
                 let mut set = [self.chain_state.rollback_before(stamp)?]
@@ -756,12 +755,12 @@ impl Vecs {
                             let typeindex = txoutindex_to_typeindex
                                 .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
-                            let typeindex_usize: usize = typeindex.into();
-                            if output_type == OutputType::P2SH && typeindex_usize > 100_000_000 {
-                                let txoutindex_usize: usize = txoutindex.into();
+                            // Debug: track the exact bad typeindex
+                            let ti: usize = typeindex.into();
+                            if ti == 254909199 {
                                 eprintln!(
-                                    "DEBUG P2SH bad typeindex at read: txoutindex={}, typeindex={}, txindex={}",
-                                    txoutindex_usize, typeindex_usize, txindex.to_usize()
+                                    "DEBUG outputs EXACT: output_type={:?}, txoutindex={}, typeindex={}",
+                                    output_type, txoutindex.to_usize(), ti
                                 );
                             }
 
@@ -796,8 +795,15 @@ impl Vecs {
                             transacted.iterate(value, output_type);
 
                             if let Some((typeindex, addressdata_opt)) = typeindex_with_addressdata_opt {
+                                let ti: usize = typeindex.into();
+                                if ti == 254909199 {
+                                    eprintln!("DEBUG fold outputs EXACT: output_type={:?}, typeindex={}, has_addressdata={}", output_type, ti, addressdata_opt.is_some());
+                                }
                                 if let Some(addressdata) = addressdata_opt
                                 {
+                                    if ti == 254909199 {
+                                        eprintln!("DEBUG fold inserting to addressdatawithsource EXACT: output_type={:?}, is_new={}", output_type, addressdata.is_new());
+                                    }
                                     addresstype_to_typeindex_to_addressdatawithsource
                                         .insert_for_type(output_type, typeindex, addressdata);
                                 }
@@ -868,6 +874,15 @@ impl Vecs {
                             let typeindex = txoutindex_to_typeindex
                                 .read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
+                            // Debug: track the exact bad typeindex
+                            let ti: usize = typeindex.into();
+                            if ti == 254909199 {
+                                eprintln!(
+                                    "DEBUG inputs EXACT: input_type={:?}, txoutindex={}, typeindex={}",
+                                    input_type, txoutindex.to_usize(), ti
+                                );
+                            }
+
                             let addressdata_opt = Self::get_addressdatawithsource(
                                 input_type,
                                 typeindex,
@@ -917,7 +932,14 @@ impl Vecs {
                                 if let Some((typeindex, addressdata_opt)) =
                                     typeindex_with_addressdata_opt
                                 {
+                                    let ti: usize = typeindex.into();
+                                    if ti == 254909199 {
+                                        eprintln!("DEBUG fold inputs EXACT: output_type={:?}, typeindex={}, has_addressdata={}", output_type, ti, addressdata_opt.is_some());
+                                    }
                                     if let Some(addressdata) = addressdata_opt {
+                                        if ti == 254909199 {
+                                            eprintln!("DEBUG fold inputs inserting EXACT: output_type={:?}, is_new={}", output_type, addressdata.is_new());
+                                        }
                                         addresstype_to_typeindex_to_addressdatawithsource
                                             .insert_for_type(output_type, typeindex, addressdata);
                                     }
@@ -1383,15 +1405,15 @@ impl Vecs {
         any_address_indexes: &AnyAddressIndexesVecs,
         addresses_data: &AddressesDataVecs,
     ) -> Option<WithAddressDataSource<LoadedAddressData>> {
+        let typeindex_usize: usize = typeindex.into();
+        if typeindex_usize == 254909199 {
+            eprintln!("DEBUG get_addressdatawithsource EXACT: address_type={:?}, typeindex={}", address_type, typeindex_usize);
+        }
         let first = *first_addressindexes.get(address_type).unwrap();
         if first <= typeindex {
-            let typeindex_usize: usize = typeindex.into();
             let first_usize: usize = first.into();
-            if typeindex_usize > 100_000_000 {
-                eprintln!(
-                    "DEBUG get_addressdatawithsource NEW: address_type={:?}, typeindex={}, first_addressindex={}",
-                    address_type, typeindex_usize, first_usize
-                );
+            if typeindex_usize == 254909199 {
+                eprintln!("DEBUG get_addressdatawithsource returning New EXACT: address_type={:?}, first={}", address_type, first_usize);
             }
             return Some(WithAddressDataSource::New(LoadedAddressData::default()));
         }
@@ -1478,13 +1500,6 @@ impl Vecs {
             addresstype_to_typeindex_to_emptyaddressdata.into_sorted_iter()
         {
             for (typeindex, emptyaddressdata_with_source) in sorted.into_iter() {
-                let typeindex_usize: usize = typeindex.into();
-                if typeindex_usize > 100_000_000 {
-                    eprintln!(
-                        "DEBUG emptyaddressdata: address_type={:?}, typeindex={}, variant={:?}",
-                        address_type, typeindex_usize, std::mem::discriminant(&emptyaddressdata_with_source)
-                    );
-                }
                 match emptyaddressdata_with_source {
                     WithAddressDataSource::New(emptyaddressdata) => {
                         let emptyaddressindex = self
@@ -1494,6 +1509,10 @@ impl Vecs {
 
                         let anyaddressindex = AnyAddressIndex::from(emptyaddressindex);
 
+                        let ti: usize = typeindex.into();
+                        if address_type == OutputType::P2SH && ti > 30_000_000 {
+                            eprintln!("DEBUG insert1 (empty New): P2SH typeindex={}", ti);
+                        }
                         addresstype_to_typeindex_to_new_or_updated_anyaddressindex
                             .get_mut(address_type)
                             .unwrap()
@@ -1519,6 +1538,10 @@ impl Vecs {
 
                         let anyaddressindex = emptyaddressindex.into();
 
+                        let ti: usize = typeindex.into();
+                        if address_type == OutputType::P2SH && ti > 30_000_000 {
+                            eprintln!("DEBUG insert2 (empty FromLoaded): P2SH typeindex={}", ti);
+                        }
                         addresstype_to_typeindex_to_new_or_updated_anyaddressindex
                             .get_mut(address_type)
                             .unwrap()
@@ -1532,13 +1555,6 @@ impl Vecs {
             addresstype_to_typeindex_to_loadedaddressdata.into_sorted_iter()
         {
             for (typeindex, loadedaddressdata_with_source) in sorted.into_iter() {
-                let typeindex_usize: usize = typeindex.into();
-                if typeindex_usize > 100_000_000 {
-                    eprintln!(
-                        "DEBUG loadedaddressdata: address_type={:?}, typeindex={}, variant={:?}",
-                        address_type, typeindex_usize, std::mem::discriminant(&loadedaddressdata_with_source)
-                    );
-                }
                 match loadedaddressdata_with_source {
                     WithAddressDataSource::New(loadedaddressdata) => {
                         let loadedaddressindex = self
@@ -1548,6 +1564,10 @@ impl Vecs {
 
                         let anyaddressindex = AnyAddressIndex::from(loadedaddressindex);
 
+                        let ti: usize = typeindex.into();
+                        if address_type == OutputType::P2SH && ti > 30_000_000 {
+                            eprintln!("DEBUG insert3 (loaded New): P2SH typeindex={}", ti);
+                        }
                         addresstype_to_typeindex_to_new_or_updated_anyaddressindex
                             .get_mut(address_type)
                             .unwrap()
@@ -1573,6 +1593,10 @@ impl Vecs {
 
                         let anyaddressindex = loadedaddressindex.into();
 
+                        let ti: usize = typeindex.into();
+                        if address_type == OutputType::P2SH && ti > 30_000_000 {
+                            eprintln!("DEBUG insert4 (loaded FromEmpty): P2SH typeindex={}", ti);
+                        }
                         addresstype_to_typeindex_to_new_or_updated_anyaddressindex
                             .get_mut(address_type)
                             .unwrap()
@@ -1586,6 +1610,14 @@ impl Vecs {
             addresstype_to_typeindex_to_new_or_updated_anyaddressindex.into_sorted_iter()
         {
             for (typeindex, anyaddressindex) in sorted {
+                // Debug: log right before the call that fails
+                let typeindex_usize: usize = typeindex.into();
+                if address_type == OutputType::P2SH && typeindex_usize > 30_000_000 {
+                    eprintln!(
+                        "DEBUG flush update_or_push: address_type={:?}, typeindex={}, anyaddressindex={:?}",
+                        address_type, typeindex_usize, anyaddressindex
+                    );
+                }
                 self.any_address_indexes.update_or_push(
                     address_type,
                     typeindex,
@@ -1611,4 +1643,3 @@ impl Vecs {
         Ok(())
     }
 }
-
