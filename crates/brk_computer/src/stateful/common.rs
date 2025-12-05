@@ -1011,6 +1011,10 @@ impl Vecs {
                     .um()
                     .safe_flush(exit)?;
             }
+
+            if let Some(price_percentiles) = self.price_percentiles.as_mut() {
+                price_percentiles.safe_flush(exit)?;
+            }
         }
 
         state.commit(height)?;

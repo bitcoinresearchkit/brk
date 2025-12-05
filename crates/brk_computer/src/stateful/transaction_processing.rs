@@ -33,11 +33,6 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
     ) {
         self.unwrap().into_iter().for_each(|(_type, vec)| {
             vec.into_iter().for_each(|(type_index, value)| {
-                let type_index_usize: usize = type_index.into();
-                if type_index_usize == 254909199 {
-                    eprintln!("DEBUG process_received EXACT: _type={:?}, type_index={}", _type, type_index_usize);
-                }
-
                 let mut is_new = false;
                 let mut from_any_empty = false;
 
@@ -52,18 +47,12 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                             .remove(&type_index)
                             .map(|ad| {
                                 from_any_empty = true;
-                                if type_index_usize == 254909199 {
-                                    eprintln!("DEBUG process_received from_empty EXACT: _type={:?}, is_new={}", _type, ad.is_new());
-                                }
                                 ad.into()
                             })
                             .unwrap_or_else(|| {
                                 let addressdata =
                                     stored_or_new_addresstype_to_typeindex_to_addressdatawithsource
                                         .remove_for_type(_type, &type_index);
-                                if type_index_usize == 254909199 {
-                                    eprintln!("DEBUG process_received from_stored_or_new EXACT: _type={:?}, is_new={}", _type, addressdata.is_new());
-                                }
                                 is_new = addressdata.is_new();
                                 from_any_empty = addressdata.is_from_emptyaddressdata();
                                 addressdata
@@ -156,11 +145,6 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
 
             v.unwrap().into_iter().try_for_each(|(_type, vec)| {
                 vec.into_iter().try_for_each(|(type_index, value)| {
-                    let type_index_usize: usize = type_index.into();
-                    if type_index_usize == 254909199 {
-                        eprintln!("DEBUG process_sent EXACT: _type={:?}, type_index={}", _type, type_index_usize);
-                    }
-
                     let typeindex_to_loadedaddressdata =
                         addresstype_to_typeindex_to_loadedaddressdata.get_mut_unwrap(_type);
 
@@ -202,9 +186,6 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                             let addressdata =
                                 typeindex_to_loadedaddressdata.remove(&type_index).unwrap();
 
-                            if type_index_usize == 254909199 {
-                                eprintln!("DEBUG process_sent will_be_empty EXACT: _type={:?}", _type);
-                            }
                             addresstype_to_typeindex_to_emptyaddressdata
                                 .get_mut(_type)
                                 .unwrap()

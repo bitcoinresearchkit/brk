@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Dollars, Height, Version};
-use vecdb::{AnyExportableVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
+use vecdb::{AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
 
 use crate::{Indexes, indexes};
 
@@ -82,6 +82,15 @@ impl PricePercentiles {
             .iter()
             .position(|&p| p == percentile)
             .and_then(|i| self.vecs[i].as_ref())
+    }
+
+    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+        for vec in self.vecs.iter_mut().flatten() {
+            if let Some(height_vec) = vec.height.as_mut() {
+                height_vec.safe_flush(exit)?;
+            }
+        }
+        Ok(())
     }
 }
 

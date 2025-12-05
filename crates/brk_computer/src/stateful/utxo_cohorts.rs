@@ -8,8 +8,8 @@ use brk_grouper::{
 };
 use brk_traversable::Traversable;
 use brk_types::{
-    Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Timestamp,
-    Version, ONE_DAY_IN_SEC,
+    Bitcoin, CheckedSub, DateIndex, Dollars, HalvingEpoch, Height, ONE_DAY_IN_SEC, OutputType,
+    Sats, Timestamp, Version,
 };
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -41,12 +41,17 @@ impl Vecs {
         let v = version + VERSION + Version::ZERO;
 
         // Helper to create a cohort - booleans are now derived from filter
-        let create =
-            |filter: Filter, state_level: StateLevel| -> Result<utxo_cohort::Vecs> {
-                utxo_cohort::Vecs::forced_import(
-                    db, filter, v, indexes, price, states_path, state_level,
-                )
-            };
+        let create = |filter: Filter, state_level: StateLevel| -> Result<utxo_cohort::Vecs> {
+            utxo_cohort::Vecs::forced_import(
+                db,
+                filter,
+                v,
+                indexes,
+                price,
+                states_path,
+                state_level,
+            )
+        };
 
         let full = |f: Filter| create(f, StateLevel::Full);
         let none = |f: Filter| create(f, StateLevel::None);
@@ -158,19 +163,45 @@ impl Vecs {
             amount_range: ByAmountRange {
                 _0sats: full(Filter::Amount(AmountFilter::LowerThan(Sats::_1)))?,
                 _1sat_to_10sats: full(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10)))?,
-                _10sats_to_100sats: full(Filter::Amount(AmountFilter::Range(Sats::_10..Sats::_100)))?,
-                _100sats_to_1k_sats: full(Filter::Amount(AmountFilter::Range(Sats::_100..Sats::_1K)))?,
-                _1k_sats_to_10k_sats: full(Filter::Amount(AmountFilter::Range(Sats::_1K..Sats::_10K)))?,
-                _10k_sats_to_100k_sats: full(Filter::Amount(AmountFilter::Range(Sats::_10K..Sats::_100K)))?,
-                _100k_sats_to_1m_sats: full(Filter::Amount(AmountFilter::Range(Sats::_100K..Sats::_1M)))?,
-                _1m_sats_to_10m_sats: full(Filter::Amount(AmountFilter::Range(Sats::_1M..Sats::_10M)))?,
-                _10m_sats_to_1btc: full(Filter::Amount(AmountFilter::Range(Sats::_10M..Sats::_1BTC)))?,
-                _1btc_to_10btc: full(Filter::Amount(AmountFilter::Range(Sats::_1BTC..Sats::_10BTC)))?,
-                _10btc_to_100btc: full(Filter::Amount(AmountFilter::Range(Sats::_10BTC..Sats::_100BTC)))?,
-                _100btc_to_1k_btc: full(Filter::Amount(AmountFilter::Range(Sats::_100BTC..Sats::_1K_BTC)))?,
-                _1k_btc_to_10k_btc: full(Filter::Amount(AmountFilter::Range(Sats::_1K_BTC..Sats::_10K_BTC)))?,
-                _10k_btc_to_100k_btc: full(Filter::Amount(AmountFilter::Range(Sats::_10K_BTC..Sats::_100K_BTC)))?,
-                _100k_btc_or_more: full(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100K_BTC)))?,
+                _10sats_to_100sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_10..Sats::_100,
+                )))?,
+                _100sats_to_1k_sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_100..Sats::_1K,
+                )))?,
+                _1k_sats_to_10k_sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_1K..Sats::_10K,
+                )))?,
+                _10k_sats_to_100k_sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_10K..Sats::_100K,
+                )))?,
+                _100k_sats_to_1m_sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_100K..Sats::_1M,
+                )))?,
+                _1m_sats_to_10m_sats: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_1M..Sats::_10M,
+                )))?,
+                _10m_sats_to_1btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_10M..Sats::_1BTC,
+                )))?,
+                _1btc_to_10btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_1BTC..Sats::_10BTC,
+                )))?,
+                _10btc_to_100btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_10BTC..Sats::_100BTC,
+                )))?,
+                _100btc_to_1k_btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_100BTC..Sats::_1K_BTC,
+                )))?,
+                _1k_btc_to_10k_btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_1K_BTC..Sats::_10K_BTC,
+                )))?,
+                _10k_btc_to_100k_btc: full(Filter::Amount(AmountFilter::Range(
+                    Sats::_10K_BTC..Sats::_100K_BTC,
+                )))?,
+                _100k_btc_or_more: full(Filter::Amount(AmountFilter::GreaterOrEqual(
+                    Sats::_100K_BTC,
+                )))?,
             },
 
             lt_amount: ByLowerThanAmount {
@@ -579,13 +610,16 @@ impl Vecs {
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         // Flush stateful cohorts
-        self.iter_separate_mut()
+        self.par_iter_separate_mut()
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
 
-        // Flush aggregate cohorts' price_to_amount
-        self.0.iter_aggregate_mut().try_for_each(|v| {
+        // Flush aggregate cohorts' price_to_amount and price_percentiles
+        self.0.par_iter_aggregate_mut().try_for_each(|v| {
             if let Some(p2a) = v.price_to_amount.as_mut() {
                 p2a.flush(height)?;
+            }
+            if let Some(pp) = v.inner.price_percentiles.as_mut() {
+                pp.safe_flush(exit)?;
             }
             Ok(())
         })
@@ -602,15 +636,28 @@ impl Vecs {
         })
     }
 
-    /// Import aggregate cohorts' price_to_amount from disk when resuming from a checkpoint
+    /// Import aggregate cohorts' price_to_amount from disk when resuming from a checkpoint.
+    /// Returns the height to start processing from (checkpoint_height + 1), matching the
+    /// behavior of `common::import_state` for separate cohorts.
+    ///
+    /// Note: We don't check inner.min_height_vecs_len() for aggregate cohorts because their
+    /// inner vecs (height_to_supply, etc.) are computed post-hoc by compute_overlapping_vecs,
+    /// not maintained during the main processing loop.
     pub fn import_aggregate_price_to_amount(&mut self, height: Height) -> Result<Height> {
-        let mut min_height = height;
+        // Match separate vecs behavior: decrement height to get prev_height
+        let Some(mut prev_height) = height.decremented() else {
+            // height is 0, return ZERO (caller will handle this)
+            return Ok(Height::ZERO);
+        };
+
         for v in self.0.iter_aggregate_mut() {
             if let Some(p2a) = v.price_to_amount.as_mut() {
-                min_height = min_height.min(p2a.import_at_or_before(height)?);
+                // Match separate vecs: update prev_height to the checkpoint found
+                prev_height = prev_height.min(p2a.import_at_or_before(prev_height)?);
             }
         }
-        Ok(min_height)
+        // Return prev_height + 1, matching separate vecs behavior
+        Ok(prev_height.incremented())
     }
 
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
@@ -620,12 +667,7 @@ impl Vecs {
             .0
             .age_range
             .iter()
-            .map(|sub| {
-                (
-                    sub.filter().clone(),
-                    sub.state.u().supply.value,
-                )
-            })
+            .map(|sub| (sub.filter().clone(), sub.state.u().supply.value))
             .collect();
 
         let results: Vec<_> = self
