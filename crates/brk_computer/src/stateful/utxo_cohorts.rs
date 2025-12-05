@@ -18,7 +18,7 @@ use vecdb::{Database, Exit, IterableVec, VecIndex};
 
 use crate::{
     Indexes, indexes, price,
-    stateful::r#trait::DynCohortVecs,
+    stateful::{Flushable, HeightFlushable, r#trait::DynCohortVecs},
     states::{BlockState, Transacted},
     utils::OptionExt,
 };
@@ -614,13 +614,10 @@ impl Vecs {
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
 
         // Flush aggregate cohorts' price_to_amount and price_percentiles
+        // Using traits ensures we can't forget to flush any field
         self.0.par_iter_aggregate_mut().try_for_each(|v| {
-            if let Some(p2a) = v.price_to_amount.as_mut() {
-                p2a.flush(height)?;
-            }
-            if let Some(pp) = v.inner.price_percentiles.as_mut() {
-                pp.safe_flush(exit)?;
-            }
+            v.price_to_amount.flush_at_height(height, exit)?;
+            v.inner.price_percentiles.safe_flush(exit)?;
             Ok(())
         })
     }
@@ -628,11 +625,7 @@ impl Vecs {
     /// Reset aggregate cohorts' price_to_amount when starting from scratch
     pub fn reset_aggregate_price_to_amount(&mut self) -> Result<()> {
         self.0.iter_aggregate_mut().try_for_each(|v| {
-            if let Some(p2a) = v.price_to_amount.as_mut() {
-                p2a.clean()?;
-                p2a.init();
-            }
-            Ok(())
+            v.price_to_amount.reset()
         })
     }
 
@@ -651,10 +644,8 @@ impl Vecs {
         };
 
         for v in self.0.iter_aggregate_mut() {
-            if let Some(p2a) = v.price_to_amount.as_mut() {
-                // Match separate vecs: update prev_height to the checkpoint found
-                prev_height = prev_height.min(p2a.import_at_or_before(prev_height)?);
-            }
+            // Using HeightFlushable trait - if price_to_amount is None, returns height unchanged
+            prev_height = prev_height.min(v.price_to_amount.import_at_or_before(prev_height)?);
         }
         // Return prev_height + 1, matching separate vecs behavior
         Ok(prev_height.incremented())

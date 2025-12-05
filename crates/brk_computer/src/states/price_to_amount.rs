@@ -9,9 +9,9 @@ use brk_types::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
-use vecdb::Bytes;
+use vecdb::{Bytes, Exit};
 
-use crate::{states::SupplyState, utils::OptionExt};
+use crate::{stateful::HeightFlushable, states::SupplyState, utils::OptionExt};
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
@@ -125,6 +125,22 @@ impl PriceToAmount {
     }
     fn path_state_(path: &Path, height: Height) -> PathBuf {
         path.join(u32::from(height).to_string())
+    }
+}
+
+impl HeightFlushable for PriceToAmount {
+    fn flush_at_height(&mut self, height: Height, _exit: &Exit) -> Result<()> {
+        self.flush(height)
+    }
+
+    fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
+        PriceToAmount::import_at_or_before(self, height)
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.clean()?;
+        self.init();
+        Ok(())
     }
 }
 

@@ -1,3 +1,33 @@
+//! Stateful computation module for Bitcoin UTXO and address cohort analysis.
+//!
+//! This module contains the main computation loop that processes blocks and computes
+//! various metrics for UTXO cohorts (grouped by age, amount, etc.) and address cohorts.
+//!
+//! ## Architecture
+//!
+//! The module is organized as follows:
+//!
+//! - **`Vecs`**: Main struct holding all computed vectors and state
+//! - **Cohort Types**:
+//!   - **Separate cohorts**: Have full state tracking (e.g., UTXOs 1-2 years old)
+//!   - **Aggregate cohorts**: Computed from separate cohorts (e.g., all, sth, lth)
+//!
+//! ## Checkpoint/Resume
+//!
+//! The computation supports checkpointing via `flush_states()` which saves:
+//! - All separate cohorts' state (via `safe_flush_stateful_vecs`)
+//! - Aggregate cohorts' `price_to_amount` (via `HeightFlushable` trait)
+//! - Aggregate cohorts' `price_percentiles` (via `Flushable` trait)
+//!
+//! Resume is handled by:
+//! - `import_state()` for separate cohorts
+//! - `import_aggregate_price_to_amount()` for aggregate cohorts
+//!
+//! ## Key Traits
+//!
+//! - `Flushable`: Simple flush operations (no height tracking)
+//! - `HeightFlushable`: Height-indexed state (flush, import, reset)
+
 use std::{cmp::Ordering, collections::BTreeSet, mem, path::Path, thread};
 
 use brk_error::Result;
@@ -34,6 +64,7 @@ mod address_cohorts;
 mod address_indexes;
 mod addresstype;
 mod common;
+mod flushable;
 mod range_map;
 mod readers;
 mod r#trait;
@@ -41,6 +72,8 @@ mod transaction_processing;
 mod utxo_cohort;
 mod utxo_cohorts;
 mod withaddressdatasource;
+
+pub use flushable::{Flushable, HeightFlushable};
 
 use address_indexes::{AddressesDataVecs, AnyAddressIndexesVecs};
 use addresstype::*;
