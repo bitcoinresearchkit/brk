@@ -5,6 +5,7 @@ use brk_grouper::{AddressGroups, AmountFilter, Filter, Filtered};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
+use rayon::prelude::*;
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
@@ -132,7 +133,7 @@ impl Vecs {
     }
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.iter_separate_mut()
+        self.par_iter_separate_mut()
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))
     }
 }
