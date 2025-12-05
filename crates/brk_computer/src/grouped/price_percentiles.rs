@@ -3,7 +3,7 @@ use brk_traversable::{Traversable, TreeNode};
 use brk_types::{Dollars, Height, Version};
 use vecdb::{AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
 
-use crate::{Indexes, indexes};
+use crate::{Indexes, indexes, stateful::Flushable};
 
 use super::{ComputedVecsFromHeight, Source, VecBuilderOptions};
 
@@ -84,7 +84,10 @@ impl PricePercentiles {
             .and_then(|i| self.vecs[i].as_ref())
     }
 
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+}
+
+impl Flushable for PricePercentiles {
+    fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
             if let Some(height_vec) = vec.height.as_mut() {
                 height_vec.safe_flush(exit)?;
