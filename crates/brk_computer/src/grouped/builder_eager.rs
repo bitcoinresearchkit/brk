@@ -238,7 +238,7 @@ where
                 Ok(())
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -335,7 +335,7 @@ where
                 Ok(())
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -460,7 +460,7 @@ where
                 Ok(())
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -527,42 +527,42 @@ where
         self.cumulative.u()
     }
 
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         if let Some(first) = self.first.as_mut() {
-            first.safe_flush(exit)?;
+            first.safe_write(exit)?;
         }
         if let Some(last) = self.last.as_mut() {
-            last.safe_flush(exit)?;
+            last.safe_write(exit)?;
         }
         if let Some(min) = self.min.as_mut() {
-            min.safe_flush(exit)?;
+            min.safe_write(exit)?;
         }
         if let Some(max) = self.max.as_mut() {
-            max.safe_flush(exit)?;
+            max.safe_write(exit)?;
         }
         if let Some(median) = self.median.as_mut() {
-            median.safe_flush(exit)?;
+            median.safe_write(exit)?;
         }
         if let Some(average) = self.average.as_mut() {
-            average.safe_flush(exit)?;
+            average.safe_write(exit)?;
         }
         if let Some(sum) = self.sum.as_mut() {
-            sum.safe_flush(exit)?;
+            sum.safe_write(exit)?;
         }
         if let Some(cumulative) = self.cumulative.as_mut() {
-            cumulative.safe_flush(exit)?;
+            cumulative.safe_write(exit)?;
         }
         if let Some(pct90) = self.pct90.as_mut() {
-            pct90.safe_flush(exit)?;
+            pct90.safe_write(exit)?;
         }
         if let Some(pct75) = self.pct75.as_mut() {
-            pct75.safe_flush(exit)?;
+            pct75.safe_write(exit)?;
         }
         if let Some(pct25) = self.pct25.as_mut() {
-            pct25.safe_flush(exit)?;
+            pct25.safe_write(exit)?;
         }
         if let Some(pct10) = self.pct10.as_mut() {
-            pct10.safe_flush(exit)?;
+            pct10.safe_write(exit)?;
         }
 
         Ok(())

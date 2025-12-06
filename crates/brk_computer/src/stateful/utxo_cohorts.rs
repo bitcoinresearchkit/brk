@@ -617,7 +617,7 @@ impl Vecs {
         // Using traits ensures we can't forget to flush any field
         self.0.par_iter_aggregate_mut().try_for_each(|v| {
             v.price_to_amount.flush_at_height(height, exit)?;
-            v.inner.price_percentiles.safe_flush(exit)?;
+            v.inner.price_percentiles.safe_write(exit)?;
             Ok(())
         })
     }

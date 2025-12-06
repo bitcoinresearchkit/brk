@@ -5,6 +5,7 @@ use std::{collections::BTreeMap, sync::Arc};
 use brk_computer::Computer;
 use brk_error::{Error, Result};
 use brk_indexer::Indexer;
+use brk_monitor::Mempool;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
 use brk_types::{
@@ -39,10 +40,16 @@ struct QueryInner<'a> {
     reader: Reader,
     indexer: &'a Indexer,
     computer: &'a Computer,
+    mempool: Option<Mempool>,
 }
 
 impl Query {
-    pub fn build(reader: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
+    pub fn build(
+        reader: &Reader,
+        indexer: &Indexer,
+        computer: &Computer,
+        mempool: Option<Mempool>,
+    ) -> Self {
         let reader = reader.clone();
         let indexer = Box::leak(Box::new(indexer.clone()));
         let computer = Box::leak(Box::new(computer.clone()));
@@ -53,6 +60,7 @@ impl Query {
             reader,
             indexer,
             computer,
+            mempool,
         }))
     }
 
@@ -272,6 +280,11 @@ impl Query {
     #[inline]
     pub fn computer(&self) -> &Computer {
         self.0.computer
+    }
+
+    #[inline]
+    pub fn mempool(&self) -> Option<&Mempool> {
+        self.0.mempool.as_ref()
     }
 
     #[inline]

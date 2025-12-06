@@ -95,6 +95,15 @@ impl Flushable for PricePercentiles {
         }
         Ok(())
     }
+
+    fn safe_write(&mut self, exit: &Exit) -> Result<()> {
+        for vec in self.vecs.iter_mut().flatten() {
+            if let Some(height_vec) = vec.height.as_mut() {
+                height_vec.safe_write(exit)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Traversable for PricePercentiles {

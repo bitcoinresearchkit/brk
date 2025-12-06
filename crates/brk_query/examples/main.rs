@@ -36,7 +36,7 @@ pub fn main() -> Result<()> {
 
     let computer = Computer::forced_import(&outputs_dir, &indexer, None)?;
 
-    let query = Query::build(&reader, &indexer, &computer);
+    let query = Query::build(&reader, &indexer, &computer, None);
 
     dbg!(query.search_and_format(Params {
         index: Index::Height,

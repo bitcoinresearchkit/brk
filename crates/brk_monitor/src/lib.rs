@@ -19,8 +19,8 @@ const MAX_FETCHES_PER_CYCLE: usize = 10_000;
 pub struct Mempool(Arc<MempoolInner>);
 
 impl Mempool {
-    pub fn new(client: Client) -> Self {
-        Self(Arc::new(MempoolInner::new(client)))
+    pub fn new(client: &Client) -> Self {
+        Self(Arc::new(MempoolInner::new(client.clone())))
     }
 }
 

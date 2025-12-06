@@ -14,6 +14,9 @@ use vecdb::Exit;
 pub trait Flushable {
     /// Safely flush data to disk.
     fn safe_flush(&mut self, exit: &Exit) -> Result<()>;
+
+    /// Write to mmap without fsync. Data visible to readers immediately but not durable.
+    fn safe_write(&mut self, exit: &Exit) -> Result<()>;
 }
 
 /// Trait for stateful components that track data indexed by height.
@@ -39,6 +42,13 @@ impl<T: Flushable> Flushable for Option<T> {
     fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
         if let Some(inner) = self.as_mut() {
             inner.safe_flush(exit)?;
+        }
+        Ok(())
+    }
+
+    fn safe_write(&mut self, exit: &Exit) -> Result<()> {
+        if let Some(inner) = self.as_mut() {
+            inner.safe_write(exit)?;
         }
         Ok(())
     }

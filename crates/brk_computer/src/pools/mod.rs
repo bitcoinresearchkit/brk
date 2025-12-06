@@ -205,7 +205,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.height_to_pool.safe_flush(exit)?;
+        self.height_to_pool.safe_write(exit)?;
         Ok(())
     }
 }

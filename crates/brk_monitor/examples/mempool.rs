@@ -14,7 +14,7 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 
-    let mempool = Mempool::new(client);
+    let mempool = Mempool::new(&client);
 
     let mempool_clone = mempool.clone();
     thread::spawn(move || {

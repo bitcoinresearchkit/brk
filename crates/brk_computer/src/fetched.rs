@@ -94,7 +94,7 @@ impl Vecs {
                 prev_timestamp = Some(v);
                 Ok(())
             })?;
-        self.height_to_price_ohlc_in_cents.safe_flush(exit)?;
+        self.height_to_price_ohlc_in_cents.safe_write(exit)?;
 
         let index = starting_indexes
             .dateindex
@@ -130,7 +130,7 @@ impl Vecs {
 
                 Ok(())
             })?;
-        self.dateindex_to_price_ohlc_in_cents.safe_flush(exit)?;
+        self.dateindex_to_price_ohlc_in_cents.safe_write(exit)?;
 
         Ok(())
     }

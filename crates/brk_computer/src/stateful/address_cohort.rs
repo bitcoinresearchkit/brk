@@ -154,7 +154,7 @@ impl DynCohortVecs for Vecs {
     }
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.height_to_addr_count.safe_flush(exit)?;
+        self.height_to_addr_count.safe_write(exit)?;
 
         self.inner
             .safe_flush_stateful_vecs(height, exit, &mut self.state.um().inner)
