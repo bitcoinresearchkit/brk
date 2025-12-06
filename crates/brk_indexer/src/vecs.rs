@@ -12,8 +12,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, TypedVecIterator, PAGE_SIZE,
-    PcoVec, Stamp,
+    AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PAGE_SIZE, PcoVec, Reader,
+    Stamp, TypedVecIterator,
 };
 
 use crate::Indexes;
@@ -314,6 +314,52 @@ impl Vecs {
         Ok(())
     }
 
+    /// Get address bytes by output type, using the reader for the specific address type.
+    /// Returns None if the index doesn't exist yet.
+    pub fn get_addressbytes_by_type(
+        &self,
+        addresstype: OutputType,
+        typeindex: TypeIndex,
+        reader: &Reader,
+    ) -> Result<Option<AddressBytes>> {
+        match addresstype {
+            OutputType::P2PK65 => self
+                .p2pk65addressindex_to_p2pk65bytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2PK33 => self
+                .p2pk33addressindex_to_p2pk33bytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2PKH => self
+                .p2pkhaddressindex_to_p2pkhbytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2SH => self
+                .p2shaddressindex_to_p2shbytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2WPKH => self
+                .p2wpkhaddressindex_to_p2wpkhbytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2WSH => self
+                .p2wshaddressindex_to_p2wshbytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2TR => self
+                .p2traddressindex_to_p2trbytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            OutputType::P2A => self
+                .p2aaddressindex_to_p2abytes
+                .get_pushed_or_read(typeindex.into(), reader)
+                .map(|opt| opt.map(AddressBytes::from)),
+            _ => unreachable!("get_addressbytes_by_type called with non-address type"),
+        }
+        .map_err(|e| e.into())
+    }
+
     pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
         match bytes {
             AddressBytes::P2PK65(bytes) => self
@@ -386,10 +432,13 @@ impl Vecs {
                                 index.increment();
                                 AddressHash::from(&bytes)
                             })
-                        })) as Box<dyn Iterator<Item = AddressHash> + '_>)
+                        }))
+                            as Box<dyn Iterator<Item = AddressHash> + '_>)
                     }
-                    Err(_) => Ok(Box::new(std::iter::empty())
-                        as Box<dyn Iterator<Item = AddressHash> + '_>),
+                    Err(_) => {
+                        Ok(Box::new(std::iter::empty())
+                            as Box<dyn Iterator<Item = AddressHash> + '_>)
+                    }
                 }
             }};
         }

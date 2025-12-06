@@ -49,6 +49,23 @@ impl Indexes {
         }
     }
 
+    /// Increments the address index for the given address type and returns the previous value.
+    /// Only call this for address types (P2PK65, P2PK33, P2PKH, P2SH, P2WPKH, P2WSH, P2TR, P2A).
+    #[inline]
+    pub fn increment_address_index(&mut self, addresstype: OutputType) -> TypeIndex {
+        match addresstype {
+            OutputType::P2PK65 => self.p2pk65addressindex.copy_then_increment(),
+            OutputType::P2PK33 => self.p2pk33addressindex.copy_then_increment(),
+            OutputType::P2PKH => self.p2pkhaddressindex.copy_then_increment(),
+            OutputType::P2SH => self.p2shaddressindex.copy_then_increment(),
+            OutputType::P2WPKH => self.p2wpkhaddressindex.copy_then_increment(),
+            OutputType::P2WSH => self.p2wshaddressindex.copy_then_increment(),
+            OutputType::P2TR => self.p2traddressindex.copy_then_increment(),
+            OutputType::P2A => self.p2aaddressindex.copy_then_increment(),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn push_if_needed(&self, vecs: &mut Vecs) -> Result<()> {
         let height = self.height;
         vecs.height_to_first_txindex
