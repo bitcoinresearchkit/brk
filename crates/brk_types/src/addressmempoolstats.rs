@@ -7,7 +7,7 @@ use serde::Serialize;
 ///
 /// Based on mempool.space's format.
 ///
-#[derive(Debug, Default, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 pub struct AddressMempoolStats {
     /// Number of unconfirmed transaction outputs funding this address
     #[schemars(example = 0)]

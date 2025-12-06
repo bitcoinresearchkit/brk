@@ -74,7 +74,7 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
                 self.truncate_push_at(i, stack)
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -118,7 +118,7 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
                 self.truncate_push_at(i, stack)
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -176,7 +176,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
                 self.truncate_push_at(i, avg_price)
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }
@@ -208,7 +208,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
                 self.truncate_push_at(i, avg_price)
             })?;
 
-        self.safe_flush(exit)?;
+        self.safe_write(exit)?;
 
         Ok(())
     }

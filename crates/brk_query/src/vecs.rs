@@ -110,6 +110,7 @@ impl<'a> Vecs<'a> {
     // Not the most performant or type safe but only built once so that's okay
     fn insert(&mut self, vec: &'a dyn AnyExportableVec) {
         let name = vec.name();
+        dbg!(vec.region_name());
         let serialized_index = vec.index_type_to_string();
         let index = Index::try_from(serialized_index)
             .inspect_err(|_| {

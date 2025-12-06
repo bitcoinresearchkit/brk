@@ -135,40 +135,40 @@ impl Vecs {
         exit: &Exit,
         state: &mut CohortState,
     ) -> Result<()> {
-        self.height_to_supply.safe_flush(exit)?;
-        self.height_to_utxo_count.safe_flush(exit)?;
-        self.height_to_sent.safe_flush(exit)?;
-        self.height_to_satdays_destroyed.safe_flush(exit)?;
-        self.height_to_satblocks_destroyed.safe_flush(exit)?;
+        self.height_to_supply.safe_write(exit)?;
+        self.height_to_utxo_count.safe_write(exit)?;
+        self.height_to_sent.safe_write(exit)?;
+        self.height_to_satdays_destroyed.safe_write(exit)?;
+        self.height_to_satblocks_destroyed.safe_write(exit)?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-            height_to_realized_cap.safe_flush(exit)?;
-            self.height_to_realized_profit.um().safe_flush(exit)?;
-            self.height_to_realized_loss.um().safe_flush(exit)?;
-            self.height_to_value_created.um().safe_flush(exit)?;
-            self.height_to_value_destroyed.um().safe_flush(exit)?;
-            self.height_to_supply_in_profit.um().safe_flush(exit)?;
-            self.height_to_supply_in_loss.um().safe_flush(exit)?;
-            self.height_to_unrealized_profit.um().safe_flush(exit)?;
-            self.height_to_unrealized_loss.um().safe_flush(exit)?;
-            self.dateindex_to_supply_in_profit.um().safe_flush(exit)?;
-            self.dateindex_to_supply_in_loss.um().safe_flush(exit)?;
-            self.dateindex_to_unrealized_profit.um().safe_flush(exit)?;
-            self.dateindex_to_unrealized_loss.um().safe_flush(exit)?;
-            self.height_to_min_price_paid.um().safe_flush(exit)?;
-            self.height_to_max_price_paid.um().safe_flush(exit)?;
+            height_to_realized_cap.safe_write(exit)?;
+            self.height_to_realized_profit.um().safe_write(exit)?;
+            self.height_to_realized_loss.um().safe_write(exit)?;
+            self.height_to_value_created.um().safe_write(exit)?;
+            self.height_to_value_destroyed.um().safe_write(exit)?;
+            self.height_to_supply_in_profit.um().safe_write(exit)?;
+            self.height_to_supply_in_loss.um().safe_write(exit)?;
+            self.height_to_unrealized_profit.um().safe_write(exit)?;
+            self.height_to_unrealized_loss.um().safe_write(exit)?;
+            self.dateindex_to_supply_in_profit.um().safe_write(exit)?;
+            self.dateindex_to_supply_in_loss.um().safe_write(exit)?;
+            self.dateindex_to_unrealized_profit.um().safe_write(exit)?;
+            self.dateindex_to_unrealized_loss.um().safe_write(exit)?;
+            self.height_to_min_price_paid.um().safe_write(exit)?;
+            self.height_to_max_price_paid.um().safe_write(exit)?;
 
             if self.height_to_adjusted_value_created.is_some() {
                 self.height_to_adjusted_value_created
                     .um()
-                    .safe_flush(exit)?;
+                    .safe_write(exit)?;
                 self.height_to_adjusted_value_destroyed
                     .um()
-                    .safe_flush(exit)?;
+                    .safe_write(exit)?;
             }
 
             // Uses Flushable trait - Option<T> impl handles None case
-            self.price_percentiles.safe_flush(exit)?;
+            self.price_percentiles.safe_write(exit)?;
         }
 
         state.commit(height)?;

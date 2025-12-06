@@ -57,12 +57,14 @@ impl Computer {
         fetcher: Option<Fetcher>,
     ) -> Result<Self> {
         info!("Importing computer...");
+        let import_start = Instant::now();
 
         let computed_path = outputs_path.join("computed");
 
         const STACK_SIZE: usize = 512 * 1024 * 1024;
         let big_thread = || thread::Builder::new().stack_size(STACK_SIZE);
 
+        let i = Instant::now();
         let (indexes, fetched, blks) = thread::scope(|s| -> Result<_> {
             let fetched_handle = fetcher
                 .map(|fetcher| {
@@ -81,7 +83,9 @@ impl Computer {
 
             Ok((indexes, fetched, blks))
         })?;
+        info!("Imported indexes/fetched/blks in {:?}", i.elapsed());
 
+        let i = Instant::now();
         let (price, constants, market) = thread::scope(|s| -> Result<_> {
             let constants_handle = big_thread().spawn_scoped(s, || {
                 constants::Vecs::forced_import(&computed_path, VERSION, &indexes)
@@ -100,7 +104,9 @@ impl Computer {
 
             Ok((price, constants, market))
         })?;
+        info!("Imported price/constants/market in {:?}", i.elapsed());
 
+        let i = Instant::now();
         let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
             let chain_handle = big_thread().spawn_scoped(s, || {
                 chain::Vecs::forced_import(
@@ -124,10 +130,15 @@ impl Computer {
 
             Ok((chain, pools, cointime))
         })?;
+        info!("Imported chain/pools/cointime in {:?}", i.elapsed());
 
         // Threads inside
+        let i = Instant::now();
         let stateful =
             stateful::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
+        info!("Imported stateful in {:?}", i.elapsed());
+
+        info!("Total import time: {:?}", import_start.elapsed());
 
         Ok(Self {
             constants,
@@ -150,6 +161,7 @@ impl Computer {
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
+        let compute_start = Instant::now();
         info!("Computing indexes...");
         let i = Instant::now();
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
@@ -163,12 +175,9 @@ impl Computer {
 
             info!("Computing prices...");
             let i = Instant::now();
-            self.price.um().compute(
-                &self.indexes,
-                &starting_indexes,
-                fetched,
-                exit,
-            )?;
+            self.price
+                .um()
+                .compute(&self.indexes, &starting_indexes, fetched, exit)?;
             info!("Computed prices in {:?}", i.elapsed());
         }
 
@@ -231,6 +240,7 @@ impl Computer {
         info!("Computed pools in {:?}", i.elapsed());
 
         info!("Computing stateful...");
+        let i = Instant::now();
         self.stateful.compute(
             indexer,
             &self.indexes,
@@ -239,8 +249,10 @@ impl Computer {
             &mut starting_indexes,
             exit,
         )?;
+        info!("Computed stateful in {:?}", i.elapsed());
 
         info!("Computing cointime...");
+        let i = Instant::now();
         self.cointime.compute(
             &self.indexes,
             &starting_indexes,
@@ -249,7 +261,9 @@ impl Computer {
             &self.stateful,
             exit,
         )?;
+        info!("Computed cointime in {:?}", i.elapsed());
 
+        info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
     }
 }

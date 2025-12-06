@@ -14,6 +14,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
+use brk_monitor::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
@@ -57,7 +58,14 @@ pub fn run() -> color_eyre::Result<()> {
 
     let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
-    let query = AsyncQuery::build(&reader, &indexer, &computer);
+    let mempool = Mempool::new(&client);
+
+    let mempool_clone = mempool.clone();
+    thread::spawn(move || {
+        mempool_clone.start();
+    });
+
+    let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool));
 
     let website = config.website();
 

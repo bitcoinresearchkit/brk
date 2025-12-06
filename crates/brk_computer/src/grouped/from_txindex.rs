@@ -330,7 +330,7 @@ impl ComputedVecsFromTxindex<Bitcoin> {
                 Ok(())
             })?;
 
-        self.height.safe_flush(exit)?;
+        self.height.safe_write(exit)?;
 
         self.compute_after_height(indexes, starting_indexes, exit)
     }
@@ -455,7 +455,7 @@ impl ComputedVecsFromTxindex<Dollars> {
                 Ok(())
             })?;
 
-        self.height.safe_flush(exit)?;
+        self.height.safe_write(exit)?;
 
         self.compute_after_height(indexes, starting_indexes, exit)
     }

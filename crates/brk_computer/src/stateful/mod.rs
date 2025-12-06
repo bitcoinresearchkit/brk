@@ -1473,8 +1473,8 @@ impl Vecs {
         self.utxo_cohorts.safe_flush_stateful_vecs(height, exit)?;
         self.address_cohorts
             .safe_flush_stateful_vecs(height, exit)?;
-        self.height_to_unspendable_supply.safe_flush(exit)?;
-        self.height_to_opreturn_supply.safe_flush(exit)?;
+        self.height_to_unspendable_supply.safe_write(exit)?;
+        self.height_to_opreturn_supply.safe_write(exit)?;
         self.addresstype_to_height_to_addr_count
             .values_mut()
             .try_for_each(|v| v.safe_flush(exit))?;

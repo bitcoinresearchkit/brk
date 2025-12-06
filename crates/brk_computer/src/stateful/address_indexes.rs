@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{
     AnyAddressIndex, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData,
@@ -90,6 +90,48 @@ impl AnyAddressIndexesVecs {
                 .p2a
                 .get_pushed_or_read_at_unwrap(typeindex.into(), reader),
             _ => unreachable!(),
+        }
+    }
+
+    pub fn get_anyaddressindex_once(
+        &self,
+        address_type: OutputType,
+        typeindex: TypeIndex,
+    ) -> Result<AnyAddressIndex> {
+        match address_type {
+            OutputType::P2PK33 => self
+                .p2pk33
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2PK65 => self
+                .p2pk65
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2PKH => self
+                .p2pkh
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2SH => self
+                .p2sh
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2TR => self
+                .p2tr
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2WPKH => self
+                .p2wpkh
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2WSH => self
+                .p2wsh
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            OutputType::P2A => self
+                .p2a
+                .read_at_once(typeindex.into())
+                .map_err(|e| e.into()),
+            _ => Err(Error::UnsupportedType(address_type.to_string())),
         }
     }
 

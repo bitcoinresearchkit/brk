@@ -3,10 +3,10 @@ use std::str::FromStr;
 use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
-    Address, AddressBytes, AddressChainStats, AddressHash, AddressMempoolStats, AddressStats,
-    AnyAddressDataIndexEnum, OutputType,
+    Address, AddressBytes, AddressChainStats, AddressHash, AddressStats, AnyAddressDataIndexEnum,
+    OutputType,
 };
-use vecdb::{IterableVec, TypedVecIterator};
+use vecdb::TypedVecIterator;
 
 use crate::Query;
 
@@ -44,68 +44,20 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
         return Err(Error::UnknownAddress);
     };
 
-    let stateful = &computer.stateful;
-    let price = computer.price.as_ref().map(|v| {
-        *v.timeindexes_to_price_close
-            .dateindex
-            .as_ref()
-            .unwrap()
-            .iter()
-            .last()
-            .unwrap()
-    });
-
-    let any_address_index = match outputtype {
-        OutputType::P2PK33 => stateful
-            .any_address_indexes
-            .p2pk33
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2PK65 => stateful
-            .any_address_indexes
-            .p2pk65
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2PKH => stateful
-            .any_address_indexes
-            .p2pkh
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2SH => stateful
-            .any_address_indexes
-            .p2sh
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2TR => stateful
-            .any_address_indexes
-            .p2tr
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2WPKH => stateful
-            .any_address_indexes
-            .p2wpkh
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2WSH => stateful
-            .any_address_indexes
-            .p2wsh
-            .iter()?
-            .get_unwrap(type_index.into()),
-        OutputType::P2A => stateful
-            .any_address_indexes
-            .p2a
-            .iter()?
-            .get_unwrap(type_index.into()),
-        t => {
-            return Err(Error::UnsupportedType(t.to_string()));
-        }
-    };
+    let any_address_index = computer
+        .stateful
+        .any_address_indexes
+        .get_anyaddressindex_once(outputtype, type_index)?;
 
     let address_data = match any_address_index.to_enum() {
-        AnyAddressDataIndexEnum::Loaded(index) => {
-            stateful.addresses_data.loaded.iter()?.get_unwrap(index)
-        }
-        AnyAddressDataIndexEnum::Empty(index) => stateful
+        AnyAddressDataIndexEnum::Loaded(index) => computer
+            .stateful
+            .addresses_data
+            .loaded
+            .iter()?
+            .get_unwrap(index),
+        AnyAddressDataIndexEnum::Empty(index) => computer
+            .stateful
             .addresses_data
             .empty
             .iter()?
@@ -115,20 +67,19 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
 
     Ok(AddressStats {
         address: address.into(),
-        chain_stats: AddressChainStats::default(),
-        mempool_stats: AddressMempoolStats::default(),
+        chain_stats: AddressChainStats {
+            type_index,
+            funded_txo_count: address_data.funded_txo_count,
+            funded_txo_sum: address_data.received,
+            spent_txo_count: address_data.spent_txo_count,
+            spent_txo_sum: address_data.sent,
+            tx_count: address_data.tx_count,
+        },
+        mempool_stats: query.mempool().and_then(|mempool| {
+            mempool
+                .get_addresses()
+                .get(&bytes)
+                .map(|(stats, ..)| stats.clone())
+        }),
     })
-
-    // Ok(Address {
-    //     address: address.to_string(),
-    //     r#type: type_,
-    //     type_index,
-    //     utxo_count: address_data.utxo_count,
-    //     total_sent: address_data.sent,
-    //     total_received: address_data.received,
-    //     balance,
-    //     balance_usd: price.map(|p| p * Bitcoin::from(balance)),
-    //     estimated_total_invested: price.map(|_| address_data.realized_cap),
-    //     estimated_avg_entry_price: price.map(|_| address_data.realized_price()),
-    // })
 }

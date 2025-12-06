@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_monitor::Mempool;
 use brk_reader::Reader;
 use brk_types::{
     Address, AddressStats, Height, Index, IndexInfo, Limit, Metric, MetricCount, Transaction,
@@ -21,8 +22,13 @@ use crate::{
 pub struct AsyncQuery(Query);
 
 impl AsyncQuery {
-    pub fn build(reader: &Reader, indexer: &Indexer, computer: &Computer) -> Self {
-        Self(Query::build(reader, indexer, computer))
+    pub fn build(
+        reader: &Reader,
+        indexer: &Indexer,
+        computer: &Computer,
+        mempool: Option<Mempool>,
+    ) -> Self {
+        Self(Query::build(reader, indexer, computer, mempool))
     }
 
     pub fn inner(&self) -> &Query {

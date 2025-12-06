@@ -173,30 +173,77 @@ impl Vecs {
         }
         macro_rules! computed_h {
             ($name:expr, $source:expr, $opts:expr) => {
-                ComputedVecsFromHeight::forced_import(&db, $name, $source, version + v0, indexes, $opts)?
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    $name,
+                    $source,
+                    version + v0,
+                    indexes,
+                    $opts,
+                )?
             };
             ($name:expr, $source:expr, $v:expr, $opts:expr) => {
-                ComputedVecsFromHeight::forced_import(&db, $name, $source, version + $v, indexes, $opts)?
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    $name,
+                    $source,
+                    version + $v,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! computed_di {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + v0, indexes, $opts)?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    version + v0,
+                    indexes,
+                    $opts,
+                )?
             };
             ($name:expr, $v:expr, $opts:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + $v, indexes, $opts)?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    version + $v,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! computed_tx {
             ($name:expr, $source:expr, $opts:expr) => {
-                ComputedVecsFromTxindex::forced_import(&db, $name, $source, version + v0, indexes, $opts)?
+                ComputedVecsFromTxindex::forced_import(
+                    &db,
+                    $name,
+                    $source,
+                    version + v0,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         let last = || VecBuilderOptions::default().add_last();
         let sum = || VecBuilderOptions::default().add_sum();
         let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
-        let stats = || VecBuilderOptions::default().add_average().add_minmax().add_percentiles();
-        let full_stats = || VecBuilderOptions::default().add_average().add_minmax().add_percentiles().add_sum().add_cumulative();
+        let stats = || {
+            VecBuilderOptions::default()
+                .add_average()
+                .add_minmax()
+                .add_percentiles()
+        };
+        let full_stats = || {
+            VecBuilderOptions::default()
+                .add_average()
+                .add_minmax()
+                .add_percentiles()
+                .add_sum()
+                .add_cumulative()
+        };
 
         let txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>> = eager!("value");
 
@@ -299,7 +346,10 @@ impl Vecs {
             yearindex_to_block_count_target,
             decadeindex_to_block_count_target,
             height_to_interval: eager!("interval"),
-            timeindexes_to_timestamp: computed_di!("timestamp", VecBuilderOptions::default().add_first()),
+            timeindexes_to_timestamp: computed_di!(
+                "timestamp",
+                VecBuilderOptions::default().add_first()
+            ),
             indexes_to_block_interval: computed_h!("block_interval", Source::None, stats()),
             indexes_to_block_count: computed_h!("block_count", Source::Compute, sum_cum()),
             indexes_to_1w_block_count: computed_di!("1w_block_count", last()),
@@ -328,7 +378,7 @@ impl Vecs {
             indexes_to_tx_v3: computed_h!("tx_v3", Source::Compute, sum_cum()),
             indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
                 &db,
-                "sent",
+                "sent_sum",
                 Source::Compute,
                 version + Version::ZERO,
                 VecBuilderOptions::default().add_sum(),
@@ -400,36 +450,120 @@ impl Vecs {
             indexes_to_p2wpkh_count: computed_h!("p2wpkh_count", Source::Compute, full_stats()),
             indexes_to_p2wsh_count: computed_h!("p2wsh_count", Source::Compute, full_stats()),
             indexes_to_opreturn_count: computed_h!("opreturn_count", Source::Compute, full_stats()),
-            indexes_to_unknownoutput_count: computed_h!("unknownoutput_count", Source::Compute, full_stats()),
-            indexes_to_emptyoutput_count: computed_h!("emptyoutput_count", Source::Compute, full_stats()),
+            indexes_to_unknownoutput_count: computed_h!(
+                "unknownoutput_count",
+                Source::Compute,
+                full_stats()
+            ),
+            indexes_to_emptyoutput_count: computed_h!(
+                "emptyoutput_count",
+                Source::Compute,
+                full_stats()
+            ),
             indexes_to_exact_utxo_count: computed_h!("exact_utxo_count", Source::Compute, last()),
             indexes_to_subsidy_usd_1y_sma: compute_dollars
-                .then(|| ComputedVecsFromDateIndex::forced_import(&db, "subsidy_usd_1y_sma", Source::Compute, version + v0, indexes, last()))
+                .then(|| {
+                    ComputedVecsFromDateIndex::forced_import(
+                        &db,
+                        "subsidy_usd_1y_sma",
+                        Source::Compute,
+                        version + v0,
+                        indexes,
+                        last(),
+                    )
+                })
                 .transpose()?,
             indexes_to_puell_multiple: compute_dollars
-                .then(|| ComputedVecsFromDateIndex::forced_import(&db, "puell_multiple", Source::Compute, version + v0, indexes, last()))
+                .then(|| {
+                    ComputedVecsFromDateIndex::forced_import(
+                        &db,
+                        "puell_multiple",
+                        Source::Compute,
+                        version + v0,
+                        indexes,
+                        last(),
+                    )
+                })
                 .transpose()?,
             indexes_to_hash_rate: computed_h!("hash_rate", Source::Compute, v5, last()),
             indexes_to_hash_rate_1w_sma: computed_di!("hash_rate_1w_sma", last()),
             indexes_to_hash_rate_1m_sma: computed_di!("hash_rate_1m_sma", last()),
             indexes_to_hash_rate_2m_sma: computed_di!("hash_rate_2m_sma", last()),
             indexes_to_hash_rate_1y_sma: computed_di!("hash_rate_1y_sma", last()),
-            indexes_to_difficulty_as_hash: computed_h!("difficulty_as_hash", Source::Compute, last()),
-            indexes_to_difficulty_adjustment: computed_h!("difficulty_adjustment", Source::Compute, sum()),
-            indexes_to_blocks_before_next_difficulty_adjustment: computed_h!("blocks_before_next_difficulty_adjustment", Source::Compute, v2, last()),
-            indexes_to_days_before_next_difficulty_adjustment: computed_h!("days_before_next_difficulty_adjustment", Source::Compute, v2, last()),
-            indexes_to_blocks_before_next_halving: computed_h!("blocks_before_next_halving", Source::Compute, v2, last()),
-            indexes_to_days_before_next_halving: computed_h!("days_before_next_halving", Source::Compute, v2, last()),
+            indexes_to_difficulty_as_hash: computed_h!(
+                "difficulty_as_hash",
+                Source::Compute,
+                last()
+            ),
+            indexes_to_difficulty_adjustment: computed_h!(
+                "difficulty_adjustment",
+                Source::Compute,
+                sum()
+            ),
+            indexes_to_blocks_before_next_difficulty_adjustment: computed_h!(
+                "blocks_before_next_difficulty_adjustment",
+                Source::Compute,
+                v2,
+                last()
+            ),
+            indexes_to_days_before_next_difficulty_adjustment: computed_h!(
+                "days_before_next_difficulty_adjustment",
+                Source::Compute,
+                v2,
+                last()
+            ),
+            indexes_to_blocks_before_next_halving: computed_h!(
+                "blocks_before_next_halving",
+                Source::Compute,
+                v2,
+                last()
+            ),
+            indexes_to_days_before_next_halving: computed_h!(
+                "days_before_next_halving",
+                Source::Compute,
+                v2,
+                last()
+            ),
             indexes_to_hash_price_ths: computed_h!("hash_price_ths", Source::Compute, v4, last()),
             indexes_to_hash_price_phs: computed_h!("hash_price_phs", Source::Compute, v4, last()),
             indexes_to_hash_value_ths: computed_h!("hash_value_ths", Source::Compute, v4, last()),
             indexes_to_hash_value_phs: computed_h!("hash_value_phs", Source::Compute, v4, last()),
-            indexes_to_hash_price_ths_min: computed_h!("hash_price_ths_min", Source::Compute, v4, last()),
-            indexes_to_hash_price_phs_min: computed_h!("hash_price_phs_min", Source::Compute, v4, last()),
-            indexes_to_hash_price_rebound: computed_h!("hash_price_rebound", Source::Compute, v4, last()),
-            indexes_to_hash_value_ths_min: computed_h!("hash_value_ths_min", Source::Compute, v4, last()),
-            indexes_to_hash_value_phs_min: computed_h!("hash_value_phs_min", Source::Compute, v4, last()),
-            indexes_to_hash_value_rebound: computed_h!("hash_value_rebound", Source::Compute, v4, last()),
+            indexes_to_hash_price_ths_min: computed_h!(
+                "hash_price_ths_min",
+                Source::Compute,
+                v4,
+                last()
+            ),
+            indexes_to_hash_price_phs_min: computed_h!(
+                "hash_price_phs_min",
+                Source::Compute,
+                v4,
+                last()
+            ),
+            indexes_to_hash_price_rebound: computed_h!(
+                "hash_price_rebound",
+                Source::Compute,
+                v4,
+                last()
+            ),
+            indexes_to_hash_value_ths_min: computed_h!(
+                "hash_value_ths_min",
+                Source::Compute,
+                v4,
+                last()
+            ),
+            indexes_to_hash_value_phs_min: computed_h!(
+                "hash_value_phs_min",
+                Source::Compute,
+                v4,
+                last()
+            ),
+            indexes_to_hash_value_rebound: computed_h!(
+                "hash_value_rebound",
+                Source::Compute,
+                v4,
+                last()
+            ),
             indexes_to_inflation_rate: computed_di!("inflation_rate", last()),
             indexes_to_annualized_volume: computed_di!("annualized_volume", last()),
             indexes_to_annualized_volume_btc: computed_di!("annualized_volume_btc", last()),

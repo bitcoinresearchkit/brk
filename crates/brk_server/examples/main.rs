@@ -53,7 +53,7 @@ fn run() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let query = AsyncQuery::build(&reader, &indexer, &computer);
+    let query = AsyncQuery::build(&reader, &indexer, &computer, None);
 
     let future = async move {
         let server = Server::new(&query, None);
