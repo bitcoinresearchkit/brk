@@ -165,7 +165,7 @@ impl Stores {
             self.addresstype_to_addressindex_and_unspentoutpoint
                 .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
-        ) // Changed from par_iter_mut()
+        )
         .map(|store| {
             let items = store.take_all_f2();
             store.export_meta_if_needed(height)?;
@@ -249,11 +249,12 @@ impl Stores {
                     let txindex = TxIndex::from(txindex);
                     let txidprefix = TxidPrefix::from(&txid);
 
-                    let is_known_dup = crate::DUPLICATE_TXID_PREFIXES
-                        .iter()
-                        .any(|(dup_prefix, dup_txindex)| {
-                            txindex == *dup_txindex && txidprefix == *dup_prefix
-                        });
+                    let is_known_dup =
+                        crate::DUPLICATE_TXID_PREFIXES
+                            .iter()
+                            .any(|(dup_prefix, dup_txindex)| {
+                                txindex == *dup_txindex && txidprefix == *dup_prefix
+                            });
 
                     if !is_known_dup {
                         self.txidprefix_to_txindex.remove(txidprefix);

@@ -151,7 +151,7 @@ impl Vecs {
             indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
                 db,
                 &suffix("sent"),
-                Source::Compute,
+                Source::None,
                 version + v0,
                 sum(),
                 compute_dollars,

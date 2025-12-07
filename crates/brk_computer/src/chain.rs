@@ -75,7 +75,7 @@ pub struct Vecs {
     pub indexes_to_fee_rate: ComputedVecsFromTxindex<FeeRate>,
     /// Value == 0 when Coinbase
     pub txindex_to_input_value: EagerVec<PcoVec<TxIndex, Sats>>,
-    pub indexes_to_sent: ComputedValueVecsFromHeight,
+    pub indexes_to_sent_sum: ComputedValueVecsFromHeight,
     // pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU64>,
     pub txindex_to_output_value: EagerVec<PcoVec<TxIndex, Sats>>,
@@ -376,7 +376,7 @@ impl Vecs {
             indexes_to_tx_v1: computed_h!("tx_v1", Source::Compute, sum_cum()),
             indexes_to_tx_v2: computed_h!("tx_v2", Source::Compute, sum_cum()),
             indexes_to_tx_v3: computed_h!("tx_v3", Source::Compute, sum_cum()),
-            indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
+            indexes_to_sent_sum: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "sent_sum",
                 Source::Compute,
@@ -915,7 +915,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_sent
+        self.indexes_to_sent_sum
             .compute_all(indexes, price, starting_indexes, exit, |v| {
                 v.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
@@ -1608,7 +1608,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
-                    self.indexes_to_sent.sats.dateindex.unwrap_sum(),
+                    self.indexes_to_sent_sum.sats.dateindex.unwrap_sum(),
                     365,
                     exit,
                 )?;
@@ -1619,7 +1619,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
-                    self.indexes_to_sent.bitcoin.dateindex.unwrap_sum(),
+                    self.indexes_to_sent_sum.bitcoin.dateindex.unwrap_sum(),
                     365,
                     exit,
                 )?;
@@ -1643,12 +1643,12 @@ impl Vecs {
                 Ok(())
             })?;
 
-        if let Some(indexes_to_sent) = self.indexes_to_sent.dollars.as_ref() {
+        if let Some(indexes_to_sent_sum) = self.indexes_to_sent_sum.dollars.as_ref() {
             self.indexes_to_annualized_volume_usd
                 .compute_all(starting_indexes, exit, |v| {
                     v.compute_sum(
                         starting_indexes.dateindex,
-                        indexes_to_sent.dateindex.unwrap_sum(),
+                        indexes_to_sent_sum.dateindex.unwrap_sum(),
                         365,
                         exit,
                     )?;
