@@ -75,11 +75,13 @@ pub fn get_address(Address { address }: Address, query: &Query) -> Result<Addres
             spent_txo_sum: address_data.sent,
             tx_count: address_data.tx_count,
         },
-        mempool_stats: query.mempool().and_then(|mempool| {
+        mempool_stats: query.mempool().map(|mempool| {
             mempool
                 .get_addresses()
                 .get(&bytes)
-                .map(|(stats, ..)| stats.clone())
+                .map(|(stats, _)| stats)
+                .cloned()
+                .unwrap_or_default()
         }),
     })
 }

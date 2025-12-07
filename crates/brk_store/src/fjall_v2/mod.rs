@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, mem, path::Path};
 
 use brk_error::Result;
 use brk_types::{Height, Version};
-use byteview6::ByteView;
+use byteview_f2::ByteView;
 use fjall2::{
     CompressionType, InnerItem, PartitionCreateOptions, TransactionalKeyspace,
     TransactionalPartitionHandle, ValueType,
@@ -227,6 +227,10 @@ where
 
     fn version(&self) -> Version {
         self.meta.version()
+    }
+
+    fn commit_f3(&mut self, _: Height) -> Result<()> {
+        Ok(())
     }
 }
 

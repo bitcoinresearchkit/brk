@@ -1,10 +1,10 @@
-use std::{borrow::Cow, cmp, fmt::Debug, fs, hash::Hash, mem, path::Path};
+use std::{borrow::Cow, cmp::Ordering, fmt::Debug, fs, hash::Hash, mem, path::Path};
 
 use brk_error::Result;
 use brk_types::{Height, Version};
-use byteview8::ByteView;
+use byteview_f3::ByteView;
 use fjall3::{
-    Database, Keyspace, KeyspaceCreateOptions, ValueType,
+    Database, Keyspace, KeyspaceCreateOptions,
     config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PinningPolicy},
 };
 
@@ -38,9 +38,10 @@ where
     K: Debug + Clone + From<ByteView> + Ord + Eq + Hash,
     V: Debug + Clone + From<ByteView>,
     ByteView: From<K> + From<V>,
+    Self: Send + Sync,
 {
     pub fn import(
-        database: &Database,
+        db: &Database,
         path: &Path,
         name: &str,
         version: Version,
@@ -50,11 +51,11 @@ where
         fs::create_dir_all(path)?;
 
         let (meta, keyspace) = StoreMeta::checked_open(
-            database,
+            db,
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_keyspace(database, name, mode, kind).inspect_err(|e| {
+                Self::open_keyspace(db, name, mode, kind).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -79,7 +80,7 @@ where
         let mut options = KeyspaceCreateOptions::default().manual_journal_persist(true);
 
         if kind.is_not_vec() {
-            options = options.filter_policy(FilterPolicy::new(&[
+            options = options.filter_policy(FilterPolicy::new([
                 FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(10.0)),
                 FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(10.0)),
                 FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(8.0)),
@@ -97,7 +98,7 @@ where
                 .index_block_pinning_policy(PinningPolicy::all(false));
         }
 
-        database.keyspace(name, options).map_err(|e| e.into())
+        database.keyspace(name, || options).map_err(|e| e.into())
     }
 
     #[inline]
@@ -188,20 +189,6 @@ where
         panic!()
     }
 
-    fn take_all_f3(&mut self) -> Vec<fjall3::InnerItem> {
-        let mut items = mem::take(&mut self.puts)
-            .into_iter()
-            .map(|(key, value)| Item::Value { key, value })
-            .chain(
-                mem::take(&mut self.dels)
-                    .into_iter()
-                    .map(|key| Item::Tomb(key)),
-            )
-            .collect::<Vec<_>>();
-        items.sort_unstable();
-        items.into_iter().map(|v| v.fjalled()).collect()
-    }
-
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
         if self.has(height) {
             return Ok(());
@@ -229,6 +216,51 @@ where
     fn version(&self) -> Version {
         self.meta.version()
     }
+
+    fn commit_f3(&mut self, height: Height) -> Result<()> {
+        self.export_meta_if_needed(height)?;
+
+        let mut items = mem::take(&mut self.puts)
+            .into_iter()
+            .map(|(key, value)| Item::Value { key, value })
+            .chain(
+                mem::take(&mut self.dels)
+                    .into_iter()
+                    .map(|key| Item::Tomb(key)),
+            )
+            .collect::<Vec<_>>();
+
+        if items.is_empty() {
+            return Ok(());
+        }
+
+        items.sort_unstable();
+
+        // let mut batch = OwnedWriteBatch::with_capacity(self.db.clone(), items.len());
+        // let p = self.keyspace();
+        // for item in items {
+        //     match item {
+        //         Item::Value { key, value } => {
+        //             batch.insert(p, ByteView::from(key), ByteView::from(value))
+        //         }
+        //         Item::Tomb(key) => batch.remove(p, ByteView::from(key)),
+        //     }
+        // }
+        // batch.commit()?;
+
+        let mut ingestion = self.keyspace.start_ingestion()?;
+        for item in items {
+            match item {
+                Item::Value { key, value } => {
+                    ingestion.write(ByteView::from(key), ByteView::from(value))
+                }
+                Item::Tomb(key) => ingestion.write_tombstone(ByteView::from(key)),
+            }?
+        }
+        ingestion.finish()?;
+
+        Ok(())
+    }
 }
 
 pub enum Item<K, V> {
@@ -237,13 +269,13 @@ pub enum Item<K, V> {
 }
 
 impl<K: Ord, V> Ord for Item<K, V> {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         self.key().cmp(other.key())
     }
 }
 
 impl<K: Ord, V> PartialOrd for Item<K, V> {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
@@ -260,25 +292,6 @@ impl<K, V> Item<K, V> {
     fn key(&self) -> &K {
         match self {
             Self::Value { key, .. } | Self::Tomb(key) => key,
-        }
-    }
-
-    pub fn fjalled(self) -> fjall3::InnerItem
-    where
-        K: Into<ByteView>,
-        V: Into<ByteView>,
-    {
-        match self {
-            Item::Value { key, value } => fjall3::InnerItem {
-                key: key.into().into(),
-                value: value.into().into(),
-                value_type: ValueType::Value,
-            },
-            Item::Tomb(key) => fjall3::InnerItem {
-                key: key.into().into(),
-                value: [].into(),
-                value_type: ValueType::Tombstone,
-            },
         }
     }
 }

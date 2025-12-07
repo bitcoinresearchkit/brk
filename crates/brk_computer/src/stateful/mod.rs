@@ -1080,6 +1080,12 @@ impl Vecs {
                         .get_mut(&typeindex)
                     {
                         addressdata.deref_mut().tx_count += tx_count;
+                    } else if let Some(addressdata) =
+                        stored_or_new_addresstype_to_typeindex_to_addressdatawithsource
+                            .get_mut_unwrap(address_type)
+                            .get_mut(&typeindex)
+                    {
+                        addressdata.deref_mut().tx_count += tx_count;
                     }
                 }
 

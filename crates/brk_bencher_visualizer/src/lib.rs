@@ -108,13 +108,13 @@ impl Visualizer {
         let progress_runs = self.read_benchmark_runs(crate_path, "progress.csv")?;
         let io_runs = self.read_benchmark_runs(crate_path, "io.csv")?;
 
-        // Generate combined charts (all runs together)
+        // Generate combined charts (all runs together) - use progress-based cutoffs
         if !disk_runs.is_empty() {
-            self.generate_disk_chart(crate_path, crate_name, &disk_runs)?;
+            self.generate_disk_chart(crate_path, crate_name, &disk_runs, &progress_runs)?;
         }
 
         if !memory_runs.is_empty() {
-            self.generate_memory_chart(crate_path, crate_name, &memory_runs)?;
+            self.generate_memory_chart(crate_path, crate_name, &memory_runs, &progress_runs)?;
         }
 
         if !progress_runs.is_empty() {
@@ -122,19 +122,19 @@ impl Visualizer {
         }
 
         if !io_runs.is_empty() {
-            self.generate_io_read_chart(crate_path, crate_name, &io_runs)?;
-            self.generate_io_write_chart(crate_path, crate_name, &io_runs)?;
+            self.generate_io_read_chart(crate_path, crate_name, &io_runs, &progress_runs)?;
+            self.generate_io_write_chart(crate_path, crate_name, &io_runs, &progress_runs)?;
         }
 
-        // Generate individual charts for each run
+        // Generate individual charts for each run (no progress-based cutoffs for single runs)
         for run in &disk_runs {
             let run_path = crate_path.join(&run.run_id);
-            self.generate_disk_chart(&run_path, crate_name, slice::from_ref(run))?;
+            self.generate_disk_chart(&run_path, crate_name, slice::from_ref(run), &[])?;
         }
 
         for run in &memory_runs {
             let run_path = crate_path.join(&run.run_id);
-            self.generate_memory_chart(&run_path, crate_name, slice::from_ref(run))?;
+            self.generate_memory_chart(&run_path, crate_name, slice::from_ref(run), &[])?;
         }
 
         for run in &progress_runs {
@@ -144,8 +144,8 @@ impl Visualizer {
 
         for run in &io_runs {
             let run_path = crate_path.join(&run.run_id);
-            self.generate_io_read_chart(&run_path, crate_name, slice::from_ref(run))?;
-            self.generate_io_write_chart(&run_path, crate_name, slice::from_ref(run))?;
+            self.generate_io_read_chart(&run_path, crate_name, slice::from_ref(run), &[])?;
+            self.generate_io_write_chart(&run_path, crate_name, slice::from_ref(run), &[])?;
         }
 
         Ok(())
@@ -262,6 +262,69 @@ impl Visualizer {
             .unwrap_or(1000)
     }
 
+    /// Find the minimum of the max progress values across all runs,
+    /// then return the cutoff timestamp for each run when that progress was reached.
+    fn calculate_progress_based_cutoffs(
+        runs: &[BenchmarkRun],
+        progress_runs: &[BenchmarkRun],
+    ) -> Option<Vec<u64>> {
+        // Find the minimum of max progress across all runs
+        let min_max_progress = progress_runs
+            .iter()
+            .filter_map(|r| r.data.iter().map(|d| d.value).fold(None, |acc, v| {
+                Some(acc.map_or(v, |a: f64| a.max(v)))
+            }))
+            .fold(f64::MAX, f64::min);
+
+        if min_max_progress == f64::MAX {
+            return None;
+        }
+
+        // For each run, find the timestamp when this progress was first reached
+        let cutoffs: Vec<u64> = runs
+            .iter()
+            .map(|run| {
+                // Find the matching progress run
+                let progress_run = progress_runs.iter().find(|pr| pr.run_id == run.run_id);
+
+                if let Some(pr) = progress_run {
+                    // Find the timestamp when min_max_progress was reached
+                    pr.data
+                        .iter()
+                        .find(|d| d.value >= min_max_progress)
+                        .map(|d| d.timestamp_ms)
+                        .unwrap_or_else(|| {
+                            // Fallback to max timestamp if progress not found
+                            run.data.iter().map(|d| d.timestamp_ms).max().unwrap_or(1000)
+                        })
+                } else {
+                    // No matching progress run, use max timestamp
+                    run.data.iter().map(|d| d.timestamp_ms).max().unwrap_or(1000)
+                }
+            })
+            .collect();
+
+        Some(cutoffs)
+    }
+
+    fn trim_runs_with_individual_cutoffs(
+        runs: &[BenchmarkRun],
+        cutoffs: &[u64],
+    ) -> Vec<BenchmarkRun> {
+        runs.iter()
+            .zip(cutoffs.iter())
+            .map(|(run, &cutoff)| BenchmarkRun {
+                run_id: run.run_id.clone(),
+                data: run
+                    .data
+                    .iter()
+                    .filter(|d| d.timestamp_ms <= cutoff)
+                    .cloned()
+                    .collect(),
+            })
+            .collect()
+    }
+
     fn calculate_max_value(runs: &[BenchmarkRun]) -> f64 {
         runs.iter()
             .flat_map(|r| r.data.iter().map(|d| d.value))
@@ -339,17 +402,26 @@ impl Visualizer {
         crate_path: &Path,
         crate_name: &str,
         runs: &[BenchmarkRun],
+        progress_runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("disk.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
-        // Calculate time window based on shortest run + buffer
-        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
-        let max_time_s = (min_max_time_ms as f64) / 1000.0;
+        // Try progress-based cutoffs first, fall back to time-based
+        let (trimmed_runs, max_time_ms) =
+            if let Some(cutoffs) = Self::calculate_progress_based_cutoffs(runs, progress_runs) {
+                let max_cutoff = cutoffs.iter().copied().max().unwrap_or(1000);
+                (
+                    Self::trim_runs_with_individual_cutoffs(runs, &cutoffs),
+                    max_cutoff + TIME_BUFFER_MS,
+                )
+            } else {
+                let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+                (Self::trim_runs_to_time_window(runs, min_max_time_ms), min_max_time_ms)
+            };
 
-        // Trim all runs to the same time window
-        let trimmed_runs = Self::trim_runs_to_time_window(runs, min_max_time_ms);
+        let max_time_s = (max_time_ms as f64) / 1000.0;
 
         let max_value = Self::calculate_max_value(&trimmed_runs);
         let (max_value_scaled, unit) = Self::format_bytes(max_value);
@@ -403,33 +475,55 @@ impl Visualizer {
         crate_path: &Path,
         crate_name: &str,
         runs: &[BenchmarkRun],
+        progress_runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("memory.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
-        // Calculate time window based on shortest run + buffer
-        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
-        let max_time_s = (min_max_time_ms as f64) / 1000.0;
-
         // Read memory CSV files which have 3 columns: timestamp, footprint, peak
         let enhanced_runs = self.read_memory_data(crate_path, runs)?;
 
-        // Trim enhanced runs to the same time window
-        let trimmed_enhanced_runs: Vec<_> = enhanced_runs
-            .into_iter()
-            .map(|(run_id, footprint, peak)| {
-                let trimmed_footprint: Vec<_> = footprint
+        // Try progress-based cutoffs first, fall back to time-based
+        let (trimmed_enhanced_runs, max_time_ms) =
+            if let Some(cutoffs) = Self::calculate_progress_based_cutoffs(runs, progress_runs) {
+                let max_cutoff = cutoffs.iter().copied().max().unwrap_or(1000) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = enhanced_runs
                     .into_iter()
-                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .zip(cutoffs.iter())
+                    .map(|((run_id, footprint, peak), &cutoff)| {
+                        let trimmed_footprint: Vec<_> = footprint
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= cutoff)
+                            .collect();
+                        let trimmed_peak: Vec<_> = peak
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= cutoff)
+                            .collect();
+                        (run_id, trimmed_footprint, trimmed_peak)
+                    })
                     .collect();
-                let trimmed_peak: Vec<_> = peak
+                (trimmed, max_cutoff)
+            } else {
+                let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = enhanced_runs
                     .into_iter()
-                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .map(|(run_id, footprint, peak)| {
+                        let trimmed_footprint: Vec<_> = footprint
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                            .collect();
+                        let trimmed_peak: Vec<_> = peak
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                            .collect();
+                        (run_id, trimmed_footprint, trimmed_peak)
+                    })
                     .collect();
-                (run_id, trimmed_footprint, trimmed_peak)
-            })
-            .collect();
+                (trimmed, min_max_time_ms)
+            };
+
+        let max_time_s = (max_time_ms as f64) / 1000.0;
 
         let max_value = trimmed_enhanced_runs
             .iter()
@@ -627,29 +721,47 @@ impl Visualizer {
         crate_path: &Path,
         crate_name: &str,
         runs: &[BenchmarkRun],
+        progress_runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("io_read.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
-        // Calculate time window based on shortest run + buffer
-        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
-        let max_time_s = (min_max_time_ms as f64) / 1000.0;
-
         // Read I/O CSV files which have 3 columns: timestamp, bytes_read, bytes_written
         let io_runs = self.read_io_data(crate_path, runs)?;
 
-        // Trim I/O runs to the same time window and extract only read data
-        let trimmed_io_runs: Vec<_> = io_runs
-            .into_iter()
-            .map(|(run_id, read_data, _write_data)| {
-                let trimmed_read: Vec<_> = read_data
+        // Try progress-based cutoffs first, fall back to time-based
+        let (trimmed_io_runs, max_time_ms) =
+            if let Some(cutoffs) = Self::calculate_progress_based_cutoffs(runs, progress_runs) {
+                let max_cutoff = cutoffs.iter().copied().max().unwrap_or(1000) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = io_runs
                     .into_iter()
-                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .zip(cutoffs.iter())
+                    .map(|((run_id, read_data, _write_data), &cutoff)| {
+                        let trimmed_read: Vec<_> = read_data
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= cutoff)
+                            .collect();
+                        (run_id, trimmed_read)
+                    })
                     .collect();
-                (run_id, trimmed_read)
-            })
-            .collect();
+                (trimmed, max_cutoff)
+            } else {
+                let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = io_runs
+                    .into_iter()
+                    .map(|(run_id, read_data, _write_data)| {
+                        let trimmed_read: Vec<_> = read_data
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                            .collect();
+                        (run_id, trimmed_read)
+                    })
+                    .collect();
+                (trimmed, min_max_time_ms)
+            };
+
+        let max_time_s = (max_time_ms as f64) / 1000.0;
 
         let max_value = trimmed_io_runs
             .iter()
@@ -709,29 +821,47 @@ impl Visualizer {
         crate_path: &Path,
         crate_name: &str,
         runs: &[BenchmarkRun],
+        progress_runs: &[BenchmarkRun],
     ) -> Result<()> {
         let output_path = crate_path.join("io_write.svg");
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
-        // Calculate time window based on shortest run + buffer
-        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
-        let max_time_s = (min_max_time_ms as f64) / 1000.0;
-
         // Read I/O CSV files which have 3 columns: timestamp, bytes_read, bytes_written
         let io_runs = self.read_io_data(crate_path, runs)?;
 
-        // Trim I/O runs to the same time window and extract only write data
-        let trimmed_io_runs: Vec<_> = io_runs
-            .into_iter()
-            .map(|(run_id, _read_data, write_data)| {
-                let trimmed_write: Vec<_> = write_data
+        // Try progress-based cutoffs first, fall back to time-based
+        let (trimmed_io_runs, max_time_ms) =
+            if let Some(cutoffs) = Self::calculate_progress_based_cutoffs(runs, progress_runs) {
+                let max_cutoff = cutoffs.iter().copied().max().unwrap_or(1000) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = io_runs
                     .into_iter()
-                    .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                    .zip(cutoffs.iter())
+                    .map(|((run_id, _read_data, write_data), &cutoff)| {
+                        let trimmed_write: Vec<_> = write_data
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= cutoff)
+                            .collect();
+                        (run_id, trimmed_write)
+                    })
                     .collect();
-                (run_id, trimmed_write)
-            })
-            .collect();
+                (trimmed, max_cutoff)
+            } else {
+                let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+                let trimmed: Vec<_> = io_runs
+                    .into_iter()
+                    .map(|(run_id, _read_data, write_data)| {
+                        let trimmed_write: Vec<_> = write_data
+                            .into_iter()
+                            .filter(|d| d.timestamp_ms <= min_max_time_ms)
+                            .collect();
+                        (run_id, trimmed_write)
+                    })
+                    .collect();
+                (trimmed, min_max_time_ms)
+            };
+
+        let max_time_s = (max_time_ms as f64) / 1000.0;
 
         let max_value = trimmed_io_runs
             .iter()
@@ -796,13 +926,20 @@ impl Visualizer {
         let root = SVGBackend::new(&output_path, SIZE).into_drawing_area();
         root.fill(&BG_COLOR)?;
 
-        // Calculate time window based on shortest run + buffer
-        let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
-        let max_time_s = (min_max_time_ms as f64) / 1000.0;
+        // Try progress-based cutoffs first, fall back to time-based
+        let (trimmed_runs, max_time_ms) =
+            if let Some(cutoffs) = Self::calculate_progress_based_cutoffs(runs, runs) {
+                let max_cutoff = cutoffs.iter().copied().max().unwrap_or(1000) + TIME_BUFFER_MS;
+                (
+                    Self::trim_runs_with_individual_cutoffs(runs, &cutoffs),
+                    max_cutoff,
+                )
+            } else {
+                let min_max_time_ms = Self::calculate_min_max_time(runs) + TIME_BUFFER_MS;
+                (Self::trim_runs_to_time_window(runs, min_max_time_ms), min_max_time_ms)
+            };
 
-        // Trim all runs to the same time window
-        let trimmed_runs = Self::trim_runs_to_time_window(runs, min_max_time_ms);
-
+        let max_time_s = (max_time_ms as f64) / 1000.0;
         let max_block = Self::calculate_max_value(&trimmed_runs);
 
         // Format time based on duration

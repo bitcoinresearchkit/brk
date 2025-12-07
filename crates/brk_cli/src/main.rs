@@ -28,6 +28,13 @@ mod website;
 use crate::{config::Config, paths::*};
 
 pub fn main() -> color_eyre::Result<()> {
+    let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
+    rlimit::setrlimit(
+        rlimit::Resource::NOFILE,
+        no_file_limit.0.max(10_000),
+        no_file_limit.1,
+    )?;
+
     // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
         .stack_size(512 * 1024 * 1024)
