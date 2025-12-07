@@ -33,10 +33,6 @@ pub struct Stores {
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
-    // pub addresstype_to_addressindex_and_txindex: Store<AddressTypeAddressIndexTxIndex, Unit>,
-    // pub addresshash_to_typeindex: Store<AddressHash, TypeIndex>,
-    // pub addresstype_to_addressindex_and_unspentoutpoint:
-    // Store<AddressTypeAddressIndexOutPoint, Unit>,
 }
 
 impl Stores {
@@ -64,6 +60,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
+                10,
             )
         };
 
@@ -75,6 +72,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Vec,
+                0,
             )
         };
 
@@ -86,6 +84,7 @@ impl Stores {
                 version,
                 Mode3::Any,
                 Kind3::Vec,
+                0,
             )
         };
 
@@ -99,6 +98,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Sequential,
+                0,
             )?,
             addresstype_to_addresshash_to_addressindex: ByAddressType::new_with_index(
                 create_addresshash_to_addressindex_store,
@@ -116,6 +116,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
+                0,
             )?,
             txidprefix_to_txindex: Store::import(
                 database_ref,
@@ -124,6 +125,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
+                10,
             )?,
         })
     }

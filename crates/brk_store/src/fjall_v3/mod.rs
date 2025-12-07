@@ -22,6 +22,7 @@ pub struct StoreFjallV3<Key, Value> {
     keyspace: Keyspace,
     puts: FxHashMap<Key, Value>,
     dels: FxHashSet<Key>,
+    prev_puts: Vec<FxHashMap<Key, Value>>,
 }
 
 const MAJOR_FJALL_VERSION: Version = Version::new(3);
@@ -47,6 +48,7 @@ where
         version: Version,
         mode: Mode3,
         kind: Kind3,
+        cached_commits: usize,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -62,12 +64,18 @@ where
             },
         )?;
 
+        let mut prev_puts = vec![];
+        for _ in 0..cached_commits {
+            prev_puts.push(FxHashMap::default());
+        }
+
         Ok(Self {
             meta,
             name: Box::leak(Box::new(name.to_string())),
             keyspace,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
+            prev_puts,
         })
     }
 
@@ -107,8 +115,16 @@ where
         ByteView: From<&'a K>,
     {
         if let Some(v) = self.puts.get(key) {
-            Ok(Some(Cow::Borrowed(v)))
-        } else if let Some(slice) = self.keyspace.get(ByteView::from(key))? {
+            return Ok(Some(Cow::Borrowed(v)));
+        }
+
+        for prev in &self.prev_puts {
+            if let Some(v) = prev.get(key) {
+                return Ok(Some(Cow::Borrowed(v)));
+            }
+        }
+
+        if let Some(slice) = self.keyspace.get(ByteView::from(key))? {
             Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
         } else {
             Ok(None)
@@ -220,7 +236,14 @@ where
     fn commit_f3(&mut self, height: Height) -> Result<()> {
         self.export_meta_if_needed(height)?;
 
-        let mut items = mem::take(&mut self.puts)
+        let puts = mem::take(&mut self.puts);
+
+        if !self.prev_puts.is_empty() {
+            self.prev_puts.pop();
+            self.prev_puts.insert(0, puts.clone());
+        }
+
+        let mut items = puts
             .into_iter()
             .map(|(key, value)| Item::Value { key, value })
             .chain(

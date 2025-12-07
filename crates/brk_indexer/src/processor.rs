@@ -113,7 +113,7 @@ impl<'a> BlockProcessor<'a> {
 
     /// Compute TXIDs in parallel (CPU-intensive operation).
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
-        let should_check_collisions =
+        let will_check_collisions =
             self.check_collisions && self.stores.txidprefix_to_txindex.needs(self.height);
         let base_txindex = self.indexes.txindex;
 
@@ -125,7 +125,7 @@ impl<'a> BlockProcessor<'a> {
                 let txid = Txid::from(tx.compute_txid());
                 let txid_prefix = TxidPrefix::from(&txid);
 
-                let prev_txindex_opt = if should_check_collisions {
+                let prev_txindex_opt = if will_check_collisions {
                     self.stores
                         .txidprefix_to_txindex
                         .get(&txid_prefix)?

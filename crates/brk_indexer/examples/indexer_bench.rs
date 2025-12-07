@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     });
 
     let i = Instant::now();
-    indexer.checked_index(&blocks, &client, &exit)?;
+    indexer.index(&blocks, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
     // We want to benchmark the drop too

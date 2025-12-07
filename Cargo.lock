@@ -1246,7 +1246,7 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "brk_error",
- "byteview 0.6.1",
+ "byteview 0.9.1",
  "derive_deref",
  "itoa",
  "jiff",
@@ -2073,8 +2073,6 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 [[package]]
 name = "fjall"
 version = "3.0.0-rc.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91b735d557d6636f69dedbea4d7a465e6095a00409b2b146a64cf4c136ab833"
 dependencies = [
  "byteorder-lite",
  "byteview 0.9.1",
@@ -2973,8 +2971,6 @@ dependencies = [
 [[package]]
 name = "lsm-tree"
 version = "3.0.0-rc.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4e32220e039b7e8e1474a5206eb32c002c9d18fe0770d87c693e00b782f15ff"
 dependencies = [
  "byteorder-lite",
  "byteview 0.9.1",
