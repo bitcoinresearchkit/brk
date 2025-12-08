@@ -1,5 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::Sats;
+use rayon::prelude::*;
 
 use super::{AmountFilter, Filter};
 
@@ -78,5 +79,27 @@ impl<T> ByGreatEqualAmount<T> {
             &mut self._10k_btc,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self._1sat,
+            &mut self._10sats,
+            &mut self._100sats,
+            &mut self._1k_sats,
+            &mut self._10k_sats,
+            &mut self._100k_sats,
+            &mut self._1m_sats,
+            &mut self._10m_sats,
+            &mut self._1btc,
+            &mut self._10btc,
+            &mut self._100btc,
+            &mut self._1k_btc,
+            &mut self._10k_btc,
+        ]
+        .into_par_iter()
     }
 }

@@ -56,6 +56,14 @@ impl Computer {
         indexer: &Indexer,
         fetcher: Option<Fetcher>,
     ) -> Result<Self> {
+        info!("Increasing number of open files...");
+        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
+        rlimit::setrlimit(
+            rlimit::Resource::NOFILE,
+            no_file_limit.0.max(10_000),
+            no_file_limit.1,
+        )?;
+
         info!("Importing computer...");
         let import_start = Instant::now();
 
@@ -181,7 +189,7 @@ impl Computer {
             info!("Computed prices in {:?}", i.elapsed());
         }
 
-        std::thread::scope(|scope| -> Result<()> {
+        thread::scope(|scope| -> Result<()> {
             let blks = scope.spawn(|| -> Result<()> {
                 info!("Computing BLKs metadata...");
                 let i = Instant::now();
@@ -227,29 +235,38 @@ impl Computer {
             Ok(())
         })?;
 
-        info!("Computing pools...");
-        let i = Instant::now();
-        self.pools.compute(
-            indexer,
-            &self.indexes,
-            &starting_indexes,
-            &self.chain,
-            self.price.as_ref(),
-            exit,
-        )?;
-        info!("Computed pools in {:?}", i.elapsed());
+        let starting_indexes_clone = starting_indexes.clone();
+        thread::scope(|scope| -> Result<()> {
+            let pools = scope.spawn(|| -> Result<()> {
+                info!("Computing pools...");
+                let i = Instant::now();
+                self.pools.compute(
+                    indexer,
+                    &self.indexes,
+                    &starting_indexes_clone,
+                    &self.chain,
+                    self.price.as_ref(),
+                    exit,
+                )?;
+                info!("Computed pools in {:?}", i.elapsed());
+                Ok(())
+            });
 
-        info!("Computing stateful...");
-        let i = Instant::now();
-        self.stateful.compute(
-            indexer,
-            &self.indexes,
-            &self.chain,
-            self.price.as_ref(),
-            &mut starting_indexes,
-            exit,
-        )?;
-        info!("Computed stateful in {:?}", i.elapsed());
+            info!("Computing stateful...");
+            let i = Instant::now();
+            self.stateful.compute(
+                indexer,
+                &self.indexes,
+                &self.chain,
+                self.price.as_ref(),
+                &mut starting_indexes,
+                exit,
+            )?;
+            info!("Computed stateful in {:?}", i.elapsed());
+
+            pools.join().unwrap()?;
+            Ok(())
+        })?;
 
         info!("Computing cointime...");
         let i = Instant::now();

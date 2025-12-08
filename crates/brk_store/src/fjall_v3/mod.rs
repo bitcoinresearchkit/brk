@@ -29,8 +29,7 @@ const MAJOR_FJALL_VERSION: Version = Version::new(3);
 
 pub fn open_fjall3_database(path: &Path) -> fjall3::Result<Database> {
     Database::builder(path.join("fjall"))
-        .max_write_buffer_size(256 * 1_024 * 1_024)
-        .cache_size(4 * 1024 * 1024 * 1024)
+        .cache_size(1024 * 1024 * 1024)
         .open()
 }
 

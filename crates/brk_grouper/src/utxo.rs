@@ -67,6 +67,23 @@ impl<T> UTXOGroups<T> {
             .chain(self.type_.iter_mut())
     }
 
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [&mut self.all]
+            .into_par_iter()
+            .chain(self.term.par_iter_mut())
+            .chain(self.max_age.par_iter_mut())
+            .chain(self.min_age.par_iter_mut())
+            .chain(self.ge_amount.par_iter_mut())
+            .chain(self.age_range.par_iter_mut())
+            .chain(self.epoch.par_iter_mut())
+            .chain(self.amount_range.par_iter_mut())
+            .chain(self.lt_amount.par_iter_mut())
+            .chain(self.type_.par_iter_mut())
+    }
+
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.age_range
             .iter_mut()
