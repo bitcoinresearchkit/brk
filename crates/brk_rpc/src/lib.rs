@@ -107,7 +107,20 @@ impl Client {
             .map_err(Into::into)
     }
 
-    pub fn get_transaction<'a, T>(&self, txid: &'a T) -> Result<Transaction>
+    pub fn get_transaction<'a, T, H>(
+        &self,
+        txid: &'a T,
+        block_hash: Option<&'a H>,
+    ) -> brk_error::Result<bitcoin::Transaction>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+        &'a H: Into<&'a bitcoin::BlockHash>,
+    {
+        let tx = self.get_raw_transaction(txid, block_hash)?;
+        Ok(tx)
+    }
+
+    pub fn get_mempool_transaction<'a, T>(&self, txid: &'a T) -> Result<Transaction>
     where
         &'a T: Into<&'a bitcoin::Txid>,
     {

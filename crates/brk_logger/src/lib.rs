@@ -28,7 +28,7 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
     }
 
     Builder::from_env(Env::default().default_filter_or(
-        "debug,bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off",
+        "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off",
         // "debug,fjall=trace,bitcoin=off,bitcoincore-rpc=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off",
     ))
     .format(move |buf, record| {

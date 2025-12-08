@@ -64,7 +64,7 @@ pub fn get_transaction(TxidPath { txid }: TxidPath, query: &Query) -> Result<Tra
     xori.bytes(&mut buffer, reader.xor_bytes());
 
     let mut reader = Cursor::new(buffer);
-    let Ok(_) = bitcoin::Transaction::consensus_decode(&mut reader) else {
+    let Ok(tx) = bitcoin::Transaction::consensus_decode(&mut reader) else {
         return Err(Error::Str("Failed decode the transaction"));
     };
 
