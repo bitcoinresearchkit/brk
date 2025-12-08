@@ -76,7 +76,12 @@ impl MempoolInner {
                 .collect::<Vec<_>>()
         }
         .into_iter()
-        .filter_map(|txid| self.client.get_transaction(&txid).ok().map(|tx| (txid, tx)))
+        .filter_map(|txid| {
+            self.client
+                .get_mempool_transaction(&txid)
+                .ok()
+                .map(|tx| (txid, tx))
+        })
         .collect::<FxHashMap<_, _>>();
 
         let mut txs = self.txs.write();
