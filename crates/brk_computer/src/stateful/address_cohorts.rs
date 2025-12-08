@@ -57,7 +57,7 @@ impl Vecs {
         [
             self.0
                 .ge_amount
-                .iter_mut()
+                .par_iter_mut()
                 .map(|vecs| {
                     let filter = vecs.filter().clone();
                     (
@@ -71,7 +71,7 @@ impl Vecs {
                 .collect::<Vec<_>>(),
             self.0
                 .lt_amount
-                .iter_mut()
+                .par_iter_mut()
                 .map(|vecs| {
                     let filter = vecs.filter().clone();
                     (
@@ -98,7 +98,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.iter_mut()
+        self.par_iter_mut()
             .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
 
@@ -116,7 +116,7 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.0.iter_mut().try_for_each(|v| {
+        self.0.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
                 indexes,
                 price,

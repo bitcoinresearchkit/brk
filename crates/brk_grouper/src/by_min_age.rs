@@ -1,4 +1,5 @@
 use brk_traversable::Traversable;
+use rayon::prelude::*;
 
 use super::{Filter, TimeFilter};
 
@@ -53,24 +54,9 @@ impl<T> ByMinAge<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
-            &self._1d,
-            &self._1w,
-            &self._1m,
-            &self._2m,
-            &self._3m,
-            &self._4m,
-            &self._5m,
-            &self._6m,
-            &self._1y,
-            &self._2y,
-            &self._3y,
-            &self._4y,
-            &self._5y,
-            &self._6y,
-            &self._7y,
-            &self._8y,
-            &self._10y,
-            &self._12y,
+            &self._1d, &self._1w, &self._1m, &self._2m, &self._3m, &self._4m, &self._5m, &self._6m,
+            &self._1y, &self._2y, &self._3y, &self._4y, &self._5y, &self._6y, &self._7y, &self._8y,
+            &self._10y, &self._12y,
         ]
         .into_iter()
     }
@@ -97,5 +83,32 @@ impl<T> ByMinAge<T> {
             &mut self._12y,
         ]
         .into_iter()
+    }
+
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        [
+            &mut self._1d,
+            &mut self._1w,
+            &mut self._1m,
+            &mut self._2m,
+            &mut self._3m,
+            &mut self._4m,
+            &mut self._5m,
+            &mut self._6m,
+            &mut self._1y,
+            &mut self._2y,
+            &mut self._3y,
+            &mut self._4y,
+            &mut self._5y,
+            &mut self._6y,
+            &mut self._7y,
+            &mut self._8y,
+            &mut self._10y,
+            &mut self._12y,
+        ]
+        .into_par_iter()
     }
 }

@@ -511,8 +511,8 @@ impl Vecs {
         let by_size_range = &self.0.amount_range;
 
         [(&mut self.0.all, by_date_range.iter().collect::<Vec<_>>())]
-            .into_iter()
-            .chain(self.0.min_age.iter_mut().map(|vecs| {
+            .into_par_iter()
+            .chain(self.0.min_age.par_iter_mut().map(|vecs| {
                 let filter = vecs.filter().clone();
                 (
                     vecs,
@@ -522,7 +522,7 @@ impl Vecs {
                         .collect::<Vec<_>>(),
                 )
             }))
-            .chain(self.0.max_age.iter_mut().map(|vecs| {
+            .chain(self.0.max_age.par_iter_mut().map(|vecs| {
                 let filter = vecs.filter().clone();
                 (
                     vecs,
@@ -532,7 +532,7 @@ impl Vecs {
                         .collect::<Vec<_>>(),
                 )
             }))
-            .chain(self.0.term.iter_mut().map(|vecs| {
+            .chain(self.0.term.par_iter_mut().map(|vecs| {
                 let filter = vecs.filter().clone();
                 (
                     vecs,
@@ -542,7 +542,7 @@ impl Vecs {
                         .collect::<Vec<_>>(),
                 )
             }))
-            .chain(self.0.ge_amount.iter_mut().map(|vecs| {
+            .chain(self.0.ge_amount.par_iter_mut().map(|vecs| {
                 let filter = vecs.filter().clone();
                 (
                     vecs,
@@ -552,7 +552,7 @@ impl Vecs {
                         .collect::<Vec<_>>(),
                 )
             }))
-            .chain(self.0.lt_amount.iter_mut().map(|vecs| {
+            .chain(self.0.lt_amount.par_iter_mut().map(|vecs| {
                 let filter = vecs.filter().clone();
                 (
                     vecs,
@@ -574,7 +574,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.iter_mut()
+        self.par_iter_mut()
             .try_for_each(|v| v.compute_rest_part1(indexes, price, starting_indexes, exit))
     }
 
@@ -592,7 +592,7 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.iter_mut().try_for_each(|v| {
+        self.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
                 indexes,
                 price,
@@ -624,9 +624,9 @@ impl Vecs {
 
     /// Reset aggregate cohorts' price_to_amount when starting from scratch
     pub fn reset_aggregate_price_to_amount(&mut self) -> Result<()> {
-        self.0.iter_aggregate_mut().try_for_each(|v| {
-            v.price_to_amount.reset()
-        })
+        self.0
+            .iter_aggregate_mut()
+            .try_for_each(|v| v.price_to_amount.reset())
     }
 
     /// Import aggregate cohorts' price_to_amount from disk when resuming from a checkpoint.

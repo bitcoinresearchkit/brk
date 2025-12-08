@@ -60,7 +60,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
-                10,
+                21,
             )
         };
 
@@ -125,7 +125,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
-                10,
+                21,
             )?,
         })
     }

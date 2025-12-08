@@ -39,6 +39,16 @@ impl<T> AddressGroups<T> {
             .chain(self.lt_amount.iter_mut())
     }
 
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
+    where
+        T: Send + Sync,
+    {
+        self.ge_amount
+            .par_iter_mut()
+            .chain(self.amount_range.par_iter_mut())
+            .chain(self.lt_amount.par_iter_mut())
+    }
+
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.amount_range.iter_mut()
     }

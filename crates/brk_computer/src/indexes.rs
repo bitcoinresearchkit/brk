@@ -108,11 +108,15 @@ impl Vecs {
         let version = parent_version + VERSION;
 
         macro_rules! eager {
-            ($name:expr) => { EagerVec::forced_import(&db, $name, version)? };
+            ($name:expr) => {
+                EagerVec::forced_import(&db, $name, version)?
+            };
         }
         macro_rules! lazy {
             ($name:expr, $source:expr) => {
-                LazyVecFrom1::init($name, version, $source.boxed_clone(), |index, _| Some(index))
+                LazyVecFrom1::init($name, version, $source.boxed_clone(), |index, _| {
+                    Some(index)
+                })
             };
         }
 
@@ -120,18 +124,54 @@ impl Vecs {
             txinindex_to_txoutindex: eager!("txoutindex"),
             txoutindex_to_txoutindex: lazy!("txoutindex", indexer.vecs.txoutindex_to_value),
             txinindex_to_txinindex: lazy!("txinindex", indexer.vecs.txinindex_to_outpoint),
-            p2pk33addressindex_to_p2pk33addressindex: lazy!("p2pk33addressindex", indexer.vecs.p2pk33addressindex_to_p2pk33bytes),
-            p2pk65addressindex_to_p2pk65addressindex: lazy!("p2pk65addressindex", indexer.vecs.p2pk65addressindex_to_p2pk65bytes),
-            p2pkhaddressindex_to_p2pkhaddressindex: lazy!("p2pkhaddressindex", indexer.vecs.p2pkhaddressindex_to_p2pkhbytes),
-            p2shaddressindex_to_p2shaddressindex: lazy!("p2shaddressindex", indexer.vecs.p2shaddressindex_to_p2shbytes),
-            p2traddressindex_to_p2traddressindex: lazy!("p2traddressindex", indexer.vecs.p2traddressindex_to_p2trbytes),
-            p2wpkhaddressindex_to_p2wpkhaddressindex: lazy!("p2wpkhaddressindex", indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes),
-            p2wshaddressindex_to_p2wshaddressindex: lazy!("p2wshaddressindex", indexer.vecs.p2wshaddressindex_to_p2wshbytes),
-            p2aaddressindex_to_p2aaddressindex: lazy!("p2aaddressindex", indexer.vecs.p2aaddressindex_to_p2abytes),
-            p2msoutputindex_to_p2msoutputindex: lazy!("p2msoutputindex", indexer.vecs.p2msoutputindex_to_txindex),
-            emptyoutputindex_to_emptyoutputindex: lazy!("emptyoutputindex", indexer.vecs.emptyoutputindex_to_txindex),
-            unknownoutputindex_to_unknownoutputindex: lazy!("unknownoutputindex", indexer.vecs.unknownoutputindex_to_txindex),
-            opreturnindex_to_opreturnindex: lazy!("opreturnindex", indexer.vecs.opreturnindex_to_txindex),
+            p2pk33addressindex_to_p2pk33addressindex: lazy!(
+                "p2pk33addressindex",
+                indexer.vecs.p2pk33addressindex_to_p2pk33bytes
+            ),
+            p2pk65addressindex_to_p2pk65addressindex: lazy!(
+                "p2pk65addressindex",
+                indexer.vecs.p2pk65addressindex_to_p2pk65bytes
+            ),
+            p2pkhaddressindex_to_p2pkhaddressindex: lazy!(
+                "p2pkhaddressindex",
+                indexer.vecs.p2pkhaddressindex_to_p2pkhbytes
+            ),
+            p2shaddressindex_to_p2shaddressindex: lazy!(
+                "p2shaddressindex",
+                indexer.vecs.p2shaddressindex_to_p2shbytes
+            ),
+            p2traddressindex_to_p2traddressindex: lazy!(
+                "p2traddressindex",
+                indexer.vecs.p2traddressindex_to_p2trbytes
+            ),
+            p2wpkhaddressindex_to_p2wpkhaddressindex: lazy!(
+                "p2wpkhaddressindex",
+                indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes
+            ),
+            p2wshaddressindex_to_p2wshaddressindex: lazy!(
+                "p2wshaddressindex",
+                indexer.vecs.p2wshaddressindex_to_p2wshbytes
+            ),
+            p2aaddressindex_to_p2aaddressindex: lazy!(
+                "p2aaddressindex",
+                indexer.vecs.p2aaddressindex_to_p2abytes
+            ),
+            p2msoutputindex_to_p2msoutputindex: lazy!(
+                "p2msoutputindex",
+                indexer.vecs.p2msoutputindex_to_txindex
+            ),
+            emptyoutputindex_to_emptyoutputindex: lazy!(
+                "emptyoutputindex",
+                indexer.vecs.emptyoutputindex_to_txindex
+            ),
+            unknownoutputindex_to_unknownoutputindex: lazy!(
+                "unknownoutputindex",
+                indexer.vecs.unknownoutputindex_to_txindex
+            ),
+            opreturnindex_to_opreturnindex: lazy!(
+                "opreturnindex",
+                indexer.vecs.opreturnindex_to_txindex
+            ),
             txindex_to_txindex: lazy!("txindex", indexer.vecs.txindex_to_txid),
             txindex_to_input_count: eager!("input_count"),
             txindex_to_output_count: eager!("output_count"),
@@ -653,7 +693,7 @@ impl Vecs {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Indexes {
     indexes: brk_indexer::Indexes,
     pub dateindex: DateIndex,
