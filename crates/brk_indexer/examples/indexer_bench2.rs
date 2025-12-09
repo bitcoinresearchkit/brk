@@ -55,7 +55,7 @@ fn main() -> Result<()> {
 
     loop {
         let i = Instant::now();
-        indexer.checked_index(&blocks, &client, &exit)?;
+        indexer.index(&blocks, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
 
         sleep(Duration::from_secs(60));
