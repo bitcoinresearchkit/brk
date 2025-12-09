@@ -5,7 +5,9 @@ use brk_types::{Height, Version};
 use byteview_f3::ByteView;
 use fjall3::{
     Database, Keyspace, KeyspaceCreateOptions,
-    config::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PinningPolicy},
+    config::{
+        BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PartitioningPolicy, PinningPolicy,
+    },
 };
 
 mod meta;
@@ -29,7 +31,7 @@ const MAJOR_FJALL_VERSION: Version = Version::new(3);
 
 pub fn open_fjall3_database(path: &Path) -> fjall3::Result<Database> {
     Database::builder(path.join("fjall"))
-        .cache_size(1024 * 1024 * 1024)
+        .cache_size(2 * 1024 * 1024 * 1024)
         .open()
 }
 
@@ -84,7 +86,11 @@ where
         _mode: Mode3,
         kind: Kind3,
     ) -> Result<Keyspace> {
-        let mut options = KeyspaceCreateOptions::default().manual_journal_persist(true);
+        let mut options = KeyspaceCreateOptions::default()
+            .manual_journal_persist(true)
+            .expect_point_read_hits(true)
+            .filter_block_partitioning_policy(PartitioningPolicy::new([false, false, true]))
+            .index_block_partitioning_policy(PartitioningPolicy::new([false, false, true]));
 
         if kind.is_not_vec() {
             options = options.filter_policy(FilterPolicy::new([
@@ -101,6 +107,8 @@ where
 
         if kind.is_sequential() {
             options = options
+                .filter_block_partitioning_policy(PartitioningPolicy::all(true))
+                .index_block_partitioning_policy(PartitioningPolicy::all(true))
                 .filter_block_pinning_policy(PinningPolicy::all(false))
                 .index_block_pinning_policy(PinningPolicy::all(false));
         }
