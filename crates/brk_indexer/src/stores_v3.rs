@@ -47,7 +47,7 @@ impl Stores {
         let database_ref = &database;
 
         let create_addresshash_to_addressindex_store = |index| {
-            Store::import(
+            Store::import_cached(
                 database_ref,
                 path,
                 &format!("h2i{}", index),
@@ -66,7 +66,6 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Vec,
-                0,
             )
         };
 
@@ -78,7 +77,6 @@ impl Stores {
                 version,
                 Mode3::Any,
                 Kind3::Vec,
-                0,
             )
         };
 
@@ -92,7 +90,6 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Sequential,
-                0,
             )?,
             addresstype_to_addresshash_to_addressindex: ByAddressType::new_with_index(
                 create_addresshash_to_addressindex_store,
@@ -110,9 +107,8 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
-                0,
             )?,
-            txidprefix_to_txindex: Store::import(
+            txidprefix_to_txindex: Store::import_cached(
                 database_ref,
                 path,
                 "txidprefix_to_txindex",
