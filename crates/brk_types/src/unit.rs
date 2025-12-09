@@ -4,14 +4,20 @@ use byteview::ByteView;
 pub struct Unit;
 
 impl From<ByteView> for Unit {
-    #[inline]
+    #[inline(always)]
     fn from(_: ByteView) -> Self {
         Self
     }
 }
 impl From<Unit> for ByteView {
-    #[inline]
+    #[inline(always)]
     fn from(_: Unit) -> Self {
+        Self::new(&[])
+    }
+}
+impl From<&Unit> for ByteView {
+    #[inline(always)]
+    fn from(_: &Unit) -> Self {
         Self::new(&[])
     }
 }

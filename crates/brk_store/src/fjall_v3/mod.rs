@@ -26,7 +26,7 @@ pub struct StoreFjallV3<K, V> {
     keyspace: Keyspace,
     puts: FxHashMap<K, V>,
     dels: FxHashSet<K>,
-    cache: Option<Cache<K, V>>,
+    caches: Vec<FxHashMap<K, V>>,
 }
 
 impl<K, V> StoreFjallV3<K, V>
@@ -44,7 +44,7 @@ where
         mode: Mode3,
         kind: Kind3,
     ) -> Result<Self> {
-        Self::import_inner(db, path, name, version, mode, kind, None)
+        Self::import_inner(db, path, name, version, mode, kind, 0)
     }
 
     pub fn import_cached(
@@ -54,9 +54,9 @@ where
         version: Version,
         mode: Mode3,
         kind: Kind3,
-        max_batches: u16,
+        max_batches: u8,
     ) -> Result<Self> {
-        Self::import_inner(db, path, name, version, mode, kind, Some(max_batches))
+        Self::import_inner(db, path, name, version, mode, kind, max_batches)
     }
 
     fn import_inner(
@@ -66,7 +66,7 @@ where
         version: Version,
         mode: Mode3,
         kind: Kind3,
-        max_batches: Option<u16>,
+        max_batches: u8,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -82,7 +82,10 @@ where
             },
         )?;
 
-        let cache = max_batches.map(|max_batches| Cache::new(max_batches));
+        let mut caches = vec![];
+        for _ in 0..max_batches {
+            caches.push(FxHashMap::default());
+        }
 
         Ok(Self {
             meta,
@@ -90,7 +93,7 @@ where
             keyspace,
             puts: FxHashMap::default(),
             dels: FxHashSet::default(),
-            cache,
+            caches,
         })
     }
 
@@ -139,10 +142,10 @@ where
             return Ok(Some(Cow::Borrowed(v)));
         }
 
-        if let Some(cache) = &self.cache
-            && let Some(v) = cache.get(key)
-        {
-            return Ok(Some(Cow::Borrowed(v)));
+        for cache in &self.caches {
+            if let Some(v) = cache.get(key) {
+                return Ok(Some(Cow::Borrowed(v)));
+            }
         }
 
         if let Some(slice) = self.keyspace.get(ByteView::from(key))? {
@@ -200,7 +203,7 @@ where
     }
 
     #[inline]
-    fn needs(&self, height: Height) -> bool {
+    pub fn needs(&self, height: Height) -> bool {
         self.meta.needs(height)
     }
 
@@ -210,13 +213,46 @@ where
         }
         Ok(())
     }
+
+    fn ingest<'a>(
+        keyspace: &Keyspace,
+        puts: impl Iterator<Item = (&'a K, &'a V)>,
+        dels: impl Iterator<Item = &'a K>,
+    ) -> Result<()>
+    where
+        ByteView: From<&'a K> + From<&'a V>,
+        K: 'a,
+        V: 'a,
+    {
+        let mut items: Vec<Item<&'a K, &'a V>> = puts
+            .map(|(key, value)| Item::Value { key, value })
+            .chain(dels.map(Item::Tomb))
+            .collect();
+
+        items.sort_unstable();
+
+        let mut ingestion = keyspace.start_ingestion()?;
+        for item in items {
+            match item {
+                Item::Value { key, value } => {
+                    ingestion.write(ByteView::from(key), ByteView::from(value))?;
+                }
+                Item::Tomb(key) => {
+                    ingestion.write_tombstone(ByteView::from(key))?;
+                }
+            }
+        }
+        ingestion.finish()?;
+
+        Ok(())
+    }
 }
 
 impl<K, V> AnyStore for StoreFjallV3<K, V>
 where
     K: Debug + Clone + From<ByteView> + Ord + Eq + Hash,
     V: Debug + Clone + From<ByteView>,
-    ByteView: From<K> + From<V>,
+    for<'a> ByteView: From<K> + From<V> + From<&'a K> + From<&'a V>,
     Self: Send + Sync,
 {
     fn keyspace(&self) -> &Keyspace {
@@ -265,34 +301,12 @@ where
             return Ok(());
         }
 
-        // Insert into cache here
-        if let Some(cache) = &mut self.cache {
-            for (k, v) in &puts {
-                cache.insert(k.clone(), v.clone());
-            }
-            cache.commit();
+        Self::ingest(&self.keyspace, puts.iter(), dels.iter())?;
+
+        if !self.caches.is_empty() {
+            self.caches.pop();
+            self.caches.insert(0, puts);
         }
-
-        let mut items: Vec<_> = puts
-            .into_iter()
-            .map(|(key, value)| Item::Value { key, value })
-            .chain(dels.into_iter().map(Item::Tomb))
-            .collect();
-
-        items.sort_unstable();
-
-        let mut ingestion = self.keyspace.start_ingestion()?;
-        for item in items {
-            match item {
-                Item::Value { key, value } => {
-                    ingestion.write(ByteView::from(key), ByteView::from(value))?;
-                }
-                Item::Tomb(key) => {
-                    ingestion.write_tombstone(ByteView::from(key))?;
-                }
-            }
-        }
-        ingestion.finish()?;
 
         Ok(())
     }
@@ -362,44 +376,5 @@ impl Kind3 {
 
     pub fn is_not_vec(&self) -> bool {
         !matches!(*self, Self::Vec)
-    }
-}
-
-#[derive(Clone)]
-struct Cache<K, V> {
-    index: FxHashMap<K, (V, u16)>,
-    current_batch: u16,
-    max_batches: u16,
-}
-impl<K: Hash + Eq + Clone, V: Clone> Cache<K, V> {
-    fn new(max_batches: u16) -> Self {
-        Self {
-            index: FxHashMap::default(),
-            current_batch: 0,
-            max_batches,
-        }
-    }
-
-    #[inline]
-    fn get(&self, key: &K) -> Option<&V> {
-        self.index.get(key).map(|(v, _)| v)
-    }
-
-    #[inline]
-    fn insert(&mut self, key: K, value: V) {
-        self.index.insert(key, (value, self.current_batch));
-    }
-
-    fn commit(&mut self) {
-        let max = self.max_batches;
-        let current = self.current_batch;
-        self.index
-            .retain(|_, (_, batch)| current.wrapping_sub(*batch) < max);
-        self.current_batch = self.current_batch.wrapping_add(1);
-    }
-
-    fn clear(&mut self) {
-        self.index.clear();
-        self.current_batch = 0;
     }
 }

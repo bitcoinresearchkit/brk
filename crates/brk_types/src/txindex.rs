@@ -114,14 +114,20 @@ impl From<TxIndex> for usize {
 }
 
 impl From<ByteView> for TxIndex {
-    #[inline]
+    #[inline(always)]
     fn from(value: ByteView) -> Self {
         Self(u32::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 impl From<TxIndex> for ByteView {
-    #[inline]
+    #[inline(always)]
     fn from(value: TxIndex) -> Self {
+        ByteView::from(&value)
+    }
+}
+impl From<&TxIndex> for ByteView {
+    #[inline(always)]
+    fn from(value: &TxIndex) -> Self {
         Self::new(&value.to_be_bytes())
     }
 }
