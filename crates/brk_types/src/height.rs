@@ -227,15 +227,22 @@ impl TryFrom<&std::path::Path> for Height {
 }
 
 impl From<ByteView> for Height {
-    #[inline]
+    #[inline(always)]
     fn from(value: ByteView) -> Self {
         Self(u32::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
 
 impl From<Height> for ByteView {
-    #[inline]
+    #[inline(always)]
     fn from(value: Height) -> Self {
+        ByteView::from(&value)
+    }
+}
+
+impl From<&Height> for ByteView {
+    #[inline(always)]
+    fn from(value: &Height) -> Self {
         Self::new(&value.0.to_be_bytes())
     }
 }

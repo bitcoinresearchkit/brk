@@ -117,8 +117,14 @@ impl From<ByteView> for TypeIndex {
     }
 }
 impl From<TypeIndex> for ByteView {
-    #[inline]
+    #[inline(always)]
     fn from(value: TypeIndex) -> Self {
+        ByteView::from(&value)
+    }
+}
+impl From<&TypeIndex> for ByteView {
+    #[inline(always)]
+    fn from(value: &TypeIndex) -> Self {
         Self::new(&value.0.to_be_bytes())
     }
 }

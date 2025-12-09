@@ -20,14 +20,12 @@ impl From<ByteView> for AddressHash {
         Self(u64::from_be_bytes((&*value).try_into().unwrap()))
     }
 }
-
 impl From<AddressHash> for ByteView {
     #[inline]
     fn from(value: AddressHash) -> Self {
         Self::from(&value)
     }
 }
-
 impl From<&AddressHash> for ByteView {
     #[inline]
     fn from(value: &AddressHash) -> Self {
