@@ -53,14 +53,11 @@ fn main() -> Result<()> {
         debug!("Bench stopped.");
     });
 
-    let i = Instant::now();
-    indexer.index(&blocks, &client, &exit)?;
-    info!("Done in {:?}", i.elapsed());
+    loop {
+        let i = Instant::now();
+        indexer.checked_index(&blocks, &client, &exit)?;
+        info!("Done in {:?}", i.elapsed());
 
-    // We want to benchmark the drop too
-    drop(indexer);
-
-    sleep(Duration::from_secs(10));
-
-    Ok(())
+        sleep(Duration::from_secs(60));
+    }
 }

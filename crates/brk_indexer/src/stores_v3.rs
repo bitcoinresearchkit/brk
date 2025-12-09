@@ -1,9 +1,3 @@
-//! Experimental stores implementation using fjall3.
-//!
-//! This module is currently commented out in lib.rs and not in use.
-//! It exists as a work-in-progress upgrade path from fjall2 (stores_v2) to fjall3.
-//! Do not delete - intended for future activation once fjall3 is stable and tested.
-
 use std::{fs, path::Path, time::Instant};
 
 use brk_error::Result;
@@ -18,7 +12,7 @@ use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
 
-use crate::Indexes;
+use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
 
 use super::Vecs;
 
@@ -60,7 +54,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
-                21,
+                10,
             )
         };
 
@@ -125,7 +119,7 @@ impl Stores {
                 version,
                 Mode3::PushOnly,
                 Kind3::Random,
-                21,
+                10,
             )?,
         })
     }
@@ -186,11 +180,6 @@ impl Stores {
         let i = Instant::now();
         self.db.persist(PersistMode::SyncData)?;
         info!("Stores persisted in {:?}", i.elapsed());
-
-        info!(
-            "self.db.config.cache.size = {}",
-            self.db.config.cache.size()
-        );
 
         Ok(())
     }
@@ -265,7 +254,7 @@ impl Stores {
                     let txidprefix = TxidPrefix::from(&txid);
 
                     let is_known_dup =
-                        crate::DUPLICATE_TXID_PREFIXES
+                        DUPLICATE_TXID_PREFIXES
                             .iter()
                             .any(|(dup_prefix, dup_txindex)| {
                                 txindex == *dup_txindex && txidprefix == *dup_prefix
