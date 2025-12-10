@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_types::{Cents, CheckedSub, Date, DateIndex, Height, OHLCCents};
+use brk_types::{Cents, CheckedSub, Close, Date, DateIndex, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Dollars, High, Low, Open, default_retry};
+use crate::{PriceSource, default_retry};
 
 #[derive(Default, Clone)]
 #[allow(clippy::upper_case_acronyms)]
@@ -25,12 +25,8 @@ impl BRK {
         if !self.height_to_ohlc.contains_key(&key)
             || ((key + self.height_to_ohlc.get(&key).unwrap().len()) <= height)
         {
-            self.height_to_ohlc.insert(
-                key,
-                Self::fetch_height_prices(key).inspect_err(|e| {
-                    dbg!(e);
-                })?,
-            );
+            self.height_to_ohlc
+                .insert(key, Self::fetch_height_prices(key)?);
         }
 
         self.height_to_ohlc
@@ -42,14 +38,13 @@ impl BRK {
     }
 
     fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCents>> {
-        info!("Fetching BRK height {height} prices...");
-
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/height-to-price-ohlc?from={}&to={}",
                 height,
                 height + CHUNK_SIZE
             );
+            info!("Fetching {url} ...");
 
             let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
 
@@ -70,12 +65,8 @@ impl BRK {
         if !self.dateindex_to_ohlc.contains_key(&key)
             || ((key + self.dateindex_to_ohlc.get(&key).unwrap().len()) <= dateindex)
         {
-            self.dateindex_to_ohlc.insert(
-                key,
-                Self::fetch_date_prices(key).inspect_err(|e| {
-                    dbg!(e);
-                })?,
-            );
+            self.dateindex_to_ohlc
+                .insert(key, Self::fetch_date_prices(key)?);
         }
 
         self.dateindex_to_ohlc
@@ -87,14 +78,13 @@ impl BRK {
     }
 
     fn fetch_date_prices(dateindex: DateIndex) -> Result<Vec<OHLCCents>> {
-        info!("Fetching BRK dateindex {dateindex} prices...");
-
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/dateindex-to-price-ohlc?from={}&to={}",
                 dateindex,
                 dateindex + CHUNK_SIZE
             );
+            info!("Fetching {url}...");
 
             let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
 
@@ -128,7 +118,30 @@ impl BRK {
         )))
     }
 
-    pub fn clear(&mut self) {
+}
+
+impl PriceSource for BRK {
+    fn name(&self) -> &'static str {
+        "BRK"
+    }
+
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_date(date))
+    }
+
+    fn get_1mn(
+        &mut self,
+        _timestamp: Timestamp,
+        _previous_timestamp: Option<Timestamp>,
+    ) -> Option<Result<OHLCCents>> {
+        None // BRK doesn't support timestamp-based queries
+    }
+
+    fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_height(height))
+    }
+
+    fn clear(&mut self) {
         self.height_to_ohlc.clear();
         self.dateindex_to_ohlc.clear();
     }

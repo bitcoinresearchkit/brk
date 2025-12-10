@@ -212,3 +212,55 @@ impl fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl Error {
+    /// Returns true if this network/fetch error indicates a permanent/blocking condition
+    /// that won't be resolved by retrying (e.g., DNS failure, connection refused, blocked endpoint).
+    /// Returns false for transient errors worth retrying (timeouts, rate limits, server errors).
+    pub fn is_network_permanently_blocked(&self) -> bool {
+        match self {
+            Error::Minreq(e) => is_minreq_error_permanent(e),
+            Error::IO(e) => is_io_error_permanent(e),
+            // Other errors are data/parsing related, not network - treat as transient
+            _ => false,
+        }
+    }
+}
+
+fn is_minreq_error_permanent(e: &minreq::Error) -> bool {
+    use minreq::Error::*;
+    match e {
+        // DNS resolution failure - likely blocked or misconfigured
+        IoError(io_err) => is_io_error_permanent(io_err),
+        // Check error message for common blocking indicators
+        other => {
+            let msg = format!("{:?}", other);
+            // DNS/connection failures
+            msg.contains("nodename nor servname")
+                || msg.contains("Name or service not known")
+                || msg.contains("No such host")
+                || msg.contains("connection refused")
+                || msg.contains("Connection refused")
+                // SSL/TLS failures (often due to blocking/MITM)
+                || msg.contains("certificate")
+                || msg.contains("SSL")
+                || msg.contains("TLS")
+                || msg.contains("handshake")
+        }
+    }
+}
+
+fn is_io_error_permanent(e: &std::io::Error) -> bool {
+    use std::io::ErrorKind::*;
+    match e.kind() {
+        // Permanent errors
+        ConnectionRefused | PermissionDenied | AddrNotAvailable => true,
+        // Check the error message for DNS failures
+        _ => {
+            let msg = e.to_string();
+            msg.contains("nodename nor servname")
+                || msg.contains("Name or service not known")
+                || msg.contains("No such host")
+        }
+    }
+}

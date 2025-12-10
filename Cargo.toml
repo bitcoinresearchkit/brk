@@ -78,7 +78,8 @@ serde_derive = "1.0.228"
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
 vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco"] }
-# vecdb = { version = "0.3.20", features = ["derive"] }
+# vecdb = { git = "https://github.com/anydb-rs/anydb", features = ["derive", "serde_json", "pco"] }
+# vecdb = { version = "0.3.20", features = ["derive", "serde_json", "pco"] }
 
 [workspace.metadata.release]
 shared-version = true

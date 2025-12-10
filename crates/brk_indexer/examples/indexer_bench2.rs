@@ -25,8 +25,9 @@ fn main() -> Result<()> {
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
 
     let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk/benches");
-    fs::create_dir_all(&outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
+
+    fs::create_dir_all(&outputs_dir)?;
 
     let client = Client::new(
         Client::default_url(),

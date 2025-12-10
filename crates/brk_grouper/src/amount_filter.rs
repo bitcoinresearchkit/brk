@@ -40,7 +40,11 @@ impl AmountFilter {
             AmountFilter::LowerThan(s) => format!("under_{}", format_sats(*s)),
             AmountFilter::GreaterOrEqual(s) => format!("above_{}", format_sats(*s)),
             AmountFilter::Range(r) => {
-                format!("{}_{}", format_sats(r.start), format_sats(r.end))
+                format!(
+                    "above_{}_under_{}",
+                    format_sats(r.start),
+                    format_sats(r.end)
+                )
             }
         }
     }
