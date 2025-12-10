@@ -12,16 +12,14 @@ mod constants;
 mod indexes;
 mod processor;
 mod readers;
-// mod stores_v2;
-mod stores_v3;
+mod stores;
 mod vecs;
 
 use constants::*;
 pub use indexes::*;
 pub use processor::*;
 pub use readers::*;
-// pub use stores_v2::*;
-pub use stores_v3::*;
+pub use stores::*;
 pub use vecs::*;
 
 #[derive(Clone)]

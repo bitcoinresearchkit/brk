@@ -2,12 +2,12 @@ use std::{fs, path::Path, time::Instant};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
-use brk_store::{AnyStore, Kind3, Mode3, StoreFjallV3 as Store};
+use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
     AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height, OutPoint,
     OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
-use fjall3::{Database, PersistMode};
+use fjall::{Database, PersistMode};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
@@ -36,7 +36,7 @@ impl Stores {
 
         fs::create_dir_all(&pathbuf)?;
 
-        let database = match brk_store::open_fjall3_database(path) {
+        let database = match brk_store::open_database(path) {
             Ok(database) => database,
             Err(_) => {
                 fs::remove_dir_all(path)?;
@@ -47,14 +47,13 @@ impl Stores {
         let database_ref = &database;
 
         let create_addresshash_to_addressindex_store = |index| {
-            Store::import_cached(
+            Store::import(
                 database_ref,
                 path,
                 &format!("h2i{}", index),
                 version,
-                Mode3::PushOnly,
-                Kind3::Random,
-                10,
+                Mode::PushOnly,
+                Kind::Random,
             )
         };
 
@@ -64,8 +63,8 @@ impl Stores {
                 path,
                 &format!("a2t{}", index),
                 version,
-                Mode3::PushOnly,
-                Kind3::Vec,
+                Mode::PushOnly,
+                Kind::Vec,
             )
         };
 
@@ -75,8 +74,8 @@ impl Stores {
                 path,
                 &format!("a2u{}", index),
                 version,
-                Mode3::Any,
-                Kind3::Vec,
+                Mode::Any,
+                Kind::Vec,
             )
         };
 
@@ -88,8 +87,8 @@ impl Stores {
                 path,
                 "height_to_coinbase_tag",
                 version,
-                Mode3::PushOnly,
-                Kind3::Sequential,
+                Mode::PushOnly,
+                Kind::Sequential,
             )?,
             addresstype_to_addresshash_to_addressindex: ByAddressType::new_with_index(
                 create_addresshash_to_addressindex_store,
@@ -105,17 +104,17 @@ impl Stores {
                 path,
                 "blockhashprefix_to_height",
                 version,
-                Mode3::PushOnly,
-                Kind3::Random,
+                Mode::PushOnly,
+                Kind::Random,
             )?,
             txidprefix_to_txindex: Store::import_cached(
                 database_ref,
                 path,
                 "txidprefix_to_txindex",
                 version,
-                Mode3::PushOnly,
-                Kind3::Random,
-                10,
+                Mode::PushOnly,
+                Kind::Recent,
+                5,
             )?,
         })
     }
@@ -170,7 +169,7 @@ impl Stores {
                 .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
         ) // Changed from par_iter_mut()
-        .try_for_each(|store| store.commit_f3(height))?;
+        .try_for_each(|store| store.commit(height))?;
         info!("Commits done in {:?}", i.elapsed());
 
         let i = Instant::now();

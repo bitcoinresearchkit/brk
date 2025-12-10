@@ -13,8 +13,6 @@ build = "build.rs"
 [dependencies]
 brk_error = { workspace = true }
 brk_types = { workspace = true }
-byteview_f2 = { version = "=0.6.1", package = "byteview" }
-byteview_f3 = { version = "0.9.1", package = "byteview" }
-fjall2 = { workspace = true }
-fjall3 = { workspace = true }
+byteview = { workspace = true }
+fjall = { workspace = true }
 rustc-hash = { workspace = true }

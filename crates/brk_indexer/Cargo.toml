@@ -20,8 +20,7 @@ brk_rpc = { workspace = true }
 brk_store = { workspace = true }
 brk_types = { workspace = true }
 brk_traversable = { workspace = true }
-fjall2 = { workspace = true }
-fjall3 = { workspace = true }
+fjall = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

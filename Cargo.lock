@@ -644,7 +644,6 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "brk_fjall",
  "fjall",
  "jiff",
  "minreq",
@@ -666,23 +665,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_fjall"
-version = "2.11.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da285ef974591f84284f6ab500dfd903c7a9bf8674e2c17f8b35a44a20726ee1"
-dependencies = [
- "byteorder",
- "byteview 0.6.1",
- "dashmap",
- "log",
- "lsm-tree 2.10.4",
- "path-absolutize",
- "std-semaphore",
- "tempfile",
- "xxhash-rust",
-]
-
-[[package]]
 name = "brk_grouper"
 version = "0.0.111"
 dependencies = [
@@ -700,7 +682,6 @@ dependencies = [
  "bitcoin",
  "brk_bencher",
  "brk_error",
- "brk_fjall",
  "brk_grouper",
  "brk_iterator",
  "brk_logger",
@@ -1241,10 +1222,8 @@ name = "brk_store"
 version = "0.0.111"
 dependencies = [
  "brk_error",
- "brk_fjall",
  "brk_types",
- "byteview 0.6.1",
- "byteview 0.9.1",
+ "byteview",
  "fjall",
  "rustc-hash",
 ]
@@ -1287,7 +1266,7 @@ version = "0.0.111"
 dependencies = [
  "bitcoin",
  "brk_error",
- "byteview 0.9.1",
+ "byteview",
  "derive_deref",
  "itoa",
  "jiff",
@@ -1355,12 +1334,6 @@ name = "bytes"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
-
-[[package]]
-name = "byteview"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6236364b88b9b6d0bc181ba374cf1ab55ba3ef97a1cb6f8cddad48a273767fb5"
 
 [[package]]
 name = "byteview"
@@ -1944,12 +1917,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "double-ended-peekable"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0d05e1c0dbad51b52c38bda7adceef61b9efc2baf04acfe8726a8c4630a6f57"
-
-[[package]]
 name = "dragonbox_ecma"
 version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2113,14 +2080,16 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "fjall"
-version = "3.0.0-rc.5"
+version = "3.0.0-rc.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff63be4348f42ed3c0c50175785ff14d0a833915c6b499a31f91d0e3ec5fc337"
 dependencies = [
  "byteorder-lite",
- "byteview 0.9.1",
+ "byteview",
  "dashmap",
  "flume",
  "log",
- "lsm-tree 3.0.0-rc.5",
+ "lsm-tree",
  "lz4_flex 0.11.5",
  "tempfile",
  "xxhash-rust",
@@ -2403,12 +2372,6 @@ name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
-
-[[package]]
-name = "guardian"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17e2ac29387b1aa07a1e448f7bb4f35b500787971e965b02842b900afa5c8f6f"
 
 [[package]]
 name = "half"
@@ -2997,34 +2960,12 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "lsm-tree"
-version = "2.10.4"
+version = "3.0.0-rc.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "799399117a2bfb37660e08be33f470958babb98386b04185288d829df362ea15"
-dependencies = [
- "byteorder",
- "crossbeam-skiplist",
- "double-ended-peekable",
- "enum_dispatch",
- "guardian",
- "interval-heap",
- "log",
- "lz4_flex 0.11.5",
- "path-absolutize",
- "quick_cache",
- "rustc-hash",
- "self_cell",
- "tempfile",
- "value-log",
- "varint-rs",
- "xxhash-rust",
-]
-
-[[package]]
-name = "lsm-tree"
-version = "3.0.0-rc.5"
+checksum = "315d36f307af4d53f1030d6561de3fb6b914d5c242c353be101ddff91527c4b4"
 dependencies = [
  "byteorder-lite",
- "byteview 0.9.1",
+ "byteview",
  "crossbeam-skiplist",
  "enum_dispatch",
  "interval-heap",
@@ -3849,24 +3790,6 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
-name = "path-absolutize"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4af381fe79fa195b4909485d99f73a80792331df0625188e707854f0b3383f5"
-dependencies = [
- "path-dedot",
-]
-
-[[package]]
-name = "path-dedot"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07ba0ad7e047712414213ff67533e6dd477af0a4e1d14fb52343e53d30ea9397"
-dependencies = [
- "once_cell",
-]
 
 [[package]]
 name = "pathdiff"
@@ -4848,12 +4771,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
-name = "std-semaphore"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ae9eec00137a8eed469fb4148acd9fc6ac8c3f9b110f52cd34698c8b5bfa0e"
-
-[[package]]
 name = "str_indices"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5429,23 +5346,6 @@ name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
-
-[[package]]
-name = "value-log"
-version = "1.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62fc7c4ce161f049607ecea654dca3f2d727da5371ae85e2e4f14ce2b98ed67c"
-dependencies = [
- "byteorder",
- "byteview 0.6.1",
- "interval-heap",
- "log",
- "path-absolutize",
- "rustc-hash",
- "tempfile",
- "varint-rs",
- "xxhash-rust",
-]
 
 [[package]]
 name = "value-trait"

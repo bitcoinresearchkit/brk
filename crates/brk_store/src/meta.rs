@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::Result;
 use brk_types::Version;
-use fjall3::{Database, Keyspace};
+use fjall::{Database, Keyspace};
 
 use super::Height;
 
