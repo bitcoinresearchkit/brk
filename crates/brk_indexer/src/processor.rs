@@ -221,7 +221,7 @@ impl<'a> BlockProcessor<'a> {
                     {
                         txindex
                     } else {
-                        return Err(Error::Str("Can't find txid = {txid}"));
+                        return Err(Error::UnknownTxid);
                     };
 
                     let txoutindex = self

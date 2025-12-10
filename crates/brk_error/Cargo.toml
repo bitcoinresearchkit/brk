@@ -11,8 +11,7 @@ build = "build.rs"
 [dependencies]
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
-fjall2 = { workspace = true }
-fjall3 = { workspace = true }
+fjall = { workspace = true }
 jiff = { workspace = true }
 minreq = { workspace = true }
 serde_json = { workspace = true }
