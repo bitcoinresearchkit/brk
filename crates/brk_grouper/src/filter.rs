@@ -58,8 +58,7 @@ impl Filter {
 
         let needs_prefix = match self {
             Filter::All | Filter::Term(_) | Filter::Epoch(_) | Filter::Type(_) => false,
-            Filter::Time(_) => matches!(context, CohortContext::Utxo),
-            Filter::Amount(_) => true,
+            Filter::Time(_) | Filter::Amount(_) => true,
         };
 
         if needs_prefix {

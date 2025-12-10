@@ -4,11 +4,12 @@ use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
-use brk_indexer::{Indexer, Indexes};
+use brk_indexer::Indexer;
+use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
-use vecdb::Exit;
+use vecdb::{AnyStoredVec, Exit};
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -36,11 +37,22 @@ fn run() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let indexer = Indexer::forced_import(&outputs_dir)?;
+    let blocks = Blocks::new(&client, &reader);
+
+    let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let fetcher = Fetcher::import(true, None)?;
 
     let mut computer = Computer::forced_import(&outputs_benches_dir, &indexer, Some(fetcher))?;
+
+    dbg!(
+        computer
+            .indexes
+            .txinindex_to_txoutindex
+            .region()
+            .meta()
+            .reserved()
+    );
 
     let mut bencher =
         Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("computed"))?;
@@ -55,8 +67,7 @@ fn run() -> Result<()> {
     });
 
     let i = Instant::now();
-    // let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
-    let starting_indexes = Indexes::default();
+    let starting_indexes = indexer.index(&blocks, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
     let i = Instant::now();

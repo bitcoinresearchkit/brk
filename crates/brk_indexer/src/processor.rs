@@ -1,7 +1,6 @@
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_error::{Error, Result};
 use brk_grouper::ByAddressType;
-use brk_store::AnyStore;
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, Block, BlockHashPrefix,
     Height, OutPoint, OutputType, Sats, StoredBool, Timestamp, TxInIndex, TxIndex, TxOutIndex,
@@ -195,6 +194,21 @@ impl<'a> BlockProcessor<'a> {
                     let outpoint = txin.previous_output;
                     let txid = Txid::from(outpoint.txid);
                     let txid_prefix = TxidPrefix::from(&txid);
+                    let vout = Vout::from(outpoint.vout);
+
+                    if let Some(&&same_block_txindex) = txid_prefix_to_txindex
+                        .get(&txid_prefix) {
+                        let outpoint = OutPoint::new(same_block_txindex, vout);
+                        return Ok((
+                            txinindex,
+                            InputSource::SameBlock {
+                                txindex,
+                                txin,
+                                vin,
+                                outpoint,
+                            },
+                        ));
+                    }
 
                     let prev_txindex = if let Some(txindex) = self
                         .stores
@@ -207,24 +221,9 @@ impl<'a> BlockProcessor<'a> {
                     {
                         txindex
                     } else {
-                        let vout = Vout::from(outpoint.vout);
-                        let prev_txindex = **txid_prefix_to_txindex
-                            .get(&txid_prefix)
-                            .ok_or(Error::Str("txid should be in same block"))?;
-                        let outpoint = OutPoint::new(prev_txindex, vout);
-
-                        return Ok((
-                            txinindex,
-                            InputSource::SameBlock {
-                                txindex,
-                                txin,
-                                vin,
-                                outpoint,
-                            },
-                        ));
+                        return Err(Error::Str("Can't find txid = {txid}"));
                     };
 
-                    let vout = Vout::from(outpoint.vout);
                     let txoutindex = self
                         .vecs
                         .txindex_to_first_txoutindex

@@ -1,74 +1,87 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::BTreeMap, path::Path, thread::sleep, time::Duration};
+use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
-use brk_types::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
+use brk_types::{Date, Height, OHLCCents, Timestamp};
 use log::info;
 
 mod binance;
 mod brk;
 mod kraken;
+mod ohlc;
 mod retry;
+mod source;
 
 pub use binance::*;
 pub use brk::*;
 pub use kraken::*;
+pub use ohlc::compute_ohlc_from_range;
 use retry::*;
+pub use source::{PriceSource, TrackedSource};
 
-const TRIES: usize = 12 * 60;
+const MAX_RETRIES: usize = 12 * 60; // 12 hours of retrying
 
 #[derive(Clone)]
 pub struct Fetcher {
-    binance: Option<Binance>,
-    kraken: Option<Kraken>,
-    brk: BRK,
+    pub binance: Option<TrackedSource<Binance>>,
+    pub kraken: Option<TrackedSource<Kraken>>,
+    pub brk: TrackedSource<BRK>,
 }
 
 impl Fetcher {
     pub fn import(exchanges: bool, hars_path: Option<&Path>) -> Result<Self> {
+        Self::new(exchanges, hars_path)
+    }
+
+    pub fn new(exchanges: bool, hars_path: Option<&Path>) -> Result<Self> {
         Ok(Self {
-            binance: exchanges.then(|| Binance::init(hars_path)),
-            kraken: exchanges.then(Kraken::default),
-            brk: BRK::default(),
+            binance: exchanges.then(|| TrackedSource::new(Binance::init(hars_path))),
+            kraken: exchanges.then(|| TrackedSource::new(Kraken::default())),
+            brk: TrackedSource::new(BRK::default()),
         })
     }
 
-    pub fn get_date(&mut self, date: Date) -> Result<OHLCCents> {
-        self.get_date_(date, 0)
+    /// Iterate over all active sources in priority order
+    fn for_each_source<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut dyn PriceSource),
+    {
+        if let Some(binance) = &mut self.binance {
+            f(binance);
+        }
+        if let Some(kraken) = &mut self.kraken {
+            f(kraken);
+        }
+        f(&mut self.brk);
     }
 
-    fn get_date_(&mut self, date: Date, tries: usize) -> Result<OHLCCents> {
-        self.kraken
-            .as_mut()
-            .map_or(Err(Error::Str("Kraken off")), |kraken| {
-                kraken.get_from_1d(&date)
-            })
-            .or_else(|_| {
-                // eprintln!("{e}");
-                self.binance
-                    .as_mut()
-                    .map_or(Err(Error::Str("Binance off")), |binance| {
-                        binance.get_from_1d(&date)
-                    })
-            })
-            .or_else(|_| {
-                // eprintln!("{e}");
-                self.brk.get_from_date(date)
-            })
-            .or_else(|e| {
-                sleep(Duration::from_secs(60));
+    /// Try fetching from each source in order, return first success
+    fn try_sources<F>(&mut self, mut fetch: F) -> Option<Result<OHLCCents>>
+    where
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
+    {
+        if let Some(binance) = &mut self.binance
+            && let Some(Ok(ohlc)) = fetch(binance)
+        {
+            return Some(Ok(ohlc));
+        }
+        if let Some(kraken) = &mut self.kraken
+            && let Some(Ok(ohlc)) = fetch(kraken)
+        {
+            return Some(Ok(ohlc));
+        }
+        if let Some(Ok(ohlc)) = fetch(&mut self.brk) {
+            return Some(Ok(ohlc));
+        }
+        None
+    }
 
-                if tries < TRIES {
-                    self.clear();
-                    // dbg!(e, date, &self.binance._1d);
-                    info!("Retrying to fetch date price...");
-                    self.get_date_(date, tries + 1)
-                } else {
-                    info!("Failed to fetch date prices...");
-                    Err(e)
-                }
-            })
+    pub fn get_date(&mut self, date: Date) -> Result<OHLCCents> {
+        self.fetch_with_retry(
+            |source| source.get_date(date),
+            || format!("Failed to fetch price for date {date}"),
+        )
     }
 
     pub fn get_height(
@@ -77,61 +90,24 @@ impl Fetcher {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> Result<OHLCCents> {
-        self.get_height_(height, timestamp, previous_timestamp, 0)
-    }
-
-    fn get_height_(
-        &mut self,
-        height: Height,
-        timestamp: Timestamp,
-        previous_timestamp: Option<Timestamp>,
-        tries: usize,
-    ) -> Result<OHLCCents> {
         let timestamp = timestamp.floor_seconds();
-
-        if previous_timestamp.is_none() && height != Height::ZERO {
-            panic!("Shouldn't be possible");
-        }
-
         let previous_timestamp = previous_timestamp.map(|t| t.floor_seconds());
 
-        let ohlc = self
-            .kraken
-            .as_mut()
-            .map_or(Err(Error::Str("Kraken off")), |kraken| {
-                kraken.get_from_1mn(timestamp, previous_timestamp)
-            })
-            .unwrap_or_else(|_report| {
-                // eprintln!("{_report}");
-                self.binance
-                    .as_mut()
-                    .map_or(Err(Error::Str("Binance off")), |binance| {
-                        binance.get_from_1mn(timestamp, previous_timestamp)
-                    })
-                    .unwrap_or_else(|_report| {
-                        //         // eprintln!("{_report}");
-                        self.brk.get_from_height(height).unwrap_or_else(|_report| {
-                            // eprintln!("{_report}");
+        if previous_timestamp.is_none() && height != Height::ZERO {
+            panic!("previous_timestamp required for non-genesis blocks");
+        }
 
-                            sleep(Duration::from_secs(60));
-
-                            if tries < TRIES {
-                                self.clear();
-
-                                info!("Retrying to fetch height prices...");
-                                // dbg!((height, timestamp, previous_timestamp));
-
-                                return self
-                                    .get_height_(height, timestamp, previous_timestamp, tries + 1)
-                                    .unwrap();
-                            }
-
-                            info!("Failed to fetch height prices");
-
-                            let date = Date::from(timestamp);
-                            // eprintln!("{e}");
-                            panic!(
-                                "
+        self.fetch_with_retry(
+            |source| {
+                // Try 1mn data first, fall back to height-based
+                source
+                    .get_1mn(timestamp, previous_timestamp)
+                    .or_else(|| source.get_height(height))
+            },
+            || {
+                let date = Date::from(timestamp);
+                format!(
+                    "
 Can't find the price for: height: {height} - date: {date}
 1mn APIs are limited to the last 16 hours for Binance's and the last 10 hours for Kraken's
 How to fix this:
@@ -145,64 +121,49 @@ How to fix this:
 7. Go back to the dev tools
 8. Export to a har file (if there is no explicit button, click on the cog button)
 9. Move the file to 'parser/imports/binance.har'
-        "
-                            )
-                        })
-                    })
-            });
-
-        Ok(ohlc)
+"
+                )
+            },
+        )
     }
 
-    fn find_height_ohlc(
-        tree: &BTreeMap<Timestamp, OHLCCents>,
-        timestamp: Timestamp,
-        previous_timestamp: Option<Timestamp>,
-        name: &str,
-    ) -> Result<OHLCCents> {
-        let previous_ohlc = previous_timestamp
-            .map_or(Some(OHLCCents::default()), |previous_timestamp| {
-                tree.get(&previous_timestamp).cloned()
-            });
+    /// Try each source in order, with retries on total failure
+    fn fetch_with_retry<F, E>(&mut self, mut fetch: F, error_message: E) -> Result<OHLCCents>
+    where
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
+        E: Fn() -> String,
+    {
+        for retry in 0..=MAX_RETRIES {
+            if let Some(ohlc) = self.try_sources(&mut fetch) {
+                return ohlc;
+            }
 
-        let last_ohlc = tree.get(&timestamp);
-
-        if previous_ohlc.is_none() || last_ohlc.is_none() {
-            return Err(Error::String(format!("Couldn't find timestamp in {name}")));
+            // All sources failed
+            if retry < MAX_RETRIES {
+                info!("All sources failed, retrying in 60s...");
+                sleep(Duration::from_secs(60));
+                self.clear_caches();
+            }
         }
 
-        let previous_ohlc = previous_ohlc.unwrap();
-
-        let mut final_ohlc = OHLCCents::from(previous_ohlc.close);
-
-        let start = previous_timestamp.unwrap_or(Timestamp::new(0));
-        let end = timestamp;
-
-        // Otherwise it's a re-org
-        if start < end {
-            tree.range(start..=end).skip(1).for_each(|(_, ohlc)| {
-                if ohlc.high > final_ohlc.high {
-                    final_ohlc.high = ohlc.high
-                }
-
-                if ohlc.low < final_ohlc.low {
-                    final_ohlc.low = ohlc.low
-                }
-
-                final_ohlc.close = ohlc.close;
-            });
-        }
-
-        Ok(final_ohlc)
+        Err(Error::String(error_message()))
     }
 
+    fn clear_caches(&mut self) {
+        self.for_each_source(|s| s.clear());
+    }
+
+    /// Clear caches and reset health state for all sources
     pub fn clear(&mut self) {
-        if let Some(kraken) = self.kraken.as_mut() {
-            kraken.clear()
+        if let Some(binance) = &mut self.binance {
+            binance.clear();
+            binance.reset_health();
         }
-        if let Some(binance) = self.binance.as_mut() {
-            binance.clear()
+        if let Some(kraken) = &mut self.kraken {
+            kraken.clear();
+            kraken.reset_health();
         }
         self.brk.clear();
+        self.brk.reset_health();
     }
 }

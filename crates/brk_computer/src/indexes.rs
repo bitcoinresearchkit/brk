@@ -275,7 +275,7 @@ impl Vecs {
         self.txindex_to_input_count.compute_count_from_indexes(
             starting_indexes.txindex,
             &indexer.vecs.txindex_to_first_txinindex,
-            &self.txinindex_to_txoutindex,
+            &indexer.vecs.txinindex_to_outpoint,
             exit,
         )?;
 

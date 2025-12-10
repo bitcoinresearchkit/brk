@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_types::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
+use brk_types::{Date, Height, OHLCCents, Timestamp};
 use log::info;
 use serde_json::Value;
 
-use crate::{Fetcher, default_retry};
+use crate::{
+    PriceSource, default_retry,
+    ohlc::{compute_ohlc_from_range, ohlc_from_array, timestamp_from_secs, date_from_timestamp},
+};
 
 #[derive(Default, Clone)]
 pub struct Kraken {
@@ -14,7 +17,7 @@ pub struct Kraken {
 }
 
 impl Kraken {
-    pub fn get_from_1mn(
+    fn get_from_1mn(
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
@@ -24,27 +27,26 @@ impl Kraken {
         {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Fetcher::find_height_ohlc(
+        compute_ohlc_from_range(
             self._1mn.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
-            "kraken 1m",
+            "Kraken 1mn",
         )
     }
 
     pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
-        info!("Fetching 1mn prices from Kraken...");
-
         default_retry(|_| {
-            Self::json_to_timestamp_to_ohlc(&serde_json::from_slice(
-                minreq::get(Self::url(1)).send()?.as_bytes(),
-            )?)
+            let url = Self::url(1);
+            info!("Fetching {url} ...");
+            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            Self::parse_ohlc_response(&json)
         })
     }
 
-    pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
+    fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
         if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 <= date {
-            self._1d.replace(Kraken::fetch_1d()?);
+            self._1d.replace(Self::fetch_1d()?);
         }
         self._1d
             .as_ref()
@@ -55,80 +57,66 @@ impl Kraken {
     }
 
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
-        info!("Fetching daily prices from Kraken...");
-
         default_retry(|_| {
-            Self::json_to_date_to_ohlc(&serde_json::from_slice(
-                minreq::get(Self::url(1440)).send()?.as_bytes(),
-            )?)
+            let url = Self::url(1440);
+            info!("Fetching {url} ...");
+            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            Self::parse_date_ohlc_response(&json)
         })
     }
 
-    fn json_to_timestamp_to_ohlc(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
-        Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
-    }
-
-    fn json_to_date_to_ohlc(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
-        Self::json_to_btree(json, Self::array_to_date_and_ohlc)
-    }
-
-    fn json_to_btree<F, K, V>(json: &Value, fun: F) -> Result<BTreeMap<K, V>>
-    where
-        F: Fn(&Value) -> Result<(K, V)>,
-        K: Ord,
-    {
-        json.as_object()
-            .ok_or(Error::Str("Expect to be an object"))?
+    /// Parse Kraken's nested JSON response: { result: { XXBTZUSD: [...] } }
+    fn parse_ohlc_response(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
+        let result = json
             .get("result")
-            .ok_or(Error::Str("Expect object to have result"))?
-            .as_object()
-            .ok_or(Error::Str("Expect to be an object"))?
-            .get("XXBTZUSD")
-            .ok_or(Error::Str("Expect to have XXBTZUSD"))?
-            .as_array()
-            .ok_or(Error::Str("Expect to be an array"))?
+            .and_then(|r| r.get("XXBTZUSD"))
+            .and_then(|v| v.as_array())
+            .ok_or(Error::Str("Invalid Kraken response format"))?
             .iter()
-            .map(fun)
-            .collect::<Result<BTreeMap<_, _>, _>>()
+            .filter_map(|v| v.as_array())
+            .map(|arr| {
+                let ts = arr.first().and_then(|v| v.as_u64()).unwrap_or(0);
+                (timestamp_from_secs(ts), ohlc_from_array(arr))
+            })
+            .collect();
+        Ok(result)
     }
 
-    fn array_to_timestamp_and_ohlc(array: &Value) -> Result<(Timestamp, OHLCCents)> {
-        let array = array.as_array().ok_or(Error::Str("Expect to be array"))?;
-
-        let timestamp = Timestamp::from(array.first().unwrap().as_u64().unwrap() as u32);
-
-        let get_cents = |index: usize| {
-            Cents::from(Dollars::from(
-                array
-                    .get(index)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .parse::<f64>()
-                    .unwrap(),
-            ))
-        };
-
-        Ok((
-            timestamp,
-            OHLCCents::from((
-                Open::new(get_cents(1)),
-                High::new(get_cents(2)),
-                Low::new(get_cents(3)),
-                Close::new(get_cents(4)),
-            )),
-        ))
-    }
-
-    fn array_to_date_and_ohlc(array: &Value) -> Result<(Date, OHLCCents)> {
-        Self::array_to_timestamp_and_ohlc(array).map(|(t, ohlc)| (Date::from(t), ohlc))
+    fn parse_date_ohlc_response(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
+        Self::parse_ohlc_response(json).map(|map| {
+            map.into_iter()
+                .map(|(ts, ohlc)| (date_from_timestamp(ts), ohlc))
+                .collect()
+        })
     }
 
     fn url(interval: usize) -> String {
         format!("https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval={interval}")
     }
+}
 
-    pub fn clear(&mut self) {
+impl PriceSource for Kraken {
+    fn name(&self) -> &'static str {
+        "Kraken"
+    }
+
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_1d(&date))
+    }
+
+    fn get_1mn(
+        &mut self,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+    ) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_1mn(timestamp, previous_timestamp))
+    }
+
+    fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
+        None // Kraken doesn't support height-based queries
+    }
+
+    fn clear(&mut self) {
         self._1d.take();
         self._1mn.take();
     }

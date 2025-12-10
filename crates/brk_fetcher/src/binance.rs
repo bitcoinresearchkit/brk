@@ -6,11 +6,14 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_types::{Cents, OHLCCents, Timestamp};
+use brk_types::{Date, Height, OHLCCents, Timestamp};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, default_retry};
+use crate::{
+    PriceSource, default_retry,
+    ohlc::{compute_ohlc_from_range, ohlc_from_array, timestamp_from_ms, date_from_timestamp},
+};
 
 #[derive(Clone)]
 pub struct Binance {
@@ -35,44 +38,43 @@ impl Binance {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> Result<OHLCCents> {
+        // Try live API data first
         if self._1mn.is_none()
             || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp
         {
             self._1mn.replace(Self::fetch_1mn()?);
         }
 
-        let res = Fetcher::find_height_ohlc(
+        let res = compute_ohlc_from_range(
             self._1mn.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
-            "binance 1mn",
+            "Binance 1mn",
         );
 
         if res.is_ok() {
             return res;
         }
 
+        // Fall back to HAR file data
         if self.har.is_none() {
             self.har.replace(self.read_har().unwrap_or_default());
         }
 
-        Fetcher::find_height_ohlc(
+        compute_ohlc_from_range(
             self.har.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
-            "binance har",
+            "Binance HAR",
         )
     }
 
     pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
-        info!("Fetching 1mn prices from Binance...");
-
         default_retry(|_| {
-            Self::json_to_timestamp_to_ohlc(&serde_json::from_slice(
-                minreq::get(Self::url("interval=1m&limit=1000"))
-                    .send()?
-                    .as_bytes(),
-            )?)
+            let url = Self::url("interval=1m&limit=1000");
+            info!("Fetching {url} ...");
+            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            Self::parse_ohlc_array(&json)
         })
     }
 
@@ -90,12 +92,11 @@ impl Binance {
     }
 
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
-        info!("Fetching daily prices from Binance...");
-
         default_retry(|_| {
-            Self::json_to_date_to_ohlc(&serde_json::from_slice(
-                minreq::get(Self::url("interval=1d")).send()?.as_bytes(),
-            )?)
+            let url = Self::url("interval=1d");
+            info!("Fetching {url} ...");
+            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            Self::parse_date_ohlc_array(&json)
         })
     }
 
@@ -167,8 +168,8 @@ impl Binance {
                 }
 
                 let text = text.unwrap().as_str().unwrap();
-
-                Self::json_to_timestamp_to_ohlc(&serde_json::from_str(text).unwrap())
+                let json: Value = serde_json::from_str(text).unwrap();
+                Self::parse_ohlc_array(&json)
             })
             .try_fold(BTreeMap::default(), |mut all, res| {
                 all.append(&mut res?);
@@ -176,63 +177,56 @@ impl Binance {
             })
     }
 
-    fn json_to_timestamp_to_ohlc(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
-        Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
-    }
-
-    fn json_to_date_to_ohlc(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
-        Self::json_to_btree(json, Self::array_to_date_and_ohlc)
-    }
-
-    fn json_to_btree<F, K, V>(json: &Value, fun: F) -> Result<BTreeMap<K, V>>
-    where
-        F: Fn(&Value) -> Result<(K, V)>,
-        K: Ord,
-    {
-        json.as_array()
-            .ok_or(Error::Str("Expect to be an array"))?
+    fn parse_ohlc_array(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
+        let result = json
+            .as_array()
+            .ok_or(Error::Str("Expected JSON array"))?
             .iter()
-            .map(fun)
-            .collect::<Result<BTreeMap<_, _>, _>>()
+            .filter_map(|v| v.as_array())
+            .map(|arr| {
+                let ts = arr.first().and_then(|v| v.as_u64()).unwrap_or(0);
+                (timestamp_from_ms(ts), ohlc_from_array(arr))
+            })
+            .collect();
+        Ok(result)
     }
 
-    fn array_to_timestamp_and_ohlc(array: &Value) -> Result<(Timestamp, OHLCCents)> {
-        let array = array.as_array().ok_or(Error::Str("Expect to be array"))?;
-
-        let timestamp = Timestamp::from((array.first().unwrap().as_u64().unwrap() / 1_000) as u32);
-
-        let get_cents = |index: usize| {
-            Cents::from(Dollars::from(
-                array
-                    .get(index)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .parse::<f64>()
-                    .unwrap(),
-            ))
-        };
-
-        Ok((
-            timestamp,
-            OHLCCents::from((
-                Open::new(get_cents(1)),
-                High::new(get_cents(2)),
-                Low::new(get_cents(3)),
-                Close::new(get_cents(4)),
-            )),
-        ))
-    }
-
-    fn array_to_date_and_ohlc(array: &Value) -> Result<(Date, OHLCCents)> {
-        Self::array_to_timestamp_and_ohlc(array).map(|(t, ohlc)| (Date::from(t), ohlc))
+    fn parse_date_ohlc_array(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
+        Self::parse_ohlc_array(json).map(|map| {
+            map.into_iter()
+                .map(|(ts, ohlc)| (date_from_timestamp(ts), ohlc))
+                .collect()
+        })
     }
 
     fn url(query: &str) -> String {
         format!("https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&{query}")
     }
 
-    pub fn clear(&mut self) {
+}
+
+impl PriceSource for Binance {
+    fn name(&self) -> &'static str {
+        "Binance"
+    }
+
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_1d(&date))
+    }
+
+    fn get_1mn(
+        &mut self,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+    ) -> Option<Result<OHLCCents>> {
+        Some(self.get_from_1mn(timestamp, previous_timestamp))
+    }
+
+    fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
+        None // Binance doesn't support height-based queries
+    }
+
+    fn clear(&mut self) {
         self._1d.take();
         self._1mn.take();
     }

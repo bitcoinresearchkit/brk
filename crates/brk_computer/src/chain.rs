@@ -857,7 +857,6 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        // Because random reads are needed, reading directly from the mmap is faster than using buffered iterators
         let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
         let txoutindex_to_value_reader = indexer.vecs.txoutindex_to_value.create_reader();
         self.txinindex_to_value.compute_transform(

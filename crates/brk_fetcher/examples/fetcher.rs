@@ -9,20 +9,20 @@ fn main() -> Result<()> {
     dbg!(brk.get_from_height(Height::new(900_000))?);
     dbg!(brk.get_from_date(Date::new(2025, 6, 7))?);
 
-    let mut fetcher = Fetcher::import(true, None)?;
+    let mut fetcher = Fetcher::new(true, None)?;
 
-    Binance::fetch_1d().map(|b| {
+    let _ = Binance::fetch_1d().map(|b| {
         dbg!(b.last_key_value());
-    })?;
-    Kraken::fetch_1d().map(|b| {
+    });
+    let _ = Kraken::fetch_1d().map(|b| {
         dbg!(b.last_key_value());
-    })?;
-    Binance::fetch_1mn().map(|b| {
+    });
+    let _ = Binance::fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
-    })?;
-    Kraken::fetch_1mn().map(|b| {
+    });
+    let _ = Kraken::fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
-    })?;
+    });
 
     dbg!(fetcher.get_date(Date::new(2025, 6, 5))?);
     dbg!(fetcher.get_height(
