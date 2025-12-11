@@ -1,0 +1,110 @@
+//! Aggregate cohort computation.
+//!
+//! After block processing, compute derived metrics:
+//! 1. Overlapping cohorts (e.g., ">=1d" from sum of age_range cohorts)
+//! 2. Index-based transforms (height -> dateindex, etc.)
+//! 3. Relative metrics (supply ratios, market cap ratios)
+
+use brk_error::Result;
+use brk_types::{Bitcoin, DateIndex, Dollars, Height};
+use log::info;
+use vecdb::{Exit, IterableVec};
+
+use crate::{Indexes, indexes, price};
+
+use super::super::cohorts::{AddressCohorts, UTXOCohorts};
+
+/// Compute overlapping cohorts from component cohorts.
+///
+/// For example:
+/// - ">=1d" UTXO cohort is computed from sum of age_range cohorts that match
+/// - ">=1 BTC" address cohort is computed from sum of amount_range cohorts that match
+pub fn compute_overlapping(
+    utxo_cohorts: &mut UTXOCohorts,
+    address_cohorts: &mut AddressCohorts,
+    starting_indexes: &Indexes,
+    exit: &Exit,
+) -> Result<()> {
+    info!("Computing overlapping cohorts...");
+
+    utxo_cohorts.compute_overlapping_vecs(starting_indexes, exit)?;
+    address_cohorts.compute_overlapping_vecs(starting_indexes, exit)?;
+
+    Ok(())
+}
+
+/// First phase of post-processing: compute index transforms.
+///
+/// Converts height-indexed data to dateindex-indexed data and other transforms.
+pub fn compute_rest_part1(
+    utxo_cohorts: &mut UTXOCohorts,
+    address_cohorts: &mut AddressCohorts,
+    indexes: &indexes::Vecs,
+    price: Option<&price::Vecs>,
+    starting_indexes: &Indexes,
+    exit: &Exit,
+) -> Result<()> {
+    info!("Computing rest part 1...");
+
+    utxo_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
+    address_cohorts.compute_rest_part1(indexes, price, starting_indexes, exit)?;
+
+    Ok(())
+}
+
+/// Second phase of post-processing: compute relative metrics.
+///
+/// Computes supply ratios, market cap ratios, etc. using total references.
+#[allow(clippy::too_many_arguments)]
+pub fn compute_rest_part2<S, D, HM, DM, HR, DR>(
+    utxo_cohorts: &mut UTXOCohorts,
+    address_cohorts: &mut AddressCohorts,
+    indexes: &indexes::Vecs,
+    price: Option<&price::Vecs>,
+    starting_indexes: &Indexes,
+    height_to_supply: &S,
+    dateindex_to_supply: &D,
+    height_to_market_cap: Option<&HM>,
+    dateindex_to_market_cap: Option<&DM>,
+    height_to_realized_cap: Option<&HR>,
+    dateindex_to_realized_cap: Option<&DR>,
+    exit: &Exit,
+) -> Result<()>
+where
+    S: IterableVec<Height, Bitcoin> + Sync,
+    D: IterableVec<DateIndex, Bitcoin> + Sync,
+    HM: IterableVec<Height, Dollars> + Sync,
+    DM: IterableVec<DateIndex, Dollars> + Sync,
+    HR: IterableVec<Height, Dollars> + Sync,
+    DR: IterableVec<DateIndex, Dollars> + Sync,
+{
+    info!("Computing rest part 2...");
+
+    utxo_cohorts.compute_rest_part2(
+        indexes,
+        price,
+        starting_indexes,
+        height_to_supply,
+        dateindex_to_supply,
+        height_to_market_cap,
+        dateindex_to_market_cap,
+        height_to_realized_cap,
+        dateindex_to_realized_cap,
+        exit,
+    )?;
+
+    address_cohorts.compute_rest_part2(
+        indexes,
+        price,
+        starting_indexes,
+        height_to_supply,
+        dateindex_to_supply,
+        height_to_market_cap,
+        dateindex_to_market_cap,
+        height_to_realized_cap,
+        dateindex_to_realized_cap,
+        exit,
+    )?;
+
+    Ok(())
+}

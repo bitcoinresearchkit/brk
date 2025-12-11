@@ -23,6 +23,7 @@ brk_traversable = { workspace = true }
 fjall = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
+rlimit = "0.10.2"
 rustc-hash = { workspace = true }
 vecdb = { workspace = true }
 

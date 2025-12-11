@@ -30,6 +30,14 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
+        info!("Increasing number of open files limit...");
+        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
+        rlimit::setrlimit(
+            rlimit::Resource::NOFILE,
+            no_file_limit.0.max(10_000),
+            no_file_limit.1,
+        )?;
+
         info!("Importing indexer...");
 
         let path = outputs_dir.join("indexed");

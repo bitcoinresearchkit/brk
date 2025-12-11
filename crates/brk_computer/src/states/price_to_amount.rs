@@ -11,7 +11,9 @@ use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Exit};
 
-use crate::{stateful::HeightFlushable, states::SupplyState, utils::OptionExt};
+use crate::{states::SupplyState, utils::OptionExt};
+
+use super::HeightFlushable;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {

@@ -1,0 +1,135 @@
+//! Processing spent inputs (UTXOs being spent).
+
+use brk_grouper::{Filter, Filtered, TimeFilter, UTXOGroups};
+use brk_types::{CheckedSub, HalvingEpoch, Height};
+use rustc_hash::FxHashMap;
+use vecdb::VecIndex;
+
+use crate::{states::{BlockState, Transacted}, utils::OptionExt, PriceToAmount};
+
+use super::UTXOCohorts;
+
+impl UTXOCohorts {
+    /// Process spent inputs for this block.
+    ///
+    /// Each input references a UTXO created at some previous height.
+    /// We need to update the cohort states based on when that UTXO was created.
+    pub fn send(
+        &mut self,
+        height_to_sent: FxHashMap<Height, Transacted>,
+        chain_state: &mut [BlockState],
+    ) {
+        let UTXOGroups {
+            all,
+            term,
+            age_range,
+            epoch,
+            type_,
+            amount_range,
+            ..
+        } = &mut self.0;
+
+        // Time-based cohorts: age_range + epoch
+        let mut time_cohorts: Vec<_> = age_range
+            .iter_mut()
+            .chain(epoch.iter_mut())
+            .collect();
+
+        // Aggregate cohorts' price_to_amount
+        let mut aggregate_p2a: Vec<(Filter, Option<&mut PriceToAmount>)> = vec![
+            (all.filter().clone(), all.price_to_amount.as_mut()),
+            (
+                term.short.filter().clone(),
+                term.short.price_to_amount.as_mut(),
+            ),
+            (
+                term.long.filter().clone(),
+                term.long.price_to_amount.as_mut(),
+            ),
+        ];
+
+        let last_block = chain_state.last().unwrap();
+        let last_timestamp = last_block.timestamp;
+        let current_price = last_block.price;
+        let chain_len = chain_state.len();
+
+        for (height, sent) in height_to_sent {
+            // Update chain_state to reflect spent supply
+            chain_state[height.to_usize()].supply -= &sent.spendable_supply;
+
+            let block_state = &chain_state[height.to_usize()];
+            let prev_price = block_state.price;
+            let blocks_old = chain_len - 1 - height.to_usize();
+            let days_old = last_timestamp.difference_in_days_between(block_state.timestamp);
+            let days_old_float =
+                last_timestamp.difference_in_days_between_float(block_state.timestamp);
+            let older_than_hour = last_timestamp
+                .checked_sub(block_state.timestamp)
+                .unwrap()
+                .is_more_than_hour();
+
+            // Update time-based cohorts
+            time_cohorts
+                .iter_mut()
+                .filter(|v| match v.filter() {
+                    Filter::Time(TimeFilter::GreaterOrEqual(from)) => *from <= days_old,
+                    Filter::Time(TimeFilter::LowerThan(to)) => *to > days_old,
+                    Filter::Time(TimeFilter::Range(range)) => range.contains(&days_old),
+                    Filter::Epoch(e) => *e == HalvingEpoch::from(height),
+                    _ => unreachable!(),
+                })
+                .for_each(|vecs| {
+                    vecs.state.um().send(
+                        &sent.spendable_supply,
+                        current_price,
+                        prev_price,
+                        blocks_old,
+                        days_old_float,
+                        older_than_hour,
+                    );
+                });
+
+            // Update output type cohorts
+            sent.by_type
+                .spendable
+                .iter_typed()
+                .for_each(|(output_type, supply_state)| {
+                    type_.get_mut(output_type).state.um().send(
+                        supply_state,
+                        current_price,
+                        prev_price,
+                        blocks_old,
+                        days_old_float,
+                        older_than_hour,
+                    )
+                });
+
+            // Update amount range cohorts
+            sent.by_size_group
+                .iter_typed()
+                .for_each(|(group, supply_state)| {
+                    amount_range.get_mut(group).state.um().send(
+                        supply_state,
+                        current_price,
+                        prev_price,
+                        blocks_old,
+                        days_old_float,
+                        older_than_hour,
+                    );
+                });
+
+            // Update aggregate cohorts' price_to_amount
+            if let Some(prev_price) = prev_price {
+                let supply_state = &sent.spendable_supply;
+                if supply_state.value.is_not_zero() {
+                    aggregate_p2a
+                        .iter_mut()
+                        .filter(|(f, _)| f.contains_time(days_old))
+                        .for_each(|(_, p2a)| {
+                            p2a.um().decrement(prev_price, supply_state);
+                        });
+                }
+            }
+        }
+    }
+}

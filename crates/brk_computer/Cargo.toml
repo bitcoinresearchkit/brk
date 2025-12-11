@@ -26,7 +26,6 @@ derive_deref = { workspace = true }
 log = { workspace = true }
 pco = "0.4.7"
 rayon = { workspace = true }
-rlimit = "0.10.2"
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 smallvec = "1.15.1"
