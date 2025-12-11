@@ -77,19 +77,28 @@ pub enum StartMode {
 /// Returns the consistent starting height if all vectors agree,
 /// otherwise returns Height::ZERO (need fresh start).
 pub fn rollback_states(
-    stamp: Stamp,
-    chain_state_rollback: Result<Stamp>,
-    address_indexes_rollbacks: Vec<Result<Stamp>>,
-    address_data_rollbacks: Vec<Result<Stamp>>,
+    _stamp: Stamp,
+    chain_state_rollback: vecdb::Result<Stamp>,
+    address_indexes_rollbacks: Result<Vec<Stamp>>,
+    address_data_rollbacks: Result<[Stamp; 2]>,
 ) -> Height {
-    let mut heights: BTreeSet<Height> = [chain_state_rollback]
-        .into_iter()
-        .chain(address_indexes_rollbacks)
-        .chain(address_data_rollbacks)
-        .filter_map(|r| r.ok())
-        .map(Height::from)
-        .map(Height::incremented)
-        .collect();
+    let mut heights: BTreeSet<Height> = BTreeSet::new();
+
+    if let Ok(s) = chain_state_rollback {
+        heights.insert(Height::from(s).incremented());
+    }
+
+    if let Ok(stamps) = address_indexes_rollbacks {
+        for s in stamps {
+            heights.insert(Height::from(s).incremented());
+        }
+    }
+
+    if let Ok(stamps) = address_data_rollbacks {
+        for s in stamps {
+            heights.insert(Height::from(s).incremented());
+        }
+    }
 
     if heights.len() == 1 {
         heights.pop_first().unwrap()

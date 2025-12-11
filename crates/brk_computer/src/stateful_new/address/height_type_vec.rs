@@ -17,4 +17,9 @@ impl<T> HeightToAddressTypeToVec<T> {
             self.entry(height).or_default().merge_mut(vec);
         }
     }
+
+    /// Consume and iterate over (Height, AddressTypeToVec) pairs.
+    pub fn into_iter(self) -> impl Iterator<Item = (Height, AddressTypeToVec<T>)> {
+        self.0.into_iter()
+    }
 }

@@ -1,6 +1,7 @@
 use brk_error::Result;
-use brk_types::{AddressDataSource, AnyAddressIndex, EmptyAddressData};
+use brk_types::AnyAddressIndex;
 
+use super::EmptyAddressDataWithSource;
 use crate::stateful_new::{AddressTypeToTypeIndexMap, AddressesDataVecs};
 
 /// Process empty address data updates.
@@ -11,24 +12,24 @@ use crate::stateful_new::{AddressTypeToTypeIndexMap, AddressesDataVecs};
 /// - Transition loaded -> empty: delete from loaded, push to empty
 pub fn process_empty_addresses(
     addresses_data: &mut AddressesDataVecs,
-    empty_updates: AddressTypeToTypeIndexMap<AddressDataSource<EmptyAddressData>>,
+    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
 ) -> Result<AddressTypeToTypeIndexMap<AnyAddressIndex>> {
     let mut result = AddressTypeToTypeIndexMap::default();
 
     for (address_type, sorted) in empty_updates.into_sorted_iter() {
         for (typeindex, source) in sorted {
             match source {
-                AddressDataSource::New(data) => {
+                EmptyAddressDataWithSource::New(data) => {
                     let index = addresses_data.empty.fill_first_hole_or_push(data)?;
                     result
                         .get_mut(address_type)
                         .unwrap()
                         .insert(typeindex, AnyAddressIndex::from(index));
                 }
-                AddressDataSource::FromEmpty((index, data)) => {
+                EmptyAddressDataWithSource::FromEmpty(index, data) => {
                     addresses_data.empty.update(index, data)?;
                 }
-                AddressDataSource::FromLoaded((loaded_index, data)) => {
+                EmptyAddressDataWithSource::FromLoaded(loaded_index, data) => {
                     addresses_data.loaded.delete(loaded_index);
                     let empty_index = addresses_data.empty.fill_first_hole_or_push(data)?;
                     result

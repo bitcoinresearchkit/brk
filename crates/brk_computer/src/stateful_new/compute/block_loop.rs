@@ -13,25 +13,29 @@ use std::thread;
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Height, OutputType, Sats};
+use brk_types::{DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex};
 use log::info;
-use vecdb::{Exit, GenericStoredVec, IterableVec, VecIndex};
+use rayon::prelude::*;
+use vecdb::{AnyStoredVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::states::{BlockState, Transacted};
+use crate::utils::OptionExt;
 use crate::{chain, indexes, price};
 
+use super::super::address::AddressTypeToTypeIndexMap;
 use super::super::cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
 use super::super::vecs::Vecs;
 use super::{
-    FLUSH_INTERVAL, IndexerReaders, build_txinindex_to_txindex, build_txoutindex_to_height_map,
-    build_txoutindex_to_txindex, process_inputs, process_outputs,
+    BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
+    BIP30_ORIGINAL_HEIGHT_2, FLUSH_INTERVAL, IndexerReaders, VecsReaders, build_txinindex_to_txindex,
+    build_txoutindex_to_txindex, flush::flush_checkpoint as flush_checkpoint_full,
 };
-
-/// BIP30 duplicate coinbase heights - must handle specially.
-const BIP30_DUPLICATE_HEIGHT_1: u32 = 91_842;
-const BIP30_DUPLICATE_HEIGHT_2: u32 = 91_880;
-const BIP30_ORIGINAL_HEIGHT_1: u32 = 91_812;
-const BIP30_ORIGINAL_HEIGHT_2: u32 = 91_722;
+use crate::stateful_new::address::AddressTypeToAddressCount;
+use crate::stateful_new::process::{
+    AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
+    build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
+    process_sent, update_tx_counts,
+};
 
 /// Process all blocks from starting_height to last_height.
 #[allow(clippy::too_many_arguments)]
@@ -55,48 +59,104 @@ pub fn process_blocks(
         starting_height, last_height
     );
 
-    // Pre-compute iterators for fast access
-    let mut height_to_first_txindex = indexes.height_to_first_txindex.boxed_iter();
-    let mut height_to_tx_count = chain.height_to_tx_count.boxed_iter();
-    let mut height_to_first_txoutindex = indexes.height_to_first_txoutindex.boxed_iter();
-    let mut height_to_output_count = chain.height_to_output_count.boxed_iter();
-    let mut height_to_first_txinindex = indexes.height_to_first_txinindex.boxed_iter();
-    let mut height_to_input_count = chain.height_to_input_count.boxed_iter();
-    let mut height_to_timestamp = chain.height_to_timestamp.boxed_iter();
-    let mut height_to_unclaimed_rewards = chain.height_to_unclaimed_reward.boxed_iter();
-    let mut height_to_date = indexes.height_to_date.boxed_iter();
-    let mut dateindex_to_first_height = indexes.dateindex_to_first_height.boxed_iter();
-    let mut dateindex_to_height_count = indexes.dateindex_to_height_count.boxed_iter();
-    let mut txindex_to_output_count = chain.txindex_to_output_count.boxed_iter();
-    let mut txindex_to_input_count = chain.txindex_to_input_count.boxed_iter();
+    // References to vectors using correct field paths
+    // From indexer.vecs:
+    let height_to_first_txindex = &indexer.vecs.height_to_first_txindex;
+    let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
+    let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
 
-    let mut height_to_price = price.map(|p| p.height_to_close.boxed_iter());
-    let mut dateindex_to_price = price.map(|p| p.dateindex_to_close.boxed_iter());
+    // From chain (via .height.u() or .height.unwrap_sum() patterns):
+    let height_to_tx_count = chain.indexes_to_tx_count.height.u();
+    let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
+    let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
+    let height_to_unclaimed_rewards = chain.indexes_to_unclaimed_rewards.sats.height.as_ref().unwrap();
+
+    // From indexes:
+    let height_to_timestamp = &indexes.height_to_timestamp_fixed;
+    let height_to_date = &indexes.height_to_date_fixed;
+    let dateindex_to_first_height = &indexes.dateindex_to_first_height;
+    let dateindex_to_height_count = &indexes.dateindex_to_height_count;
+    let txindex_to_output_count = &indexes.txindex_to_output_count;
+    let txindex_to_input_count = &indexes.txindex_to_input_count;
+
+    // From price (optional):
+    let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
+    let dateindex_to_price = price.map(|p| p.timeindexes_to_price_close.dateindex.u());
+
+    // Collect price and timestamp vectors for process_sent (needs slice access, not iterators)
+    // These are used in the spawned thread and need to be separate from chain_state
+    let height_to_price_vec: Option<Vec<Dollars>> =
+        height_to_price.map(|v| v.into_iter().map(|d| *d).collect());
+    let height_to_timestamp_vec: Vec<Timestamp> = height_to_timestamp.into_iter().collect();
+
+    // Create iterators for sequential access
+    let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
+    let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
+    let mut height_to_first_txinindex_iter = height_to_first_txinindex.into_iter();
+    let mut height_to_tx_count_iter = height_to_tx_count.into_iter();
+    let mut height_to_output_count_iter = height_to_output_count.into_iter();
+    let mut height_to_input_count_iter = height_to_input_count.into_iter();
+    let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
+    let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
+    let mut height_to_date_iter = height_to_date.into_iter();
+    let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
+    let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
+    let mut txindex_to_output_count_iter = txindex_to_output_count.iter();
+    let mut txindex_to_input_count_iter = txindex_to_input_count.iter();
+    let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
+    let mut dateindex_to_price_iter = dateindex_to_price.map(|v| v.into_iter());
 
     // Build txoutindex -> height map for input processing
-    let txoutindex_to_height = build_txoutindex_to_height_map(&indexes.height_to_first_txoutindex);
+    let txoutindex_to_height = build_txoutindex_to_height_map(height_to_first_txoutindex);
 
     // Create readers for parallel data access
     let ir = IndexerReaders::new(indexer);
+    let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
-    // Track running totals
-    let mut unspendable_supply = Sats::ZERO;
-    let mut opreturn_supply = Sats::ZERO;
-    let mut addresstype_to_addr_count = ByAddressType::<u64>::default();
-    let mut addresstype_to_empty_addr_count = ByAddressType::<u64>::default();
+    // Create iterators for first address indexes per type
+    let mut first_p2a_iter = indexer.vecs.height_to_first_p2aaddressindex.into_iter();
+    let mut first_p2pk33_iter = indexer.vecs.height_to_first_p2pk33addressindex.into_iter();
+    let mut first_p2pk65_iter = indexer.vecs.height_to_first_p2pk65addressindex.into_iter();
+    let mut first_p2pkh_iter = indexer.vecs.height_to_first_p2pkhaddressindex.into_iter();
+    let mut first_p2sh_iter = indexer.vecs.height_to_first_p2shaddressindex.into_iter();
+    let mut first_p2tr_iter = indexer.vecs.height_to_first_p2traddressindex.into_iter();
+    let mut first_p2wpkh_iter = indexer.vecs.height_to_first_p2wpkhaddressindex.into_iter();
+    let mut first_p2wsh_iter = indexer.vecs.height_to_first_p2wshaddressindex.into_iter();
 
-    // Recover initial values if resuming
-    if starting_height > Height::ZERO {
-        let prev_height = starting_height.decremented().unwrap();
-        unspendable_supply = vecs
-            .height_to_unspendable_supply
-            .get(prev_height)
-            .unwrap_or_default();
-        opreturn_supply = vecs
-            .height_to_opreturn_supply
-            .get(prev_height)
-            .unwrap_or_default();
-    }
+    // Track running totals - recover from previous height if resuming
+    let (mut unspendable_supply, mut opreturn_supply, mut addresstype_to_addr_count, mut addresstype_to_empty_addr_count) =
+        if starting_height > Height::ZERO {
+            let prev_height = starting_height.decremented().unwrap();
+            (
+                vecs.height_to_unspendable_supply
+                    .into_iter()
+                    .get_unwrap(prev_height),
+                vecs.height_to_opreturn_supply
+                    .into_iter()
+                    .get_unwrap(prev_height),
+                AddressTypeToAddressCount::from((
+                    &vecs.addresstype_to_height_to_addr_count,
+                    starting_height,
+                )),
+                AddressTypeToAddressCount::from((
+                    &vecs.addresstype_to_height_to_empty_addr_count,
+                    starting_height,
+                )),
+            )
+        } else {
+            (
+                Sats::ZERO,
+                Sats::ZERO,
+                AddressTypeToAddressCount::default(),
+                AddressTypeToAddressCount::default(),
+            )
+        };
+
+    // Persistent address data caches (accumulate across blocks, flushed at checkpoints)
+    let mut loaded_cache: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource> =
+        AddressTypeToTypeIndexMap::default();
+    let mut empty_cache: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource> =
+        AddressTypeToTypeIndexMap::default();
 
     // Main block iteration
     for height in starting_height.to_usize()..=last_height.to_usize() {
@@ -107,20 +167,32 @@ pub fn process_blocks(
         }
 
         // Get block metadata
-        let first_txindex = height_to_first_txindex.get_unwrap(height);
-        let tx_count = u64::from(height_to_tx_count.get_unwrap(height));
-        let first_txoutindex = height_to_first_txoutindex.get_unwrap(height).to_usize();
-        let output_count = u64::from(height_to_output_count.get_unwrap(height)) as usize;
-        let first_txinindex = height_to_first_txinindex.get_unwrap(height).to_usize();
-        let input_count = u64::from(height_to_input_count.get_unwrap(height)) as usize;
-        let timestamp = height_to_timestamp.get_unwrap(height);
-        let block_price = height_to_price.as_mut().map(|v| v.get_unwrap(height));
+        let first_txindex = height_to_first_txindex_iter.get_unwrap(height);
+        let tx_count = u64::from(height_to_tx_count_iter.get_unwrap(height));
+        let first_txoutindex = height_to_first_txoutindex_iter.get_unwrap(height).to_usize();
+        let output_count = u64::from(height_to_output_count_iter.get_unwrap(height)) as usize;
+        let first_txinindex = height_to_first_txinindex_iter.get_unwrap(height).to_usize();
+        let input_count = u64::from(height_to_input_count_iter.get_unwrap(height)) as usize;
+        let timestamp = height_to_timestamp_iter.get_unwrap(height);
+        let block_price = height_to_price_iter.as_mut().map(|v| *v.get_unwrap(height));
 
         // Build txindex mappings for this block
         let txoutindex_to_txindex =
-            build_txoutindex_to_txindex(first_txindex, tx_count, &mut txindex_to_output_count);
+            build_txoutindex_to_txindex(first_txindex, tx_count, &mut txindex_to_output_count_iter);
         let txinindex_to_txindex =
-            build_txinindex_to_txindex(first_txindex, tx_count, &mut txindex_to_input_count);
+            build_txinindex_to_txindex(first_txindex, tx_count, &mut txindex_to_input_count_iter);
+
+        // Get first address indexes for this height
+        let first_addressindexes = ByAddressType {
+            p2a: TypeIndex::from(first_p2a_iter.get_unwrap(height).to_usize()),
+            p2pk33: TypeIndex::from(first_p2pk33_iter.get_unwrap(height).to_usize()),
+            p2pk65: TypeIndex::from(first_p2pk65_iter.get_unwrap(height).to_usize()),
+            p2pkh: TypeIndex::from(first_p2pkh_iter.get_unwrap(height).to_usize()),
+            p2sh: TypeIndex::from(first_p2sh_iter.get_unwrap(height).to_usize()),
+            p2tr: TypeIndex::from(first_p2tr_iter.get_unwrap(height).to_usize()),
+            p2wpkh: TypeIndex::from(first_p2wpkh_iter.get_unwrap(height).to_usize()),
+            p2wsh: TypeIndex::from(first_p2wsh_iter.get_unwrap(height).to_usize()),
+        };
 
         // Reset per-block values for all separate cohorts
         reset_block_values(&mut vecs.utxo_cohorts, &mut vecs.address_cohorts);
@@ -142,6 +214,12 @@ pub fn process_blocks(
                 &indexer.vecs.txoutindex_to_outputtype,
                 &indexer.vecs.txoutindex_to_typeindex,
                 &ir,
+                &first_addressindexes,
+                &loaded_cache,
+                &empty_cache,
+                &vr,
+                &vecs.any_address_indexes,
+                &vecs.addresses_data,
             );
 
             // Process inputs (send) - skip coinbase input
@@ -157,23 +235,40 @@ pub fn process_blocks(
                     &indexer.vecs.txoutindex_to_typeindex,
                     &txoutindex_to_height,
                     &ir,
+                    &first_addressindexes,
+                    &loaded_cache,
+                    &empty_cache,
+                    &vr,
+                    &vecs.any_address_indexes,
+                    &vecs.addresses_data,
                 )
             } else {
-                super::InputsResult {
+                InputsResult {
                     height_to_sent: Default::default(),
                     sent_data: Default::default(),
+                    address_data: Default::default(),
+                    txindex_vecs: Default::default(),
                 }
             };
 
             (outputs_result, inputs_result)
         });
 
+        // Merge new address data into caches
+        loaded_cache.merge_mut(outputs_result.address_data);
+        loaded_cache.merge_mut(inputs_result.address_data);
+
+        // Combine txindex_vecs from outputs and inputs, then update tx_count
+        let combined_txindex_vecs =
+            outputs_result.txindex_vecs.merge_vec(inputs_result.txindex_vecs);
+        update_tx_counts(&mut loaded_cache, &mut empty_cache, combined_txindex_vecs);
+
         let mut transacted = outputs_result.transacted;
         let mut height_to_sent = inputs_result.height_to_sent;
 
         // Update supply tracking
         unspendable_supply += transacted.by_type.unspendable.opreturn.value
-            + height_to_unclaimed_rewards.get_unwrap(height);
+            + height_to_unclaimed_rewards_iter.get_unwrap(height);
         opreturn_supply += transacted.by_type.unspendable.opreturn.value;
 
         // Handle special cases
@@ -203,9 +298,53 @@ pub fn process_blocks(
             timestamp,
         });
 
-        // Update UTXO cohorts
-        vecs.utxo_cohorts.receive(transacted, height, block_price);
-        vecs.utxo_cohorts.send(height_to_sent, chain_state);
+        // Process UTXO cohorts and Address cohorts in parallel
+        // - Main thread: UTXO cohorts receive/send
+        // - Spawned thread: Address cohorts process_received/process_sent
+        thread::scope(|scope| {
+            // Spawn address cohort processing in background thread
+            scope.spawn(|| {
+                // Create lookup closure that returns None (data was pre-fetched in parallel phase)
+                let get_address_data =
+                    |_output_type, _type_index| -> Option<LoadedAddressDataWithSource> { None };
+
+                let mut lookup = AddressLookup {
+                    get_address_data,
+                    loaded: &mut loaded_cache,
+                    empty: &mut empty_cache,
+                };
+
+                // Process received outputs (addresses receiving funds)
+                process_received(
+                    outputs_result.received_data,
+                    &mut vecs.address_cohorts,
+                    &mut lookup,
+                    block_price,
+                    &mut addresstype_to_addr_count,
+                    &mut addresstype_to_empty_addr_count,
+                );
+
+                // Process sent inputs (addresses sending funds)
+                // Uses separate price/timestamp vecs to avoid borrowing chain_state
+                process_sent(
+                    inputs_result.sent_data,
+                    &mut vecs.address_cohorts,
+                    &mut lookup,
+                    block_price,
+                    &mut addresstype_to_addr_count,
+                    &mut addresstype_to_empty_addr_count,
+                    height_to_price_vec.as_deref(),
+                    &height_to_timestamp_vec,
+                    height,
+                    timestamp,
+                )
+                .unwrap();
+            });
+
+            // Main thread: Update UTXO cohorts
+            vecs.utxo_cohorts.receive(transacted, height, block_price);
+            vecs.utxo_cohorts.send(height_to_sent, chain_state);
+        });
 
         // Push to height-indexed vectors
         vecs.height_to_unspendable_supply
@@ -218,15 +357,15 @@ pub fn process_blocks(
             .truncate_push(height, &addresstype_to_empty_addr_count)?;
 
         // Get date info for unrealized state computation
-        let date = height_to_date.get_unwrap(height);
+        let date = height_to_date_iter.get_unwrap(height);
         let dateindex = DateIndex::try_from(date).unwrap();
-        let date_first_height = dateindex_to_first_height.get_unwrap(dateindex);
-        let date_height_count = dateindex_to_height_count.get_unwrap(dateindex);
+        let date_first_height = dateindex_to_first_height_iter.get_unwrap(dateindex);
+        let date_height_count = dateindex_to_height_count_iter.get_unwrap(dateindex);
         let is_date_last_height =
             date_first_height + Height::from(date_height_count).decremented().unwrap() == height;
-        let date_price = dateindex_to_price
+        let date_price = dateindex_to_price_iter
             .as_mut()
-            .map(|v| is_date_last_height.then(|| v.get_unwrap(dateindex)));
+            .map(|v| is_date_last_height.then(|| *v.get_unwrap(dateindex)));
         let dateindex_opt = is_date_last_height.then_some(dateindex);
 
         // Push cohort states and compute unrealized
@@ -239,19 +378,31 @@ pub fn process_blocks(
             date_price,
         )?;
 
+        // Compute and push percentiles for aggregate cohorts (all, sth, lth)
+        vecs.utxo_cohorts
+            .truncate_push_aggregate_percentiles(height)?;
+
         // Periodic checkpoint flush
         if height != last_height
             && height != Height::ZERO
             && height.to_usize() % FLUSH_INTERVAL == 0
         {
             let _lock = exit.lock();
-            flush_checkpoint(vecs, height, exit)?;
+
+            // Drop readers before flush to release mmap handles
+            drop(vr);
+
+            flush_checkpoint(vecs, height, &mut loaded_cache, &mut empty_cache, exit)?;
+
+            // Recreate readers after flush to pick up new data
+            vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
         }
     }
 
     // Final flush
     let _lock = exit.lock();
-    flush_checkpoint(vecs, last_height, exit)?;
+    drop(vr);
+    flush_checkpoint(vecs, last_height, &mut loaded_cache, &mut empty_cache, exit)?;
 
     Ok(())
 }
@@ -302,7 +453,20 @@ fn push_cohort_states(
 }
 
 /// Flush checkpoint to disk.
-fn flush_checkpoint(vecs: &mut Vecs, height: Height, exit: &Exit) -> Result<()> {
+///
+/// Flushes all accumulated data including:
+/// - Cohort stateful vectors
+/// - Height-indexed vectors
+/// - Address data caches (loaded and empty)
+/// - Chain state
+#[allow(clippy::too_many_arguments)]
+fn flush_checkpoint(
+    vecs: &mut Vecs,
+    height: Height,
+    loaded_cache: &mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
+    empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    exit: &Exit,
+) -> Result<()> {
     info!("Flushing checkpoint at height {}...", height);
 
     // Flush cohort states
@@ -316,8 +480,31 @@ fn flush_checkpoint(vecs: &mut Vecs, height: Height, exit: &Exit) -> Result<()> 
     vecs.addresstype_to_height_to_empty_addr_count
         .safe_flush(exit)?;
 
+    // Process and flush address data updates
+    let empty_updates = std::mem::take(empty_cache);
+    let loaded_updates = std::mem::take(loaded_cache);
+    flush_checkpoint_full(
+        height,
+        &mut vecs
+            .utxo_cohorts
+            .par_iter_separate_mut()
+            .map(|v| v as &mut dyn DynCohortVecs)
+            .collect::<Vec<_>>()[..],
+        &mut vecs
+            .address_cohorts
+            .par_iter_separate_mut()
+            .map(|v| v as &mut dyn DynCohortVecs)
+            .collect::<Vec<_>>()[..],
+        &mut vecs.any_address_indexes,
+        &mut vecs.addresses_data,
+        empty_updates,
+        loaded_updates,
+        true,
+        exit,
+    )?;
+
     // Flush chain state with stamp
-    vecs.chain_state.safe_write_with_stamp(height.into(), exit)?;
+    vecs.chain_state.stamped_flush_with_changes(height.into())?;
 
     Ok(())
 }

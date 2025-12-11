@@ -414,6 +414,13 @@ impl RelativeMetrics {
     }
 
     /// Second phase of computed metrics (ratios, relative values).
+    ///
+    /// This computes percentage ratios comparing cohort metrics to global metrics:
+    /// - Supply relative to circulating supply
+    /// - Supply in profit/loss relative to own supply and circulating supply
+    /// - Unrealized profit/loss relative to market cap, own market cap, total unrealized
+    ///
+    /// See `stateful/common/compute.rs` lines 800-1200 for the full original implementation.
     #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_part2(
         &mut self,
@@ -426,10 +433,11 @@ impl RelativeMetrics {
         _height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
         _dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         supply: &SupplyMetrics,
+        unrealized: Option<&super::UnrealizedMetrics>,
         _realized: Option<&RealizedMetrics>,
         exit: &Exit,
     ) -> Result<()> {
-        // Supply relative to circulating supply
+        // === Supply Relative to Circulating Supply ===
         if let Some(v) = self.indexes_to_supply_rel_to_circulating_supply.as_mut() {
             v.compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage(
@@ -442,9 +450,150 @@ impl RelativeMetrics {
             })?;
         }
 
-        let _ = (dateindex_to_supply, height_to_market_cap, dateindex_to_market_cap);
+        // === Supply in Profit/Loss Relative to Own Supply ===
+        if let Some(unrealized) = unrealized {
+            self.height_to_supply_in_profit_rel_to_own_supply.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_supply_in_profit_value.bitcoin,
+                &supply.height_to_supply_value.bitcoin,
+                exit,
+            )?;
+            self.height_to_supply_in_loss_rel_to_own_supply.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_supply_in_loss_value.bitcoin,
+                &supply.height_to_supply_value.bitcoin,
+                exit,
+            )?;
 
-        // Additional relative metrics computed here
+            self.indexes_to_supply_in_profit_rel_to_own_supply.compute_all(
+                starting_indexes,
+                exit,
+                |v| {
+                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_profit.bitcoin.dateindex.as_ref() {
+                        if let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
+                            v.compute_percentage(
+                                starting_indexes.dateindex,
+                                dateindex_vec,
+                                supply_dateindex,
+                                exit,
+                            )?;
+                        }
+                    }
+                    Ok(())
+                },
+            )?;
+
+            self.indexes_to_supply_in_loss_rel_to_own_supply.compute_all(
+                starting_indexes,
+                exit,
+                |v| {
+                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_loss.bitcoin.dateindex.as_ref() {
+                        if let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
+                            v.compute_percentage(
+                                starting_indexes.dateindex,
+                                dateindex_vec,
+                                supply_dateindex,
+                                exit,
+                            )?;
+                        }
+                    }
+                    Ok(())
+                },
+            )?;
+        }
+
+        // === Supply in Profit/Loss Relative to Circulating Supply ===
+        if let (Some(unrealized), Some(v)) = (
+            unrealized,
+            self.height_to_supply_in_profit_rel_to_circulating_supply.as_mut(),
+        ) {
+            v.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_supply_in_profit_value.bitcoin,
+                height_to_supply,
+                exit,
+            )?;
+        }
+        if let (Some(unrealized), Some(v)) = (
+            unrealized,
+            self.height_to_supply_in_loss_rel_to_circulating_supply.as_mut(),
+        ) {
+            v.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_supply_in_loss_value.bitcoin,
+                height_to_supply,
+                exit,
+            )?;
+        }
+
+        // === Unrealized vs Market Cap ===
+        if let (Some(unrealized), Some(height_to_mc)) = (unrealized, height_to_market_cap) {
+            self.height_to_unrealized_profit_rel_to_market_cap.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_unrealized_profit,
+                height_to_mc,
+                exit,
+            )?;
+            self.height_to_unrealized_loss_rel_to_market_cap.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_unrealized_loss,
+                height_to_mc,
+                exit,
+            )?;
+            self.height_to_neg_unrealized_loss_rel_to_market_cap.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_neg_unrealized_loss,
+                height_to_mc,
+                exit,
+            )?;
+            self.height_to_net_unrealized_pnl_rel_to_market_cap.compute_percentage(
+                starting_indexes.height,
+                &unrealized.height_to_net_unrealized_pnl,
+                height_to_mc,
+                exit,
+            )?;
+        }
+
+        if let Some(dateindex_to_mc) = dateindex_to_market_cap {
+            if let Some(unrealized) = unrealized {
+                self.indexes_to_unrealized_profit_rel_to_market_cap.compute_all(
+                    starting_indexes,
+                    exit,
+                    |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            &unrealized.dateindex_to_unrealized_profit,
+                            dateindex_to_mc,
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )?;
+                self.indexes_to_unrealized_loss_rel_to_market_cap.compute_all(
+                    starting_indexes,
+                    exit,
+                    |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            &unrealized.dateindex_to_unrealized_loss,
+                            dateindex_to_mc,
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )?;
+            }
+        }
+
+        // TODO: Remaining relative metrics to implement:
+        // - indexes_to_supply_in_profit/loss_rel_to_circulating_supply
+        // - height_to_unrealized_*_rel_to_own_market_cap
+        // - height_to_unrealized_*_rel_to_own_total_unrealized_pnl
+        // - indexes_to_unrealized_*_rel_to_own_market_cap
+        // - indexes_to_unrealized_*_rel_to_own_total_unrealized_pnl
+        // See stateful/common/compute.rs for patterns.
+
+        let _ = dateindex_to_supply;
         Ok(())
     }
 }

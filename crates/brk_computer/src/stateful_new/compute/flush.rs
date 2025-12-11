@@ -4,14 +4,14 @@
 //! including cohort states, address data, and chain state.
 
 use brk_error::Result;
-use brk_types::{
-    AddressDataSource, AnyAddressIndex, EmptyAddressData, EmptyAddressIndex, Height,
-    LoadedAddressData, LoadedAddressIndex,
-};
+use brk_types::{AnyAddressIndex, Height};
 use log::info;
 use vecdb::{Exit, Stamp};
 
-use crate::stateful_new::process::{process_empty_addresses, process_loaded_addresses};
+use crate::stateful_new::process::{
+    EmptyAddressDataWithSource, LoadedAddressDataWithSource, process_empty_addresses,
+    process_loaded_addresses,
+};
 
 use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
 use super::super::cohorts::DynCohortVecs;
@@ -60,8 +60,8 @@ pub fn flush_checkpoint(
     address_vecs: &mut [&mut dyn DynCohortVecs],
     address_indexes: &mut AnyAddressIndexesVecs,
     addresses_data: &mut AddressesDataVecs,
-    empty_updates: AddressTypeToTypeIndexMap<AddressDataSource<EmptyAddressData>>,
-    loaded_updates: AddressTypeToTypeIndexMap<AddressDataSource<LoadedAddressData>>,
+    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    loaded_updates: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
     with_changes: bool,
     exit: &Exit,
 ) -> Result<()> {

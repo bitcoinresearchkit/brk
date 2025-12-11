@@ -283,6 +283,7 @@ impl CohortMetrics {
                 height_to_realized_cap,
                 dateindex_to_realized_cap,
                 &self.supply,
+                self.unrealized.as_ref(),
                 self.realized.as_ref(),
                 exit,
             )?;
