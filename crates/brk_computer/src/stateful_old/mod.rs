@@ -73,7 +73,7 @@ mod utxo_cohort;
 mod utxo_cohorts;
 mod withaddressdatasource;
 
-pub use crate::states::{Flushable, HeightFlushable};
+pub use flushable::{Flushable, HeightFlushable};
 
 use address_indexes::{AddressesDataVecs, AnyAddressIndexesVecs};
 use addresstype::*;

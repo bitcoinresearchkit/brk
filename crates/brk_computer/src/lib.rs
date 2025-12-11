@@ -22,6 +22,7 @@ mod market;
 mod pools;
 mod price;
 mod stateful;
+mod stateful_new;
 mod states;
 mod traits;
 mod utils;
@@ -56,14 +57,6 @@ impl Computer {
         indexer: &Indexer,
         fetcher: Option<Fetcher>,
     ) -> Result<Self> {
-        info!("Increasing number of open files...");
-        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
-        rlimit::setrlimit(
-            rlimit::Resource::NOFILE,
-            no_file_limit.0.max(10_000),
-            no_file_limit.1,
-        )?;
-
         info!("Importing computer...");
         let import_start = Instant::now();
 

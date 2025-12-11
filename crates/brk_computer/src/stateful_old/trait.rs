@@ -1,0 +1,59 @@
+use brk_error::Result;
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use vecdb::{Exit, IterableVec};
+
+use crate::{Indexes, indexes, price};
+
+pub trait DynCohortVecs: Send + Sync {
+    fn min_height_vecs_len(&self) -> usize;
+    fn reset_state_starting_height(&mut self);
+
+    fn import_state(&mut self, starting_height: Height) -> Result<Height>;
+
+    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
+
+    fn truncate_push(&mut self, height: Height) -> Result<()>;
+
+    fn compute_then_truncate_push_unrealized_states(
+        &mut self,
+        height: Height,
+        height_price: Option<Dollars>,
+        dateindex: Option<DateIndex>,
+        date_price: Option<Option<Dollars>>,
+    ) -> Result<()>;
+
+    fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn compute_rest_part1(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()>;
+}
+
+pub trait CohortVecs: DynCohortVecs {
+    fn compute_from_stateful(
+        &mut self,
+        starting_indexes: &Indexes,
+        others: &[&Self],
+        exit: &Exit,
+    ) -> Result<()>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn compute_rest_part2(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &Indexes,
+        height_to_supply: &impl IterableVec<Height, Bitcoin>,
+        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
+        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
+        dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        exit: &Exit,
+    ) -> Result<()>;
+}
