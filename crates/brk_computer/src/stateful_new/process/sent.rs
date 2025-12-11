@@ -1,0 +1,122 @@
+//! Process sent outputs for address cohorts.
+//!
+//! Updates address cohort states when addresses send funds:
+//! - Addresses may cross cohort boundaries
+//! - Addresses may become empty (0 balance)
+//! - Age metrics (blocks_old, days_old) are tracked for sent UTXOs
+
+use brk_error::Result;
+use brk_grouper::{ByAddressType, Filtered};
+use brk_types::{CheckedSub, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex};
+use vecdb::VecIndex;
+
+use super::super::address::HeightToAddressTypeToVec;
+use super::super::cohorts::AddressCohorts;
+use super::address_lookup::{AddressLookup, LoadedAddressDataWithSource};
+
+/// Process sent outputs for address cohorts.
+///
+/// For each spent UTXO:
+/// 1. Look up address data
+/// 2. Calculate age metrics (blocks_old, days_old)
+/// 3. Update address balance and cohort membership
+/// 4. Handle addresses becoming empty
+///
+/// Note: Takes separate price/timestamp slices instead of chain_state to allow
+/// parallel execution with UTXO cohort processing (which mutates chain_state).
+#[allow(clippy::too_many_arguments)]
+pub fn process_sent<F>(
+    sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
+    cohorts: &mut AddressCohorts,
+    lookup: &mut AddressLookup<F>,
+    current_price: Option<Dollars>,
+    addr_count: &mut ByAddressType<u64>,
+    empty_addr_count: &mut ByAddressType<u64>,
+    height_to_price: Option<&[Dollars]>,
+    height_to_timestamp: &[Timestamp],
+    current_height: Height,
+    current_timestamp: Timestamp,
+) -> Result<()>
+where
+    F: FnMut(OutputType, TypeIndex) -> Option<LoadedAddressDataWithSource>,
+{
+    for (prev_height, by_type) in sent_data.into_iter() {
+        let prev_price = height_to_price.map(|v| v[prev_height.to_usize()]);
+        let prev_timestamp = height_to_timestamp[prev_height.to_usize()];
+
+        let blocks_old = current_height.to_usize() - prev_height.to_usize();
+        let days_old = current_timestamp.difference_in_days_between_float(prev_timestamp);
+        let older_than_hour = current_timestamp
+            .checked_sub(prev_timestamp)
+            .map(|d| d.is_more_than_hour())
+            .unwrap_or(false);
+
+        for (output_type, vec) in by_type.unwrap().into_iter() {
+            for (type_index, value) in vec {
+                let addr_data = lookup.get_for_send(output_type, type_index);
+
+                let prev_balance = addr_data.balance();
+                let new_balance = prev_balance.checked_sub(value).unwrap();
+                let will_be_empty = addr_data.has_1_utxos();
+
+                // Check if crossing cohort boundary
+                let prev_cohort = cohorts.amount_range.get(prev_balance);
+                let new_cohort = cohorts.amount_range.get(new_balance);
+                let filters_differ = prev_cohort.filter() != new_cohort.filter();
+
+                if will_be_empty || filters_differ {
+                    // Subtract from old cohort
+                    cohorts
+                        .amount_range
+                        .get_mut(prev_balance)
+                        .state
+                        .as_mut()
+                        .unwrap()
+                        .subtract(addr_data);
+
+                    // Update address data
+                    addr_data.send(value, prev_price)?;
+
+                    if will_be_empty {
+                        // Address becoming empty
+                        debug_assert!(new_balance.is_zero());
+
+                        *addr_count.get_mut(output_type).unwrap() -= 1;
+                        *empty_addr_count.get_mut(output_type).unwrap() += 1;
+
+                        // Move from loaded to empty
+                        lookup.move_to_empty(output_type, type_index);
+                    } else {
+                        // Add to new cohort
+                        cohorts
+                            .amount_range
+                            .get_mut(new_balance)
+                            .state
+                            .as_mut()
+                            .unwrap()
+                            .add(addr_data);
+                    }
+                } else {
+                    // Address staying in same cohort - update in place
+                    cohorts
+                        .amount_range
+                        .get_mut(new_balance)
+                        .state
+                        .as_mut()
+                        .unwrap()
+                        .send(
+                            addr_data,
+                            value,
+                            current_price,
+                            prev_price,
+                            blocks_old,
+                            days_old,
+                            older_than_hour,
+                        )?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}

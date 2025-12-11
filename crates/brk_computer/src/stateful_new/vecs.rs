@@ -15,6 +15,7 @@ use crate::{
     Indexes, SupplyState, chain,
     grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
+    utils::OptionExt,
 };
 
 use super::{
@@ -174,56 +175,228 @@ impl Vecs {
     /// 3. Flushes checkpoints periodically
     /// 4. Computes aggregate cohorts from separate cohorts
     /// 5. Computes derived metrics
-    ///
-    /// NOTE: This is a placeholder. The full implementation needs to be ported
-    /// from stateful/mod.rs once all the supporting methods on UTXOCohorts,
-    /// AddressCohorts, and state types are implemented.
     #[allow(clippy::too_many_arguments)]
     pub fn compute(
         &mut self,
-        _indexer: &Indexer,
-        _indexes: &indexes::Vecs,
-        _chain: &chain::Vecs,
-        _price: Option<&price::Vecs>,
-        _starting_indexes: &mut Indexes,
-        _exit: &Exit,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        chain: &chain::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &mut Indexes,
+        exit: &Exit,
     ) -> Result<()> {
-        // The full compute implementation requires these methods to be implemented:
-        //
-        // On UTXOCohorts:
-        // - tick_tock_next_block(&chain_state, timestamp)
-        // - receive(transacted, height, price)
-        // - send(height_to_sent, &mut chain_state)
-        // - truncate_push_aggregate_percentiles(height)
-        // - import_aggregate_price_to_amount(height)
-        // - reset_aggregate_price_to_amount()
-        //
-        // On UTXOCohortState:
-        // - reset_block_values()
-        // - reset_price_to_amount()
-        //
-        // On AddressCohortState:
-        // - inner.reset_block_values()
-        // - inner.reset_price_to_amount()
-        //
-        // On AddressTypeToHeightToAddressCount:
-        // - safe_flush(exit)
-        // - truncate_push(height, &count)
-        //
-        // See stateful/mod.rs:368-1397 for the full implementation.
-        //
-        // The basic structure is:
-        // 1. Validate computed versions against base version
-        // 2. Find min stateful height and recover state
-        // 3. For each block:
-        //    a. Reset per-block values
-        //    b. Process outputs in parallel (receive)
-        //    c. Process inputs in parallel (send)
-        //    d. Push to height-indexed vectors
-        //    e. Flush checkpoint every 10,000 blocks
-        // 4. Compute aggregate cohorts from separate cohorts
-        // 5. Compute rest_part1 (dateindex mappings)
-        // 6. Compute rest_part2 (ratios and relative metrics)
+        use super::compute::{
+            StartMode, determine_start_mode, process_blocks,
+        };
+        use crate::states::BlockState;
+        use vecdb::{AnyVec, GenericStoredVec, Stamp, TypedVecIterator, VecIndex};
+
+        // 1. Find minimum computed height for recovery
+        let chain_state_height = Height::from(self.chain_state.len());
+
+        // Get minimum heights without holding mutable references
+        let utxo_min = self.utxo_cohorts.min_separate_height_vecs_len();
+        let address_min = self.address_cohorts.min_separate_height_vecs_len();
+
+        let stateful_min = utxo_min
+            .min(address_min)
+            .min(Height::from(self.chain_state.len()))
+            .min(self.any_address_indexes.min_stamped_height())
+            .min(self.addresses_data.min_stamped_height())
+            .min(Height::from(self.height_to_unspendable_supply.len()))
+            .min(Height::from(self.height_to_opreturn_supply.len()));
+
+        // 2. Determine start mode and recover state
+        let start_mode = determine_start_mode(stateful_min, chain_state_height);
+
+        let (starting_height, mut chain_state) = match start_mode {
+            StartMode::Resume(height) => {
+                let stamp = Stamp::from(height);
+
+                // Rollback state vectors
+                let _ = self.chain_state.rollback_before(stamp);
+                let _ = self.any_address_indexes.rollback_before(stamp);
+                let _ = self.addresses_data.rollback_before(stamp);
+
+                // Import cohort states
+                self.utxo_cohorts.import_separate_states(height);
+                self.address_cohorts.import_separate_states(height);
+
+                // Import aggregate price_to_amount
+                let _ = self.utxo_cohorts.import_aggregate_price_to_amount(height);
+
+                // Recover chain_state from stored values
+                let chain_state = if !height.is_zero() {
+                    let height_to_timestamp = &indexes.height_to_timestamp_fixed;
+                    let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
+
+                    let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
+                    let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
+                    let mut chain_state_iter = self.chain_state.into_iter();
+
+                    (0..height.to_usize())
+                        .map(|h| {
+                            let h = Height::from(h);
+                            BlockState {
+                                supply: chain_state_iter.get_unwrap(h),
+                                price: height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h)),
+                                timestamp: height_to_timestamp_iter.get_unwrap(h),
+                            }
+                        })
+                        .collect()
+                } else {
+                    vec![]
+                };
+
+                (height, chain_state)
+            }
+            StartMode::Fresh => {
+                // Reset all state
+                self.any_address_indexes.reset()?;
+                self.addresses_data.reset()?;
+
+                // Reset state heights
+                self.utxo_cohorts.reset_separate_state_heights();
+                self.address_cohorts.reset_separate_state_heights();
+
+                // Reset price_to_amount for all separate cohorts
+                self.utxo_cohorts.reset_separate_price_to_amount()?;
+                self.address_cohorts.reset_separate_price_to_amount()?;
+
+                // Reset aggregate cohorts' price_to_amount
+                self.utxo_cohorts.reset_aggregate_price_to_amount()?;
+
+                (Height::ZERO, vec![])
+            }
+        };
+
+        // 3. Get last height from indexer
+        let last_height = Height::from(indexer.vecs.height_to_blockhash.len().saturating_sub(1));
+
+        // 4. Process blocks
+        if starting_height <= last_height {
+            process_blocks(
+                self,
+                indexer,
+                indexes,
+                chain,
+                price,
+                starting_height,
+                last_height,
+                &mut chain_state,
+                exit,
+            )?;
+        }
+
+        // 5. Compute aggregates (overlapping cohorts from separate cohorts)
+        self.utxo_cohorts
+            .compute_overlapping_vecs(starting_indexes, exit)?;
+        self.address_cohorts
+            .compute_overlapping_vecs(starting_indexes, exit)?;
+
+        // 6. Compute rest part1 (dateindex mappings)
+        self.utxo_cohorts
+            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
+        self.address_cohorts
+            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
+
+        // 7. Compute indexes_to_market_cap from dateindex supply
+        if let Some(indexes_to_market_cap) = self.indexes_to_market_cap.as_mut() {
+            indexes_to_market_cap.compute_all(starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.utxo_cohorts
+                        .all
+                        .metrics
+                        .supply
+                        .indexes_to_supply
+                        .dollars
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    |(i, v, ..)| (i, v),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+        }
+
+        // 8. Compute rest part2 (relative metrics)
+        let height_to_supply = &self
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .height_to_supply_value
+            .bitcoin
+            .clone();
+
+        let dateindex_to_supply = self
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .indexes_to_supply
+            .bitcoin
+            .dateindex
+            .clone();
+
+        let height_to_market_cap = self.height_to_market_cap.clone();
+
+        let dateindex_to_market_cap = self
+            .indexes_to_market_cap
+            .as_ref()
+            .map(|v| v.dateindex.u().clone());
+
+        let height_to_realized_cap = self
+            .utxo_cohorts
+            .all
+            .metrics
+            .realized
+            .as_ref()
+            .map(|r| r.height_to_realized_cap.clone());
+
+        let dateindex_to_realized_cap = self
+            .utxo_cohorts
+            .all
+            .metrics
+            .realized
+            .as_ref()
+            .map(|r| r.indexes_to_realized_cap.dateindex.unwrap_last().clone());
+
+        let dateindex_to_supply_ref = dateindex_to_supply.u();
+        let height_to_market_cap_ref = height_to_market_cap.as_ref();
+        let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
+        let height_to_realized_cap_ref = height_to_realized_cap.as_ref();
+        let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
+
+        self.utxo_cohorts.compute_rest_part2(
+            indexes,
+            price,
+            starting_indexes,
+            height_to_supply,
+            dateindex_to_supply_ref,
+            height_to_market_cap_ref,
+            dateindex_to_market_cap_ref,
+            height_to_realized_cap_ref,
+            dateindex_to_realized_cap_ref,
+            exit,
+        )?;
+
+        self.address_cohorts.compute_rest_part2(
+            indexes,
+            price,
+            starting_indexes,
+            height_to_supply,
+            dateindex_to_supply_ref,
+            height_to_market_cap_ref,
+            dateindex_to_market_cap_ref,
+            height_to_realized_cap_ref,
+            dateindex_to_realized_cap_ref,
+            exit,
+        )?;
 
         self.db.compact()?;
         Ok(())

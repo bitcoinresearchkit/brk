@@ -16,7 +16,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{Database, Exit, IterableVec};
+use vecdb::{Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{Indexes, indexes, price, stateful_new::DynCohortVecs};
 
@@ -372,5 +372,84 @@ impl UTXOCohorts {
         }
 
         Ok(prev_height.incremented())
+    }
+
+    /// Get minimum height from all separate cohorts' height-indexed vectors.
+    pub fn min_separate_height_vecs_len(&self) -> Height {
+        self.iter_separate()
+            .map(|v| Height::from(v.min_height_vecs_len()))
+            .min()
+            .unwrap_or_default()
+    }
+
+    /// Import state for all separate cohorts at given height.
+    pub fn import_separate_states(&mut self, height: Height) {
+        self.par_iter_separate_mut().for_each(|v| {
+            let _ = v.import_state(height);
+        });
+    }
+
+    /// Reset state heights for all separate cohorts.
+    pub fn reset_separate_state_heights(&mut self) {
+        self.par_iter_separate_mut().for_each(|v| {
+            v.reset_state_starting_height();
+        });
+    }
+
+    /// Reset price_to_amount for all separate cohorts (called during fresh start).
+    pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
+        self.par_iter_separate_mut()
+            .try_for_each(|v| {
+                if let Some(state) = v.state.as_mut() {
+                    state.reset_price_to_amount_if_needed()?;
+                }
+                Ok(())
+            })
+    }
+
+    /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
+    /// Must be called after receive()/send() when price_to_amount is up to date.
+    pub fn truncate_push_aggregate_percentiles(&mut self, height: Height) -> Result<()> {
+        // Collect supply values from age_range cohorts
+        let age_range_data: Vec<_> = self
+            .0
+            .age_range
+            .iter()
+            .map(|sub| (sub.filter().clone(), sub.state.as_ref().map(|s| s.supply.value).unwrap_or(Sats::ZERO)))
+            .collect();
+
+        // Compute percentiles for each aggregate cohort in parallel
+        let results: Vec<_> = self
+            .0
+            .par_iter_aggregate()
+            .filter_map(|v| {
+                if v.price_to_amount.is_none() {
+                    return None;
+                }
+                let filter = v.filter().clone();
+                let supply = age_range_data
+                    .iter()
+                    .filter(|(sub_filter, _)| filter.includes(sub_filter))
+                    .map(|(_, value)| *value)
+                    .fold(Sats::ZERO, |acc, v| acc + v);
+                let percentiles = v.compute_percentile_prices_from_standalone(supply);
+                Some((filter, percentiles))
+            })
+            .collect();
+
+        // Push results sequentially (requires &mut)
+        for (filter, percentiles) in results {
+            let v = self
+                .0
+                .iter_aggregate_mut()
+                .find(|v| v.filter() == &filter)
+                .unwrap();
+
+            if let Some(pp) = v.metrics.price_paid.as_mut().and_then(|p| p.price_percentiles.as_mut()) {
+                pp.truncate_push(height, &percentiles)?;
+            }
+        }
+
+        Ok(())
     }
 }

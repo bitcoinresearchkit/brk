@@ -227,4 +227,40 @@ impl AddressCohorts {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))
     }
+
+    /// Get minimum height from all separate cohorts' height-indexed vectors.
+    pub fn min_separate_height_vecs_len(&self) -> Height {
+        self.iter_separate()
+            .map(|v| Height::from(v.min_height_vecs_len()))
+            .min()
+            .unwrap_or_default()
+    }
+
+    /// Import state for all separate cohorts at given height.
+    ///
+    /// Note: This follows the same pattern as UTXOCohorts - errors are ignored
+    /// and the start_mode logic ensures we're in a valid state before calling.
+    pub fn import_separate_states(&mut self, height: Height) {
+        self.par_iter_separate_mut().for_each(|v| {
+            let _ = v.import_state(height);
+        });
+    }
+
+    /// Reset state heights for all separate cohorts.
+    pub fn reset_separate_state_heights(&mut self) {
+        self.par_iter_separate_mut().for_each(|v| {
+            v.reset_state_starting_height();
+        });
+    }
+
+    /// Reset price_to_amount for all separate cohorts (called during fresh start).
+    pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
+        self.par_iter_separate_mut()
+            .try_for_each(|v| {
+                if let Some(state) = v.state.as_mut() {
+                    state.reset_price_to_amount_if_needed()?;
+                }
+                Ok(())
+            })
+    }
 }

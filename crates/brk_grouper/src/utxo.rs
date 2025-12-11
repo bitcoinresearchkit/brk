@@ -84,6 +84,14 @@ impl<T> UTXOGroups<T> {
             .chain(self.type_.par_iter_mut())
     }
 
+    pub fn iter_separate(&self) -> impl Iterator<Item = &T> {
+        self.age_range
+            .iter()
+            .chain(self.epoch.iter())
+            .chain(self.amount_range.iter())
+            .chain(self.type_.iter())
+    }
+
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.age_range
             .iter_mut()

@@ -49,6 +49,10 @@ impl<T> AddressGroups<T> {
             .chain(self.lt_amount.par_iter_mut())
     }
 
+    pub fn iter_separate(&self) -> impl Iterator<Item = &T> {
+        self.amount_range.iter()
+    }
+
     pub fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.amount_range.iter_mut()
     }

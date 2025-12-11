@@ -5,11 +5,13 @@ use std::path::Path;
 use brk_error::Result;
 use brk_grouper::{CohortContext, Filter, Filtered, StateLevel};
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
-    Indexes, PriceToAmount, UTXOCohortState, indexes, price,
+    Indexes, PriceToAmount, UTXOCohortState,
+    grouped::{PERCENTILES, PERCENTILES_LEN},
+    indexes, price,
     stateful_new::{CohortVecs, DynCohortVecs},
 };
 
@@ -93,6 +95,45 @@ impl UTXOCohortVecs {
     /// Reset state starting height to zero.
     pub fn reset_state_starting_height(&mut self) {
         self.state_starting_height = Some(Height::ZERO);
+    }
+
+    /// Compute percentile prices from standalone price_to_amount.
+    /// Returns NaN array if price_to_amount is None or empty.
+    pub fn compute_percentile_prices_from_standalone(
+        &self,
+        supply: Sats,
+    ) -> [Dollars; PERCENTILES_LEN] {
+        let mut result = [Dollars::NAN; PERCENTILES_LEN];
+
+        let price_to_amount = match self.price_to_amount.as_ref() {
+            Some(p) => p,
+            None => return result,
+        };
+
+        if price_to_amount.is_empty() || supply == Sats::ZERO {
+            return result;
+        }
+
+        let total = supply;
+        let targets = PERCENTILES.map(|p| total * p as u64 / 100);
+
+        let mut accumulated = Sats::ZERO;
+        let mut pct_idx = 0;
+
+        for (&price, &sats) in price_to_amount.iter() {
+            accumulated += sats;
+
+            while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
+                result[pct_idx] = price;
+                pct_idx += 1;
+            }
+
+            if pct_idx >= PERCENTILES_LEN {
+                break;
+            }
+        }
+
+        result
     }
 }
 

@@ -8,14 +8,14 @@
 //! 5. Compute aggregate cohorts from separate cohorts
 
 mod aggregates;
-// mod block_loop;
+mod block_loop;
 mod context;
 mod flush;
 mod readers;
 mod recover;
 
 pub use aggregates::{compute_overlapping, compute_rest_part1, compute_rest_part2};
-// pub use block_loop::process_blocks;
+pub use block_loop::process_blocks;
 pub use context::ComputeContext;
 pub use flush::{flush_checkpoint, flush_cohort_states};
 pub use readers::{
