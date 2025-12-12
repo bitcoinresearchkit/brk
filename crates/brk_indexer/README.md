@@ -34,7 +34,7 @@ cargo add brk_indexer
 
 ## Quick Start
 
-```rust
+```rust,ignore
 use brk_indexer::Indexer;
 use brk_reader::Parser;
 use bitcoincore_rpc::{Client, Auth};
@@ -112,7 +112,7 @@ Complete coverage of Bitcoin script types:
 
 ### Basic Indexing Operation
 
-```rust
+```rust,ignore
 use brk_indexer::Indexer;
 use brk_reader::Parser;
 use std::path::Path;
@@ -135,7 +135,7 @@ println!("Total addresses: {}", final_indexes.total_address_count());
 
 ### Querying Indexed Data
 
-```rust
+```rust,ignore
 use brk_indexer::Indexer;
 use brk_types::{Height, TxidPrefix, AddressHash};
 
@@ -143,7 +143,7 @@ let indexer = Indexer::forced_import("./blockchain_index")?;
 
 // Look up block hash by height
 let height = Height::new(750000);
-if let Some(block_hash) = indexer.vecs.height_to_blockhash.get(height)? {
+if let Some(block_hash) = indexer.vecs.block.height_to_blockhash.get(height)? {
     println!("Block 750000 hash: {}", block_hash);
 }
 
@@ -162,7 +162,7 @@ if let Some(type_index) = indexer.stores.addresshash_to_typeindex.get(&address_h
 
 ### Incremental Processing
 
-```rust
+```rust,ignore
 use brk_indexer::Indexer;
 
 // Indexer automatically resumes from last processed height
@@ -181,7 +181,7 @@ println!("Processed {} new blocks",
 
 ### Address Type Analysis
 
-```rust
+```rust,ignore
 use brk_indexer::Indexer;
 use brk_types::OutputType;
 
@@ -189,7 +189,7 @@ let indexer = Indexer::forced_import("./blockchain_index")?;
 
 // Analyze address distribution by type
 for output_type in OutputType::as_vec() {
-    let count = indexer.vecs.txoutindex_to_outputtype
+    let count = indexer.vecs.txout.txoutindex_to_outputtype
         .iter()
         .filter(|&ot| ot == output_type)
         .count();

@@ -74,7 +74,7 @@ impl ComputedValueVecsFromTxindex {
                 &name_usd,
                 version + VERSION,
                 bitcoin_txindex.boxed_clone(),
-                indexer.vecs.txindex_to_height.boxed_clone(),
+                indexer.vecs.tx.txindex_to_height.boxed_clone(),
                 price.chainindexes_to_price_close.height.boxed_clone(),
                 |txindex: TxIndex,
                  txindex_to_btc_iter,

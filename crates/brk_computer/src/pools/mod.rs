@@ -122,28 +122,28 @@ impl Vecs {
             self.height_to_pool.version() + indexer.stores.height_to_coinbase_tag.version(),
         )?;
 
-        let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter()?;
+        let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
         let mut txindex_to_first_txoutindex_iter =
-            indexer.vecs.txindex_to_first_txoutindex.iter()?;
+            indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-        let mut txoutindex_to_outputtype_iter = indexer.vecs.txoutindex_to_outputtype.iter()?;
-        let mut txoutindex_to_typeindex_iter = indexer.vecs.txoutindex_to_typeindex.iter()?;
+        let mut txoutindex_to_outputtype_iter = indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
+        let mut txoutindex_to_typeindex_iter = indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
         let mut p2pk65addressindex_to_p2pk65bytes_iter =
-            indexer.vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
+            indexer.vecs.address.p2pk65addressindex_to_p2pk65bytes.iter()?;
         let mut p2pk33addressindex_to_p2pk33bytes_iter =
-            indexer.vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
+            indexer.vecs.address.p2pk33addressindex_to_p2pk33bytes.iter()?;
         let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-            indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
+            indexer.vecs.address.p2pkhaddressindex_to_p2pkhbytes.iter()?;
         let mut p2shaddressindex_to_p2shbytes_iter =
-            indexer.vecs.p2shaddressindex_to_p2shbytes.iter()?;
+            indexer.vecs.address.p2shaddressindex_to_p2shbytes.iter()?;
         let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-            indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
+            indexer.vecs.address.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
         let mut p2wshaddressindex_to_p2wshbytes_iter =
-            indexer.vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
+            indexer.vecs.address.p2wshaddressindex_to_p2wshbytes.iter()?;
         let mut p2traddressindex_to_p2trbytes_iter =
-            indexer.vecs.p2traddressindex_to_p2trbytes.iter()?;
+            indexer.vecs.address.p2traddressindex_to_p2trbytes.iter()?;
         let mut p2aaddressindex_to_p2abytes_iter =
-            indexer.vecs.p2aaddressindex_to_p2abytes.iter()?;
+            indexer.vecs.address.p2aaddressindex_to_p2abytes.iter()?;
 
         let unknown = self.pools.get_unknown();
 

@@ -250,8 +250,8 @@ impl Vecs {
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
             version + Version::ZERO,
-            indexer.vecs.txindex_to_base_size.boxed_clone(),
-            indexer.vecs.txindex_to_total_size.boxed_clone(),
+            indexer.vecs.tx.txindex_to_base_size.boxed_clone(),
+            indexer.vecs.tx.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
                 let index = index.to_usize();
                 txindex_to_base_size_iter.get_at(index).map(|base_size| {
@@ -279,8 +279,8 @@ impl Vecs {
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version + Version::ZERO,
-            indexer.vecs.txindex_to_height.boxed_clone(),
-            indexer.vecs.height_to_first_txindex.boxed_clone(),
+            indexer.vecs.tx.txindex_to_height.boxed_clone(),
+            indexer.vecs.tx.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
                 txindex_to_height_iter.get(index).map(|height| {
                     let txindex = height_to_first_txindex_iter.get_unwrap(height);
@@ -652,7 +652,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_range(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_weight,
+                    &indexer.vecs.block.height_to_weight,
                     |h| (h, StoredU32::from(1_u32)),
                     exit,
                 )?;
@@ -692,10 +692,10 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter()?;
+        let mut height_to_timestamp_iter = indexer.vecs.block.height_to_timestamp.iter()?;
         self.height_to_interval.compute_transform(
             starting_indexes.height,
-            &indexer.vecs.height_to_timestamp,
+            &indexer.vecs.block.height_to_timestamp,
             |(height, timestamp, ..)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp_iter.get_unwrap(prev_h);
@@ -719,19 +719,19 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer.vecs.height_to_weight),
+            Some(&indexer.vecs.block.height_to_weight),
         )?;
 
         self.indexes_to_block_size.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer.vecs.height_to_total_size),
+            Some(&indexer.vecs.block.height_to_total_size),
         )?;
 
         self.height_to_vbytes.compute_transform(
             starting_indexes.height,
-            &indexer.vecs.height_to_weight,
+            &indexer.vecs.block.height_to_weight,
             |(h, w, ..)| {
                 (
                     h,
@@ -748,7 +748,7 @@ impl Vecs {
             Some(&self.height_to_vbytes),
         )?;
 
-        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter()?;
+        let mut height_to_timestamp_iter = indexer.vecs.block.height_to_timestamp.iter()?;
 
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,
@@ -806,15 +806,15 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer.vecs.height_to_difficulty),
+            Some(&indexer.vecs.block.height_to_difficulty),
         )?;
 
         self.indexes_to_tx_count
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_txindex,
-                    &indexer.vecs.txindex_to_txid,
+                    &indexer.vecs.tx.height_to_first_txindex,
+                    &indexer.vecs.tx.txindex_to_txid,
                     exit,
                 )?;
                 Ok(())
@@ -838,12 +838,12 @@ impl Vecs {
 
         let compute_indexes_to_tx_vany =
             |indexes_to_tx_vany: &mut ComputedVecsFromHeight<StoredU64>, txversion| {
-                let mut txindex_to_txversion_iter = indexer.vecs.txindex_to_txversion.iter()?;
+                let mut txindex_to_txversion_iter = indexer.vecs.tx.txindex_to_txversion.iter()?;
                 indexes_to_tx_vany.compute_all(indexes, starting_indexes, exit, |vec| {
                     vec.compute_filtered_count_from_indexes(
                         starting_indexes.height,
-                        &indexer.vecs.height_to_first_txindex,
-                        &indexer.vecs.txindex_to_txid,
+                        &indexer.vecs.tx.height_to_first_txindex,
+                        &indexer.vecs.tx.txindex_to_txid,
                         |txindex| {
                             let v = txindex_to_txversion_iter.get_unwrap(txindex);
                             v == txversion
@@ -857,8 +857,8 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
-        let txoutindex_to_value_reader = indexer.vecs.txoutindex_to_value.create_reader();
+        let txoutindex_to_value = &indexer.vecs.txout.txoutindex_to_value;
+        let txoutindex_to_value_reader = indexer.vecs.txout.txoutindex_to_value.create_reader();
         self.txinindex_to_value.compute_transform(
             starting_indexes.txinindex,
             &indexes.txinindex_to_txoutindex,
@@ -877,7 +877,7 @@ impl Vecs {
 
         self.txindex_to_input_value.compute_sum_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_txinindex,
+            &indexer.vecs.tx.txindex_to_first_txinindex,
             &indexes.txindex_to_input_count,
             &self.txinindex_to_value,
             exit,
@@ -885,9 +885,9 @@ impl Vecs {
 
         self.txindex_to_output_value.compute_sum_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_txoutindex,
+            &indexer.vecs.tx.txindex_to_first_txoutindex,
             &indexes.txindex_to_output_count,
-            &indexer.vecs.txoutindex_to_value,
+            &indexer.vecs.txout.txoutindex_to_value,
             exit,
         )?;
 
@@ -918,7 +918,7 @@ impl Vecs {
             .compute_all(indexes, price, starting_indexes, exit, |v| {
                 v.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_txindex,
+                    &indexer.vecs.tx.height_to_first_txindex,
                     &indexes.height_to_txindex_count,
                     &self.txindex_to_input_value,
                     |sats| !sats.is_max(),
@@ -963,12 +963,12 @@ impl Vecs {
         self.indexes_to_coinbase
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 let mut txindex_to_first_txoutindex_iter =
-                    indexer.vecs.txindex_to_first_txoutindex.iter()?;
+                    indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
                 let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-                let mut txoutindex_to_value_iter = indexer.vecs.txoutindex_to_value.iter()?;
+                let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
                 vec.compute_transform(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_txindex,
+                    &indexer.vecs.tx.height_to_first_txindex,
                     |(height, txindex, ..)| {
                         let first_txoutindex = txindex_to_first_txoutindex_iter
                             .get_unwrap(txindex)
@@ -1093,8 +1093,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2aaddressindex,
-                    &indexer.vecs.p2aaddressindex_to_p2abytes,
+                    &indexer.vecs.address.height_to_first_p2aaddressindex,
+                    &indexer.vecs.address.p2aaddressindex_to_p2abytes,
                     exit,
                 )?;
                 Ok(())
@@ -1104,8 +1104,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2msoutputindex,
-                    &indexer.vecs.p2msoutputindex_to_txindex,
+                    &indexer.vecs.output.height_to_first_p2msoutputindex,
+                    &indexer.vecs.output.p2msoutputindex_to_txindex,
                     exit,
                 )?;
                 Ok(())
@@ -1115,8 +1115,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pk33addressindex,
-                    &indexer.vecs.p2pk33addressindex_to_p2pk33bytes,
+                    &indexer.vecs.address.height_to_first_p2pk33addressindex,
+                    &indexer.vecs.address.p2pk33addressindex_to_p2pk33bytes,
                     exit,
                 )?;
                 Ok(())
@@ -1126,8 +1126,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pk65addressindex,
-                    &indexer.vecs.p2pk65addressindex_to_p2pk65bytes,
+                    &indexer.vecs.address.height_to_first_p2pk65addressindex,
+                    &indexer.vecs.address.p2pk65addressindex_to_p2pk65bytes,
                     exit,
                 )?;
                 Ok(())
@@ -1137,8 +1137,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pkhaddressindex,
-                    &indexer.vecs.p2pkhaddressindex_to_p2pkhbytes,
+                    &indexer.vecs.address.height_to_first_p2pkhaddressindex,
+                    &indexer.vecs.address.p2pkhaddressindex_to_p2pkhbytes,
                     exit,
                 )?;
                 Ok(())
@@ -1148,8 +1148,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2shaddressindex,
-                    &indexer.vecs.p2shaddressindex_to_p2shbytes,
+                    &indexer.vecs.address.height_to_first_p2shaddressindex,
+                    &indexer.vecs.address.p2shaddressindex_to_p2shbytes,
                     exit,
                 )?;
                 Ok(())
@@ -1159,8 +1159,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2traddressindex,
-                    &indexer.vecs.p2traddressindex_to_p2trbytes,
+                    &indexer.vecs.address.height_to_first_p2traddressindex,
+                    &indexer.vecs.address.p2traddressindex_to_p2trbytes,
                     exit,
                 )?;
                 Ok(())
@@ -1170,8 +1170,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2wpkhaddressindex,
-                    &indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes,
+                    &indexer.vecs.address.height_to_first_p2wpkhaddressindex,
+                    &indexer.vecs.address.p2wpkhaddressindex_to_p2wpkhbytes,
                     exit,
                 )?;
                 Ok(())
@@ -1181,8 +1181,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2wshaddressindex,
-                    &indexer.vecs.p2wshaddressindex_to_p2wshbytes,
+                    &indexer.vecs.address.height_to_first_p2wshaddressindex,
+                    &indexer.vecs.address.p2wshaddressindex_to_p2wshbytes,
                     exit,
                 )?;
                 Ok(())
@@ -1192,8 +1192,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_opreturnindex,
-                    &indexer.vecs.opreturnindex_to_txindex,
+                    &indexer.vecs.output.height_to_first_opreturnindex,
+                    &indexer.vecs.output.opreturnindex_to_txindex,
                     exit,
                 )?;
                 Ok(())
@@ -1203,8 +1203,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_unknownoutputindex,
-                    &indexer.vecs.unknownoutputindex_to_txindex,
+                    &indexer.vecs.output.height_to_first_unknownoutputindex,
+                    &indexer.vecs.output.unknownoutputindex_to_txindex,
                     exit,
                 )?;
                 Ok(())
@@ -1214,8 +1214,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_emptyoutputindex,
-                    &indexer.vecs.emptyoutputindex_to_txindex,
+                    &indexer.vecs.output.height_to_first_emptyoutputindex,
+                    &indexer.vecs.output.emptyoutputindex_to_txindex,
                     exit,
                 )?;
                 Ok(())
@@ -1299,7 +1299,7 @@ impl Vecs {
                 let multiplier = 2.0_f64.powi(32) / 600.0;
                 v.compute_transform(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_difficulty,
+                    &indexer.vecs.block.height_to_difficulty,
                     |(i, v, ..)| (i, StoredF32::from(*v * multiplier)),
                     exit,
                 )?;
@@ -1418,7 +1418,7 @@ impl Vecs {
             |v| {
                 v.compute_percentage_change(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_difficulty,
+                    &indexer.vecs.block.height_to_difficulty,
                     1,
                     exit,
                 )?;

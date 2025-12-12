@@ -24,6 +24,7 @@ fn main() -> Result<()> {
     dbg!(
         indexer
             .vecs
+            .txout
             .txoutindex_to_value
             .iter()?
             .enumerate()

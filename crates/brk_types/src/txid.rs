@@ -16,6 +16,11 @@ use vecdb::{Bytes, Formattable};
 #[repr(C)]
 pub struct Txid([u8; 32]);
 
+impl Txid {
+    /// Coinbase transaction "txid" - all zeros (used for coinbase inputs)
+    pub const COINBASE: Self = Self([0u8; 32]);
+}
+
 impl From<bitcoin::Txid> for Txid {
     #[inline]
     fn from(value: bitcoin::Txid) -> Self {

@@ -82,7 +82,7 @@ impl Indexer {
     ) -> Result<Indexes> {
         debug!("Starting indexing...");
 
-        let last_blockhash = self.vecs.height_to_blockhash.iter()?.last();
+        let last_blockhash = self.vecs.block.height_to_blockhash.iter()?.last();
         debug!("Last block hash found.");
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {

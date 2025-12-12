@@ -271,7 +271,7 @@ impl Vecs {
         };
 
         // 3. Get last height from indexer
-        let last_height = Height::from(indexer.vecs.height_to_blockhash.len().saturating_sub(1));
+        let last_height = Height::from(indexer.vecs.block.height_to_blockhash.len().saturating_sub(1));
 
         // 4. Process blocks
         if starting_height <= last_height {

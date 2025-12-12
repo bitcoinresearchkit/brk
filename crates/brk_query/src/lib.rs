@@ -14,6 +14,7 @@ use brk_types::{
 };
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
+#[cfg(feature = "tokio")]
 mod r#async;
 mod chain;
 mod deser;
@@ -22,6 +23,7 @@ mod pagination;
 mod params;
 mod vecs;
 
+#[cfg(feature = "tokio")]
 pub use r#async::*;
 pub use output::{Output, Value};
 pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
@@ -65,7 +67,7 @@ impl Query {
     }
 
     pub fn get_height(&self) -> Height {
-        Height::from(self.indexer().vecs.height_to_blockhash.stamp())
+        Height::from(self.indexer().vecs.block.height_to_blockhash.stamp())
     }
 
     pub fn get_address(&self, address: Address) -> Result<AddressStats> {

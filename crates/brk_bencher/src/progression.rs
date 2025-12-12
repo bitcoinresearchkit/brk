@@ -6,6 +6,12 @@ use std::{
     time::Instant,
 };
 
+/// Patterns to match for progress tracking.
+const PROGRESS_PATTERNS: &[&str] = &[
+    "block ",    // "Indexing block 123..."
+    "chain at ", // "Processing chain at 456..."
+];
+
 pub struct ProgressionMonitor {
     csv_file: Mutex<BufWriter<fs::File>>,
     start_time: Instant,
@@ -14,7 +20,7 @@ pub struct ProgressionMonitor {
 impl ProgressionMonitor {
     pub fn new(csv_path: &Path) -> io::Result<Self> {
         let mut csv_file = BufWriter::new(fs::File::create(csv_path)?);
-        writeln!(csv_file, "timestamp_ms,block_number")?;
+        writeln!(csv_file, "timestamp_ms,value")?;
 
         Ok(Self {
             csv_file: Mutex::new(csv_file),
@@ -22,20 +28,19 @@ impl ProgressionMonitor {
         })
     }
 
-    /// Fast inline check and record
+    /// Check message for progress patterns and record if found
     #[inline]
     pub fn check_and_record(&self, message: &str) {
-        if !message.contains("block ") {
+        let Some(value) = parse_progress(message) else {
+            return;
+        };
+
+        if value % 10 != 0 {
             return;
         }
 
-        if let Some(block_num) = parse_block_number(message)
-            && block_num % 10 == 0
-        {
-            let elapsed_ms = self.start_time.elapsed().as_millis();
-            let mut writer = self.csv_file.lock();
-            let _ = writeln!(writer, "{},{}", elapsed_ms, block_num);
-        }
+        let elapsed_ms = self.start_time.elapsed().as_millis();
+        let _ = writeln!(self.csv_file.lock(), "{},{}", elapsed_ms, value);
     }
 
     pub fn flush(&self) -> io::Result<()> {
@@ -43,14 +48,27 @@ impl ProgressionMonitor {
     }
 }
 
+/// Parse progress value from message
 #[inline]
-fn parse_block_number(message: &str) -> Option<u64> {
-    let start = message.find("block ")?;
-    let after_block = &message[start + 6..];
+fn parse_progress(message: &str) -> Option<u64> {
+    PROGRESS_PATTERNS
+        .iter()
+        .find_map(|pattern| parse_number_after(message, pattern))
+}
 
-    let end = after_block
+/// Extract number immediately following the pattern
+#[inline]
+fn parse_number_after(message: &str, pattern: &str) -> Option<u64> {
+    let start = message.find(pattern)?;
+    let after = &message[start + pattern.len()..];
+
+    let end = after
         .find(|c: char| !c.is_ascii_digit())
-        .unwrap_or(after_block.len());
+        .unwrap_or(after.len());
 
-    after_block[..end].parse::<u64>().ok()
+    if end == 0 {
+        return None;
+    }
+
+    after[..end].parse().ok()
 }
