@@ -73,7 +73,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let height_to_timestamp = &indexer.vecs.height_to_timestamp;
+        let height_to_timestamp = &indexer.vecs.block.height_to_timestamp;
         let index = starting_indexes
             .height
             .min(Height::from(self.height_to_price_ohlc_in_cents.len()));

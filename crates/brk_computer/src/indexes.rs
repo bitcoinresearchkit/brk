@@ -122,57 +122,57 @@ impl Vecs {
 
         let this = Self {
             txinindex_to_txoutindex: eager!("txoutindex"),
-            txoutindex_to_txoutindex: lazy!("txoutindex", indexer.vecs.txoutindex_to_value),
-            txinindex_to_txinindex: lazy!("txinindex", indexer.vecs.txinindex_to_outpoint),
+            txoutindex_to_txoutindex: lazy!("txoutindex", indexer.vecs.txout.txoutindex_to_value),
+            txinindex_to_txinindex: lazy!("txinindex", indexer.vecs.txin.txinindex_to_outpoint),
             p2pk33addressindex_to_p2pk33addressindex: lazy!(
                 "p2pk33addressindex",
-                indexer.vecs.p2pk33addressindex_to_p2pk33bytes
+                indexer.vecs.address.p2pk33addressindex_to_p2pk33bytes
             ),
             p2pk65addressindex_to_p2pk65addressindex: lazy!(
                 "p2pk65addressindex",
-                indexer.vecs.p2pk65addressindex_to_p2pk65bytes
+                indexer.vecs.address.p2pk65addressindex_to_p2pk65bytes
             ),
             p2pkhaddressindex_to_p2pkhaddressindex: lazy!(
                 "p2pkhaddressindex",
-                indexer.vecs.p2pkhaddressindex_to_p2pkhbytes
+                indexer.vecs.address.p2pkhaddressindex_to_p2pkhbytes
             ),
             p2shaddressindex_to_p2shaddressindex: lazy!(
                 "p2shaddressindex",
-                indexer.vecs.p2shaddressindex_to_p2shbytes
+                indexer.vecs.address.p2shaddressindex_to_p2shbytes
             ),
             p2traddressindex_to_p2traddressindex: lazy!(
                 "p2traddressindex",
-                indexer.vecs.p2traddressindex_to_p2trbytes
+                indexer.vecs.address.p2traddressindex_to_p2trbytes
             ),
             p2wpkhaddressindex_to_p2wpkhaddressindex: lazy!(
                 "p2wpkhaddressindex",
-                indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes
+                indexer.vecs.address.p2wpkhaddressindex_to_p2wpkhbytes
             ),
             p2wshaddressindex_to_p2wshaddressindex: lazy!(
                 "p2wshaddressindex",
-                indexer.vecs.p2wshaddressindex_to_p2wshbytes
+                indexer.vecs.address.p2wshaddressindex_to_p2wshbytes
             ),
             p2aaddressindex_to_p2aaddressindex: lazy!(
                 "p2aaddressindex",
-                indexer.vecs.p2aaddressindex_to_p2abytes
+                indexer.vecs.address.p2aaddressindex_to_p2abytes
             ),
             p2msoutputindex_to_p2msoutputindex: lazy!(
                 "p2msoutputindex",
-                indexer.vecs.p2msoutputindex_to_txindex
+                indexer.vecs.output.p2msoutputindex_to_txindex
             ),
             emptyoutputindex_to_emptyoutputindex: lazy!(
                 "emptyoutputindex",
-                indexer.vecs.emptyoutputindex_to_txindex
+                indexer.vecs.output.emptyoutputindex_to_txindex
             ),
             unknownoutputindex_to_unknownoutputindex: lazy!(
                 "unknownoutputindex",
-                indexer.vecs.unknownoutputindex_to_txindex
+                indexer.vecs.output.unknownoutputindex_to_txindex
             ),
             opreturnindex_to_opreturnindex: lazy!(
                 "opreturnindex",
-                indexer.vecs.opreturnindex_to_txindex
+                indexer.vecs.output.opreturnindex_to_txindex
             ),
-            txindex_to_txindex: lazy!("txindex", indexer.vecs.txindex_to_txid),
+            txindex_to_txindex: lazy!("txindex", indexer.vecs.tx.txindex_to_txid),
             txindex_to_input_count: eager!("input_count"),
             txindex_to_output_count: eager!("output_count"),
             dateindex_to_date: eager!("date"),
@@ -251,11 +251,11 @@ impl Vecs {
         // TxInIndex
         // ---
 
-        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
+        let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
         let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
         self.txinindex_to_txoutindex.compute_transform(
             starting_indexes.txinindex,
-            &indexer.vecs.txinindex_to_outpoint,
+            &indexer.vecs.txin.txinindex_to_outpoint,
             |(txinindex, outpoint, ..)| {
                 if unlikely(outpoint.is_coinbase()) {
                     return (txinindex, TxOutIndex::COINBASE);
@@ -274,22 +274,22 @@ impl Vecs {
 
         self.txindex_to_input_count.compute_count_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_txinindex,
-            &indexer.vecs.txinindex_to_outpoint,
+            &indexer.vecs.tx.txindex_to_first_txinindex,
+            &indexer.vecs.txin.txinindex_to_outpoint,
             exit,
         )?;
 
         self.txindex_to_output_count.compute_count_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.txindex_to_first_txoutindex,
-            &indexer.vecs.txoutindex_to_value,
+            &indexer.vecs.tx.txindex_to_first_txoutindex,
+            &indexer.vecs.txout.txoutindex_to_value,
             exit,
         )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,
-            &indexer.vecs.height_to_first_txindex,
-            &indexer.vecs.txindex_to_txid,
+            &indexer.vecs.tx.height_to_first_txindex,
+            &indexer.vecs.tx.txindex_to_txid,
             exit,
         )?;
 
@@ -299,13 +299,13 @@ impl Vecs {
 
         self.height_to_height.compute_from_index(
             starting_indexes.height,
-            &indexer.vecs.height_to_weight,
+            &indexer.vecs.block.height_to_weight,
             exit,
         )?;
 
         self.height_to_date.compute_transform(
             starting_indexes.height,
-            &indexer.vecs.height_to_timestamp,
+            &indexer.vecs.block.height_to_timestamp,
             |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
@@ -313,7 +313,7 @@ impl Vecs {
         let mut prev_timestamp_fixed = None;
         self.height_to_timestamp_fixed.compute_transform(
             starting_indexes.height,
-            &indexer.vecs.height_to_timestamp,
+            &indexer.vecs.block.height_to_timestamp,
             |(h, timestamp, height_to_timestamp_fixed_iter)| {
                 if prev_timestamp_fixed.is_none()
                     && let Some(prev_h) = h.decremented()
@@ -389,7 +389,7 @@ impl Vecs {
         self.dateindex_to_height_count.compute_count_from_indexes(
             starting_dateindex,
             &self.dateindex_to_first_height,
-            &indexer.vecs.height_to_weight,
+            &indexer.vecs.block.height_to_weight,
             exit,
         )?;
 
@@ -442,7 +442,7 @@ impl Vecs {
 
         self.height_to_difficultyepoch.compute_from_index(
             starting_indexes.height,
-            &indexer.vecs.height_to_weight,
+            &indexer.vecs.block.height_to_weight,
             exit,
         )?;
 
@@ -626,7 +626,7 @@ impl Vecs {
 
         self.height_to_halvingepoch.compute_from_index(
             starting_indexes.height,
-            &indexer.vecs.height_to_weight,
+            &indexer.vecs.block.height_to_weight,
             exit,
         )?;
 

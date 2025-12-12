@@ -8,7 +8,7 @@ fn run_benchmark(indexer: &Indexer) -> (Sats, std::time::Duration, usize) {
     let mut sum = Sats::ZERO;
     let mut count = 0;
 
-    for value in indexer.vecs.txoutindex_to_value.clean_iter().unwrap() {
+    for value in indexer.vecs.txout.txoutindex_to_value.clean_iter().unwrap() {
         // for value in indexer.vecs.txoutindex_to_value.values() {
         sum += value;
         count += 1;

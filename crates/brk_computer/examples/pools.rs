@@ -31,26 +31,26 @@ fn main() -> Result<()> {
             let vecs = indexer.vecs;
             let stores = indexer.stores;
 
-            let mut height_to_first_txindex_iter = vecs.height_to_first_txindex.iter()?;
-            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
+            let mut height_to_first_txindex_iter = vecs.tx.height_to_first_txindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
             let mut txindex_to_output_count_iter = computer.indexes.txindex_to_output_count.iter();
-            let mut txoutindex_to_outputtype_iter = vecs.txoutindex_to_outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
             let mut p2pk65addressindex_to_p2pk65bytes_iter =
-                vecs.p2pk65addressindex_to_p2pk65bytes.iter()?;
+                vecs.address.p2pk65addressindex_to_p2pk65bytes.iter()?;
             let mut p2pk33addressindex_to_p2pk33bytes_iter =
-                vecs.p2pk33addressindex_to_p2pk33bytes.iter()?;
+                vecs.address.p2pk33addressindex_to_p2pk33bytes.iter()?;
             let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-                vecs.p2pkhaddressindex_to_p2pkhbytes.iter()?;
+                vecs.address.p2pkhaddressindex_to_p2pkhbytes.iter()?;
             let mut p2shaddressindex_to_p2shbytes_iter =
-                vecs.p2shaddressindex_to_p2shbytes.iter()?;
+                vecs.address.p2shaddressindex_to_p2shbytes.iter()?;
             let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-                vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
+                vecs.address.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
             let mut p2wshaddressindex_to_p2wshbytes_iter =
-                vecs.p2wshaddressindex_to_p2wshbytes.iter()?;
+                vecs.address.p2wshaddressindex_to_p2wshbytes.iter()?;
             let mut p2traddressindex_to_p2trbytes_iter =
-                vecs.p2traddressindex_to_p2trbytes.iter()?;
-            let mut p2aaddressindex_to_p2abytes_iter = vecs.p2aaddressindex_to_p2abytes.iter()?;
+                vecs.address.p2traddressindex_to_p2trbytes.iter()?;
+            let mut p2aaddressindex_to_p2abytes_iter = vecs.address.p2aaddressindex_to_p2abytes.iter()?;
 
             let unknown = pools.get_unknown();
 

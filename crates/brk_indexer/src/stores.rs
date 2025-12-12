@@ -204,7 +204,8 @@ impl Stores {
         }
 
         if starting_indexes.height != Height::ZERO {
-            vecs.height_to_blockhash
+            vecs.block
+                .height_to_blockhash
                 .iter()?
                 .skip(starting_indexes.height.to_usize())
                 .map(BlockHashPrefix::from)
@@ -212,7 +213,7 @@ impl Stores {
                     self.blockhashprefix_to_height.remove(prefix);
                 });
 
-            (starting_indexes.height.to_usize()..vecs.height_to_blockhash.len())
+            (starting_indexes.height.to_usize()..vecs.block.height_to_blockhash.len())
                 .map(Height::from)
                 .for_each(|h| {
                     self.height_to_coinbase_tag.remove(h);
@@ -240,7 +241,8 @@ impl Stores {
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
-            vecs.txindex_to_txid
+            vecs.tx
+                .txindex_to_txid
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txindex.to_usize())
@@ -264,18 +266,22 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            let mut txoutindex_to_txindex_iter = vecs.txoutindex_to_txindex.iter()?;
-            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
-            vecs.txoutindex_to_outputtype
+            let mut txoutindex_to_txindex_iter = vecs.txout.txoutindex_to_txindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
+            vecs.txout
+                .txoutindex_to_outputtype
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txoutindex.to_usize())
                 .zip(
-                    vecs.txoutindex_to_typeindex
+                    vecs.txout
+                        .txoutindex_to_typeindex
                         .iter()?
                         .skip(starting_indexes.txoutindex.to_usize()),
                 )
-                .filter(|((_, outputtype), _)| outputtype.is_address())
+                .filter(|((_, outputtype), _): &((usize, OutputType), TypeIndex)| {
+                    outputtype.is_address()
+                })
                 .for_each(|((txoutindex, addresstype), addressindex)| {
                     let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
@@ -297,13 +303,14 @@ impl Stores {
                 });
 
             // Add back outputs that were spent after the rollback point
-            let mut txindex_to_first_txoutindex_iter = vecs.txindex_to_first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.txoutindex_to_outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.txoutindex_to_typeindex.iter()?;
-            vecs.txinindex_to_outpoint
+            let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
+            vecs.txin
+                .txinindex_to_outpoint
                 .iter()?
                 .skip(starting_indexes.txinindex.to_usize())
-                .for_each(|outpoint| {
+                .for_each(|outpoint: OutPoint| {
                     if outpoint.is_coinbase() {
                         return;
                     }

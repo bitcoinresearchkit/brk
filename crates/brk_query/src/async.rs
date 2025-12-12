@@ -9,7 +9,6 @@ use brk_types::{
     Address, AddressStats, Height, Index, IndexInfo, Limit, Metric, MetricCount, Transaction,
     TreeNode, TxidPath,
 };
-#[cfg(feature = "tokio")]
 use tokio::task::spawn_blocking;
 
 use crate::{
@@ -18,7 +17,6 @@ use crate::{
 };
 
 #[derive(Clone)]
-#[cfg(feature = "tokio")]
 pub struct AsyncQuery(Query);
 
 impl AsyncQuery {

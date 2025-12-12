@@ -36,16 +36,16 @@ fn run() -> Result<()> {
     dbg!(
         indexer
             .vecs
-            .txindex_to_txid
+            .tx.txindex_to_txid
             .read_once(txindex)
             .unwrap()
             .to_string()
     );
-    let first_txinindex = indexer.vecs.txindex_to_first_txinindex.read_once(txindex)?;
+    let first_txinindex = indexer.vecs.tx.txindex_to_first_txinindex.read_once(txindex)?;
     dbg!(first_txinindex);
     let first_txoutindex = indexer
         .vecs
-        .txindex_to_first_txoutindex
+        .tx.txindex_to_first_txoutindex
         .read_once(txindex)?;
     dbg!(first_txoutindex);
     let input_count = *computer.indexes.txindex_to_input_count.read_once(txindex)?;
@@ -74,11 +74,11 @@ fn run() -> Result<()> {
             .txinindex_to_value
             .read_once(first_txinindex + 1)
     );
-    dbg!(indexer.vecs.txoutindex_to_value.read_once(first_txoutindex));
+    dbg!(indexer.vecs.txout.txoutindex_to_value.read_once(first_txoutindex));
     dbg!(
         indexer
             .vecs
-            .txoutindex_to_value
+            .txout.txoutindex_to_value
             .read_once(first_txoutindex + 1)
     );
     dbg!(computer.chain.txindex_to_input_value.read_once(txindex));

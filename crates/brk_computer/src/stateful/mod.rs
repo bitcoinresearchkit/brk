@@ -381,18 +381,18 @@ impl Vecs {
             .as_ref()
             .map(|price| price.timeindexes_to_price_close.dateindex.u());
         let height_to_date_fixed = &indexes.height_to_date_fixed;
-        let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
-        let height_to_first_p2pk33addressindex = &indexer.vecs.height_to_first_p2pk33addressindex;
-        let height_to_first_p2pk65addressindex = &indexer.vecs.height_to_first_p2pk65addressindex;
-        let height_to_first_p2pkhaddressindex = &indexer.vecs.height_to_first_p2pkhaddressindex;
-        let height_to_first_p2shaddressindex = &indexer.vecs.height_to_first_p2shaddressindex;
-        let height_to_first_p2traddressindex = &indexer.vecs.height_to_first_p2traddressindex;
-        let height_to_first_p2wpkhaddressindex = &indexer.vecs.height_to_first_p2wpkhaddressindex;
-        let height_to_first_p2wshaddressindex = &indexer.vecs.height_to_first_p2wshaddressindex;
-        let height_to_first_txindex = &indexer.vecs.height_to_first_txindex;
+        let height_to_first_p2aaddressindex = &indexer.vecs.address.height_to_first_p2aaddressindex;
+        let height_to_first_p2pk33addressindex = &indexer.vecs.address.height_to_first_p2pk33addressindex;
+        let height_to_first_p2pk65addressindex = &indexer.vecs.address.height_to_first_p2pk65addressindex;
+        let height_to_first_p2pkhaddressindex = &indexer.vecs.address.height_to_first_p2pkhaddressindex;
+        let height_to_first_p2shaddressindex = &indexer.vecs.address.height_to_first_p2shaddressindex;
+        let height_to_first_p2traddressindex = &indexer.vecs.address.height_to_first_p2traddressindex;
+        let height_to_first_p2wpkhaddressindex = &indexer.vecs.address.height_to_first_p2wpkhaddressindex;
+        let height_to_first_p2wshaddressindex = &indexer.vecs.address.height_to_first_p2wshaddressindex;
+        let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
         let height_to_txindex_count = chain.indexes_to_tx_count.height.u();
-        let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
-        let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
+        let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
+        let height_to_first_txoutindex = &indexer.vecs.txout.height_to_first_txoutindex;
         let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
         let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
         let height_to_price_close = price
@@ -406,15 +406,15 @@ impl Vecs {
             .height
             .as_ref()
             .unwrap();
-        let txindex_to_first_txoutindex = &indexer.vecs.txindex_to_first_txoutindex;
-        let txindex_to_height = &indexer.vecs.txindex_to_height;
+        let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
+        let txindex_to_height = &indexer.vecs.tx.txindex_to_height;
         let txindex_to_input_count = &indexes.txindex_to_input_count;
         let txindex_to_output_count = &indexes.txindex_to_output_count;
-        let txinindex_to_outpoint = &indexer.vecs.txinindex_to_outpoint;
-        let txoutindex_to_outputtype = &indexer.vecs.txoutindex_to_outputtype;
-        let txoutindex_to_txindex = &indexer.vecs.txoutindex_to_txindex;
-        let txoutindex_to_typeindex = &indexer.vecs.txoutindex_to_typeindex;
-        let txoutindex_to_value = &indexer.vecs.txoutindex_to_value;
+        let txinindex_to_outpoint = &indexer.vecs.txin.txinindex_to_outpoint;
+        let txoutindex_to_outputtype = &indexer.vecs.txout.txoutindex_to_outputtype;
+        let txoutindex_to_txindex = &indexer.vecs.txout.txoutindex_to_txindex;
+        let txoutindex_to_typeindex = &indexer.vecs.txout.txoutindex_to_typeindex;
+        let txoutindex_to_value = &indexer.vecs.txout.txoutindex_to_value;
 
         let mut height_to_price_close_iter = height_to_price_close.as_ref().map(|v| v.into_iter());
         let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
@@ -501,7 +501,7 @@ impl Vecs {
         };
 
         let starting_height = starting_indexes.height.min(stateful_starting_height);
-        let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
+        let last_height = Height::from(indexer.vecs.block.height_to_blockhash.stamp());
         if starting_height <= last_height {
             let stamp = starting_height.into();
             let starting_height = if starting_height.is_not_zero() {

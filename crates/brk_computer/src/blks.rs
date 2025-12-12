@@ -69,7 +69,7 @@ impl Vecs {
 
         let Some(min_height) = indexer
             .vecs
-            .txindex_to_height
+            .tx.txindex_to_height
             .iter()?
             .get(min_txindex)
             .map(|h| h.min(starting_indexes.height))
@@ -77,12 +77,12 @@ impl Vecs {
             return Ok(());
         };
 
-        let mut height_to_first_txindex_iter = indexer.vecs.height_to_first_txindex.iter()?;
+        let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
 
         parser
             .read(
                 Some(min_height),
-                Some((indexer.vecs.height_to_first_txindex.len() - 1).into()),
+                Some((indexer.vecs.tx.height_to_first_txindex.len() - 1).into()),
             )
             .iter()
             .try_for_each(|block| -> Result<()> {

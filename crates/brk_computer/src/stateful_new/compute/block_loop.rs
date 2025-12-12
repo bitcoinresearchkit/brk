@@ -61,9 +61,9 @@ pub fn process_blocks(
 
     // References to vectors using correct field paths
     // From indexer.vecs:
-    let height_to_first_txindex = &indexer.vecs.height_to_first_txindex;
-    let height_to_first_txoutindex = &indexer.vecs.height_to_first_txoutindex;
-    let height_to_first_txinindex = &indexer.vecs.height_to_first_txinindex;
+    let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
+    let height_to_first_txoutindex = &indexer.vecs.txout.height_to_first_txoutindex;
+    let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
 
     // From chain (via .height.u() or .height.unwrap_sum() patterns):
     let height_to_tx_count = chain.indexes_to_tx_count.height.u();
@@ -114,14 +114,14 @@ pub fn process_blocks(
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
     // Create iterators for first address indexes per type
-    let mut first_p2a_iter = indexer.vecs.height_to_first_p2aaddressindex.into_iter();
-    let mut first_p2pk33_iter = indexer.vecs.height_to_first_p2pk33addressindex.into_iter();
-    let mut first_p2pk65_iter = indexer.vecs.height_to_first_p2pk65addressindex.into_iter();
-    let mut first_p2pkh_iter = indexer.vecs.height_to_first_p2pkhaddressindex.into_iter();
-    let mut first_p2sh_iter = indexer.vecs.height_to_first_p2shaddressindex.into_iter();
-    let mut first_p2tr_iter = indexer.vecs.height_to_first_p2traddressindex.into_iter();
-    let mut first_p2wpkh_iter = indexer.vecs.height_to_first_p2wpkhaddressindex.into_iter();
-    let mut first_p2wsh_iter = indexer.vecs.height_to_first_p2wshaddressindex.into_iter();
+    let mut first_p2a_iter = indexer.vecs.address.height_to_first_p2aaddressindex.into_iter();
+    let mut first_p2pk33_iter = indexer.vecs.address.height_to_first_p2pk33addressindex.into_iter();
+    let mut first_p2pk65_iter = indexer.vecs.address.height_to_first_p2pk65addressindex.into_iter();
+    let mut first_p2pkh_iter = indexer.vecs.address.height_to_first_p2pkhaddressindex.into_iter();
+    let mut first_p2sh_iter = indexer.vecs.address.height_to_first_p2shaddressindex.into_iter();
+    let mut first_p2tr_iter = indexer.vecs.address.height_to_first_p2traddressindex.into_iter();
+    let mut first_p2wpkh_iter = indexer.vecs.address.height_to_first_p2wpkhaddressindex.into_iter();
+    let mut first_p2wsh_iter = indexer.vecs.address.height_to_first_p2wshaddressindex.into_iter();
 
     // Track running totals - recover from previous height if resuming
     let (mut unspendable_supply, mut opreturn_supply, mut addresstype_to_addr_count, mut addresstype_to_empty_addr_count) =
@@ -210,9 +210,9 @@ pub fn process_blocks(
                 first_txoutindex,
                 output_count,
                 &txoutindex_to_txindex,
-                &indexer.vecs.txoutindex_to_value,
-                &indexer.vecs.txoutindex_to_outputtype,
-                &indexer.vecs.txoutindex_to_typeindex,
+                &indexer.vecs.txout.txoutindex_to_value,
+                &indexer.vecs.txout.txoutindex_to_outputtype,
+                &indexer.vecs.txout.txoutindex_to_typeindex,
                 &ir,
                 &first_addressindexes,
                 &loaded_cache,
@@ -228,11 +228,11 @@ pub fn process_blocks(
                     first_txinindex + 1, // Skip coinbase
                     input_count - 1,
                     &txinindex_to_txindex[1..], // Skip coinbase
-                    &indexer.vecs.txinindex_to_outpoint,
-                    &indexer.vecs.txindex_to_first_txoutindex,
-                    &indexer.vecs.txoutindex_to_value,
-                    &indexer.vecs.txoutindex_to_outputtype,
-                    &indexer.vecs.txoutindex_to_typeindex,
+                    &indexer.vecs.txin.txinindex_to_outpoint,
+                    &indexer.vecs.tx.txindex_to_first_txoutindex,
+                    &indexer.vecs.txout.txoutindex_to_value,
+                    &indexer.vecs.txout.txoutindex_to_outputtype,
+                    &indexer.vecs.txout.txoutindex_to_typeindex,
                     &txoutindex_to_height,
                     &ir,
                     &first_addressindexes,

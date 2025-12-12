@@ -21,11 +21,11 @@ pub struct IndexerReaders {
 impl IndexerReaders {
     pub fn new(indexer: &Indexer) -> Self {
         Self {
-            txinindex_to_outpoint: indexer.vecs.txinindex_to_outpoint.create_reader(),
-            txindex_to_first_txoutindex: indexer.vecs.txindex_to_first_txoutindex.create_reader(),
-            txoutindex_to_value: indexer.vecs.txoutindex_to_value.create_reader(),
-            txoutindex_to_outputtype: indexer.vecs.txoutindex_to_outputtype.create_reader(),
-            txoutindex_to_typeindex: indexer.vecs.txoutindex_to_typeindex.create_reader(),
+            txinindex_to_outpoint: indexer.vecs.txin.txinindex_to_outpoint.create_reader(),
+            txindex_to_first_txoutindex: indexer.vecs.tx.txindex_to_first_txoutindex.create_reader(),
+            txoutindex_to_value: indexer.vecs.txout.txoutindex_to_value.create_reader(),
+            txoutindex_to_outputtype: indexer.vecs.txout.txoutindex_to_outputtype.create_reader(),
+            txoutindex_to_typeindex: indexer.vecs.txout.txoutindex_to_typeindex.create_reader(),
         }
     }
 }

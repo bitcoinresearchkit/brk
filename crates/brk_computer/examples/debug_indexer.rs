@@ -11,34 +11,34 @@ fn main() -> color_eyre::Result<()> {
 
     let indexer = Indexer::forced_import(&outputs_dir)?;
 
-    let reader_outputtype = indexer.vecs.txoutindex_to_outputtype.create_reader();
-    let reader_typeindex = indexer.vecs.txoutindex_to_typeindex.create_reader();
-    let reader_txindex = indexer.vecs.txoutindex_to_txindex.create_reader();
-    let reader_txid = indexer.vecs.txindex_to_txid.create_reader();
-    let reader_height_to_first_txoutindex = indexer.vecs.height_to_first_txoutindex.create_reader();
-    let reader_p2pkh = indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.create_reader();
-    let reader_p2sh = indexer.vecs.p2shaddressindex_to_p2shbytes.create_reader();
+    let reader_outputtype = indexer.vecs.txout.txoutindex_to_outputtype.create_reader();
+    let reader_typeindex = indexer.vecs.txout.txoutindex_to_typeindex.create_reader();
+    let reader_txindex = indexer.vecs.txout.txoutindex_to_txindex.create_reader();
+    let reader_txid = indexer.vecs.tx.txindex_to_txid.create_reader();
+    let reader_height_to_first_txoutindex = indexer.vecs.txout.height_to_first_txoutindex.create_reader();
+    let reader_p2pkh = indexer.vecs.address.p2pkhaddressindex_to_p2pkhbytes.create_reader();
+    let reader_p2sh = indexer.vecs.address.p2shaddressindex_to_p2shbytes.create_reader();
 
     // Check what's stored at typeindex 254909199 in both P2PKH and P2SH vecs
     let typeindex = TypeIndex::from(254909199_usize);
 
     let p2pkh_bytes = indexer
         .vecs
-        .p2pkhaddressindex_to_p2pkhbytes
+        .address.p2pkhaddressindex_to_p2pkhbytes
         .read(P2PKHAddressIndex::from(typeindex), &reader_p2pkh);
     println!("P2PKH at typeindex 254909199: {:?}", p2pkh_bytes);
 
     let p2sh_bytes = indexer
         .vecs
-        .p2shaddressindex_to_p2shbytes
+        .address.p2shaddressindex_to_p2shbytes
         .read(P2SHAddressIndex::from(typeindex), &reader_p2sh);
     println!("P2SH at typeindex 254909199: {:?}", p2sh_bytes);
 
     // Check first P2SH index at height 476152
-    let reader_first_p2sh = indexer.vecs.height_to_first_p2shaddressindex.create_reader();
-    let reader_first_p2pkh = indexer.vecs.height_to_first_p2pkhaddressindex.create_reader();
-    let first_p2sh_at_476152 = indexer.vecs.height_to_first_p2shaddressindex.read(Height::from(476152_usize), &reader_first_p2sh);
-    let first_p2pkh_at_476152 = indexer.vecs.height_to_first_p2pkhaddressindex.read(Height::from(476152_usize), &reader_first_p2pkh);
+    let reader_first_p2sh = indexer.vecs.address.height_to_first_p2shaddressindex.create_reader();
+    let reader_first_p2pkh = indexer.vecs.address.height_to_first_p2pkhaddressindex.create_reader();
+    let first_p2sh_at_476152 = indexer.vecs.address.height_to_first_p2shaddressindex.read(Height::from(476152_usize), &reader_first_p2sh);
+    let first_p2pkh_at_476152 = indexer.vecs.address.height_to_first_p2pkhaddressindex.read(Height::from(476152_usize), &reader_first_p2pkh);
     println!("First P2SH index at height 476152: {:?}", first_p2sh_at_476152);
     println!("First P2PKH index at height 476152: {:?}", first_p2pkh_at_476152);
 
@@ -47,22 +47,22 @@ fn main() -> color_eyre::Result<()> {
         let txoutindex = TxOutIndex::from(txoutindex_usize);
         let outputtype = indexer
             .vecs
-            .txoutindex_to_outputtype
+            .txout.txoutindex_to_outputtype
             .read(txoutindex, &reader_outputtype)
             .unwrap();
         let typeindex = indexer
             .vecs
-            .txoutindex_to_typeindex
+            .txout.txoutindex_to_typeindex
             .read(txoutindex, &reader_typeindex)
             .unwrap();
         let txindex = indexer
             .vecs
-            .txoutindex_to_txindex
+            .txout.txoutindex_to_txindex
             .read(txoutindex, &reader_txindex)
             .unwrap();
         let txid = indexer
             .vecs
-            .txindex_to_txid
+            .tx.txindex_to_txid
             .read(txindex, &reader_txid)
             .unwrap();
 
@@ -71,7 +71,7 @@ fn main() -> color_eyre::Result<()> {
         for h in 0..900_000_usize {
             let first_txoutindex = indexer
                 .vecs
-                .height_to_first_txoutindex
+                .txout.height_to_first_txoutindex
                 .read(Height::from(h), &reader_height_to_first_txoutindex);
             if let Ok(first) = first_txoutindex {
                 if usize::from(first) > txoutindex_usize {
