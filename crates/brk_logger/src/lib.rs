@@ -94,11 +94,11 @@ fn write(
     dash: impl Display,
     args: impl Display,
 ) -> Result<(), std::io::Error> {
-    // writeln!(buf, "{date_time} {dash} {level} {args}")
+    writeln!(buf, "{date_time} {dash} {level} {args}")
     // Don't remove, used to know the target of unwanted logs
-    writeln!(
-        buf,
-        "{} {} {} {}  {}",
-        date_time, _target, level, dash, args
-    )
+    // writeln!(
+    //     buf,
+    //     "{} {} {} {}  {}",
+    //     date_time, _target, level, dash, args
+    // )
 }

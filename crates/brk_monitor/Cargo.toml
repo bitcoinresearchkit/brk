@@ -16,3 +16,7 @@ derive_deref = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
 rustc-hash = { workspace = true }
+smallvec = { workspace = true }
+
+[dev-dependencies]
+brk_logger = { workspace = true }

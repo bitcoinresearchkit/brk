@@ -737,12 +737,14 @@ name = "brk_monitor"
 version = "0.0.111"
 dependencies = [
  "brk_error",
+ "brk_logger",
  "brk_rpc",
  "brk_types",
  "derive_deref",
  "log",
  "parking_lot",
  "rustc-hash",
+ "smallvec",
 ]
 
 [[package]]

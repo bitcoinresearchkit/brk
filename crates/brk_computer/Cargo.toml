@@ -28,7 +28,7 @@ pco = "0.4.7"
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
-smallvec = "1.15.1"
+smallvec = { workspace = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]

@@ -9,7 +9,10 @@ use bitcoincore_rpc::{
     {Client as CoreClient, Error as RpcError, RpcApi},
 };
 use brk_error::Result;
-use brk_types::{BlockHash, Height, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid, Vout};
+use brk_types::{
+    BlockHash, Height, MempoolEntryInfo, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid,
+    Vout,
+};
 
 pub use bitcoincore_rpc::Auth;
 
@@ -194,6 +197,24 @@ impl Client {
         self.call(|c| c.get_raw_mempool())
             .map(|v| unsafe { mem::transmute(v) })
             .map_err(Into::into)
+    }
+
+    /// Get all mempool entries with their fee data in a single RPC call
+    pub fn get_raw_mempool_verbose(&self) -> Result<Vec<MempoolEntryInfo>> {
+        let result = self.call(|c| c.get_raw_mempool_verbose())?;
+        Ok(result
+            .into_iter()
+            .map(|(txid, entry)| MempoolEntryInfo {
+                txid: txid.into(),
+                vsize: entry.vsize,
+                weight: entry.weight.unwrap_or(entry.vsize * 4),
+                fee: Sats::from(entry.fees.base.to_sat()),
+                ancestor_count: entry.ancestor_count,
+                ancestor_size: entry.ancestor_size,
+                ancestor_fee: Sats::from(entry.fees.ancestor.to_sat()),
+                depends: entry.depends.into_iter().map(Txid::from).collect(),
+            })
+            .collect())
     }
 
     pub fn get_raw_transaction<'a, T, H>(
