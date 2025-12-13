@@ -35,6 +35,7 @@ pub enum Error {
     InvalidAddress,
     InvalidNetwork,
     InvalidTxid,
+    MempoolNotAvailable,
     UnknownAddress,
     UnknownTxid,
     UnsupportedType(String),
@@ -189,6 +190,7 @@ impl fmt::Display for Error {
             Error::InvalidTxid => write!(f, "The provided TXID appears to be invalid"),
             Error::InvalidNetwork => write!(f, "Invalid network"),
             Error::InvalidAddress => write!(f, "The provided address appears to be invalid"),
+            Error::MempoolNotAvailable => write!(f, "Mempool data is not available"),
             Error::UnknownAddress => write!(
                 f,
                 "Address not found in the blockchain (no transaction history)"

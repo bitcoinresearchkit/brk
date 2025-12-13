@@ -1,6 +1,7 @@
-use brk_types::{Outpoint, Sats, Transaction, Txid, VSize};
+use brk_types::{Sats, Transaction, Txid, VSize, Vout};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use super::entry::MempoolOutpoint;
 use super::MempoolEntry;
 
 /// Transaction dependency graph for the mempool
@@ -13,7 +14,7 @@ pub struct TxGraph {
     entries: FxHashMap<Txid, MempoolEntry>,
 
     /// Maps outpoint -> txid that created it (for finding parents)
-    outpoint_to_tx: FxHashMap<Outpoint, Txid>,
+    outpoint_to_tx: FxHashMap<MempoolOutpoint, Txid>,
 
     /// Maps txid -> txids that spend its outputs (children)
     children: FxHashMap<Txid, FxHashSet<Txid>>,
@@ -51,7 +52,7 @@ impl TxGraph {
 
         // Register this tx's outputs
         for (vout, _) in tx.output.iter().enumerate() {
-            let outpoint = Outpoint::new(entry.txid.clone(), vout as u32);
+            let outpoint = (entry.txid.clone(), Vout::from(vout as u32));
             self.outpoint_to_tx.insert(outpoint, entry.txid.clone());
         }
 
@@ -97,7 +98,7 @@ impl TxGraph {
     }
 
     /// Find which inputs reference in-mempool transactions (parents)
-    fn find_parents(&self, spends: &[Outpoint]) -> Vec<Txid> {
+    fn find_parents(&self, spends: &[MempoolOutpoint]) -> Vec<Txid> {
         spends
             .iter()
             .filter_map(|outpoint| self.outpoint_to_tx.get(outpoint).cloned())

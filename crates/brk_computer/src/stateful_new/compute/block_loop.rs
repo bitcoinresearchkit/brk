@@ -8,12 +8,14 @@
 //! 5. Push to height-indexed vectors
 //! 6. Periodically flush checkpoints
 
-use std::thread;
+use std::{mem, thread};
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TxInIndex, TxOutIndex, TypeIndex};
+use brk_types::{
+    DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TxInIndex, TxOutIndex, TypeIndex,
+};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
@@ -27,8 +29,9 @@ use super::super::cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
 use super::super::vecs::Vecs;
 use super::{
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, FLUSH_INTERVAL, IndexerReaders, VecsReaders, build_txinindex_to_txindex,
-    build_txoutindex_to_txindex, flush::flush_checkpoint as flush_checkpoint_full,
+    BIP30_ORIGINAL_HEIGHT_2, FLUSH_INTERVAL, IndexerReaders, VecsReaders,
+    build_txinindex_to_txindex, build_txoutindex_to_txindex,
+    flush::flush_checkpoint as flush_checkpoint_full,
 };
 use crate::stateful_new::address::AddressTypeToAddressCount;
 use crate::stateful_new::process::{
@@ -69,7 +72,12 @@ pub fn process_blocks(
     let height_to_tx_count = chain.indexes_to_tx_count.height.u();
     let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
     let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
-    let height_to_unclaimed_rewards = chain.indexes_to_unclaimed_rewards.sats.height.as_ref().unwrap();
+    let height_to_unclaimed_rewards = chain
+        .indexes_to_unclaimed_rewards
+        .sats
+        .height
+        .as_ref()
+        .unwrap();
 
     // From indexes:
     let height_to_timestamp = &indexes.height_to_timestamp_fixed;
@@ -114,43 +122,79 @@ pub fn process_blocks(
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
     // Create iterators for first address indexes per type
-    let mut first_p2a_iter = indexer.vecs.address.height_to_first_p2aaddressindex.into_iter();
-    let mut first_p2pk33_iter = indexer.vecs.address.height_to_first_p2pk33addressindex.into_iter();
-    let mut first_p2pk65_iter = indexer.vecs.address.height_to_first_p2pk65addressindex.into_iter();
-    let mut first_p2pkh_iter = indexer.vecs.address.height_to_first_p2pkhaddressindex.into_iter();
-    let mut first_p2sh_iter = indexer.vecs.address.height_to_first_p2shaddressindex.into_iter();
-    let mut first_p2tr_iter = indexer.vecs.address.height_to_first_p2traddressindex.into_iter();
-    let mut first_p2wpkh_iter = indexer.vecs.address.height_to_first_p2wpkhaddressindex.into_iter();
-    let mut first_p2wsh_iter = indexer.vecs.address.height_to_first_p2wshaddressindex.into_iter();
+    let mut first_p2a_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2aaddressindex
+        .into_iter();
+    let mut first_p2pk33_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2pk33addressindex
+        .into_iter();
+    let mut first_p2pk65_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2pk65addressindex
+        .into_iter();
+    let mut first_p2pkh_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2pkhaddressindex
+        .into_iter();
+    let mut first_p2sh_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2shaddressindex
+        .into_iter();
+    let mut first_p2tr_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2traddressindex
+        .into_iter();
+    let mut first_p2wpkh_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2wpkhaddressindex
+        .into_iter();
+    let mut first_p2wsh_iter = indexer
+        .vecs
+        .address
+        .height_to_first_p2wshaddressindex
+        .into_iter();
 
     // Track running totals - recover from previous height if resuming
-    let (mut unspendable_supply, mut opreturn_supply, mut addresstype_to_addr_count, mut addresstype_to_empty_addr_count) =
-        if starting_height > Height::ZERO {
-            let prev_height = starting_height.decremented().unwrap();
-            (
-                vecs.height_to_unspendable_supply
-                    .into_iter()
-                    .get_unwrap(prev_height),
-                vecs.height_to_opreturn_supply
-                    .into_iter()
-                    .get_unwrap(prev_height),
-                AddressTypeToAddressCount::from((
-                    &vecs.addresstype_to_height_to_addr_count,
-                    starting_height,
-                )),
-                AddressTypeToAddressCount::from((
-                    &vecs.addresstype_to_height_to_empty_addr_count,
-                    starting_height,
-                )),
-            )
-        } else {
-            (
-                Sats::ZERO,
-                Sats::ZERO,
-                AddressTypeToAddressCount::default(),
-                AddressTypeToAddressCount::default(),
-            )
-        };
+    let (
+        mut unspendable_supply,
+        mut opreturn_supply,
+        mut addresstype_to_addr_count,
+        mut addresstype_to_empty_addr_count,
+    ) = if starting_height > Height::ZERO {
+        let prev_height = starting_height.decremented().unwrap();
+        (
+            vecs.height_to_unspendable_supply
+                .into_iter()
+                .get_unwrap(prev_height),
+            vecs.height_to_opreturn_supply
+                .into_iter()
+                .get_unwrap(prev_height),
+            AddressTypeToAddressCount::from((
+                &vecs.addresstype_to_height_to_addr_count,
+                starting_height,
+            )),
+            AddressTypeToAddressCount::from((
+                &vecs.addresstype_to_height_to_empty_addr_count,
+                starting_height,
+            )),
+        )
+    } else {
+        (
+            Sats::ZERO,
+            Sats::ZERO,
+            AddressTypeToAddressCount::default(),
+            AddressTypeToAddressCount::default(),
+        )
+    };
 
     // Persistent address data caches (accumulate across blocks, flushed at checkpoints)
     let mut loaded_cache: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource> =
@@ -169,7 +213,9 @@ pub fn process_blocks(
         // Get block metadata
         let first_txindex = height_to_first_txindex_iter.get_unwrap(height);
         let tx_count = u64::from(height_to_tx_count_iter.get_unwrap(height));
-        let first_txoutindex = height_to_first_txoutindex_iter.get_unwrap(height).to_usize();
+        let first_txoutindex = height_to_first_txoutindex_iter
+            .get_unwrap(height)
+            .to_usize();
         let output_count = u64::from(height_to_output_count_iter.get_unwrap(height)) as usize;
         let first_txinindex = height_to_first_txinindex_iter.get_unwrap(height).to_usize();
         let input_count = u64::from(height_to_input_count_iter.get_unwrap(height)) as usize;
@@ -260,8 +306,9 @@ pub fn process_blocks(
         loaded_cache.merge_mut(inputs_result.address_data);
 
         // Combine txindex_vecs from outputs and inputs, then update tx_count
-        let combined_txindex_vecs =
-            outputs_result.txindex_vecs.merge_vec(inputs_result.txindex_vecs);
+        let combined_txindex_vecs = outputs_result
+            .txindex_vecs
+            .merge_vec(inputs_result.txindex_vecs);
         update_tx_counts(&mut loaded_cache, &mut empty_cache, combined_txindex_vecs);
 
         let mut transacted = outputs_result.transacted;
@@ -478,7 +525,8 @@ fn flush_checkpoint(
 
     // Flush cohort states
     vecs.utxo_cohorts.safe_flush_stateful_vecs(height, exit)?;
-    vecs.address_cohorts.safe_flush_stateful_vecs(height, exit)?;
+    vecs.address_cohorts
+        .safe_flush_stateful_vecs(height, exit)?;
 
     // Flush height-indexed vectors
     vecs.height_to_unspendable_supply.safe_write(exit)?;
@@ -488,8 +536,8 @@ fn flush_checkpoint(
         .safe_flush(exit)?;
 
     // Process and flush address data updates
-    let empty_updates = std::mem::take(empty_cache);
-    let loaded_updates = std::mem::take(loaded_cache);
+    let empty_updates = mem::take(empty_cache);
+    let loaded_updates = mem::take(loaded_cache);
     flush_checkpoint_full(
         height,
         &mut vecs

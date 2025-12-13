@@ -11,7 +11,7 @@ use brk_reader::Reader;
 use brk_traversable::TreeNode;
 use brk_types::{
     Address, AddressStats, BlockInfo, BlockStatus, Format, Height, Index, IndexInfo, Limit,
-    MempoolInfo, Metric, MetricCount, Transaction, TxStatus, Txid, TxidPath, Utxo,
+    MempoolInfo, Metric, MetricCount, RecommendedFees, Transaction, TxStatus, Txid, TxidPath, Utxo,
 };
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
@@ -35,8 +35,8 @@ use crate::{
     chain::{
         get_address, get_address_txids, get_address_utxos, get_block_by_height,
         get_block_status_by_height, get_block_txids, get_blocks, get_height_by_hash,
-        get_mempool_info, get_mempool_txids, get_transaction, get_transaction_hex,
-        get_transaction_status,
+        get_mempool_info, get_mempool_txids, get_recommended_fees, get_transaction,
+        get_transaction_hex, get_transaction_status,
     },
     vecs::{IndexToVec, MetricToVec},
 };
@@ -134,6 +134,10 @@ impl Query {
 
     pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
         get_mempool_txids(self)
+    }
+
+    pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
+        get_recommended_fees(self)
     }
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {
