@@ -5,7 +5,7 @@ use brk_types::{FeeRate, MempoolEntryInfo, Sats, Txid, TxidPrefix, VSize};
 /// Stores only the data needed for fee estimation and block building.
 /// Ancestor values are pre-computed by Bitcoin Core (correctly handling shared ancestors).
 #[derive(Debug, Clone)]
-pub struct MempoolEntry {
+pub struct Entry {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
@@ -17,7 +17,7 @@ pub struct MempoolEntry {
     pub depends: Vec<TxidPrefix>,
 }
 
-impl MempoolEntry {
+impl Entry {
     pub fn from_info(info: &MempoolEntryInfo) -> Self {
         Self {
             txid: info.txid.clone(),
@@ -34,18 +34,16 @@ impl MempoolEntry {
         FeeRate::from((self.fee, self.vsize))
     }
 
-    /// Ancestor fee rate (package rate for CPFP)
+    /// Ancestor fee rate (package rate for CPFP).
     #[inline]
     pub fn ancestor_fee_rate(&self) -> FeeRate {
         FeeRate::from((self.ancestor_fee, self.ancestor_vsize))
     }
 
-    /// Effective fee rate for display - the rate that justified this tx's inclusion.
-    /// For CPFP parents, this is their ancestor_fee_rate (child paying for them).
-    /// For regular txs, this is their own fee_rate.
+    /// Effective fee rate for display.
     #[inline]
     pub fn effective_fee_rate(&self) -> FeeRate {
-        std::cmp::max(self.fee_rate(), self.ancestor_fee_rate())
+        self.fee_rate().max(self.ancestor_fee_rate())
     }
 
     #[inline]
