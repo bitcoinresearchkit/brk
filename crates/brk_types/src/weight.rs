@@ -8,6 +8,12 @@ use vecdb::{Formattable, Pco};
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct Weight(u64);
 
+impl Weight {
+    pub fn to_vbytes_ceil(&self) -> u64 {
+        bitcoin::Weight::from(*self).to_vbytes_ceil()
+    }
+}
+
 impl From<bitcoin::Weight> for Weight {
     #[inline]
     fn from(value: bitcoin::Weight) -> Self {

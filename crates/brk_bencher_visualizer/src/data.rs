@@ -150,10 +150,10 @@ pub fn read_runs(crate_path: &Path, filename: &str) -> Result<Vec<Run>> {
         }
 
         let csv_path = run_path.join(filename);
-        if csv_path.exists() {
-            if let Ok(data) = read_csv(&csv_path) {
-                runs.push(Run { id: run_id, data });
-            }
+        if csv_path.exists()
+            && let Ok(data) = read_csv(&csv_path)
+        {
+            runs.push(Run { id: run_id, data });
         }
     }
 
@@ -180,14 +180,14 @@ pub fn read_dual_runs(crate_path: &Path, filename: &str) -> Result<Vec<DualRun>>
         }
 
         let csv_path = run_path.join(filename);
-        if csv_path.exists() {
-            if let Ok((primary, secondary)) = read_dual_csv(&csv_path) {
-                runs.push(DualRun {
-                    id: run_id,
-                    primary,
-                    secondary,
-                });
-            }
+        if csv_path.exists()
+            && let Ok((primary, secondary)) = read_dual_csv(&csv_path)
+        {
+            runs.push(DualRun {
+                id: run_id,
+                primary,
+                secondary,
+            });
         }
     }
 
@@ -219,19 +219,18 @@ fn read_dual_csv(path: &Path) -> Result<(Vec<DataPoint>, Vec<DataPoint>)> {
 
     for line in content.lines().skip(1) {
         let mut parts = line.split(',');
-        if let (Some(ts), Some(v1), Some(v2)) = (parts.next(), parts.next(), parts.next()) {
-            if let (Ok(timestamp_ms), Ok(val1), Ok(val2)) =
+        if let (Some(ts), Some(v1), Some(v2)) = (parts.next(), parts.next(), parts.next())
+            && let (Ok(timestamp_ms), Ok(val1), Ok(val2)) =
                 (ts.parse(), v1.parse::<f64>(), v2.parse::<f64>())
-            {
-                primary.push(DataPoint {
-                    timestamp_ms,
-                    value: val1,
-                });
-                secondary.push(DataPoint {
-                    timestamp_ms,
-                    value: val2,
-                });
-            }
+        {
+            primary.push(DataPoint {
+                timestamp_ms,
+                value: val1,
+            });
+            secondary.push(DataPoint {
+                timestamp_ms,
+                value: val2,
+            });
         }
     }
 

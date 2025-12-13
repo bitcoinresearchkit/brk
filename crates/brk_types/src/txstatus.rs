@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::{BlockHash, Height, Timestamp};
 
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 /// Transaction confirmation status
 pub struct TxStatus {
     /// Whether the transaction is confirmed
@@ -24,7 +24,7 @@ pub struct TxStatus {
 }
 
 impl TxStatus {
-    pub const UNCOMFIRMED: Self = Self {
+    pub const UNCONFIRMED: Self = Self {
         confirmed: false,
         block_hash: None,
         block_height: None,

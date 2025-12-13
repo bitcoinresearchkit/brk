@@ -14,13 +14,18 @@ use brk_types::Health;
 
 use crate::{
     VERSION,
-    api::{addresses::AddressRoutes, metrics::ApiMetricsRoutes, transactions::TxRoutes},
+    api::{
+        addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
+        metrics::ApiMetricsRoutes, transactions::TxRoutes,
+    },
     extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
 };
 
 use super::AppState;
 
 mod addresses;
+mod blocks;
+mod mempool;
 mod metrics;
 mod openapi;
 mod transactions;
@@ -34,6 +39,8 @@ pub trait ApiRoutes {
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
         self.add_addresses_routes()
+            .add_block_routes()
+            .add_mempool_routes()
             .add_tx_routes()
             .add_metrics_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))

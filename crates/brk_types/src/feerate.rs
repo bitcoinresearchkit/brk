@@ -3,17 +3,18 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
 
-use super::{Sats, StoredU64};
+use super::{Sats, VSize};
 
-#[derive(Debug, Clone, Copy, Serialize, Pco)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct FeeRate(f64);
 
-impl From<(Sats, StoredU64)> for FeeRate {
+impl From<(Sats, VSize)> for FeeRate {
     #[inline]
-    fn from((sats, vsize): (Sats, StoredU64)) -> Self {
+    fn from((sats, vsize): (Sats, VSize)) -> Self {
         if sats.is_zero() {
             return Self(0.0);
         }

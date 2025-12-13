@@ -3,7 +3,7 @@
 use std::{
     collections::BTreeMap,
     fs::{self, File},
-    io::Read,
+    io::{Read, Seek, SeekFrom},
     mem,
     ops::ControlFlow,
     path::PathBuf,
@@ -81,6 +81,26 @@ impl ReaderInner {
 
     pub fn xor_bytes(&self) -> XORBytes {
         self.xor_bytes
+    }
+
+    /// Read raw bytes from a blk file at the given position with XOR decoding
+    pub fn read_raw_bytes(&self, position: BlkPosition, size: usize) -> Result<Vec<u8>> {
+        let blk_paths = self.blk_index_to_blk_path();
+        let blk_path = blk_paths
+            .get(&position.blk_index())
+            .ok_or("Blk file not found")?;
+
+        let mut file = File::open(blk_path)?;
+        file.seek(SeekFrom::Start(position.offset() as u64))?;
+
+        let mut buffer = vec![0u8; size];
+        file.read_exact(&mut buffer)?;
+
+        let mut xori = XORIndex::default();
+        xori.add_assign(position.offset() as usize);
+        xori.bytes(&mut buffer, self.xor_bytes);
+
+        Ok(buffer)
     }
 
     ///

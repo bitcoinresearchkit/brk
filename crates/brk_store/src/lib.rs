@@ -222,6 +222,17 @@ where
     }
 
     #[inline]
+    pub fn prefix<P: AsRef<[u8]>>(
+        &self,
+        prefix: P,
+    ) -> impl DoubleEndedIterator<Item = (K, V)> + '_ {
+        self.keyspace
+            .prefix(prefix)
+            .map(|res| res.into_inner().unwrap())
+            .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
+    }
+
+    #[inline]
     fn has(&self, height: Height) -> bool {
         self.meta.has(height)
     }

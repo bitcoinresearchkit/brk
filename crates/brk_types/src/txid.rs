@@ -1,9 +1,9 @@
-use std::{fmt, mem};
+use std::{fmt, mem, str::FromStr};
 
 use bitcoin::hashes::Hash;
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use vecdb::{Bytes, Formattable};
 
 /// Transaction ID (hash)
@@ -68,6 +68,17 @@ impl Serialize for Txid {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for Txid {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let bitcoin_txid = bitcoin::Txid::from_str(&s).map_err(de::Error::custom)?;
+        Ok(Self::from(bitcoin_txid))
     }
 }
 

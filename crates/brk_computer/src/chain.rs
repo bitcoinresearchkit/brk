@@ -7,7 +7,7 @@ use brk_types::{
     Bitcoin, CheckedSub, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch,
     Height, MonthIndex, ONE_DAY_IN_SEC_F64, QuarterIndex, Sats, SemesterIndex, StoredBool,
     StoredF32, StoredF64, StoredU32, StoredU64, Timestamp, TxInIndex, TxIndex, TxOutIndex,
-    TxVersion, Version, WeekIndex, Weight, YearIndex,
+    TxVersion, VSize, Version, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{
     Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, IterableVec,
@@ -95,14 +95,14 @@ pub struct Vecs {
     pub indexes_to_tx_v1: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_tx_v2: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_tx_v3: ComputedVecsFromHeight<StoredU64>,
-    pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredU64>,
+    pub indexes_to_tx_vsize: ComputedVecsFromTxindex<VSize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
     pub txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,
-    pub txindex_to_vsize: LazyVecFrom1<TxIndex, StoredU64, TxIndex, Weight>,
+    pub txindex_to_vsize: LazyVecFrom1<TxIndex, VSize, TxIndex, Weight>,
     pub txindex_to_weight: LazyVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
     pub txindex_to_fee: EagerVec<PcoVec<TxIndex, Sats>>,
     pub txindex_to_fee_rate: EagerVec<PcoVec<TxIndex, FeeRate>>,
@@ -269,11 +269,7 @@ impl Vecs {
             "vsize",
             version + Version::ZERO,
             txindex_to_weight.boxed_clone(),
-            |index: TxIndex, iter| {
-                iter.get(index).map(|weight| {
-                    StoredU64::from(bitcoin::Weight::from(weight).to_vbytes_ceil() as usize)
-                })
-            },
+            |index: TxIndex, iter| iter.get(index).map(VSize::from),
         );
 
         let txindex_to_is_coinbase = LazyVecFrom2::init(

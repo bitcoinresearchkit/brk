@@ -5,10 +5,10 @@ use std::path::Path;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, StoredU64, Version};
+use brk_types::{Dollars, Height, Sats, StoredU64, TxInIndex, TxOutIndex, Version};
 use vecdb::{
-    BytesVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, LazyVecFrom1,
-    PAGE_SIZE, PcoVec,
+    AnyStoredVec, BytesVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec,
+    LazyVecFrom1, PAGE_SIZE, PcoVec,
 };
 
 use crate::{
@@ -35,6 +35,7 @@ pub struct Vecs {
     // States
     // ---
     pub chain_state: BytesVec<Height, SupplyState>,
+    pub txoutindex_to_txinindex: BytesVec<TxOutIndex, TxInIndex>,
     pub any_address_indexes: AnyAddressIndexesVecs,
     pub addresses_data: AddressesDataVecs,
     pub utxo_cohorts: UTXOCohorts,
@@ -81,6 +82,10 @@ impl Vecs {
         Ok(Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", v0)
+                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+            )?,
+            txoutindex_to_txinindex: BytesVec::forced_import_with(
+                vecdb::ImportOptions::new(&db, "txinindex", v0)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
@@ -185,9 +190,7 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        use super::compute::{
-            StartMode, determine_start_mode, process_blocks,
-        };
+        use super::compute::{StartMode, determine_start_mode, process_blocks};
         use crate::states::BlockState;
         use vecdb::{AnyVec, GenericStoredVec, Stamp, TypedVecIterator, VecIndex};
 
@@ -201,6 +204,7 @@ impl Vecs {
         let stateful_min = utxo_min
             .min(address_min)
             .min(Height::from(self.chain_state.len()))
+            .min(Height::from(self.txoutindex_to_txinindex.stamp()).incremented())
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
             .min(Height::from(self.height_to_unspendable_supply.len()))
@@ -215,6 +219,7 @@ impl Vecs {
 
                 // Rollback state vectors
                 let _ = self.chain_state.rollback_before(stamp);
+                let _ = self.txoutindex_to_txinindex.rollback_before(stamp);
                 let _ = self.any_address_indexes.rollback_before(stamp);
                 let _ = self.addresses_data.rollback_before(stamp);
 
@@ -252,6 +257,7 @@ impl Vecs {
             }
             StartMode::Fresh => {
                 // Reset all state
+                self.txoutindex_to_txinindex.reset()?;
                 self.any_address_indexes.reset()?;
                 self.addresses_data.reset()?;
 
@@ -271,7 +277,14 @@ impl Vecs {
         };
 
         // 3. Get last height from indexer
-        let last_height = Height::from(indexer.vecs.block.height_to_blockhash.len().saturating_sub(1));
+        let last_height = Height::from(
+            indexer
+                .vecs
+                .block
+                .height_to_blockhash
+                .len()
+                .saturating_sub(1),
+        );
 
         // 4. Process blocks
         if starting_height <= last_height {
@@ -399,6 +412,26 @@ impl Vecs {
         )?;
 
         self.db.compact()?;
+        Ok(())
+    }
+
+    /// Update txoutindex_to_txinindex for a block.
+    ///
+    /// 1. Push UNSPENT for all new outputs in the block
+    /// 2. Update spent outputs with their spending txinindex
+    pub fn update_txoutindex_to_txinindex(
+        &mut self,
+        output_count: usize,
+        updates: Vec<(TxOutIndex, TxInIndex)>,
+    ) -> Result<()> {
+        // Push UNSPENT for all new outputs in this block
+        for _ in 0..output_count {
+            self.txoutindex_to_txinindex.push(TxInIndex::UNSPENT);
+        }
+        // Update spent outputs with their spending txinindex
+        for (txoutindex, txinindex) in updates {
+            self.txoutindex_to_txinindex.update(txoutindex, txinindex)?;
+        }
         Ok(())
     }
 }

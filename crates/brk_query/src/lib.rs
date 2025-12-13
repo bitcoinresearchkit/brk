@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+#![allow(clippy::module_inception)]
 
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -9,8 +10,8 @@ use brk_monitor::Mempool;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
 use brk_types::{
-    Address, AddressStats, Format, Height, Index, IndexInfo, Limit, Metric, MetricCount,
-    Transaction, TxidPath,
+    Address, AddressStats, BlockInfo, BlockStatus, Format, Height, Index, IndexInfo, Limit,
+    MempoolInfo, Metric, MetricCount, Transaction, TxStatus, Txid, TxidPath, Utxo,
 };
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
@@ -31,7 +32,12 @@ pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
 use crate::{
-    chain::{get_address, get_transaction},
+    chain::{
+        get_address, get_address_txids, get_address_utxos, get_block_by_height,
+        get_block_status_by_height, get_block_txids, get_blocks, get_height_by_hash,
+        get_mempool_info, get_mempool_txids, get_transaction, get_transaction_hex,
+        get_transaction_status,
+    },
     vecs::{IndexToVec, MetricToVec},
 };
 
@@ -74,8 +80,60 @@ impl Query {
         get_address(address, self)
     }
 
+    pub fn get_address_txids(
+        &self,
+        address: Address,
+        after_txid: Option<Txid>,
+        limit: usize,
+    ) -> Result<Vec<Txid>> {
+        get_address_txids(address, after_txid, limit, self)
+    }
+
+    pub fn get_address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {
+        get_address_utxos(address, self)
+    }
+
     pub fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
         get_transaction(txid, self)
+    }
+
+    pub fn get_transaction_status(&self, txid: TxidPath) -> Result<TxStatus> {
+        get_transaction_status(txid, self)
+    }
+
+    pub fn get_transaction_hex(&self, txid: TxidPath) -> Result<String> {
+        get_transaction_hex(txid, self)
+    }
+
+    pub fn get_block(&self, hash: &str) -> Result<BlockInfo> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_by_height(height, self)
+    }
+
+    pub fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
+        get_block_by_height(height, self)
+    }
+
+    pub fn get_block_status(&self, hash: &str) -> Result<BlockStatus> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_status_by_height(height, self)
+    }
+
+    pub fn get_blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
+        get_blocks(start_height, self)
+    }
+
+    pub fn get_block_txids(&self, hash: &str) -> Result<Vec<Txid>> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_txids(height, self)
+    }
+
+    pub fn get_mempool_info(&self) -> Result<MempoolInfo> {
+        get_mempool_info(self)
+    }
+
+    pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
+        get_mempool_txids(self)
     }
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {

@@ -12,12 +12,20 @@ use super::Vin;
 pub struct TxInIndex(u64);
 
 impl TxInIndex {
+    /// Sentinel value indicating an unspent output.
+    /// Used in `txoutindex_to_txinindex` mapping.
+    pub const UNSPENT: Self = Self(u64::MAX);
+
     pub fn new(index: u64) -> Self {
         Self(index)
     }
 
     pub fn incremented(self) -> Self {
         Self(*self + 1)
+    }
+
+    pub fn is_unspent(self) -> bool {
+        self == Self::UNSPENT
     }
 }
 

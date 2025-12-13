@@ -36,16 +36,22 @@ fn run() -> Result<()> {
     dbg!(
         indexer
             .vecs
-            .tx.txindex_to_txid
+            .tx
+            .txindex_to_txid
             .read_once(txindex)
             .unwrap()
             .to_string()
     );
-    let first_txinindex = indexer.vecs.tx.txindex_to_first_txinindex.read_once(txindex)?;
+    let first_txinindex = indexer
+        .vecs
+        .tx
+        .txindex_to_first_txinindex
+        .read_once(txindex)?;
     dbg!(first_txinindex);
     let first_txoutindex = indexer
         .vecs
-        .tx.txindex_to_first_txoutindex
+        .tx
+        .txindex_to_first_txoutindex
         .read_once(txindex)?;
     dbg!(first_txoutindex);
     let input_count = *computer.indexes.txindex_to_input_count.read_once(txindex)?;
@@ -55,35 +61,42 @@ fn run() -> Result<()> {
         .txindex_to_output_count
         .read_once(txindex)?;
     dbg!(output_count);
-    dbg!(
+    let _ = dbg!(
         computer
             .indexes
             .txinindex_to_txoutindex
             .read_once(first_txinindex)
     );
-    dbg!(
+    let _ = dbg!(
         computer
             .indexes
             .txinindex_to_txoutindex
             .read_once(first_txinindex + 1)
     );
-    dbg!(computer.chain.txinindex_to_value.read_once(first_txinindex));
-    dbg!(
+    let _ = dbg!(computer.chain.txinindex_to_value.read_once(first_txinindex));
+    let _ = dbg!(
         computer
             .chain
             .txinindex_to_value
             .read_once(first_txinindex + 1)
     );
-    dbg!(indexer.vecs.txout.txoutindex_to_value.read_once(first_txoutindex));
-    dbg!(
+    let _ = dbg!(
         indexer
             .vecs
-            .txout.txoutindex_to_value
+            .txout
+            .txoutindex_to_value
+            .read_once(first_txoutindex)
+    );
+    let _ = dbg!(
+        indexer
+            .vecs
+            .txout
+            .txoutindex_to_value
             .read_once(first_txoutindex + 1)
     );
-    dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
-    dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
-    dbg!(computer.chain.txindex_to_output_value.read_once(txindex));
+    let _ = dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
+    let _ = dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
+    let _ = dbg!(computer.chain.txindex_to_output_value.read_once(txindex));
     // dbg!(computer.indexes.txindex_to_txindex.ge(txindex));
     dbg!(
         computer

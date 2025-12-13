@@ -19,6 +19,13 @@ impl TryFrom<&str> for BlockHash {
     }
 }
 
+impl FromStr for BlockHash {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
 impl From<bitcoin::BlockHash> for BlockHash {
     #[inline]
     fn from(value: bitcoin::BlockHash) -> Self {

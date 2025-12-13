@@ -1,12 +1,7 @@
-use std::{
-    fs::File,
-    io::{Cursor, Read, Seek, SeekFrom},
-    str::FromStr,
-};
+use std::{io::Cursor, str::FromStr};
 
 use bitcoin::consensus::Decodable;
 use brk_error::{Error, Result};
-use brk_reader::XORIndex;
 use brk_types::{
     Sats, Transaction, TxIn, TxIndex, TxOut, TxStatus, Txid, TxidPath, TxidPrefix, Vout, Weight,
 };
@@ -20,6 +15,15 @@ pub fn get_transaction(TxidPath { txid }: TxidPath, query: &Query) -> Result<Tra
     };
 
     let txid = Txid::from(txid);
+
+    // First check mempool for unconfirmed transactions
+    if let Some(mempool) = query.mempool()
+        && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
+    {
+        return Ok(tx_with_hex.tx().clone());
+    }
+
+    // Look up confirmed transaction by txid prefix
     let prefix = TxidPrefix::from(&txid);
     let indexer = query.indexer();
     let Ok(Some(txindex)) = indexer
@@ -45,7 +49,11 @@ pub fn get_transaction_by_index(txindex: TxIndex, query: &Query) -> Result<Trans
     let version = indexer.vecs.tx.txindex_to_txversion.read_once(txindex)?;
     let lock_time = indexer.vecs.tx.txindex_to_rawlocktime.read_once(txindex)?;
     let total_size = indexer.vecs.tx.txindex_to_total_size.read_once(txindex)?;
-    let first_txinindex = indexer.vecs.tx.txindex_to_first_txinindex.read_once(txindex)?;
+    let first_txinindex = indexer
+        .vecs
+        .tx
+        .txindex_to_first_txinindex
+        .read_once(txindex)?;
     let position = computer.blks.txindex_to_position.read_once(txindex)?;
 
     // Get block info for status
@@ -53,39 +61,15 @@ pub fn get_transaction_by_index(txindex: TxIndex, query: &Query) -> Result<Trans
     let block_time = indexer.vecs.block.height_to_timestamp.read_once(height)?;
 
     // Read and decode the raw transaction from blk file
-    let blk_index_to_blk_path = reader.blk_index_to_blk_path();
-    let Some(blk_path) = blk_index_to_blk_path.get(&position.blk_index()) else {
-        return Err(Error::Str("Failed to get the correct blk file"));
-    };
-
-    let mut xori = XORIndex::default();
-    xori.add_assign(position.offset() as usize);
-
-    let Ok(mut file) = File::open(blk_path) else {
-        return Err(Error::Str("Failed to open blk file"));
-    };
-
-    if file
-        .seek(SeekFrom::Start(position.offset() as u64))
-        .is_err()
-    {
-        return Err(Error::Str("Failed to seek position in file"));
-    }
-
-    let mut buffer = vec![0u8; *total_size as usize];
-    if file.read_exact(&mut buffer).is_err() {
-        return Err(Error::Str("Failed to read the transaction (read exact)"));
-    }
-    xori.bytes(&mut buffer, reader.xor_bytes());
-
+    let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
     let mut cursor = Cursor::new(buffer);
-    let Ok(tx) = bitcoin::Transaction::consensus_decode(&mut cursor) else {
-        return Err(Error::Str("Failed decode the transaction"));
-    };
+    let tx = bitcoin::Transaction::consensus_decode(&mut cursor)
+        .map_err(|_| Error::Str("Failed to decode transaction"))?;
 
     // For iterating through inputs, we need iterators (multiple lookups)
     let mut txindex_to_txid_iter = indexer.vecs.tx.txindex_to_txid.iter()?;
-    let mut txindex_to_first_txoutindex_iter = indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
+    let mut txindex_to_first_txoutindex_iter =
+        indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
     let mut txinindex_to_outpoint_iter = indexer.vecs.txin.txinindex_to_outpoint.iter()?;
     let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
 
@@ -144,6 +128,12 @@ pub fn get_transaction_by_index(txindex: TxIndex, query: &Query) -> Result<Trans
     // Calculate weight before consuming tx.output
     let weight = Weight::from(tx.weight());
 
+    // Calculate sigop cost
+    // Note: Using |_| None means P2SH and SegWit sigops won't be counted accurately
+    // since we don't provide the prevout scripts. This matches mempool tx behavior.
+    // For accurate counting, we'd need to reconstruct prevout scripts from indexed data.
+    let total_sigop_cost = tx.total_sigop_cost(|_| None);
+
     // Build outputs
     let output: Vec<TxOut> = tx.output.into_iter().map(TxOut::from).collect();
 
@@ -162,8 +152,8 @@ pub fn get_transaction_by_index(txindex: TxIndex, query: &Query) -> Result<Trans
         lock_time,
         total_size: *total_size as usize,
         weight,
-        total_sigop_cost: 0, // Would need to calculate from scripts
-        fee: Sats::ZERO,     // Will be computed below
+        total_sigop_cost,
+        fee: Sats::ZERO, // Will be computed below
         input,
         output,
         status,

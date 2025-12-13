@@ -6,13 +6,25 @@ use vecdb::Bytes;
 
 use crate::{AddressIndexTxIndex, Vout};
 
-use super::{OutPoint, TypeIndex};
+use super::{OutPoint, TxIndex, TypeIndex};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize)]
 #[repr(C)]
 pub struct AddressIndexOutPoint {
     addressindextxindex: AddressIndexTxIndex, // u64
     vout: Vout,                               // u16
+}
+
+impl AddressIndexOutPoint {
+    #[inline]
+    pub fn txindex(&self) -> TxIndex {
+        self.addressindextxindex.txindex()
+    }
+
+    #[inline]
+    pub fn vout(&self) -> Vout {
+        self.vout
+    }
 }
 
 impl Hash for AddressIndexOutPoint {

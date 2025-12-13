@@ -14,8 +14,16 @@ impl AddressIndexTxIndex {
         (self.0 >> 32) as u32
     }
 
-    pub fn txindex(&self) -> u32 {
-        self.0 as u32
+    pub fn txindex(&self) -> TxIndex {
+        TxIndex::from(self.0 as u32)
+    }
+
+    pub fn min_for_address(addressindex: TypeIndex) -> Self {
+        Self(u64::from(addressindex) << 32)
+    }
+
+    pub fn max_for_address(addressindex: TypeIndex) -> Self {
+        Self((u64::from(addressindex) << 32) | u64::MAX >> 32)
     }
 }
 

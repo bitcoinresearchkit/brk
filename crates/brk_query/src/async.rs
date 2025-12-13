@@ -6,13 +6,13 @@ use brk_indexer::Indexer;
 use brk_monitor::Mempool;
 use brk_reader::Reader;
 use brk_types::{
-    Address, AddressStats, Height, Index, IndexInfo, Limit, Metric, MetricCount, Transaction,
-    TreeNode, TxidPath,
+    Address, AddressStats, BlockInfo, BlockStatus, Height, Index, IndexInfo, Limit, MempoolInfo,
+    Metric, MetricCount, Transaction, TreeNode, TxStatus, Txid, TxidPath, Utxo,
 };
 use tokio::task::spawn_blocking;
 
 use crate::{
-    Output, PaginatedIndexParam, PaginatedMetrics, PaginationParam, Params, ParamsOpt, Query,
+    Output, PaginatedIndexParam, PaginatedMetrics, PaginationParam, Params, Query,
     vecs::{IndexToVec, MetricToVec, Vecs},
 };
 
@@ -42,9 +42,69 @@ impl AsyncQuery {
         spawn_blocking(move || query.get_address(address)).await?
     }
 
+    pub async fn get_address_txids(
+        &self,
+        address: Address,
+        after_txid: Option<Txid>,
+        limit: usize,
+    ) -> Result<Vec<Txid>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_address_txids(address, after_txid, limit)).await?
+    }
+
+    pub async fn get_address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_address_utxos(address)).await?
+    }
+
     pub async fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_transaction(txid)).await?
+    }
+
+    pub async fn get_transaction_status(&self, txid: TxidPath) -> Result<TxStatus> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_transaction_status(txid)).await?
+    }
+
+    pub async fn get_transaction_hex(&self, txid: TxidPath) -> Result<String> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_transaction_hex(txid)).await?
+    }
+
+    pub async fn get_block(&self, hash: String) -> Result<BlockInfo> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block(&hash)).await?
+    }
+
+    pub async fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_by_height(height)).await?
+    }
+
+    pub async fn get_block_status(&self, hash: String) -> Result<BlockStatus> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_status(&hash)).await?
+    }
+
+    pub async fn get_blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_blocks(start_height)).await?
+    }
+
+    pub async fn get_block_txids(&self, hash: String) -> Result<Vec<Txid>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_txids(&hash)).await?
+    }
+
+    pub async fn get_mempool_info(&self) -> Result<MempoolInfo> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_mempool_info()).await?
+    }
+
+    pub async fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_mempool_txids()).await?
     }
 
     pub async fn match_metric(&self, metric: Metric, limit: Limit) -> Result<Vec<&'static str>> {
