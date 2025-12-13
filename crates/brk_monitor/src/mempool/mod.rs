@@ -1,7 +1,13 @@
+mod block_builder;
 mod entry;
-mod graph;
+mod monitor;
 mod projected_blocks;
+mod types;
 
-pub use entry::MempoolEntry;
-pub use graph::TxGraph;
-pub use projected_blocks::ProjectedBlocks;
+// Public API
+pub use monitor::{Mempool, MempoolInner};
+pub use projected_blocks::{BlockStats, ProjectedSnapshot};
+
+// Crate-internal (used by submodules)
+pub(crate) use entry::MempoolEntry;
+pub(crate) use types::{MempoolTxIndex, PoolIndex, SelectedTx};

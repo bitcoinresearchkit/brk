@@ -1,62 +1,55 @@
-use brk_types::{FeeRate, Sats, Transaction, Txid, VSize, Vout};
-use rustc_hash::FxHashSet;
+use brk_types::{FeeRate, MempoolEntryInfo, Sats, Txid, TxidPrefix, VSize};
 
-/// (txid, vout) tuple identifying an unspent output in the mempool
-pub type MempoolOutpoint = (Txid, Vout);
-
-/// A mempool transaction with its dependency metadata
+/// A mempool transaction entry.
+///
+/// Stores only the data needed for fee estimation and block building.
+/// Ancestor values are pre-computed by Bitcoin Core (correctly handling shared ancestors).
 #[derive(Debug, Clone)]
 pub struct MempoolEntry {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
-
-    /// Outpoints this tx spends (inputs)
-    pub spends: Vec<MempoolOutpoint>,
-
-    /// Txids of unconfirmed ancestors (parents, grandparents, etc.)
-    pub ancestors: FxHashSet<Txid>,
-
-    /// Cumulative fee of this tx + all ancestors
+    /// Pre-computed ancestor fee (self + all ancestors, no double-counting)
     pub ancestor_fee: Sats,
-
-    /// Cumulative vsize of this tx + all ancestors
+    /// Pre-computed ancestor vsize (self + all ancestors, no double-counting)
     pub ancestor_vsize: VSize,
+    /// Parent txid prefixes (transactions this tx depends on)
+    pub depends: Vec<TxidPrefix>,
 }
 
 impl MempoolEntry {
-    pub fn new(tx: &Transaction) -> Self {
-        let txid = tx.txid.clone();
-        let fee = tx.fee;
-        let vsize = tx.vsize();
-
-        let spends = tx
-            .input
-            .iter()
-            .map(|txin| (txin.txid.clone(), txin.vout))
-            .collect();
-
+    pub fn from_info(info: &MempoolEntryInfo) -> Self {
         Self {
-            txid,
-            fee,
-            vsize,
-            spends,
-            ancestors: FxHashSet::default(),
-            ancestor_fee: fee,
-            ancestor_vsize: vsize,
+            txid: info.txid.clone(),
+            fee: info.fee,
+            vsize: VSize::from(info.vsize),
+            ancestor_fee: info.ancestor_fee,
+            ancestor_vsize: VSize::from(info.ancestor_size),
+            depends: info.depends.iter().map(TxidPrefix::from).collect(),
         }
     }
 
-    /// Individual fee rate (without ancestors)
     #[inline]
     pub fn fee_rate(&self) -> FeeRate {
         FeeRate::from((self.fee, self.vsize))
     }
 
-    /// Ancestor fee rate (fee + ancestors_fee) / (vsize + ancestors_vsize)
-    /// This is the effective mining priority
+    /// Ancestor fee rate (package rate for CPFP)
     #[inline]
     pub fn ancestor_fee_rate(&self) -> FeeRate {
         FeeRate::from((self.ancestor_fee, self.ancestor_vsize))
+    }
+
+    /// Effective fee rate for display - the rate that justified this tx's inclusion.
+    /// For CPFP parents, this is their ancestor_fee_rate (child paying for them).
+    /// For regular txs, this is their own fee_rate.
+    #[inline]
+    pub fn effective_fee_rate(&self) -> FeeRate {
+        std::cmp::max(self.fee_rate(), self.ancestor_fee_rate())
+    }
+
+    #[inline]
+    pub fn txid_prefix(&self) -> TxidPrefix {
+        TxidPrefix::from(&self.txid)
     }
 }
