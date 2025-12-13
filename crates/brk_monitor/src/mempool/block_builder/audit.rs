@@ -64,8 +64,8 @@ pub struct AuditTx {
     pub ancestor_vsize: VSize,
     /// Already selected into a block
     pub used: bool,
-    /// Already in modified priority queue
-    pub in_modified: bool,
+    /// Generation counter for invalidating stale heap entries
+    pub generation: u32,
 }
 
 impl AuditTx {
@@ -88,31 +88,20 @@ impl AuditTx {
             ancestor_fee,
             ancestor_vsize,
             used: false,
-            in_modified: false,
+            generation: 0,
         }
-    }
-
-    #[inline]
-    pub fn has_higher_score_than(&self, other: &Self) -> bool {
-        has_higher_fee_rate(
-            self.ancestor_fee,
-            self.ancestor_vsize,
-            other.ancestor_fee,
-            other.ancestor_vsize,
-        )
     }
 }
 
-/// Priority queue entry for the modified queue.
-/// Stores a snapshot of ancestor values at time of insertion.
+/// Priority queue entry. Stores snapshot of score at insertion time.
 #[derive(Clone, Copy)]
 pub struct TxPriority {
-    /// Pool index (for indexing into pool array)
     pub pool_idx: PoolIndex,
-    /// Snapshot of ancestor fee at insertion time
-    pub ancestor_fee: Sats,
-    /// Snapshot of ancestor vsize at insertion time
-    pub ancestor_vsize: VSize,
+    /// Score snapshot for heap ordering
+    ancestor_fee: Sats,
+    ancestor_vsize: VSize,
+    /// Generation at insertion (detects stale entries)
+    pub generation: u32,
 }
 
 impl TxPriority {
@@ -121,11 +110,18 @@ impl TxPriority {
             pool_idx: tx.pool_idx,
             ancestor_fee: tx.ancestor_fee,
             ancestor_vsize: tx.ancestor_vsize,
+            generation: tx.generation,
         }
     }
 
+    /// Check if this entry is stale (tx was updated since insertion).
     #[inline]
-    pub fn has_higher_score_than(&self, other: &Self) -> bool {
+    pub fn is_stale(&self, tx: &AuditTx) -> bool {
+        self.generation != tx.generation
+    }
+
+    #[inline]
+    fn has_higher_score_than(&self, other: &Self) -> bool {
         has_higher_fee_rate(
             self.ancestor_fee,
             self.ancestor_vsize,
