@@ -9,35 +9,33 @@ use std::{
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{
-    AddressBytes, AddressMempoolStats, MempoolEntryInfo, MempoolInfo, RecommendedFees, TxWithHex,
-    Txid, TxidPrefix,
-};
+use brk_types::{MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
 use derive_deref::Deref;
 use log::{error, info};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::block_builder::build_projected_blocks;
-use super::entry::MempoolEntry;
-use super::projected_blocks::{BlockStats, ProjectedSnapshot};
-use super::types::MempoolTxIndex;
+use super::addresses::AddressTracker;
+use super::entry::Entry;
+use crate::block_builder::build_projected_blocks;
+use crate::projected_blocks::{BlockStats, RecommendedFees, Snapshot};
+use crate::types::TxIndex;
 
-/// Max new txs to fetch full data for per update cycle (for address tracking)
+/// Max new txs to fetch full data for per update cycle (for address tracking).
 const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 
-/// Minimum interval between rebuilds (milliseconds)
+/// Minimum interval between rebuilds (milliseconds).
 const MIN_REBUILD_INTERVAL_MS: u64 = 1000;
 
 /// Block building state - grouped for atomic locking.
 #[derive(Default)]
 struct BlockBuildingState {
     /// Slot-based entry storage
-    entries: Vec<Option<MempoolEntry>>,
+    entries: Vec<Option<Entry>>,
     /// TxidPrefix -> slot index
-    txid_prefix_to_idx: FxHashMap<TxidPrefix, MempoolTxIndex>,
+    txid_prefix_to_idx: FxHashMap<TxidPrefix, TxIndex>,
     /// Recycled slot indices
-    free_indices: Vec<MempoolTxIndex>,
+    free_indices: Vec<TxIndex>,
 }
 
 /// Mempool monitor.
@@ -59,13 +57,13 @@ pub struct MempoolInner {
     // Mempool state
     info: RwLock<MempoolInfo>,
     txs: RwLock<FxHashMap<Txid, TxWithHex>>,
-    addresses: RwLock<FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>>,
+    addresses: RwLock<AddressTracker>,
 
     // Block building data (single lock for consistency)
     block_state: RwLock<BlockBuildingState>,
 
     // Projected blocks snapshot
-    snapshot: RwLock<ProjectedSnapshot>,
+    snapshot: RwLock<Snapshot>,
 
     // Rate limiting
     dirty: AtomicBool,
@@ -78,9 +76,9 @@ impl MempoolInner {
             client,
             info: RwLock::new(MempoolInfo::default()),
             txs: RwLock::new(FxHashMap::default()),
-            addresses: RwLock::new(FxHashMap::default()),
+            addresses: RwLock::new(AddressTracker::default()),
             block_state: RwLock::new(BlockBuildingState::default()),
-            snapshot: RwLock::new(ProjectedSnapshot::default()),
+            snapshot: RwLock::new(Snapshot::default()),
             dirty: AtomicBool::new(false),
             last_rebuild_ms: AtomicU64::new(0),
         }
@@ -94,7 +92,7 @@ impl MempoolInner {
         self.snapshot.read().fees.clone()
     }
 
-    pub fn get_snapshot(&self) -> ProjectedSnapshot {
+    pub fn get_snapshot(&self) -> Snapshot {
         self.snapshot.read().clone()
     }
 
@@ -106,9 +104,7 @@ impl MempoolInner {
         self.txs.read()
     }
 
-    pub fn get_addresses(
-        &self,
-    ) -> RwLockReadGuard<'_, FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>> {
+    pub fn get_addresses(&self) -> RwLockReadGuard<'_, AddressTracker> {
         self.addresses.read()
     }
 
@@ -124,15 +120,11 @@ impl MempoolInner {
 
     /// Sync with Bitcoin Core mempool and rebuild projections if needed.
     pub fn update(&self) -> Result<()> {
-        // Single RPC call gets all entries with fees
         let entries_info = self.client.get_raw_mempool_verbose()?;
 
         let current_txids: FxHashSet<Txid> = entries_info.iter().map(|e| e.txid.clone()).collect();
 
-        // Find new txids and fetch full tx data for address tracking
         let new_txs = self.fetch_new_txs(&current_txids);
-
-        // Apply changes using the entry info (has fees) and full txs (for addresses)
         let has_changes = self.apply_changes(&entries_info, new_txs);
 
         if has_changes {
@@ -146,7 +138,6 @@ impl MempoolInner {
 
     /// Fetch full transaction data for new txids (needed for address tracking).
     fn fetch_new_txs(&self, current_txids: &FxHashSet<Txid>) -> FxHashMap<Txid, TxWithHex> {
-        // Collect txids to fetch while holding read lock, then release it
         let txids_to_fetch: Vec<Txid> = {
             let txs = self.txs.read();
             current_txids
@@ -157,7 +148,6 @@ impl MempoolInner {
                 .collect()
         };
 
-        // Make RPC calls without holding the lock
         txids_to_fetch
             .into_iter()
             .filter_map(|txid| {
@@ -175,7 +165,6 @@ impl MempoolInner {
         entries_info: &[MempoolEntryInfo],
         new_txs: FxHashMap<Txid, TxWithHex>,
     ) -> bool {
-        // Build lookup map for current entries
         let current_entries: FxHashMap<TxidPrefix, &MempoolEntryInfo> = entries_info
             .iter()
             .map(|e| (TxidPrefix::from(&e.txid), e))
@@ -200,9 +189,8 @@ impl MempoolInner {
             let tx = tx_with_hex.tx();
 
             info.remove(tx);
-            Self::update_address_stats(tx, txid, &mut addresses, false);
+            addresses.remove_tx(tx, txid);
 
-            // Remove from slot-based storage
             if let Some(idx) = block_state.txid_prefix_to_idx.remove(&prefix) {
                 if let Some(slot) = block_state.entries.get_mut(idx.as_usize()) {
                     *slot = None;
@@ -218,22 +206,20 @@ impl MempoolInner {
             let tx = tx_with_hex.tx();
             let prefix = TxidPrefix::from(txid);
 
-            // Get the entry info (has fee from Bitcoin Core)
             let Some(entry_info) = current_entries.get(&prefix) else {
                 continue;
             };
 
-            let entry = MempoolEntry::from_info(entry_info);
+            let entry = Entry::from_info(entry_info);
 
             info.add(tx);
-            Self::update_address_stats(tx, txid, &mut addresses, true);
+            addresses.add_tx(tx, txid);
 
-            // Allocate slot
             let idx = if let Some(idx) = block_state.free_indices.pop() {
                 block_state.entries[idx.as_usize()] = Some(entry);
                 idx
             } else {
-                let idx = MempoolTxIndex::from(block_state.entries.len());
+                let idx = TxIndex::from(block_state.entries.len());
                 block_state.entries.push(Some(entry));
                 idx
             };
@@ -261,13 +247,12 @@ impl MempoolInner {
             return;
         }
 
-        // Attempt to claim the rebuild (atomic compare-exchange)
         if self
             .last_rebuild_ms
             .compare_exchange(last, now_ms, Ordering::AcqRel, Ordering::Relaxed)
             .is_err()
         {
-            return; // Another thread is rebuilding
+            return;
         }
 
         self.dirty.store(false, Ordering::Release);
@@ -282,48 +267,8 @@ impl MempoolInner {
         let block_state = self.block_state.read();
 
         let blocks = build_projected_blocks(&block_state.entries);
-        let snapshot = ProjectedSnapshot::build(blocks, &block_state.entries);
+        let snapshot = Snapshot::build(blocks, &block_state.entries);
 
         *self.snapshot.write() = snapshot;
-    }
-
-    fn update_address_stats(
-        tx: &brk_types::Transaction,
-        txid: &Txid,
-        addresses: &mut FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>,
-        is_addition: bool,
-    ) {
-        // Inputs: track sending
-        tx.input
-            .iter()
-            .flat_map(|txin| txin.prevout.as_ref())
-            .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
-            .for_each(|(txout, bytes)| {
-                let (stats, set) = addresses.entry(bytes).or_default();
-                if is_addition {
-                    set.insert(txid.clone());
-                    stats.sending(txout);
-                } else {
-                    set.remove(txid);
-                    stats.sent(txout);
-                }
-                stats.update_tx_count(set.len() as u32);
-            });
-
-        // Outputs: track receiving
-        tx.output
-            .iter()
-            .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
-            .for_each(|(txout, bytes)| {
-                let (stats, set) = addresses.entry(bytes).or_default();
-                if is_addition {
-                    set.insert(txid.clone());
-                    stats.receiving(txout);
-                } else {
-                    set.remove(txid);
-                    stats.received(txout);
-                }
-                stats.update_tx_count(set.len() as u32);
-            });
     }
 }
