@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_types::{MempoolInfo, Txid};
+use brk_types::{MempoolInfo, RecommendedFees, Txid};
 
 use crate::{
     VERSION,
@@ -57,6 +57,26 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .summary("Mempool transaction IDs")
                             .description("Get all transaction IDs currently in the mempool.")
                             .ok_response::<Vec<Txid>>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/fees/recommended",
+                get_with(
+                    async |headers: HeaderMap, State(state): State<AppState>| {
+                        let etag = format!("{VERSION}-{}", state.get_height().await);
+                        if headers.has_etag(&etag) {
+                            return Response::new_not_modified();
+                        }
+                        state.get_recommended_fees().await.to_json_response(&etag)
+                    },
+                    |op| {
+                        op.mempool_tag()
+                            .summary("Recommended fees")
+                            .description("Get recommended fee rates for different confirmation targets based on current mempool state.")
+                            .ok_response::<RecommendedFees>()
                             .not_modified()
                             .server_error()
                     },

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, mem};
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -98,7 +98,7 @@ fn sanitize(dirty: impl Iterator<Item = String>) -> Vec<String> {
             match c {
                 ' ' | ',' | '+' => {
                     if !current.is_empty() {
-                        clean.push(std::mem::take(&mut current));
+                        clean.push(mem::take(&mut current));
                     }
                 }
                 '-' => current.push('_'),

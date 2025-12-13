@@ -1,3 +1,5 @@
+use std::mem;
+
 use brk_types::{FeeRate, RecommendedFees, Sats, Txid, VSize};
 use rustc_hash::FxHashSet;
 
@@ -11,6 +13,9 @@ const BLOCK_VSIZE_TARGET: u64 = MAX_BLOCK_WEIGHT / 4;
 
 /// Number of projected blocks to build
 const NUM_PROJECTED_BLOCKS: usize = 8;
+
+/// Minimum fee rate (no priority)
+const MIN_FEE_RATE: f64 = 0.1;
 
 /// A projected future block built from mempool transactions
 #[derive(Debug, Clone, Default)]
@@ -43,7 +48,14 @@ impl ProjectedBlocks {
         let mut sorted: Vec<_> = graph
             .entries()
             .iter()
-            .map(|(txid, entry)| (txid.clone(), entry.ancestor_fee_rate(), entry.vsize, entry.fee))
+            .map(|(txid, entry)| {
+                (
+                    txid.clone(),
+                    entry.ancestor_fee_rate(),
+                    entry.vsize,
+                    entry.fee,
+                )
+            })
             .collect();
 
         sorted.sort_by(|a, b| b.1.cmp(&a.1));
@@ -62,19 +74,14 @@ impl ProjectedBlocks {
             // Would this tx fit in the current block?
             let new_vsize = current_block.total_vsize + vsize;
 
-            if u64::from(new_vsize) > BLOCK_VSIZE_TARGET {
-                // Finalize current block if it has transactions
-                if !current_block.txids.is_empty() {
-                    Self::finalize_block(&mut current_block);
-                    blocks.push(current_block);
+            if u64::from(new_vsize) > BLOCK_VSIZE_TARGET && !current_block.txids.is_empty() {
+                // Finalize and store current block
+                Self::finalize_block(&mut current_block);
+                blocks.push(mem::take(&mut current_block));
 
-                    if blocks.len() >= NUM_PROJECTED_BLOCKS {
-                        break;
-                    }
+                if blocks.len() >= NUM_PROJECTED_BLOCKS {
+                    break;
                 }
-
-                // Start new block
-                current_block = ProjectedBlock::default();
             }
 
             // Add to current block
@@ -103,20 +110,19 @@ impl ProjectedBlocks {
     pub fn recommended_fees(&self) -> RecommendedFees {
         RecommendedFees {
             fastest_fee: self.fee_for_block(0),
-            half_hour_fee: self.fee_for_block(2),  // ~3 blocks
-            hour_fee: self.fee_for_block(5),       // ~6 blocks
-            economy_fee: self.fee_for_block(7),    // ~12 blocks, but we only have 8
-            minimum_fee: 1.0,
+            half_hour_fee: self.fee_for_block(2), // ~3 blocks
+            hour_fee: self.fee_for_block(5),      // ~6 blocks
+            economy_fee: self.fee_for_block(7),   // ~8 blocks
+            minimum_fee: FeeRate::from(MIN_FEE_RATE),
         }
     }
 
     /// Get the minimum fee rate needed to get into block N
-    fn fee_for_block(&self, block_index: usize) -> f64 {
+    fn fee_for_block(&self, block_index: usize) -> FeeRate {
         self.blocks
             .get(block_index)
-            .map(|b| f64::from(b.min_fee_rate))
-            .unwrap_or(1.0)
-            .max(1.0) // Never recommend below 1 sat/vB
+            .map(|b| b.min_fee_rate)
+            .unwrap_or_else(|| FeeRate::from(MIN_FEE_RATE))
     }
 
     fn finalize_block(block: &mut ProjectedBlock) {

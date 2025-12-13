@@ -1,5 +1,8 @@
-use brk_types::{FeeRate, Outpoint, Sats, Transaction, Txid, VSize};
+use brk_types::{FeeRate, Sats, Transaction, Txid, VSize, Vout};
 use rustc_hash::FxHashSet;
+
+/// (txid, vout) tuple identifying an unspent output in the mempool
+pub type MempoolOutpoint = (Txid, Vout);
 
 /// A mempool transaction with its dependency metadata
 #[derive(Debug, Clone)]
@@ -9,7 +12,7 @@ pub struct MempoolEntry {
     pub vsize: VSize,
 
     /// Outpoints this tx spends (inputs)
-    pub spends: Vec<Outpoint>,
+    pub spends: Vec<MempoolOutpoint>,
 
     /// Txids of unconfirmed ancestors (parents, grandparents, etc.)
     pub ancestors: FxHashSet<Txid>,
@@ -30,7 +33,7 @@ impl MempoolEntry {
         let spends = tx
             .input
             .iter()
-            .map(|txin| Outpoint::new(txin.txid.clone(), txin.vout))
+            .map(|txin| (txin.txid.clone(), txin.vout))
             .collect();
 
         Self {

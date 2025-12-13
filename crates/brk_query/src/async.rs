@@ -7,7 +7,7 @@ use brk_monitor::Mempool;
 use brk_reader::Reader;
 use brk_types::{
     Address, AddressStats, BlockInfo, BlockStatus, Height, Index, IndexInfo, Limit, MempoolInfo,
-    Metric, MetricCount, Transaction, TreeNode, TxStatus, Txid, TxidPath, Utxo,
+    Metric, MetricCount, RecommendedFees, Transaction, TreeNode, TxStatus, Txid, TxidPath, Utxo,
 };
 use tokio::task::spawn_blocking;
 
@@ -98,13 +98,15 @@ impl AsyncQuery {
     }
 
     pub async fn get_mempool_info(&self) -> Result<MempoolInfo> {
-        let query = self.0.clone();
-        spawn_blocking(move || query.get_mempool_info()).await?
+        self.0.get_mempool_info()
     }
 
     pub async fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
-        let query = self.0.clone();
-        spawn_blocking(move || query.get_mempool_txids()).await?
+        self.0.get_mempool_txids()
+    }
+
+    pub async fn get_recommended_fees(&self) -> Result<RecommendedFees> {
+        self.0.get_recommended_fees()
     }
 
     pub async fn match_metric(&self, metric: Metric, limit: Limit) -> Result<Vec<&'static str>> {
