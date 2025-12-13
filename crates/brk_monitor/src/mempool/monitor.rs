@@ -133,7 +133,7 @@ impl MempoolInner {
         let new_txs = self.fetch_new_txs(&current_txids);
 
         // Apply changes using the entry info (has fees) and full txs (for addresses)
-        let has_changes = self.apply_changes(&entries_info, &new_txs);
+        let has_changes = self.apply_changes(&entries_info, new_txs);
 
         if has_changes {
             self.dirty.store(true, Ordering::Release);
@@ -146,13 +146,19 @@ impl MempoolInner {
 
     /// Fetch full transaction data for new txids (needed for address tracking).
     fn fetch_new_txs(&self, current_txids: &FxHashSet<Txid>) -> FxHashMap<Txid, TxWithHex> {
-        let txs = self.txs.read();
-        current_txids
-            .iter()
-            .filter(|txid| !txs.contains_key(*txid))
-            .take(MAX_TX_FETCHES_PER_CYCLE)
-            .cloned()
-            .collect::<Vec<_>>()
+        // Collect txids to fetch while holding read lock, then release it
+        let txids_to_fetch: Vec<Txid> = {
+            let txs = self.txs.read();
+            current_txids
+                .iter()
+                .filter(|txid| !txs.contains_key(*txid))
+                .take(MAX_TX_FETCHES_PER_CYCLE)
+                .cloned()
+                .collect()
+        };
+
+        // Make RPC calls without holding the lock
+        txids_to_fetch
             .into_iter()
             .filter_map(|txid| {
                 self.client
@@ -167,7 +173,7 @@ impl MempoolInner {
     fn apply_changes(
         &self,
         entries_info: &[MempoolEntryInfo],
-        new_txs: &FxHashMap<Txid, TxWithHex>,
+        new_txs: FxHashMap<Txid, TxWithHex>,
     ) -> bool {
         // Build lookup map for current entries
         let current_entries: FxHashMap<TxidPrefix, &MempoolEntryInfo> = entries_info
@@ -194,7 +200,7 @@ impl MempoolInner {
             let tx = tx_with_hex.tx();
 
             info.remove(tx);
-            Self::update_address_stats_on_removal(tx, txid, &mut addresses);
+            Self::update_address_stats(tx, txid, &mut addresses, false);
 
             // Remove from slot-based storage
             if let Some(idx) = block_state.txid_prefix_to_idx.remove(&prefix) {
@@ -208,7 +214,7 @@ impl MempoolInner {
         });
 
         // Add new transactions
-        for (txid, tx_with_hex) in new_txs {
+        for (txid, tx_with_hex) in &new_txs {
             let tx = tx_with_hex.tx();
             let prefix = TxidPrefix::from(txid);
 
@@ -220,7 +226,7 @@ impl MempoolInner {
             let entry = MempoolEntry::from_info(entry_info);
 
             info.add(tx);
-            Self::update_address_stats_on_addition(tx, txid, &mut addresses);
+            Self::update_address_stats(tx, txid, &mut addresses, true);
 
             // Allocate slot
             let idx = if let Some(idx) = block_state.free_indices.pop() {
@@ -234,7 +240,7 @@ impl MempoolInner {
 
             block_state.txid_prefix_to_idx.insert(prefix, idx);
         }
-        txs.extend(new_txs.clone());
+        txs.extend(new_txs);
 
         had_removals || had_additions
     }
@@ -281,60 +287,42 @@ impl MempoolInner {
         *self.snapshot.write() = snapshot;
     }
 
-    fn update_address_stats_on_removal(
+    fn update_address_stats(
         tx: &brk_types::Transaction,
         txid: &Txid,
         addresses: &mut FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>,
+        is_addition: bool,
     ) {
-        // Inputs: undo "sending" state
+        // Inputs: track sending
         tx.input
             .iter()
             .flat_map(|txin| txin.prevout.as_ref())
             .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
             .for_each(|(txout, bytes)| {
                 let (stats, set) = addresses.entry(bytes).or_default();
-                set.remove(txid);
-                stats.sent(txout);
+                if is_addition {
+                    set.insert(txid.clone());
+                    stats.sending(txout);
+                } else {
+                    set.remove(txid);
+                    stats.sent(txout);
+                }
                 stats.update_tx_count(set.len() as u32);
             });
 
-        // Outputs: undo "receiving" state
+        // Outputs: track receiving
         tx.output
             .iter()
             .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
             .for_each(|(txout, bytes)| {
                 let (stats, set) = addresses.entry(bytes).or_default();
-                set.remove(txid);
-                stats.received(txout);
-                stats.update_tx_count(set.len() as u32);
-            });
-    }
-
-    fn update_address_stats_on_addition(
-        tx: &brk_types::Transaction,
-        txid: &Txid,
-        addresses: &mut FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>,
-    ) {
-        // Inputs: mark as "sending"
-        tx.input
-            .iter()
-            .flat_map(|txin| txin.prevout.as_ref())
-            .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
-            .for_each(|(txout, bytes)| {
-                let (stats, set) = addresses.entry(bytes).or_default();
-                set.insert(txid.clone());
-                stats.sending(txout);
-                stats.update_tx_count(set.len() as u32);
-            });
-
-        // Outputs: mark as "receiving"
-        tx.output
-            .iter()
-            .flat_map(|txout| txout.address_bytes().map(|bytes| (txout, bytes)))
-            .for_each(|(txout, bytes)| {
-                let (stats, set) = addresses.entry(bytes).or_default();
-                set.insert(txid.clone());
-                stats.receiving(txout);
+                if is_addition {
+                    set.insert(txid.clone());
+                    stats.receiving(txout);
+                } else {
+                    set.remove(txid);
+                    stats.received(txout);
+                }
                 stats.update_tx_count(set.len() as u32);
             });
     }

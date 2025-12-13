@@ -149,32 +149,29 @@ fn pick_best_candidate(
 }
 
 /// Select a tx and all its unselected ancestors (topological order).
-/// Takes and returns pool indices.
+/// Returns pool indices with parents before children.
 fn select_with_ancestors(pool: &mut Pool, pool_idx: PoolIndex) -> Vec<PoolIndex> {
     let mut to_select: Vec<PoolIndex> = Vec::new();
-    let mut stack = vec![pool_idx];
 
-    // DFS to find all unselected ancestors
-    while let Some(current) = stack.pop() {
-        let tx = &pool[current];
-        if tx.used {
+    // Stack entries: (pool_idx, parents_processed)
+    let mut stack: Vec<(PoolIndex, bool)> = vec![(pool_idx, false)];
+
+    while let Some((current, parents_processed)) = stack.pop() {
+        if pool[current].used {
             continue;
         }
 
-        // Push unselected parents onto stack (process parents first)
-        let has_unselected_parents = tx.parents.iter().any(|&p| !pool[p].used);
-        if has_unselected_parents {
-            stack.push(current); // Re-add self to process after parents
-            for &parent in &tx.parents {
-                if !pool[parent].used {
-                    stack.push(parent);
-                }
-            }
+        if parents_processed {
+            // All parents handled, select this tx
+            pool[current].used = true;
+            to_select.push(current);
         } else {
-            // All parents selected, can select this one
-            if !pool[current].used {
-                pool[current].used = true;
-                to_select.push(current);
+            // First visit: push self for post-processing, then push parents
+            stack.push((current, true));
+            for &parent in &pool[current].parents {
+                if !pool[parent].used {
+                    stack.push((parent, false));
+                }
             }
         }
     }
@@ -183,55 +180,79 @@ fn select_with_ancestors(pool: &mut Pool, pool_idx: PoolIndex) -> Vec<PoolIndex>
 }
 
 /// Fix fee rate ordering violations between blocks.
-/// Swaps txs between adjacent blocks until Block N's min >= Block N+1's max.
+/// Ensures Block[i].min >= Block[i+1].max for all adjacent blocks.
+///
+/// Uses cached min/max indices to avoid O(n) scans on each iteration.
 fn fix_block_ordering(blocks: &mut [Vec<SelectedTx>]) {
-    // Iterate until no more swaps needed
-    let mut changed = true;
-    let mut iterations = 0;
-    const MAX_ITERATIONS: usize = 100; // Prevent infinite loops
+    if blocks.len() < 2 {
+        return;
+    }
 
-    while changed && iterations < MAX_ITERATIONS {
-        changed = false;
+    // Cache (min_idx, max_idx) for each block
+    let mut cache: Vec<(usize, usize)> = blocks
+        .iter()
+        .map(|block| find_min_max_indices(block))
+        .collect();
+
+    let mut iterations = 0;
+    const MAX_ITERATIONS: usize = 100;
+
+    loop {
+        let mut changed = false;
         iterations += 1;
 
-        for i in 0..blocks.len().saturating_sub(1) {
-            // Find min in block i and max in block i+1
-            let Some(curr_min_idx) = blocks[i]
-                .iter()
-                .enumerate()
-                .min_by_key(|(_, s)| s.effective_fee_rate)
-                .map(|(idx, _)| idx)
-            else {
-                continue;
-            };
+        for i in 0..blocks.len() - 1 {
+            let (curr_min_idx, _) = cache[i];
+            let (_, next_max_idx) = cache[i + 1];
 
-            let Some(next_max_idx) = blocks[i + 1]
-                .iter()
-                .enumerate()
-                .max_by_key(|(_, s)| s.effective_fee_rate)
-                .map(|(idx, _)| idx)
-            else {
+            // Skip empty blocks
+            if blocks[i].is_empty() || blocks[i + 1].is_empty() {
                 continue;
-            };
+            }
 
             let curr_min = blocks[i][curr_min_idx].effective_fee_rate;
             let next_max = blocks[i + 1][next_max_idx].effective_fee_rate;
 
-            // If violation exists, swap the two txs
             if next_max > curr_min {
-                // Swap: move high-fee tx to earlier block, low-fee tx to later block
+                // Swap: high-fee tx to earlier block, low-fee tx to later block
                 let high_tx = blocks[i + 1].swap_remove(next_max_idx);
                 let low_tx = blocks[i].swap_remove(curr_min_idx);
                 blocks[i].push(high_tx);
                 blocks[i + 1].push(low_tx);
+
+                // Recompute cache only for affected blocks
+                cache[i] = find_min_max_indices(&blocks[i]);
+                cache[i + 1] = find_min_max_indices(&blocks[i + 1]);
                 changed = true;
             }
+        }
+
+        if !changed || iterations >= MAX_ITERATIONS {
+            break;
         }
     }
 
     if iterations >= MAX_ITERATIONS {
         log::warn!("fix_block_ordering: reached max iterations, some violations may remain");
     }
+}
+
+/// Find indices of min and max fee rate transactions in a block.
+fn find_min_max_indices(block: &[SelectedTx]) -> (usize, usize) {
+    if block.is_empty() {
+        return (0, 0);
+    }
+    let mut min_idx = 0;
+    let mut max_idx = 0;
+    for (i, tx) in block.iter().enumerate().skip(1) {
+        if tx.effective_fee_rate < block[min_idx].effective_fee_rate {
+            min_idx = i;
+        }
+        if tx.effective_fee_rate > block[max_idx].effective_fee_rate {
+            max_idx = i;
+        }
+    }
+    (min_idx, max_idx)
 }
 
 /// Update descendants' ancestor scores after selecting a tx.
