@@ -1,9 +1,9 @@
-use crate::{RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, Weight};
+use crate::{FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, VSize, Weight};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::CheckedSub;
 
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 /// Transaction information compatible with mempool.space API format
 pub struct Transaction {
     #[schemars(example = TxIndex::new(0))]
@@ -61,5 +61,17 @@ impl Transaction {
 
     pub fn compute_fee(&mut self) {
         self.fee = Self::fee(self).unwrap_or_default();
+    }
+
+    /// Virtual size in vbytes (weight / 4, rounded up)
+    #[inline]
+    pub fn vsize(&self) -> VSize {
+        VSize::from(self.weight)
+    }
+
+    /// Fee rate in sat/vB
+    #[inline]
+    pub fn fee_rate(&self) -> FeeRate {
+        FeeRate::from((self.fee, self.vsize()))
     }
 }

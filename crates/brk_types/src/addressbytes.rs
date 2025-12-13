@@ -1,4 +1,6 @@
-use bitcoin::ScriptBuf;
+use std::str::FromStr;
+
+use bitcoin::{Network, PublicKey, opcodes, script::Builder, ScriptBuf};
 use brk_error::Error;
 
 use super::{
@@ -34,6 +36,44 @@ impl AddressBytes {
 
     pub fn hash(&self) -> u64 {
         rapidhash::v3::rapidhash_v3(self.as_slice()).to_le()
+    }
+
+    /// Reconstruct the script_pubkey from the address bytes
+    pub fn to_script_pubkey(&self) -> ScriptBuf {
+        match self {
+            AddressBytes::P2PK65(b) => Builder::new()
+                .push_slice(****b)
+                .push_opcode(opcodes::all::OP_CHECKSIG)
+                .into_script(),
+            AddressBytes::P2PK33(b) => Builder::new()
+                .push_slice(****b)
+                .push_opcode(opcodes::all::OP_CHECKSIG)
+                .into_script(),
+            AddressBytes::P2PKH(b) => Builder::new()
+                .push_opcode(opcodes::all::OP_DUP)
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(****b)
+                .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                .push_opcode(opcodes::all::OP_CHECKSIG)
+                .into_script(),
+            AddressBytes::P2SH(b) => Builder::new()
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(****b)
+                .push_opcode(opcodes::all::OP_EQUAL)
+                .into_script(),
+            AddressBytes::P2WPKH(b) => {
+                Builder::new().push_int(0).push_slice(****b).into_script()
+            }
+            AddressBytes::P2WSH(b) => {
+                Builder::new().push_int(0).push_slice(****b).into_script()
+            }
+            AddressBytes::P2TR(b) => {
+                Builder::new().push_int(1).push_slice(****b).into_script()
+            }
+            AddressBytes::P2A(b) => {
+                Builder::new().push_int(1).push_slice(****b).into_script()
+            }
+        }
     }
 }
 
@@ -164,5 +204,32 @@ impl From<P2ABytes> for AddressBytes {
     #[inline]
     fn from(value: P2ABytes) -> Self {
         Self::P2A(Box::new(value))
+    }
+}
+
+impl AddressBytes {
+    /// Parse an address string to a ScriptBuf
+    pub fn address_to_script(address: &str) -> Result<ScriptBuf, Error> {
+        if let Ok(address) = bitcoin::Address::from_str(address) {
+            if !address.is_valid_for_network(Network::Bitcoin) {
+                return Err(Error::InvalidNetwork);
+            }
+            let address = address.assume_checked();
+            Ok(address.script_pubkey())
+        } else if let Ok(pubkey) = PublicKey::from_str(address) {
+            Ok(ScriptBuf::new_p2pk(&pubkey))
+        } else {
+            Err(Error::InvalidAddress)
+        }
+    }
+}
+
+impl FromStr for AddressBytes {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let script = Self::address_to_script(s)?;
+        let outputtype = OutputType::from(&script);
+        Self::try_from((&script, outputtype))
     }
 }

@@ -9,6 +9,9 @@ pub trait ResultExtended<T> {
     fn to_json_response(self, etag: &str) -> Response
     where
         T: Serialize;
+    fn to_text_response(self, etag: &str) -> Response
+    where
+        T: AsRef<str>;
 }
 
 impl<T> ResultExtended<T> for Result<T> {
@@ -35,6 +38,16 @@ impl<T> ResultExtended<T> for Result<T> {
         match self.with_status() {
             Ok(value) => Response::new_json(&value, etag),
             Err((status, message)) => Response::new_json_with(status, &message, etag),
+        }
+    }
+
+    fn to_text_response(self, etag: &str) -> Response
+    where
+        T: AsRef<str>,
+    {
+        match self.with_status() {
+            Ok(value) => Response::new_text(value.as_ref(), etag),
+            Err((status, message)) => Response::new_text_with(status, &message, etag),
         }
     }
 }

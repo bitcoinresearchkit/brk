@@ -33,6 +33,8 @@ pub struct InputsResult {
     pub address_data: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
     /// Transaction indexes per address for tx_count tracking.
     pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
+    /// Updates to txoutindex_to_txinindex: (spent txoutindex, spending txinindex).
+    pub txoutindex_to_txinindex_updates: Vec<(TxOutIndex, TxInIndex)>,
 }
 
 /// Process inputs (spent UTXOs) for a block in parallel.
@@ -64,7 +66,7 @@ pub fn process_inputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> InputsResult {
-    let (height_to_sent, sent_data, address_data, txindex_vecs) = (first_txinindex
+    let (height_to_sent, sent_data, address_data, txindex_vecs, txoutindex_to_txinindex_updates) = (first_txinindex
         ..first_txinindex + input_count)
         .into_par_iter()
         .map(|i| {
@@ -88,7 +90,7 @@ pub fn process_inputs(
 
             // Non-address inputs don't need typeindex or address lookup
             if input_type.is_not_address() {
-                return (prev_height, value, input_type, None);
+                return (txinindex, txoutindex, prev_height, value, input_type, None);
             }
 
             let typeindex =
@@ -107,6 +109,8 @@ pub fn process_inputs(
             );
 
             (
+                txinindex,
+                txoutindex,
                 prev_height,
                 value,
                 input_type,
@@ -120,14 +124,17 @@ pub fn process_inputs(
                     HeightToAddressTypeToVec::default(),
                     AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
                     AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
+                    Vec::<(TxOutIndex, TxInIndex)>::new(),
                 )
             },
-            |(mut height_to_sent, mut sent_data, mut address_data, mut txindex_vecs),
-             (prev_height, value, output_type, addr_info)| {
+            |(mut height_to_sent, mut sent_data, mut address_data, mut txindex_vecs, mut txoutindex_to_txinindex_updates),
+             (txinindex, txoutindex, prev_height, value, output_type, addr_info)| {
                 height_to_sent
                     .entry(prev_height)
                     .or_default()
                     .iterate(value, output_type);
+
+                txoutindex_to_txinindex_updates.push((txoutindex, txinindex));
 
                 if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
                     sent_data
@@ -149,7 +156,7 @@ pub fn process_inputs(
                         .push(txindex);
                 }
 
-                (height_to_sent, sent_data, address_data, txindex_vecs)
+                (height_to_sent, sent_data, address_data, txindex_vecs, txoutindex_to_txinindex_updates)
             },
         )
         .reduce(
@@ -159,9 +166,10 @@ pub fn process_inputs(
                     HeightToAddressTypeToVec::default(),
                     AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
                     AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
+                    Vec::<(TxOutIndex, TxInIndex)>::new(),
                 )
             },
-            |(mut h1, mut s1, a1, tx1), (h2, s2, a2, tx2)| {
+            |(mut h1, mut s1, a1, tx1, updates1), (h2, s2, a2, tx2, updates2)| {
                 // Merge height_to_sent maps
                 for (k, v) in h2 {
                     *h1.entry(k).or_default() += v;
@@ -170,7 +178,15 @@ pub fn process_inputs(
                 // Merge sent_data maps
                 s1.merge_mut(s2);
 
-                (h1, s1, a1.merge(a2), tx1.merge_vec(tx2))
+                // Merge txoutindex_to_txinindex updates (extend longest with shortest)
+                let (mut updates, updates_consumed) = if updates1.len() > updates2.len() {
+                    (updates1, updates2)
+                } else {
+                    (updates2, updates1)
+                };
+                updates.extend(updates_consumed);
+
+                (h1, s1, a1.merge(a2), tx1.merge_vec(tx2), updates)
             },
         );
 
@@ -179,6 +195,7 @@ pub fn process_inputs(
         sent_data,
         address_data,
         txindex_vecs,
+        txoutindex_to_txinindex_updates,
     }
 }
 

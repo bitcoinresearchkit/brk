@@ -5,6 +5,8 @@ use serde::Serialize;
 use strum::Display;
 use vecdb::{Bytes, Formattable};
 
+use crate::AddressBytes;
+
 #[derive(
     Debug, Clone, Copy, Display, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema, Hash,
 )]
@@ -875,6 +877,22 @@ impl From<AddressType> for OutputType {
             AddressType::P2wpkh => Self::P2WPKH,
             AddressType::P2wsh => Self::P2WSH,
             _ => unreachable!(),
+        }
+    }
+}
+
+impl From<&AddressBytes> for OutputType {
+    #[inline]
+    fn from(bytes: &AddressBytes) -> Self {
+        match bytes {
+            AddressBytes::P2PK65(_) => Self::P2PK65,
+            AddressBytes::P2PK33(_) => Self::P2PK33,
+            AddressBytes::P2PKH(_) => Self::P2PKH,
+            AddressBytes::P2SH(_) => Self::P2SH,
+            AddressBytes::P2WPKH(_) => Self::P2WPKH,
+            AddressBytes::P2WSH(_) => Self::P2WSH,
+            AddressBytes::P2TR(_) => Self::P2TR,
+            AddressBytes::P2A(_) => Self::P2A,
         }
     }
 }

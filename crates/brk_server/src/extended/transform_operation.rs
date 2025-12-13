@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 pub trait TransformResponseExtended<'t> {
     fn addresses_tag(self) -> Self;
     fn blocks_tag(self) -> Self;
+    fn mempool_tag(self) -> Self;
     fn metrics_tag(self) -> Self;
     fn mining_tag(self) -> Self;
     fn server_tag(self) -> Self;
@@ -36,6 +37,10 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
 
     fn blocks_tag(self) -> Self {
         self.tag("Blocks")
+    }
+
+    fn mempool_tag(self) -> Self {
+        self.tag("Mempool")
     }
 
     fn metrics_tag(self) -> Self {

@@ -3,14 +3,13 @@ use std::path::{Path, PathBuf};
 use std::thread::sleep;
 use std::{mem, sync::Arc, time::Duration};
 
-use bitcoin::block::Header;
-use bitcoin::consensus::encode;
-use bitcoincore_rpc::json::{
-    GetBlockHeaderResult, GetBlockResult, GetBlockchainInfoResult, GetTxOutResult,
+use bitcoin::{block::Header, consensus::encode};
+use bitcoincore_rpc::{
+    json::{GetBlockHeaderResult, GetBlockResult, GetBlockchainInfoResult, GetTxOutResult},
+    {Client as CoreClient, Error as RpcError, RpcApi},
 };
-use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, RpcApi};
 use brk_error::Result;
-use brk_types::{BlockHash, Height, Sats, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
+use brk_types::{BlockHash, Height, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid, Vout};
 
 pub use bitcoincore_rpc::Auth;
 
@@ -120,11 +119,13 @@ impl Client {
         Ok(tx)
     }
 
-    pub fn get_mempool_transaction<'a, T>(&self, txid: &'a T) -> Result<Transaction>
+    pub fn get_mempool_transaction<'a, T>(&self, txid: &'a T) -> Result<TxWithHex>
     where
         &'a T: Into<&'a bitcoin::Txid>,
     {
-        let mut tx = self.get_raw_transaction(txid, None as Option<&'a BlockHash>)?;
+        // Get hex first, then deserialize from it
+        let hex = self.get_raw_transaction_hex(txid, None as Option<&'a BlockHash>)?;
+        let mut tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
 
         let input = mem::take(&mut tx.input)
             .into_iter()
@@ -170,12 +171,12 @@ impl Client {
             fee: Sats::default(),
             input,
             output: tx.output.into_iter().map(TxOut::from).collect(),
-            status: TxStatus::UNCOMFIRMED,
+            status: TxStatus::UNCONFIRMED,
         };
 
         tx.compute_fee();
 
-        Ok(tx)
+        Ok(TxWithHex::new(tx, hex))
     }
 
     pub fn get_tx_out(

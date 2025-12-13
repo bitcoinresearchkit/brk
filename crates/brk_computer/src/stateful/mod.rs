@@ -64,7 +64,7 @@ mod address_cohorts;
 mod address_indexes;
 mod addresstype;
 mod common;
-mod flushable;
+// mod flushable;
 mod range_map;
 mod readers;
 mod r#trait;
@@ -102,6 +102,7 @@ pub struct Vecs {
     // States
     // ---
     pub chain_state: BytesVec<Height, SupplyState>,
+    pub txoutindex_to_txinindex: BytesVec<TxOutIndex, TxInIndex>,
     pub any_address_indexes: AnyAddressIndexesVecs,
     pub addresses_data: AddressesDataVecs,
     pub utxo_cohorts: utxo_cohorts::Vecs,
@@ -177,6 +178,10 @@ impl Vecs {
         let this = Self {
             chain_state: BytesVec::forced_import_with(
                 ImportOptions::new(&db, "chain", v0)
+                    .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+            )?,
+            txoutindex_to_txinindex: BytesVec::forced_import_with(
+                ImportOptions::new(&db, "txinindex", v0)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
@@ -382,13 +387,20 @@ impl Vecs {
             .map(|price| price.timeindexes_to_price_close.dateindex.u());
         let height_to_date_fixed = &indexes.height_to_date_fixed;
         let height_to_first_p2aaddressindex = &indexer.vecs.address.height_to_first_p2aaddressindex;
-        let height_to_first_p2pk33addressindex = &indexer.vecs.address.height_to_first_p2pk33addressindex;
-        let height_to_first_p2pk65addressindex = &indexer.vecs.address.height_to_first_p2pk65addressindex;
-        let height_to_first_p2pkhaddressindex = &indexer.vecs.address.height_to_first_p2pkhaddressindex;
-        let height_to_first_p2shaddressindex = &indexer.vecs.address.height_to_first_p2shaddressindex;
-        let height_to_first_p2traddressindex = &indexer.vecs.address.height_to_first_p2traddressindex;
-        let height_to_first_p2wpkhaddressindex = &indexer.vecs.address.height_to_first_p2wpkhaddressindex;
-        let height_to_first_p2wshaddressindex = &indexer.vecs.address.height_to_first_p2wshaddressindex;
+        let height_to_first_p2pk33addressindex =
+            &indexer.vecs.address.height_to_first_p2pk33addressindex;
+        let height_to_first_p2pk65addressindex =
+            &indexer.vecs.address.height_to_first_p2pk65addressindex;
+        let height_to_first_p2pkhaddressindex =
+            &indexer.vecs.address.height_to_first_p2pkhaddressindex;
+        let height_to_first_p2shaddressindex =
+            &indexer.vecs.address.height_to_first_p2shaddressindex;
+        let height_to_first_p2traddressindex =
+            &indexer.vecs.address.height_to_first_p2traddressindex;
+        let height_to_first_p2wpkhaddressindex =
+            &indexer.vecs.address.height_to_first_p2wpkhaddressindex;
+        let height_to_first_p2wshaddressindex =
+            &indexer.vecs.address.height_to_first_p2wshaddressindex;
         let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
         let height_to_txindex_count = chain.indexes_to_tx_count.height.u();
         let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
@@ -489,6 +501,7 @@ impl Vecs {
                     .unwrap_or_default(),
             )
             .min(chain_state_starting_height)
+            .min(Height::from(self.txoutindex_to_txinindex.stamp()).incremented())
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
             .min(Height::from(self.height_to_unspendable_supply.len()))
@@ -507,6 +520,7 @@ impl Vecs {
             let starting_height = if starting_height.is_not_zero() {
                 let mut set = [self.chain_state.rollback_before(stamp)?]
                     .into_iter()
+                    .chain([self.txoutindex_to_txinindex.rollback_before(stamp)?])
                     .chain(self.any_address_indexes.rollback_before(stamp)?)
                     .chain(self.addresses_data.rollback_before(stamp)?)
                     .map(Height::from)
@@ -589,6 +603,7 @@ impl Vecs {
 
                 chain_state = vec![];
 
+                self.txoutindex_to_txinindex.reset()?;
                 self.any_address_indexes.reset()?;
                 self.addresses_data.reset()?;
 
@@ -760,6 +775,7 @@ impl Vecs {
                     addresstype_to_typedindex_to_sent_data,
                     mut stored_or_new_addresstype_to_typeindex_to_addressdatawithsource,
                     mut combined_txindex_vecs,
+                    txoutindex_to_txinindex_updates,
                 ) = thread::scope(|scope| {
                     scope.spawn(|| {
                         self.utxo_cohorts
@@ -860,6 +876,7 @@ impl Vecs {
                         addresstype_to_typedindex_to_sent_data,
                         sending_addresstype_to_typeindex_to_addressdatawithsource,
                         input_txindex_vecs,
+                        txoutindex_to_txinindex_updates,
                     ) = (first_txinindex + 1..first_txinindex + usize::from(input_count))
                         .into_par_iter()
                         .map(|i| {
@@ -884,7 +901,15 @@ impl Vecs {
                             let prev_height = *txoutindex_range_to_height.get(txoutindex).unwrap();
 
                             if input_type.is_not_address() {
-                                return (txindex, prev_height, value, input_type, None);
+                                return (
+                                    txinindex,
+                                    txoutindex,
+                                    txindex,
+                                    prev_height,
+                                    value,
+                                    input_type,
+                                    None,
+                                );
                             }
 
                             let typeindex = txoutindex_to_typeindex
@@ -902,6 +927,8 @@ impl Vecs {
                             );
 
                             (
+                                txinindex,
+                                txoutindex,
                                 txindex,
                                 prev_height,
                                 value,
@@ -916,6 +943,7 @@ impl Vecs {
                                     HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
                                     AddressTypeToTypeIndexMap::default(),
                                     AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
+                                    Vec::<(TxOutIndex, TxInIndex)>::new(),
                                 )
                             },
                             |(
@@ -923,8 +951,11 @@ impl Vecs {
                                 mut height_to_addresstype_to_typedindex_to_data,
                                 mut addresstype_to_typeindex_to_addressdatawithsource,
                                 mut txindex_vecs,
+                                mut txoutindex_to_txinindex_updates,
                             ),
                              (
+                                txinindex,
+                                txoutindex,
                                 txindex,
                                 prev_height,
                                 value,
@@ -935,6 +966,8 @@ impl Vecs {
                                     .entry(prev_height)
                                     .or_default()
                                     .iterate(value, output_type);
+
+                                txoutindex_to_txinindex_updates.push((txoutindex, txinindex));
 
                                 if let Some((typeindex, addressdata_opt)) =
                                     typeindex_with_addressdata_opt
@@ -966,6 +999,7 @@ impl Vecs {
                                     height_to_addresstype_to_typedindex_to_data,
                                     addresstype_to_typeindex_to_addressdatawithsource,
                                     txindex_vecs,
+                                    txoutindex_to_txinindex_updates,
                                 )
                             },
                         )
@@ -976,6 +1010,7 @@ impl Vecs {
                                     HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default(),
                                     AddressTypeToTypeIndexMap::default(),
                                     AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
+                                    Vec::<(TxOutIndex, TxInIndex)>::new(),
                                 )
                             },
                             |(
@@ -983,12 +1018,14 @@ impl Vecs {
                                 addresstype_to_typedindex_to_data,
                                 addresstype_to_typeindex_to_addressdatawithsource,
                                 txindex_vecs,
+                                txoutindex_to_txinindex_updates,
                             ),
                              (
                                 height_to_transacted2,
                                 addresstype_to_typedindex_to_data2,
                                 addresstype_to_typeindex_to_addressdatawithsource2,
                                 txindex_vecs2,
+                                txoutindex_to_txinindex_updates2,
                             )| {
                                 let (mut height_to_transacted, height_to_transacted_consumed) =
                                     if height_to_transacted.len() > height_to_transacted2.len() {
@@ -1028,12 +1065,32 @@ impl Vecs {
                                             .merge_mut(v);
                                     });
 
+                                let (
+                                    mut txoutindex_to_txinindex_updates,
+                                    txoutindex_to_txinindex_updates_consumed,
+                                ) = if txoutindex_to_txinindex_updates.len()
+                                    > txoutindex_to_txinindex_updates2.len()
+                                {
+                                    (
+                                        txoutindex_to_txinindex_updates,
+                                        txoutindex_to_txinindex_updates2,
+                                    )
+                                } else {
+                                    (
+                                        txoutindex_to_txinindex_updates2,
+                                        txoutindex_to_txinindex_updates,
+                                    )
+                                };
+                                txoutindex_to_txinindex_updates
+                                    .extend(txoutindex_to_txinindex_updates_consumed);
+
                                 (
                                     height_to_transacted,
                                     addresstype_to_typedindex_to_data,
                                     addresstype_to_typeindex_to_addressdatawithsource
                                         .merge(addresstype_to_typeindex_to_addressdatawithsource2),
                                     txindex_vecs.merge_vec(txindex_vecs2),
+                                    txoutindex_to_txinindex_updates,
                                 )
                             },
                         );
@@ -1051,6 +1108,7 @@ impl Vecs {
                         addresstype_to_typedindex_to_sent_data,
                         addresstype_to_typeindex_to_addressdatawithsource,
                         combined_txindex_vecs,
+                        txoutindex_to_txinindex_updates,
                     )
                 });
 
@@ -1158,6 +1216,12 @@ impl Vecs {
 
                     self.utxo_cohorts.send(height_to_sent, &mut chain_state);
                 });
+
+                // Update txoutindex_to_txinindex
+                self.update_txoutindex_to_txinindex(
+                    usize::from(output_count),
+                    txoutindex_to_txinindex_updates,
+                )?;
 
                 self.height_to_unspendable_supply
                     .truncate_push(height, unspendable_supply)?;
@@ -1599,6 +1663,8 @@ impl Vecs {
 
         let stamp = Stamp::from(height);
 
+        self.txoutindex_to_txinindex
+            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
         self.any_address_indexes
             .stamped_flush_maybe_with_changes(stamp, with_changes)?;
         self.addresses_data
@@ -1611,6 +1677,26 @@ impl Vecs {
         self.chain_state
             .stamped_flush_maybe_with_changes(stamp, with_changes)?;
 
+        Ok(())
+    }
+
+    /// Update txoutindex_to_txinindex for a block.
+    ///
+    /// 1. Push UNSPENT for all new outputs in the block
+    /// 2. Update spent outputs with their spending txinindex
+    pub fn update_txoutindex_to_txinindex(
+        &mut self,
+        output_count: usize,
+        updates: Vec<(TxOutIndex, TxInIndex)>,
+    ) -> Result<()> {
+        // Push UNSPENT for all new outputs in this block
+        for _ in 0..output_count {
+            self.txoutindex_to_txinindex.push(TxInIndex::UNSPENT);
+        }
+        // Update spent outputs with their spending txinindex
+        for (txoutindex, txinindex) in updates {
+            self.txoutindex_to_txinindex.update(txoutindex, txinindex)?;
+        }
         Ok(())
     }
 }

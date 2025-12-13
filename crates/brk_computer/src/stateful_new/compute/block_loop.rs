@@ -13,7 +13,7 @@ use std::thread;
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex};
+use brk_types::{DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TxInIndex, TxOutIndex, TypeIndex};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
@@ -248,6 +248,7 @@ pub fn process_blocks(
                     sent_data: Default::default(),
                     address_data: Default::default(),
                     txindex_vecs: Default::default(),
+                    txoutindex_to_txinindex_updates: Default::default(),
                 }
             };
 
@@ -345,6 +346,12 @@ pub fn process_blocks(
             vecs.utxo_cohorts.receive(transacted, height, block_price);
             vecs.utxo_cohorts.send(height_to_sent, chain_state);
         });
+
+        // Update txoutindex_to_txinindex
+        vecs.update_txoutindex_to_txinindex(
+            output_count,
+            inputs_result.txoutindex_to_txinindex_updates,
+        )?;
 
         // Push to height-indexed vectors
         vecs.height_to_unspendable_supply
@@ -503,7 +510,9 @@ fn flush_checkpoint(
         exit,
     )?;
 
-    // Flush chain state with stamp
+    // Flush chain state and txoutindex_to_txinindex with stamp
+    vecs.txoutindex_to_txinindex
+        .stamped_flush_with_changes(height.into())?;
     vecs.chain_state.stamped_flush_with_changes(height.into())?;
 
     Ok(())

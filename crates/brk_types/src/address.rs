@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
-use bitcoin::{ScriptBuf, opcodes, script::Builder};
+use bitcoin::ScriptBuf;
 use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
@@ -53,37 +53,12 @@ impl TryFrom<(&ScriptBuf, OutputType)> for Address {
 impl TryFrom<&AddressBytes> for Address {
     type Error = Error;
     fn try_from(bytes: &AddressBytes) -> Result<Self, Self::Error> {
+        // P2PK addresses are represented as raw pubkey hex, not as a script
         let address = match bytes {
-            AddressBytes::P2PK65(_) => Self::from(bytes_to_hex(bytes.as_slice())),
-            AddressBytes::P2PK33(_) => Self::from(bytes_to_hex(bytes.as_slice())),
-            AddressBytes::P2PKH(b) => Self::try_from(
-                &Builder::new()
-                    .push_opcode(opcodes::all::OP_DUP)
-                    .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(****b)
-                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
-                    .push_opcode(opcodes::all::OP_CHECKSIG)
-                    .into_script(),
-            )?,
-            AddressBytes::P2SH(b) => Self::try_from(
-                &Builder::new()
-                    .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(****b)
-                    .push_opcode(opcodes::all::OP_EQUAL)
-                    .into_script(),
-            )?,
-            AddressBytes::P2WPKH(b) => {
-                Self::try_from(&Builder::new().push_int(0).push_slice(****b).into_script())?
+            AddressBytes::P2PK65(_) | AddressBytes::P2PK33(_) => {
+                Self::from(bytes_to_hex(bytes.as_slice()))
             }
-            AddressBytes::P2WSH(b) => {
-                Self::try_from(&Builder::new().push_int(0).push_slice(****b).into_script())?
-            }
-            AddressBytes::P2TR(b) => {
-                Self::try_from(&Builder::new().push_int(1).push_slice(****b).into_script())?
-            }
-            AddressBytes::P2A(b) => {
-                Self::try_from(&Builder::new().push_int(1).push_slice(****b).into_script())?
-            }
+            _ => Self::try_from(&bytes.to_script_pubkey())?,
         };
         Ok(address)
     }
@@ -104,5 +79,23 @@ impl Serialize for Address {
         S: Serializer,
     {
         serializer.collect_str(&self.address)
+    }
+}
+
+impl FromStr for Address {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let _ = AddressBytes::address_to_script(s)?;
+        Ok(Self {
+            address: s.to_string(),
+        })
+    }
+}
+
+impl Address {
+    /// Get the script for this address
+    pub fn script(&self) -> Result<ScriptBuf, Error> {
+        AddressBytes::address_to_script(&self.address)
     }
 }

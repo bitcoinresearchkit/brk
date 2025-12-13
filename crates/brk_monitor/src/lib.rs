@@ -1,14 +1,25 @@
-use std::{sync::Arc, thread, time::Duration};
+use std::{
+    collections::BTreeMap,
+    sync::Arc,
+    thread,
+    time::Duration,
+};
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{AddressBytes, AddressMempoolStats, Transaction, Txid};
+use brk_types::{
+    AddressBytes, AddressMempoolStats, FeeRate, MempoolInfo, RecommendedFees, TxWithHex, Txid,
+    VSize,
+};
 use derive_deref::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 const MAX_FETCHES_PER_CYCLE: usize = 10_000;
+
+/// Target block vsize (1MB = 1_000_000 vbytes, but using 4MW weight / 4 = 1MW vbytes max)
+const BLOCK_VSIZE_TARGET: u64 = 1_000_000;
 
 ///
 /// Mempool monitor
@@ -26,7 +37,11 @@ impl Mempool {
 
 pub struct MempoolInner {
     client: Client,
-    txs: RwLock<FxHashMap<Txid, Transaction>>,
+    info: RwLock<MempoolInfo>,
+    fees: RwLock<RecommendedFees>,
+    /// Map of fee rate -> total vsize at that fee rate, used for fee estimation
+    fee_rates: RwLock<BTreeMap<FeeRate, VSize>>,
+    txs: RwLock<FxHashMap<Txid, TxWithHex>>,
     addresses: RwLock<FxHashMap<AddressBytes, (AddressMempoolStats, FxHashSet<Txid>)>>,
 }
 
@@ -34,12 +49,23 @@ impl MempoolInner {
     pub fn new(client: Client) -> Self {
         Self {
             client,
+            info: RwLock::new(MempoolInfo::default()),
+            fees: RwLock::new(RecommendedFees::default()),
+            fee_rates: RwLock::new(BTreeMap::new()),
             txs: RwLock::new(FxHashMap::default()),
             addresses: RwLock::new(FxHashMap::default()),
         }
     }
 
-    pub fn get_txs(&self) -> RwLockReadGuard<'_, FxHashMap<Txid, Transaction>> {
+    pub fn get_info(&self) -> MempoolInfo {
+        self.info.read().clone()
+    }
+
+    pub fn get_fees(&self) -> RecommendedFees {
+        self.fees.read().clone()
+    }
+
+    pub fn get_txs(&self) -> RwLockReadGuard<'_, FxHashMap<Txid, TxWithHex>> {
         self.txs.read()
     }
 
@@ -84,13 +110,17 @@ impl MempoolInner {
         })
         .collect::<FxHashMap<_, _>>();
 
+        let mut info = self.info.write();
         let mut txs = self.txs.write();
         let mut addresses = self.addresses.write();
 
-        txs.retain(|txid, tx| {
+        txs.retain(|txid, tx_with_hex| {
             if txids.contains(txid) {
                 return true;
             }
+            let tx = tx_with_hex.tx();
+            info.remove(tx);
+
             tx.input
                 .iter()
                 .flat_map(|txin| txin.prevout.as_ref())
@@ -113,7 +143,10 @@ impl MempoolInner {
             false
         });
 
-        new_txs.iter().for_each(|(txid, tx)| {
+        new_txs.iter().for_each(|(txid, tx_with_hex)| {
+            let tx = tx_with_hex.tx();
+            info.add(tx);
+
             tx.input
                 .iter()
                 .flat_map(|txin| txin.prevout.as_ref())

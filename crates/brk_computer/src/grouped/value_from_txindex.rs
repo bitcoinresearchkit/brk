@@ -56,7 +56,7 @@ impl ComputedValueVecsFromTxindex {
         let bitcoin_txindex = LazyVecFrom1::init(
             &name_btc,
             version + VERSION,
-            source_vec.map_or_else(|| sats.txindex.u().boxed_clone(), |s| s),
+            source_vec.unwrap_or_else(|| sats.txindex.u().boxed_clone()),
             |txindex: TxIndex, iter| iter.get_at(txindex.to_usize()).map(Bitcoin::from),
         );
 
