@@ -1,13 +1,13 @@
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use super::PoolId;
+use super::PoolSlug;
 
 /// Mining pool information
 #[derive(Debug, Serialize, JsonSchema)]
 pub struct Pool {
     /// Unique pool identifier
-    pub id: PoolId,
+    pub slug: PoolSlug,
 
     /// Pool name
     pub name: &'static str,
@@ -30,8 +30,14 @@ pub struct Pool {
 }
 
 impl Pool {
-    pub fn serialized_id(&self) -> String {
-        self.id.to_string()
+    /// Get slug of pool
+    pub fn slug(&self) -> PoolSlug {
+        self.slug
+    }
+
+    /// Get the pool's unique numeric ID
+    pub fn unique_id(&self) -> u8 {
+        self.slug.into()
     }
 }
 
@@ -39,7 +45,7 @@ impl From<(usize, JSONPool)> for Pool {
     #[inline]
     fn from((index, pool): (usize, JSONPool)) -> Self {
         Self {
-            id: (index as u8).into(),
+            slug: (index as u8).into(),
             name: pool.name,
             addresses: pool.addresses,
             tags_lowercase: pool

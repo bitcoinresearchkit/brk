@@ -6,8 +6,9 @@ use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_types::{
-    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, DifficultyAdjustment, Height,
-    Index, IndexInfo, Limit, MempoolBlock, MempoolInfo, Metric, MetricCount, RecommendedFees,
+    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, DifficultyAdjustment,
+    HashrateSummary, Height, Index, IndexInfo, Limit, MempoolBlock, MempoolInfo, Metric,
+    MetricCount, PoolDetail, PoolInfo, PoolSlug, PoolsSummary, RecommendedFees, TimePeriod,
     Timestamp, Transaction, TreeNode, TxOutspend, TxStatus, Txid, TxidPath, Utxo, Vout,
 };
 use tokio::task::spawn_blocking;
@@ -117,7 +118,11 @@ impl AsyncQuery {
         spawn_blocking(move || query.get_block_txids(&hash)).await?
     }
 
-    pub async fn get_block_txs(&self, hash: String, start_index: usize) -> Result<Vec<Transaction>> {
+    pub async fn get_block_txs(
+        &self,
+        hash: String,
+        start_index: usize,
+    ) -> Result<Vec<Transaction>> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_block_txs(&hash, start_index)).await?
     }
@@ -150,6 +155,70 @@ impl AsyncQuery {
     pub async fn get_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_difficulty_adjustment()).await?
+    }
+
+    pub async fn get_mining_pools(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_mining_pools(time_period)).await?
+    }
+
+    pub async fn get_all_pools(&self) -> Result<Vec<PoolInfo>> {
+        Ok(self.0.get_all_pools())
+    }
+
+    pub async fn get_pool_detail(&self, slug: PoolSlug) -> Result<PoolDetail> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_pool_detail(slug)).await?
+    }
+
+    pub async fn get_hashrate(&self, time_period: Option<TimePeriod>) -> Result<HashrateSummary> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_hashrate(time_period)).await?
+    }
+
+    pub async fn get_difficulty_adjustments(
+        &self,
+        time_period: Option<TimePeriod>,
+    ) -> Result<Vec<brk_types::DifficultyAdjustmentEntry>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_difficulty_adjustments(time_period)).await?
+    }
+
+    pub async fn get_block_fees(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<Vec<brk_types::BlockFeesEntry>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_fees(time_period)).await?
+    }
+
+    pub async fn get_block_rewards(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<Vec<brk_types::BlockRewardsEntry>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_rewards(time_period)).await?
+    }
+
+    pub async fn get_block_fee_rates(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<Vec<brk_types::BlockFeeRatesEntry>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_fee_rates(time_period)).await?
+    }
+
+    pub async fn get_block_sizes_weights(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<brk_types::BlockSizesWeights> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_sizes_weights(time_period)).await?
+    }
+
+    pub async fn get_reward_stats(&self, block_count: usize) -> Result<brk_types::RewardStats> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_reward_stats(block_count)).await?
     }
 
     pub async fn match_metric(&self, metric: Metric, limit: Limit) -> Result<Vec<&'static str>> {

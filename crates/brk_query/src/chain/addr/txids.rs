@@ -41,13 +41,13 @@ pub fn get_address_txids(
         .rev()
         .filter(|(key, _): &(AddressIndexTxIndex, Unit)| {
             if let Some(after) = after_txindex {
-                TxIndex::from(key.txindex()) < after
+                key.txindex() < after
             } else {
                 true
             }
         })
         .take(limit)
-        .map(|(key, _)| TxIndex::from(key.txindex()))
+        .map(|(key, _)| key.txindex())
         .collect();
 
     let mut txindex_to_txid_iter = indexer.vecs.tx.txindex_to_txid.iter()?;

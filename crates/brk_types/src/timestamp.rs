@@ -11,6 +11,7 @@ use super::Date;
 /// Timestamp
 #[derive(
     Debug,
+    Default,
     Deref,
     Clone,
     Copy,

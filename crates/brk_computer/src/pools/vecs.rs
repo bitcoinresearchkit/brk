@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, PoolId, Pools, Sats, StoredF32, StoredU16, StoredU32};
+use brk_types::{Height, PoolSlug, Pools, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{Database, Exit, GenericStoredVec, IterableVec, VecIndex, Version};
 
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    id: PoolId,
+    slug: PoolSlug,
 
     pub indexes_to_blocks_mined: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
@@ -36,15 +36,13 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         db: &Database,
-        id: PoolId,
-        pools: &Pools,
+        slug: PoolSlug,
+        _pools: &Pools,
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let pool = pools.get(id);
-        let name = pool.serialized_id();
-        let suffix = |s: &str| format!("{name}_{s}");
+        let suffix = |s: &str| format!("{}_{s}", slug.to_string());
         let compute_dollars = price.is_some();
         let version = parent_version + Version::ZERO;
 
@@ -65,7 +63,7 @@ impl Vecs {
         }
 
         Ok(Self {
-            id,
+            slug,
             indexes_to_blocks_mined: ComputedVecsFromHeight::forced_import(
                 db,
                 &suffix("blocks_mined"),
@@ -118,7 +116,7 @@ impl Vecs {
         &mut self,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        height_to_pool: &impl IterableVec<Height, PoolId>,
+        height_to_pool: &impl IterableVec<Height, PoolSlug>,
         chain: &chain::Vecs,
         price: Option<&price::Vecs>,
         exit: &Exit,
@@ -131,7 +129,7 @@ impl Vecs {
                     |(h, id, ..)| {
                         (
                             h,
-                            if id == self.id {
+                            if id == self.slug {
                                 StoredU32::ONE
                             } else {
                                 StoredU32::ZERO

@@ -1,6 +1,6 @@
 use std::{slice::Iter, sync::OnceLock};
 
-use crate::{JSONPool, PoolId};
+use crate::{JSONPool, PoolSlug};
 
 use super::Pool;
 
@@ -27,8 +27,8 @@ impl Pools {
         &self.0[0]
     }
 
-    pub fn get(&self, id: PoolId) -> &Pool {
-        let i: u8 = id.into();
+    pub fn get(&self, slug: PoolSlug) -> &Pool {
+        let i: u8 = slug.into();
         &self.0[i as usize]
     }
 

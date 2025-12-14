@@ -11,7 +11,7 @@ use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
 use derive_deref::Deref;
-use log::{error, info};
+use log::{debug, error};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
 
@@ -225,7 +225,7 @@ impl MempoolInner {
 
         let i = Instant::now();
         self.rebuild_projected_blocks();
-        info!("mempool: rebuild_projected_blocks in {:?}", i.elapsed());
+        debug!("mempool: rebuild_projected_blocks in {:?}", i.elapsed());
     }
 
     /// Rebuild projected blocks snapshot.

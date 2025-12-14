@@ -10,9 +10,10 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
 use brk_types::{
-    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, Format, Height, Index,
-    IndexInfo, Limit, MempoolInfo, Metric, MetricCount, RecommendedFees, Timestamp, Transaction,
-    TxOutspend, TxStatus, Txid, TxidPath, Utxo, Vout,
+    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, Format, HashrateSummary,
+    Height, Index, IndexInfo, Limit, MempoolInfo, Metric, MetricCount, PoolDetail, PoolInfo,
+    PoolSlug, PoolsSummary, RecommendedFees, TimePeriod, Timestamp, Transaction, TxOutspend,
+    TxStatus, Txid, TxidPath, Utxo, Vout,
 };
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
@@ -37,11 +38,12 @@ pub use crate::chain::validate_address;
 use crate::{
     chain::{
         get_address, get_address_mempool_txids, get_address_txids, get_address_utxos,
-        get_block_by_height, get_block_by_timestamp, get_block_raw, get_block_status_by_height,
-        get_block_txid_at_index, get_block_txids, get_block_txs, get_blocks,
-        get_difficulty_adjustment, get_height_by_hash, get_mempool_blocks, get_mempool_info,
-        get_mempool_txids, get_recommended_fees, get_transaction, get_transaction_hex,
-        get_transaction_status, get_tx_outspend, get_tx_outspends,
+        get_all_pools, get_block_by_height, get_block_by_timestamp, get_block_raw,
+        get_block_status_by_height, get_block_txid_at_index, get_block_txids, get_block_txs,
+        get_blocks, get_difficulty_adjustment, get_hashrate, get_height_by_hash,
+        get_mempool_blocks, get_mempool_info, get_mempool_txids, get_mining_pools, get_pool_detail,
+        get_recommended_fees, get_transaction, get_transaction_hex, get_transaction_status,
+        get_tx_outspend, get_tx_outspends,
     },
     vecs::{IndexToVec, MetricToVec},
 };
@@ -182,6 +184,58 @@ impl Query {
 
     pub fn get_difficulty_adjustment(&self) -> Result<brk_types::DifficultyAdjustment> {
         get_difficulty_adjustment(self)
+    }
+
+    pub fn get_mining_pools(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
+        get_mining_pools(time_period, self)
+    }
+
+    pub fn get_all_pools(&self) -> Vec<PoolInfo> {
+        get_all_pools()
+    }
+
+    pub fn get_pool_detail(&self, slug: PoolSlug) -> Result<PoolDetail> {
+        get_pool_detail(slug, self)
+    }
+
+    pub fn get_hashrate(&self, time_period: Option<TimePeriod>) -> Result<HashrateSummary> {
+        get_hashrate(time_period, self)
+    }
+
+    pub fn get_difficulty_adjustments(
+        &self,
+        time_period: Option<TimePeriod>,
+    ) -> Result<Vec<brk_types::DifficultyAdjustmentEntry>> {
+        chain::get_difficulty_adjustments(time_period, self)
+    }
+
+    pub fn get_block_fees(&self, time_period: TimePeriod) -> Result<Vec<brk_types::BlockFeesEntry>> {
+        chain::get_block_fees(time_period, self)
+    }
+
+    pub fn get_block_rewards(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<Vec<brk_types::BlockRewardsEntry>> {
+        chain::get_block_rewards(time_period, self)
+    }
+
+    pub fn get_block_fee_rates(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<Vec<brk_types::BlockFeeRatesEntry>> {
+        chain::get_block_fee_rates(time_period, self)
+    }
+
+    pub fn get_block_sizes_weights(
+        &self,
+        time_period: TimePeriod,
+    ) -> Result<brk_types::BlockSizesWeights> {
+        chain::get_block_sizes_weights(time_period, self)
+    }
+
+    pub fn get_reward_stats(&self, block_count: usize) -> Result<brk_types::RewardStats> {
+        chain::get_reward_stats(block_count, self)
     }
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {

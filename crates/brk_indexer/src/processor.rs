@@ -597,6 +597,10 @@ impl<'a> BlockProcessor<'a> {
 
             self.vecs
                 .txin
+                .txinindex_to_txindex
+                .push_if_needed(txinindex, txindex)?;
+            self.vecs
+                .txin
                 .txinindex_to_outpoint
                 .push_if_needed(txinindex, outpoint)?;
 

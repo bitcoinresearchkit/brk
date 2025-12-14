@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_traversable::Traversable;
-use brk_types::{Address, AddressBytes, Height, OutputType, PoolId, Pools, TxOutIndex, pools};
+use brk_types::{Address, AddressBytes, Height, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, Exit, GenericStoredVec, ImportableVec, IterableVec,
@@ -24,8 +24,8 @@ pub struct Vecs {
     db: Database,
     pools: &'static Pools,
 
-    pub height_to_pool: BytesVec<Height, PoolId>,
-    pub vecs: BTreeMap<PoolId, vecs::Vecs>,
+    pub height_to_pool: BytesVec<Height, PoolSlug>,
+    pub vecs: BTreeMap<PoolSlug, vecs::Vecs>,
 }
 
 impl Vecs {
@@ -48,13 +48,13 @@ impl Vecs {
                 .map(|pool| {
                     vecs::Vecs::forced_import(
                         &db,
-                        pool.id,
+                        pool.slug,
                         pools,
                         version + Version::ZERO,
                         indexes,
                         price,
                     )
-                    .map(|vecs| (pool.id, vecs))
+                    .map(|vecs| (pool.slug, vecs))
                 })
                 .collect::<Result<BTreeMap<_, _>>>()?,
             pools,
@@ -126,20 +126,36 @@ impl Vecs {
         let mut txindex_to_first_txoutindex_iter =
             indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-        let mut txoutindex_to_outputtype_iter = indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
+        let mut txoutindex_to_outputtype_iter =
+            indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
         let mut txoutindex_to_typeindex_iter = indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
-        let mut p2pk65addressindex_to_p2pk65bytes_iter =
-            indexer.vecs.address.p2pk65addressindex_to_p2pk65bytes.iter()?;
-        let mut p2pk33addressindex_to_p2pk33bytes_iter =
-            indexer.vecs.address.p2pk33addressindex_to_p2pk33bytes.iter()?;
-        let mut p2pkhaddressindex_to_p2pkhbytes_iter =
-            indexer.vecs.address.p2pkhaddressindex_to_p2pkhbytes.iter()?;
+        let mut p2pk65addressindex_to_p2pk65bytes_iter = indexer
+            .vecs
+            .address
+            .p2pk65addressindex_to_p2pk65bytes
+            .iter()?;
+        let mut p2pk33addressindex_to_p2pk33bytes_iter = indexer
+            .vecs
+            .address
+            .p2pk33addressindex_to_p2pk33bytes
+            .iter()?;
+        let mut p2pkhaddressindex_to_p2pkhbytes_iter = indexer
+            .vecs
+            .address
+            .p2pkhaddressindex_to_p2pkhbytes
+            .iter()?;
         let mut p2shaddressindex_to_p2shbytes_iter =
             indexer.vecs.address.p2shaddressindex_to_p2shbytes.iter()?;
-        let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
-            indexer.vecs.address.p2wpkhaddressindex_to_p2wpkhbytes.iter()?;
-        let mut p2wshaddressindex_to_p2wshbytes_iter =
-            indexer.vecs.address.p2wshaddressindex_to_p2wshbytes.iter()?;
+        let mut p2wpkhaddressindex_to_p2wpkhbytes_iter = indexer
+            .vecs
+            .address
+            .p2wpkhaddressindex_to_p2wpkhbytes
+            .iter()?;
+        let mut p2wshaddressindex_to_p2wshbytes_iter = indexer
+            .vecs
+            .address
+            .p2wshaddressindex_to_p2wshbytes
+            .iter()?;
         let mut p2traddressindex_to_p2trbytes_iter =
             indexer.vecs.address.p2traddressindex_to_p2trbytes.iter()?;
         let mut p2aaddressindex_to_p2abytes_iter =
@@ -201,7 +217,7 @@ impl Vecs {
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);
 
-                self.height_to_pool.push_if_needed(height, pool.id)?;
+                self.height_to_pool.push_if_needed(height, pool.slug)?;
                 Ok(())
             })?;
 

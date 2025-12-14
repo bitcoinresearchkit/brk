@@ -63,8 +63,8 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
     contents += &sorted_pools
         .iter()
         .map(|pool| {
-            let id = pool.serialized_id();
-            format!("  {id}: \"{}\",", pool.name)
+            let slug = pool.slug();
+            format!("  {slug}: \"{}\",", pool.name)
         })
         .collect::<Vec<_>>()
         .join("\n");

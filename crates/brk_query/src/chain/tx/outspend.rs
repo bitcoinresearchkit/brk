@@ -47,7 +47,10 @@ pub fn get_tx_outspend(
 
     // Look up spend status
     let computer = query.computer();
-    let txinindex = computer.stateful.txoutindex_to_txinindex.read_once(txoutindex)?;
+    let txinindex = computer
+        .stateful
+        .txoutindex_to_txinindex
+        .read_once(txoutindex)?;
 
     if txinindex == TxInIndex::UNSPENT {
         return Ok(TxOutspend::UNSPENT);
@@ -119,10 +122,13 @@ pub fn get_tx_outspends(TxidPath { txid }: TxidPath, query: &Query) -> Result<Ve
 /// Get spending transaction details from a txinindex
 fn get_outspend_details(txinindex: TxInIndex, query: &Query) -> Result<TxOutspend> {
     let indexer = query.indexer();
-    let computer = query.computer();
 
     // Look up spending txindex directly
-    let spending_txindex = computer.indexes.txinindex_to_txindex.read_once(txinindex)?;
+    let spending_txindex = indexer
+        .vecs
+        .txin
+        .txinindex_to_txindex
+        .read_once(txinindex)?;
 
     // Calculate vin
     let spending_first_txinindex = indexer
@@ -133,8 +139,16 @@ fn get_outspend_details(txinindex: TxInIndex, query: &Query) -> Result<TxOutspen
     let vin = Vin::from(usize::from(txinindex) - usize::from(spending_first_txinindex));
 
     // Get spending tx details
-    let spending_txid = indexer.vecs.tx.txindex_to_txid.read_once(spending_txindex)?;
-    let spending_height = indexer.vecs.tx.txindex_to_height.read_once(spending_txindex)?;
+    let spending_txid = indexer
+        .vecs
+        .tx
+        .txindex_to_txid
+        .read_once(spending_txindex)?;
+    let spending_height = indexer
+        .vecs
+        .tx
+        .txindex_to_height
+        .read_once(spending_txindex)?;
     let block_hash = indexer
         .vecs
         .block

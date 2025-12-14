@@ -118,21 +118,22 @@ impl AddressRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/address/{address}/txs/chain/{after_txid}",
+            "/api/address/{address}/txs/chain",
             get_with(async |
                 headers: HeaderMap,
-                Path((address, after_txid)): Path<(Address, Option<Txid>)>,
+                Path(address): Path<Address>,
+                Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
                 let etag = format!("{VERSION}-{}", state.get_height().await);
                 if headers.has_etag(&etag) {
                     return Response::new_not_modified();
                 }
-                state.get_address_txids(address, after_txid, 25).await.to_json_response(&etag)
+                state.get_address_txids(address, params.after_txid, 25).await.to_json_response(&etag)
             }, |op| op
                 .addresses_tag()
                 .summary("Address confirmed transactions")
-                .description("Get confirmed transaction IDs for an address, 25 per page. Use after_txid for pagination.")
+                .description("Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.")
                 .ok_response::<Vec<Txid>>()
                 .not_modified()
                 .bad_request()

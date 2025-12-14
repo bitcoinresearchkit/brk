@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockTimestamp, Date, DateIndex, Height, Timestamp};
 use jiff::Timestamp as JiffTimestamp;
-use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator};
+use vecdb::{GenericStoredVec, TypedVecIterator};
 
 use crate::Query;
 
@@ -59,7 +59,12 @@ pub fn get_block_by_timestamp(timestamp: Timestamp, query: &Query) -> Result<Blo
     }
 
     let height = Height::from(best_height);
-    let blockhash = indexer.vecs.block.height_to_blockhash.iter()?.get_unwrap(height);
+    let blockhash = indexer
+        .vecs
+        .block
+        .height_to_blockhash
+        .iter()?
+        .get_unwrap(height);
 
     // Convert timestamp to ISO 8601 format
     let ts_secs: i64 = (*best_ts).into();

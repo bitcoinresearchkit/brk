@@ -25,7 +25,7 @@ use vecdb::{Bytes, Formattable};
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 #[repr(u8)]
-pub enum PoolId {
+pub enum PoolSlug {
     #[default]
     Unknown,
     BlockFills,
@@ -285,14 +285,14 @@ pub enum PoolId {
     Dummy255,
 }
 
-impl Formattable for PoolId {
+impl Formattable for PoolSlug {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         false
     }
 }
 
-impl Bytes for PoolId {
+impl Bytes for PoolSlug {
     type Array = [u8; size_of::<Self>()];
 
     #[inline]
