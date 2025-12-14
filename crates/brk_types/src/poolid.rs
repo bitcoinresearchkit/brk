@@ -1,4 +1,5 @@
 use num_enum::{FromPrimitive, IntoPrimitive};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::{Bytes, Formattable};
@@ -17,6 +18,7 @@ use vecdb::{Bytes, Formattable};
     Ord,
     Serialize,
     Deserialize,
+    JsonSchema,
     FromPrimitive,
     IntoPrimitive,
 )]

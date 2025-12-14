@@ -5,7 +5,7 @@ use axum::{
     response::{Redirect, Response},
     routing::get,
 };
-use brk_types::{MempoolInfo, RecommendedFees, Txid};
+use brk_types::{MempoolBlock, MempoolInfo, RecommendedFees, Txid};
 
 use crate::{
     VERSION,
@@ -77,6 +77,26 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .summary("Recommended fees")
                             .description("Get recommended fee rates for different confirmation targets based on current mempool state.")
                             .ok_response::<RecommendedFees>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/fees/mempool-blocks",
+                get_with(
+                    async |headers: HeaderMap, State(state): State<AppState>| {
+                        let etag = format!("{VERSION}-{}", state.get_height().await);
+                        if headers.has_etag(&etag) {
+                            return Response::new_not_modified();
+                        }
+                        state.get_mempool_blocks().await.to_json_response(&etag)
+                    },
+                    |op| {
+                        op.mempool_tag()
+                            .summary("Projected mempool blocks")
+                            .description("Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.")
+                            .ok_response::<Vec<MempoolBlock>>()
                             .not_modified()
                             .server_error()
                     },

@@ -12,6 +12,12 @@ use super::{Sats, VSize};
 #[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct FeeRate(f64);
 
+impl FeeRate {
+    pub fn new(fr: f64) -> Self {
+        Self(fr)
+    }
+}
+
 impl From<(Sats, VSize)> for FeeRate {
     #[inline]
     fn from((sats, vsize): (Sats, VSize)) -> Self {

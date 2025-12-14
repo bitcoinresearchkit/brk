@@ -47,6 +47,7 @@ pub trait HeaderMapExtended {
     fn insert_content_type_text_html(&mut self);
     fn insert_content_type_text_plain(&mut self);
     fn insert_content_type_font_woff2(&mut self);
+    fn insert_content_type_octet_stream(&mut self);
 }
 
 impl HeaderMapExtended for HeaderMap {
@@ -202,5 +203,12 @@ impl HeaderMapExtended for HeaderMap {
 
     fn insert_content_type_font_woff2(&mut self) {
         self.insert(header::CONTENT_TYPE, "font/woff2".parse().unwrap());
+    }
+
+    fn insert_content_type_octet_stream(&mut self) {
+        self.insert(
+            header::CONTENT_TYPE,
+            "application/octet-stream".parse().unwrap(),
+        );
     }
 }

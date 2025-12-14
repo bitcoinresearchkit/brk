@@ -4,7 +4,7 @@ use brk_types::TxidPrefix;
 use rustc_hash::FxHashMap;
 
 use super::tx_node::TxNode;
-use crate::mempool::Entry;
+use crate::entry::Entry;
 use crate::types::{PoolIndex, TxIndex};
 
 /// Type-safe wrapper around Vec<TxNode> that only allows PoolIndex access.
@@ -84,12 +84,20 @@ pub fn build_graph(entries: &[Option<Entry>]) -> Graph {
         })
         .collect();
 
-    // Build child relationships (reverse of parents)
-    for i in 0..nodes.len() {
-        let parents = nodes[i].parents.clone();
-        for parent_idx in parents {
-            nodes[parent_idx.as_usize()].children.push(PoolIndex::from(i));
-        }
+    // Collect parent->child edges (avoids cloning each node's parents)
+    let edges: Vec<(usize, PoolIndex)> = nodes
+        .iter()
+        .enumerate()
+        .flat_map(|(i, node)| {
+            node.parents
+                .iter()
+                .map(move |&p| (p.as_usize(), PoolIndex::from(i)))
+        })
+        .collect();
+
+    // Build child relationships
+    for (parent_idx, child_idx) in edges {
+        nodes[parent_idx].children.push(child_idx);
     }
 
     Graph(nodes)

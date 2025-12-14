@@ -1,6 +1,6 @@
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 /// Index of the output being spent in the previous transaction
@@ -15,6 +15,7 @@ use vecdb::{Bytes, Formattable};
     PartialOrd,
     Ord,
     Serialize,
+    Deserialize,
     JsonSchema,
     Bytes,
     Hash,

@@ -2,6 +2,7 @@ use std::collections::BinaryHeap;
 
 use brk_types::FeeRate;
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use super::graph::Graph;
 use super::heap_entry::HeapEntry;
@@ -53,9 +54,9 @@ pub fn select_packages(graph: &mut Graph, num_blocks: usize) -> Vec<Package> {
 }
 
 /// Select a tx and all its unselected ancestors in topological order.
-fn select_with_ancestors(graph: &mut Graph, pool_idx: PoolIndex) -> Vec<PoolIndex> {
-    let mut result: Vec<PoolIndex> = Vec::new();
-    let mut stack: Vec<(PoolIndex, bool)> = vec![(pool_idx, false)];
+fn select_with_ancestors(graph: &mut Graph, pool_idx: PoolIndex) -> SmallVec<[PoolIndex; 8]> {
+    let mut result: SmallVec<[PoolIndex; 8]> = SmallVec::new();
+    let mut stack: SmallVec<[(PoolIndex, bool); 16]> = smallvec::smallvec![(pool_idx, false)];
 
     while let Some((idx, parents_done)) = stack.pop() {
         if graph[idx].selected {
@@ -85,7 +86,7 @@ fn update_descendants(graph: &mut Graph, selected_idx: PoolIndex, heap: &mut Bin
 
     // Track visited to avoid double-updates in diamond patterns
     let mut visited: FxHashSet<PoolIndex> = FxHashSet::default();
-    let mut stack: Vec<PoolIndex> = graph[selected_idx].children.to_vec();
+    let mut stack: SmallVec<[PoolIndex; 16]> = graph[selected_idx].children.iter().copied().collect();
 
     while let Some(child_idx) = stack.pop() {
         if !visited.insert(child_idx) {

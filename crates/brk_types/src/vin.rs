@@ -1,6 +1,9 @@
 use derive_deref::Deref;
+use schemars::JsonSchema;
+use serde::Serialize;
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// Input index in the spending transaction
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct Vin(u16);
 
 impl Vin {

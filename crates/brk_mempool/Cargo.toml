@@ -1,6 +1,6 @@
 [package]
-name = "brk_monitor"
-description = "A Bitcoin mempool monitor with real-time synchronization"
+name = "brk_mempool"
+description = "Bitcoin mempool monitor with fee estimation"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

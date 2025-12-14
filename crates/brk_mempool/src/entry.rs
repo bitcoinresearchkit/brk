@@ -1,4 +1,5 @@
 use brk_types::{FeeRate, MempoolEntryInfo, Sats, Txid, TxidPrefix, VSize};
+use smallvec::SmallVec;
 
 /// A mempool transaction entry.
 ///
@@ -13,8 +14,8 @@ pub struct Entry {
     pub ancestor_fee: Sats,
     /// Pre-computed ancestor vsize (self + all ancestors, no double-counting)
     pub ancestor_vsize: VSize,
-    /// Parent txid prefixes (transactions this tx depends on)
-    pub depends: Vec<TxidPrefix>,
+    /// Parent txid prefixes (most txs have 0-2 parents)
+    pub depends: SmallVec<[TxidPrefix; 2]>,
 }
 
 impl Entry {

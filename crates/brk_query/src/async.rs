@@ -3,11 +3,12 @@ use std::collections::BTreeMap;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_monitor::Mempool;
+use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_types::{
-    Address, AddressStats, BlockInfo, BlockStatus, Height, Index, IndexInfo, Limit, MempoolInfo,
-    Metric, MetricCount, RecommendedFees, Transaction, TreeNode, TxStatus, Txid, TxidPath, Utxo,
+    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, DifficultyAdjustment, Height,
+    Index, IndexInfo, Limit, MempoolBlock, MempoolInfo, Metric, MetricCount, RecommendedFees,
+    Timestamp, Transaction, TreeNode, TxOutspend, TxStatus, Txid, TxidPath, Utxo, Vout,
 };
 use tokio::task::spawn_blocking;
 
@@ -57,6 +58,11 @@ impl AsyncQuery {
         spawn_blocking(move || query.get_address_utxos(address)).await?
     }
 
+    pub async fn get_address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_address_mempool_txids(address)).await?
+    }
+
     pub async fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_transaction(txid)).await?
@@ -72,6 +78,16 @@ impl AsyncQuery {
         spawn_blocking(move || query.get_transaction_hex(txid)).await?
     }
 
+    pub async fn get_tx_outspend(&self, txid: TxidPath, vout: Vout) -> Result<TxOutspend> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_tx_outspend(txid, vout)).await?
+    }
+
+    pub async fn get_tx_outspends(&self, txid: TxidPath) -> Result<Vec<TxOutspend>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_tx_outspends(txid)).await?
+    }
+
     pub async fn get_block(&self, hash: String) -> Result<BlockInfo> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_block(&hash)).await?
@@ -80,6 +96,10 @@ impl AsyncQuery {
     pub async fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
         let query = self.0.clone();
         spawn_blocking(move || query.get_block_by_height(height)).await?
+    }
+
+    pub async fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
+        self.0.get_block_by_timestamp(timestamp)
     }
 
     pub async fn get_block_status(&self, hash: String) -> Result<BlockStatus> {
@@ -97,6 +117,20 @@ impl AsyncQuery {
         spawn_blocking(move || query.get_block_txids(&hash)).await?
     }
 
+    pub async fn get_block_txs(&self, hash: String, start_index: usize) -> Result<Vec<Transaction>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_txs(&hash, start_index)).await?
+    }
+
+    pub async fn get_block_txid_at_index(&self, hash: String, index: usize) -> Result<Txid> {
+        self.0.get_block_txid_at_index(&hash, index)
+    }
+
+    pub async fn get_block_raw(&self, hash: String) -> Result<Vec<u8>> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_block_raw(&hash)).await?
+    }
+
     pub async fn get_mempool_info(&self) -> Result<MempoolInfo> {
         self.0.get_mempool_info()
     }
@@ -107,6 +141,15 @@ impl AsyncQuery {
 
     pub async fn get_recommended_fees(&self) -> Result<RecommendedFees> {
         self.0.get_recommended_fees()
+    }
+
+    pub async fn get_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
+        self.0.get_mempool_blocks()
+    }
+
+    pub async fn get_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
+        let query = self.0.clone();
+        spawn_blocking(move || query.get_difficulty_adjustment()).await?
     }
 
     pub async fn match_metric(&self, metric: Metric, limit: Limit) -> Result<Vec<&'static str>> {

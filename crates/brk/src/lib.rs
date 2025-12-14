@@ -44,9 +44,9 @@ pub use brk_logger as logger;
 #[doc(inline)]
 pub use brk_mcp as mcp;
 
-#[cfg(feature = "monitor")]
+#[cfg(feature = "mempool")]
 #[doc(inline)]
-pub use brk_monitor as monitor;
+pub use brk_mempool as mempool;
 
 #[cfg(feature = "query")]
 #[doc(inline)]

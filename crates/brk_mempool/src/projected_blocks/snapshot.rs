@@ -2,7 +2,7 @@ use brk_types::RecommendedFees;
 
 use super::fees;
 use super::stats::{self, BlockStats};
-use crate::mempool::Entry;
+use crate::entry::Entry;
 use crate::types::{SelectedTx, TxIndex};
 
 /// Immutable snapshot of projected blocks.

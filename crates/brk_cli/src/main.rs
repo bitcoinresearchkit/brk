@@ -14,7 +14,7 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
-use brk_monitor::Mempool;
+use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};

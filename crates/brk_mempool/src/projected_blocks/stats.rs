@@ -1,6 +1,6 @@
 use brk_types::{FeeRate, Sats, VSize};
 
-use crate::mempool::Entry;
+use crate::entry::Entry;
 use crate::types::SelectedTx;
 
 /// Statistics for a single projected block.
@@ -45,7 +45,7 @@ pub fn compute_block_stats(selected: &[SelectedTx], entries: &[Option<Entry>]) -
         }
     }
 
-    fee_rates.sort();
+    fee_rates.sort_unstable();
 
     BlockStats {
         tx_count: selected.len() as u32,

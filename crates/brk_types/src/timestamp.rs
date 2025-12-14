@@ -3,13 +3,26 @@ use std::ops::{Add, AddAssign, Div};
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::Date;
 
 /// Timestamp
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
+)]
 pub struct Timestamp(u32);
 
 pub const ONE_HOUR_IN_SEC: u32 = 60 * 60;

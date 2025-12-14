@@ -6,12 +6,13 @@ use std::{collections::BTreeMap, sync::Arc};
 use brk_computer::Computer;
 use brk_error::{Error, Result};
 use brk_indexer::Indexer;
-use brk_monitor::Mempool;
+use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
 use brk_types::{
-    Address, AddressStats, BlockInfo, BlockStatus, Format, Height, Index, IndexInfo, Limit,
-    MempoolInfo, Metric, MetricCount, RecommendedFees, Transaction, TxStatus, Txid, TxidPath, Utxo,
+    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, Format, Height, Index,
+    IndexInfo, Limit, MempoolInfo, Metric, MetricCount, RecommendedFees, Timestamp, Transaction,
+    TxOutspend, TxStatus, Txid, TxidPath, Utxo, Vout,
 };
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
@@ -31,12 +32,16 @@ pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 pub use params::{Params, ParamsDeprec, ParamsOpt};
 use vecs::Vecs;
 
+pub use crate::chain::BLOCK_TXS_PAGE_SIZE;
+pub use crate::chain::validate_address;
 use crate::{
     chain::{
-        get_address, get_address_txids, get_address_utxos, get_block_by_height,
-        get_block_status_by_height, get_block_txids, get_blocks, get_height_by_hash,
-        get_mempool_info, get_mempool_txids, get_recommended_fees, get_transaction,
-        get_transaction_hex, get_transaction_status,
+        get_address, get_address_mempool_txids, get_address_txids, get_address_utxos,
+        get_block_by_height, get_block_by_timestamp, get_block_raw, get_block_status_by_height,
+        get_block_txid_at_index, get_block_txids, get_block_txs, get_blocks,
+        get_difficulty_adjustment, get_height_by_hash, get_mempool_blocks, get_mempool_info,
+        get_mempool_txids, get_recommended_fees, get_transaction, get_transaction_hex,
+        get_transaction_status, get_tx_outspend, get_tx_outspends,
     },
     vecs::{IndexToVec, MetricToVec},
 };
@@ -93,6 +98,10 @@ impl Query {
         get_address_utxos(address, self)
     }
 
+    pub fn get_address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
+        get_address_mempool_txids(address, self)
+    }
+
     pub fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
         get_transaction(txid, self)
     }
@@ -105,6 +114,14 @@ impl Query {
         get_transaction_hex(txid, self)
     }
 
+    pub fn get_tx_outspend(&self, txid: TxidPath, vout: Vout) -> Result<TxOutspend> {
+        get_tx_outspend(txid, vout, self)
+    }
+
+    pub fn get_tx_outspends(&self, txid: TxidPath) -> Result<Vec<TxOutspend>> {
+        get_tx_outspends(txid, self)
+    }
+
     pub fn get_block(&self, hash: &str) -> Result<BlockInfo> {
         let height = get_height_by_hash(hash, self)?;
         get_block_by_height(height, self)
@@ -112,6 +129,10 @@ impl Query {
 
     pub fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
         get_block_by_height(height, self)
+    }
+
+    pub fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
+        get_block_by_timestamp(timestamp, self)
     }
 
     pub fn get_block_status(&self, hash: &str) -> Result<BlockStatus> {
@@ -128,6 +149,21 @@ impl Query {
         get_block_txids(height, self)
     }
 
+    pub fn get_block_txs(&self, hash: &str, start_index: usize) -> Result<Vec<Transaction>> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_txs(height, start_index, self)
+    }
+
+    pub fn get_block_txid_at_index(&self, hash: &str, index: usize) -> Result<Txid> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_txid_at_index(height, index, self)
+    }
+
+    pub fn get_block_raw(&self, hash: &str) -> Result<Vec<u8>> {
+        let height = get_height_by_hash(hash, self)?;
+        get_block_raw(height, self)
+    }
+
     pub fn get_mempool_info(&self) -> Result<MempoolInfo> {
         get_mempool_info(self)
     }
@@ -138,6 +174,14 @@ impl Query {
 
     pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
         get_recommended_fees(self)
+    }
+
+    pub fn get_mempool_blocks(&self) -> Result<Vec<brk_types::MempoolBlock>> {
+        get_mempool_blocks(self)
+    }
+
+    pub fn get_difficulty_adjustment(&self) -> Result<brk_types::DifficultyAdjustment> {
+        get_difficulty_adjustment(self)
     }
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {

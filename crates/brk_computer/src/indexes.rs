@@ -82,6 +82,7 @@ pub struct Vecs {
     pub txindex_to_input_count: EagerVec<PcoVec<TxIndex, StoredU64>>,
     pub txindex_to_output_count: EagerVec<PcoVec<TxIndex, StoredU64>>,
     pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
+    pub txinindex_to_txindex: EagerVec<PcoVec<TxInIndex, TxIndex>>,
     pub txinindex_to_txinindex: LazyVecFrom1<TxInIndex, TxInIndex, TxInIndex, OutPoint>,
     pub txinindex_to_txoutindex: EagerVec<PcoVec<TxInIndex, TxOutIndex>>,
     pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
@@ -121,6 +122,7 @@ impl Vecs {
         }
 
         let this = Self {
+            txinindex_to_txindex: eager!("txindex"),
             txinindex_to_txoutindex: eager!("txoutindex"),
             txoutindex_to_txoutindex: lazy!("txoutindex", indexer.vecs.txout.txoutindex_to_value),
             txinindex_to_txinindex: lazy!("txinindex", indexer.vecs.txin.txinindex_to_outpoint),
@@ -250,6 +252,13 @@ impl Vecs {
         // ---
         // TxInIndex
         // ---
+
+        self.txinindex_to_txindex.compute_finer(
+            starting_indexes.txinindex,
+            &indexer.vecs.tx.txindex_to_first_txinindex,
+            &indexer.vecs.txin.txinindex_to_outpoint,
+            exit,
+        )?;
 
         let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
         let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();

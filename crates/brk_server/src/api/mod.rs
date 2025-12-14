@@ -16,7 +16,7 @@ use crate::{
     VERSION,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
-        metrics::ApiMetricsRoutes, transactions::TxRoutes,
+        metrics::ApiMetricsRoutes, mining::MiningRoutes, transactions::TxRoutes,
     },
     extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
 };
@@ -27,6 +27,7 @@ mod addresses;
 mod blocks;
 mod mempool;
 mod metrics;
+mod mining;
 mod openapi;
 mod transactions;
 
@@ -41,6 +42,7 @@ impl ApiRoutes for ApiRouter<AppState> {
         self.add_addresses_routes()
             .add_block_routes()
             .add_mempool_routes()
+            .add_mining_routes()
             .add_tx_routes()
             .add_metrics_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))

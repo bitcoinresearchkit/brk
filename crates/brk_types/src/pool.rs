@@ -1,12 +1,31 @@
+use schemars::JsonSchema;
+use serde::Serialize;
+
 use super::PoolId;
 
-#[derive(Debug)]
+/// Mining pool information
+#[derive(Debug, Serialize, JsonSchema)]
 pub struct Pool {
+    /// Unique pool identifier
     pub id: PoolId,
+
+    /// Pool name
     pub name: &'static str,
+
+    /// Known payout addresses for pool identification
+    #[serde(skip)]
     pub addresses: Box<[&'static str]>,
+
+    /// Coinbase tags used to identify blocks mined by this pool
+    #[serde(skip)]
     pub tags: Box<[&'static str]>,
+
+    /// Lowercase coinbase tags for case-insensitive matching
+    #[serde(skip)]
+    #[schemars(skip)]
     pub tags_lowercase: Box<[String]>,
+
+    /// Pool website URL
     pub link: &'static str,
 }
 

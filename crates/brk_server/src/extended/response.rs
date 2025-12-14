@@ -20,6 +20,8 @@ where
         T: Serialize;
     fn new_text(value: &str, etag: &str) -> Self;
     fn new_text_with(status: StatusCode, value: &str, etag: &str) -> Self;
+    fn new_bytes(value: Vec<u8>, etag: &str) -> Self;
+    fn new_bytes_with(status: StatusCode, value: Vec<u8>, etag: &str) -> Self;
 }
 
 impl ResponseExtended for Response<Body> {
@@ -64,6 +66,21 @@ impl ResponseExtended for Response<Body> {
         let headers = response.headers_mut();
         headers.insert_cors();
         headers.insert_content_type_text_plain();
+        headers.insert_cache_control_must_revalidate();
+        headers.insert_etag(etag);
+        response
+    }
+
+    fn new_bytes(value: Vec<u8>, etag: &str) -> Self {
+        Self::new_bytes_with(StatusCode::default(), value, etag)
+    }
+
+    fn new_bytes_with(status: StatusCode, value: Vec<u8>, etag: &str) -> Self {
+        let mut response = Response::builder().body(value.into()).unwrap();
+        *response.status_mut() = status;
+        let headers = response.headers_mut();
+        headers.insert_cors();
+        headers.insert_content_type_octet_stream();
         headers.insert_cache_control_must_revalidate();
         headers.insert_etag(etag);
         response

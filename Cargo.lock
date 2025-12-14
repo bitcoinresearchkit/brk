@@ -535,7 +535,7 @@ dependencies = [
  "brk_iterator",
  "brk_logger",
  "brk_mcp",
- "brk_monitor",
+ "brk_mempool",
  "brk_query",
  "brk_reader",
  "brk_rpc",
@@ -593,7 +593,7 @@ dependencies = [
  "brk_indexer",
  "brk_iterator",
  "brk_logger",
- "brk_monitor",
+ "brk_mempool",
  "brk_query",
  "brk_reader",
  "brk_rpc",
@@ -733,7 +733,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_monitor"
+name = "brk_mempool"
 version = "0.0.111"
 dependencies = [
  "brk_error",
@@ -755,12 +755,13 @@ dependencies = [
  "brk_computer",
  "brk_error",
  "brk_indexer",
- "brk_monitor",
+ "brk_mempool",
  "brk_reader",
  "brk_rpc",
  "brk_traversable",
  "brk_types",
  "derive_deref",
+ "jiff",
  "quickmatch",
  "schemars",
  "serde",

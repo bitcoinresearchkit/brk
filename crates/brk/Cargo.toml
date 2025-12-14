@@ -21,7 +21,7 @@ full = [
     "iterator",
     "logger",
     "mcp",
-    "monitor",
+    "mempool",
     "query",
     "reader",
     "rpc",
@@ -41,7 +41,7 @@ indexer = ["brk_indexer"]
 iterator = ["brk_iterator"]
 logger = ["brk_logger"]
 mcp = ["brk_mcp"]
-monitor = ["brk_monitor"]
+mempool = ["brk_mempool"]
 query = ["brk_query"]
 reader = ["brk_reader"]
 rpc = ["brk_rpc"]
@@ -62,7 +62,7 @@ brk_indexer = { workspace = true, optional = true }
 brk_iterator = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_mcp = { workspace = true, optional = true }
-brk_monitor = { workspace = true, optional = true }
+brk_mempool = { workspace = true, optional = true }
 brk_query = { workspace = true, optional = true }
 brk_reader = { workspace = true, optional = true }
 brk_rpc = { workspace = true, optional = true }

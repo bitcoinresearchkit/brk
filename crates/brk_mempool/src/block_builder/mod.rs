@@ -13,7 +13,7 @@ mod partitioner;
 mod selector;
 mod tx_node;
 
-use crate::mempool::Entry;
+use crate::entry::Entry;
 use crate::types::SelectedTx;
 
 /// Target vsize per block (~1MB, derived from 4MW weight limit).

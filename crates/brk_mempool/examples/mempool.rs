@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 
 use brk_error::Result;
-use brk_monitor::Mempool;
+use brk_mempool::Mempool;
 use brk_rpc::{Auth, Client};
 
 fn main() -> Result<()> {
