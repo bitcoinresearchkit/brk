@@ -1,5 +1,3 @@
-//! Handler for single metric data endpoint.
-
 use std::time::Duration;
 
 use axum::{
@@ -56,7 +54,7 @@ async fn req_to_response_res(
     }
 
     let cache_key = format!(
-        "single-{}{}{}",
+        "{}{}{}",
         uri.path(),
         uri.query().unwrap_or(""),
         cache_params.etag_str()
@@ -67,7 +65,7 @@ async fn req_to_response_res(
         Response::new(Body::from(v))
     } else {
         match query
-            .run(move |q| q.search_and_format_checked(params, MAX_WEIGHT))
+            .run(move |q| q.search_and_format_bulk_checked(params, MAX_WEIGHT))
             .await?
         {
             Output::CSV(s) => {

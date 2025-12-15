@@ -1,8 +1,9 @@
 use brk_types::Format;
 
+/// New format with MetricData metadata wrapper
 #[derive(Debug)]
 pub enum Output {
-    Json(Value),
+    Json(Vec<u8>),
     CSV(String),
 }
 
@@ -11,44 +12,67 @@ impl Output {
     pub fn to_string(self) -> String {
         match self {
             Output::CSV(s) => s,
-            Output::Json(v) => unsafe { String::from_utf8_unchecked(v.to_vec()) },
+            Output::Json(v) => unsafe { String::from_utf8_unchecked(v) },
         }
     }
-}
 
-#[derive(Debug)]
-pub enum Value {
-    Matrix(Vec<Vec<u8>>),
-    List(Vec<u8>),
-}
-
-impl Value {
-    pub fn to_vec(self) -> Vec<u8> {
-        match self {
-            Value::List(v) => v,
-            Self::Matrix(m) => {
-                let total_size = m.iter().map(|v| v.len()).sum::<usize>() + m.len() - 1 + 2;
-                let mut matrix = Vec::with_capacity(total_size);
-                matrix.push(b'[');
-
-                for (i, vec) in m.into_iter().enumerate() {
-                    if i > 0 {
-                        matrix.push(b',');
-                    }
-                    matrix.extend(vec);
-                }
-                matrix.push(b']');
-                matrix
-            }
-        }
-    }
-}
-
-impl Output {
     pub fn default(format: Format) -> Self {
         match format {
-            Format::CSV => Output::CSV("".to_string()),
-            Format::JSON => Output::Json(Value::List(b"[]".to_vec())),
+            Format::CSV => Output::CSV(String::new()),
+            Format::JSON => Output::Json(br#"{"len":0,"from":0,"to":0,"data":[]}"#.to_vec()),
+        }
+    }
+}
+
+/// Deprecated: Raw JSON without metadata wrapper
+#[derive(Debug)]
+pub enum OutputLegacy {
+    Json(LegacyValue),
+    CSV(String),
+}
+
+impl OutputLegacy {
+    #[allow(clippy::inherent_to_string)]
+    pub fn to_string(self) -> String {
+        match self {
+            OutputLegacy::CSV(s) => s,
+            OutputLegacy::Json(v) => unsafe { String::from_utf8_unchecked(v.to_vec()) },
+        }
+    }
+
+    pub fn default(format: Format) -> Self {
+        match format {
+            Format::CSV => OutputLegacy::CSV(String::new()),
+            Format::JSON => OutputLegacy::Json(LegacyValue::List(b"[]".to_vec())),
+        }
+    }
+}
+
+/// Deprecated: Raw JSON without metadata wrapper.
+#[derive(Debug)]
+pub enum LegacyValue {
+    Matrix(Vec<Vec<u8>>),
+    List(Vec<u8>),
+    Value(Vec<u8>),
+}
+
+impl LegacyValue {
+    pub fn to_vec(self) -> Vec<u8> {
+        match self {
+            LegacyValue::Value(v) | LegacyValue::List(v) => v,
+            LegacyValue::Matrix(m) => {
+                let total_size = m.iter().map(|v| v.len()).sum::<usize>() + m.len() + 1;
+                let mut buf = Vec::with_capacity(total_size);
+                buf.push(b'[');
+                for (i, vec) in m.into_iter().enumerate() {
+                    if i > 0 {
+                        buf.push(b',');
+                    }
+                    buf.extend(vec);
+                }
+                buf.push(b']');
+                buf
+            }
         }
     }
 }

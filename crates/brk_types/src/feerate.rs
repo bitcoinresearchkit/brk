@@ -9,6 +9,7 @@ use vecdb::{Formattable, Pco};
 
 use super::{Sats, VSize};
 
+/// Fee rate in sats/vB
 #[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct FeeRate(f64);
 

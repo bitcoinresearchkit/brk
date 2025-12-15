@@ -7,7 +7,7 @@ use brk_mempool::Mempool;
 use brk_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use brk_types::{Address, DataRangeFormat, Index, MetricSelection, OutputType};
+use brk_types::{Address, OutputType};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -62,11 +62,11 @@ fn run() -> Result<()> {
             .approximate_len()
     );
 
-    dbg!(query.address(Address {
+    let _ = dbg!(query.address(Address {
         address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
     }));
 
-    dbg!(query.address_txids(
+    let _ = dbg!(query.address_txids(
         Address {
             address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
         },
@@ -74,7 +74,7 @@ fn run() -> Result<()> {
         25
     ));
 
-    dbg!(query.address_utxos(Address {
+    let _ = dbg!(query.address_utxos(Address {
         address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
     }));
 

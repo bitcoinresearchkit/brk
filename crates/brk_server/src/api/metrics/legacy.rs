@@ -1,4 +1,4 @@
-//! Handler for single metric data endpoint.
+//! Deprecated handler for legacy endpoints - returns raw data without MetricData wrapper.
 
 use std::time::Duration;
 
@@ -8,7 +8,7 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_query::{MetricSelection, Output};
+use brk_query::{MetricSelection, OutputLegacy};
 use brk_types::Format;
 use quick_cache::sync::GuardResult;
 
@@ -56,7 +56,7 @@ async fn req_to_response_res(
     }
 
     let cache_key = format!(
-        "single-{}{}{}",
+        "legacy-{}{}{}",
         uri.path(),
         uri.query().unwrap_or(""),
         cache_params.etag_str()
@@ -67,16 +67,16 @@ async fn req_to_response_res(
         Response::new(Body::from(v))
     } else {
         match query
-            .run(move |q| q.search_and_format_checked(params, MAX_WEIGHT))
+            .run(move |q| q.search_and_format_legacy_checked(params, MAX_WEIGHT))
             .await?
         {
-            Output::CSV(s) => {
+            OutputLegacy::CSV(s) => {
                 if let GuardResult::Guard(g) = guard_res {
                     let _ = g.insert(s.clone().into());
                 }
                 s.into_response()
             }
-            Output::Json(v) => {
+            OutputLegacy::Json(v) => {
                 let json = v.to_vec();
                 if let GuardResult::Guard(g) = guard_res {
                     let _ = g.insert(json.clone().into());

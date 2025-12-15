@@ -5,15 +5,24 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use brk_query::{DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics, Pagination};
+use brk_query::{
+    DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics, Pagination,
+};
 use brk_traversable::TreeNode;
-use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
+use brk_types::{
+    Index, IndexInfo, Limit, Metric, MetricCount, MetricData, MetricWithIndex, Metrics,
+};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
+mod bulk;
 mod data;
+mod legacy;
+
+/// Maximum allowed request weight in bytes (650KB)
+const MAX_WEIGHT: usize = 65 * 10_000;
 
 pub trait ApiMetricsRoutes {
     fn add_metrics_routes(self) -> Self;
@@ -48,7 +57,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.get_indexes().to_vec())).await
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.indexes().to_vec())).await
                 },
                 |op| op
                     .metrics_tag()
@@ -68,7 +77,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(pagination): Query<Pagination>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.get_metrics(pagination))).await
+                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.metrics(pagination))).await
                 },
                 |op| op
                     .metrics_tag()
@@ -82,7 +91,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             "/api/metrics/catalog",
             get_with(
                 async |headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.get_metrics_catalog().clone())).await
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metrics_catalog().clone())).await
                 },
                 |op| op
                     .metrics_tag()
@@ -125,13 +134,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         if let Some(indexes) = q.metric_to_indexes(metric.clone()) {
                             return Ok(indexes.clone())
                         }
-                        Err(brk_error::Error::String(
-                            if let Some(first) = q.match_metric(&metric, Limit::MIN).first() {
-                                format!("Could not find '{metric}', did you mean '{first}' ?")
-                            } else {
-                                format!("Could not find '{metric}'.")
-                            }
-                        ))
+                        Err(q.metric_not_found_error(&metric))
                     }).await
                 },
                 |op| op
@@ -146,25 +149,48 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .not_found(),
             ),
         )
-        // WIP
-        .route("/api/metrics/bulk", get(data::handler))
-        .route(
+        .api_route(
             "/api/metric/{metric}/{index}",
-            get(
+            get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        state: State<AppState>,
-                       Path((metric, index)): Path<(Metric, Index)>,
+                       Path(path): Path<MetricWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     data::handler(
                         uri,
                         headers,
-                        Query(MetricSelection::from((index, metric, range))),
+                        Query(MetricSelection::from((path.index, path.metric, range))),
                         state,
                     )
                     .await
                 },
+                |op| op
+                    .metrics_tag()
+                    .summary("Get metric data")
+                    .description(
+                        "Fetch data for a specific metric at the given index. \
+                        Use query parameters to filter by date range and format (json/csv)."
+                    )
+                    .ok_response::<MetricData>()
+                    .not_modified()
+                    .not_found(),
+            ),
+        )
+        .api_route(
+            "/api/metrics/bulk",
+            get_with(
+                bulk::handler,
+                |op| op
+                    .metrics_tag()
+                    .summary("Bulk metric data")
+                    .description(
+                        "Fetch multiple metrics in a single request. Supports filtering by index and date range. \
+                        Returns an array of MetricData objects."
+                    )
+                    .ok_response::<Vec<MetricData>>()
+                    .not_modified(),
             ),
         )
         // !!!
@@ -178,7 +204,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                        Query(params): Query<MetricSelectionLegacy>,
                        state: State<AppState>|
                        -> Response {
-                    data::handler(uri, headers, Query(params.into()), state).await
+                    legacy::handler(uri, headers, Query(params.into()), state).await
                 },
             ),
         )
@@ -208,7 +234,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         Metrics::from(split.collect::<Vec<_>>().join(separator)),
                         range,
                     ));
-                    data::handler(uri, headers, Query(params), state).await
+                    legacy::handler(uri, headers, Query(params), state).await
                 },
             ),
         )

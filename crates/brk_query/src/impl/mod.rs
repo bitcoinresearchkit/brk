@@ -5,6 +5,8 @@
 mod address;
 mod block;
 mod mempool;
+mod metrics;
+mod metrics_legacy;
 mod mining;
 mod transaction;
 

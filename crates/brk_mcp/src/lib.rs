@@ -56,7 +56,7 @@ Get the list of all existing indexes and their accepted variants.
     async fn get_indexes(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.inner().get_indexes()).unwrap(),
+            Content::json(self.query.inner().indexes()).unwrap(),
         ]))
     }
 
@@ -71,7 +71,7 @@ If the `page` param is omitted, it will default to the first page.
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_metrics");
         Ok(CallToolResult::success(vec![
-            Content::json(self.query.sync(|q| q.get_metrics(pagination))).unwrap(),
+            Content::json(self.query.sync(|q| q.metrics(pagination))).unwrap(),
         ]))
     }
 
@@ -88,7 +88,7 @@ If the `page` param is omitted, it will default to the first page.
         let result = self
             .query
             .inner()
-            .get_index_to_vecids(paginated_index)
+            .index_to_vecids(paginated_index)
             .unwrap_or_default();
         Ok(CallToolResult::success(vec![
             Content::json(result).unwrap(),
@@ -122,7 +122,7 @@ The response's format will depend on the given parameters, it will be:
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecs");
         Ok(CallToolResult::success(vec![Content::text(
-            match self.query.run(move |q| q.search_and_format(params)).await {
+            match self.query.run(move |q| q.search_and_format_legacy(params)).await {
                 Ok(output) => output.to_string(),
                 Err(e) => format!("Error:\n{e}"),
             },
