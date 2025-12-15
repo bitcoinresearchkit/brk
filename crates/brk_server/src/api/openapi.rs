@@ -27,11 +27,11 @@ pub fn create_openapi() -> OpenApi {
 
     let tags = vec![
         Tag {
-            name: "Addresses".to_string(),
+            name: "Metrics".to_string(),
             description: Some(
-                "Query Bitcoin address data including balances, transaction history, and UTXOs. \
-                Supports all address types: P2PKH, P2SH, P2WPKH, P2WSH, and P2TR."
-                    .to_string()
+                "Access Bitcoin network metrics and time-series data. Query historical statistics \
+                across various indexes with JSON or CSV output."
+                    .to_string(),
             ),
             ..Default::default()
         },
@@ -40,42 +40,7 @@ pub fn create_openapi() -> OpenApi {
             description: Some(
                 "Retrieve block data by hash or height. Access block headers, transaction lists, \
                 and raw block bytes."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Mempool".to_string(),
-            description: Some(
-                "Monitor unconfirmed transactions and fee estimates. Get mempool statistics, \
-                transaction IDs, and recommended fee rates for different confirmation targets."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Metrics".to_string(),
-            description: Some(
-                "Access Bitcoin network metrics and time-series data. Query historical statistics \
-                across various indexes (date, week, month, year, halving epoch) with JSON or CSV output."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Mining".to_string(),
-            description: Some(
-                "Mining statistics including pool distribution, hashrate, difficulty adjustments, \
-                block rewards, and fee rates across configurable time periods."
-                    .to_string()
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Server".to_string(),
-            description: Some(
-                "API metadata and health monitoring. Version information and service status."
-                    .to_string()
+                    .to_string(),
             ),
             ..Default::default()
         },
@@ -84,7 +49,42 @@ pub fn create_openapi() -> OpenApi {
             description: Some(
                 "Retrieve transaction data by txid. Access full transaction details, confirmation \
                 status, raw hex, and output spend information."
-                    .to_string()
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Addresses".to_string(),
+            description: Some(
+                "Query Bitcoin address data including balances, transaction history, and UTXOs. \
+                Supports all address types: P2PKH, P2SH, P2WPKH, P2WSH, and P2TR."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Mempool".to_string(),
+            description: Some(
+                "Monitor unconfirmed transactions and fee estimates. Get mempool statistics, \
+                transaction IDs, and recommended fee rates for different confirmation targets."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Mining".to_string(),
+            description: Some(
+                "Mining statistics including pool distribution, hashrate, difficulty adjustments, \
+                block rewards, and fee rates across configurable time periods."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Server".to_string(),
+            description: Some(
+                "API metadata and health monitoring. Version information and service status."
+                    .to_string(),
             ),
             ..Default::default()
         },

@@ -1,15 +1,11 @@
 #![doc = include_str!("../README.md")]
-#![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("../examples/server.rs")]
-#![doc = "```"]
 
-use std::{ops::Deref, path::PathBuf, sync::Arc, time::Duration};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use aide::axum::ApiRouter;
-use api::ApiRoutes;
 use axum::{
     Extension,
-    body::{Body, Bytes},
+    body::Body,
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
     response::Redirect,
@@ -20,7 +16,6 @@ use brk_error::Result;
 use brk_logger::OwoColorize;
 use brk_mcp::route::MCPRoutes;
 use brk_query::AsyncQuery;
-use files::FilesRoutes;
 use log::{error, info};
 use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
@@ -31,89 +26,13 @@ mod api;
 pub mod cache;
 mod extended;
 mod files;
+mod state;
 
 use api::*;
 pub use cache::{CacheParams, CacheStrategy};
 use extended::*;
-
-#[derive(Clone)]
-pub struct AppState {
-    query: AsyncQuery,
-    path: Option<PathBuf>,
-    cache: Arc<Cache<String, Bytes>>,
-}
-
-impl Deref for AppState {
-    type Target = AsyncQuery;
-    fn deref(&self) -> &Self::Target {
-        &self.query
-    }
-}
-
-impl AppState {
-    /// JSON response with caching
-    pub async fn cached_json<T, F>(
-        &self,
-        headers: &axum::http::HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> axum::http::Response<axum::body::Body>
-    where
-        T: serde::Serialize + Send + 'static,
-        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
-    {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-        match self.run(f).await {
-            Ok(value) => ResponseExtended::new_json_cached(&value, &params),
-            Err(e) => ResultExtended::<T>::to_json_response(Err(e), params.etag_str()),
-        }
-    }
-
-    /// Text response with caching
-    pub async fn cached_text<T, F>(
-        &self,
-        headers: &axum::http::HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> axum::http::Response<axum::body::Body>
-    where
-        T: AsRef<str> + Send + 'static,
-        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
-    {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-        match self.run(f).await {
-            Ok(value) => ResponseExtended::new_text_cached(value.as_ref(), &params),
-            Err(e) => ResultExtended::<T>::to_text_response(Err(e), params.etag_str()),
-        }
-    }
-
-    /// Binary response with caching
-    pub async fn cached_bytes<T, F>(
-        &self,
-        headers: &axum::http::HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> axum::http::Response<axum::body::Body>
-    where
-        T: Into<Vec<u8>> + Send + 'static,
-        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
-    {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-        match self.run(f).await {
-            Ok(value) => ResponseExtended::new_bytes_cached(value.into(), &params),
-            Err(e) => ResultExtended::<T>::to_bytes_response(Err(e), params.etag_str()),
-        }
-    }
-}
+use files::FilesRoutes;
+use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

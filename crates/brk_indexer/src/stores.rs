@@ -40,7 +40,7 @@ impl Stores {
             Ok(database) => database,
             Err(_) => {
                 fs::remove_dir_all(path)?;
-                return Self::forced_import(path, version);
+                return Self::forced_import(parent, version);
             }
         };
 

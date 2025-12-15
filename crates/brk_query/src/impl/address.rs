@@ -32,17 +32,20 @@ impl Query {
             return Err(Error::InvalidAddress);
         };
 
+        dbg!(&script);
+
         let outputtype = OutputType::from(&script);
+        dbg!(outputtype);
         let Ok(bytes) = AddressBytes::try_from((&script, outputtype)) else {
             return Err(Error::Str("Failed to convert the address to bytes"));
         };
         let addresstype = outputtype;
         let hash = AddressHash::from(&bytes);
+        dbg!(hash);
 
         let Ok(Some(type_index)) = stores
             .addresstype_to_addresshash_to_addressindex
-            .get(addresstype)
-            .unwrap()
+            .get_unwrap(addresstype)
             .get(&hash)
             .map(|opt| opt.map(|cow| cow.into_owned()))
         else {

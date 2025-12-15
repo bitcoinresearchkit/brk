@@ -232,6 +232,10 @@ where
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }
 
+    pub fn approximate_len(&self) -> usize {
+        self.keyspace.approximate_len()
+    }
+
     #[inline]
     fn has(&self, height: Height) -> bool {
         self.meta.has(height)
