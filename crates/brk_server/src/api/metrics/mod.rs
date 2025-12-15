@@ -1,18 +1,15 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode, Uri},
+    http::{HeaderMap, Uri},
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use brk_query::{PaginatedMetrics, PaginationParam, Params, ParamsDeprec, ParamsOpt};
+use brk_query::{DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics, Pagination};
 use brk_traversable::TreeNode;
 use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, Metrics};
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -34,11 +31,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    Response::new_json(state.metric_count().await, etag)
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metric_count())).await
                 },
                 |op| op
                     .metrics_tag()
@@ -55,11 +48,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    Response::new_json( state.get_indexes().await, etag)
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.get_indexes().to_vec())).await
                 },
                 |op| op
                     .metrics_tag()
@@ -77,13 +66,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Query(pagination): Query<PaginationParam>
+                    Query(pagination): Query<Pagination>
                 | {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    Response::new_json(state.get_metrics(pagination).await, etag)
+                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.get_metrics(pagination))).await
                 },
                 |op| op
                     .metrics_tag()
@@ -96,12 +81,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics/catalog",
             get_with(
-                async |headers: HeaderMap, State(state): State<AppState>| -> Response {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    Response::new_json(state.get_metrics_catalog().await, etag)
+                async |headers: HeaderMap, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.get_metrics_catalog().clone())).await
                 },
                 |op| op
                     .metrics_tag()
@@ -122,11 +103,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     Path(metric): Path<Metric>,
                     Query(limit): Query<Limit>
                 | {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.match_metric(metric, limit).await.to_json_response(etag)
+                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.match_metric(&metric, limit))).await
                 },
                 |op| op
                     .metrics_tag()
@@ -144,20 +121,18 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Path(metric): Path<Metric>
                 | {
-                    let etag = VERSION;
-                    if headers.has_etag(etag) {
-                        return Response::new_not_modified();
-                    }
-                    if let Some(indexes) = state.metric_to_indexes(metric.clone()).await {
-                        return Response::new_json(indexes, etag)
-                    }
-                    // REMOVE UNWRAP !!
-                    let value  = if let Some(first) = state.match_metric(metric.clone(), Limit::MIN).await.unwrap().first() {
-                        format!("Could not find '{metric}', did you mean '{first}' ?")
-                    } else {
-                        format!("Could not find '{metric}'.")
-                    };
-                    Response::new_json_with(StatusCode::NOT_FOUND, value, etag)
+                    state.cached_json(&headers, CacheStrategy::Static, move |q| {
+                        if let Some(indexes) = q.metric_to_indexes(metric.clone()) {
+                            return Ok(indexes.clone())
+                        }
+                        Err(brk_error::Error::String(
+                            if let Some(first) = q.match_metric(&metric, Limit::MIN).first() {
+                                format!("Could not find '{metric}', did you mean '{first}' ?")
+                            } else {
+                                format!("Could not find '{metric}'.")
+                            }
+                        ))
+                    }).await
                 },
                 |op| op
                     .metrics_tag()
@@ -173,7 +148,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
         )
         // WIP
         .route("/api/metrics/bulk", get(data::handler))
-        // WIP
         .route(
             "/api/metric/{metric}/{index}",
             get(
@@ -181,16 +155,15 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                        headers: HeaderMap,
                        state: State<AppState>,
                        Path((metric, index)): Path<(Metric, Index)>,
-                       Query(params_opt): Query<ParamsOpt>|
+                       Query(range): Query<DataRangeFormat>|
                        -> Response {
-                           todo!();
-                    // data::handler(
-                    //     uri,
-                    //     headers,
-                    //     Query(Params::from(((index, metric), params_opt))),
-                    //     state,
-                    // )
-                    // .await
+                    data::handler(
+                        uri,
+                        headers,
+                        Query(MetricSelection::from((index, metric, range))),
+                        state,
+                    )
+                    .await
                 },
             ),
         )
@@ -202,7 +175,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             get(
                 async |uri: Uri,
                        headers: HeaderMap,
-                       Query(params): Query<ParamsDeprec>,
+                       Query(params): Query<MetricSelectionLegacy>,
                        state: State<AppState>|
                        -> Response {
                     data::handler(uri, headers, Query(params.into()), state).await
@@ -218,7 +191,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        Path(variant): Path<String>,
-                       Query(params_opt): Query<ParamsOpt>,
+                       Query(range): Query<DataRangeFormat>,
                        state: State<AppState>|
                        -> Response {
                     let separator = "_to_";
@@ -230,10 +203,10 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         return format!("Index {ser_index} doesn't exist").into_response();
                     };
 
-                    let params = Params::from((
+                    let params = MetricSelection::from((
                         index,
                         Metrics::from(split.collect::<Vec<_>>().join(separator)),
-                        params_opt,
+                        range,
                     ));
                     data::handler(uri, headers, Query(params), state).await
                 },

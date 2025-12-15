@@ -6,6 +6,7 @@ use aide::{
 };
 use axum::{
     Extension, Json,
+    extract::State,
     http::HeaderMap,
     response::{Html, Redirect, Response},
     routing::get,
@@ -13,7 +14,7 @@ use axum::{
 use brk_types::Health;
 
 use crate::{
-    VERSION,
+    CacheStrategy, VERSION,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
         metrics::ApiMetricsRoutes, mining::MiningRoutes, transactions::TxRoutes,
@@ -49,12 +50,15 @@ impl ApiRoutes for ApiRouter<AppState> {
             .api_route(
                 "/version",
                 get_with(
-                    async || -> Json<&'static str> { Json(VERSION) },
+                    async |headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Static, |_| Ok(env!("CARGO_PKG_VERSION"))).await
+                    },
                     |op| {
                         op.server_tag()
                             .summary("API version")
                             .description("Returns the current version of the API server")
                             .ok_response::<String>()
+                            .not_modified()
                     },
                 ),
             )

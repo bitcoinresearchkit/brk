@@ -2,7 +2,7 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::{Redirect, Response},
+    response::Redirect,
     routing::get,
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
@@ -11,10 +11,7 @@ use brk_types::{
     BlockTimestamp, Height, HeightPath, StartHeightPath, TimestampPath, Transaction, Txid,
 };
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -35,11 +32,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_block(path.hash).await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block(&path.hash)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -61,14 +54,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state
-                            .get_block_status(path.hash)
-                            .await
-                            .to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block_status(&path.hash)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -90,14 +76,8 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<HeightPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state
-                            .get_block_by_height(Height::from(path.height))
-                            .await
-                            .to_json_response(&etag)
+                        let height = Height::from(path.height);
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block_by_height(height)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -119,12 +99,8 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<StartHeightPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
                         let start_height = path.start_height.map(Height::from);
-                        state.get_blocks(start_height).await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.blocks(start_height)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -145,11 +121,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_block_txids(path.hash).await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block_txids(&path.hash)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -171,11 +143,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashStartIndexPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_block_txs(path.hash, path.start_index).await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block_txs(&path.hash, path.start_index)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -198,11 +166,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashTxIndexPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_block_txid_at_index(path.hash, path.index).await.to_display_response(&etag)
+                        state.cached_text(&headers, CacheStrategy::Height, move |q| q.block_txid_at_index(&path.hash, path.index).map(|t| t.to_string())).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -224,14 +188,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<TimestampPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state
-                            .get_block_by_timestamp(path.timestamp)
-                            .await
-                            .to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.block_by_timestamp(path.timestamp)).await
                     },
                     |op| {
                         op.blocks_tag()
@@ -251,11 +208,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashPath>,
                            State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_block_raw(path.hash).await.to_bytes_response(&etag)
+                        state.cached_bytes(&headers, CacheStrategy::Height, move |q| q.block_raw(&path.hash)).await
                     },
                     |op| {
                         op.blocks_tag()

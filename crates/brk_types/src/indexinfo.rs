@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use super::Index;
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Clone, Copy, Serialize, JsonSchema)]
 /// Information about an available index and its query aliases
 pub struct IndexInfo {
     /// The canonical index name

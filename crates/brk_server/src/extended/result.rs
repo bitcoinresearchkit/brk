@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use axum::{http::StatusCode, response::Response};
 use brk_error::{Error, Result};
 use serde::Serialize;
@@ -14,9 +12,6 @@ pub trait ResultExtended<T> {
     fn to_text_response(self, etag: &str) -> Response
     where
         T: AsRef<str>;
-    fn to_display_response(self, etag: &str) -> Response
-    where
-        T: Display;
     fn to_bytes_response(self, etag: &str) -> Response
     where
         T: Into<Vec<u8>>;
@@ -55,16 +50,6 @@ impl<T> ResultExtended<T> for Result<T> {
     {
         match self.with_status() {
             Ok(value) => Response::new_text(value.as_ref(), etag),
-            Err((status, message)) => Response::new_text_with(status, &message, etag),
-        }
-    }
-
-    fn to_display_response(self, etag: &str) -> Response
-    where
-        T: Display,
-    {
-        match self.with_status() {
-            Ok(value) => Response::new_text(&value.to_string(), etag),
             Err((status, message)) => Response::new_text_with(status, &message, etag),
         }
     }

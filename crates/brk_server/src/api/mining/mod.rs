@@ -2,7 +2,7 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::{Redirect, Response},
+    response::Redirect,
     routing::get,
 };
 use brk_types::{
@@ -11,10 +11,7 @@ use brk_types::{
     PoolSlugPath, PoolsSummary, RewardStats, TimePeriodPath,
 };
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -32,14 +29,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/difficulty-adjustment",
             get_with(
                 async |headers: HeaderMap, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_difficulty_adjustment()
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::Height, |q| q.difficulty_adjustment()).await
                 },
                 |op| {
                     op.mining_tag()
@@ -55,11 +45,8 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pools",
             get_with(
                 async |headers: HeaderMap, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-pools");
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.get_all_pools().await.to_json_response(&etag)
+                    // Pool list is static, only changes on code update
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.all_pools())).await
                 },
                 |op| {
                     op.mining_tag()
@@ -72,17 +59,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/pools/:time_period",
+            "/api/v1/mining/pools/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_mining_pools(path.time_period)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("{:?}", path.time_period)), move |q| q.mining_pools(path.time_period)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -95,17 +75,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/pool/:slug",
+            "/api/v1/mining/pool/{slug}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<PoolSlugPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-{}-{:?}", state.get_height().await, path.slug);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_pool_detail(path.slug)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(path.slug), move |q| q.pool_detail(path.slug)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -122,14 +95,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/hashrate",
             get_with(
                 async |headers: HeaderMap, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-hashrate-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_hashrate(None)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with("hashrate"), |q| q.hashrate(None)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -142,17 +108,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/hashrate/:time_period",
+            "/api/v1/mining/hashrate/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-hashrate-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_hashrate(Some(path.time_period))
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("hashrate-{:?}", path.time_period)), move |q| q.hashrate(Some(path.time_period))).await
                 },
                 |op| {
                     op.mining_tag()
@@ -168,14 +127,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/difficulty-adjustments",
             get_with(
                 async |headers: HeaderMap, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-diff-adj-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_difficulty_adjustments(None)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with("diff-adj"), |q| q.difficulty_adjustments(None)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -188,17 +140,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/difficulty-adjustments/:time_period",
+            "/api/v1/mining/difficulty-adjustments/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-diff-adj-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_difficulty_adjustments(Some(path.time_period))
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("diff-adj-{:?}", path.time_period)), move |q| q.difficulty_adjustments(Some(path.time_period))).await
                 },
                 |op| {
                     op.mining_tag()
@@ -211,17 +156,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/blocks/fees/:time_period",
+            "/api/v1/mining/blocks/fees/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-fees-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_block_fees(path.time_period)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("fees-{:?}", path.time_period)), move |q| q.block_fees(path.time_period)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -234,17 +172,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/blocks/rewards/:time_period",
+            "/api/v1/mining/blocks/rewards/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-rewards-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_block_rewards(path.time_period)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("rewards-{:?}", path.time_period)), move |q| q.block_rewards(path.time_period)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -257,17 +188,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/blocks/fee-rates/:time_period",
+            "/api/v1/mining/blocks/fee-rates/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-feerates-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_block_fee_rates(path.time_period)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("feerates-{:?}", path.time_period)), move |q| q.block_fee_rates(path.time_period)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -280,17 +204,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/blocks/sizes-weights/:time_period",
+            "/api/v1/mining/blocks/sizes-weights/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-sizes-{}-{:?}", state.get_height().await, path.time_period);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_block_sizes_weights(path.time_period)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("sizes-{:?}", path.time_period)), move |q| q.block_sizes_weights(path.time_period)).await
                 },
                 |op| {
                     op.mining_tag()
@@ -303,17 +220,10 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/v1/mining/reward-stats/:block_count",
+            "/api/v1/mining/reward-stats/{block_count}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<BlockCountPath>, State(state): State<AppState>| {
-                    let etag = format!("{VERSION}-reward-stats-{}-{}", state.get_height().await, path.block_count);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state
-                        .get_reward_stats(path.block_count)
-                        .await
-                        .to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::height_with(format!("reward-stats-{}", path.block_count)), move |q| q.reward_stats(path.block_count)).await
                 },
                 |op| {
                     op.mining_tag()

@@ -2,15 +2,12 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::{Redirect, Response},
+    response::Redirect,
     routing::get,
 };
 use brk_types::{Transaction, TxOutspend, TxStatus, TxidPath, TxidVoutPath};
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -31,11 +28,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(txid): Path<TxidPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.get_transaction(txid).await.to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction(txid)).await
                 },
                 |op| op
                     .transactions_tag()
@@ -58,11 +51,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(txid): Path<TxidPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.get_transaction_status(txid).await.to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction_status(txid)).await
                 },
                 |op| op
                     .transactions_tag()
@@ -85,11 +74,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(txid): Path<TxidPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.get_transaction_hex(txid).await.to_text_response(&etag)
+                    state.cached_text(&headers, CacheStrategy::Height, move |q| q.transaction_hex(txid)).await
                 },
                 |op| op
                     .transactions_tag()
@@ -112,12 +97,8 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(path): Path<TxidVoutPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
                     let txid = TxidPath { txid: path.txid };
-                    state.get_tx_outspend(txid, path.vout).await.to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspend(txid, path.vout)).await
                 },
                 |op| op
                     .transactions_tag()
@@ -140,11 +121,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(txid): Path<TxidPath>,
                     State(state): State<AppState>
                 | {
-                    let etag = format!("{VERSION}-{}", state.get_height().await);
-                    if headers.has_etag(&etag) {
-                        return Response::new_not_modified();
-                    }
-                    state.get_tx_outspends(txid).await.to_json_response(&etag)
+                    state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspends(txid)).await
                 },
                 |op| op
                     .transactions_tag()

@@ -2,16 +2,12 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    response::{Redirect, Response},
+    response::Redirect,
     routing::get,
 };
-use brk_query::validate_address;
 use brk_types::{Address, AddressStats, AddressTxidsParam, AddressValidation, Txid, Utxo};
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -31,11 +27,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(address): Path<Address>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height().await);
-                if headers.has_etag(&etag) {
-                    return Response::new_not_modified();
-                }
-                state.get_address(address).await.to_json_response(&etag)
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address(address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address information")
@@ -55,11 +47,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height().await);
-                if headers.has_etag(&etag) {
-                    return Response::new_not_modified();
-                }
-                state.get_address_txids(address, params.after_txid, params.limit).await.to_json_response(&etag)
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(address, params.after_txid, params.limit)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address transaction IDs")
@@ -78,11 +66,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(address): Path<Address>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height().await);
-                if headers.has_etag(&etag) {
-                    return Response::new_not_modified();
-                }
-                state.get_address_utxos(address).await.to_json_response(&etag)
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_utxos(address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address UTXOs")
@@ -101,17 +85,13 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(address): Path<Address>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height().await);
-                if headers.has_etag(&etag) {
-                    return Response::new_not_modified();
-                }
-                state.get_address_mempool_txids(address).await.to_json_response(&etag)
+                // Mempool txs for an address - use MaxAge since it's volatile
+                state.cached_json(&headers, CacheStrategy::MaxAge(5), move |q| q.address_mempool_txids(address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address mempool transactions")
                 .description("Get unconfirmed transaction IDs for an address from the mempool (up to 50).")
                 .ok_response::<Vec<Txid>>()
-                .not_modified()
                 .bad_request()
                 .not_found()
                 .server_error()
@@ -125,11 +105,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                let etag = format!("{VERSION}-{}", state.get_height().await);
-                if headers.has_etag(&etag) {
-                    return Response::new_not_modified();
-                }
-                state.get_address_txids(address, params.after_txid, 25).await.to_json_response(&etag)
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(address, params.after_txid, 25)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address confirmed transactions")
@@ -148,11 +124,7 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Path(address): Path<String>,
                 State(state): State<AppState>
             | {
-                let etag = VERSION;
-                if headers.has_etag(etag) {
-                    return Response::new_not_modified();
-                }
-                Response::new_json(validate_address(&address), etag)
+                state.cached_json(&headers, CacheStrategy::Static, move |_q| Ok(AddressValidation::from_address(&address))).await
             }, |op| op
                 .addresses_tag()
                 .summary("Validate address")

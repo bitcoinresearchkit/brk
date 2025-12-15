@@ -3,10 +3,10 @@ use std::{env, fs, path::Path};
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_query::{Params, ParamsOpt, Query};
+use brk_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use brk_types::Index;
+use brk_types::{DataRangeFormat, Index, MetricSelection};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -38,15 +38,15 @@ pub fn main() -> Result<()> {
 
     let query = Query::build(&reader, &indexer, &computer, None);
 
-    dbg!(query.search_and_format(Params {
+    dbg!(query.search_and_format(MetricSelection {
         index: Index::Height,
         metrics: vec!["date"].into(),
-        rest: ParamsOpt::default().set_from(-1),
+        range: DataRangeFormat::default().set_from(-1),
     })?);
-    dbg!(query.search_and_format(Params {
+    dbg!(query.search_and_format(MetricSelection {
         index: Index::Height,
         metrics: vec!["date", "timestamp"].into(),
-        rest: ParamsOpt::default().set_from(-10).set_count(5),
+        range: DataRangeFormat::default().set_from(-10).set_count(5),
     })?);
 
     Ok(())

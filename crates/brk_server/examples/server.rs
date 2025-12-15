@@ -1,0 +1,77 @@
+use std::{path::Path, thread};
+
+use brk_computer::Computer;
+use brk_error::Result;
+use brk_fetcher::Fetcher;
+use brk_indexer::Indexer;
+use brk_mempool::Mempool;
+use brk_query::AsyncQuery;
+use brk_reader::Reader;
+use brk_rpc::{Auth, Client};
+use brk_server::Server;
+use log::info;
+use vecdb::Exit;
+
+pub fn main() -> Result<()> {
+    // Can't increase main thread's stack size, thus we need to use another thread
+    thread::Builder::new()
+        .stack_size(512 * 1024 * 1024)
+        .spawn(run)?
+        .join()
+        .unwrap()
+}
+
+fn run() -> Result<()> {
+    brk_logger::init(Some(Path::new(".log")))?;
+
+    let bitcoin_dir = Client::default_bitcoin_path();
+    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+
+    let client = Client::new(
+        Client::default_url(),
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
+
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
+    let indexer = Indexer::forced_import(&outputs_dir)?;
+    let fetcher = Some(Fetcher::import(true, None)?);
+    let computer = Computer::forced_import(&outputs_dir, &indexer, fetcher)?;
+
+    let mempool = Mempool::new(&client);
+    let mempool_clone = mempool.clone();
+    thread::spawn(move || {
+        mempool_clone.start();
+    });
+
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
+
+    let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool));
+
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
+
+    // Option 1: block_on to run and properly propagate errors
+    runtime.block_on(async move {
+        let server = Server::new(&query, None);
+
+        let handle = tokio::spawn(async move { server.serve(true).await });
+
+        // Await the handle to catch both panics and errors
+        match handle.await {
+            Ok(Ok(())) => info!("Server shut down cleanly"),
+            Ok(Err(e)) => log::error!("Server error: {e:?}"),
+            Err(e) => {
+                // JoinError - either panic or cancellation
+                if e.is_panic() {
+                    log::error!("Server panicked: {:?}", e.into_panic());
+                } else {
+                    log::error!("Server task cancelled");
+                }
+            }
+        }
+
+        Ok(()) as Result<()>
+    })
+}

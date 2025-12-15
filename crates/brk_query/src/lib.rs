@@ -9,44 +9,30 @@ use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_traversable::TreeNode;
-use brk_types::{
-    Address, AddressStats, BlockInfo, BlockStatus, BlockTimestamp, Format, HashrateSummary,
-    Height, Index, IndexInfo, Limit, MempoolInfo, Metric, MetricCount, PoolDetail, PoolInfo,
-    PoolSlug, PoolsSummary, RecommendedFees, TimePeriod, Timestamp, Transaction, TxOutspend,
-    TxStatus, Txid, TxidPath, Utxo, Vout,
-};
+use brk_types::{Format, Height, Index, IndexInfo, Limit, Metric, MetricCount};
 use vecdb::{AnyExportableVec, AnyStoredVec};
 
+// Infrastructure modules
 #[cfg(feature = "tokio")]
 mod r#async;
-mod chain;
-mod deser;
 mod output;
-mod pagination;
-mod params;
 mod vecs;
 
+// Query impl blocks (extend Query with domain methods)
+mod r#impl;
+
+// Re-exports
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-pub use output::{Output, Value};
-pub use pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
-pub use params::{Params, ParamsDeprec, ParamsOpt};
-use vecs::Vecs;
-
-pub use crate::chain::BLOCK_TXS_PAGE_SIZE;
-pub use crate::chain::validate_address;
-use crate::{
-    chain::{
-        get_address, get_address_mempool_txids, get_address_txids, get_address_utxos,
-        get_all_pools, get_block_by_height, get_block_by_timestamp, get_block_raw,
-        get_block_status_by_height, get_block_txid_at_index, get_block_txids, get_block_txs,
-        get_blocks, get_difficulty_adjustment, get_hashrate, get_height_by_hash,
-        get_mempool_blocks, get_mempool_info, get_mempool_txids, get_mining_pools, get_pool_detail,
-        get_recommended_fees, get_transaction, get_transaction_hex, get_transaction_status,
-        get_tx_outspend, get_tx_outspends,
-    },
-    vecs::{IndexToVec, MetricToVec},
+pub use brk_types::{
+    DataRange, DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics,
+    Pagination, PaginationIndex,
 };
+pub use r#impl::BLOCK_TXS_PAGE_SIZE;
+pub use output::{Output, Value};
+
+use crate::vecs::{IndexToVec, MetricToVec};
+use vecs::Vecs;
 
 #[derive(Clone)]
 pub struct Query(Arc<QueryInner<'static>>);
@@ -79,215 +65,15 @@ impl Query {
         }))
     }
 
-    pub fn get_height(&self) -> Height {
+    /// Current indexed height
+    pub fn height(&self) -> Height {
         Height::from(self.indexer().vecs.block.height_to_blockhash.stamp())
     }
 
-    pub fn get_address(&self, address: Address) -> Result<AddressStats> {
-        get_address(address, self)
-    }
-
-    pub fn get_address_txids(
-        &self,
-        address: Address,
-        after_txid: Option<Txid>,
-        limit: usize,
-    ) -> Result<Vec<Txid>> {
-        get_address_txids(address, after_txid, limit, self)
-    }
-
-    pub fn get_address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {
-        get_address_utxos(address, self)
-    }
-
-    pub fn get_address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
-        get_address_mempool_txids(address, self)
-    }
-
-    pub fn get_transaction(&self, txid: TxidPath) -> Result<Transaction> {
-        get_transaction(txid, self)
-    }
-
-    pub fn get_transaction_status(&self, txid: TxidPath) -> Result<TxStatus> {
-        get_transaction_status(txid, self)
-    }
-
-    pub fn get_transaction_hex(&self, txid: TxidPath) -> Result<String> {
-        get_transaction_hex(txid, self)
-    }
-
-    pub fn get_tx_outspend(&self, txid: TxidPath, vout: Vout) -> Result<TxOutspend> {
-        get_tx_outspend(txid, vout, self)
-    }
-
-    pub fn get_tx_outspends(&self, txid: TxidPath) -> Result<Vec<TxOutspend>> {
-        get_tx_outspends(txid, self)
-    }
-
-    pub fn get_block(&self, hash: &str) -> Result<BlockInfo> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_by_height(height, self)
-    }
-
-    pub fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
-        get_block_by_height(height, self)
-    }
-
-    pub fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
-        get_block_by_timestamp(timestamp, self)
-    }
-
-    pub fn get_block_status(&self, hash: &str) -> Result<BlockStatus> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_status_by_height(height, self)
-    }
-
-    pub fn get_blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
-        get_blocks(start_height, self)
-    }
-
-    pub fn get_block_txids(&self, hash: &str) -> Result<Vec<Txid>> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_txids(height, self)
-    }
-
-    pub fn get_block_txs(&self, hash: &str, start_index: usize) -> Result<Vec<Transaction>> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_txs(height, start_index, self)
-    }
-
-    pub fn get_block_txid_at_index(&self, hash: &str, index: usize) -> Result<Txid> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_txid_at_index(height, index, self)
-    }
-
-    pub fn get_block_raw(&self, hash: &str) -> Result<Vec<u8>> {
-        let height = get_height_by_hash(hash, self)?;
-        get_block_raw(height, self)
-    }
-
-    pub fn get_mempool_info(&self) -> Result<MempoolInfo> {
-        get_mempool_info(self)
-    }
-
-    pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
-        get_mempool_txids(self)
-    }
-
-    pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
-        get_recommended_fees(self)
-    }
-
-    pub fn get_mempool_blocks(&self) -> Result<Vec<brk_types::MempoolBlock>> {
-        get_mempool_blocks(self)
-    }
-
-    pub fn get_difficulty_adjustment(&self) -> Result<brk_types::DifficultyAdjustment> {
-        get_difficulty_adjustment(self)
-    }
-
-    pub fn get_mining_pools(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
-        get_mining_pools(time_period, self)
-    }
-
-    pub fn get_all_pools(&self) -> Vec<PoolInfo> {
-        get_all_pools()
-    }
-
-    pub fn get_pool_detail(&self, slug: PoolSlug) -> Result<PoolDetail> {
-        get_pool_detail(slug, self)
-    }
-
-    pub fn get_hashrate(&self, time_period: Option<TimePeriod>) -> Result<HashrateSummary> {
-        get_hashrate(time_period, self)
-    }
-
-    pub fn get_difficulty_adjustments(
-        &self,
-        time_period: Option<TimePeriod>,
-    ) -> Result<Vec<brk_types::DifficultyAdjustmentEntry>> {
-        chain::get_difficulty_adjustments(time_period, self)
-    }
-
-    pub fn get_block_fees(&self, time_period: TimePeriod) -> Result<Vec<brk_types::BlockFeesEntry>> {
-        chain::get_block_fees(time_period, self)
-    }
-
-    pub fn get_block_rewards(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<Vec<brk_types::BlockRewardsEntry>> {
-        chain::get_block_rewards(time_period, self)
-    }
-
-    pub fn get_block_fee_rates(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<Vec<brk_types::BlockFeeRatesEntry>> {
-        chain::get_block_fee_rates(time_period, self)
-    }
-
-    pub fn get_block_sizes_weights(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<brk_types::BlockSizesWeights> {
-        chain::get_block_sizes_weights(time_period, self)
-    }
-
-    pub fn get_reward_stats(&self, block_count: usize) -> Result<brk_types::RewardStats> {
-        chain::get_reward_stats(block_count, self)
-    }
+    // === Metrics methods ===
 
     pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {
         self.vecs().matches(metric, limit)
-    }
-
-    pub fn search_metric_with_index(
-        &self,
-        metric: &str,
-        index: Index,
-        // params: &Params,
-    ) -> Result<Vec<(String, &&dyn AnyExportableVec)>> {
-        todo!();
-
-        // let all_metrics = &self.vecs.metrics;
-        // let metrics = &params.metrics;
-        // let index = params.index;
-
-        // let ids_to_vec = self
-        //     .vecs
-        //     .index_to_metric_to_vec
-        //     .get(&index)
-        //     .ok_or(Error::String(format!(
-        //         "Index \"{}\" isn't a valid index",
-        //         index
-        //     )))?;
-
-        // metrics
-        //     .iter()
-        //     .map(|metric| {
-        //         let vec = ids_to_vec.get(metric.as_str()).ok_or_else(|| {
-        //             let matches: Vec<&str> = MATCHER.with(|matcher| {
-        //                 let matcher = matcher.borrow();
-        //                 let mut scored: Vec<(&str, i64)> = all_metrics
-        //                     .iter()
-        //                     .filter_map(|m| matcher.fuzzy_match(m, metric).map(|s| (*m, s)))
-        //                     .collect();
-
-        //                 scored.sort_unstable_by_key(|&(_, s)| std::cmp::Reverse(s));
-        //                 scored.into_iter().take(5).map(|(m, _)| m).collect()
-        //             });
-
-        //             let mut message = format!("No vec \"{metric}\" for index \"{index}\".\n");
-        //             if !matches.is_empty() {
-        //                 message += &format!("\nDid you mean: {matches:?}\n");
-        //             }
-
-        //             Error::String(message)
-        //         });
-        //         vec.map(|vec| (metric.clone(), vec))
-        //     })
-        //     .collect::<Result<Vec<_>>>()
     }
 
     fn columns_to_csv(
@@ -336,7 +122,7 @@ impl Query {
     pub fn format(
         &self,
         metrics: Vec<&&dyn AnyExportableVec>,
-        params: &ParamsOpt,
+        params: &DataRangeFormat,
     ) -> Result<Output> {
         let from = params.from().map(|from| {
             metrics
@@ -381,9 +167,50 @@ impl Query {
         })
     }
 
-    pub fn search_and_format(&self, params: Params) -> Result<Output> {
-        todo!()
-        // self.format(self.search(&params)?, &params.rest)
+    /// Search for vecs matching the given metrics and index
+    pub fn search(&self, params: &MetricSelection) -> Vec<&'static dyn AnyExportableVec> {
+        params
+            .metrics
+            .iter()
+            .filter_map(|metric| self.vecs().get(metric, params.index))
+            .collect()
+    }
+
+    /// Calculate total weight of the vecs for the given range
+    pub fn weight(vecs: &[&dyn AnyExportableVec], from: Option<i64>, to: Option<i64>) -> usize {
+        vecs.iter().map(|v| v.range_weight(from, to)).sum()
+    }
+
+    pub fn search_and_format(&self, params: MetricSelection) -> Result<Output> {
+        let vecs = self.search(&params);
+
+        if vecs.is_empty() {
+            return Ok(Output::default(params.range.format()));
+        }
+
+        self.format(vecs.iter().collect(), &params.range)
+    }
+
+    /// Search and format with weight limit (for DDoS prevention)
+    pub fn search_and_format_checked(
+        &self,
+        params: MetricSelection,
+        max_weight: usize,
+    ) -> Result<Output> {
+        let vecs = self.search(&params);
+
+        if vecs.is_empty() {
+            return Ok(Output::default(params.range.format()));
+        }
+
+        let weight = Self::weight(&vecs, params.from(), params.to());
+        if weight > max_weight {
+            return Err(Error::String(format!(
+                "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"
+            )));
+        }
+
+        self.format(vecs.iter().collect(), &params.range)
     }
 
     pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
@@ -413,7 +240,7 @@ impl Query {
         &self.vecs().indexes
     }
 
-    pub fn get_metrics(&self, pagination: PaginationParam) -> PaginatedMetrics {
+    pub fn get_metrics(&self, pagination: Pagination) -> PaginatedMetrics {
         self.vecs().metrics(pagination)
     }
 
@@ -421,13 +248,15 @@ impl Query {
         self.vecs().catalog()
     }
 
-    pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {
+    pub fn get_index_to_vecids(&self, paginated_index: PaginationIndex) -> Option<&[&str]> {
         self.vecs().index_to_ids(paginated_index)
     }
 
     pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.vecs().metric_to_indexes(metric)
     }
+
+    // === Core accessors ===
 
     #[inline]
     pub fn reader(&self) -> &Reader {

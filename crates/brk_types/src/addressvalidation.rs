@@ -1,5 +1,8 @@
+use bitcoin::hex::DisplayHex;
 use schemars::JsonSchema;
 use serde::Serialize;
+
+use crate::{AddressBytes, OutputType};
 
 /// Address validation result
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -34,6 +37,7 @@ pub struct AddressValidation {
 }
 
 impl AddressValidation {
+    /// Returns an invalid validation result
     pub fn invalid() -> Self {
         Self {
             isvalid: false,
@@ -43,6 +47,44 @@ impl AddressValidation {
             iswitness: None,
             witness_version: None,
             witness_program: None,
+        }
+    }
+
+    /// Validate a Bitcoin address string and return details
+    pub fn from_address(address: &str) -> Self {
+        let Ok(script) = AddressBytes::address_to_script(address) else {
+            return Self::invalid();
+        };
+
+        let output_type = OutputType::from(&script);
+        let script_hex = script.as_bytes().to_lower_hex_string();
+
+        let is_script = matches!(output_type, OutputType::P2SH);
+        let is_witness = matches!(
+            output_type,
+            OutputType::P2WPKH | OutputType::P2WSH | OutputType::P2TR | OutputType::P2A
+        );
+
+        let (witness_version, witness_program) = if is_witness {
+            let version = script.witness_version().map(|v| v.to_num());
+            let program = if script.len() > 2 {
+                Some(script.as_bytes()[2..].to_lower_hex_string())
+            } else {
+                None
+            };
+            (version, program)
+        } else {
+            (None, None)
+        };
+
+        Self {
+            isvalid: true,
+            address: Some(address.to_string()),
+            script_pub_key: Some(script_hex),
+            isscript: Some(is_script),
+            iswitness: Some(is_witness),
+            witness_version,
+            witness_program,
         }
     }
 }

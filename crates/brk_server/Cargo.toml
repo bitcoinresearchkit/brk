@@ -15,7 +15,6 @@ brk_computer = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
-brk_iterator = { workspace = true }
 brk_logger = { workspace = true }
 brk_mcp = { workspace = true }
 brk_query = { workspace = true }
@@ -33,3 +32,6 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.8", features = ["compression-full", "trace"] }
 tracing = "0.1.43"
+
+[dev-dependencies]
+brk_mempool = { workspace = true }

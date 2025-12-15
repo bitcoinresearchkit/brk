@@ -27,6 +27,7 @@ pub trait HeaderMapExtended {
     fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)>;
     fn check_if_modified_since_(&self, duration: Duration) -> Result<(ModifiedState, DateTime)>;
 
+    fn insert_cache_control(&mut self, value: &str);
     fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
     fn insert_etag(&mut self, etag: &str);
@@ -56,18 +57,16 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, "*".parse().unwrap());
     }
 
+    fn insert_cache_control(&mut self, value: &str) {
+        self.insert(header::CACHE_CONTROL, value.parse().unwrap());
+    }
+
     fn insert_cache_control_must_revalidate(&mut self) {
-        self.insert(
-            header::CACHE_CONTROL,
-            "public, max-age=1, must-revalidate".parse().unwrap(),
-        );
+        self.insert_cache_control("public, max-age=1, must-revalidate");
     }
 
     fn insert_cache_control_immutable(&mut self) {
-        self.insert(
-            header::CACHE_CONTROL,
-            "public, max-age=31536000, immutable".parse().unwrap(),
-        );
+        self.insert_cache_control("public, max-age=31536000, immutable");
     }
 
     fn insert_content_disposition_attachment(&mut self) {

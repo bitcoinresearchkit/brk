@@ -3,12 +3,10 @@ use std::collections::BTreeMap;
 use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
-use brk_types::{Index, IndexInfo, Limit, Metric};
+use brk_types::{Index, IndexInfo, Limit, Metric, PaginatedMetrics, Pagination, PaginationIndex};
 use derive_deref::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
 use vecdb::AnyExportableVec;
-
-use crate::pagination::{PaginatedIndexParam, PaginatedMetrics, PaginationParam};
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -18,7 +16,6 @@ pub struct Vecs<'a> {
     pub indexes: Vec<IndexInfo>,
     pub distinct_metric_count: usize,
     pub total_metric_count: usize,
-    pub longest_metric_len: usize,
     catalog: Option<TreeNode>,
     matcher: Option<QuickMatch<'a>>,
     metric_to_indexes: BTreeMap<&'a str, Vec<Index>>,
@@ -58,12 +55,6 @@ impl<'a> Vecs<'a> {
         sort_ids(&mut ids);
 
         this.metrics = ids;
-        this.longest_metric_len = this
-            .metrics
-            .iter()
-            .map(|s| s.len())
-            .max()
-            .unwrap_or_default();
         this.distinct_metric_count = this.metric_to_index_to_vec.keys().count();
         this.total_metric_count = this
             .index_to_metric_to_vec
@@ -107,44 +98,35 @@ impl<'a> Vecs<'a> {
         this
     }
 
-    // Not the most performant or type safe but only built once so that's okay
     fn insert(&mut self, vec: &'a dyn AnyExportableVec) {
         let name = vec.name();
-        // dbg!(vec.region_name());
         let serialized_index = vec.index_type_to_string();
         let index = Index::try_from(serialized_index)
-            .inspect_err(|_| {
-                dbg!(&serialized_index);
-            })
-            .unwrap();
+            .unwrap_or_else(|_| panic!("Unknown index type: {serialized_index}"));
+
         let prev = self
             .metric_to_index_to_vec
             .entry(name)
             .or_default()
             .insert(index, vec);
-        if prev.is_some() {
-            dbg!(serialized_index, name);
-            panic!()
-        }
+        assert!(prev.is_none(), "Duplicate metric: {name} for index {index:?}");
+
         let prev = self
             .index_to_metric_to_vec
             .entry(index)
             .or_default()
             .insert(name, vec);
-        if prev.is_some() {
-            dbg!(serialized_index, name);
-            panic!()
-        }
+        assert!(prev.is_none(), "Duplicate metric: {name} for index {index:?}");
     }
 
-    pub fn metrics(&'static self, pagination: PaginationParam) -> PaginatedMetrics {
+    pub fn metrics(&'static self, pagination: Pagination) -> PaginatedMetrics {
         let len = self.metrics.len();
         let start = pagination.start(len);
         let end = pagination.end(len);
 
         PaginatedMetrics {
-            current_page: pagination.page.unwrap_or_default(),
-            max_page: len.div_ceil(PaginationParam::PER_PAGE).saturating_sub(1),
+            current_page: pagination.page(),
+            max_page: len.div_ceil(Pagination::PER_PAGE).saturating_sub(1),
             metrics: &self.metrics[start..end],
         }
     }
@@ -156,28 +138,34 @@ impl<'a> Vecs<'a> {
 
     pub fn index_to_ids(
         &self,
-        PaginatedIndexParam { index, pagination }: PaginatedIndexParam,
-    ) -> Vec<&'a str> {
-        let vec = self.index_to_metrics.get(&index).unwrap();
+        PaginationIndex { index, pagination }: PaginationIndex,
+    ) -> Option<&[&'a str]> {
+        let vec = self.index_to_metrics.get(&index)?;
 
         let len = vec.len();
         let start = pagination.start(len);
         let end = pagination.end(len);
 
-        vec.iter().skip(start).take(end).cloned().collect()
+        Some(&vec[start..end])
     }
 
     pub fn catalog(&self) -> &TreeNode {
-        self.catalog.as_ref().unwrap()
+        self.catalog.as_ref().expect("catalog not initialized")
     }
 
     pub fn matches(&self, metric: &Metric, limit: Limit) -> Vec<&'_ str> {
-        self.matcher()
+        self.matcher
+            .as_ref()
+            .expect("matcher not initialized")
             .matches_with(metric, &QuickMatchConfig::new().with_limit(*limit))
     }
 
-    fn matcher(&self) -> &QuickMatch<'_> {
-        self.matcher.as_ref().unwrap()
+    /// Look up a vec by metric name and index
+    pub fn get(&self, metric: &Metric, index: Index) -> Option<&'a dyn AnyExportableVec> {
+        let metric_name = metric.replace("-", "_");
+        self.metric_to_index_to_vec
+            .get(metric_name.as_str())
+            .and_then(|index_to_vec| index_to_vec.get(&index).copied())
     }
 }
 

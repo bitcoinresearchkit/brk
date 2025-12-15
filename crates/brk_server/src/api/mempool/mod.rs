@@ -2,15 +2,12 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::State,
     http::HeaderMap,
-    response::{Redirect, Response},
+    response::Redirect,
     routing::get,
 };
 use brk_types::{MempoolBlock, MempoolInfo, RecommendedFees, Txid};
 
-use crate::{
-    VERSION,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended, TransformResponseExtended},
-};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -26,18 +23,13 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/mempool/info",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_mempool_info().await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_info()).await
                     },
                     |op| {
                         op.mempool_tag()
                             .summary("Mempool statistics")
                             .description("Get current mempool statistics including transaction count, total vsize, and total fees.")
                             .ok_response::<MempoolInfo>()
-                            .not_modified()
                             .server_error()
                     },
                 ),
@@ -46,18 +38,13 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/mempool/txids",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_mempool_txids().await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_txids()).await
                     },
                     |op| {
                         op.mempool_tag()
                             .summary("Mempool transaction IDs")
                             .description("Get all transaction IDs currently in the mempool.")
                             .ok_response::<Vec<Txid>>()
-                            .not_modified()
                             .server_error()
                     },
                 ),
@@ -66,18 +53,13 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/v1/fees/recommended",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_recommended_fees().await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::MaxAge(3), |q| q.recommended_fees()).await
                     },
                     |op| {
                         op.mempool_tag()
                             .summary("Recommended fees")
                             .description("Get recommended fee rates for different confirmation targets based on current mempool state.")
                             .ok_response::<RecommendedFees>()
-                            .not_modified()
                             .server_error()
                     },
                 ),
@@ -86,18 +68,13 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 "/api/v1/fees/mempool-blocks",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        let etag = format!("{VERSION}-{}", state.get_height().await);
-                        if headers.has_etag(&etag) {
-                            return Response::new_not_modified();
-                        }
-                        state.get_mempool_blocks().await.to_json_response(&etag)
+                        state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_blocks()).await
                     },
                     |op| {
                         op.mempool_tag()
                             .summary("Projected mempool blocks")
                             .description("Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.")
                             .ok_response::<Vec<MempoolBlock>>()
-                            .not_modified()
                             .server_error()
                     },
                 ),

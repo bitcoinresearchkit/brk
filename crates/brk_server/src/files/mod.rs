@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use aide::axum::ApiRouter;
-use axum::routing::get;
+use axum::{response::Redirect, routing::get};
 
 use super::AppState;
 
@@ -19,7 +19,7 @@ impl FilesRoutes for ApiRouter<AppState> {
             self.route("/{*path}", get(file_handler))
                 .route("/", get(index_handler))
         } else {
-            self
+            self.route("/", get(Redirect::temporary("/api")))
         }
     }
 }

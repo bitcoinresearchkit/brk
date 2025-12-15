@@ -42,7 +42,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let suffix = |s: &str| format!("{}_{s}", slug.to_string());
+        let suffix = |s: &str| format!("{}_{s}", slug);
         let compute_dollars = price.is_some();
         let version = parent_version + Version::ZERO;
 

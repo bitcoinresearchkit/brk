@@ -29,7 +29,8 @@ pub fn create_openapi() -> OpenApi {
         Tag {
             name: "Addresses".to_string(),
             description: Some(
-                "Explore Bitcoin addresses."
+                "Query Bitcoin address data including balances, transaction history, and UTXOs. \
+                Supports all address types: P2PKH, P2SH, P2WPKH, P2WSH, and P2TR."
                     .to_string()
             ),
             ..Default::default()
@@ -37,7 +38,17 @@ pub fn create_openapi() -> OpenApi {
         Tag {
             name: "Blocks".to_string(),
             description: Some(
-                "Explore Bitcoin blocks."
+                "Retrieve block data by hash or height. Access block headers, transaction lists, \
+                and raw block bytes."
+                    .to_string()
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Mempool".to_string(),
+            description: Some(
+                "Monitor unconfirmed transactions and fee estimates. Get mempool statistics, \
+                transaction IDs, and recommended fee rates for different confirmation targets."
                     .to_string()
             ),
             ..Default::default()
@@ -45,8 +56,8 @@ pub fn create_openapi() -> OpenApi {
         Tag {
             name: "Metrics".to_string(),
             description: Some(
-                "Access Bitcoin network metrics and time-series data. Query historical and real-time \
-                statistics across various blockchain dimensions and aggregation levels."
+                "Access Bitcoin network metrics and time-series data. Query historical statistics \
+                across various indexes (date, week, month, year, halving epoch) with JSON or CSV output."
                     .to_string()
             ),
             ..Default::default()
@@ -54,7 +65,8 @@ pub fn create_openapi() -> OpenApi {
         Tag {
             name: "Mining".to_string(),
             description: Some(
-                "Explore mining related endpoints."
+                "Mining statistics including pool distribution, hashrate, difficulty adjustments, \
+                block rewards, and fee rates across configurable time periods."
                     .to_string()
             ),
             ..Default::default()
@@ -62,15 +74,16 @@ pub fn create_openapi() -> OpenApi {
         Tag {
             name: "Server".to_string(),
             description: Some(
-                "Metadata and utility endpoints for API status, health checks, and system information."
+                "API metadata and health monitoring. Version information and service status."
                     .to_string()
             ),
-                ..Default::default()
+            ..Default::default()
         },
         Tag {
             name: "Transactions".to_string(),
             description: Some(
-                "Explore Bitcoin transactions."
+                "Retrieve transaction data by txid. Access full transaction details, confirmation \
+                status, raw hex, and output spend information."
                     .to_string()
             ),
             ..Default::default()

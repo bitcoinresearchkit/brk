@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("../examples/main.rs")]
+#![doc = include_str!("../examples/server.rs")]
 #![doc = "```"]
 
 use std::{ops::Deref, path::PathBuf, sync::Arc, time::Duration};
@@ -28,10 +28,12 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::Span;
 
 mod api;
+pub mod cache;
 mod extended;
 mod files;
 
 use api::*;
+pub use cache::{CacheParams, CacheStrategy};
 use extended::*;
 
 #[derive(Clone)]
@@ -45,6 +47,71 @@ impl Deref for AppState {
     type Target = AsyncQuery;
     fn deref(&self) -> &Self::Target {
         &self.query
+    }
+}
+
+impl AppState {
+    /// JSON response with caching
+    pub async fn cached_json<T, F>(
+        &self,
+        headers: &axum::http::HeaderMap,
+        strategy: CacheStrategy,
+        f: F,
+    ) -> axum::http::Response<axum::body::Body>
+    where
+        T: serde::Serialize + Send + 'static,
+        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
+    {
+        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
+        if params.matches_etag(headers) {
+            return ResponseExtended::new_not_modified();
+        }
+        match self.run(f).await {
+            Ok(value) => ResponseExtended::new_json_cached(&value, &params),
+            Err(e) => ResultExtended::<T>::to_json_response(Err(e), params.etag_str()),
+        }
+    }
+
+    /// Text response with caching
+    pub async fn cached_text<T, F>(
+        &self,
+        headers: &axum::http::HeaderMap,
+        strategy: CacheStrategy,
+        f: F,
+    ) -> axum::http::Response<axum::body::Body>
+    where
+        T: AsRef<str> + Send + 'static,
+        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
+    {
+        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
+        if params.matches_etag(headers) {
+            return ResponseExtended::new_not_modified();
+        }
+        match self.run(f).await {
+            Ok(value) => ResponseExtended::new_text_cached(value.as_ref(), &params),
+            Err(e) => ResultExtended::<T>::to_text_response(Err(e), params.etag_str()),
+        }
+    }
+
+    /// Binary response with caching
+    pub async fn cached_bytes<T, F>(
+        &self,
+        headers: &axum::http::HeaderMap,
+        strategy: CacheStrategy,
+        f: F,
+    ) -> axum::http::Response<axum::body::Body>
+    where
+        T: Into<Vec<u8>> + Send + 'static,
+        F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
+    {
+        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
+        if params.matches_etag(headers) {
+            return ResponseExtended::new_not_modified();
+        }
+        match self.run(f).await {
+            Ok(value) => ResponseExtended::new_bytes_cached(value.into(), &params),
+            Err(e) => ResultExtended::<T>::to_bytes_response(Err(e), params.etag_str()),
+        }
     }
 }
 
@@ -132,20 +199,19 @@ impl Server {
             .layer(response_uri_layer)
             .layer(trace_layer);
 
-        let mut port = 3110;
+        const BASE_PORT: u16 = 3110;
+        const MAX_PORT: u16 = BASE_PORT + 100;
 
-        let mut listener;
-        loop {
-            listener = TcpListener::bind(format!("0.0.0.0:{port}")).await;
-            if listener.is_ok() {
-                break;
+        let mut port = BASE_PORT;
+        let listener = loop {
+            match TcpListener::bind(format!("0.0.0.0:{port}")).await {
+                Ok(l) => break l,
+                Err(_) if port < MAX_PORT => port += 1,
+                Err(e) => return Err(e.into()),
             }
-            port += 1;
-        }
+        };
 
         info!("Starting server on port {port}...");
-
-        let listener = listener.unwrap();
 
         let mut openapi = create_openapi();
         serve(
