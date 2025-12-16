@@ -15,19 +15,25 @@ pub struct MempoolInfo {
 }
 
 impl MempoolInfo {
-    /// Increment stats for a newly added transaction
+    /// Increment stats for a newly added transaction.
+    ///
+    /// Fee must come from `MempoolEntryInfo` (Bitcoin Core) rather than `tx.fee`
+    /// because `tx.fee` may be 0 for chained mempool transactions where prevouts
+    /// cannot be looked up via `gettxout`.
     #[inline]
-    pub fn add(&mut self, tx: &Transaction) {
+    pub fn add(&mut self, tx: &Transaction, fee: Sats) {
         self.count += 1;
         self.vsize += tx.vsize();
-        self.total_fee += tx.fee;
+        self.total_fee += fee;
     }
 
-    /// Decrement stats for a removed transaction
+    /// Decrement stats for a removed transaction.
+    ///
+    /// Fee must match the fee used when the transaction was added.
     #[inline]
-    pub fn remove(&mut self, tx: &Transaction) {
+    pub fn remove(&mut self, tx: &Transaction, fee: Sats) {
         self.count -= 1;
         self.vsize -= tx.vsize();
-        self.total_fee -= tx.fee;
+        self.total_fee -= fee;
     }
 }

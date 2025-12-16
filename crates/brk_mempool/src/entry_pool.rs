@@ -34,6 +34,12 @@ impl EntryPool {
         idx
     }
 
+    /// Get an entry by its txid prefix.
+    pub fn get(&self, prefix: &TxidPrefix) -> Option<&Entry> {
+        let idx = self.prefix_to_idx.get(prefix)?;
+        self.entries.get(idx.as_usize())?.as_ref()
+    }
+
     /// Remove an entry by its txid prefix.
     pub fn remove(&mut self, prefix: &TxidPrefix) {
         if let Some(idx) = self.prefix_to_idx.remove(prefix) {

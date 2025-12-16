@@ -173,7 +173,9 @@ impl MempoolInner {
                 let tx = tx_with_hex.tx();
                 let prefix = TxidPrefix::from(txid);
 
-                info.remove(tx);
+                // Get fee from entries (before removing) - this is the authoritative fee from Bitcoin Core
+                let fee = entries.get(&prefix).map(|e| e.fee).unwrap_or_default();
+                info.remove(tx, fee);
                 addresses.remove_tx(tx, txid);
                 entries.remove(&prefix);
             },
@@ -188,7 +190,7 @@ impl MempoolInner {
                 continue;
             };
 
-            info.add(tx);
+            info.add(tx, entry_info.fee);
             addresses.add_tx(tx, txid);
             entries.insert(prefix, Entry::from_info(entry_info));
         }
