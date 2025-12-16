@@ -9,12 +9,14 @@ use crate::{DataRangeFormat, LegacyValue, MetricSelection, OutputLegacy, Query};
 impl Query {
     /// Deprecated - raw data without MetricData wrapper
     pub fn format_legacy(&self, metrics: &[&dyn AnyExportableVec], params: &DataRangeFormat) -> Result<OutputLegacy> {
+        let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
+
         let from = params
             .from()
             .map(|from| metrics.iter().map(|v| v.i64_to_usize(from)).min().unwrap_or_default());
 
         let to = params
-            .to()
+            .to_for_len(min_len)
             .map(|to| metrics.iter().map(|v| v.i64_to_usize(to)).min().unwrap_or_default());
 
         let format = params.format();
@@ -57,13 +59,10 @@ impl Query {
 
     /// Deprecated - use search_and_format_checked instead
     pub fn search_and_format_legacy_checked(&self, params: MetricSelection, max_weight: usize) -> Result<OutputLegacy> {
-        let vecs = self.search(&params);
+        let vecs = self.search(&params)?;
 
-        if vecs.is_empty() {
-            return Ok(OutputLegacy::default(params.range.format()));
-        }
-
-        let weight = Self::weight(&vecs, params.from(), params.to());
+        let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
+        let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
         if weight > max_weight {
             return Err(Error::String(format!(
                 "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"

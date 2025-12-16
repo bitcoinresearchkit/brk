@@ -193,27 +193,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .not_modified(),
             ),
         )
-        // !!!
-        // DEPRECATED: Do not use
-        // !!!
-        .route(
-            "/api/vecs/query",
-            get(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       Query(params): Query<MetricSelectionLegacy>,
-                       state: State<AppState>|
-                       -> Response {
-                    legacy::handler(uri, headers, Query(params.into()), state).await
-                },
-            ),
-        )
-        // !!!
-        // DEPRECATED: Do not use
-        // !!!
-        .route(
+        .api_route(
             "/api/vecs/{variant}",
-            get(
+            get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        Path(variant): Path<String>,
@@ -236,6 +218,41 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     ));
                     legacy::handler(uri, headers, Query(params), state).await
                 },
+                |op| op
+                    .metrics_tag()
+                    .summary("Legacy variant endpoint")
+                    .description(
+                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` instead.\n\n\
+                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
+                        Legacy endpoint for querying metrics by variant path (e.g., `dateindex_to_price`). \
+                        Returns raw data without the MetricData wrapper."
+                    )
+                    .deprecated()
+                    .ok_response::<serde_json::Value>()
+                    .not_modified(),
+            ),
+        )
+        .api_route(
+            "/api/vecs/query",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       Query(params): Query<MetricSelectionLegacy>,
+                       state: State<AppState>|
+                       -> Response {
+                    legacy::handler(uri, headers, Query(params.into()), state).await
+                },
+                |op| op
+                    .metrics_tag()
+                    .summary("Legacy query endpoint")
+                    .description(
+                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` or `/api/metrics/bulk` instead.\n\n\
+                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
+                        Legacy endpoint for querying metrics. Returns raw data without the MetricData wrapper."
+                    )
+                    .deprecated()
+                    .ok_response::<serde_json::Value>()
+                    .not_modified(),
             ),
         )
     }

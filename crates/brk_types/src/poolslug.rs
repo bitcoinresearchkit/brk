@@ -7,6 +7,7 @@ use vecdb::{Bytes, Formattable};
 // Slug of a mining pool
 #[allow(clippy::upper_case_acronyms)]
 #[derive(
+    Default,
     Debug,
     Copy,
     Display,
@@ -184,103 +185,201 @@ pub enum PoolSlug {
     InnopolisTech,
     BtcLab,
     Parasite,
+    #[schemars(skip)]
     Dummy158,
+    #[schemars(skip)]
     Dummy159,
+    #[schemars(skip)]
     Dummy160,
+    #[schemars(skip)]
     Dummy161,
+    #[schemars(skip)]
     Dummy162,
+    #[schemars(skip)]
     Dummy163,
+    #[schemars(skip)]
     Dummy164,
+    #[schemars(skip)]
     Dummy165,
+    #[schemars(skip)]
     Dummy166,
+    #[schemars(skip)]
     Dummy167,
+    #[schemars(skip)]
     Dummy168,
+    #[schemars(skip)]
     Dummy169,
+    #[schemars(skip)]
     Dummy170,
+    #[schemars(skip)]
     Dummy171,
+    #[schemars(skip)]
     Dummy172,
+    #[schemars(skip)]
     Dummy173,
+    #[schemars(skip)]
     Dummy174,
+    #[schemars(skip)]
     Dummy175,
+    #[schemars(skip)]
     Dummy176,
+    #[schemars(skip)]
     Dummy177,
+    #[schemars(skip)]
     Dummy178,
+    #[schemars(skip)]
     Dummy179,
+    #[schemars(skip)]
     Dummy180,
+    #[schemars(skip)]
     Dummy181,
+    #[schemars(skip)]
     Dummy182,
+    #[schemars(skip)]
     Dummy183,
+    #[schemars(skip)]
     Dummy184,
+    #[schemars(skip)]
     Dummy185,
+    #[schemars(skip)]
     Dummy186,
+    #[schemars(skip)]
     Dummy187,
+    #[schemars(skip)]
     Dummy188,
+    #[schemars(skip)]
     Dummy189,
+    #[schemars(skip)]
     Dummy190,
+    #[schemars(skip)]
     Dummy191,
+    #[schemars(skip)]
     Dummy192,
+    #[schemars(skip)]
     Dummy193,
+    #[schemars(skip)]
     Dummy194,
+    #[schemars(skip)]
     Dummy195,
+    #[schemars(skip)]
     Dummy196,
+    #[schemars(skip)]
     Dummy197,
+    #[schemars(skip)]
     Dummy198,
+    #[schemars(skip)]
     Dummy199,
+    #[schemars(skip)]
     Dummy200,
+    #[schemars(skip)]
     Dummy201,
+    #[schemars(skip)]
     Dummy202,
+    #[schemars(skip)]
     Dummy203,
+    #[schemars(skip)]
     Dummy204,
+    #[schemars(skip)]
     Dummy205,
+    #[schemars(skip)]
     Dummy206,
+    #[schemars(skip)]
     Dummy207,
+    #[schemars(skip)]
     Dummy208,
+    #[schemars(skip)]
     Dummy209,
+    #[schemars(skip)]
     Dummy210,
+    #[schemars(skip)]
     Dummy211,
+    #[schemars(skip)]
     Dummy212,
+    #[schemars(skip)]
     Dummy213,
+    #[schemars(skip)]
     Dummy214,
+    #[schemars(skip)]
     Dummy215,
+    #[schemars(skip)]
     Dummy216,
+    #[schemars(skip)]
     Dummy217,
+    #[schemars(skip)]
     Dummy218,
+    #[schemars(skip)]
     Dummy219,
+    #[schemars(skip)]
     Dummy220,
+    #[schemars(skip)]
     Dummy221,
+    #[schemars(skip)]
     Dummy222,
+    #[schemars(skip)]
     Dummy223,
+    #[schemars(skip)]
     Dummy224,
+    #[schemars(skip)]
     Dummy225,
+    #[schemars(skip)]
     Dummy226,
+    #[schemars(skip)]
     Dummy227,
+    #[schemars(skip)]
     Dummy228,
+    #[schemars(skip)]
     Dummy229,
+    #[schemars(skip)]
     Dummy230,
+    #[schemars(skip)]
     Dummy231,
+    #[schemars(skip)]
     Dummy232,
+    #[schemars(skip)]
     Dummy233,
+    #[schemars(skip)]
     Dummy234,
+    #[schemars(skip)]
     Dummy235,
+    #[schemars(skip)]
     Dummy236,
+    #[schemars(skip)]
     Dummy237,
+    #[schemars(skip)]
     Dummy238,
+    #[schemars(skip)]
     Dummy239,
+    #[schemars(skip)]
     Dummy240,
+    #[schemars(skip)]
     Dummy241,
+    #[schemars(skip)]
     Dummy242,
+    #[schemars(skip)]
     Dummy243,
+    #[schemars(skip)]
     Dummy244,
+    #[schemars(skip)]
     Dummy245,
+    #[schemars(skip)]
     Dummy246,
+    #[schemars(skip)]
     Dummy247,
+    #[schemars(skip)]
     Dummy248,
+    #[schemars(skip)]
     Dummy249,
+    #[schemars(skip)]
     Dummy250,
+    #[schemars(skip)]
     Dummy251,
+    #[schemars(skip)]
     Dummy252,
+    #[schemars(skip)]
     Dummy253,
+    #[schemars(skip)]
     Dummy254,
+    #[schemars(skip)]
     Dummy255,
 }
 

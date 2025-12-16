@@ -6,7 +6,7 @@ use axum::{
     routing::get,
 };
 use brk_types::{
-    BlockCountParam, BlockFeeRatesEntry, BlockFeesEntry, BlockRewardsEntry, BlockSizesWeights,
+    BlockCountParam, BlockFeesEntry, BlockRewardsEntry, BlockSizesWeights,
     DifficultyAdjustment, DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolInfo,
     PoolSlugParam, PoolsSummary, RewardStats, TimePeriodParam,
 };
@@ -187,22 +187,23 @@ impl MiningRoutes for ApiRouter<AppState> {
                 },
             ),
         )
-        .api_route(
-            "/api/v1/mining/blocks/fee-rates/{time_period}",
-            get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::height_with(format!("feerates-{:?}", path.time_period)), move |q| q.block_fee_rates(path.time_period)).await
-                },
-                |op| {
-                    op.mining_tag()
-                        .summary("Block fee rates")
-                        .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
-                        .ok_response::<Vec<BlockFeeRatesEntry>>()
-                        .not_modified()
-                        .server_error()
-                },
-            ),
-        )
+        // TODO: Disabled - dateindex doesn't have percentile fields (see block_fee_rates.rs)
+        // .api_route(
+        //     "/api/v1/mining/blocks/fee-rates/{time_period}",
+        //     get_with(
+        //         async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
+        //             state.cached_json(&headers, CacheStrategy::height_with(format!("feerates-{:?}", path.time_period)), move |q| q.block_fee_rates(path.time_period)).await
+        //         },
+        //         |op| {
+        //             op.mining_tag()
+        //                 .summary("Block fee rates")
+        //                 .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+        //                 .ok_response::<Vec<BlockFeeRatesEntry>>()
+        //                 .not_modified()
+        //                 .server_error()
+        //         },
+        //     ),
+        // )
         .api_route(
             "/api/v1/mining/blocks/sizes-weights/{time_period}",
             get_with(

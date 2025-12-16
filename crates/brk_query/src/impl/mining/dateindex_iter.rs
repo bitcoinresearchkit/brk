@@ -48,8 +48,9 @@ impl<'a> DateIndexIter<'a> {
             .computer
             .chain
             .timeindexes_to_timestamp
-            .dateindex_extra
-            .unwrap_first()
+            .dateindex
+            .as_ref()
+            .expect("timeindexes_to_timestamp.dateindex should exist")
             .iter();
         let mut heights = self.computer.indexes.dateindex_to_first_height.iter();
 

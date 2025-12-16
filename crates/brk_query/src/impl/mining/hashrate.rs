@@ -23,6 +23,7 @@ impl Query {
             .indexes
             .height_to_dateindex
             .read_once(current_height)?;
+
         let current_hashrate = *computer
             .chain
             .indexes_to_hash_rate
@@ -58,11 +59,13 @@ impl Query {
             .dateindex
             .unwrap_last()
             .iter();
+
         let mut timestamp_iter = computer
             .chain
             .timeindexes_to_timestamp
-            .dateindex_extra
-            .unwrap_first()
+            .dateindex
+            .as_ref()
+            .expect("timeindexes_to_timestamp.dateindex should exist")
             .iter();
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);

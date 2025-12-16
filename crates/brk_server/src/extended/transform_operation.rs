@@ -11,6 +11,9 @@ pub trait TransformResponseExtended<'t> {
     fn server_tag(self) -> Self;
     fn transactions_tag(self) -> Self;
 
+    /// Mark operation as deprecated
+    fn deprecated(self) -> Self;
+
     /// 200
     fn ok_response<R>(self) -> Self
     where
@@ -64,6 +67,11 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         R: JsonSchema,
     {
         self.ok_response_with(|r: TransformResponse<'_, R>| r)
+    }
+
+    fn deprecated(mut self) -> Self {
+        self.inner_mut().deprecated = true;
+        self
     }
 
     fn ok_response_with<R, F>(self, f: F) -> Self

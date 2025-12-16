@@ -41,11 +41,11 @@ async fn req_to_response_res(
 ) -> brk_error::Result<Response> {
     let format = params.format();
     let height = query.sync(|q| q.height());
-    let to = params.to();
 
-    let cache_params = CacheParams::resolve(&CacheStrategy::height_with(format!("{to:?}")), || {
-        height.into()
-    });
+    let cache_params =
+        CacheParams::resolve(&CacheStrategy::height_with(params.etag_suffix()), || {
+            height.into()
+        });
 
     if cache_params.matches_etag(&headers) {
         let mut response = (StatusCode::NOT_MODIFIED, "").into_response();

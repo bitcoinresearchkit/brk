@@ -22,6 +22,16 @@ impl Query {
     }
 
     pub fn metric_not_found_error(&self, metric: &Metric) -> Error {
+        // Check if metric exists but with different indexes
+        if let Some(indexes) = self.vecs().metric_to_indexes(metric.clone()) {
+            let index_list: Vec<_> = indexes.iter().map(|i| i.to_string()).collect();
+            return Error::String(format!(
+                "'{metric}' doesn't support the requested index. Supported indexes: {}",
+                index_list.join(", ")
+            ));
+        }
+
+        // Metric doesn't exist, suggest alternatives
         if let Some(first) = self.match_metric(metric, Limit::MIN).first() {
             Error::String(format!("Could not find '{metric}', did you mean '{first}'?"))
         } else {
@@ -77,8 +87,9 @@ impl Query {
         metric: &dyn AnyExportableVec,
         params: &DataRangeFormat,
     ) -> Result<Output> {
+        let len = metric.len();
         let from = params.from().map(|from| metric.i64_to_usize(from));
-        let to = params.to().map(|to| metric.i64_to_usize(to));
+        let to = params.to_for_len(len).map(|to| metric.i64_to_usize(to));
 
         Ok(match params.format() {
             Format::CSV => Output::CSV(Self::columns_to_csv(
@@ -100,6 +111,9 @@ impl Query {
         metrics: &[&dyn AnyExportableVec],
         params: &DataRangeFormat,
     ) -> Result<Output> {
+        // Use min length across metrics for consistent count resolution
+        let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
+
         let from = params.from().map(|from| {
             metrics
                 .iter()
@@ -108,7 +122,7 @@ impl Query {
                 .unwrap_or_default()
         });
 
-        let to = params.to().map(|to| {
+        let to = params.to_for_len(min_len).map(|to| {
             metrics
                 .iter()
                 .map(|v| v.i64_to_usize(to))
@@ -143,13 +157,20 @@ impl Query {
         })
     }
 
-    /// Search for vecs matching the given metrics and index
-    pub fn search(&self, params: &MetricSelection) -> Vec<&'static dyn AnyExportableVec> {
-        params
-            .metrics
-            .iter()
-            .filter_map(|metric| self.vecs().get(metric, params.index))
-            .collect()
+    /// Search for vecs matching the given metrics and index.
+    /// Returns error if no metrics requested or any requested metric is not found.
+    pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
+        if params.metrics.is_empty() {
+            return Err(Error::String("No metrics specified".to_string()));
+        }
+        let mut vecs = Vec::with_capacity(params.metrics.len());
+        for metric in params.metrics.iter() {
+            match self.vecs().get(metric, params.index) {
+                Some(vec) => vecs.push(vec),
+                None => return Err(self.metric_not_found_error(metric)),
+            }
+        }
+        Ok(vecs)
     }
 
     /// Calculate total weight of the vecs for the given range
@@ -168,14 +189,11 @@ impl Query {
         params: MetricSelection,
         max_weight: usize,
     ) -> Result<Output> {
-        let vecs = self.search(&params);
+        let vecs = self.search(&params)?;
 
-        let Some(metric) = vecs.first() else {
-            let metric = params.metrics.first().cloned().unwrap_or_else(|| Metric::from(""));
-            return Err(self.metric_not_found_error(&metric));
-        };
+        let metric = vecs.first().expect("search guarantees non-empty on success");
 
-        let weight = Self::weight(&vecs, params.from(), params.to());
+        let weight = Self::weight(&vecs, params.from(), params.to_for_len(metric.len()));
         if weight > max_weight {
             return Err(Error::String(format!(
                 "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"
@@ -196,13 +214,10 @@ impl Query {
         params: MetricSelection,
         max_weight: usize,
     ) -> Result<Output> {
-        let vecs = self.search(&params);
+        let vecs = self.search(&params)?;
 
-        if vecs.is_empty() {
-            return Ok(Output::default(params.range.format()));
-        }
-
-        let weight = Self::weight(&vecs, params.from(), params.to());
+        let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
+        let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
         if weight > max_weight {
             return Err(Error::String(format!(
                 "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"

@@ -14,6 +14,8 @@ use super::{Sats, VSize};
 pub struct FeeRate(f64);
 
 impl FeeRate {
+    pub const MIN: Self = Self(0.1);
+
     pub fn new(fr: f64) -> Self {
         Self(fr)
     }

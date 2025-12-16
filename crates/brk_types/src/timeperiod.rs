@@ -5,35 +5,26 @@ use serde::{Deserialize, Serialize};
 ///
 /// Used to specify the lookback window for pool statistics, hashrate calculations,
 /// and other time-based mining metrics.
-///
-/// - `Day` (alias: 24h) - Last 24 hours (~144 blocks)
-/// - `ThreeDays` (alias: 3d) - Last 3 days (~432 blocks)
-/// - `Week` (alias: 1w) - Last week (~1008 blocks)
-/// - `Month` (alias: 1m) - Last month (~4320 blocks)
-/// - `ThreeMonths` (alias: 3m) - Last 3 months (~12960 blocks)
-/// - `SixMonths` (alias: 6m) - Last 6 months (~25920 blocks)
-/// - `Year` (alias: 1y) - Last year (~52560 blocks)
-/// - `TwoYears` (alias: 2y) - Last 2 years (~105120 blocks)
-/// - `ThreeYears` (alias: 3y) - Last 3 years (~157680 blocks)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum TimePeriod {
-    #[serde(alias = "24h")]
+    #[default]
+    #[serde(rename = "24h")]
     Day,
-    #[serde(alias = "3d")]
+    #[serde(rename = "3d")]
     ThreeDays,
-    #[serde(alias = "1w")]
+    #[serde(rename = "1w")]
     Week,
-    #[serde(alias = "1m")]
+    #[serde(rename = "1m")]
     Month,
-    #[serde(alias = "3m")]
+    #[serde(rename = "3m")]
     ThreeMonths,
-    #[serde(alias = "6m")]
+    #[serde(rename = "6m")]
     SixMonths,
-    #[serde(alias = "1y")]
+    #[serde(rename = "1y")]
     Year,
-    #[serde(alias = "2y")]
+    #[serde(rename = "2y")]
     TwoYears,
-    #[serde(alias = "3y")]
+    #[serde(rename = "3y")]
     ThreeYears,
 }
 

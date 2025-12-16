@@ -2,13 +2,11 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::Redirect,
-    routing::get,
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
 use brk_types::{
     BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockStatus, BlockTimestamp,
-    HeightParam, StartHeightParam, TimestampParam, Transaction, Txid,
+    HeightParam, TimestampParam, Transaction, Txid,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -21,10 +19,23 @@ pub trait BlockRoutes {
 
 impl BlockRoutes for ApiRouter<AppState> {
     fn add_block_routes(self) -> Self {
-        self.route("/api/block", get(Redirect::temporary("/api/blocks")))
-            .route(
+        self.api_route(
                 "/api/blocks",
-                get(Redirect::temporary("/api#tag/blocks")),
+                get_with(
+                    async |headers: HeaderMap, State(state): State<AppState>| {
+                        state
+                            .cached_json(&headers, CacheStrategy::Height, move |q| q.blocks(None))
+                            .await
+                    },
+                    |op| {
+                        op.blocks_tag()
+                            .summary("Recent blocks")
+                            .description("Retrieve the last 10 blocks. Returns block metadata for each block.")
+                            .ok_response::<Vec<BlockInfo>>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
             )
             .api_route(
                 "/api/block/{hash}",
@@ -93,18 +104,18 @@ impl BlockRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
-                "/api/blocks/{start_height}",
+                "/api/blocks/{height}",
                 get_with(
                     async |headers: HeaderMap,
-                           Path(path): Path<StartHeightParam>,
+                           Path(path): Path<HeightParam>,
                            State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.blocks(path.start_height)).await
+                        state.cached_json(&headers, CacheStrategy::Height, move |q| q.blocks(Some(path.height))).await
                     },
                     |op| {
                         op.blocks_tag()
-                            .summary("Recent blocks")
+                            .summary("Blocks from height")
                             .description(
-                                "Retrieve the last 10 blocks, optionally starting from a specific height. Returns block metadata for each block.",
+                                "Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.",
                             )
                             .ok_response::<Vec<BlockInfo>>()
                             .not_modified()
