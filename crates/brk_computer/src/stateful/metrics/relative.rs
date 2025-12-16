@@ -469,8 +469,8 @@ impl RelativeMetrics {
                 starting_indexes,
                 exit,
                 |v| {
-                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_profit.bitcoin.dateindex.as_ref() {
-                        if let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
+                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_profit.bitcoin.dateindex.as_ref()
+                        && let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
                             v.compute_percentage(
                                 starting_indexes.dateindex,
                                 dateindex_vec,
@@ -478,7 +478,6 @@ impl RelativeMetrics {
                                 exit,
                             )?;
                         }
-                    }
                     Ok(())
                 },
             )?;
@@ -487,8 +486,8 @@ impl RelativeMetrics {
                 starting_indexes,
                 exit,
                 |v| {
-                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_loss.bitcoin.dateindex.as_ref() {
-                        if let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
+                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_loss.bitcoin.dateindex.as_ref()
+                        && let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
                             v.compute_percentage(
                                 starting_indexes.dateindex,
                                 dateindex_vec,
@@ -496,7 +495,6 @@ impl RelativeMetrics {
                                 exit,
                             )?;
                         }
-                    }
                     Ok(())
                 },
             )?;
@@ -554,8 +552,8 @@ impl RelativeMetrics {
             )?;
         }
 
-        if let Some(dateindex_to_mc) = dateindex_to_market_cap {
-            if let Some(unrealized) = unrealized {
+        if let Some(dateindex_to_mc) = dateindex_to_market_cap
+            && let Some(unrealized) = unrealized {
                 self.indexes_to_unrealized_profit_rel_to_market_cap.compute_all(
                     starting_indexes,
                     exit,
@@ -583,7 +581,6 @@ impl RelativeMetrics {
                     },
                 )?;
             }
-        }
 
         // TODO: Remaining relative metrics to implement:
         // - indexes_to_supply_in_profit/loss_rel_to_circulating_supply

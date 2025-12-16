@@ -14,7 +14,7 @@ use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
 use brk_types::{
-    DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TxInIndex, TxOutIndex, TypeIndex,
+    DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex,
 };
 use log::info;
 use rayon::prelude::*;
@@ -33,8 +33,8 @@ use super::{
     build_txinindex_to_txindex, build_txoutindex_to_txindex,
     flush::flush_checkpoint as flush_checkpoint_full,
 };
-use crate::stateful_new::address::AddressTypeToAddressCount;
-use crate::stateful_new::process::{
+use crate::stateful::address::AddressTypeToAddressCount;
+use crate::stateful::process::{
     AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
     build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
     process_sent, update_tx_counts,

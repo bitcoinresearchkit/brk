@@ -13,7 +13,7 @@ use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{Database, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful_new::DynCohortVecs};
+use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
 
 use super::{AddressCohortVecs, CohortVecs};
 
@@ -255,12 +255,11 @@ impl AddressCohorts {
 
     /// Reset price_to_amount for all separate cohorts (called during fresh start).
     pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
-        self.par_iter_separate_mut()
-            .try_for_each(|v| {
-                if let Some(state) = v.state.as_mut() {
-                    state.reset_price_to_amount_if_needed()?;
-                }
-                Ok(())
-            })
+        self.par_iter_separate_mut().try_for_each(|v| {
+            if let Some(state) = v.state.as_mut() {
+                state.reset_price_to_amount_if_needed()?;
+            }
+            Ok(())
+        })
     }
 }

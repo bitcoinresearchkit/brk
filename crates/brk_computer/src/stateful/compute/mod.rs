@@ -14,16 +14,13 @@ mod flush;
 mod readers;
 mod recover;
 
-pub use aggregates::{compute_overlapping, compute_rest_part1, compute_rest_part2};
 pub use block_loop::process_blocks;
 pub use context::ComputeContext;
-pub use flush::{flush_checkpoint, flush_cohort_states};
 pub use readers::{
     IndexerReaders, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
 };
 pub use recover::{
-    RecoveredState, StartMode, determine_start_mode, find_min_height,
-    import_aggregate_price_to_amount, import_cohort_states, reset_all_state, rollback_states,
+    StartMode, determine_start_mode,
 };
 
 /// Flush checkpoint interval (every N blocks).

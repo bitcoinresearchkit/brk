@@ -83,7 +83,6 @@ impl PricePercentiles {
             .position(|&p| p == percentile)
             .and_then(|i| self.vecs[i].as_ref())
     }
-
 }
 
 impl Flushable for PricePercentiles {

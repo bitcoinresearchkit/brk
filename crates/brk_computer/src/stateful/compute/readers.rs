@@ -7,7 +7,7 @@ use brk_indexer::Indexer;
 use brk_types::{OutputType, StoredU64, TxIndex};
 use vecdb::{BoxedVecIterator, GenericStoredVec, Reader, VecIndex};
 
-use crate::stateful_new::address::{AddressesDataVecs, AnyAddressIndexesVecs};
+use crate::stateful::address::{AddressesDataVecs, AnyAddressIndexesVecs};
 
 /// Cached readers for indexer vectors.
 pub struct IndexerReaders {
@@ -22,7 +22,11 @@ impl IndexerReaders {
     pub fn new(indexer: &Indexer) -> Self {
         Self {
             txinindex_to_outpoint: indexer.vecs.txin.txinindex_to_outpoint.create_reader(),
-            txindex_to_first_txoutindex: indexer.vecs.tx.txindex_to_first_txoutindex.create_reader(),
+            txindex_to_first_txoutindex: indexer
+                .vecs
+                .tx
+                .txindex_to_first_txoutindex
+                .create_reader(),
             txoutindex_to_value: indexer.vecs.txout.txoutindex_to_value.create_reader(),
             txoutindex_to_outputtype: indexer.vecs.txout.txoutindex_to_outputtype.create_reader(),
             txoutindex_to_typeindex: indexer.vecs.txout.txoutindex_to_typeindex.create_reader(),
@@ -86,7 +90,7 @@ pub fn build_txoutindex_to_txindex<'a>(
 
     for (offset, &count) in counts.iter().enumerate() {
         let txindex = TxIndex::from(first + offset);
-        result.extend(std::iter::repeat(txindex).take(count as usize));
+        result.extend(std::iter::repeat_n(txindex, count as usize));
     }
 
     result

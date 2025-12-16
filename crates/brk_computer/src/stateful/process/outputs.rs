@@ -12,9 +12,11 @@ use rayon::prelude::*;
 use smallvec::SmallVec;
 use vecdb::{BytesVec, GenericStoredVec};
 
-use crate::stateful_new::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
-use crate::stateful_new::compute::VecsReaders;
-use crate::{stateful_new::IndexerReaders, states::Transacted};
+use crate::stateful::address::{
+    AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
+};
+use crate::stateful::compute::VecsReaders;
+use crate::{stateful::IndexerReaders, states::Transacted};
 
 use super::super::address::AddressTypeToVec;
 use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
@@ -90,7 +92,11 @@ pub fn process_outputs(
                 addresses_data,
             );
 
-            (value, output_type, Some((typeindex, txindex, value, addr_data_opt)))
+            (
+                value,
+                output_type,
+                Some((typeindex, txindex, value, addr_data_opt)),
+            )
         })
         .fold(
             || {
@@ -151,6 +157,7 @@ pub fn process_outputs(
 /// Look up address data from storage or determine if new.
 ///
 /// Returns None if address is already in loaded or empty cache.
+#[allow(clippy::too_many_arguments)]
 fn get_address_data(
     address_type: OutputType,
     typeindex: TypeIndex,

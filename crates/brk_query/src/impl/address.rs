@@ -55,7 +55,7 @@ impl Query {
         let any_address_index = computer
             .stateful
             .any_address_indexes
-            .get_anyaddressindex_once(outputtype, type_index)?;
+            .get_once(outputtype, type_index)?;
 
         let address_data = match any_address_index.to_enum() {
             AnyAddressDataIndexEnum::Loaded(index) => computer

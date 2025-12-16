@@ -80,39 +80,36 @@ impl CohortState {
     pub fn increment(&mut self, supply: &SupplyState, price: Option<Dollars>) {
         self.supply += supply;
 
-        if supply.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.increment(supply, price);
                 self.price_to_amount.as_mut().unwrap().increment(price, supply);
             }
-        }
     }
 
     /// Remove supply from this cohort (e.g., when UTXO ages out of cohort).
     pub fn decrement(&mut self, supply: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply;
 
-        if supply.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.decrement(supply, price);
                 self.price_to_amount.as_mut().unwrap().decrement(price, supply);
             }
-        }
     }
 
     /// Process received output (new UTXO in cohort).
     pub fn receive(&mut self, supply: &SupplyState, price: Option<Dollars>) {
         self.supply += supply;
 
-        if supply.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.receive(supply, price);
                 self.price_to_amount.as_mut().unwrap().increment(price, supply);
             }
-        }
     }
 
     /// Process spent input (UTXO leaving cohort).

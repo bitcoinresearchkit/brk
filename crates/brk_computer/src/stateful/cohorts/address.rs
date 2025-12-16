@@ -163,7 +163,7 @@ impl DynCohortVecs for AddressCohortVecs {
     }
 
     fn truncate_push(&mut self, height: Height) -> Result<()> {
-        if self.starting_height.map_or(false, |h| h > height) {
+        if self.starting_height.is_some_and(|h| h > height) {
             return Ok(());
         }
 

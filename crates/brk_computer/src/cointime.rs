@@ -68,25 +68,61 @@ impl Vecs {
 
         macro_rules! computed_h {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromHeight::forced_import(&db, $name, Source::Compute, v0, indexes, $opts)?
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    v0,
+                    indexes,
+                    $opts,
+                )?
             };
             ($name:expr, $v:expr, $opts:expr) => {
-                ComputedVecsFromHeight::forced_import(&db, $name, Source::Compute, $v, indexes, $opts)?
+                ComputedVecsFromHeight::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    $v,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! computed_di {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v0, indexes, $opts)?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    v0,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! ratio_di {
             ($name:expr) => {
-                ComputedRatioVecsFromDateIndex::forced_import(&db, $name, Source::None, v0, indexes, true)?
+                ComputedRatioVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::None,
+                    v0,
+                    indexes,
+                    true,
+                )?
             };
         }
         macro_rules! value_h {
             ($name:expr) => {
-                ComputedValueVecsFromHeight::forced_import(&db, $name, Source::Compute, v1, last(), compute_dollars, indexes)?
+                ComputedValueVecsFromHeight::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    v1,
+                    last(),
+                    compute_dollars,
+                    indexes,
+                )?
             };
         }
 
@@ -95,7 +131,10 @@ impl Vecs {
             indexes_to_coinblocks_stored: computed_h!("coinblocks_stored", sum_cum()),
             indexes_to_liveliness: computed_h!("liveliness", last()),
             indexes_to_vaultedness: computed_h!("vaultedness", last()),
-            indexes_to_activity_to_vaultedness_ratio: computed_h!("activity_to_vaultedness_ratio", last()),
+            indexes_to_activity_to_vaultedness_ratio: computed_h!(
+                "activity_to_vaultedness_ratio",
+                last()
+            ),
             indexes_to_vaulted_supply: value_h!("vaulted_supply"),
             indexes_to_active_supply: value_h!("active_supply"),
             indexes_to_thermo_cap: computed_h!("thermo_cap", v1, last()),
@@ -114,9 +153,18 @@ impl Vecs {
             indexes_to_cointime_price: computed_h!("cointime_price", last()),
             indexes_to_cointime_cap: computed_h!("cointime_cap", last()),
             indexes_to_cointime_price_ratio: ratio_di!("cointime_price"),
-            indexes_to_cointime_adj_inflation_rate: computed_di!("cointime_adj_inflation_rate", last()),
-            indexes_to_cointime_adj_tx_btc_velocity: computed_di!("cointime_adj_tx_btc_velocity", last()),
-            indexes_to_cointime_adj_tx_usd_velocity: computed_di!("cointime_adj_tx_usd_velocity", last()),
+            indexes_to_cointime_adj_inflation_rate: computed_di!(
+                "cointime_adj_inflation_rate",
+                last()
+            ),
+            indexes_to_cointime_adj_tx_btc_velocity: computed_di!(
+                "cointime_adj_tx_btc_velocity",
+                last()
+            ),
+            indexes_to_cointime_adj_tx_usd_velocity: computed_di!(
+                "cointime_adj_tx_usd_velocity",
+                last()
+            ),
 
             db,
         };
@@ -157,7 +205,7 @@ impl Vecs {
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let circulating_supply = &stateful.utxo_cohorts.all.inner.height_to_supply;
+        let circulating_supply = &stateful.utxo_cohorts.all.metrics.supply.height_to_supply;
 
         self.indexes_to_coinblocks_created
             .compute_all(indexes, starting_indexes, exit, |vec| {
@@ -170,8 +218,12 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let indexes_to_coinblocks_destroyed =
-            &stateful.utxo_cohorts.all.inner.indexes_to_coinblocks_destroyed;
+        let indexes_to_coinblocks_destroyed = &stateful
+            .utxo_cohorts
+            .all
+            .metrics
+            .activity
+            .indexes_to_coinblocks_destroyed;
 
         self.indexes_to_coinblocks_stored
             .compute_all(indexes, starting_indexes, exit, |vec| {
@@ -294,24 +346,22 @@ impl Vecs {
             })?;
 
         if let Some(price) = price {
-            let realized_cap = stateful
+            let realized_cap = &stateful
                 .utxo_cohorts
                 .all
-                .inner
-                .height_to_realized_cap
-                .as_ref()
-                .unwrap();
-
+                .metrics
+                .realized
+                .u()
+                .height_to_realized_cap;
             let realized_price = stateful
                 .utxo_cohorts
                 .all
-                .inner
+                .metrics
+                .realized
+                .u()
                 .indexes_to_realized_price
-                .as_ref()
-                .unwrap()
                 .height
-                .as_ref()
-                .unwrap();
+                .u();
 
             self.indexes_to_thermo_cap
                 .compute_all(indexes, starting_indexes, exit, |vec| {

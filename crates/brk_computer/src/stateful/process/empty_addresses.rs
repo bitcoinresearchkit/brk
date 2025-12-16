@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_types::AnyAddressIndex;
 
 use super::EmptyAddressDataWithSource;
-use crate::stateful_new::{AddressTypeToTypeIndexMap, AddressesDataVecs};
+use crate::stateful::{AddressTypeToTypeIndexMap, AddressesDataVecs};
 
 /// Process empty address data updates.
 ///

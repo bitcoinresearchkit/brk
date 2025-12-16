@@ -13,15 +13,19 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use vecdb::{BytesVec, GenericStoredVec, PcoVec};
 
-use crate::stateful_new::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
-use crate::stateful_new::compute::VecsReaders;
+use crate::stateful::address::{
+    AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
+};
+use crate::stateful::compute::VecsReaders;
 use crate::{
-    stateful_new::{IndexerReaders, process::RangeMap},
+    stateful::{IndexerReaders, process::RangeMap},
     states::Transacted,
 };
 
 use super::super::address::HeightToAddressTypeToVec;
-use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource};
+use super::{
+    EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource,
+};
 
 /// Result of processing inputs for a block.
 pub struct InputsResult {
@@ -202,6 +206,7 @@ pub fn process_inputs(
 /// Look up address data from storage or determine if new.
 ///
 /// Returns None if address is already in loaded or empty cache.
+#[allow(clippy::too_many_arguments)]
 fn get_address_data(
     address_type: OutputType,
     typeindex: TypeIndex,

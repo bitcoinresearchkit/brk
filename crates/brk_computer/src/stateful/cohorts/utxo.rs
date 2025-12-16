@@ -12,7 +12,7 @@ use crate::{
     Indexes, PriceToAmount, UTXOCohortState,
     grouped::{PERCENTILES, PERCENTILES_LEN},
     indexes, price,
-    stateful_new::{CohortVecs, DynCohortVecs},
+    stateful::{CohortVecs, DynCohortVecs},
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig};
@@ -169,13 +169,13 @@ impl DynCohortVecs for UTXOCohortVecs {
     }
 
     fn truncate_push(&mut self, height: Height) -> Result<()> {
-        if self.state_starting_height.map_or(false, |h| h > height) {
+        if self.state_starting_height.is_some_and(|h| h > height) {
             return Ok(());
         }
 
         // Push from state to metrics
         if let Some(state) = self.state.as_ref() {
-            self.metrics.truncate_push(height, &state)?;
+            self.metrics.truncate_push(height, state)?;
         }
 
         Ok(())

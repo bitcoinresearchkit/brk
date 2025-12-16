@@ -8,7 +8,7 @@ use brk_types::{AnyAddressIndex, Height};
 use log::info;
 use vecdb::{Exit, Stamp};
 
-use crate::stateful_new::process::{
+use crate::stateful::process::{
     EmptyAddressDataWithSource, LoadedAddressDataWithSource, process_empty_addresses,
     process_loaded_addresses,
 };

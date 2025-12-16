@@ -75,7 +75,7 @@ impl ActivityMetrics {
                 Source::Compute,
                 cfg.version + v0,
                 cfg.indexes,
-                sum.clone(),
+                sum,
             )?,
 
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(

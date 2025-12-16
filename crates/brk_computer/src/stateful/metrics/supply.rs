@@ -237,12 +237,12 @@ impl SupplyMetrics {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        _starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         _dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        exit: &Exit,
+        _exit: &Exit,
     ) -> Result<()> {
         let _ = (indexes, price, height_to_supply, height_to_market_cap, dateindex_to_market_cap);
 

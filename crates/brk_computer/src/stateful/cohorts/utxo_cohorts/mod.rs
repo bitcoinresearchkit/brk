@@ -18,7 +18,7 @@ use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{Database, Exit, GenericStoredVec, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful_new::DynCohortVecs};
+use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
 
 use super::{CohortVecs, HeightFlushable, UTXOCohortVecs};
 
@@ -398,13 +398,12 @@ impl UTXOCohorts {
 
     /// Reset price_to_amount for all separate cohorts (called during fresh start).
     pub fn reset_separate_price_to_amount(&mut self) -> Result<()> {
-        self.par_iter_separate_mut()
-            .try_for_each(|v| {
-                if let Some(state) = v.state.as_mut() {
-                    state.reset_price_to_amount_if_needed()?;
-                }
-                Ok(())
-            })
+        self.par_iter_separate_mut().try_for_each(|v| {
+            if let Some(state) = v.state.as_mut() {
+                state.reset_price_to_amount_if_needed()?;
+            }
+            Ok(())
+        })
     }
 
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
@@ -415,7 +414,15 @@ impl UTXOCohorts {
             .0
             .age_range
             .iter()
-            .map(|sub| (sub.filter().clone(), sub.state.as_ref().map(|s| s.supply.value).unwrap_or(Sats::ZERO)))
+            .map(|sub| {
+                (
+                    sub.filter().clone(),
+                    sub.state
+                        .as_ref()
+                        .map(|s| s.supply.value)
+                        .unwrap_or(Sats::ZERO),
+                )
+            })
             .collect();
 
         // Compute percentiles for each aggregate cohort in parallel
@@ -423,9 +430,7 @@ impl UTXOCohorts {
             .0
             .par_iter_aggregate()
             .filter_map(|v| {
-                if v.price_to_amount.is_none() {
-                    return None;
-                }
+                v.price_to_amount.as_ref()?;
                 let filter = v.filter().clone();
                 let supply = age_range_data
                     .iter()
@@ -445,7 +450,12 @@ impl UTXOCohorts {
                 .find(|v| v.filter() == &filter)
                 .unwrap();
 
-            if let Some(pp) = v.metrics.price_paid.as_mut().and_then(|p| p.price_percentiles.as_mut()) {
+            if let Some(pp) = v
+                .metrics
+                .price_paid
+                .as_mut()
+                .and_then(|p| p.price_percentiles.as_mut())
+            {
                 pp.truncate_push(height, &percentiles)?;
             }
         }
