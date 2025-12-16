@@ -1,12 +1,11 @@
-use std::borrow::Cow;
-
 use derive_deref::Deref;
-use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 /// Maximum number of results to return. Defaults to 100 if not specified.
-#[derive(Debug, Deref, Deserialize)]
-#[serde(default = "default_search_limit")]
+#[derive(Debug, Deref, Deserialize, JsonSchema)]
+#[serde(transparent)]
+#[schemars(default, example = 1, example = 10, example = 100)]
 pub struct Limit(usize);
 
 impl Limit {
@@ -14,26 +13,8 @@ impl Limit {
     pub const DEFAULT: Self = Self(100);
 }
 
-fn default_search_limit() -> Limit {
-    Limit::DEFAULT
-}
-
-impl JsonSchema for Limit {
-    fn schema_name() -> Cow<'static, str> {
-        Cow::Borrowed("Limit")
-    }
-
-    fn json_schema(_: &mut SchemaGenerator) -> Schema {
-        json_schema!({
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum number of results to return. Defaults to 100 if not specified.",
-                    "default": 100,
-                    "examples": [1, 10, 100, 1000, 10000, 100000]
-                }
-            }
-        })
+impl Default for Limit {
+    fn default() -> Self {
+        Self::DEFAULT
     }
 }

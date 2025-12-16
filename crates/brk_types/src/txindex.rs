@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign};
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::StoredU32;
@@ -20,6 +20,7 @@ use super::StoredU32;
     DerefMut,
     Default,
     Serialize,
+    Deserialize,
     Pco,
     JsonSchema,
     Hash,

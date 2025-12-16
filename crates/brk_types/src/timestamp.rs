@@ -8,7 +8,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::Date;
 
-/// Timestamp
+/// UNIX timestamp in seconds
 #[derive(
     Debug,
     Default,
@@ -24,6 +24,7 @@ use super::Date;
     Pco,
     JsonSchema,
 )]
+#[schemars(example = 1672531200)]
 pub struct Timestamp(u32);
 
 pub const ONE_HOUR_IN_SEC: u32 = 60 * 60;

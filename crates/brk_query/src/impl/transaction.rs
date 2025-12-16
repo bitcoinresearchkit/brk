@@ -1,9 +1,9 @@
-use std::{io::Cursor, str::FromStr};
+use std::io::Cursor;
 
 use bitcoin::{consensus::Decodable, hex::DisplayHex};
 use brk_error::{Error, Result};
 use brk_types::{
-    Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid, TxidPath,
+    Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid, TxidParam,
     TxidPrefix, Vin, Vout, Weight,
 };
 use vecdb::{GenericStoredVec, TypedVecIterator};
@@ -11,13 +11,7 @@ use vecdb::{GenericStoredVec, TypedVecIterator};
 use crate::Query;
 
 impl Query {
-    pub fn transaction(&self, TxidPath { txid }: TxidPath) -> Result<Transaction> {
-        let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
-            return Err(Error::InvalidTxid);
-        };
-
-        let txid = Txid::from(txid);
-
+    pub fn transaction(&self, TxidParam { txid }: TxidParam) -> Result<Transaction> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
             && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
@@ -40,13 +34,7 @@ impl Query {
         self.transaction_by_index(txindex)
     }
 
-    pub fn transaction_status(&self, TxidPath { txid }: TxidPath) -> Result<TxStatus> {
-        let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
-            return Err(Error::InvalidTxid);
-        };
-
-        let txid = Txid::from(txid);
-
+    pub fn transaction_status(&self, TxidParam { txid }: TxidParam) -> Result<TxStatus> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
             && mempool.get_txs().contains_key(&txid)
@@ -79,13 +67,7 @@ impl Query {
         })
     }
 
-    pub fn transaction_hex(&self, TxidPath { txid }: TxidPath) -> Result<String> {
-        let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
-            return Err(Error::InvalidTxid);
-        };
-
-        let txid = Txid::from(txid);
-
+    pub fn transaction_hex(&self, TxidParam { txid }: TxidParam) -> Result<String> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
             && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
@@ -108,13 +90,7 @@ impl Query {
         self.transaction_hex_by_index(txindex)
     }
 
-    pub fn outspend(&self, TxidPath { txid }: TxidPath, vout: Vout) -> Result<TxOutspend> {
-        let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
-            return Err(Error::InvalidTxid);
-        };
-
-        let txid = Txid::from(txid);
-
+    pub fn outspend(&self, TxidParam { txid }: TxidParam, vout: Vout) -> Result<TxOutspend> {
         // Mempool outputs are unspent in on-chain terms
         if let Some(mempool) = self.mempool()
             && mempool.get_txs().contains_key(&txid)
@@ -156,13 +132,7 @@ impl Query {
         self.outspend_details(txinindex)
     }
 
-    pub fn outspends(&self, TxidPath { txid }: TxidPath) -> Result<Vec<TxOutspend>> {
-        let Ok(txid) = bitcoin::Txid::from_str(&txid) else {
-            return Err(Error::InvalidTxid);
-        };
-
-        let txid = Txid::from(txid);
-
+    pub fn outspends(&self, TxidParam { txid }: TxidParam) -> Result<Vec<TxOutspend>> {
         // Mempool outputs are unspent in on-chain terms
         if let Some(mempool) = self.mempool()
             && let Some(tx_with_hex) = mempool.get_txs().get(&txid)

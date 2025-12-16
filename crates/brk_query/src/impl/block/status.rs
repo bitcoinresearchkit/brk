@@ -1,11 +1,11 @@
 use brk_error::Result;
-use brk_types::{BlockStatus, Height};
+use brk_types::{BlockHash, BlockStatus, Height};
 use vecdb::{AnyVec, GenericStoredVec};
 
 use crate::Query;
 
 impl Query {
-    pub fn block_status(&self, hash: &str) -> Result<BlockStatus> {
+    pub fn block_status(&self, hash: &BlockHash) -> Result<BlockStatus> {
         let height = self.height_by_hash(hash)?;
         self.block_status_by_height(height)
     }

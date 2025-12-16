@@ -5,7 +5,10 @@ use axum::{
     response::Redirect,
     routing::get,
 };
-use brk_types::{Address, AddressStats, AddressTxidsParam, AddressValidation, Txid, Utxo};
+use brk_types::{
+    AddressParam, AddressStats, AddressTxidsParam, AddressValidation, Txid, Utxo,
+    ValidateAddressParam,
+};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
@@ -24,10 +27,10 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<Address>,
+                Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address(address)).await
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address(path.address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address information")
@@ -43,11 +46,11 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}/txs",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<Address>,
+                Path(path): Path<AddressParam>,
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(address, params.after_txid, params.limit)).await
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(path.address, params.after_txid, params.limit)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address transaction IDs")
@@ -63,10 +66,10 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}/utxo",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<Address>,
+                Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_utxos(address)).await
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_utxos(path.address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address UTXOs")
@@ -82,11 +85,11 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}/txs/mempool",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<Address>,
+                Path(path): Path<AddressParam>,
                 State(state): State<AppState>
             | {
                 // Mempool txs for an address - use MaxAge since it's volatile
-                state.cached_json(&headers, CacheStrategy::MaxAge(5), move |q| q.address_mempool_txids(address)).await
+                state.cached_json(&headers, CacheStrategy::MaxAge(5), move |q| q.address_mempool_txids(path.address)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address mempool transactions")
@@ -101,11 +104,11 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/address/{address}/txs/chain",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<Address>,
+                Path(path): Path<AddressParam>,
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(address, params.after_txid, 25)).await
+                state.cached_json(&headers, CacheStrategy::Height, move |q| q.address_txids(path.address, params.after_txid, 25)).await
             }, |op| op
                 .addresses_tag()
                 .summary("Address confirmed transactions")
@@ -121,10 +124,10 @@ impl AddressRoutes for ApiRouter<AppState> {
             "/api/v1/validate-address/{address}",
             get_with(async |
                 headers: HeaderMap,
-                Path(address): Path<String>,
+                Path(path): Path<ValidateAddressParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Static, move |_q| Ok(AddressValidation::from_address(&address))).await
+                state.cached_json(&headers, CacheStrategy::Static, move |_q| Ok(AddressValidation::from_address(&path.address))).await
             }, |op| op
                 .addresses_tag()
                 .summary("Validate address")

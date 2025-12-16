@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct Pagination {
     /// Pagination index
     #[serde(default, alias = "p")]
+    #[schemars(example = 0, example = 1, example = 2)]
     pub page: Option<usize>,
 }
 

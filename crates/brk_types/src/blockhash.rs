@@ -4,12 +4,17 @@ use bitcoin::hashes::Hash;
 use brk_error::Error;
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer, de};
 use vecdb::{Bytes, Formattable};
 
 /// Block hash
 #[derive(Debug, Deref, Clone, PartialEq, Eq, Bytes, JsonSchema)]
 #[repr(C)]
+#[schemars(
+    transparent,
+    with = "String",
+    example = &"000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+)]
 pub struct BlockHash([u8; 32]);
 
 impl TryFrom<&str> for BlockHash {
@@ -73,6 +78,16 @@ impl Serialize for BlockHash {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for BlockHash {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Self::from_str(&s).map_err(de::Error::custom)
     }
 }
 

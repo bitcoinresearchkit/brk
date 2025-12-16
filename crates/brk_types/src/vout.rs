@@ -20,6 +20,7 @@ use vecdb::{Bytes, Formattable};
     Bytes,
     Hash,
 )]
+#[schemars(example = 0)]
 pub struct Vout(u16);
 
 impl Vout {

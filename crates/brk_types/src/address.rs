@@ -1,9 +1,9 @@
-use std::{borrow::Cow, fmt, str::FromStr};
+use std::{fmt, str::FromStr};
 
 use bitcoin::ScriptBuf;
 use brk_error::Error;
 use derive_deref::Deref;
-use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
 use crate::AddressBytes;
@@ -11,28 +11,14 @@ use crate::AddressBytes;
 use super::OutputType;
 
 /// Bitcoin address string
-#[derive(Debug, Deref, Deserialize)]
+#[derive(Debug, Deref, Deserialize, JsonSchema)]
+#[serde(transparent)]
+#[schemars(
+    example = &"04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f",
+    example = &"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+    example = &"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
+)]
 pub struct Address(String);
-
-impl JsonSchema for Address {
-    fn schema_name() -> Cow<'static, str> {
-        Cow::Borrowed("Address")
-    }
-
-    fn json_schema(_: &mut SchemaGenerator) -> Schema {
-        json_schema!({
-            "type": "object",
-            "required": ["address"],
-            "properties": {
-                "address": {
-                    "type": "string",
-                    "description": "Bitcoin address string",
-                    "examples": ["04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"]
-                }
-            }
-        })
-    }
-}
 
 impl fmt::Display for Address {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

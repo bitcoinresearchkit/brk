@@ -4,6 +4,7 @@ use serde::Serialize;
 
 /// Input index in the spending transaction
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[schemars(example = 0)]
 pub struct Vin(u16);
 
 impl Vin {

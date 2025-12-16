@@ -5,7 +5,7 @@ use axum::{
     response::Redirect,
     routing::get,
 };
-use brk_types::{Transaction, TxOutspend, TxStatus, TxidPath, TxidVoutPath};
+use brk_types::{Transaction, TxOutspend, TxStatus, TxidParam, TxidVout};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
@@ -25,7 +25,7 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    Path(txid): Path<TxidPath>,
+                    Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction(txid)).await
@@ -48,7 +48,7 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    Path(txid): Path<TxidPath>,
+                    Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Height, move |q| q.transaction_status(txid)).await
@@ -71,7 +71,7 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    Path(txid): Path<TxidPath>,
+                    Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
                     state.cached_text(&headers, CacheStrategy::Height, move |q| q.transaction_hex(txid)).await
@@ -94,10 +94,10 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    Path(path): Path<TxidVoutPath>,
+                    Path(path): Path<TxidVout>,
                     State(state): State<AppState>
                 | {
-                    let txid = TxidPath { txid: path.txid };
+                    let txid = TxidParam { txid: path.txid };
                     state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspend(txid, path.vout)).await
                 },
                 |op| op
@@ -118,7 +118,7 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    Path(txid): Path<TxidPath>,
+                    Path(txid): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Height, move |q| q.outspends(txid)).await

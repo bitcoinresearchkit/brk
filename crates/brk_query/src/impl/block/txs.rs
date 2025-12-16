@@ -1,24 +1,24 @@
 use brk_error::{Error, Result};
-use brk_types::{Height, Transaction, TxIndex, Txid};
+use brk_types::{BlockHash, Height, Transaction, TxIndex, Txid};
 use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator};
 
 use super::BLOCK_TXS_PAGE_SIZE;
 use crate::Query;
 
 impl Query {
-    pub fn block_txids(&self, hash: &str) -> Result<Vec<Txid>> {
+    pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
         let height = self.height_by_hash(hash)?;
         self.block_txids_by_height(height)
     }
 
-    pub fn block_txs(&self, hash: &str, start_index: usize) -> Result<Vec<Transaction>> {
+    pub fn block_txs(&self, hash: &BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
         let height = self.height_by_hash(hash)?;
-        self.block_txs_by_height(height, start_index)
+        self.block_txs_by_height(height, start_index.into())
     }
 
-    pub fn block_txid_at_index(&self, hash: &str, index: usize) -> Result<Txid> {
+    pub fn block_txid_at_index(&self, hash: &BlockHash, index: TxIndex) -> Result<Txid> {
         let height = self.height_by_hash(hash)?;
-        self.block_txid_at_index_by_height(height, index)
+        self.block_txid_at_index_by_height(height, index.into())
     }
 
     // === Helper methods ===

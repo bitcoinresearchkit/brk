@@ -10,7 +10,7 @@ use brk_query::{
 };
 use brk_traversable::TreeNode;
 use brk_types::{
-    Index, IndexInfo, Limit, Metric, MetricCount, MetricData, MetricWithIndex, Metrics,
+    Index, IndexInfo, LimitParam, MetricCount, MetricData, MetricParam, MetricWithIndex, Metrics,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -109,14 +109,13 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Path(metric): Path<Metric>,
-                    Query(limit): Query<Limit>
+                    Path(path): Path<MetricParam>,
+                    Query(query): Query<LimitParam>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.match_metric(&metric, limit))).await
+                    state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.match_metric(&path.metric, query.limit))).await
                 },
                 |op| op
                     .metrics_tag()
-                    // .path_param::<Metric>()
                     .summary("Search metrics")
                     .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
                     .ok_response::<Vec<String>>()
@@ -129,13 +128,13 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Path(metric): Path<Metric>
+                    Path(path): Path<MetricParam>
                 | {
                     state.cached_json(&headers, CacheStrategy::Static, move |q| {
-                        if let Some(indexes) = q.metric_to_indexes(metric.clone()) {
+                        if let Some(indexes) = q.metric_to_indexes(path.metric.clone()) {
                             return Ok(indexes.clone())
                         }
-                        Err(q.metric_not_found_error(&metric))
+                        Err(q.metric_not_found_error(&path.metric))
                     }).await
                 },
                 |op| op

@@ -7,7 +7,7 @@ use crate::Query;
 const DEFAULT_BLOCK_COUNT: u32 = 10;
 
 impl Query {
-    pub fn block(&self, hash: &str) -> Result<BlockInfo> {
+    pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
         let height = self.height_by_hash(hash)?;
         self.block_by_height(height)
     }
@@ -58,11 +58,10 @@ impl Query {
 
     // === Helper methods ===
 
-    pub fn height_by_hash(&self, hash: &str) -> Result<Height> {
+    pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
         let indexer = self.indexer();
 
-        let blockhash: BlockHash = hash.parse().map_err(|_| Error::Str("Invalid block hash"))?;
-        let prefix = BlockHashPrefix::from(&blockhash);
+        let prefix = BlockHashPrefix::from(hash);
 
         indexer
             .stores

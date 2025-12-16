@@ -1,11 +1,11 @@
 use brk_error::{Error, Result};
-use brk_types::Height;
+use brk_types::{BlockHash, Height};
 use vecdb::{AnyVec, GenericStoredVec};
 
 use crate::Query;
 
 impl Query {
-    pub fn block_raw(&self, hash: &str) -> Result<Vec<u8>> {
+    pub fn block_raw(&self, hash: &BlockHash) -> Result<Vec<u8>> {
         let height = self.height_by_hash(hash)?;
         self.block_raw_by_height(height)
     }

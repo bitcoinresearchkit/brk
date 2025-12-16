@@ -6,9 +6,14 @@ use serde::Deserialize;
 
 use super::Metric;
 
-/// A list of metrics
+/// Comma-separated list of metric names
 #[derive(Debug, Deref, JsonSchema)]
-#[schemars(transparent)]
+#[schemars(
+    with = "String",
+    example = &"price_close",
+    example = &"price_close,market_cap",
+    example = &"realized_price,nvt_ratio,mvrv"
+)]
 pub struct Metrics(Vec<Metric>);
 
 const MAX_VECS: usize = 32;
