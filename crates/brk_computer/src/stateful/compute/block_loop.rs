@@ -13,9 +13,7 @@ use std::{mem, thread};
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
-use brk_types::{
-    DateIndex, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex,
-};
+use brk_types::{DateIndex, Height, OutputType, Sats, TypeIndex};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
@@ -29,7 +27,7 @@ use super::super::cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
 use super::super::vecs::Vecs;
 use super::{
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, FLUSH_INTERVAL, IndexerReaders, VecsReaders,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, VecsReaders,
     build_txinindex_to_txindex, build_txoutindex_to_txindex,
     flush::flush_checkpoint as flush_checkpoint_full,
 };
@@ -53,13 +51,19 @@ pub fn process_blocks(
     chain_state: &mut Vec<BlockState>,
     exit: &Exit,
 ) -> Result<()> {
-    if starting_height > last_height {
+    // Create computation context with pre-computed vectors for thread-safe access
+    let ctx = ComputeContext::new(starting_height, last_height, indexes, price);
+
+    if ctx.starting_height > ctx.last_height {
         return Ok(());
     }
 
     info!(
-        "Processing blocks {} to {}...",
-        starting_height, last_height
+        "Processing blocks {} to {} (compute_dollars: {}, price_data: {})...",
+        ctx.starting_height,
+        ctx.last_height,
+        ctx.compute_dollars,
+        ctx.price.is_some()
     );
 
     // References to vectors using correct field paths
@@ -91,11 +95,9 @@ pub fn process_blocks(
     let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
     let dateindex_to_price = price.map(|p| p.timeindexes_to_price_close.dateindex.u());
 
-    // Collect price and timestamp vectors for process_sent (needs slice access, not iterators)
-    // These are used in the spawned thread and need to be separate from chain_state
-    let height_to_price_vec: Option<Vec<Dollars>> =
-        height_to_price.map(|v| v.into_iter().map(|d| *d).collect());
-    let height_to_timestamp_vec: Vec<Timestamp> = height_to_timestamp.into_iter().collect();
+    // Access pre-computed vectors from context for thread-safe access
+    let height_to_price_vec = &ctx.height_to_price;
+    let height_to_timestamp_vec = &ctx.height_to_timestamp;
 
     // Create iterators for sequential access
     let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
@@ -221,6 +223,10 @@ pub fn process_blocks(
         let input_count = u64::from(height_to_input_count_iter.get_unwrap(height)) as usize;
         let timestamp = height_to_timestamp_iter.get_unwrap(height);
         let block_price = height_to_price_iter.as_mut().map(|v| *v.get_unwrap(height));
+
+        // Debug validation: verify context methods match iterator values
+        debug_assert_eq!(ctx.timestamp_at(height), timestamp);
+        debug_assert_eq!(ctx.price_at(height), block_price);
 
         // Build txindex mappings for this block
         let txoutindex_to_txindex =
@@ -382,7 +388,7 @@ pub fn process_blocks(
                     &mut addresstype_to_addr_count,
                     &mut addresstype_to_empty_addr_count,
                     height_to_price_vec.as_deref(),
-                    &height_to_timestamp_vec,
+                    height_to_timestamp_vec,
                     height,
                     timestamp,
                 )

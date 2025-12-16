@@ -7,7 +7,7 @@
 //! 4. Periodically flush to disk
 //! 5. Compute aggregate cohorts from separate cohorts
 
-mod aggregates;
+pub mod aggregates;
 mod block_loop;
 mod context;
 mod flush;
@@ -19,9 +19,7 @@ pub use context::ComputeContext;
 pub use readers::{
     IndexerReaders, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
 };
-pub use recover::{
-    StartMode, determine_start_mode,
-};
+pub use recover::{StartMode, determine_start_mode, recover_state, reset_state};
 
 /// Flush checkpoint interval (every N blocks).
 pub const FLUSH_INTERVAL: usize = 10_000;

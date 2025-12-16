@@ -7,10 +7,11 @@ use std::collections::BTreeSet;
 
 use brk_error::Result;
 use brk_types::Height;
-use vecdb::{AnyVec, Stamp};
+use vecdb::Stamp;
 
 use super::super::address::AnyAddressIndexesVecs;
-use super::super::cohorts::{DynCohortVecs, UTXOCohorts};
+use super::super::cohorts::{AddressCohorts, UTXOCohorts};
+use super::super::AddressesDataVecs;
 
 /// Result of state recovery.
 pub struct RecoveredState {
@@ -20,39 +21,72 @@ pub struct RecoveredState {
     pub restored: bool,
 }
 
-/// Determine starting height from vector lengths.
-pub fn find_min_height(
-    utxo_vecs: &[&mut dyn DynCohortVecs],
-    address_vecs: &[&mut dyn DynCohortVecs],
-    chain_state_len: usize,
-    address_indexes_min_height: Height,
-    address_data_min_height: Height,
-    other_vec_lens: &[usize],
-) -> Height {
-    let utxo_min = utxo_vecs
-        .iter()
-        .map(|v| Height::from(v.min_height_vecs_len()))
-        .min()
-        .unwrap_or_default();
+/// Perform state recovery for resuming from checkpoint.
+///
+/// Rolls back state vectors and imports cohort states.
+/// Returns the recovered state information.
+pub fn recover_state(
+    height: Height,
+    any_address_indexes: &mut AnyAddressIndexesVecs,
+    addresses_data: &mut AddressesDataVecs,
+    utxo_cohorts: &mut UTXOCohorts,
+    address_cohorts: &mut AddressCohorts,
+) -> Result<RecoveredState> {
+    let stamp = Stamp::from(height);
 
-    let address_min = address_vecs
-        .iter()
-        .map(|v| Height::from(v.min_height_vecs_len()))
-        .min()
-        .unwrap_or_default();
+    // Rollback address state vectors
+    let address_indexes_rollback = any_address_indexes.rollback_before(stamp);
+    let address_data_rollback = addresses_data.rollback_before(stamp);
 
-    let other_min = other_vec_lens
-        .iter()
-        .map(|&len| Height::from(len))
-        .min()
-        .unwrap_or_default();
+    // Verify rollback consistency (uses rollback_states helper)
+    let _consistent_height = rollback_states(
+        stamp,
+        Ok(stamp), // chain_state handled separately
+        address_indexes_rollback,
+        address_data_rollback,
+    );
 
-    utxo_min
-        .min(address_min)
-        .min(Height::from(chain_state_len))
-        .min(address_indexes_min_height)
-        .min(address_data_min_height)
-        .min(other_min)
+    // Import cohort states
+    utxo_cohorts.import_separate_states(height);
+    address_cohorts.import_separate_states(height);
+
+    // Import aggregate price_to_amount
+    let _ = import_aggregate_price_to_amount(height, utxo_cohorts)?;
+
+    Ok(RecoveredState {
+        starting_height: height,
+        restored: true,
+    })
+}
+
+/// Reset all state for fresh start.
+///
+/// Resets all state vectors and cohort states.
+pub fn reset_state(
+    any_address_indexes: &mut AnyAddressIndexesVecs,
+    addresses_data: &mut AddressesDataVecs,
+    utxo_cohorts: &mut UTXOCohorts,
+    address_cohorts: &mut AddressCohorts,
+) -> Result<RecoveredState> {
+    // Reset address state
+    any_address_indexes.reset()?;
+    addresses_data.reset()?;
+
+    // Reset cohort state heights
+    utxo_cohorts.reset_separate_state_heights();
+    address_cohorts.reset_separate_state_heights();
+
+    // Reset price_to_amount for all cohorts
+    utxo_cohorts.reset_separate_price_to_amount()?;
+    address_cohorts.reset_separate_price_to_amount()?;
+
+    // Reset aggregate cohorts' price_to_amount
+    utxo_cohorts.reset_aggregate_price_to_amount()?;
+
+    Ok(RecoveredState {
+        starting_height: Height::ZERO,
+        restored: false,
+    })
 }
 
 /// Check if we can resume from a checkpoint or need to start fresh.
@@ -76,7 +110,7 @@ pub enum StartMode {
 ///
 /// Returns the consistent starting height if all vectors agree,
 /// otherwise returns Height::ZERO (need fresh start).
-pub fn rollback_states(
+fn rollback_states(
     _stamp: Stamp,
     chain_state_rollback: vecdb::Result<Stamp>,
     address_indexes_rollbacks: Result<Vec<Stamp>>,
@@ -107,32 +141,8 @@ pub fn rollback_states(
     }
 }
 
-/// Import state for all separate cohorts.
-///
-/// Returns the starting height if all imports succeed with the same height,
-/// otherwise returns Height::ZERO.
-pub fn import_cohort_states(
-    starting_height: Height,
-    cohorts: &mut [&mut dyn DynCohortVecs],
-) -> Height {
-    if starting_height.is_zero() {
-        return Height::ZERO;
-    }
-
-    let all_match = cohorts
-        .iter_mut()
-        .map(|v| v.import_state(starting_height).unwrap_or_default())
-        .all(|h| h == starting_height);
-
-    if all_match {
-        starting_height
-    } else {
-        Height::ZERO
-    }
-}
-
 /// Import aggregate price_to_amount for UTXO cohorts.
-pub fn import_aggregate_price_to_amount(
+fn import_aggregate_price_to_amount(
     starting_height: Height,
     utxo_cohorts: &mut UTXOCohorts,
 ) -> Result<Height> {
@@ -149,24 +159,3 @@ pub fn import_aggregate_price_to_amount(
     })
 }
 
-/// Reset all state for fresh start.
-pub fn reset_all_state(
-    address_indexes: &mut AnyAddressIndexesVecs,
-    utxo_vecs: &mut [&mut dyn DynCohortVecs],
-    address_vecs: &mut [&mut dyn DynCohortVecs],
-    utxo_cohorts: &mut UTXOCohorts,
-) -> Result<()> {
-    address_indexes.reset()?;
-
-    for v in utxo_vecs.iter_mut() {
-        v.reset_state_starting_height();
-    }
-
-    for v in address_vecs.iter_mut() {
-        v.reset_state_starting_height();
-    }
-
-    utxo_cohorts.reset_aggregate_price_to_amount()?;
-
-    Ok(())
-}

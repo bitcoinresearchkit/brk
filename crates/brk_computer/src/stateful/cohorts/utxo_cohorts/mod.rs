@@ -16,7 +16,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{Database, Exit, GenericStoredVec, IterableVec};
+use vecdb::{Database, Exit, IterableVec};
 
 use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
 
@@ -461,5 +461,11 @@ impl UTXOCohorts {
         }
 
         Ok(())
+    }
+
+    /// Validate computed versions for all separate cohorts.
+    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        self.par_iter_separate_mut()
+            .try_for_each(|v| v.validate_computed_versions(base_version))
     }
 }

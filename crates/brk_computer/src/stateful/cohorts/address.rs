@@ -15,7 +15,7 @@ use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
-    states::AddressCohortState,
+    stateful::cohorts::AddressCohortState,
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig};

@@ -58,7 +58,7 @@ impl CohortState {
     }
 
     /// Reset price_to_amount if needed (for starting fresh).
-    pub fn reset_price_to_amount(&mut self) -> Result<()> {
+    pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
         if let Some(p) = self.price_to_amount.as_mut() {
             p.clean()?;
             p.init();
@@ -66,8 +66,18 @@ impl CohortState {
         Ok(())
     }
 
+    /// Get first (lowest) price entry in distribution.
+    pub fn price_to_amount_first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.price_to_amount.u().first_key_value()
+    }
+
+    /// Get last (highest) price entry in distribution.
+    pub fn price_to_amount_last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.price_to_amount.u().last_key_value()
+    }
+
     /// Reset per-block values before processing next block.
-    pub fn reset_block_values(&mut self) {
+    pub fn reset_single_iteration_values(&mut self) {
         self.sent = Sats::ZERO;
         self.satdays_destroyed = Sats::ZERO;
         self.satblocks_destroyed = Sats::ZERO;
@@ -88,6 +98,22 @@ impl CohortState {
             }
     }
 
+    /// Add supply with pre-computed realized cap (for address cohorts).
+    pub fn increment_(
+        &mut self,
+        supply: &SupplyState,
+        realized_cap: Dollars,
+        realized_price: Dollars,
+    ) {
+        self.supply += supply;
+
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut() {
+                realized.increment_(realized_cap);
+                self.price_to_amount.as_mut().unwrap().increment(realized_price, supply);
+            }
+    }
+
     /// Remove supply from this cohort (e.g., when UTXO ages out of cohort).
     pub fn decrement(&mut self, supply: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply;
@@ -100,15 +126,56 @@ impl CohortState {
             }
     }
 
+    /// Remove supply with pre-computed realized cap (for address cohorts).
+    pub fn decrement_(
+        &mut self,
+        supply: &SupplyState,
+        realized_cap: Dollars,
+        realized_price: Dollars,
+    ) {
+        self.supply -= supply;
+
+        if supply.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut() {
+                realized.decrement_(realized_cap);
+                self.price_to_amount.as_mut().unwrap().decrement(realized_price, supply);
+            }
+    }
+
     /// Process received output (new UTXO in cohort).
     pub fn receive(&mut self, supply: &SupplyState, price: Option<Dollars>) {
+        self.receive_(
+            supply,
+            price,
+            price.map(|price| (price, supply)),
+            None,
+        );
+    }
+
+    /// Process received output with custom price_to_amount updates (for address cohorts).
+    pub fn receive_(
+        &mut self,
+        supply: &SupplyState,
+        price: Option<Dollars>,
+        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
+        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
+    ) {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
             && let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.receive(supply, price);
-                self.price_to_amount.as_mut().unwrap().increment(price, supply);
+
+                if let Some((price, supply)) = price_to_amount_increment
+                    && supply.value.is_not_zero() {
+                        self.price_to_amount.as_mut().unwrap().increment(price, supply);
+                    }
+
+                if let Some((price, supply)) = price_to_amount_decrement
+                    && supply.value.is_not_zero() {
+                        self.price_to_amount.as_mut().unwrap().decrement(price, supply);
+                    }
             }
     }
 
@@ -121,6 +188,31 @@ impl CohortState {
         blocks_old: usize,
         days_old: f64,
         older_than_hour: bool,
+    ) {
+        self.send_(
+            supply,
+            current_price,
+            prev_price,
+            blocks_old,
+            days_old,
+            older_than_hour,
+            None,
+            prev_price.map(|prev_price| (prev_price, supply)),
+        );
+    }
+
+    /// Process spent input with custom price_to_amount updates (for address cohorts).
+    #[allow(clippy::too_many_arguments)]
+    pub fn send_(
+        &mut self,
+        supply: &SupplyState,
+        current_price: Option<Dollars>,
+        prev_price: Option<Dollars>,
+        blocks_old: usize,
+        days_old: f64,
+        older_than_hour: bool,
+        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
+        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
     ) {
         if supply.utxo_count == 0 {
             return;
@@ -138,7 +230,16 @@ impl CohortState {
                 let current_price = current_price.unwrap();
                 let prev_price = prev_price.unwrap();
                 realized.send(supply, current_price, prev_price, older_than_hour);
-                self.price_to_amount.as_mut().unwrap().decrement(prev_price, supply);
+
+                if let Some((price, supply)) = price_to_amount_increment
+                    && supply.value.is_not_zero() {
+                        self.price_to_amount.as_mut().unwrap().increment(price, supply);
+                    }
+
+                if let Some((price, supply)) = price_to_amount_decrement
+                    && supply.value.is_not_zero() {
+                        self.price_to_amount.as_mut().unwrap().decrement(price, supply);
+                    }
             }
         }
     }
@@ -176,6 +277,15 @@ impl CohortState {
         }
 
         result
+    }
+
+    /// Compute unrealized profit/loss at current price (alias for compatibility).
+    pub fn compute_unrealized_states(
+        &self,
+        height_price: Dollars,
+        date_price: Option<Dollars>,
+    ) -> (UnrealizedState, Option<UnrealizedState>) {
+        self.compute_unrealized(height_price, date_price)
     }
 
     /// Compute unrealized profit/loss at current price.

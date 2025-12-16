@@ -9,10 +9,10 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
-    Indexes, PriceToAmount, UTXOCohortState,
+    Indexes, PriceToAmount,
     grouped::{PERCENTILES, PERCENTILES_LEN},
     indexes, price,
-    stateful::{CohortVecs, DynCohortVecs},
+    stateful::{CohortVecs, DynCohortVecs, cohorts::UTXOCohortState},
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig};

@@ -30,7 +30,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, states::CohortState};
+use crate::{Indexes, indexes, price, stateful::cohorts::CohortState};
 
 /// All metrics for a cohort, organized by category.
 #[derive(Clone, Traversable)]

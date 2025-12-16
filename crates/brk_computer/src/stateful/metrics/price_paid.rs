@@ -10,7 +10,8 @@ use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVe
 use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, PricePercentiles, Source, VecBuilderOptions},
-    states::{CohortState, Flushable},
+    stateful::cohorts::CohortState,
+    states::Flushable,
 };
 
 use super::ImportConfig;

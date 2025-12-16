@@ -24,12 +24,6 @@ impl<T> WithAddressDataSource<T> {
     pub fn is_from_emptyaddressdata(&self) -> bool {
         matches!(self, Self::FromEmpty(..))
     }
-
-    pub fn deref_mut(&mut self) -> &mut T {
-        match self {
-            Self::New(v) | Self::FromLoaded(_, v) | Self::FromEmpty(_, v) => v,
-        }
-    }
 }
 
 impl<T> std::ops::Deref for WithAddressDataSource<T> {

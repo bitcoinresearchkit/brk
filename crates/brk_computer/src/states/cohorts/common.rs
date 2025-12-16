@@ -4,9 +4,9 @@ use brk_error::Result;
 use brk_types::{CheckedSub, Dollars, Height, Sats};
 
 use crate::{
+    PriceToAmount, RealizedState, SupplyState, UnrealizedState,
     grouped::{PERCENTILES, PERCENTILES_LEN},
     utils::OptionExt,
-    PriceToAmount, RealizedState, SupplyState, UnrealizedState,
 };
 
 #[derive(Clone)]
@@ -337,12 +337,7 @@ impl CohortState {
                 update_state(price, height_price, sats, &mut height_unrealized_state);
 
                 if let Some(date_price) = date_price {
-                    update_state(
-                        price,
-                        date_price,
-                        sats,
-                        date_unrealized_state.um(),
-                    )
+                    update_state(price, date_price, sats, date_unrealized_state.um())
                 }
             });
 

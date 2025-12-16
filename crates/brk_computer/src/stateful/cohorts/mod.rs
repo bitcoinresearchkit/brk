@@ -9,14 +9,18 @@
 mod address;
 mod address_cohorts;
 mod state;
+mod state_address;
+mod state_utxo;
 mod traits;
 mod utxo;
 mod utxo_cohorts;
 
+pub use crate::states::{Flushable, HeightFlushable};
 pub use address::AddressCohortVecs;
 pub use address_cohorts::AddressCohorts;
-pub use crate::states::{Flushable, HeightFlushable};
 pub use state::CohortState;
+pub use state_address::AddressCohortState;
+pub use state_utxo::UTXOCohortState;
 pub use traits::{CohortVecs, DynCohortVecs};
 pub use utxo::UTXOCohortVecs;
 pub use utxo_cohorts::UTXOCohorts;

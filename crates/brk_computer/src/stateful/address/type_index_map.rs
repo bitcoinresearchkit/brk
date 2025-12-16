@@ -66,14 +66,6 @@ impl<T> AddressTypeToTypeIndexMap<T> {
         self.get_mut(address_type).unwrap().insert(typeindex, value);
     }
 
-    /// Remove and return a value for a specific address type and typeindex.
-    pub fn remove_for_type(&mut self, address_type: OutputType, typeindex: &TypeIndex) -> T {
-        self.get_mut(address_type)
-            .unwrap()
-            .remove(typeindex)
-            .unwrap()
-    }
-
     /// Iterate over sorted entries by address type.
     pub fn into_sorted_iter(self) -> impl Iterator<Item = (OutputType, Vec<(TypeIndex, T)>)> {
         self.0.into_iter().map(|(output_type, map)| {
@@ -122,26 +114,3 @@ where
     }
 }
 
-impl<T> AddressTypeToTypeIndexMap<Vec<T>> {
-    /// Merge two maps of Vec values, concatenating vectors.
-    pub fn merge_vecs(mut self, other: Self) -> Self {
-        for (address_type, other_map) in other.0.into_iter() {
-            let self_map = self.0.get_mut_unwrap(address_type);
-            for (typeindex, mut other_vec) in other_map {
-                match self_map.entry(typeindex) {
-                    Entry::Occupied(mut entry) => {
-                        let self_vec = entry.get_mut();
-                        if other_vec.len() > self_vec.len() {
-                            mem::swap(self_vec, &mut other_vec);
-                        }
-                        self_vec.extend(other_vec);
-                    }
-                    Entry::Vacant(entry) => {
-                        entry.insert(other_vec);
-                    }
-                }
-            }
-        }
-        self
-    }
-}

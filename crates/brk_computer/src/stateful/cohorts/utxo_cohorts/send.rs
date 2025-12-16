@@ -19,6 +19,10 @@ impl UTXOCohorts {
         height_to_sent: FxHashMap<Height, Transacted>,
         chain_state: &mut [BlockState],
     ) {
+        if chain_state.is_empty() {
+            return;
+        }
+
         let UTXOGroups {
             all,
             term,
@@ -65,8 +69,8 @@ impl UTXOCohorts {
                 last_timestamp.difference_in_days_between_float(block_state.timestamp);
             let older_than_hour = last_timestamp
                 .checked_sub(block_state.timestamp)
-                .unwrap()
-                .is_more_than_hour();
+                .map(|d| d.is_more_than_hour())
+                .unwrap_or(false);
 
             // Update time-based cohorts
             time_cohorts

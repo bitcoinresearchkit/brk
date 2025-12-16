@@ -3,9 +3,10 @@
 use std::path::Path;
 
 use brk_error::Result;
+use log::info;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats, StoredU64, TxInIndex, TxOutIndex, Version};
+use brk_types::{Dollars, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, Sats, StoredU64, TxInIndex, TxOutIndex, Version};
 use vecdb::{
     AnyStoredVec, BytesVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec,
     LazyVecFrom1, PAGE_SIZE, PcoVec,
@@ -13,7 +14,7 @@ use vecdb::{
 
 use crate::{
     Indexes, SupplyState, chain,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
+    grouped::{ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
     utils::OptionExt,
 };
@@ -21,6 +22,7 @@ use crate::{
 use super::{
     AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
     address::{AddressTypeToHeightToAddressCount, AddressTypeToIndexesToAddressCount},
+    compute::aggregates,
 };
 
 const VERSION: Version = Version::new(21);
@@ -51,10 +53,16 @@ pub struct Vecs {
     // ---
     pub addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount,
     pub addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount,
+    pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
+    pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_empty_addr_count: ComputedVecsFromHeight<StoredU64>,
     pub height_to_market_cap: Option<LazyVecFrom1<Height, Dollars, Height, Dollars>>,
     pub indexes_to_market_cap: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub loadedaddressindex_to_loadedaddressindex:
+        LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
+    pub emptyaddressindex_to_emptyaddressindex:
+        LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 }
 
 const SAVED_STAMPED_CHANGES: u16 = 10;
@@ -79,6 +87,30 @@ impl Vecs {
 
         let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, price, &states_path)?;
 
+        // Create address data BytesVecs first so we can also use them for identity mappings
+        let loadedaddressindex_to_loadedaddressdata = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "loadedaddressdata", v0)
+                .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+        )?;
+        let emptyaddressindex_to_emptyaddressdata = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "emptyaddressdata", v0)
+                .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
+        )?;
+
+        // Identity mappings for traversable
+        let loadedaddressindex_to_loadedaddressindex = LazyVecFrom1::init(
+            "loadedaddressindex",
+            v0,
+            loadedaddressindex_to_loadedaddressdata.boxed_clone(),
+            |index, _| Some(index),
+        );
+        let emptyaddressindex_to_emptyaddressindex = LazyVecFrom1::init(
+            "emptyaddressindex",
+            v0,
+            emptyaddressindex_to_emptyaddressdata.boxed_clone(),
+            |index, _| Some(index),
+        );
+
         Ok(Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", v0)
@@ -90,7 +122,25 @@ impl Vecs {
             )?,
 
             height_to_unspendable_supply: EagerVec::forced_import(&db, "unspendable_supply", v0)?,
+            indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
+                &db,
+                "unspendable_supply",
+                Source::None,
+                v0,
+                VecBuilderOptions::default().add_last(),
+                compute_dollars,
+                indexes,
+            )?,
             height_to_opreturn_supply: EagerVec::forced_import(&db, "opreturn_supply", v0)?,
+            indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
+                &db,
+                "opreturn_supply",
+                Source::None,
+                v0,
+                VecBuilderOptions::default().add_last(),
+                compute_dollars,
+                indexes,
+            )?,
 
             indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 &db,
@@ -166,7 +216,12 @@ impl Vecs {
             )?,
 
             any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, v0)?,
-            addresses_data: AddressesDataVecs::forced_import(&db, v0)?,
+            addresses_data: AddressesDataVecs {
+                loaded: loadedaddressindex_to_loadedaddressdata,
+                empty: emptyaddressindex_to_emptyaddressdata,
+            },
+            loadedaddressindex_to_loadedaddressindex,
+            emptyaddressindex_to_emptyaddressindex,
 
             db,
         })
@@ -190,7 +245,9 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        use super::compute::{StartMode, determine_start_mode, process_blocks};
+        use super::compute::{
+            StartMode, determine_start_mode, process_blocks, recover_state, reset_state,
+        };
         use crate::states::BlockState;
         use vecdb::{AnyVec, GenericStoredVec, Stamp, TypedVecIterator, VecIndex};
 
@@ -210,28 +267,28 @@ impl Vecs {
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()));
 
-        // 2. Determine start mode and recover state
+        // 2. Determine start mode and recover/reset state
         let start_mode = determine_start_mode(stateful_min, chain_state_height);
 
         let (starting_height, mut chain_state) = match start_mode {
             StartMode::Resume(height) => {
                 let stamp = Stamp::from(height);
 
-                // Rollback state vectors
+                // Rollback BytesVec state (not handled by recover_state)
                 let _ = self.chain_state.rollback_before(stamp);
                 let _ = self.txoutindex_to_txinindex.rollback_before(stamp);
-                let _ = self.any_address_indexes.rollback_before(stamp);
-                let _ = self.addresses_data.rollback_before(stamp);
 
-                // Import cohort states
-                self.utxo_cohorts.import_separate_states(height);
-                self.address_cohorts.import_separate_states(height);
-
-                // Import aggregate price_to_amount
-                let _ = self.utxo_cohorts.import_aggregate_price_to_amount(height);
+                // Use recover_state for address and cohort state recovery
+                let recovered = recover_state(
+                    height,
+                    &mut self.any_address_indexes,
+                    &mut self.addresses_data,
+                    &mut self.utxo_cohorts,
+                    &mut self.address_cohorts,
+                )?;
 
                 // Recover chain_state from stored values
-                let chain_state = if !height.is_zero() {
+                let chain_state = if !recovered.starting_height.is_zero() {
                     let height_to_timestamp = &indexes.height_to_timestamp_fixed;
                     let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
 
@@ -239,7 +296,7 @@ impl Vecs {
                     let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
                     let mut chain_state_iter = self.chain_state.into_iter();
 
-                    (0..height.to_usize())
+                    (0..recovered.starting_height.to_usize())
                         .map(|h| {
                             let h = Height::from(h);
                             BlockState {
@@ -253,28 +310,38 @@ impl Vecs {
                     vec![]
                 };
 
-                (height, chain_state)
+                info!(
+                    "State recovery: {} at height {}",
+                    if recovered.restored { "resumed from checkpoint" } else { "fresh start" },
+                    recovered.starting_height
+                );
+                (recovered.starting_height, chain_state)
             }
             StartMode::Fresh => {
-                // Reset all state
+                // Reset BytesVec state
                 self.txoutindex_to_txinindex.reset()?;
-                self.any_address_indexes.reset()?;
-                self.addresses_data.reset()?;
 
-                // Reset state heights
-                self.utxo_cohorts.reset_separate_state_heights();
-                self.address_cohorts.reset_separate_state_heights();
+                // Use reset_state for cohort and address state reset
+                let recovered = reset_state(
+                    &mut self.any_address_indexes,
+                    &mut self.addresses_data,
+                    &mut self.utxo_cohorts,
+                    &mut self.address_cohorts,
+                )?;
 
-                // Reset price_to_amount for all separate cohorts
-                self.utxo_cohorts.reset_separate_price_to_amount()?;
-                self.address_cohorts.reset_separate_price_to_amount()?;
-
-                // Reset aggregate cohorts' price_to_amount
-                self.utxo_cohorts.reset_aggregate_price_to_amount()?;
-
-                (Height::ZERO, vec![])
+                info!(
+                    "State recovery: {} at height {}",
+                    if recovered.restored { "resumed from checkpoint" } else { "fresh start" },
+                    recovered.starting_height
+                );
+                (recovered.starting_height, vec![])
             }
         };
+
+        // 2b. Validate computed versions
+        let base_version = VERSION;
+        self.utxo_cohorts.validate_computed_versions(base_version)?;
+        self.address_cohorts.validate_computed_versions(base_version)?;
 
         // 3. Get last height from indexer
         let last_height = Height::from(
@@ -302,16 +369,22 @@ impl Vecs {
         }
 
         // 5. Compute aggregates (overlapping cohorts from separate cohorts)
-        self.utxo_cohorts
-            .compute_overlapping_vecs(starting_indexes, exit)?;
-        self.address_cohorts
-            .compute_overlapping_vecs(starting_indexes, exit)?;
+        aggregates::compute_overlapping(
+            &mut self.utxo_cohorts,
+            &mut self.address_cohorts,
+            starting_indexes,
+            exit,
+        )?;
 
         // 6. Compute rest part1 (dateindex mappings)
-        self.utxo_cohorts
-            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
-        self.address_cohorts
-            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
+        aggregates::compute_rest_part1(
+            &mut self.utxo_cohorts,
+            &mut self.address_cohorts,
+            indexes,
+            price,
+            starting_indexes,
+            exit,
+        )?;
 
         // 7. Compute indexes_to_market_cap from dateindex supply
         if let Some(indexes_to_market_cap) = self.indexes_to_market_cap.as_mut() {
@@ -335,6 +408,22 @@ impl Vecs {
                 Ok(())
             })?;
         }
+
+        // 7b. Compute indexes for unspendable and opreturn supply
+        self.indexes_to_unspendable_supply.compute_rest(
+            indexes,
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_unspendable_supply),
+        )?;
+        self.indexes_to_opreturn_supply.compute_rest(
+            indexes,
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_opreturn_supply),
+        )?;
 
         // 8. Compute rest part2 (relative metrics)
         let height_to_supply = &self
@@ -385,20 +474,9 @@ impl Vecs {
         let height_to_realized_cap_ref = height_to_realized_cap.as_ref();
         let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
 
-        self.utxo_cohorts.compute_rest_part2(
-            indexes,
-            price,
-            starting_indexes,
-            height_to_supply,
-            dateindex_to_supply_ref,
-            height_to_market_cap_ref,
-            dateindex_to_market_cap_ref,
-            height_to_realized_cap_ref,
-            dateindex_to_realized_cap_ref,
-            exit,
-        )?;
-
-        self.address_cohorts.compute_rest_part2(
+        aggregates::compute_rest_part2(
+            &mut self.utxo_cohorts,
+            &mut self.address_cohorts,
             indexes,
             price,
             starting_indexes,

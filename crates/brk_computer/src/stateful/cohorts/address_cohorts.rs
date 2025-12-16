@@ -262,4 +262,10 @@ impl AddressCohorts {
             Ok(())
         })
     }
+
+    /// Validate computed versions for all separate cohorts.
+    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        self.par_iter_separate_mut()
+            .try_for_each(|v| v.validate_computed_versions(base_version))
+    }
 }
