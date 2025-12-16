@@ -14,7 +14,7 @@ impl Query {
         let max_height_usize: usize = max_height.into();
 
         if max_height_usize == 0 {
-            return Err(Error::Str("No blocks indexed"));
+            return Err(Error::NotFound("No blocks indexed".into()));
         }
 
         let target = timestamp;

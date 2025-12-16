@@ -218,7 +218,7 @@ Finally, you can run the program with '-h' for help."
                 self.rpcpassword.clone().unwrap(),
             ))
         } else {
-            Err(Error::Str("Failed to find correct auth"))
+            Err(Error::AuthFailed)
         }
     }
 

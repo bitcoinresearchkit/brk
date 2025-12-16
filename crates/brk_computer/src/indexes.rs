@@ -13,8 +13,8 @@ use brk_types::{
     YearIndex,
 };
 use vecdb::{
-    Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, LazyVecFrom1,
-    PAGE_SIZE, PcoVec, TypedVecIterator, unlikely,
+    Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, LazyVecFrom1, PAGE_SIZE, PcoVec,
+    TypedVecIterator,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -83,7 +83,6 @@ pub struct Vecs {
     pub txindex_to_output_count: EagerVec<PcoVec<TxIndex, StoredU64>>,
     pub txindex_to_txindex: LazyVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub txinindex_to_txinindex: LazyVecFrom1<TxInIndex, TxInIndex, TxInIndex, OutPoint>,
-    pub txinindex_to_txoutindex: EagerVec<PcoVec<TxInIndex, TxOutIndex>>,
     pub txoutindex_to_txoutindex: LazyVecFrom1<TxOutIndex, TxOutIndex, TxOutIndex, Sats>,
     pub unknownoutputindex_to_unknownoutputindex:
         LazyVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
@@ -121,7 +120,6 @@ impl Vecs {
         }
 
         let this = Self {
-            txinindex_to_txoutindex: eager!("txoutindex"),
             txoutindex_to_txoutindex: lazy!("txoutindex", indexer.vecs.txout.txoutindex_to_value),
             txinindex_to_txinindex: lazy!("txinindex", indexer.vecs.txin.txinindex_to_outpoint),
             p2pk33addressindex_to_p2pk33addressindex: lazy!(
@@ -247,27 +245,6 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> Result<Indexes> {
-        // ---
-        // TxInIndex
-        // ---
-
-        let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
-        let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
-        self.txinindex_to_txoutindex.compute_transform(
-            starting_indexes.txinindex,
-            &indexer.vecs.txin.txinindex_to_outpoint,
-            |(txinindex, outpoint, ..)| {
-                if unlikely(outpoint.is_coinbase()) {
-                    return (txinindex, TxOutIndex::COINBASE);
-                }
-                let txoutindex = txindex_to_first_txoutindex
-                    .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
-                    + outpoint.vout();
-                (txinindex, txoutindex)
-            },
-            exit,
-        )?;
-
         // ---
         // TxIndex
         // ---

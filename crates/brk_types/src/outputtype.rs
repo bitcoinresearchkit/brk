@@ -907,7 +907,7 @@ impl TryFrom<OutputType> for AddressType {
             OutputType::P2TR => Self::P2tr,
             OutputType::P2WPKH => Self::P2wpkh,
             OutputType::P2WSH => Self::P2wsh,
-            _ => return Err(Error::Str("Bad output format")),
+            _ => return Err(Error::UnsupportedType(format!("{:?}", value))),
         })
     }
 }

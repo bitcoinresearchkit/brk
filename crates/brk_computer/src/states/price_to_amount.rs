@@ -37,7 +37,7 @@ impl PriceToAmount {
         let (&height, path) = files
             .range(..=height)
             .next_back()
-            .ok_or(Error::Str("Not found"))?;
+            .ok_or(Error::NotFound("No price state found at or before height".into()))?;
         self.state = Some(State::deserialize(&fs::read(path)?)?);
         Ok(height)
     }

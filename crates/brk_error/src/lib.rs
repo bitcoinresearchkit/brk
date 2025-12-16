@@ -1,210 +1,130 @@
 #![doc = include_str!("../README.md")]
 
-use std::{
-    fmt::{self, Debug, Display},
-    io, result, time,
-};
+use std::{io, result, time};
+
+use thiserror::Error;
 
 pub type Result<T, E = Error> = result::Result<T, E>;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    IO(io::Error),
-    BitcoinRPC(bitcoincore_rpc::Error),
-    Jiff(jiff::Error),
-    Fjall(fjall::Error),
-    VecDB(vecdb::Error),
-    RawDB(vecdb::RawDBError),
-    Minreq(minreq::Error),
-    SystemTimeError(time::SystemTimeError),
-    BitcoinConsensusEncode(bitcoin::consensus::encode::Error),
-    BitcoinBip34Error(bitcoin::block::Bip34Error),
-    BitcoinHexError(bitcoin::consensus::encode::FromHexError),
-    BitcoinFromScriptError(bitcoin::address::FromScriptError),
-    BitcoinHexToArrayError(bitcoin::hex::HexToArrayError),
-    SerdeJSON(serde_json::Error),
-    TokioJoin(tokio::task::JoinError),
-    ZeroCopyError,
-    Vecs(vecdb::Error),
+    #[error(transparent)]
+    IO(#[from] io::Error),
 
+    #[error(transparent)]
+    BitcoinRPC(#[from] bitcoincore_rpc::Error),
+
+    #[error(transparent)]
+    Jiff(#[from] jiff::Error),
+
+    #[error(transparent)]
+    Fjall(#[from] fjall::Error),
+
+    #[error(transparent)]
+    VecDB(#[from] vecdb::Error),
+
+    #[error(transparent)]
+    RawDB(#[from] vecdb::RawDBError),
+
+    #[error(transparent)]
+    Minreq(#[from] minreq::Error),
+
+    #[error(transparent)]
+    SystemTimeError(#[from] time::SystemTimeError),
+
+    #[error(transparent)]
+    BitcoinConsensusEncode(#[from] bitcoin::consensus::encode::Error),
+
+    #[error(transparent)]
+    BitcoinBip34Error(#[from] bitcoin::block::Bip34Error),
+
+    #[error(transparent)]
+    BitcoinHexError(#[from] bitcoin::consensus::encode::FromHexError),
+
+    #[error(transparent)]
+    BitcoinFromScriptError(#[from] bitcoin::address::FromScriptError),
+
+    #[error(transparent)]
+    BitcoinHexToArrayError(#[from] bitcoin::hex::HexToArrayError),
+
+    #[error(transparent)]
+    SerdeJSON(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    TokioJoin(#[from] tokio::task::JoinError),
+
+    #[error("ZeroCopy error")]
+    ZeroCopyError,
+
+    #[error("Wrong length, expected: {expected}, received: {received}")]
     WrongLength { expected: usize, received: usize },
+
+    #[error("Wrong address type")]
     WrongAddressType,
+
+    #[error("Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater")]
     UnindexableDate,
+
+    #[error("Quick cache error")]
     QuickCacheError,
 
+    #[error("The provided address appears to be invalid")]
     InvalidAddress,
+
+    #[error("Invalid network")]
     InvalidNetwork,
+
+    #[error("The provided TXID appears to be invalid")]
     InvalidTxid,
+
+    #[error("Mempool data is not available")]
     MempoolNotAvailable,
+
+    #[error("Address not found in the blockchain (no transaction history)")]
     UnknownAddress,
+
+    #[error("Failed to find the TXID in the blockchain")]
     UnknownTxid,
+
+    #[error("Unsupported type ({0})")]
     UnsupportedType(String),
 
-    Str(&'static str),
-    String(String),
+    // Generic errors with context
+    #[error("{0}")]
+    NotFound(String),
+
+    #[error("{0}")]
+    OutOfRange(String),
+
+    #[error("Parse error: {0}")]
+    Parse(String),
+
+    #[error("Internal error: {0}")]
+    Internal(&'static str),
+
+    #[error("Authentication failed")]
+    AuthFailed,
+
+    // Metric-specific errors
+    #[error("'{metric}' not found{}", suggestion.as_ref().map(|s| format!(", did you mean '{s}'?")).unwrap_or_default())]
+    MetricNotFound {
+        metric: String,
+        suggestion: Option<String>,
+    },
+
+    #[error("'{metric}' doesn't support the requested index. Supported indexes: {supported}")]
+    MetricUnsupportedIndex { metric: String, supported: String },
+
+    #[error("No metrics specified")]
+    NoMetrics,
+
+    #[error("Request weight {requested} exceeds maximum {max}")]
+    WeightExceeded { requested: usize, max: usize },
+
+    #[error("Fetch failed after retries: {0}")]
+    FetchFailed(String),
 }
 
-impl From<bitcoin::block::Bip34Error> for Error {
-    #[inline]
-    fn from(value: bitcoin::block::Bip34Error) -> Self {
-        Self::BitcoinBip34Error(value)
-    }
-}
-
-impl From<bitcoin::consensus::encode::Error> for Error {
-    #[inline]
-    fn from(value: bitcoin::consensus::encode::Error) -> Self {
-        Self::BitcoinConsensusEncode(value)
-    }
-}
-
-impl From<bitcoin::consensus::encode::FromHexError> for Error {
-    #[inline]
-    fn from(value: bitcoin::consensus::encode::FromHexError) -> Self {
-        Self::BitcoinHexError(value)
-    }
-}
-
-impl From<bitcoin::hex::HexToArrayError> for Error {
-    #[inline]
-    fn from(value: bitcoin::hex::HexToArrayError) -> Self {
-        Self::BitcoinHexToArrayError(value)
-    }
-}
-
-impl From<bitcoin::address::FromScriptError> for Error {
-    #[inline]
-    fn from(value: bitcoin::address::FromScriptError) -> Self {
-        Self::BitcoinFromScriptError(value)
-    }
-}
-
-impl From<time::SystemTimeError> for Error {
-    #[inline]
-    fn from(value: time::SystemTimeError) -> Self {
-        Self::SystemTimeError(value)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    #[inline]
-    fn from(error: serde_json::Error) -> Self {
-        Self::SerdeJSON(error)
-    }
-}
-
-impl From<tokio::task::JoinError> for Error {
-    #[inline]
-    fn from(error: tokio::task::JoinError) -> Self {
-        Self::TokioJoin(error)
-    }
-}
-
-impl From<io::Error> for Error {
-    #[inline]
-    fn from(value: io::Error) -> Self {
-        Self::IO(value)
-    }
-}
-
-impl From<vecdb::Error> for Error {
-    #[inline]
-    fn from(value: vecdb::Error) -> Self {
-        Self::VecDB(value)
-    }
-}
-
-impl From<vecdb::RawDBError> for Error {
-    #[inline]
-    fn from(value: vecdb::RawDBError) -> Self {
-        Self::RawDB(value)
-    }
-}
-
-impl From<bitcoincore_rpc::Error> for Error {
-    #[inline]
-    fn from(value: bitcoincore_rpc::Error) -> Self {
-        Self::BitcoinRPC(value)
-    }
-}
-
-impl From<minreq::Error> for Error {
-    #[inline]
-    fn from(value: minreq::Error) -> Self {
-        Self::Minreq(value)
-    }
-}
-
-impl From<jiff::Error> for Error {
-    #[inline]
-    fn from(value: jiff::Error) -> Self {
-        Self::Jiff(value)
-    }
-}
-
-impl From<fjall::Error> for Error {
-    #[inline]
-    fn from(value: fjall::Error) -> Self {
-        Self::Fjall(value)
-    }
-}
-
-impl From<&'static str> for Error {
-    #[inline]
-    fn from(value: &'static str) -> Self {
-        Self::Str(value)
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::BitcoinConsensusEncode(error) => Display::fmt(&error, f),
-            Error::BitcoinBip34Error(error) => Display::fmt(&error, f),
-            Error::BitcoinFromScriptError(error) => Display::fmt(&error, f),
-            Error::BitcoinHexError(error) => Display::fmt(&error, f),
-            Error::BitcoinHexToArrayError(error) => Display::fmt(&error, f),
-            Error::BitcoinRPC(error) => Display::fmt(&error, f),
-            Error::Fjall(error) => Display::fmt(&error, f),
-            Error::IO(error) => Display::fmt(&error, f),
-            Error::Jiff(error) => Display::fmt(&error, f),
-            Error::Minreq(error) => Display::fmt(&error, f),
-            Error::RawDB(error) => Display::fmt(&error, f),
-            Error::SerdeJSON(error) => Display::fmt(&error, f),
-            Error::SystemTimeError(error) => Display::fmt(&error, f),
-            Error::TokioJoin(error) => Display::fmt(&error, f),
-            Error::VecDB(error) => Display::fmt(&error, f),
-            Error::Vecs(error) => Display::fmt(&error, f),
-            Error::ZeroCopyError => write!(f, "ZeroCopy error"),
-            Error::WrongLength { expected, received } => write!(
-                f,
-                "Wrong length, expected: {expected}, received: {received}"
-            ),
-            Error::QuickCacheError => write!(f, "Quick cache error"),
-            Error::WrongAddressType => write!(f, "Wrong address type"),
-            Error::UnindexableDate => write!(
-                f,
-                "Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater"
-            ),
-
-            Error::InvalidTxid => write!(f, "The provided TXID appears to be invalid"),
-            Error::InvalidNetwork => write!(f, "Invalid network"),
-            Error::InvalidAddress => write!(f, "The provided address appears to be invalid"),
-            Error::MempoolNotAvailable => write!(f, "Mempool data is not available"),
-            Error::UnknownAddress => write!(
-                f,
-                "Address not found in the blockchain (no transaction history)"
-            ),
-            Error::UnknownTxid => write!(f, "Failed to find the TXID in the blockchain"),
-            Error::UnsupportedType(t) => write!(f, "Unsupported type ({t})"),
-
-            Error::Str(s) => write!(f, "{s}"),
-            Error::String(s) => write!(f, "{s}"),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
 
 impl Error {
     /// Returns true if this network/fetch error indicates a permanent/blocking condition

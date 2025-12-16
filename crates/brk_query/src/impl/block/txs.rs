@@ -28,7 +28,7 @@ impl Query {
 
         let max_height = self.height();
         if height > max_height {
-            return Err(Error::Str("Block height out of range"));
+            return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
         let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
@@ -64,7 +64,7 @@ impl Query {
 
         let max_height = self.height();
         if height > max_height {
-            return Err(Error::Str("Block height out of range"));
+            return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
         let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
@@ -101,7 +101,7 @@ impl Query {
 
         let max_height = self.height();
         if height > max_height {
-            return Err(Error::Str("Block height out of range"));
+            return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
         let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
@@ -117,7 +117,7 @@ impl Query {
         let tx_count = next - first;
 
         if index >= tx_count {
-            return Err(Error::Str("Transaction index out of range"));
+            return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
 
         let txindex = TxIndex::from(first + index);

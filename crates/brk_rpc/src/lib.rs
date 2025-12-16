@@ -8,7 +8,7 @@ use bitcoincore_rpc::{
     json::{GetBlockHeaderResult, GetBlockResult, GetBlockchainInfoResult, GetTxOutResult},
     {Client as CoreClient, Error as RpcError, RpcApi},
 };
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_types::{
     BlockHash, Height, MempoolEntryInfo, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid,
     Vout,
@@ -262,7 +262,7 @@ impl Client {
                 let mut hash = block_info
                     .previous_block_hash
                     .map(BlockHash::from)
-                    .ok_or("Genesis block has no previous block")?;
+                    .ok_or(Error::NotFound("Genesis block has no previous block".into()))?;
 
                 loop {
                     if self.is_in_main_chain(&hash)? {
@@ -274,10 +274,10 @@ impl Client {
                     hash = info
                         .previous_block_hash
                         .map(BlockHash::from)
-                        .ok_or("Reached genesis without finding main chain")?;
+                        .ok_or(Error::NotFound("Reached genesis without finding main chain".into()))?;
                 }
             }
-            Err(_) => Err("Block hash not found in blockchain".into()),
+            Err(_) => Err(Error::NotFound("Block hash not found in blockchain".into())),
         }
     }
 

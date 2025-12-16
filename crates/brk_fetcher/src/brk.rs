@@ -34,7 +34,7 @@ impl BRK {
             .unwrap()
             .get(usize::from(height.checked_sub(key).unwrap()))
             .cloned()
-            .ok_or(Error::Str("Couldn't find height in BRK"))
+            .ok_or(Error::NotFound("Couldn't find height in BRK".into()))
     }
 
     fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCents>> {
@@ -49,7 +49,7 @@ impl BRK {
             let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
 
             body.as_array()
-                .ok_or(Error::Str("Expect to be an array"))?
+                .ok_or(Error::Parse("Expected JSON array".into()))?
                 .iter()
                 .map(Self::value_to_ohlc)
                 .collect::<Result<Vec<_>, _>>()
@@ -74,7 +74,7 @@ impl BRK {
             .unwrap()
             .get(usize::from(dateindex.checked_sub(key).unwrap()))
             .cloned()
-            .ok_or(Error::Str("Couldn't find date in BRK"))
+            .ok_or(Error::NotFound("Couldn't find date in BRK".into()))
     }
 
     fn fetch_date_prices(dateindex: DateIndex) -> Result<Vec<OHLCCents>> {
@@ -89,7 +89,7 @@ impl BRK {
             let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
 
             body.as_array()
-                .ok_or(Error::Str("Expect to be an array"))?
+                .ok_or(Error::Parse("Expected JSON array".into()))?
                 .iter()
                 .map(Self::value_to_ohlc)
                 .collect::<Result<Vec<_>, _>>()
@@ -99,14 +99,14 @@ impl BRK {
     fn value_to_ohlc(value: &Value) -> Result<OHLCCents> {
         let ohlc = value
             .as_array()
-            .ok_or(Error::Str("Expect as_array to work"))?;
+            .ok_or(Error::Parse("Expected OHLC array".into()))?;
 
         let get_value = |index: usize| -> Result<_> {
             Ok(Cents::from(Dollars::from(
                 ohlc.get(index)
-                    .ok_or(Error::Str("Expect index key to work"))?
+                    .ok_or(Error::Parse("Missing OHLC value at index".into()))?
                     .as_f64()
-                    .ok_or(Error::Str("Expect as_f64 to work"))?,
+                    .ok_or(Error::Parse("Invalid OHLC value type".into()))?,
             )))
         };
 

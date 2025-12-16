@@ -38,7 +38,7 @@ pub fn compute_ohlc_from_range(
     let last_ohlc = tree.get(&timestamp);
 
     if previous_ohlc.is_none() || last_ohlc.is_none() {
-        return Err(Error::String(format!(
+        return Err(Error::NotFound(format!(
             "Couldn't find timestamp in {source_name}"
         )));
     }

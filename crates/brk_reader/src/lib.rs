@@ -14,7 +14,7 @@ use std::{
 
 use bitcoin::{block::Header, consensus::Decodable};
 use blk_index_to_blk_path::*;
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_rpc::Client;
 use brk_types::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
@@ -88,7 +88,7 @@ impl ReaderInner {
         let blk_paths = self.blk_index_to_blk_path();
         let blk_path = blk_paths
             .get(&position.blk_index())
-            .ok_or("Blk file not found")?;
+            .ok_or(Error::NotFound("Blk file not found".into()))?;
 
         let mut file = File::open(blk_path)?;
         file.seek(SeekFrom::Start(position.offset() as u64))?;
@@ -361,7 +361,7 @@ impl ReaderInner {
 
         loop {
             if file.read_exact(&mut byte_buffer).is_err() {
-                return Err("No magic bytes found".into());
+                return Err(Error::NotFound("No magic bytes found".into()));
             }
 
             current_4bytes.rotate_left(1);

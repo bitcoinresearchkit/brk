@@ -98,7 +98,7 @@ impl Query {
             .pools
             .vecs
             .get(&slug)
-            .ok_or_else(|| Error::Str("Pool data not found"))?;
+            .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
 
         let mut cumulative = pool_vecs
             .indexes_to_blocks_mined

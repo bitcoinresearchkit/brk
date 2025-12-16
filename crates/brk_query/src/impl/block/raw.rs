@@ -24,7 +24,7 @@ impl Query {
                 .saturating_sub(1),
         );
         if height > max_height {
-            return Err(Error::Str("Block height out of range"));
+            return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
         let position = computer.blks.height_to_position.read_once(height)?;

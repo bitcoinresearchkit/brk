@@ -76,7 +76,7 @@ impl<'a> BlockProcessor<'a> {
             .is_some_and(|prev_height| *prev_height != height)
         {
             error!("BlockHash: {blockhash}");
-            return Err(Error::Str("Collision, expect prefix to need be set yet"));
+            return Err(Error::Internal("BlockHash prefix collision"));
         }
 
         self.indexes.push_if_needed(self.vecs)?;
@@ -234,7 +234,7 @@ impl<'a> BlockProcessor<'a> {
                         .tx
                         .txindex_to_first_txoutindex
                         .get_pushed_or_read(prev_txindex, &self.readers.txindex_to_first_txoutindex)?
-                        .ok_or(Error::Str("Expect txoutindex to not be none"))?
+                        .ok_or(Error::Internal("Missing txoutindex"))?
                         + vout;
 
                     let outpoint = OutPoint::new(prev_txindex, vout);
@@ -243,7 +243,7 @@ impl<'a> BlockProcessor<'a> {
                         .txout
                         .txoutindex_to_outputtype
                         .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_outputtype)?
-                        .ok_or(Error::Str("Expect outputtype to not be none"))?;
+                        .ok_or(Error::Internal("Missing outputtype"))?;
 
                     let address_info = if outputtype.is_address() {
                         let typeindex = self
@@ -251,7 +251,7 @@ impl<'a> BlockProcessor<'a> {
                             .txout
                             .txoutindex_to_typeindex
                             .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_typeindex)?
-                            .ok_or(Error::Str("Expect typeindex to not be none"))?;
+                            .ok_or(Error::Internal("Missing typeindex"))?;
                         Some((outputtype, typeindex))
                     } else {
                         None
@@ -358,7 +358,7 @@ impl<'a> BlockProcessor<'a> {
                         )?;
                         let prev_addressbytes = prev_addressbytes_opt
                             .as_ref()
-                            .ok_or(Error::Str("Expect to have addressbytes"))?;
+                            .ok_or(Error::Internal("Missing addressbytes"))?;
 
                         if self
                             .stores
@@ -574,7 +574,7 @@ impl<'a> BlockProcessor<'a> {
                     } else {
                         let outputtype_typeindex = same_block_output_info
                             .remove(&outpoint)
-                            .ok_or(Error::Str("should have found addressindex from same block"))
+                            .ok_or(Error::Internal("Same-block addressindex not found"))
                             .inspect_err(|_| {
                                 dbg!(&same_block_output_info, txin);
                             })?;
@@ -646,7 +646,7 @@ impl<'a> BlockProcessor<'a> {
             let len = self.vecs.tx.txindex_to_txid.len();
             let prev_txid = txindex_to_txid_iter
                 .get(prev_txindex)
-                .ok_or(Error::Str("To have txid for txindex"))
+                .ok_or(Error::Internal("Missing txid for txindex"))
                 .inspect_err(|_| {
                     dbg!(ct.txindex, len);
                 })?;
@@ -655,7 +655,7 @@ impl<'a> BlockProcessor<'a> {
 
             if !is_dup {
                 dbg!(self.height, ct.txindex, prev_txid, prev_txindex);
-                return Err(Error::Str("Expect none"));
+                return Err(Error::Internal("Unexpected TXID collision"));
             }
         }
 

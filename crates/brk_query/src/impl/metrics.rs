@@ -25,17 +25,16 @@ impl Query {
         // Check if metric exists but with different indexes
         if let Some(indexes) = self.vecs().metric_to_indexes(metric.clone()) {
             let index_list: Vec<_> = indexes.iter().map(|i| i.to_string()).collect();
-            return Error::String(format!(
-                "'{metric}' doesn't support the requested index. Supported indexes: {}",
-                index_list.join(", ")
-            ));
+            return Error::MetricUnsupportedIndex {
+                metric: metric.to_string(),
+                supported: index_list.join(", "),
+            };
         }
 
         // Metric doesn't exist, suggest alternatives
-        if let Some(first) = self.match_metric(metric, Limit::MIN).first() {
-            Error::String(format!("Could not find '{metric}', did you mean '{first}'?"))
-        } else {
-            Error::String(format!("Could not find '{metric}'."))
+        Error::MetricNotFound {
+            metric: metric.to_string(),
+            suggestion: self.match_metric(metric, Limit::MIN).first().map(|s| s.to_string()),
         }
     }
 
@@ -161,7 +160,7 @@ impl Query {
     /// Returns error if no metrics requested or any requested metric is not found.
     pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
         if params.metrics.is_empty() {
-            return Err(Error::String("No metrics specified".to_string()));
+            return Err(Error::NoMetrics);
         }
         let mut vecs = Vec::with_capacity(params.metrics.len());
         for metric in params.metrics.iter() {
@@ -195,9 +194,10 @@ impl Query {
 
         let weight = Self::weight(&vecs, params.from(), params.to_for_len(metric.len()));
         if weight > max_weight {
-            return Err(Error::String(format!(
-                "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"
-            )));
+            return Err(Error::WeightExceeded {
+                requested: weight,
+                max: max_weight,
+            });
         }
 
         self.format(*metric, &params.range)
@@ -219,9 +219,10 @@ impl Query {
         let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
         let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
         if weight > max_weight {
-            return Err(Error::String(format!(
-                "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"
-            )));
+            return Err(Error::WeightExceeded {
+                requested: weight,
+                max: max_weight,
+            });
         }
 
         self.format_bulk(&vecs, &params.range)

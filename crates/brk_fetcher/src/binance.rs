@@ -88,7 +88,7 @@ impl Binance {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(Error::Str("Couldn't find date"))
+            .ok_or(Error::NotFound("Couldn't find date".into()))
     }
 
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
@@ -102,7 +102,7 @@ impl Binance {
 
     fn read_har(&self) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         if self.path.is_none() {
-            return Err(Error::Str("Path missing"));
+            return Err(Error::NotFound("HAR path not configured".into()));
         }
 
         info!("Reading Binance har file...");
@@ -116,7 +116,7 @@ impl Binance {
         let file = if let Ok(file) = File::open(path_binance_har) {
             file
         } else {
-            return Err(Error::Str("Missing binance file"));
+            return Err(Error::NotFound("Binance HAR file not found".into()));
         };
 
         let reader = BufReader::new(file);
@@ -128,13 +128,13 @@ impl Binance {
         };
 
         json.get("log")
-            .ok_or(Error::Str("Expect object to have log attribute"))?
+            .ok_or(Error::Parse("HAR missing 'log' field".into()))?
             .as_object()
-            .ok_or(Error::Str("Expect to be an object"))?
+            .ok_or(Error::Parse("HAR 'log' is not an object".into()))?
             .get("entries")
-            .ok_or(Error::Str("Expect object to have entries"))?
+            .ok_or(Error::Parse("HAR missing 'entries' field".into()))?
             .as_array()
-            .ok_or(Error::Str("Expect to be an array"))?
+            .ok_or(Error::Parse("HAR 'entries' is not an array".into()))?
             .iter()
             .filter(|entry| {
                 entry
@@ -180,7 +180,7 @@ impl Binance {
     fn parse_ohlc_array(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         let result = json
             .as_array()
-            .ok_or(Error::Str("Expected JSON array"))?
+            .ok_or(Error::Parse("Expected JSON array".into()))?
             .iter()
             .filter_map(|v| v.as_array())
             .map(|arr| {

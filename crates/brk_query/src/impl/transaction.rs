@@ -213,7 +213,7 @@ impl Query {
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
         let mut cursor = Cursor::new(buffer);
         let tx = bitcoin::Transaction::consensus_decode(&mut cursor)
-            .map_err(|_| Error::Str("Failed to decode transaction"))?;
+            .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
 
         // For iterating through inputs, we need iterators (multiple lookups)
         let mut txindex_to_txid_iter = indexer.vecs.tx.txindex_to_txid.iter()?;

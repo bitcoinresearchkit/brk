@@ -853,19 +853,33 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
+        // ---
+        // TxInIndex
+        // ---
+
+        let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
+        let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
         let txoutindex_to_value = &indexer.vecs.txout.txoutindex_to_value;
         let txoutindex_to_value_reader = indexer.vecs.txout.txoutindex_to_value.create_reader();
         self.txinindex_to_value.compute_transform(
             starting_indexes.txinindex,
-            &indexes.txinindex_to_txoutindex,
-            |(txinindex, txoutindex, ..)| {
-                let value = if txoutindex == TxOutIndex::COINBASE {
-                    Sats::MAX
+            &indexer.vecs.txin.txinindex_to_outpoint,
+            |(txinindex, outpoint, ..)| {
+                if unlikely(outpoint.is_coinbase()) {
+                    return (txinindex, Sats::MAX);
+                }
+                let txoutindex = txindex_to_first_txoutindex
+                    .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
+                    + outpoint.vout();
+
+                let value = if unlikely(txoutindex == TxOutIndex::COINBASE) {
+                    unreachable!()
                 } else {
                     txoutindex_to_value
                         .unchecked_read(txoutindex, &txoutindex_to_value_reader)
                         .unwrap()
                 };
+
                 (txinindex, value)
             },
             exit,

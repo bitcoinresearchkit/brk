@@ -8,10 +8,14 @@
 #![allow(dead_code)]
 
 use brk_error::Result;
-use brk_types::{BlockFeeRatesEntry, FeeRatePercentiles, TimePeriod};
-use vecdb::{IterableVec, VecIndex};
+use brk_types::{
+    BlockFeeRatesEntry,
+    // FeeRatePercentiles,
+    TimePeriod,
+};
+// use vecdb::{IterableVec, VecIndex};
 
-use super::dateindex_iter::DateIndexIter;
+// use super::dateindex_iter::DateIndexIter;
 use crate::Query;
 
 impl Query {

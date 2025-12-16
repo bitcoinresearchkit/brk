@@ -17,7 +17,7 @@ impl Query {
 
         let max_height = self.max_height();
         if height > max_height {
-            return Err(Error::Str("Block height out of range"));
+            return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
         let blockhash = indexer.vecs.block.height_to_blockhash.read_once(height)?;
@@ -68,7 +68,7 @@ impl Query {
             .blockhashprefix_to_height
             .get(&prefix)?
             .map(|h| *h)
-            .ok_or(Error::Str("Block not found"))
+            .ok_or(Error::NotFound("Block not found".into()))
     }
 
     fn max_height(&self) -> Height {

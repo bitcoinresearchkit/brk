@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_types::TxIndex;
-use vecdb::{AnyStoredVec, Exit, GenericStoredVec};
+use vecdb::{Exit, GenericStoredVec};
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -61,18 +61,7 @@ fn run() -> Result<()> {
         .txindex_to_output_count
         .read_once(txindex)?;
     dbg!(output_count);
-    let _ = dbg!(
-        computer
-            .indexes
-            .txinindex_to_txoutindex
-            .read_once(first_txinindex)
-    );
-    let _ = dbg!(
-        computer
-            .indexes
-            .txinindex_to_txoutindex
-            .read_once(first_txinindex + 1)
-    );
+
     let _ = dbg!(computer.chain.txinindex_to_value.read_once(first_txinindex));
     let _ = dbg!(
         computer
@@ -98,13 +87,6 @@ fn run() -> Result<()> {
     let _ = dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
     let _ = dbg!(computer.chain.txindex_to_output_value.read_once(txindex));
     // dbg!(computer.indexes.txindex_to_txindex.ge(txindex));
-    dbg!(
-        computer
-            .indexes
-            .txinindex_to_txoutindex
-            .region()
-            .meta()
-            .len()
-    );
+
     Ok(())
 }

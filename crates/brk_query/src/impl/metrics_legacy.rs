@@ -64,9 +64,10 @@ impl Query {
         let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
         let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
         if weight > max_weight {
-            return Err(Error::String(format!(
-                "Request too heavy: {weight} bytes exceeds limit of {max_weight} bytes"
-            )));
+            return Err(Error::WeightExceeded {
+                requested: weight,
+                max: max_weight,
+            });
         }
 
         self.format_legacy(&vecs, &params.range)

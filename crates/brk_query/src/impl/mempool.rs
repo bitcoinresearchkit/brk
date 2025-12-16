@@ -5,12 +5,12 @@ use crate::Query;
 
 impl Query {
     pub fn mempool_info(&self) -> Result<MempoolInfo> {
-        let mempool = self.mempool().ok_or(Error::Str("Mempool not available"))?;
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         Ok(mempool.get_info())
     }
 
     pub fn mempool_txids(&self) -> Result<Vec<Txid>> {
-        let mempool = self.mempool().ok_or(Error::Str("Mempool not available"))?;
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         let txs = mempool.get_txs();
         Ok(txs.keys().cloned().collect())
     }
@@ -22,7 +22,7 @@ impl Query {
     }
 
     pub fn mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
-        let mempool = self.mempool().ok_or(Error::Str("Mempool not available"))?;
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
 
         let block_stats = mempool.get_block_stats();
 

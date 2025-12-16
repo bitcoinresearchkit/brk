@@ -647,6 +647,7 @@ dependencies = [
  "jiff",
  "minreq",
  "serde_json",
+ "thiserror 2.0.17",
  "tokio",
  "vecdb",
 ]
@@ -4189,7 +4190,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.4.0"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abd96eb8d340052584b01120ce302e283b9176b278b5b5944a5f0fc00493f861"
 dependencies = [
  "libc",
  "log",
@@ -5370,7 +5373,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.4.0"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "371b5a52a650ac0661a56ceae92e8af88e7930448ae9d3bb29c68a71437dc5d4"
 dependencies = [
  "ctrlc",
  "log",
@@ -5388,7 +5393,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.4.0"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f035c1c36fae53aeed226bdda0009292294986ea0ed6a932535cacdbec08d73d"
 dependencies = [
  "quote",
  "syn 2.0.111",

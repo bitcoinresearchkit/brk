@@ -146,7 +146,7 @@ How to fix this:
             }
         }
 
-        Err(Error::String(error_message()))
+        Err(Error::FetchFailed(error_message()))
     }
 
     fn clear_caches(&mut self) {

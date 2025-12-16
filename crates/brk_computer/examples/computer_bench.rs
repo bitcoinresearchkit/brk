@@ -9,7 +9,7 @@ use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
-use vecdb::{AnyStoredVec, Exit};
+use vecdb::Exit;
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -44,15 +44,6 @@ fn run() -> Result<()> {
     let fetcher = Fetcher::import(true, None)?;
 
     let mut computer = Computer::forced_import(&outputs_benches_dir, &indexer, Some(fetcher))?;
-
-    dbg!(
-        computer
-            .indexes
-            .txinindex_to_txoutindex
-            .region()
-            .meta()
-            .reserved()
-    );
 
     let mut bencher =
         Bencher::from_cargo_env(env!("CARGO_PKG_NAME"), &outputs_dir.join("computed"))?;

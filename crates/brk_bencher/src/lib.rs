@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 
 mod disk;
 mod io;
@@ -84,7 +84,7 @@ impl Bencher {
 
             current = current
                 .parent()
-                .ok_or("Workspace root not found")?
+                .ok_or(Error::NotFound("Workspace root not found".into()))?
                 .to_path_buf();
         };
 
@@ -94,7 +94,7 @@ impl Bencher {
     /// Start monitoring disk usage and memory footprint
     pub fn start(&mut self) -> Result<()> {
         if self.0.monitor_thread.lock().is_some() {
-            return Err("Bencher already started".into());
+            return Err(Error::Internal("Bencher already started"));
         }
 
         let stop_flag = self.0.stop_flag.clone();
@@ -113,7 +113,7 @@ impl Bencher {
         self.0.stop_flag.store(true, Ordering::Relaxed);
 
         if let Some(handle) = self.0.monitor_thread.lock().take() {
-            handle.join().map_err(|_| "Monitor thread panicked")??;
+            handle.join().map_err(|_| Error::Internal("Monitor thread panicked"))??;
         }
 
         self.0.progression.flush()?;

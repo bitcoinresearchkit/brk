@@ -179,7 +179,7 @@ impl TryFrom<&str> for Index {
             v if (Self::EmptyAddressIndex).possible_values().contains(&v) => {
                 Self::EmptyAddressIndex
             }
-            _ => return Err(Error::Str("Bad index")),
+            _ => return Err(Error::Parse(format!("Invalid index: {value}"))),
         })
     }
 }

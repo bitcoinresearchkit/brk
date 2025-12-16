@@ -159,7 +159,7 @@ where
     /// Compute percentiles from sorted values (assumes values is already sorted)
     fn compute_percentiles_from_sorted(&mut self, index: usize, values: &[T]) -> Result<()> {
         if let Some(max) = self.max.as_mut() {
-            max.truncate_push_at(index, *values.last().ok_or(Error::Str("expect some"))?)?;
+            max.truncate_push_at(index, *values.last().ok_or(Error::Internal("Empty values for percentiles"))?)?;
         }
         if let Some(pct90) = self.pct90.as_mut() {
             pct90.truncate_push_at(index, get_percentile(values, 0.90))?;

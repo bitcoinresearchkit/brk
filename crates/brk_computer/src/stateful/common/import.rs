@@ -821,7 +821,7 @@ impl Vecs {
 
             Ok(prev_height.incremented())
         } else {
-            Err(Error::Str("Unset"))
+            Err(Error::Internal("No previous height to import state from"))
         }
     }
 

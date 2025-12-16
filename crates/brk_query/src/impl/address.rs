@@ -37,7 +37,7 @@ impl Query {
         let outputtype = OutputType::from(&script);
         dbg!(outputtype);
         let Ok(bytes) = AddressBytes::try_from((&script, outputtype)) else {
-            return Err(Error::Str("Failed to convert the address to bytes"));
+            return Err(Error::InvalidAddress);
         };
         let addresstype = outputtype;
         let hash = AddressHash::from(&bytes);
@@ -116,8 +116,8 @@ impl Query {
             let txindex = stores
                 .txidprefix_to_txindex
                 .get(&after_txid.into())
-                .map_err(|_| Error::Str("Failed to look up after_txid"))?
-                .ok_or(Error::Str("after_txid not found"))?
+                .map_err(|_| Error::UnknownTxid)?
+                .ok_or(Error::UnknownTxid)?
                 .into_owned();
             Some(txindex)
         } else {
@@ -202,7 +202,7 @@ impl Query {
     }
 
     pub fn address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
-        let mempool = self.mempool().ok_or(Error::Str("Mempool not available"))?;
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
 
         let bytes = AddressBytes::from_str(&address)?;
         let addresses = mempool.get_addresses();

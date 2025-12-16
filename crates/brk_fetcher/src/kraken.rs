@@ -53,7 +53,7 @@ impl Kraken {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(Error::Str("Couldn't find date"))
+            .ok_or(Error::NotFound("Couldn't find date".into()))
     }
 
     pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
@@ -71,7 +71,7 @@ impl Kraken {
             .get("result")
             .and_then(|r| r.get("XXBTZUSD"))
             .and_then(|v| v.as_array())
-            .ok_or(Error::Str("Invalid Kraken response format"))?
+            .ok_or(Error::Parse("Invalid Kraken response format".into()))?
             .iter()
             .filter_map(|v| v.as_array())
             .map(|arr| {
