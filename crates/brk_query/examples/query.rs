@@ -62,21 +62,19 @@ fn run() -> Result<()> {
             .approximate_len()
     );
 
-    let _ = dbg!(query.address(Address {
-        address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
-    }));
+    let _ = dbg!(query.address(Address::from(
+        "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
+    )));
 
     let _ = dbg!(query.address_txids(
-        Address {
-            address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
-        },
+        Address::from("bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()),
         None,
         25
     ));
 
-    let _ = dbg!(query.address_utxos(Address {
-        address: "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
-    }));
+    let _ = dbg!(query.address_utxos(Address::from(
+        "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()
+    )));
 
     // dbg!(query.search_and_format(MetricSelection {
     //     index: Index::Height,

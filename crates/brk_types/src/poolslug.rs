@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::{Bytes, Formattable};
 
-// Created from the list in `pools.rs`
-// Can be used as index for said list
+// Slug of a mining pool
 #[allow(clippy::upper_case_acronyms)]
 #[derive(
     Debug,

@@ -13,64 +13,38 @@ use super::{
     SemesterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 
-/// Aggregation dimension for querying Bitcoin blockchain data
+/// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
+/// block-based (height, txindex), and address/output type indexes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[schemars(example = Index::DateIndex)]
 pub enum Index {
-    /// Date/day index
     DateIndex,
-    /// Decade index
     DecadeIndex,
-    /// Difficulty epoch index (equivalent to ~2 weeks)
     DifficultyEpoch,
-    /// Empty output index
     EmptyOutputIndex,
-    /// Halving epoch index (equivalent to ~4 years)
     HalvingEpoch,
-    /// Height/block index
     Height,
-    /// Transaction input index (based on total)
     TxInIndex,
-    /// Month index
     MonthIndex,
-    /// Op return index
     OpReturnIndex,
-    /// Transaction output index (based on total)
     TxOutIndex,
-    /// Index of P2A address
     P2AAddressIndex,
-    /// Index of P2MS output
     P2MSOutputIndex,
-    /// Index of P2PK (33 bytes) address
     P2PK33AddressIndex,
-    /// Index of P2PK (65 bytes) address
     P2PK65AddressIndex,
-    /// Index of P2PKH address
     P2PKHAddressIndex,
-    /// Index of P2SH address
     P2SHAddressIndex,
-    /// Index of P2TR address
     P2TRAddressIndex,
-    /// Index of P2WPKH address
     P2WPKHAddressIndex,
-    /// Index of P2WSH address
     P2WSHAddressIndex,
-    /// Quarter index
     QuarterIndex,
-    /// Semester index
     SemesterIndex,
-    /// Transaction index
     TxIndex,
-    /// Unknown output index
     UnknownOutputIndex,
-    /// Week index
     WeekIndex,
-    /// Year index
     YearIndex,
-    /// Loaded Address Index
     LoadedAddressIndex,
-    /// Empty Address Index
     EmptyAddressIndex,
 }
 

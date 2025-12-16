@@ -6,11 +6,10 @@ use serde::Deserialize;
 
 use super::Metric;
 
+/// A list of metrics
 #[derive(Debug, Deref, JsonSchema)]
-pub struct Metrics {
-    /// A list of metrics
-    metrics: Vec<Metric>,
-}
+#[schemars(transparent)]
+pub struct Metrics(Vec<Metric>);
 
 const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
@@ -18,9 +17,7 @@ const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 impl From<Metric> for Metrics {
     #[inline]
     fn from(metric: Metric) -> Self {
-        Self {
-            metrics: vec![metric],
-        }
+        Self(vec![metric])
     }
 }
 
@@ -34,12 +31,12 @@ impl From<String> for Metrics {
 impl<'a> From<Vec<&'a str>> for Metrics {
     #[inline]
     fn from(value: Vec<&'a str>) -> Self {
-        Self {
-            metrics: value
+        Self(
+            value
                 .iter()
                 .map(|s| Metric::from(s.replace("-", "_").to_lowercase()))
                 .collect::<Vec<_>>(),
-        }
+        )
     }
 }
 
@@ -52,23 +49,23 @@ impl<'de> Deserialize<'de> for Metrics {
 
         if let Some(str) = value.as_str() {
             if str.len() <= MAX_STRING_SIZE {
-                Ok(Self {
-                    metrics: sanitize(str.split(",").map(|s| s.to_string()))
+                Ok(Self(
+                    sanitize(str.split(",").map(|s| s.to_string()))
                         .into_iter()
                         .map(Metric::from)
                         .collect(),
-                })
+                ))
             } else {
                 Err(serde::de::Error::custom("Given parameter is too long"))
             }
         } else if let Some(vec) = value.as_array() {
             if vec.len() <= MAX_VECS {
-                Ok(Self {
-                    metrics: sanitize(vec.iter().map(|s| s.as_str().unwrap().to_string()))
+                Ok(Self(
+                    sanitize(vec.iter().map(|s| s.as_str().unwrap().to_string()))
                         .into_iter()
                         .map(Metric::from)
                         .collect(),
-                })
+                ))
             } else {
                 Err(serde::de::Error::custom("Given parameter is too long"))
             }
@@ -81,7 +78,7 @@ impl<'de> Deserialize<'de> for Metrics {
 impl fmt::Display for Metrics {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self
-            .metrics
+            .0
             .iter()
             .map(|m| m.to_string())
             .collect::<Vec<_>>()

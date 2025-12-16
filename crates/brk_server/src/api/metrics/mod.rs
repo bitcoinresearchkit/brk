@@ -116,6 +116,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
                 |op| op
                     .metrics_tag()
+                    // .path_param::<Metric>()
                     .summary("Search metrics")
                     .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
                     .ok_response::<Vec<String>>()

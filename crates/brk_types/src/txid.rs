@@ -14,6 +14,7 @@ use vecdb::{Bytes, Formattable};
     example = "9a0b3b8305bb30cacf9e8443a90d53a76379fb3305047fdeaa4e4b0934a2a1ba"
 )]
 #[repr(C)]
+#[schemars(transparent, with = "String")]
 pub struct Txid([u8; 32]);
 
 impl Txid {

@@ -15,7 +15,7 @@ use crate::Query;
 const MAX_MEMPOOL_TXIDS: usize = 50;
 
 impl Query {
-    pub fn address(&self, Address { address }: Address) -> Result<AddressStats> {
+    pub fn address(&self, address: Address) -> Result<AddressStats> {
         let indexer = self.indexer();
         let computer = self.computer();
         let stores = &indexer.stores;
@@ -74,7 +74,7 @@ impl Query {
         };
 
         Ok(AddressStats {
-            address: address.into(),
+            address,
             chain_stats: AddressChainStats {
                 type_index,
                 funded_txo_count: address_data.funded_txo_count,
@@ -204,7 +204,7 @@ impl Query {
     pub fn address_mempool_txids(&self, address: Address) -> Result<Vec<Txid>> {
         let mempool = self.mempool().ok_or(Error::Str("Mempool not available"))?;
 
-        let bytes = AddressBytes::from_str(&address.address)?;
+        let bytes = AddressBytes::from_str(&address)?;
         let addresses = mempool.get_addresses();
 
         let txids: Vec<Txid> = addresses
@@ -219,7 +219,7 @@ impl Query {
     fn resolve_address(&self, address: &Address) -> Result<(OutputType, TypeIndex)> {
         let stores = &self.indexer().stores;
 
-        let bytes = AddressBytes::from_str(&address.address)?;
+        let bytes = AddressBytes::from_str(address)?;
         let outputtype = OutputType::from(&bytes);
         let hash = AddressHash::from(&bytes);
 

@@ -1,34 +1,44 @@
-use std::fmt::Display;
+use std::{borrow::Cow, fmt::Display};
 
 use derive_deref::Deref;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deref, Deserialize, JsonSchema)]
-pub struct Metric {
-    /// Metric name
-    #[schemars(example = &"price_close", example = &"market_cap", example = &"realized_price")]
-    metric: String,
-}
+/// Metric name
+#[derive(Debug, Clone, Deref, Deserialize)]
+#[serde(transparent)]
+pub struct Metric(String);
 
 impl From<String> for Metric {
     #[inline]
     fn from(metric: String) -> Self {
-        Self { metric }
+        Self(metric)
     }
 }
 
 impl From<&str> for Metric {
     #[inline]
     fn from(metric: &str) -> Self {
-        Self {
-            metric: metric.to_string(),
-        }
+        Self(metric.to_owned())
     }
 }
 
 impl Display for Metric {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.metric)
+        write!(f, "{}", self.0)
+    }
+}
+
+impl JsonSchema for Metric {
+    fn schema_name() -> Cow<'static, str> {
+        Cow::Borrowed("Metric")
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "type": "string",
+            "description": "Metric name",
+            "examples": ["price_close", "market_cap", "realized_price"]
+        })
     }
 }

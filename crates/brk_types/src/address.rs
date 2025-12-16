@@ -1,32 +1,49 @@
-use std::{fmt, str::FromStr};
+use std::{borrow::Cow, fmt, str::FromStr};
 
 use bitcoin::ScriptBuf;
 use brk_error::Error;
 use derive_deref::Deref;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Serialize, Serializer};
 
 use crate::AddressBytes;
 
 use super::OutputType;
 
-#[derive(Debug, Deref, Deserialize, JsonSchema)]
-pub struct Address {
-    /// Bitcoin address string
-    #[schemars(example = &"04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")]
-    pub address: String,
+/// Bitcoin address string
+#[derive(Debug, Deref, Deserialize)]
+pub struct Address(String);
+
+impl JsonSchema for Address {
+    fn schema_name() -> Cow<'static, str> {
+        Cow::Borrowed("Address")
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "type": "object",
+            "required": ["address"],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "description": "Bitcoin address string",
+                    "examples": ["04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"]
+                }
+            }
+        })
+    }
 }
 
 impl fmt::Display for Address {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.address)
+        f.write_str(&self.0)
     }
 }
 
 impl From<String> for Address {
     #[inline]
     fn from(address: String) -> Self {
-        Self { address }
+        Self(address)
     }
 }
 
@@ -41,9 +58,7 @@ impl TryFrom<(&ScriptBuf, OutputType)> for Address {
     type Error = Error;
     fn try_from((script, outputtype): (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
         if outputtype.is_address() {
-            Ok(Self {
-                address: script.to_hex_string(),
-            })
+            Ok(Self(script.to_hex_string()))
         } else {
             Err(Error::InvalidAddress)
         }
@@ -78,7 +93,7 @@ impl Serialize for Address {
     where
         S: Serializer,
     {
-        serializer.collect_str(&self.address)
+        serializer.collect_str(&self.0)
     }
 }
 
@@ -87,15 +102,13 @@ impl FromStr for Address {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let _ = AddressBytes::address_to_script(s)?;
-        Ok(Self {
-            address: s.to_string(),
-        })
+        Ok(Self(s.to_string()))
     }
 }
 
 impl Address {
     /// Get the script for this address
     pub fn script(&self) -> Result<ScriptBuf, Error> {
-        AddressBytes::address_to_script(&self.address)
+        AddressBytes::address_to_script(&self.0)
     }
 }

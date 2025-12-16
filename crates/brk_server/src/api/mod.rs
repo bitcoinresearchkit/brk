@@ -51,7 +51,11 @@ impl ApiRoutes for ApiRouter<AppState> {
                 "/version",
                 get_with(
                     async |headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Static, |_| Ok(env!("CARGO_PKG_VERSION"))).await
+                        state
+                            .cached_json(&headers, CacheStrategy::Static, |_| {
+                                Ok(env!("CARGO_PKG_VERSION"))
+                            })
+                            .await
                     },
                     |op| {
                         op.server_tag()
