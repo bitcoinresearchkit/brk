@@ -43,6 +43,14 @@ impl PriceToAmount {
         self.state.u().iter()
     }
 
+    /// Iterate over entries in a price range with custom bounds.
+    pub fn range<R: std::ops::RangeBounds<Dollars>>(
+        &self,
+        range: R,
+    ) -> impl Iterator<Item = (&Dollars, &Sats)> {
+        self.state.u().range(range)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.state.u().is_empty()
     }

@@ -2,14 +2,13 @@
 //!
 //! This state is maintained in memory during block processing and periodically flushed.
 
-use std::cmp::Ordering;
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{CheckedSub, Dollars, Height, Sats};
+use brk_types::{Dollars, Height, Sats};
 
 use crate::{
-    PriceToAmount, RealizedState, SupplyState, UnrealizedState,
+    CachedUnrealizedState, PriceToAmount, RealizedState, SupplyState, UnrealizedState,
     grouped::{PERCENTILES, PERCENTILES_LEN},
     utils::OptionExt,
 };
@@ -34,6 +33,9 @@ pub struct CohortState {
 
     /// Price distribution for percentile calculations (requires price data)
     price_to_amount: Option<PriceToAmount>,
+
+    /// Cached unrealized state for O(k) incremental updates.
+    cached_unrealized: Option<CachedUnrealizedState>,
 }
 
 impl CohortState {
@@ -46,11 +48,15 @@ impl CohortState {
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
             price_to_amount: compute_dollars.then_some(PriceToAmount::create(path, name)),
+            cached_unrealized: None,
         }
     }
 
     /// Import state from checkpoint.
     pub fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
+        // Invalidate cache when importing new data
+        self.cached_unrealized = None;
+
         match self.price_to_amount.as_mut() {
             Some(p) => p.import_at_or_before(height),
             None => Ok(height),
@@ -63,6 +69,8 @@ impl CohortState {
             p.clean()?;
             p.init();
         }
+        // Invalidate cache when data is reset
+        self.cached_unrealized = None;
         Ok(())
     }
 
@@ -91,11 +99,20 @@ impl CohortState {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.increment(supply, price);
-                self.price_to_amount.as_mut().unwrap().increment(price, supply);
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.increment(supply, price);
+            self.price_to_amount
+                .as_mut()
+                .unwrap()
+                .increment(price, supply);
+
+            // Update cache for added supply
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_receive(price, supply.value);
             }
+        }
     }
 
     /// Add supply with pre-computed realized cap (for address cohorts).
@@ -108,10 +125,19 @@ impl CohortState {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut() {
-                realized.increment_(realized_cap);
-                self.price_to_amount.as_mut().unwrap().increment(realized_price, supply);
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.increment_(realized_cap);
+            self.price_to_amount
+                .as_mut()
+                .unwrap()
+                .increment(realized_price, supply);
+
+            // Update cache for added supply
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_receive(realized_price, supply.value);
             }
+        }
     }
 
     /// Remove supply from this cohort (e.g., when UTXO ages out of cohort).
@@ -119,11 +145,20 @@ impl CohortState {
         self.supply -= supply;
 
         if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.decrement(supply, price);
-                self.price_to_amount.as_mut().unwrap().decrement(price, supply);
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.decrement(supply, price);
+            self.price_to_amount
+                .as_mut()
+                .unwrap()
+                .decrement(price, supply);
+
+            // Update cache for removed supply
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_send(price, supply.value);
             }
+        }
     }
 
     /// Remove supply with pre-computed realized cap (for address cohorts).
@@ -136,20 +171,24 @@ impl CohortState {
         self.supply -= supply;
 
         if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut() {
-                realized.decrement_(realized_cap);
-                self.price_to_amount.as_mut().unwrap().decrement(realized_price, supply);
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.decrement_(realized_cap);
+            self.price_to_amount
+                .as_mut()
+                .unwrap()
+                .decrement(realized_price, supply);
+
+            // Update cache for removed supply
+            if let Some(cache) = self.cached_unrealized.as_mut() {
+                cache.on_send(realized_price, supply.value);
             }
+        }
     }
 
     /// Process received output (new UTXO in cohort).
     pub fn receive(&mut self, supply: &SupplyState, price: Option<Dollars>) {
-        self.receive_(
-            supply,
-            price,
-            price.map(|price| (price, supply)),
-            None,
-        );
+        self.receive_(supply, price, price.map(|price| (price, supply)), None);
     }
 
     /// Process received output with custom price_to_amount updates (for address cohorts).
@@ -163,20 +202,39 @@ impl CohortState {
         self.supply += supply;
 
         if supply.value > Sats::ZERO
-            && let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.receive(supply, price);
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.receive(supply, price);
 
-                if let Some((price, supply)) = price_to_amount_increment
-                    && supply.value.is_not_zero() {
-                        self.price_to_amount.as_mut().unwrap().increment(price, supply);
-                    }
+            if let Some((price, supply)) = price_to_amount_increment
+                && supply.value.is_not_zero()
+            {
+                self.price_to_amount
+                    .as_mut()
+                    .unwrap()
+                    .increment(price, supply);
 
-                if let Some((price, supply)) = price_to_amount_decrement
-                    && supply.value.is_not_zero() {
-                        self.price_to_amount.as_mut().unwrap().decrement(price, supply);
-                    }
+                // Update cache for added supply
+                if let Some(cache) = self.cached_unrealized.as_mut() {
+                    cache.on_receive(price, supply.value);
+                }
             }
+
+            if let Some((price, supply)) = price_to_amount_decrement
+                && supply.value.is_not_zero()
+            {
+                self.price_to_amount
+                    .as_mut()
+                    .unwrap()
+                    .decrement(price, supply);
+
+                // Update cache for removed supply
+                if let Some(cache) = self.cached_unrealized.as_mut() {
+                    cache.on_send(price, supply.value);
+                }
+            }
+        }
     }
 
     /// Process spent input (UTXO leaving cohort).
@@ -232,14 +290,32 @@ impl CohortState {
                 realized.send(supply, current_price, prev_price, older_than_hour);
 
                 if let Some((price, supply)) = price_to_amount_increment
-                    && supply.value.is_not_zero() {
-                        self.price_to_amount.as_mut().unwrap().increment(price, supply);
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount
+                        .as_mut()
+                        .unwrap()
+                        .increment(price, supply);
+
+                    // Update cache for added supply
+                    if let Some(cache) = self.cached_unrealized.as_mut() {
+                        cache.on_receive(price, supply.value);
                     }
+                }
 
                 if let Some((price, supply)) = price_to_amount_decrement
-                    && supply.value.is_not_zero() {
-                        self.price_to_amount.as_mut().unwrap().decrement(price, supply);
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount
+                        .as_mut()
+                        .unwrap()
+                        .decrement(price, supply);
+
+                    // Update cache for removed supply
+                    if let Some(cache) = self.cached_unrealized.as_mut() {
+                        cache.on_send(price, supply.value);
                     }
+                }
             }
         }
     }
@@ -279,55 +355,39 @@ impl CohortState {
         result
     }
 
-    /// Compute unrealized profit/loss at current price (alias for compatibility).
-    pub fn compute_unrealized_states(
-        &self,
-        height_price: Dollars,
-        date_price: Option<Dollars>,
-    ) -> (UnrealizedState, Option<UnrealizedState>) {
-        self.compute_unrealized(height_price, date_price)
-    }
-
     /// Compute unrealized profit/loss at current price.
-    pub fn compute_unrealized(
-        &self,
+    /// Uses O(k) incremental updates for height_price where k = flip range size.
+    pub fn compute_unrealized_states(
+        &mut self,
         height_price: Dollars,
         date_price: Option<Dollars>,
     ) -> (UnrealizedState, Option<UnrealizedState>) {
         let price_to_amount = match self.price_to_amount.as_ref() {
             Some(p) if !p.is_empty() => p,
-            _ => return (UnrealizedState::NAN, date_price.map(|_| UnrealizedState::NAN)),
+            _ => {
+                return (
+                    UnrealizedState::NAN,
+                    date_price.map(|_| UnrealizedState::NAN),
+                );
+            }
         };
 
-        let mut height_state = UnrealizedState::ZERO;
-        let mut date_state = date_price.map(|_| UnrealizedState::ZERO);
+        // Height unrealized: use incremental cache (O(k) where k = flip range)
+        let height_state = if let Some(cache) = self.cached_unrealized.as_mut() {
+            cache.get_at_price(height_price, price_to_amount).clone()
+        } else {
+            let cache = CachedUnrealizedState::compute_fresh(height_price, price_to_amount);
+            let state = cache.state.clone();
+            self.cached_unrealized = Some(cache);
+            state
+        };
 
-        for (&price, &sats) in price_to_amount.iter() {
-            Self::update_unrealized(price, height_price, sats, &mut height_state);
-
-            if let Some(date_price) = date_price {
-                Self::update_unrealized(price, date_price, sats, date_state.um());
-            }
-        }
+        // Date unrealized: compute from scratch (only at date boundaries, ~144x less frequent)
+        let date_state = date_price.map(|date_price| {
+            CachedUnrealizedState::compute_full_standalone(date_price, price_to_amount)
+        });
 
         (height_state, date_state)
-    }
-
-    fn update_unrealized(price: Dollars, current: Dollars, sats: Sats, state: &mut UnrealizedState) {
-        match price.cmp(&current) {
-            Ordering::Less | Ordering::Equal => {
-                state.supply_in_profit += sats;
-                if price < current && price > Dollars::ZERO && current > Dollars::ZERO {
-                    state.unrealized_profit += current.checked_sub(price).unwrap() * sats;
-                }
-            }
-            Ordering::Greater => {
-                state.supply_in_loss += sats;
-                if price > Dollars::ZERO && current > Dollars::ZERO {
-                    state.unrealized_loss += price.checked_sub(current).unwrap() * sats;
-                }
-            }
-        }
     }
 
     /// Flush state to disk at checkpoint.
@@ -340,12 +400,18 @@ impl CohortState {
 
     /// Get first (lowest) price in distribution.
     pub fn min_price(&self) -> Option<&Dollars> {
-        self.price_to_amount.as_ref()?.first_key_value().map(|(k, _)| k)
+        self.price_to_amount
+            .as_ref()?
+            .first_key_value()
+            .map(|(k, _)| k)
     }
 
     /// Get last (highest) price in distribution.
     pub fn max_price(&self) -> Option<&Dollars> {
-        self.price_to_amount.as_ref()?.last_key_value().map(|(k, _)| k)
+        self.price_to_amount
+            .as_ref()?
+            .last_key_value()
+            .map(|(k, _)| k)
     }
 
     /// Get iterator over price_to_amount for merged percentile computation.

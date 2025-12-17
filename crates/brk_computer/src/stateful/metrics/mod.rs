@@ -149,7 +149,7 @@ impl CohortMetrics {
         height_price: Option<Dollars>,
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
-        state: &CohortState,
+        state: &mut CohortState,
     ) -> Result<()> {
         if let (Some(unrealized), Some(price_paid), Some(height_price)) = (
             self.unrealized.as_mut(),

@@ -167,7 +167,7 @@ impl DynCohortVecs for UTXOCohortVecs {
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
     ) -> Result<()> {
-        if let Some(state) = self.state.as_ref() {
+        if let Some(state) = self.state.as_mut() {
             self.metrics.compute_then_truncate_push_unrealized_states(
                 height,
                 height_price,
