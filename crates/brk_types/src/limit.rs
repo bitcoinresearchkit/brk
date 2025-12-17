@@ -5,6 +5,7 @@ use serde::Deserialize;
 /// Maximum number of results to return. Defaults to 100 if not specified.
 #[derive(Debug, Deref, Deserialize, JsonSchema)]
 #[serde(transparent)]
+#[allow(clippy::duplicated_attributes)]
 #[schemars(default, example = 1, example = 10, example = 100)]
 pub struct Limit(usize);
 

@@ -1,11 +1,11 @@
 //! Processing spent inputs (UTXOs being spent).
 
-use brk_grouper::{Filter, Filtered, TimeFilter, UTXOGroups};
+use brk_grouper::{Filter, Filtered, TimeFilter};
 use brk_types::{CheckedSub, HalvingEpoch, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
-use crate::{states::{BlockState, Transacted}, utils::OptionExt, PriceToAmount};
+use crate::{states::{BlockState, Transacted}, utils::OptionExt};
 
 use super::UTXOCohorts;
 
@@ -23,34 +23,13 @@ impl UTXOCohorts {
             return;
         }
 
-        let UTXOGroups {
-            all,
-            term,
-            age_range,
-            epoch,
-            type_,
-            amount_range,
-            ..
-        } = &mut self.0;
-
         // Time-based cohorts: age_range + epoch
-        let mut time_cohorts: Vec<_> = age_range
+        let mut time_cohorts: Vec<_> = self
+            .0
+            .age_range
             .iter_mut()
-            .chain(epoch.iter_mut())
+            .chain(self.0.epoch.iter_mut())
             .collect();
-
-        // Aggregate cohorts' price_to_amount
-        let mut aggregate_p2a: Vec<(Filter, Option<&mut PriceToAmount>)> = vec![
-            (all.filter().clone(), all.price_to_amount.as_mut()),
-            (
-                term.short.filter().clone(),
-                term.short.price_to_amount.as_mut(),
-            ),
-            (
-                term.long.filter().clone(),
-                term.long.price_to_amount.as_mut(),
-            ),
-        ];
 
         let last_block = chain_state.last().unwrap();
         let last_timestamp = last_block.timestamp;
@@ -98,7 +77,7 @@ impl UTXOCohorts {
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    type_.get_mut(output_type).state.um().send(
+                    self.0.type_.get_mut(output_type).state.um().send(
                         supply_state,
                         current_price,
                         prev_price,
@@ -112,7 +91,7 @@ impl UTXOCohorts {
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    amount_range.get_mut(group).state.um().send(
+                    self.0.amount_range.get_mut(group).state.um().send(
                         supply_state,
                         current_price,
                         prev_price,
@@ -121,19 +100,6 @@ impl UTXOCohorts {
                         older_than_hour,
                     );
                 });
-
-            // Update aggregate cohorts' price_to_amount
-            if let Some(prev_price) = prev_price {
-                let supply_state = &sent.spendable_supply;
-                if supply_state.value.is_not_zero() {
-                    aggregate_p2a
-                        .iter_mut()
-                        .filter(|(f, _)| f.contains_time(days_old))
-                        .for_each(|(_, p2a)| {
-                            p2a.um().decrement(prev_price, supply_state);
-                        });
-                }
-            }
         }
     }
 }

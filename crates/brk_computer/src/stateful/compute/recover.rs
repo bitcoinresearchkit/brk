@@ -9,9 +9,9 @@ use brk_error::Result;
 use brk_types::Height;
 use vecdb::Stamp;
 
+use super::super::AddressesDataVecs;
 use super::super::address::AnyAddressIndexesVecs;
 use super::super::cohorts::{AddressCohorts, UTXOCohorts};
-use super::super::AddressesDataVecs;
 
 /// Result of state recovery.
 pub struct RecoveredState {
@@ -68,14 +68,6 @@ pub fn recover_state(
         });
     }
 
-    // Import aggregate price_to_amount - must match height
-    let imported = import_aggregate_price_to_amount(height, utxo_cohorts)?;
-    if imported != height {
-        return Ok(RecoveredState {
-            starting_height: Height::ZERO,
-        });
-    }
-
     Ok(RecoveredState {
         starting_height: height,
     })
@@ -101,9 +93,6 @@ pub fn reset_state(
     // Reset price_to_amount for all cohorts
     utxo_cohorts.reset_separate_price_to_amount()?;
     address_cohorts.reset_separate_price_to_amount()?;
-
-    // Reset aggregate cohorts' price_to_amount
-    utxo_cohorts.reset_aggregate_price_to_amount()?;
 
     Ok(RecoveredState {
         starting_height: Height::ZERO,
@@ -176,22 +165,3 @@ fn rollback_states(
         Height::ZERO
     }
 }
-
-/// Import aggregate price_to_amount for UTXO cohorts.
-fn import_aggregate_price_to_amount(
-    starting_height: Height,
-    utxo_cohorts: &mut UTXOCohorts,
-) -> Result<Height> {
-    if starting_height.is_zero() {
-        return Ok(Height::ZERO);
-    }
-
-    let imported = utxo_cohorts.import_aggregate_price_to_amount(starting_height)?;
-
-    Ok(if imported == starting_height {
-        starting_height
-    } else {
-        Height::ZERO
-    })
-}
-

@@ -457,8 +457,10 @@ pub fn process_blocks(
         )?;
 
         // Compute and push percentiles for aggregate cohorts (all, sth, lth)
-        vecs.utxo_cohorts
-            .truncate_push_aggregate_percentiles(height)?;
+        if let Some(dateindex) = dateindex_opt {
+            vecs.utxo_cohorts
+                .truncate_push_aggregate_percentiles(dateindex)?;
+        }
 
         // Periodic checkpoint flush
         if height != last_height

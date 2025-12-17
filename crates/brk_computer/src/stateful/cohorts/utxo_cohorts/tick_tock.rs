@@ -3,10 +3,10 @@
 //! When a new block arrives, UTXOs age. Some cross day boundaries
 //! and need to move between age-based cohorts.
 
-use brk_grouper::{Filter, Filtered, UTXOGroups};
-use brk_types::{ONE_DAY_IN_SEC, Sats, Timestamp};
+use brk_grouper::{Filter, Filtered};
+use brk_types::{ONE_DAY_IN_SEC, Timestamp};
 
-use crate::{PriceToAmount, states::BlockState, utils::OptionExt};
+use crate::states::BlockState;
 
 use super::UTXOCohorts;
 
@@ -27,32 +27,13 @@ impl UTXOCohorts {
         let elapsed = (*timestamp).saturating_sub(*prev_timestamp);
         let threshold = ONE_DAY_IN_SEC.saturating_sub(elapsed);
 
-        // Extract mutable references to avoid borrow checker issues
-        let UTXOGroups {
-            all,
-            term,
-            age_range,
-            ..
-        } = &mut self.0;
-
         // Collect age_range cohorts with their filters and states
-        let mut age_cohorts: Vec<(Filter, &mut Option<_>)> = age_range
+        let mut age_cohorts: Vec<(Filter, &mut Option<_>)> = self
+            .0
+            .age_range
             .iter_mut()
             .map(|v| (v.filter().clone(), &mut v.state))
             .collect();
-
-        // Collect aggregate cohorts' price_to_amount for age transitions
-        let mut aggregate_p2a: Vec<(Filter, Option<&mut PriceToAmount>)> = vec![
-            (all.filter().clone(), all.price_to_amount.as_mut()),
-            (
-                term.short.filter().clone(),
-                term.short.price_to_amount.as_mut(),
-            ),
-            (
-                term.long.filter().clone(),
-                term.long.price_to_amount.as_mut(),
-            ),
-        ];
 
         // Process blocks that might cross a day boundary
         chain_state
@@ -86,22 +67,6 @@ impl UTXOCohorts {
                             .decrement(&block_state.supply, block_state.price);
                     }
                 });
-
-                // Update aggregate cohorts' price_to_amount
-                if let Some(price) = block_state.price
-                    && block_state.supply.value > Sats::ZERO
-                {
-                    aggregate_p2a.iter_mut().for_each(|(filter, p2a)| {
-                        let is_now = filter.contains_time(curr_days);
-                        let was_before = filter.contains_time(prev_days);
-
-                        if is_now && !was_before {
-                            p2a.um().increment(price, &block_state.supply);
-                        } else if was_before && !is_now {
-                            p2a.um().decrement(price, &block_state.supply);
-                        }
-                    });
-                }
             });
     }
 }

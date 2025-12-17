@@ -4,7 +4,7 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Version};
+use brk_types::{DateIndex, Dollars, Height, Version};
 use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
 
 use crate::{
@@ -98,11 +98,16 @@ impl PricePaidMetrics {
         Ok(())
     }
 
-    /// Push price percentiles from state.
-    pub fn truncate_push_percentiles(&mut self, height: Height, state: &CohortState) -> Result<()> {
+    /// Push price percentiles from state at date boundary.
+    /// Only called when at the last height of a day.
+    pub fn truncate_push_percentiles(
+        &mut self,
+        dateindex: DateIndex,
+        state: &CohortState,
+    ) -> Result<()> {
         if let Some(price_percentiles) = self.price_percentiles.as_mut() {
             let percentile_prices = state.compute_percentile_prices();
-            price_percentiles.truncate_push(height, &percentile_prices)?;
+            price_percentiles.truncate_push(dateindex, &percentile_prices)?;
         }
         Ok(())
     }

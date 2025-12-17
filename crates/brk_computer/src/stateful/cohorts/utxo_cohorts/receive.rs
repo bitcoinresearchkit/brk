@@ -28,22 +28,6 @@ impl UTXOCohorts {
             v.state.as_mut().unwrap().receive(&supply_state, price);
         });
 
-        // Update aggregate cohorts' price_to_amount
-        // New UTXOs have days_old = 0, so check if filter includes day 0
-        if let Some(price) = price
-            && supply_state.value.is_not_zero()
-        {
-            self.0
-                .iter_aggregate_mut()
-                .filter(|v| v.filter().contains_time(0))
-                .for_each(|v| {
-                    v.price_to_amount
-                        .as_mut()
-                        .unwrap()
-                        .increment(price, &supply_state);
-                });
-        }
-
         // Update output type cohorts
         self.type_.iter_mut().for_each(|vecs| {
             let output_type = match vecs.filter() {

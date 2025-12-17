@@ -15,7 +15,7 @@ mod traits;
 mod utxo;
 mod utxo_cohorts;
 
-pub use crate::states::{Flushable, HeightFlushable};
+pub use crate::states::Flushable;
 pub use address::AddressCohortVecs;
 pub use address_cohorts::AddressCohorts;
 pub use state::CohortState;

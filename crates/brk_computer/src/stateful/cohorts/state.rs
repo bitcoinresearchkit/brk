@@ -347,4 +347,10 @@ impl CohortState {
     pub fn max_price(&self) -> Option<&Dollars> {
         self.price_to_amount.as_ref()?.last_key_value().map(|(k, _)| k)
     }
+
+    /// Get iterator over price_to_amount for merged percentile computation.
+    /// Returns None if price data is not tracked for this cohort.
+    pub fn price_to_amount_iter(&self) -> Option<impl Iterator<Item = (&Dollars, &Sats)>> {
+        self.price_to_amount.as_ref().map(|p| p.iter())
+    }
 }

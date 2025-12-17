@@ -18,9 +18,14 @@ use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{Database, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
+use crate::{
+    Indexes,
+    grouped::{PERCENTILES, PERCENTILES_LEN},
+    indexes, price,
+    stateful::DynCohortVecs,
+};
 
-use super::{CohortVecs, HeightFlushable, UTXOCohortVecs};
+use super::{CohortVecs, UTXOCohortVecs};
 
 const VERSION: Version = Version::new(0);
 
@@ -350,32 +355,12 @@ impl UTXOCohorts {
         self.par_iter_separate_mut()
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
 
-        // Flush aggregate cohorts' price_to_amount state AND metrics (including price_percentiles)
+        // Flush aggregate cohorts' metrics (including price_percentiles)
+        // Note: aggregate cohorts no longer maintain price_to_amount state
         for v in self.0.iter_aggregate_mut() {
-            v.price_to_amount.flush_at_height(height, exit)?;
             v.metrics.safe_flush(exit)?;
         }
         Ok(())
-    }
-
-    /// Reset aggregate cohorts' price_to_amount for fresh start.
-    pub fn reset_aggregate_price_to_amount(&mut self) -> Result<()> {
-        self.0
-            .iter_aggregate_mut()
-            .try_for_each(|v| v.price_to_amount.reset())
-    }
-
-    /// Import aggregate cohorts' price_to_amount when resuming from checkpoint.
-    pub fn import_aggregate_price_to_amount(&mut self, height: Height) -> Result<Height> {
-        let Some(mut prev_height) = height.decremented() else {
-            return Ok(Height::ZERO);
-        };
-
-        for v in self.0.iter_aggregate_mut() {
-            prev_height = prev_height.min(v.price_to_amount.import_at_or_before(prev_height)?);
-        }
-
-        Ok(prev_height.incremented())
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.
@@ -412,57 +397,115 @@ impl UTXOCohorts {
     }
 
     /// Compute and push percentiles for aggregate cohorts (all, sth, lth).
-    /// Must be called after receive()/send() when price_to_amount is up to date.
-    pub fn truncate_push_aggregate_percentiles(&mut self, height: Height) -> Result<()> {
-        // Collect supply values from age_range cohorts
+    /// Computes on-demand by merging age_range cohorts' price_to_amount data.
+    /// This avoids maintaining redundant aggregate price_to_amount maps.
+    pub fn truncate_push_aggregate_percentiles(&mut self, dateindex: DateIndex) -> Result<()> {
+        use std::cmp::Reverse;
+        use std::collections::BinaryHeap;
+
+        // Collect (filter, supply, price_to_amount as Vec) from age_range cohorts
         let age_range_data: Vec<_> = self
             .0
             .age_range
             .iter()
-            .map(|sub| {
-                (
-                    sub.filter().clone(),
-                    sub.state
-                        .as_ref()
-                        .map(|s| s.supply.value)
-                        .unwrap_or(Sats::ZERO),
-                )
+            .filter_map(|sub| {
+                let state = sub.state.as_ref()?;
+                let entries: Vec<(Dollars, Sats)> = state
+                    .price_to_amount_iter()?
+                    .map(|(&p, &a)| (p, a))
+                    .collect();
+                Some((sub.filter().clone(), state.supply.value, entries))
             })
             .collect();
 
-        // Compute percentiles for each aggregate cohort in parallel
-        let results: Vec<_> = self
-            .0
-            .par_iter_aggregate()
-            .filter_map(|v| {
-                v.price_to_amount.as_ref()?;
-                let filter = v.filter().clone();
-                let supply = age_range_data
-                    .iter()
-                    .filter(|(sub_filter, _)| filter.includes(sub_filter))
-                    .map(|(_, value)| *value)
-                    .fold(Sats::ZERO, |acc, v| acc + v);
-                let percentiles = v.compute_percentile_prices_from_standalone(supply);
-                Some((filter, percentiles))
-            })
-            .collect();
+        // Compute percentiles for each aggregate filter
+        for aggregate in self.0.iter_aggregate_mut() {
+            let filter = aggregate.filter().clone();
 
-        // Push results sequentially (requires &mut)
-        for (filter, percentiles) in results {
-            let v = self
-                .0
-                .iter_aggregate_mut()
-                .find(|v| v.filter() == &filter)
-                .unwrap();
-
-            if let Some(pp) = v
+            // Get price_percentiles storage, skip if not configured
+            let Some(pp) = aggregate
                 .metrics
                 .price_paid
                 .as_mut()
                 .and_then(|p| p.price_percentiles.as_mut())
-            {
-                pp.truncate_push(height, &percentiles)?;
+            else {
+                continue;
+            };
+
+            // Collect relevant cohort data for this aggregate
+            let relevant: Vec<_> = age_range_data
+                .iter()
+                .filter(|(sub_filter, _, _)| filter.includes(sub_filter))
+                .collect();
+
+            // Calculate total supply
+            let total_supply: u64 = relevant.iter().map(|(_, s, _)| u64::from(*s)).sum();
+
+            if total_supply == 0 {
+                pp.truncate_push(dateindex, &[Dollars::NAN; PERCENTILES_LEN])?;
+                continue;
             }
+
+            // K-way merge using min-heap: O(n log k) where k = number of cohorts
+            // Each heap entry: (price, amount, cohort_idx, entry_idx)
+            let mut heap: BinaryHeap<Reverse<(Dollars, usize, usize)>> = BinaryHeap::new();
+
+            // Initialize heap with first entry from each cohort
+            for (cohort_idx, (_, _, entries)) in relevant.iter().enumerate() {
+                if !entries.is_empty() {
+                    heap.push(Reverse((entries[0].0, cohort_idx, 0)));
+                }
+            }
+
+            let targets = PERCENTILES.map(|p| total_supply * u64::from(p) / 100);
+            let mut result = [Dollars::NAN; PERCENTILES_LEN];
+            let mut accumulated = 0u64;
+            let mut pct_idx = 0;
+            let mut current_price: Option<Dollars> = None;
+            let mut amount_at_price = 0u64;
+
+            while let Some(Reverse((price, cohort_idx, entry_idx))) = heap.pop() {
+                let (_, _, entries) = relevant[cohort_idx];
+                let (_, amount) = entries[entry_idx];
+
+                // If price changed, finalize previous price
+                if let Some(current_price) = current_price
+                    && current_price != price
+                {
+                    accumulated += amount_at_price;
+
+                    while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
+                        result[pct_idx] = current_price;
+                        pct_idx += 1;
+                    }
+
+                    if pct_idx >= PERCENTILES_LEN {
+                        break;
+                    }
+
+                    amount_at_price = 0;
+                }
+
+                current_price = Some(price);
+                amount_at_price += u64::from(amount);
+
+                // Push next entry from this cohort
+                let next_idx = entry_idx + 1;
+                if next_idx < entries.len() {
+                    heap.push(Reverse((entries[next_idx].0, cohort_idx, next_idx)));
+                }
+            }
+
+            // Finalize last price
+            if let Some(price) = current_price {
+                accumulated += amount_at_price;
+                while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
+                    result[pct_idx] = price;
+                    pct_idx += 1;
+                }
+            }
+
+            pp.truncate_push(dateindex, &result)?;
         }
 
         Ok(())

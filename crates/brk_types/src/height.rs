@@ -30,6 +30,7 @@ use super::StoredU64;
     JsonSchema,
     Hash,
 )]
+#[allow(clippy::duplicated_attributes)]
 #[schemars(example = 0, example = 210_000, example = 420_000, example = 840_000)]
 pub struct Height(u32);
 

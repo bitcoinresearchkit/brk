@@ -142,6 +142,7 @@ impl CohortMetrics {
     }
 
     /// Compute and push unrealized states.
+    /// Percentiles are only computed at date boundaries (when dateindex is Some).
     pub fn compute_then_truncate_push_unrealized_states(
         &mut self,
         height: Height,
@@ -167,7 +168,10 @@ impl CohortMetrics {
                 date_unrealized_state.as_ref(),
             )?;
 
-            price_paid.truncate_push_percentiles(height, state)?;
+            // Only compute expensive percentiles at date boundaries (~144x reduction)
+            if let Some(dateindex) = dateindex {
+                price_paid.truncate_push_percentiles(dateindex, state)?;
+            }
         }
 
         Ok(())

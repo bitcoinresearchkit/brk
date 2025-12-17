@@ -5,12 +5,11 @@ use std::path::Path;
 use brk_error::Result;
 use brk_grouper::{CohortContext, Filter, Filtered, StateLevel};
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
-    Indexes, PriceToAmount,
-    grouped::{PERCENTILES, PERCENTILES_LEN},
+    Indexes,
     indexes, price,
     stateful::{CohortVecs, DynCohortVecs, cohorts::UTXOCohortState},
 };
@@ -23,13 +22,9 @@ pub struct UTXOCohortVecs {
     /// Starting height when state was imported
     state_starting_height: Option<Height>,
 
-    /// Runtime state for block-by-block processing
+    /// Runtime state for block-by-block processing (separate cohorts only)
     #[traversable(skip)]
     pub state: Option<UTXOCohortState>,
-
-    /// For aggregate cohorts that only need price_to_amount for percentiles
-    #[traversable(skip)]
-    pub price_to_amount: Option<PriceToAmount>,
 
     /// Metric vectors
     #[traversable(flatten)]
@@ -72,12 +67,6 @@ impl UTXOCohortVecs {
                 None
             },
 
-            price_to_amount: if state_level.is_price_only() && compute_dollars {
-                Some(PriceToAmount::create(states_path, &full_name))
-            } else {
-                None
-            },
-
             metrics: CohortMetrics::forced_import(&cfg)?,
         })
     }
@@ -98,45 +87,6 @@ impl UTXOCohortVecs {
         if let Some(state) = self.state.as_mut() {
             state.reset();
         }
-    }
-
-    /// Compute percentile prices from standalone price_to_amount.
-    /// Returns NaN array if price_to_amount is None or empty.
-    pub fn compute_percentile_prices_from_standalone(
-        &self,
-        supply: Sats,
-    ) -> [Dollars; PERCENTILES_LEN] {
-        let mut result = [Dollars::NAN; PERCENTILES_LEN];
-
-        let price_to_amount = match self.price_to_amount.as_ref() {
-            Some(p) => p,
-            None => return result,
-        };
-
-        if price_to_amount.is_empty() || supply == Sats::ZERO {
-            return result;
-        }
-
-        let total = supply;
-        let targets = PERCENTILES.map(|p| total * p as u64 / 100);
-
-        let mut accumulated = Sats::ZERO;
-        let mut pct_idx = 0;
-
-        for (&price, &sats) in price_to_amount.iter() {
-            accumulated += sats;
-
-            while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
-                result[pct_idx] = price;
-                pct_idx += 1;
-            }
-
-            if pct_idx >= PERCENTILES_LEN {
-                break;
-            }
-        }
-
-        result
     }
 }
 
