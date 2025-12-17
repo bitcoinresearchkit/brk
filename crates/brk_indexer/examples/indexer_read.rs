@@ -3,6 +3,9 @@ use brk_indexer::Indexer;
 // use brk_types::Sats;
 use std::{fs, path::Path};
 
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")))?;
 

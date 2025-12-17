@@ -12,7 +12,11 @@ use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
+use mimalloc::MiMalloc;
 use vecdb::Exit;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

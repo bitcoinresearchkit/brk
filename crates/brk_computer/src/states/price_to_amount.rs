@@ -11,12 +11,17 @@ use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
 
-use crate::{states::SupplyState, utils::OptionExt};
+use crate::{grouped::PERCENTILES_LEN, states::SupplyState, utils::OptionExt};
+
+use super::PriceBuckets;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
     pathbuf: PathBuf,
     state: Option<State>,
+    /// Logarithmic buckets for O(log n) percentile queries.
+    /// Rebuilt on load, not persisted.
+    buckets: Option<PriceBuckets>,
 }
 
 const STATE_AT_: &str = "state_at_";
@@ -27,6 +32,7 @@ impl PriceToAmount {
         Self {
             pathbuf: path.join(format!("{name}_price_to_amount")),
             state: None,
+            buckets: None,
         }
     }
 
@@ -35,7 +41,16 @@ impl PriceToAmount {
         let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
             "No price state found at or before height".into(),
         ))?;
-        self.state = Some(State::deserialize(&fs::read(path)?)?);
+        let state = State::deserialize(&fs::read(path)?)?;
+
+        // Rebuild buckets from loaded state
+        let mut buckets = PriceBuckets::new();
+        for (&price, &amount) in state.iter() {
+            buckets.increment(price, amount);
+        }
+
+        self.state = Some(state);
+        self.buckets = Some(buckets);
         Ok(height)
     }
 
@@ -65,6 +80,9 @@ impl PriceToAmount {
 
     pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
         *self.state.um().entry(price).or_default() += supply_state.value;
+        if let Some(buckets) = self.buckets.as_mut() {
+            buckets.increment(price, supply_state.value);
+        }
     }
 
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
@@ -72,6 +90,9 @@ impl PriceToAmount {
             *amount -= supply_state.value;
             if *amount == Sats::ZERO {
                 self.state.um().remove(&price);
+            }
+            if let Some(buckets) = self.buckets.as_mut() {
+                buckets.decrement(price, supply_state.value);
             }
         } else {
             dbg!(price, &self.pathbuf);
@@ -81,6 +102,16 @@ impl PriceToAmount {
 
     pub fn init(&mut self) {
         self.state.replace(State::default());
+        self.buckets.replace(PriceBuckets::new());
+    }
+
+    /// Compute percentile prices using O(log n) Fenwick tree queries.
+    pub fn compute_percentiles(&self) -> [Dollars; PERCENTILES_LEN] {
+        if let Some(buckets) = self.buckets.as_ref() {
+            buckets.compute_percentiles()
+        } else {
+            [Dollars::NAN; PERCENTILES_LEN]
+        }
     }
 
     pub fn clean(&mut self) -> Result<()> {

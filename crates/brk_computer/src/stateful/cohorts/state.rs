@@ -9,7 +9,7 @@ use brk_types::{Dollars, Height, Sats};
 
 use crate::{
     CachedUnrealizedState, PriceToAmount, RealizedState, SupplyState, UnrealizedState,
-    grouped::{PERCENTILES, PERCENTILES_LEN},
+    grouped::PERCENTILES_LEN,
     utils::OptionExt,
 };
 
@@ -321,38 +321,12 @@ impl CohortState {
     }
 
     /// Compute prices at percentile thresholds.
+    /// Uses O(19 * log n) Fenwick tree queries instead of O(n) iteration.
     pub fn compute_percentile_prices(&self) -> [Dollars; PERCENTILES_LEN] {
-        let mut result = [Dollars::NAN; PERCENTILES_LEN];
-
-        let price_to_amount = match self.price_to_amount.as_ref() {
-            Some(p) => p,
-            None => return result,
-        };
-
-        if price_to_amount.is_empty() || self.supply.value == Sats::ZERO {
-            return result;
+        match self.price_to_amount.as_ref() {
+            Some(p) if !p.is_empty() => p.compute_percentiles(),
+            _ => [Dollars::NAN; PERCENTILES_LEN],
         }
-
-        let total = u64::from(self.supply.value);
-        let targets = PERCENTILES.map(|p| total * u64::from(p) / 100);
-
-        let mut accumulated = 0u64;
-        let mut pct_idx = 0;
-
-        for (&price, &sats) in price_to_amount.iter() {
-            accumulated += u64::from(sats);
-
-            while pct_idx < PERCENTILES_LEN && accumulated >= targets[pct_idx] {
-                result[pct_idx] = price;
-                pct_idx += 1;
-            }
-
-            if pct_idx >= PERCENTILES_LEN {
-                break;
-            }
-        }
-
-        result
     }
 
     /// Compute unrealized profit/loss at current price.

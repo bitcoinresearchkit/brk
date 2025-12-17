@@ -5,7 +5,11 @@ use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_types::TxIndex;
+use mimalloc::MiMalloc;
 use vecdb::{Exit, GenericStoredVec};
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread

@@ -12,6 +12,9 @@ use brk_rpc::{Auth, Client};
 use log::{debug, info};
 use vecdb::Exit;
 
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 

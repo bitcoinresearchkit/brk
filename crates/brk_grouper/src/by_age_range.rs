@@ -3,6 +3,30 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use super::{Filter, TimeFilter};
 
+/// Age boundaries in days. Defines the cohort ranges:
+/// [0, B[0]), [B[0], B[1]), [B[1], B[2]), ..., [B[n-1], ∞)
+pub const AGE_BOUNDARIES: [usize; 19] = [
+    1,         // up_to_1d | _1d_to_1w
+    7,         // _1d_to_1w | _1w_to_1m
+    30,        // _1w_to_1m | _1m_to_2m
+    2 * 30,    // _1m_to_2m | _2m_to_3m
+    3 * 30,    // _2m_to_3m | _3m_to_4m
+    4 * 30,    // _3m_to_4m | _4m_to_5m
+    5 * 30,    // _4m_to_5m | _5m_to_6m
+    6 * 30,    // _5m_to_6m | _6m_to_1y
+    365,       // _6m_to_1y | _1y_to_2y
+    2 * 365,   // _1y_to_2y | _2y_to_3y
+    3 * 365,   // _2y_to_3y | _3y_to_4y
+    4 * 365,   // _3y_to_4y | _4y_to_5y
+    5 * 365,   // _4y_to_5y | _5y_to_6y
+    6 * 365,   // _5y_to_6y | _6y_to_7y
+    7 * 365,   // _6y_to_7y | _7y_to_8y
+    8 * 365,   // _7y_to_8y | _8y_to_10y
+    10 * 365,  // _8y_to_10y | _10y_to_12y
+    12 * 365,  // _10y_to_12y | _12y_to_15y
+    15 * 365,  // _12y_to_15y | from_15y
+];
+
 #[derive(Default, Clone, Traversable)]
 pub struct ByAgeRange<T> {
     pub up_to_1d: T,
@@ -33,26 +57,26 @@ impl<T> ByAgeRange<T> {
         F: FnMut(Filter) -> T,
     {
         Self {
-            up_to_1d: create(Filter::Time(TimeFilter::Range(0..1))),
-            _1d_to_1w: create(Filter::Time(TimeFilter::Range(1..7))),
-            _1w_to_1m: create(Filter::Time(TimeFilter::Range(7..30))),
-            _1m_to_2m: create(Filter::Time(TimeFilter::Range(30..2 * 30))),
-            _2m_to_3m: create(Filter::Time(TimeFilter::Range(2 * 30..3 * 30))),
-            _3m_to_4m: create(Filter::Time(TimeFilter::Range(3 * 30..4 * 30))),
-            _4m_to_5m: create(Filter::Time(TimeFilter::Range(4 * 30..5 * 30))),
-            _5m_to_6m: create(Filter::Time(TimeFilter::Range(5 * 30..6 * 30))),
-            _6m_to_1y: create(Filter::Time(TimeFilter::Range(6 * 30..365))),
-            _1y_to_2y: create(Filter::Time(TimeFilter::Range(365..2 * 365))),
-            _2y_to_3y: create(Filter::Time(TimeFilter::Range(2 * 365..3 * 365))),
-            _3y_to_4y: create(Filter::Time(TimeFilter::Range(3 * 365..4 * 365))),
-            _4y_to_5y: create(Filter::Time(TimeFilter::Range(4 * 365..5 * 365))),
-            _5y_to_6y: create(Filter::Time(TimeFilter::Range(5 * 365..6 * 365))),
-            _6y_to_7y: create(Filter::Time(TimeFilter::Range(6 * 365..7 * 365))),
-            _7y_to_8y: create(Filter::Time(TimeFilter::Range(7 * 365..8 * 365))),
-            _8y_to_10y: create(Filter::Time(TimeFilter::Range(8 * 365..10 * 365))),
-            _10y_to_12y: create(Filter::Time(TimeFilter::Range(10 * 365..12 * 365))),
-            _12y_to_15y: create(Filter::Time(TimeFilter::Range(12 * 365..15 * 365))),
-            from_15y: create(Filter::Time(TimeFilter::GreaterOrEqual(15 * 365))),
+            up_to_1d: create(Filter::Time(TimeFilter::Range(0..AGE_BOUNDARIES[0]))),
+            _1d_to_1w: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[0]..AGE_BOUNDARIES[1]))),
+            _1w_to_1m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[1]..AGE_BOUNDARIES[2]))),
+            _1m_to_2m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[2]..AGE_BOUNDARIES[3]))),
+            _2m_to_3m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[3]..AGE_BOUNDARIES[4]))),
+            _3m_to_4m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[4]..AGE_BOUNDARIES[5]))),
+            _4m_to_5m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[5]..AGE_BOUNDARIES[6]))),
+            _5m_to_6m: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[6]..AGE_BOUNDARIES[7]))),
+            _6m_to_1y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[7]..AGE_BOUNDARIES[8]))),
+            _1y_to_2y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[8]..AGE_BOUNDARIES[9]))),
+            _2y_to_3y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[9]..AGE_BOUNDARIES[10]))),
+            _3y_to_4y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[10]..AGE_BOUNDARIES[11]))),
+            _4y_to_5y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[11]..AGE_BOUNDARIES[12]))),
+            _5y_to_6y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[12]..AGE_BOUNDARIES[13]))),
+            _6y_to_7y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[13]..AGE_BOUNDARIES[14]))),
+            _7y_to_8y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[14]..AGE_BOUNDARIES[15]))),
+            _8y_to_10y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[15]..AGE_BOUNDARIES[16]))),
+            _10y_to_12y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[16]..AGE_BOUNDARIES[17]))),
+            _12y_to_15y: create(Filter::Time(TimeFilter::Range(AGE_BOUNDARIES[17]..AGE_BOUNDARIES[18]))),
+            from_15y: create(Filter::Time(TimeFilter::GreaterOrEqual(AGE_BOUNDARIES[18]))),
         }
     }
 

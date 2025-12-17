@@ -33,3 +33,4 @@ vecdb = { workspace = true }
 
 [dev-dependencies]
 color-eyre = { workspace = true }
+mimalloc = { workspace = true }

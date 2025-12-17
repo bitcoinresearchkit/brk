@@ -1,6 +1,8 @@
 mod block;
 // mod cohorts;
+mod fenwick;
 mod flushable;
+mod price_buckets;
 mod price_to_amount;
 mod realized;
 mod supply;
@@ -10,6 +12,7 @@ mod unrealized;
 pub use block::*;
 // pub use cohorts::*;
 pub use flushable::*;
+pub use price_buckets::*;
 pub use price_to_amount::*;
 pub use realized::*;
 pub use supply::*;

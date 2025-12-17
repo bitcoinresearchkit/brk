@@ -31,6 +31,10 @@ inherits = "release"
 [profile.dist]
 inherits = "release"
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 [workspace.dependencies]
 aide = { version = "0.16.0-alpha.1", features = ["axum-json", "axum-query"] }
 axum = "0.8.7"

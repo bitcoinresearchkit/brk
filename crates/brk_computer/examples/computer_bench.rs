@@ -9,7 +9,11 @@ use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
+use mimalloc::MiMalloc;
 use vecdb::Exit;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
