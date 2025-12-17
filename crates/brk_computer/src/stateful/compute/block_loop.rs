@@ -66,6 +66,8 @@ pub fn process_blocks(
         ctx.price.is_some()
     );
 
+    info!("Setting up references...");
+
     // References to vectors using correct field paths
     // From indexer.vecs:
     let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
@@ -99,6 +101,8 @@ pub fn process_blocks(
     let height_to_price_vec = &ctx.height_to_price;
     let height_to_timestamp_vec = &ctx.height_to_timestamp;
 
+    info!("Creating iterators...");
+
     // Create iterators for sequential access
     let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
     let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
@@ -116,12 +120,18 @@ pub fn process_blocks(
     let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
     let mut dateindex_to_price_iter = dateindex_to_price.map(|v| v.into_iter());
 
+    info!("Building txoutindex_to_height map...");
+
     // Build txoutindex -> height map for input processing
     let txoutindex_to_height = build_txoutindex_to_height_map(height_to_first_txoutindex);
+
+    info!("Creating readers...");
 
     // Create readers for parallel data access
     let ir = IndexerReaders::new(indexer);
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
+
+    info!("Creating address iterators...");
 
     // Create iterators for first address indexes per type
     let mut first_p2a_iter = indexer
@@ -165,6 +175,8 @@ pub fn process_blocks(
         .height_to_first_p2wshaddressindex
         .into_iter();
 
+    info!("Recovering running totals...");
+
     // Track running totals - recover from previous height if resuming
     let (
         mut unspendable_supply,
@@ -172,23 +184,29 @@ pub fn process_blocks(
         mut addresstype_to_addr_count,
         mut addresstype_to_empty_addr_count,
     ) = if starting_height > Height::ZERO {
+        info!("Reading unspendable_supply...");
         let prev_height = starting_height.decremented().unwrap();
-        (
-            vecs.height_to_unspendable_supply
-                .into_iter()
-                .get_unwrap(prev_height),
-            vecs.height_to_opreturn_supply
-                .into_iter()
-                .get_unwrap(prev_height),
-            AddressTypeToAddressCount::from((
-                &vecs.addresstype_to_height_to_addr_count,
-                starting_height,
-            )),
-            AddressTypeToAddressCount::from((
-                &vecs.addresstype_to_height_to_empty_addr_count,
-                starting_height,
-            )),
-        )
+        let unspendable = vecs
+            .height_to_unspendable_supply
+            .into_iter()
+            .get_unwrap(prev_height);
+        info!("Reading opreturn_supply...");
+        let opreturn = vecs
+            .height_to_opreturn_supply
+            .into_iter()
+            .get_unwrap(prev_height);
+        info!("Reading addresstype_to_addr_count...");
+        let addr_count = AddressTypeToAddressCount::from((
+            &vecs.addresstype_to_height_to_addr_count,
+            starting_height,
+        ));
+        info!("Reading addresstype_to_empty_addr_count...");
+        let empty_addr_count = AddressTypeToAddressCount::from((
+            &vecs.addresstype_to_height_to_empty_addr_count,
+            starting_height,
+        ));
+        info!("Recovery complete.");
+        (unspendable, opreturn, addr_count, empty_addr_count)
     } else {
         (
             Sats::ZERO,
@@ -204,13 +222,13 @@ pub fn process_blocks(
     let mut empty_cache: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource> =
         AddressTypeToTypeIndexMap::default();
 
+    info!("Starting main block iteration...");
+
     // Main block iteration
     for height in starting_height.to_usize()..=last_height.to_usize() {
         let height = Height::from(height);
 
-        if height.to_usize() % 10000 == 0 {
-            info!("Processing chain at {}...", height);
-        }
+        info!("Processing chain at {}...", height);
 
         // Get block metadata
         let first_txindex = height_to_first_txindex_iter.get_unwrap(height);
@@ -452,7 +470,14 @@ pub fn process_blocks(
             // Drop readers before flush to release mmap handles
             drop(vr);
 
-            flush_checkpoint(vecs, height, &mut loaded_cache, &mut empty_cache, exit)?;
+            flush_checkpoint(
+                vecs,
+                height,
+                chain_state,
+                &mut loaded_cache,
+                &mut empty_cache,
+                exit,
+            )?;
 
             // Recreate readers after flush to pick up new data
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
@@ -462,7 +487,14 @@ pub fn process_blocks(
     // Final flush
     let _lock = exit.lock();
     drop(vr);
-    flush_checkpoint(vecs, last_height, &mut loaded_cache, &mut empty_cache, exit)?;
+    flush_checkpoint(
+        vecs,
+        last_height,
+        chain_state,
+        &mut loaded_cache,
+        &mut empty_cache,
+        exit,
+    )?;
 
     Ok(())
 }
@@ -491,23 +523,15 @@ fn push_cohort_states(
     dateindex: Option<DateIndex>,
     date_price: Option<Option<brk_types::Dollars>>,
 ) -> Result<()> {
-    utxo_cohorts
-        .par_iter_separate_mut()
-        .map(|v| v as &mut dyn DynCohortVecs)
-        .chain(
-            address_cohorts
-                .par_iter_separate_mut()
-                .map(|v| v as &mut dyn DynCohortVecs),
-        )
-        .try_for_each(|v| {
-            v.truncate_push(height)?;
-            v.compute_then_truncate_push_unrealized_states(
-                height,
-                height_price,
-                dateindex,
-                date_price,
-            )
-        })?;
+    utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
+        v.truncate_push(height)?;
+        v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
+    })?;
+
+    address_cohorts.par_iter_separate_mut().try_for_each(|v| {
+        v.truncate_push(height)?;
+        v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
+    })?;
 
     Ok(())
 }
@@ -518,11 +542,12 @@ fn push_cohort_states(
 /// - Cohort stateful vectors
 /// - Height-indexed vectors
 /// - Address data caches (loaded and empty)
-/// - Chain state
+/// - Chain state (synced from in-memory to persisted)
 #[allow(clippy::too_many_arguments)]
 fn flush_checkpoint(
     vecs: &mut Vecs,
     height: Height,
+    chain_state: &[BlockState],
     loaded_cache: &mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
     empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
     exit: &Exit,
@@ -564,9 +589,15 @@ fn flush_checkpoint(
         exit,
     )?;
 
-    // Flush chain state and txoutindex_to_txinindex with stamp
+    // Flush txoutindex_to_txinindex with stamp
     vecs.txoutindex_to_txinindex
         .stamped_flush_with_changes(height.into())?;
+
+    // Sync in-memory chain_state to persisted and flush
+    vecs.chain_state.truncate_if_needed(Height::ZERO)?;
+    for block_state in chain_state {
+        vecs.chain_state.push(block_state.supply.clone());
+    }
     vecs.chain_state.stamped_flush_with_changes(height.into())?;
 
     Ok(())

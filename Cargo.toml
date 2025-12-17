@@ -65,6 +65,7 @@ fjall = "3.0.0-rc.6"
 # fjall3 = { git = "https://github.com/fjall-rs/fjall.git", rev = "434979ef59d8fd2b36b91e6ff759a36d19a397ee", package = "fjall" }
 jiff = "0.2.16"
 log = "0.4.29"
+mimalloc = { version = "0.1.48", features = ["v3"] }
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"

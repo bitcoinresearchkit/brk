@@ -74,40 +74,32 @@ impl VecsReaders {
 pub fn build_txoutindex_to_txindex<'a>(
     block_first_txindex: TxIndex,
     block_tx_count: u64,
-    txindex_to_output_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
-    let first = block_first_txindex.to_usize();
-
-    let counts: Vec<u64> = (0..block_tx_count as usize)
-        .map(|offset| {
-            let txindex = TxIndex::from(first + offset);
-            u64::from(txindex_to_output_count.get_unwrap(txindex))
-        })
-        .collect();
-
-    let total: u64 = counts.iter().sum();
-    let mut result = Vec::with_capacity(total as usize);
-
-    for (offset, &count) in counts.iter().enumerate() {
-        let txindex = TxIndex::from(first + offset);
-        result.extend(std::iter::repeat_n(txindex, count as usize));
-    }
-
-    result
+    build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
 }
 
 /// Build txinindex -> txindex mapping for a block.
 pub fn build_txinindex_to_txindex<'a>(
     block_first_txindex: TxIndex,
     block_tx_count: u64,
-    txindex_to_input_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
+) -> Vec<TxIndex> {
+    build_index_to_txindex(block_first_txindex, block_tx_count, txindex_to_count)
+}
+
+/// Build index -> txindex mapping for a block (shared implementation).
+fn build_index_to_txindex<'a>(
+    block_first_txindex: TxIndex,
+    block_tx_count: u64,
+    txindex_to_count: &mut BoxedVecIterator<'a, TxIndex, StoredU64>,
 ) -> Vec<TxIndex> {
     let first = block_first_txindex.to_usize();
 
     let counts: Vec<u64> = (0..block_tx_count as usize)
         .map(|offset| {
             let txindex = TxIndex::from(first + offset);
-            u64::from(txindex_to_input_count.get_unwrap(txindex))
+            u64::from(txindex_to_count.get_unwrap(txindex))
         })
         .collect();
 

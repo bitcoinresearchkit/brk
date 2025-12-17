@@ -270,72 +270,76 @@ impl Vecs {
         // 2. Determine start mode and recover/reset state
         let start_mode = determine_start_mode(stateful_min, chain_state_height);
 
-        let (starting_height, mut chain_state) = match start_mode {
+        // Try to resume from checkpoint, fall back to fresh start if needed
+        let recovered_height = match start_mode {
             StartMode::Resume(height) => {
                 let stamp = Stamp::from(height);
 
-                // Rollback BytesVec state (not handled by recover_state)
-                let _ = self.chain_state.rollback_before(stamp);
-                let _ = self.txoutindex_to_txinindex.rollback_before(stamp);
+                // Rollback BytesVec state and capture results for validation
+                let chain_state_rollback = self.chain_state.rollback_before(stamp);
+                let txoutindex_rollback = self.txoutindex_to_txinindex.rollback_before(stamp);
 
-                // Use recover_state for address and cohort state recovery
+                // Validate all rollbacks and imports are consistent
                 let recovered = recover_state(
                     height,
+                    chain_state_rollback,
+                    txoutindex_rollback,
                     &mut self.any_address_indexes,
                     &mut self.addresses_data,
                     &mut self.utxo_cohorts,
                     &mut self.address_cohorts,
                 )?;
 
-                // Recover chain_state from stored values
-                let chain_state = if !recovered.starting_height.is_zero() {
-                    let height_to_timestamp = &indexes.height_to_timestamp_fixed;
-                    let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
-
-                    let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
-                    let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
-                    let mut chain_state_iter = self.chain_state.into_iter();
-
-                    (0..recovered.starting_height.to_usize())
-                        .map(|h| {
-                            let h = Height::from(h);
-                            BlockState {
-                                supply: chain_state_iter.get_unwrap(h),
-                                price: height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h)),
-                                timestamp: height_to_timestamp_iter.get_unwrap(h),
-                            }
-                        })
-                        .collect()
-                } else {
-                    vec![]
-                };
-
-                info!(
-                    "State recovery: {} at height {}",
-                    if recovered.restored { "resumed from checkpoint" } else { "fresh start" },
-                    recovered.starting_height
-                );
-                (recovered.starting_height, chain_state)
+                if recovered.starting_height.is_zero() {
+                    info!("State recovery validation failed, falling back to fresh start");
+                }
+                recovered.starting_height
             }
-            StartMode::Fresh => {
-                // Reset BytesVec state
-                self.txoutindex_to_txinindex.reset()?;
+            StartMode::Fresh => Height::ZERO,
+        };
 
-                // Use reset_state for cohort and address state reset
-                let recovered = reset_state(
-                    &mut self.any_address_indexes,
-                    &mut self.addresses_data,
-                    &mut self.utxo_cohorts,
-                    &mut self.address_cohorts,
-                )?;
+        // Fresh start: reset all state
+        let (starting_height, mut chain_state) = if recovered_height.is_zero() {
+            self.chain_state.reset()?;
+            self.txoutindex_to_txinindex.reset()?;
+            self.height_to_unspendable_supply.reset()?;
+            self.height_to_opreturn_supply.reset()?;
+            self.addresstype_to_height_to_addr_count.reset()?;
+            self.addresstype_to_height_to_empty_addr_count.reset()?;
+            reset_state(
+                &mut self.any_address_indexes,
+                &mut self.addresses_data,
+                &mut self.utxo_cohorts,
+                &mut self.address_cohorts,
+            )?;
 
-                info!(
-                    "State recovery: {} at height {}",
-                    if recovered.restored { "resumed from checkpoint" } else { "fresh start" },
-                    recovered.starting_height
-                );
-                (recovered.starting_height, vec![])
-            }
+            info!("State recovery: fresh start");
+            (Height::ZERO, vec![])
+        } else {
+            // Recover chain_state from stored values
+            let height_to_timestamp = &indexes.height_to_timestamp_fixed;
+            let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);
+
+            let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
+            let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
+            let mut chain_state_iter = self.chain_state.into_iter();
+
+            let chain_state = (0..recovered_height.to_usize())
+                .map(|h| {
+                    let h = Height::from(h);
+                    BlockState {
+                        supply: chain_state_iter.get_unwrap(h),
+                        price: height_to_price_iter.as_mut().map(|v| *v.get_unwrap(h)),
+                        timestamp: height_to_timestamp_iter.get_unwrap(h),
+                    }
+                })
+                .collect();
+
+            info!(
+                "State recovery: resumed from checkpoint at height {}",
+                recovered_height
+            );
+            (recovered_height, chain_state)
         };
 
         // 2b. Validate computed versions

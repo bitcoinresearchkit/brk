@@ -117,6 +117,14 @@ impl PricePaidMetrics {
         Ok(())
     }
 
+    /// Validate computed versions or reset if mismatched.
+    pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        if let Some(price_percentiles) = self.price_percentiles.as_mut() {
+            price_percentiles.validate_computed_version_or_reset(base_version)?;
+        }
+        Ok(())
+    }
+
     /// Compute aggregate values from separate cohorts.
     pub fn compute_from_stateful(
         &mut self,

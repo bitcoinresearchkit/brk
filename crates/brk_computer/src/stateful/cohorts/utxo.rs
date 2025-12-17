@@ -92,9 +92,12 @@ impl UTXOCohortVecs {
         self.state_starting_height = Some(height);
     }
 
-    /// Reset state starting height to zero.
+    /// Reset state starting height to zero and reset state values.
     pub fn reset_state_starting_height(&mut self) {
         self.state_starting_height = Some(Height::ZERO);
+        if let Some(state) = self.state.as_mut() {
+            state.reset();
+        }
     }
 
     /// Compute percentile prices from standalone price_to_amount.
@@ -150,14 +153,40 @@ impl DynCohortVecs for UTXOCohortVecs {
 
     fn reset_state_starting_height(&mut self) {
         self.state_starting_height = Some(Height::ZERO);
+        if let Some(state) = self.state.as_mut() {
+            state.reset();
+        }
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
+        use vecdb::GenericStoredVec;
+
         // Import state from runtime state if present
         if let Some(state) = self.state.as_mut() {
-            let imported = state.import_at_or_before(starting_height)?;
-            self.state_starting_height = Some(imported);
-            Ok(imported)
+            // State files are saved AT height H, so to resume at H+1 we need to import at H
+            // Decrement first, then increment result to match expected starting_height
+            if let Some(mut prev_height) = starting_height.decremented() {
+                // Import price_to_amount state file (may adjust prev_height to actual file found)
+                prev_height = state.import_at_or_before(prev_height)?;
+
+                // Restore supply state from height-indexed vectors
+                state.supply.value = self.metrics.supply.height_to_supply.read_once(prev_height)?;
+                state.supply.utxo_count = *self.metrics.supply.height_to_utxo_count.read_once(prev_height)?;
+
+                // Restore realized cap if present
+                if let Some(realized_metrics) = self.metrics.realized.as_mut()
+                    && let Some(realized_state) = state.realized.as_mut() {
+                        realized_state.cap = realized_metrics.height_to_realized_cap.read_once(prev_height)?;
+                    }
+
+                let result = prev_height.incremented();
+                self.state_starting_height = Some(result);
+                Ok(result)
+            } else {
+                // starting_height is 0, nothing to import
+                self.state_starting_height = Some(Height::ZERO);
+                Ok(Height::ZERO)
+            }
         } else {
             self.state_starting_height = Some(starting_height);
             Ok(starting_height)

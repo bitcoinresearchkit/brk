@@ -236,14 +236,12 @@ impl AddressCohorts {
             .unwrap_or_default()
     }
 
-    /// Import state for all separate cohorts at given height.
-    ///
-    /// Note: This follows the same pattern as UTXOCohorts - errors are ignored
-    /// and the start_mode logic ensures we're in a valid state before calling.
-    pub fn import_separate_states(&mut self, height: Height) {
-        self.par_iter_separate_mut().for_each(|v| {
-            let _ = v.import_state(height);
-        });
+    /// Import state for all separate cohorts at or before given height.
+    /// Returns true if all imports succeeded and returned the expected height.
+    pub fn import_separate_states(&mut self, height: Height) -> bool {
+        self.par_iter_separate_mut()
+            .map(|v| v.import_state(height).unwrap_or_default())
+            .all(|h| h == height)
     }
 
     /// Reset state heights for all separate cohorts.

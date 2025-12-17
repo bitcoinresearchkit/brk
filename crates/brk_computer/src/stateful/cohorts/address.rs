@@ -128,24 +128,52 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn reset_state_starting_height(&mut self) {
         self.reset_starting_height();
+        if let Some(state) = self.state.as_mut() {
+            state.reset();
+        }
     }
 
     fn import_state(&mut self, starting_height: Height) -> Result<Height> {
+        use vecdb::GenericStoredVec;
+
         // Import state from runtime state if present
         if let Some(state) = self.state.as_mut() {
-            let imported = state.inner.import_at_or_before(starting_height)?;
-            self.starting_height = Some(imported);
+            // State files are saved AT height H, so to resume at H+1 we need to import at H
+            // Decrement first, then increment result to match expected starting_height
+            if let Some(mut prev_height) = starting_height.decremented() {
+                // Import price_to_amount state file (may adjust prev_height to actual file found)
+                prev_height = state.inner.import_at_or_before(prev_height)?;
 
-            // Restore addr_count from last known value
-            if let Some(prev_height) = imported.decremented() {
-                use vecdb::TypedVecIterator;
-                state.addr_count = *self
-                    .height_to_addr_count
-                    .into_iter()
-                    .get_unwrap(prev_height);
+                // Restore supply state from height-indexed vectors
+                state.inner.supply.value = self
+                    .metrics
+                    .supply
+                    .height_to_supply
+                    .read_once(prev_height)?;
+                state.inner.supply.utxo_count = *self
+                    .metrics
+                    .supply
+                    .height_to_utxo_count
+                    .read_once(prev_height)?;
+                state.addr_count = *self.height_to_addr_count.read_once(prev_height)?;
+
+                // Restore realized cap if present
+                if let Some(realized_metrics) = self.metrics.realized.as_mut()
+                    && let Some(realized_state) = state.inner.realized.as_mut()
+                {
+                    realized_state.cap = realized_metrics
+                        .height_to_realized_cap
+                        .read_once(prev_height)?;
+                }
+
+                let result = prev_height.incremented();
+                self.starting_height = Some(result);
+                Ok(result)
+            } else {
+                // starting_height is 0, nothing to import
+                self.starting_height = Some(Height::ZERO);
+                Ok(Height::ZERO)
             }
-
-            Ok(imported)
         } else {
             self.starting_height = Some(starting_height);
             Ok(starting_height)

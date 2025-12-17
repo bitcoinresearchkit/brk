@@ -19,6 +19,7 @@ use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
 use log::info;
+use mimalloc::MiMalloc;
 use vecdb::Exit;
 
 mod config;
@@ -26,6 +27,9 @@ mod paths;
 mod website;
 
 use crate::{config::Config, paths::*};
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> color_eyre::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread

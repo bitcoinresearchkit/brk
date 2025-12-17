@@ -15,18 +15,19 @@ use super::super::AddressesDataVecs;
 
 /// Result of state recovery.
 pub struct RecoveredState {
-    /// Height to start processing from.
+    /// Height to start processing from. Zero means fresh start.
     pub starting_height: Height,
-    /// Whether state was successfully restored (vs starting fresh).
-    pub restored: bool,
 }
 
 /// Perform state recovery for resuming from checkpoint.
 ///
 /// Rolls back state vectors and imports cohort states.
-/// Returns the recovered state information.
+/// Validates that all rollbacks and imports are consistent.
+/// Returns Height::ZERO if any validation fails (triggers fresh start).
 pub fn recover_state(
     height: Height,
+    chain_state_rollback: vecdb::Result<Stamp>,
+    txoutindex_rollback: vecdb::Result<Stamp>,
     any_address_indexes: &mut AnyAddressIndexesVecs,
     addresses_data: &mut AddressesDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
@@ -38,24 +39,45 @@ pub fn recover_state(
     let address_indexes_rollback = any_address_indexes.rollback_before(stamp);
     let address_data_rollback = addresses_data.rollback_before(stamp);
 
-    // Verify rollback consistency (uses rollback_states helper)
-    let _consistent_height = rollback_states(
-        stamp,
-        Ok(stamp), // chain_state handled separately
+    // Verify rollback consistency - all must agree on the same height
+    let consistent_height = rollback_states(
+        chain_state_rollback,
+        txoutindex_rollback,
         address_indexes_rollback,
         address_data_rollback,
     );
 
-    // Import cohort states
-    utxo_cohorts.import_separate_states(height);
-    address_cohorts.import_separate_states(height);
+    // If rollbacks are inconsistent, start fresh
+    if consistent_height.is_zero() {
+        return Ok(RecoveredState {
+            starting_height: Height::ZERO,
+        });
+    }
 
-    // Import aggregate price_to_amount
-    let _ = import_aggregate_price_to_amount(height, utxo_cohorts)?;
+    // Import UTXO cohort states - all must succeed
+    if !utxo_cohorts.import_separate_states(height) {
+        return Ok(RecoveredState {
+            starting_height: Height::ZERO,
+        });
+    }
+
+    // Import address cohort states - all must succeed
+    if !address_cohorts.import_separate_states(height) {
+        return Ok(RecoveredState {
+            starting_height: Height::ZERO,
+        });
+    }
+
+    // Import aggregate price_to_amount - must match height
+    let imported = import_aggregate_price_to_amount(height, utxo_cohorts)?;
+    if imported != height {
+        return Ok(RecoveredState {
+            starting_height: Height::ZERO,
+        });
+    }
 
     Ok(RecoveredState {
         starting_height: height,
-        restored: true,
     })
 }
 
@@ -85,12 +107,16 @@ pub fn reset_state(
 
     Ok(RecoveredState {
         starting_height: Height::ZERO,
-        restored: false,
     })
 }
 
 /// Check if we can resume from a checkpoint or need to start fresh.
 pub fn determine_start_mode(computed_min: Height, chain_state_height: Height) -> StartMode {
+    // No data to resume from
+    if chain_state_height.is_zero() {
+        return StartMode::Fresh;
+    }
+
     match computed_min.cmp(&chain_state_height) {
         Ordering::Greater => unreachable!("min height > chain state height"),
         Ordering::Equal => StartMode::Resume(chain_state_height),
@@ -108,32 +134,42 @@ pub enum StartMode {
 
 /// Rollback state vectors to before a given stamp.
 ///
-/// Returns the consistent starting height if all vectors agree,
+/// Returns the consistent starting height if ALL rollbacks succeed and agree,
 /// otherwise returns Height::ZERO (need fresh start).
 fn rollback_states(
-    _stamp: Stamp,
     chain_state_rollback: vecdb::Result<Stamp>,
+    txoutindex_rollback: vecdb::Result<Stamp>,
     address_indexes_rollbacks: Result<Vec<Stamp>>,
     address_data_rollbacks: Result<[Stamp; 2]>,
 ) -> Height {
     let mut heights: BTreeSet<Height> = BTreeSet::new();
 
-    if let Ok(s) = chain_state_rollback {
+    // All rollbacks must succeed - any error means fresh start
+    let Ok(s) = chain_state_rollback else {
+        return Height::ZERO;
+    };
+    heights.insert(Height::from(s).incremented());
+
+    let Ok(s) = txoutindex_rollback else {
+        return Height::ZERO;
+    };
+    heights.insert(Height::from(s).incremented());
+
+    let Ok(stamps) = address_indexes_rollbacks else {
+        return Height::ZERO;
+    };
+    for s in stamps {
         heights.insert(Height::from(s).incremented());
     }
 
-    if let Ok(stamps) = address_indexes_rollbacks {
-        for s in stamps {
-            heights.insert(Height::from(s).incremented());
-        }
+    let Ok(stamps) = address_data_rollbacks else {
+        return Height::ZERO;
+    };
+    for s in stamps {
+        heights.insert(Height::from(s).incremented());
     }
 
-    if let Ok(stamps) = address_data_rollbacks {
-        for s in stamps {
-            heights.insert(Height::from(s).incremented());
-        }
-    }
-
+    // All must agree on the same height
     if heights.len() == 1 {
         heights.pop_first().unwrap()
     } else {

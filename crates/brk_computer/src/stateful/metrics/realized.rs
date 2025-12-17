@@ -434,8 +434,12 @@ impl RealizedMetrics {
         self.height_to_realized_loss.safe_write(exit)?;
         self.height_to_value_created.safe_write(exit)?;
         self.height_to_value_destroyed.safe_write(exit)?;
-        self.height_to_adjusted_value_created.um().safe_write(exit)?;
-        self.height_to_adjusted_value_destroyed.um().safe_write(exit)?;
+        if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
+            v.safe_write(exit)?;
+        }
+        if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
+            v.safe_write(exit)?;
+        }
         Ok(())
     }
 

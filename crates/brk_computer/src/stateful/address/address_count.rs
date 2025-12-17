@@ -97,6 +97,19 @@ impl AddressTypeToHeightToAddressCount {
             .truncate_push(height, addresstype_to_usize.p2a.into())?;
         Ok(())
     }
+
+    pub fn reset(&mut self) -> Result<()> {
+        use vecdb::GenericStoredVec;
+        self.p2pk65.reset()?;
+        self.p2pk33.reset()?;
+        self.p2pkh.reset()?;
+        self.p2sh.reset()?;
+        self.p2wpkh.reset()?;
+        self.p2wsh.reset()?;
+        self.p2tr.reset()?;
+        self.p2a.reset()?;
+        Ok(())
+    }
 }
 
 /// Address count per address type, indexed by various indexes (dateindex, etc.).

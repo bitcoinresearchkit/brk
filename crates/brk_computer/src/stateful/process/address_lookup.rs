@@ -40,36 +40,44 @@ where
         output_type: OutputType,
         type_index: TypeIndex,
     ) -> (&mut LoadedAddressDataWithSource, bool, bool) {
-        let mut is_new = false;
-        let mut from_empty = false;
+        use std::collections::hash_map::Entry;
 
-        let addr_data = self
-            .loaded
-            .get_mut(output_type)
-            .unwrap()
-            .entry(type_index)
-            .or_insert_with(|| {
+        let map = self.loaded.get_mut(output_type).unwrap();
+
+        match map.entry(type_index) {
+            Entry::Occupied(entry) => {
+                // Entry already exists - check its source
+                let data = entry.into_mut();
+                let is_new = data.is_new();
+                let from_empty = data.is_from_emptyaddressdata();
+                (data, is_new, from_empty)
+            }
+            Entry::Vacant(entry) => {
                 // Check if it was in empty set
-                if let Some(empty_data) = self.empty.get_mut(output_type).unwrap().remove(&type_index) {
-                    from_empty = true;
-                    return empty_data.into();
+                if let Some(empty_data) =
+                    self.empty.get_mut(output_type).unwrap().remove(&type_index)
+                {
+                    let data = entry.insert(empty_data.into());
+                    return (data, false, true);
                 }
 
                 // Look up from storage or create new
                 match (self.get_address_data)(output_type, type_index) {
                     Some(data) => {
-                        is_new = data.is_new();
-                        from_empty = data.is_from_emptyaddressdata();
-                        data
+                        let is_new = data.is_new();
+                        let from_empty = data.is_from_emptyaddressdata();
+                        let data = entry.insert(data);
+                        (data, is_new, from_empty)
                     }
                     None => {
-                        is_new = true;
-                        WithAddressDataSource::New(LoadedAddressData::default())
+                        let data = entry.insert(WithAddressDataSource::New(
+                            LoadedAddressData::default(),
+                        ));
+                        (data, true, false)
                     }
                 }
-            });
-
-        (addr_data, is_new, from_empty)
+            }
+        }
     }
 
     /// Get address data for a send operation (must exist).

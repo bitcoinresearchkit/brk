@@ -48,8 +48,8 @@ where
         let days_old = current_timestamp.difference_in_days_between_float(prev_timestamp);
         let older_than_hour = current_timestamp
             .checked_sub(prev_timestamp)
-            .map(|d| d.is_more_than_hour())
-            .unwrap_or(false);
+            .unwrap()
+            .is_more_than_hour();
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             for (type_index, value) in vec {
@@ -78,8 +78,10 @@ where
                     addr_data.send(value, prev_price)?;
 
                     if will_be_empty {
-                        // Address becoming empty
-                        debug_assert!(new_balance.is_zero());
+                        // Address becoming empty - invariant check
+                        if new_balance.is_not_zero() {
+                            unreachable!()
+                        }
 
                         *addr_count.get_mut(output_type).unwrap() -= 1;
                         *empty_addr_count.get_mut(output_type).unwrap() += 1;

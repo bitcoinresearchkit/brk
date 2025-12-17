@@ -16,20 +16,21 @@ brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_iterator = { workspace = true }
+brk_logger = { workspace = true }
 brk_mempool = { workspace = true }
 brk_query = { workspace = true }
-brk_logger = { workspace = true }
 brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
 brk_server = { workspace = true }
-vecdb = { workspace = true }
 clap = { version = "4.5.53", features = ["derive", "string"] }
 color-eyre = { workspace = true }
 log = { workspace = true }
+mimalloc = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 toml = "0.9.8"
+vecdb = { workspace = true }
 zip = { version = "6.0.0", default-features = false, features = ["deflate"] }
 
 [[bin]]

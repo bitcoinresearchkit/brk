@@ -69,8 +69,8 @@ impl UTXOCohorts {
                 last_timestamp.difference_in_days_between_float(block_state.timestamp);
             let older_than_hour = last_timestamp
                 .checked_sub(block_state.timestamp)
-                .map(|d| d.is_more_than_hour())
-                .unwrap_or(false);
+                .unwrap()
+                .is_more_than_hour();
 
             // Update time-based cohorts
             time_cohorts

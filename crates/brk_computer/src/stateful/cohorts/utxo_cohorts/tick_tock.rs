@@ -6,7 +6,7 @@
 use brk_grouper::{Filter, Filtered, UTXOGroups};
 use brk_types::{ONE_DAY_IN_SEC, Sats, Timestamp};
 
-use crate::{states::BlockState, utils::OptionExt, PriceToAmount};
+use crate::{PriceToAmount, states::BlockState, utils::OptionExt};
 
 use super::UTXOCohorts;
 

@@ -105,6 +105,16 @@ impl PricePercentiles {
         }
         Ok(())
     }
+
+    /// Validate computed versions or reset if mismatched.
+    pub fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
+        for vec in self.vecs.iter_mut().flatten() {
+            if let Some(height_vec) = vec.height.as_mut() {
+                height_vec.validate_computed_version_or_reset(version)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Traversable for PricePercentiles {

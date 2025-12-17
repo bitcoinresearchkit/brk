@@ -21,6 +21,18 @@ impl AddressCohortState {
         }
     }
 
+    /// Reset state for fresh start.
+    pub fn reset(&mut self) {
+        self.addr_count = 0;
+        self.inner.supply = crate::SupplyState::default();
+        self.inner.sent = Sats::ZERO;
+        self.inner.satblocks_destroyed = Sats::ZERO;
+        self.inner.satdays_destroyed = Sats::ZERO;
+        if let Some(realized) = self.inner.realized.as_mut() {
+            *realized = crate::RealizedState::NAN;
+        }
+    }
+
     pub fn reset_price_to_amount_if_needed(&mut self) -> Result<()> {
         self.inner.reset_price_to_amount_if_needed()
     }

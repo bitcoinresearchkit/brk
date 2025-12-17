@@ -134,6 +134,10 @@ impl CohortMetrics {
             realized.validate_computed_versions(base_version)?;
         }
 
+        if let Some(price_paid) = self.price_paid.as_mut() {
+            price_paid.validate_computed_versions(base_version)?;
+        }
+
         Ok(())
     }
 
@@ -151,10 +155,8 @@ impl CohortMetrics {
             self.price_paid.as_mut(),
             height_price,
         ) {
-            // Push price paid min/max
             price_paid.truncate_push_minmax(height, state)?;
 
-            // Compute unrealized states from price_to_amount
             let (height_unrealized_state, date_unrealized_state) =
                 state.compute_unrealized_states(height_price, date_price.unwrap());
 
@@ -165,7 +167,6 @@ impl CohortMetrics {
                 date_unrealized_state.as_ref(),
             )?;
 
-            // Compute and push price percentiles
             price_paid.truncate_push_percentiles(height, state)?;
         }
 

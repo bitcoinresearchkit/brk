@@ -182,84 +182,84 @@ impl Computer {
             info!("Computed prices in {:?}", i.elapsed());
         }
 
-        thread::scope(|scope| -> Result<()> {
-            let blks = scope.spawn(|| -> Result<()> {
-                info!("Computing BLKs metadata...");
-                let i = Instant::now();
-                self.blks
-                    .compute(indexer, &starting_indexes, reader, exit)?;
-                info!("Computed blk in {:?}", i.elapsed());
-                Ok(())
-            });
+        // thread::scope(|scope| -> Result<()> {
+        // let blks = scope.spawn(|| -> Result<()> {
+        info!("Computing BLKs metadata...");
+        let i = Instant::now();
+        self.blks
+            .compute(indexer, &starting_indexes, reader, exit)?;
+        info!("Computed blk in {:?}", i.elapsed());
+        //     Ok(())
+        // });
 
-            let constants = scope.spawn(|| -> Result<()> {
-                info!("Computing constants...");
-                let i = Instant::now();
-                self.constants
-                    .compute(&self.indexes, &starting_indexes, exit)?;
-                info!("Computed constants in {:?}", i.elapsed());
-                Ok(())
-            });
+        // let constants = scope.spawn(|| -> Result<()> {
+        info!("Computing constants...");
+        let i = Instant::now();
+        self.constants
+            .compute(&self.indexes, &starting_indexes, exit)?;
+        info!("Computed constants in {:?}", i.elapsed());
+        //     Ok(())
+        // });
 
-            let chain = scope.spawn(|| -> Result<()> {
-                info!("Computing chain...");
-                let i = Instant::now();
-                self.chain.compute(
-                    indexer,
-                    &self.indexes,
-                    &starting_indexes,
-                    self.price.as_ref(),
-                    exit,
-                )?;
-                info!("Computed chain in {:?}", i.elapsed());
-                Ok(())
-            });
+        // let chain = scope.spawn(|| -> Result<()> {
+        info!("Computing chain...");
+        let i = Instant::now();
+        self.chain.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes,
+            self.price.as_ref(),
+            exit,
+        )?;
+        info!("Computed chain in {:?}", i.elapsed());
+        //     Ok(())
+        // });
 
-            if let Some(price) = self.price.as_ref() {
-                info!("Computing market...");
-                let i = Instant::now();
-                self.market.compute(price, &starting_indexes, exit)?;
-                info!("Computed market in {:?}", i.elapsed());
-            }
+        if let Some(price) = self.price.as_ref() {
+            info!("Computing market...");
+            let i = Instant::now();
+            self.market.compute(price, &starting_indexes, exit)?;
+            info!("Computed market in {:?}", i.elapsed());
+        }
 
-            blks.join().unwrap()?;
-            constants.join().unwrap()?;
-            chain.join().unwrap()?;
-            Ok(())
-        })?;
+        // blks.join().unwrap()?;
+        // constants.join().unwrap()?;
+        // chain.join().unwrap()?;
+        // Ok(())
+        // })?;
 
         let starting_indexes_clone = starting_indexes.clone();
-        thread::scope(|scope| -> Result<()> {
-            let pools = scope.spawn(|| -> Result<()> {
-                info!("Computing pools...");
-                let i = Instant::now();
-                self.pools.compute(
-                    indexer,
-                    &self.indexes,
-                    &starting_indexes_clone,
-                    &self.chain,
-                    self.price.as_ref(),
-                    exit,
-                )?;
-                info!("Computed pools in {:?}", i.elapsed());
-                Ok(())
-            });
+        // thread::scope(|scope| -> Result<()> {
+        // let pools = scope.spawn(|| -> Result<()> {
+        info!("Computing pools...");
+        let i = Instant::now();
+        self.pools.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes_clone,
+            &self.chain,
+            self.price.as_ref(),
+            exit,
+        )?;
+        info!("Computed pools in {:?}", i.elapsed());
+        //     Ok(())
+        // });
 
-            info!("Computing stateful...");
-            let i = Instant::now();
-            self.stateful.compute(
-                indexer,
-                &self.indexes,
-                &self.chain,
-                self.price.as_ref(),
-                &mut starting_indexes,
-                exit,
-            )?;
-            info!("Computed stateful in {:?}", i.elapsed());
+        info!("Computing stateful...");
+        let i = Instant::now();
+        self.stateful.compute(
+            indexer,
+            &self.indexes,
+            &self.chain,
+            self.price.as_ref(),
+            &mut starting_indexes,
+            exit,
+        )?;
+        info!("Computed stateful in {:?}", i.elapsed());
 
-            pools.join().unwrap()?;
-            Ok(())
-        })?;
+        //     pools.join().unwrap()?;
+        //     Ok(())
+        // })?;
 
         info!("Computing cointime...");
         let i = Instant::now();

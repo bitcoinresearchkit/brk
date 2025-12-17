@@ -344,14 +344,18 @@ impl UTXOCohorts {
         })
     }
 
-    /// Flush stateful vectors for separate cohorts.
+    /// Flush stateful vectors for separate and aggregate cohorts.
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        // Flush separate cohorts (includes metrics + state)
         self.par_iter_separate_mut()
             .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))?;
 
-        self.0
-            .par_iter_aggregate_mut()
-            .try_for_each(|v| v.price_to_amount.flush_at_height(height, exit))
+        // Flush aggregate cohorts' price_to_amount state AND metrics (including price_percentiles)
+        for v in self.0.iter_aggregate_mut() {
+            v.price_to_amount.flush_at_height(height, exit)?;
+            v.metrics.safe_flush(exit)?;
+        }
+        Ok(())
     }
 
     /// Reset aggregate cohorts' price_to_amount for fresh start.
@@ -382,11 +386,12 @@ impl UTXOCohorts {
             .unwrap_or_default()
     }
 
-    /// Import state for all separate cohorts at given height.
-    pub fn import_separate_states(&mut self, height: Height) {
-        self.par_iter_separate_mut().for_each(|v| {
-            let _ = v.import_state(height);
-        });
+    /// Import state for all separate cohorts at or before given height.
+    /// Returns true if all imports succeeded and returned the expected height.
+    pub fn import_separate_states(&mut self, height: Height) -> bool {
+        self.par_iter_separate_mut()
+            .map(|v| v.import_state(height).unwrap_or_default())
+            .all(|h| h == height)
     }
 
     /// Reset state heights for all separate cohorts.
@@ -463,9 +468,17 @@ impl UTXOCohorts {
         Ok(())
     }
 
-    /// Validate computed versions for all separate cohorts.
+    /// Validate computed versions for all cohorts (separate and aggregate).
     pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        // Validate separate cohorts
         self.par_iter_separate_mut()
-            .try_for_each(|v| v.validate_computed_versions(base_version))
+            .try_for_each(|v| v.validate_computed_versions(base_version))?;
+
+        // Validate aggregate cohorts' price_percentiles
+        for v in self.0.iter_aggregate_mut() {
+            v.validate_computed_versions(base_version)?;
+        }
+
+        Ok(())
     }
 }
