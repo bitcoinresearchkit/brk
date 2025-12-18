@@ -1,12 +1,13 @@
 //! State flushing logic for checkpoints.
 //!
-//! Handles periodic flushing of all stateful data to disk,
-//! including address data and chain state.
+//! Separates processing (mutations) from flushing (I/O):
+//! - `process_address_updates`: applies cached address changes to storage
+//! - `flush`: writes all data to disk
 
-use std::mem;
+use std::time::Instant;
 
 use brk_error::Result;
-use brk_types::{AnyAddressIndex, Height};
+use brk_types::Height;
 use log::info;
 use vecdb::{AnyStoredVec, Exit, GenericStoredVec, Stamp};
 
@@ -23,38 +24,67 @@ use crate::{
 
 use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
 
-/// Apply address index updates to the index storage.
-fn apply_address_index_updates(
+/// Process address updates from caches.
+///
+/// Applies all accumulated address changes to storage structures:
+/// - Processes empty address transitions
+/// - Processes loaded address transitions
+/// - Updates address indexes
+///
+/// Call this before `flush()` to prepare data for writing.
+pub fn process_address_updates(
+    addresses_data: &mut AddressesDataVecs,
     address_indexes: &mut AnyAddressIndexesVecs,
-    updates: AddressTypeToTypeIndexMap<AnyAddressIndex>,
+    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    loaded_updates: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
 ) -> Result<()> {
-    for (address_type, sorted) in updates.into_sorted_iter() {
+    let t0 = Instant::now();
+
+    // Process address data transitions
+    let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
+    let t1 = Instant::now();
+
+    let loaded_result = process_loaded_addresses(addresses_data, loaded_updates)?;
+    let t2 = Instant::now();
+
+    let all_updates = empty_result.merge(loaded_result);
+    let t3 = Instant::now();
+
+    // Apply index updates
+    for (address_type, sorted) in all_updates.into_sorted_iter() {
         for (typeindex, any_index) in sorted {
             address_indexes.update_or_push(address_type, typeindex, any_index)?;
         }
     }
+    let t4 = Instant::now();
+
+    info!(
+        "process_address_updates: empty={:?} loaded={:?} merge={:?} indexes={:?} total={:?}",
+        t1 - t0,
+        t2 - t1,
+        t3 - t2,
+        t4 - t3,
+        t4 - t0
+    );
+
     Ok(())
 }
 
-/// Flush checkpoint to disk.
+/// Flush checkpoint to disk (pure I/O, no processing).
 ///
-/// Flushes all accumulated data including:
+/// Writes all accumulated data:
 /// - Cohort stateful vectors
 /// - Height-indexed vectors
-/// - Address data caches (loaded and empty)
-/// - Chain state (synced from in-memory to persisted)
-#[allow(clippy::too_many_arguments)]
+/// - Address indexes and data
+/// - Transaction output index mappings
+/// - Chain state
 pub fn flush(
     vecs: &mut Vecs,
     height: Height,
     chain_state: &[BlockState],
-    loaded_cache: &mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
     exit: &Exit,
 ) -> Result<()> {
-    info!("Flushing checkpoint at height {}...", height);
-
-    let _lock = exit.lock();
+    info!("Flushing at height {}...", height);
 
     // Flush cohort states (separate + aggregate)
     vecs.utxo_cohorts.safe_flush_stateful_vecs(height, exit)?;
@@ -68,19 +98,12 @@ pub fn flush(
     vecs.addresstype_to_height_to_empty_addr_count
         .safe_flush(exit)?;
 
-    // Process and flush address data updates
-    let empty_updates = mem::take(empty_cache);
-    let loaded_updates = mem::take(loaded_cache);
-    flush_address_data(
-        height,
-        &mut vecs.any_address_indexes,
-        &mut vecs.addresses_data,
-        empty_updates,
-        loaded_updates,
-        true,
-    )?;
+    // Flush address data
+    let stamp = Stamp::from(height);
+    vecs.any_address_indexes.flush(stamp, true)?;
+    vecs.addresses_data.flush(stamp, true)?;
 
-    // Flush txoutindex_to_txinindex with stamp
+    // Flush txoutindex_to_txinindex
     vecs.txoutindex_to_txinindex
         .stamped_flush_with_changes(height.into())?;
 
@@ -90,39 +113,6 @@ pub fn flush(
         vecs.chain_state.push(block_state.supply.clone());
     }
     vecs.chain_state.stamped_flush_with_changes(height.into())?;
-
-    Ok(())
-}
-
-/// Flush address data at a checkpoint.
-///
-/// Note: Cohort states are flushed separately before this is called.
-///
-/// 1. Process address data updates (empty and loaded)
-/// 2. Update address indexes
-/// 3. Stamped flush address indexes and data
-fn flush_address_data(
-    height: Height,
-    address_indexes: &mut AnyAddressIndexesVecs,
-    addresses_data: &mut AddressesDataVecs,
-    empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-    loaded_updates: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    with_changes: bool,
-) -> Result<()> {
-    info!("Flushing address data at height {}...", height);
-
-    // 1. Process address updates - empty first, then loaded
-    let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
-    let loaded_result = process_loaded_addresses(addresses_data, loaded_updates)?;
-    let all_updates = empty_result.merge(loaded_result);
-
-    // 2. Apply index updates
-    apply_address_index_updates(address_indexes, all_updates)?;
-
-    // 3. Stamped flush
-    let stamp = Stamp::from(height);
-    address_indexes.flush(stamp, with_changes)?;
-    addresses_data.flush(stamp, with_changes)?;
 
     Ok(())
 }

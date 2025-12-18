@@ -17,24 +17,30 @@ use brk_types::{DateIndex, Height, OutputType, Sats, TypeIndex};
 use log::info;
 use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
-use crate::stateful::compute::flush::flush;
-use crate::states::{BlockState, Transacted};
-use crate::utils::OptionExt;
-use crate::{chain, indexes, price};
+use crate::{
+    chain, indexes, price,
+    stateful::{
+        address::AddressTypeToAddressCount,
+        compute::flush::{flush, process_address_updates},
+        process::{
+            AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
+            build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
+            process_sent, update_tx_counts,
+        },
+    },
+    states::{BlockState, Transacted},
+    utils::OptionExt,
+};
 
-use super::super::address::AddressTypeToTypeIndexMap;
-use super::super::cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
-use super::super::vecs::Vecs;
 use super::{
+    super::{
+        address::AddressTypeToTypeIndexMap,
+        cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts},
+        vecs::Vecs,
+    },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, TxInIterators,
     TxOutIterators, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
-};
-use crate::stateful::address::AddressTypeToAddressCount;
-use crate::stateful::process::{
-    AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
-    build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
-    process_sent, update_tx_counts,
 };
 
 /// Process all blocks from starting_height to last_height.
@@ -488,14 +494,16 @@ pub fn process_blocks(
             // Drop readers before flush to release mmap handles
             drop(vr);
 
-            flush(
-                vecs,
-                height,
-                chain_state,
-                &mut loaded_cache,
-                &mut empty_cache,
-                exit,
+            // Process address updates (mutations)
+            process_address_updates(
+                &mut vecs.addresses_data,
+                &mut vecs.any_address_indexes,
+                std::mem::take(&mut empty_cache),
+                std::mem::take(&mut loaded_cache),
             )?;
+
+            // Flush to disk (pure I/O)
+            flush(vecs, height, chain_state, exit)?;
 
             // Recreate readers after flush to pick up new data
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
@@ -505,14 +513,17 @@ pub fn process_blocks(
     // Final flush
     let _lock = exit.lock();
     drop(vr);
-    flush(
-        vecs,
-        last_height,
-        chain_state,
-        &mut loaded_cache,
-        &mut empty_cache,
-        exit,
+
+    // Process address updates (mutations)
+    process_address_updates(
+        &mut vecs.addresses_data,
+        &mut vecs.any_address_indexes,
+        std::mem::take(&mut empty_cache),
+        std::mem::take(&mut loaded_cache),
     )?;
+
+    // Flush to disk (pure I/O)
+    flush(vecs, last_height, chain_state, exit)?;
 
     Ok(())
 }
