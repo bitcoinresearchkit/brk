@@ -4,8 +4,11 @@
 
 use brk_grouper::{ByAddressType, ByAnyAddress};
 use brk_indexer::Indexer;
-use brk_types::{OutputType, StoredU64, TxIndex};
-use vecdb::{BoxedVecIterator, GenericStoredVec, Reader, VecIndex};
+use brk_types::{OutPoint, OutputType, Sats, StoredU64, TxInIndex, TxIndex, TxOutIndex, TypeIndex};
+use vecdb::{
+    BoxedVecIterator, BytesVecIterator, GenericStoredVec, PcodecVecIterator, Reader, VecIndex,
+    VecIterator,
+};
 
 use crate::stateful::address::{AddressesDataVecs, AnyAddressIndexesVecs};
 
@@ -29,6 +32,70 @@ impl IndexerReaders {
             txoutindex_to_outputtype: indexer.vecs.txout.txoutindex_to_outputtype.create_reader(),
             txoutindex_to_typeindex: indexer.vecs.txout.txoutindex_to_typeindex.create_reader(),
         }
+    }
+}
+
+/// Reusable iterators for txout vectors (16KB buffered reads).
+///
+/// Iterators are created once and re-positioned each block to avoid
+/// creating new file handles repeatedly.
+pub struct TxOutIterators<'a> {
+    value_iter: BytesVecIterator<'a, TxOutIndex, Sats>,
+    outputtype_iter: BytesVecIterator<'a, TxOutIndex, OutputType>,
+    typeindex_iter: BytesVecIterator<'a, TxOutIndex, TypeIndex>,
+}
+
+impl<'a> TxOutIterators<'a> {
+    pub fn new(indexer: &'a Indexer) -> Self {
+        Self {
+            value_iter: indexer.vecs.txout.txoutindex_to_value.into_iter(),
+            outputtype_iter: indexer.vecs.txout.txoutindex_to_outputtype.into_iter(),
+            typeindex_iter: indexer.vecs.txout.txoutindex_to_typeindex.into_iter(),
+        }
+    }
+
+    /// Collect output data for a block range using buffered iteration.
+    pub fn collect_block_outputs(
+        &mut self,
+        first_txoutindex: usize,
+        output_count: usize,
+    ) -> (Vec<Sats>, Vec<OutputType>, Vec<TypeIndex>) {
+        let mut values = Vec::with_capacity(output_count);
+        let mut output_types = Vec::with_capacity(output_count);
+        let mut type_indexes = Vec::with_capacity(output_count);
+
+        for i in first_txoutindex..first_txoutindex + output_count {
+            values.push(self.value_iter.get_at_unwrap(i));
+            output_types.push(self.outputtype_iter.get_at_unwrap(i));
+            type_indexes.push(self.typeindex_iter.get_at_unwrap(i));
+        }
+
+        (values, output_types, type_indexes)
+    }
+}
+
+/// Reusable iterator for txin outpoints (PcoVec - avoids repeated page decompression).
+pub struct TxInIterators<'a> {
+    outpoint_iter: PcodecVecIterator<'a, TxInIndex, OutPoint>,
+}
+
+impl<'a> TxInIterators<'a> {
+    pub fn new(indexer: &'a Indexer) -> Self {
+        Self {
+            outpoint_iter: indexer.vecs.txin.txinindex_to_outpoint.into_iter(),
+        }
+    }
+
+    /// Collect outpoints for a block range using buffered iteration.
+    /// This avoids repeated PcoVec page decompression (~1000x speedup).
+    pub fn collect_block_outpoints(
+        &mut self,
+        first_txinindex: usize,
+        input_count: usize,
+    ) -> Vec<OutPoint> {
+        (first_txinindex..first_txinindex + input_count)
+            .map(|i| self.outpoint_iter.get_at_unwrap(i))
+            .collect()
     }
 }
 

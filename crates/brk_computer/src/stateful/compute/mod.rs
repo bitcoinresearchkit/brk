@@ -17,7 +17,8 @@ mod recover;
 pub use block_loop::process_blocks;
 pub use context::ComputeContext;
 pub use readers::{
-    IndexerReaders, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
+    IndexerReaders, TxInIterators, TxOutIterators, VecsReaders, build_txinindex_to_txindex,
+    build_txoutindex_to_txindex,
 };
 pub use recover::{StartMode, determine_start_mode, recover_state, reset_state};
 

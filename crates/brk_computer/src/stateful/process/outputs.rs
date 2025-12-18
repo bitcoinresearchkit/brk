@@ -6,16 +6,16 @@
 
 use brk_grouper::ByAddressType;
 use brk_types::{
-    AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TxOutIndex, TypeIndex,
+    AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TypeIndex,
 };
 use smallvec::SmallVec;
-use vecdb::{BytesVec, GenericStoredVec, VecIterator};
+use vecdb::GenericStoredVec;
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
 };
 use crate::stateful::compute::VecsReaders;
-use crate::{stateful::IndexerReaders, states::Transacted};
+use crate::states::Transacted;
 
 use super::super::address::AddressTypeToVec;
 use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
@@ -38,19 +38,18 @@ pub struct OutputsResult {
 /// Process outputs (new UTXOs) for a block.
 ///
 /// For each output:
-/// 1. Read value and output type from indexer (sequential via iterators)
+/// 1. Read pre-collected value, output type, and typeindex
 /// 2. Accumulate into Transacted by type and amount
 /// 3. Look up address data if output is an address type
 /// 4. Track address-specific data for address cohort processing
 #[allow(clippy::too_many_arguments)]
 pub fn process_outputs(
-    first_txoutindex: usize,
     output_count: usize,
     txoutindex_to_txindex: &[TxIndex],
-    txoutindex_to_value: &BytesVec<TxOutIndex, Sats>,
-    txoutindex_to_outputtype: &BytesVec<TxOutIndex, OutputType>,
-    txoutindex_to_typeindex: &BytesVec<TxOutIndex, TypeIndex>,
-    ir: &IndexerReaders,
+    // Pre-collected output data (from reusable iterators with 16KB buffered reads)
+    values: &[Sats],
+    output_types: &[OutputType],
+    typeindexes: &[TypeIndex],
     // Address lookup parameters
     first_addressindexes: &ByAddressType<TypeIndex>,
     loaded_cache: &AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
@@ -59,19 +58,6 @@ pub fn process_outputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> OutputsResult {
-    // Sequential iterators for value and outputtype (cache-friendly)
-    let mut value_iter = txoutindex_to_value
-        .clean_iter()
-        .expect("Failed to create value iterator");
-    value_iter.set_position_to(first_txoutindex);
-    value_iter.set_end_to(first_txoutindex + output_count);
-
-    let mut outputtype_iter = txoutindex_to_outputtype
-        .clean_iter()
-        .expect("Failed to create outputtype iterator");
-    outputtype_iter.set_position_to(first_txoutindex);
-    outputtype_iter.set_end_to(first_txoutindex + output_count);
-
     // Pre-allocate result structures
     let estimated_per_type = (output_count / 8).max(8);
     let mut transacted = Transacted::default();
@@ -81,13 +67,11 @@ pub fn process_outputs(
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
 
-    // Single pass: read and accumulate
+    // Single pass: read from pre-collected vecs and accumulate
     for local_idx in 0..output_count {
-        let txoutindex = TxOutIndex::from(first_txoutindex + local_idx);
         let txindex = txoutindex_to_txindex[local_idx];
-
-        let value = value_iter.next().unwrap();
-        let output_type = outputtype_iter.next().unwrap();
+        let value = values[local_idx];
+        let output_type = output_types[local_idx];
 
         transacted.iterate(value, output_type);
 
@@ -95,9 +79,7 @@ pub fn process_outputs(
             continue;
         }
 
-        // typeindex only for addresses (random access)
-        let typeindex =
-            txoutindex_to_typeindex.read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
+        let typeindex = typeindexes[local_idx];
 
         received_data
             .get_mut(output_type)

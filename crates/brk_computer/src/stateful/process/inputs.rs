@@ -11,7 +11,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-use vecdb::{BytesVec, GenericStoredVec, PcoVec, VecIterator};
+use vecdb::{BytesVec, GenericStoredVec};
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
@@ -44,12 +44,13 @@ pub struct InputsResult {
 /// Process inputs (spent UTXOs) for a block.
 ///
 /// For each input:
-/// 1. Read outpoint, resolve to txoutindex
-/// 2. Get the creation height from txoutindex_to_height map
-/// 3. Read value and type from the referenced output
-/// 4. Look up address data if input references an address type
-/// 5. Accumulate into height_to_sent map
-/// 6. Track address-specific data for address cohort processing
+/// 1. Use pre-collected outpoint (from reusable iterator, avoids PcoVec re-decompression)
+/// 2. Resolve outpoint to txoutindex
+/// 3. Get the creation height from txoutindex_to_height map
+/// 4. Read value and type from the referenced output (random access via mmap)
+/// 5. Look up address data if input references an address type
+/// 6. Accumulate into height_to_sent map
+/// 7. Track address-specific data for address cohort processing
 ///
 /// Uses parallel reads followed by sequential accumulation to avoid
 /// expensive merge overhead from rayon's fold/reduce pattern.
@@ -58,7 +59,8 @@ pub fn process_inputs(
     first_txinindex: usize,
     input_count: usize,
     txinindex_to_txindex: &[TxIndex],
-    txinindex_to_outpoint: &PcoVec<TxInIndex, OutPoint>,
+    // Pre-collected outpoints (from reusable iterator with page caching)
+    outpoints: &[OutPoint],
     txindex_to_first_txoutindex: &BytesVec<TxIndex, TxOutIndex>,
     txoutindex_to_value: &BytesVec<TxOutIndex, Sats>,
     txoutindex_to_outputtype: &BytesVec<TxOutIndex, OutputType>,
@@ -73,18 +75,7 @@ pub fn process_inputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> InputsResult {
-    // Phase 1: Sequential collect of outpoints (uses iterator's page cache)
-    // This avoids decompressing the same PcoVec page ~1000 times per page
-    let outpoints: Vec<OutPoint> = {
-        let mut iter = txinindex_to_outpoint
-            .clean_iter()
-            .expect("Failed to create outpoint iterator");
-        iter.set_position_to(first_txinindex);
-        iter.set_end_to(first_txinindex + input_count);
-        iter.collect()
-    };
-
-    // Phase 2: Parallel reads - collect all input data (outpoints already in memory)
+    // Parallel reads - collect all input data (outpoints already in memory)
     let items: Vec<_> = (0..input_count)
         .into_par_iter()
         .map(|local_idx| {

@@ -1,7 +1,5 @@
 //! Per-address-type vector.
 
-use std::mem;
-
 use brk_grouper::ByAddressType;
 use derive_deref::{Deref, DerefMut};
 
@@ -41,40 +39,6 @@ impl<T> AddressTypeToVec<T> {
 }
 
 impl<T> AddressTypeToVec<T> {
-    /// Merge two AddressTypeToVec, consuming other.
-    pub fn merge(mut self, mut other: Self) -> Self {
-        Self::merge_single(&mut self.p2a, &mut other.p2a);
-        Self::merge_single(&mut self.p2pk33, &mut other.p2pk33);
-        Self::merge_single(&mut self.p2pk65, &mut other.p2pk65);
-        Self::merge_single(&mut self.p2pkh, &mut other.p2pkh);
-        Self::merge_single(&mut self.p2sh, &mut other.p2sh);
-        Self::merge_single(&mut self.p2tr, &mut other.p2tr);
-        Self::merge_single(&mut self.p2wpkh, &mut other.p2wpkh);
-        Self::merge_single(&mut self.p2wsh, &mut other.p2wsh);
-        self
-    }
-
-    /// Merge in place.
-    pub fn merge_mut(&mut self, mut other: Self) {
-        Self::merge_single(&mut self.p2a, &mut other.p2a);
-        Self::merge_single(&mut self.p2pk33, &mut other.p2pk33);
-        Self::merge_single(&mut self.p2pk65, &mut other.p2pk65);
-        Self::merge_single(&mut self.p2pkh, &mut other.p2pkh);
-        Self::merge_single(&mut self.p2sh, &mut other.p2sh);
-        Self::merge_single(&mut self.p2tr, &mut other.p2tr);
-        Self::merge_single(&mut self.p2wpkh, &mut other.p2wpkh);
-        Self::merge_single(&mut self.p2wsh, &mut other.p2wsh);
-    }
-
-    fn merge_single(own: &mut Vec<T>, other: &mut Vec<T>) {
-        if own.len() >= other.len() {
-            own.append(other);
-        } else {
-            other.append(own);
-            mem::swap(own, other);
-        }
-    }
-
     /// Unwrap the inner ByAddressType.
     pub fn unwrap(self) -> ByAddressType<Vec<T>> {
         self.0

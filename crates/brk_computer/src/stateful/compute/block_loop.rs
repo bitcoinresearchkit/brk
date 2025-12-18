@@ -27,8 +27,8 @@ use super::super::cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
 use super::super::vecs::Vecs;
 use super::{
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, VecsReaders,
-    build_txinindex_to_txindex, build_txoutindex_to_txindex,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, TxInIterators,
+    TxOutIterators, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
     flush::flush_checkpoint as flush_checkpoint_full,
 };
 use crate::stateful::address::AddressTypeToAddressCount;
@@ -130,6 +130,10 @@ pub fn process_blocks(
     // Create readers for parallel data access
     let ir = IndexerReaders::new(indexer);
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
+
+    // Create reusable iterators for sequential txout/txin reads (16KB buffered)
+    let mut txout_iters = TxOutIterators::new(indexer);
+    let mut txin_iters = TxInIterators::new(indexer);
 
     info!("Creating address iterators...");
 
@@ -267,6 +271,17 @@ pub fn process_blocks(
         // Reset per-block values for all separate cohorts
         reset_block_values(&mut vecs.utxo_cohorts, &mut vecs.address_cohorts);
 
+        // Collect output/input data using reusable iterators (16KB buffered reads)
+        // Must be done before thread::scope since iterators aren't Send
+        let (output_values, output_types, output_typeindexes) =
+            txout_iters.collect_block_outputs(first_txoutindex, output_count);
+
+        let input_outpoints = if input_count > 1 {
+            txin_iters.collect_block_outpoints(first_txinindex + 1, input_count - 1)
+        } else {
+            Vec::new()
+        };
+
         // Process outputs and inputs in parallel with tick-tock
         let (outputs_result, inputs_result) = thread::scope(|scope| {
             // Tick-tock age transitions in background
@@ -278,13 +293,11 @@ pub fn process_blocks(
             let outputs_handle = scope.spawn(|| {
                 // Process outputs (receive)
                 process_outputs(
-                    first_txoutindex,
                     output_count,
                     &txoutindex_to_txindex,
-                    &indexer.vecs.txout.txoutindex_to_value,
-                    &indexer.vecs.txout.txoutindex_to_outputtype,
-                    &indexer.vecs.txout.txoutindex_to_typeindex,
-                    &ir,
+                    &output_values,
+                    &output_types,
+                    &output_typeindexes,
                     &first_addressindexes,
                     &loaded_cache,
                     &empty_cache,
@@ -300,7 +313,7 @@ pub fn process_blocks(
                     first_txinindex + 1, // Skip coinbase
                     input_count - 1,
                     &txinindex_to_txindex[1..], // Skip coinbase
-                    &indexer.vecs.txin.txinindex_to_outpoint,
+                    &input_outpoints,
                     &indexer.vecs.tx.txindex_to_first_txoutindex,
                     &indexer.vecs.txout.txoutindex_to_value,
                     &indexer.vecs.txout.txoutindex_to_outputtype,
@@ -561,11 +574,6 @@ fn flush_checkpoint(
     exit: &Exit,
 ) -> Result<()> {
     info!("Flushing checkpoint at height {}...", height);
-
-    // Flush cohort states
-    vecs.utxo_cohorts.safe_flush_stateful_vecs(height, exit)?;
-    vecs.address_cohorts
-        .safe_flush_stateful_vecs(height, exit)?;
 
     // Flush height-indexed vectors
     vecs.height_to_unspendable_supply.safe_write(exit)?;

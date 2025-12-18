@@ -12,6 +12,7 @@ use crate::grouped::{PERCENTILES, PERCENTILES_LEN};
 const MIN_PRICE: f64 = 0.001;
 
 /// Maximum price tracked ($100M for future-proofing).
+#[allow(unused)]
 const MAX_PRICE: f64 = 100_000_000.0;
 
 /// Base for logarithmic buckets (0.1% precision).
@@ -97,11 +98,13 @@ impl PriceBuckets {
     }
 
     /// Check if empty.
+    #[allow(unused)]
     pub fn is_empty(&self) -> bool {
         self.total == Sats::ZERO
     }
 
     /// Get total supply.
+    #[allow(unused)]
     pub fn total(&self) -> Sats {
         self.total
     }
@@ -127,12 +130,14 @@ impl PriceBuckets {
     }
 
     /// Get amount in a specific bucket.
+    #[allow(unused)]
     pub fn get_bucket(&self, bucket: usize) -> Sats {
         self.buckets.get(bucket).copied().unwrap_or(Sats::ZERO)
     }
 
     /// Iterate over non-empty buckets in a price range.
     /// Used for unrealized computation flip range.
+    #[allow(unused)]
     pub fn iter_range(
         &self,
         from_price: Dollars,
@@ -158,6 +163,7 @@ impl PriceBuckets {
     }
 
     /// Iterate over all non-empty buckets (for full unrealized computation).
+    #[allow(unused)]
     pub fn iter(&self) -> impl Iterator<Item = (Dollars, Sats)> + '_ {
         self.buckets
             .iter()
@@ -172,6 +178,7 @@ impl PriceBuckets {
     }
 
     /// Get the lowest price bucket with non-zero amount.
+    #[allow(unused)]
     pub fn min_price(&self) -> Option<Dollars> {
         self.buckets
             .iter()
@@ -180,6 +187,7 @@ impl PriceBuckets {
     }
 
     /// Get the highest price bucket with non-zero amount.
+    #[allow(unused)]
     pub fn max_price(&self) -> Option<Dollars> {
         self.buckets
             .iter()
@@ -188,6 +196,7 @@ impl PriceBuckets {
     }
 
     /// Clear all data.
+    #[allow(unused)]
     pub fn clear(&mut self) {
         self.fenwick.clear();
         self.buckets.fill(Sats::ZERO);

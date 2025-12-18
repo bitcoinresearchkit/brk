@@ -42,6 +42,7 @@ impl FenwickTree {
     }
 
     /// Get prefix sum of elements 0..=idx. O(log n).
+    #[allow(unused)]
     pub fn prefix_sum(&self, idx: usize) -> u64 {
         let mut sum = 0u64;
         let mut i = idx + 1; // Convert to 1-indexed
@@ -84,11 +85,13 @@ impl FenwickTree {
     }
 
     /// Get total sum of all elements. O(log n).
+    #[allow(unused)]
     pub fn total(&self) -> u64 {
         self.prefix_sum(self.len.saturating_sub(1))
     }
 
     /// Reset all values to zero. O(n).
+    #[allow(unused)]
     pub fn clear(&mut self) {
         self.tree.fill(0);
     }
