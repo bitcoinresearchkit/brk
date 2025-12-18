@@ -11,7 +11,6 @@ use crate::stateful::address::{AddressesDataVecs, AnyAddressIndexesVecs};
 
 /// Cached readers for indexer vectors.
 pub struct IndexerReaders {
-    pub txinindex_to_outpoint: Reader,
     pub txindex_to_first_txoutindex: Reader,
     pub txoutindex_to_value: Reader,
     pub txoutindex_to_outputtype: Reader,
@@ -21,7 +20,6 @@ pub struct IndexerReaders {
 impl IndexerReaders {
     pub fn new(indexer: &Indexer) -> Self {
         Self {
-            txinindex_to_outpoint: indexer.vecs.txin.txinindex_to_outpoint.create_reader(),
             txindex_to_first_txoutindex: indexer
                 .vecs
                 .tx

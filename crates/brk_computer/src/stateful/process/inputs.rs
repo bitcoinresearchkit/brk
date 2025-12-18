@@ -11,7 +11,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-use vecdb::{BytesVec, GenericStoredVec, PcoVec};
+use vecdb::{BytesVec, GenericStoredVec, PcoVec, VecIterator};
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
@@ -41,7 +41,7 @@ pub struct InputsResult {
     pub txoutindex_to_txinindex_updates: Vec<(TxOutIndex, TxInIndex)>,
 }
 
-/// Process inputs (spent UTXOs) for a block in parallel.
+/// Process inputs (spent UTXOs) for a block.
 ///
 /// For each input:
 /// 1. Read outpoint, resolve to txoutindex
@@ -50,6 +50,9 @@ pub struct InputsResult {
 /// 4. Look up address data if input references an address type
 /// 5. Accumulate into height_to_sent map
 /// 6. Track address-specific data for address cohort processing
+///
+/// Uses parallel reads followed by sequential accumulation to avoid
+/// expensive merge overhead from rayon's fold/reduce pattern.
 #[allow(clippy::too_many_arguments)]
 pub fn process_inputs(
     first_txinindex: usize,
@@ -70,16 +73,26 @@ pub fn process_inputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> InputsResult {
-    let (height_to_sent, sent_data, address_data, txindex_vecs, txoutindex_to_txinindex_updates) = (first_txinindex
-        ..first_txinindex + input_count)
+    // Phase 1: Sequential collect of outpoints (uses iterator's page cache)
+    // This avoids decompressing the same PcoVec page ~1000 times per page
+    let outpoints: Vec<OutPoint> = {
+        let mut iter = txinindex_to_outpoint
+            .clean_iter()
+            .expect("Failed to create outpoint iterator");
+        iter.set_position_to(first_txinindex);
+        iter.set_end_to(first_txinindex + input_count);
+        iter.collect()
+    };
+
+    // Phase 2: Parallel reads - collect all input data (outpoints already in memory)
+    let items: Vec<_> = (0..input_count)
         .into_par_iter()
-        .map(|i| {
-            let txinindex = TxInIndex::from(i);
-            let local_idx = i - first_txinindex;
+        .map(|local_idx| {
+            let txinindex = TxInIndex::from(first_txinindex + local_idx);
             let txindex = txinindex_to_txindex[local_idx];
 
-            // Get outpoint and resolve to txoutindex
-            let outpoint = txinindex_to_outpoint.read_unwrap(txinindex, &ir.txinindex_to_outpoint);
+            // Get outpoint from pre-collected vec and resolve to txoutindex
+            let outpoint = outpoints[local_idx];
             let first_txoutindex = txindex_to_first_txoutindex
                 .read_unwrap(outpoint.txindex(), &ir.txindex_to_first_txoutindex);
             let txoutindex = first_txoutindex + outpoint.vout();
@@ -121,78 +134,51 @@ pub fn process_inputs(
                 Some((typeindex, txindex, value, addr_data_opt)),
             )
         })
-        .fold(
-            || {
-                (
-                    FxHashMap::<Height, Transacted>::default(),
-                    HeightToAddressTypeToVec::default(),
-                    AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
-                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
-                    Vec::<(TxOutIndex, TxInIndex)>::new(),
-                )
-            },
-            |(mut height_to_sent, mut sent_data, mut address_data, mut txindex_vecs, mut txoutindex_to_txinindex_updates),
-             (txinindex, txoutindex, prev_height, value, output_type, addr_info)| {
-                height_to_sent
-                    .entry(prev_height)
-                    .or_default()
-                    .iterate(value, output_type);
+        .collect();
 
-                txoutindex_to_txinindex_updates.push((txoutindex, txinindex));
+    // Phase 2: Sequential accumulation - no merge overhead
+    // Estimate: unique heights bounded by block depth, addresses spread across ~8 types
+    let estimated_unique_heights = (input_count / 4).max(16);
+    let estimated_per_type = (input_count / 8).max(8);
+    let mut height_to_sent = FxHashMap::<Height, Transacted>::with_capacity_and_hasher(
+        estimated_unique_heights,
+        Default::default(),
+    );
+    let mut sent_data = HeightToAddressTypeToVec::with_capacity(estimated_unique_heights);
+    let mut address_data =
+        AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::with_capacity(estimated_per_type);
+    let mut txindex_vecs =
+        AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
+    let mut txoutindex_to_txinindex_updates = Vec::with_capacity(input_count);
 
-                if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
-                    sent_data
-                        .entry(prev_height)
-                        .or_default()
-                        .get_mut(output_type)
-                        .unwrap()
-                        .push((typeindex, value));
+    for (txinindex, txoutindex, prev_height, value, output_type, addr_info) in items {
+        height_to_sent
+            .entry(prev_height)
+            .or_default()
+            .iterate(value, output_type);
 
-                    if let Some(addr_data) = addr_data_opt {
-                        address_data.insert_for_type(output_type, typeindex, addr_data);
-                    }
+        txoutindex_to_txinindex_updates.push((txoutindex, txinindex));
 
-                    txindex_vecs
-                        .get_mut(output_type)
-                        .unwrap()
-                        .entry(typeindex)
-                        .or_insert_with(TxIndexVec::new)
-                        .push(txindex);
-                }
+        if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
+            sent_data
+                .entry(prev_height)
+                .or_default()
+                .get_mut(output_type)
+                .unwrap()
+                .push((typeindex, value));
 
-                (height_to_sent, sent_data, address_data, txindex_vecs, txoutindex_to_txinindex_updates)
-            },
-        )
-        .reduce(
-            || {
-                (
-                    FxHashMap::<Height, Transacted>::default(),
-                    HeightToAddressTypeToVec::default(),
-                    AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
-                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
-                    Vec::<(TxOutIndex, TxInIndex)>::new(),
-                )
-            },
-            |(mut h1, mut s1, a1, tx1, updates1), (h2, s2, a2, tx2, updates2)| {
-                // Merge height_to_sent maps
-                for (k, v) in h2 {
-                    *h1.entry(k).or_default() += v;
-                }
+            if let Some(addr_data) = addr_data_opt {
+                address_data.insert_for_type(output_type, typeindex, addr_data);
+            }
 
-                // Merge sent_data maps
-                s1.merge_mut(s2);
-
-                // Merge txoutindex_to_txinindex updates (extend longest with shortest)
-                let (mut updates, updates_consumed) = if updates1.len() > updates2.len() {
-                    (updates1, updates2)
-                } else {
-                    (updates2, updates1)
-                };
-                updates.extend(updates_consumed);
-
-                (h1, s1, a1.merge(a2), tx1.merge_vec(tx2), updates)
-            },
-        );
+            txindex_vecs
+                .get_mut(output_type)
+                .unwrap()
+                .entry(typeindex)
+                .or_default()
+                .push(txindex);
+        }
+    }
 
     InputsResult {
         height_to_sent,

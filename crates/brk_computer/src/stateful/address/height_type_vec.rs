@@ -11,6 +11,13 @@ use super::type_vec::AddressTypeToVec;
 pub struct HeightToAddressTypeToVec<T>(FxHashMap<Height, AddressTypeToVec<T>>);
 
 impl<T> HeightToAddressTypeToVec<T> {
+    /// Create with pre-allocated capacity for unique heights.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(FxHashMap::with_capacity_and_hasher(capacity, Default::default()))
+    }
+}
+
+impl<T> HeightToAddressTypeToVec<T> {
     /// Merge another map into this one.
     pub fn merge_mut(&mut self, other: Self) {
         for (height, vec) in other.0 {

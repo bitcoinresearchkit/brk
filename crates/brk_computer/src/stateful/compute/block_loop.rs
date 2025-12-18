@@ -275,22 +275,24 @@ pub fn process_blocks(
                     .tick_tock_next_block(chain_state, timestamp);
             });
 
-            // Process outputs (receive)
-            let outputs_result = process_outputs(
-                first_txoutindex,
-                output_count,
-                &txoutindex_to_txindex,
-                &indexer.vecs.txout.txoutindex_to_value,
-                &indexer.vecs.txout.txoutindex_to_outputtype,
-                &indexer.vecs.txout.txoutindex_to_typeindex,
-                &ir,
-                &first_addressindexes,
-                &loaded_cache,
-                &empty_cache,
-                &vr,
-                &vecs.any_address_indexes,
-                &vecs.addresses_data,
-            );
+            let outputs_handle = scope.spawn(|| {
+                // Process outputs (receive)
+                process_outputs(
+                    first_txoutindex,
+                    output_count,
+                    &txoutindex_to_txindex,
+                    &indexer.vecs.txout.txoutindex_to_value,
+                    &indexer.vecs.txout.txoutindex_to_outputtype,
+                    &indexer.vecs.txout.txoutindex_to_typeindex,
+                    &ir,
+                    &first_addressindexes,
+                    &loaded_cache,
+                    &empty_cache,
+                    &vr,
+                    &vecs.any_address_indexes,
+                    &vecs.addresses_data,
+                )
+            });
 
             // Process inputs (send) - skip coinbase input
             let inputs_result = if input_count > 1 {
@@ -321,6 +323,8 @@ pub fn process_blocks(
                     txoutindex_to_txinindex_updates: Default::default(),
                 }
             };
+
+            let outputs_result = outputs_handle.join().unwrap();
 
             (outputs_result, inputs_result)
         });
@@ -503,13 +507,13 @@ pub fn process_blocks(
 
 /// Reset per-block values for all separate cohorts.
 fn reset_block_values(utxo_cohorts: &mut UTXOCohorts, address_cohorts: &mut AddressCohorts) {
-    utxo_cohorts.par_iter_separate_mut().for_each(|v| {
+    utxo_cohorts.iter_separate_mut().for_each(|v| {
         if let Some(state) = v.state.as_mut() {
             state.reset_single_iteration_values();
         }
     });
 
-    address_cohorts.par_iter_separate_mut().for_each(|v| {
+    address_cohorts.iter_separate_mut().for_each(|v| {
         if let Some(state) = v.state.as_mut() {
             state.inner.reset_single_iteration_values();
         }
@@ -525,12 +529,14 @@ fn push_cohort_states(
     dateindex: Option<DateIndex>,
     date_price: Option<Option<brk_types::Dollars>>,
 ) -> Result<()> {
-    utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
+    utxo_cohorts.iter_separate_mut().try_for_each(|v| {
+        // utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
         v.truncate_push(height)?;
         v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
     })?;
 
-    address_cohorts.par_iter_separate_mut().try_for_each(|v| {
+    address_cohorts.iter_separate_mut().try_for_each(|v| {
+        // address_cohorts.par_iter_separate_mut().try_for_each(|v| {
         v.truncate_push(height)?;
         v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
     })?;

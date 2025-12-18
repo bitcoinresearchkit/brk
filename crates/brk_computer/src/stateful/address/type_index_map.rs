@@ -29,6 +29,20 @@ impl<T> Default for AddressTypeToTypeIndexMap<T> {
 }
 
 impl<T> AddressTypeToTypeIndexMap<T> {
+    /// Create with pre-allocated capacity per address type.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(ByAddressType {
+            p2a: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2pk33: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2pk65: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2pkh: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2sh: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2tr: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2wpkh: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+            p2wsh: FxHashMap::with_capacity_and_hasher(capacity, Default::default()),
+        })
+    }
+
     /// Merge two maps, consuming other and extending self.
     pub fn merge(mut self, mut other: Self) -> Self {
         Self::merge_single(&mut self.p2a, &mut other.p2a);

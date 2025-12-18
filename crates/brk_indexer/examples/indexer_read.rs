@@ -1,5 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
+use mimalloc::MiMalloc;
 // use brk_types::Sats;
 use std::{fs, path::Path};
 

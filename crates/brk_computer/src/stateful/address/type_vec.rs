@@ -25,6 +25,22 @@ impl<T> Default for AddressTypeToVec<T> {
 }
 
 impl<T> AddressTypeToVec<T> {
+    /// Create with pre-allocated capacity per address type.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(ByAddressType {
+            p2a: Vec::with_capacity(capacity),
+            p2pk33: Vec::with_capacity(capacity),
+            p2pk65: Vec::with_capacity(capacity),
+            p2pkh: Vec::with_capacity(capacity),
+            p2sh: Vec::with_capacity(capacity),
+            p2tr: Vec::with_capacity(capacity),
+            p2wpkh: Vec::with_capacity(capacity),
+            p2wsh: Vec::with_capacity(capacity),
+        })
+    }
+}
+
+impl<T> AddressTypeToVec<T> {
     /// Merge two AddressTypeToVec, consuming other.
     pub fn merge(mut self, mut other: Self) -> Self {
         Self::merge_single(&mut self.p2a, &mut other.p2a);

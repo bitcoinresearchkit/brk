@@ -1,6 +1,6 @@
-//! Parallel output processing.
+//! Output processing.
 //!
-//! Processes a block's outputs (new UTXOs) in parallel, building:
+//! Processes a block's outputs (new UTXOs), building:
 //! - Transacted: aggregated supply by output type and amount range
 //! - Address data for address cohort tracking (optional)
 
@@ -8,9 +8,8 @@ use brk_grouper::ByAddressType;
 use brk_types::{
     AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TxOutIndex, TypeIndex,
 };
-use rayon::prelude::*;
 use smallvec::SmallVec;
-use vecdb::{BytesVec, GenericStoredVec};
+use vecdb::{BytesVec, GenericStoredVec, VecIterator};
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
@@ -36,10 +35,10 @@ pub struct OutputsResult {
     pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
 }
 
-/// Process outputs (new UTXOs) for a block in parallel.
+/// Process outputs (new UTXOs) for a block.
 ///
 /// For each output:
-/// 1. Read value and output type from indexer
+/// 1. Read value and output type from indexer (sequential via iterators)
 /// 2. Accumulate into Transacted by type and amount
 /// 3. Look up address data if output is an address type
 /// 4. Track address-specific data for address cohort processing
@@ -60,91 +59,73 @@ pub fn process_outputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> OutputsResult {
-    let (transacted, received_data, address_data, txindex_vecs) = (first_txoutindex
-        ..first_txoutindex + output_count)
-        .into_par_iter()
-        .map(|i| {
-            let txoutindex = TxOutIndex::from(i);
-            let local_idx = i - first_txoutindex;
-            let txindex = txoutindex_to_txindex[local_idx];
+    // Sequential iterators for value and outputtype (cache-friendly)
+    let mut value_iter = txoutindex_to_value
+        .clean_iter()
+        .expect("Failed to create value iterator");
+    value_iter.set_position_to(first_txoutindex);
+    value_iter.set_end_to(first_txoutindex + output_count);
 
-            let value = txoutindex_to_value.read_unwrap(txoutindex, &ir.txoutindex_to_value);
-            let output_type =
-                txoutindex_to_outputtype.read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
+    let mut outputtype_iter = txoutindex_to_outputtype
+        .clean_iter()
+        .expect("Failed to create outputtype iterator");
+    outputtype_iter.set_position_to(first_txoutindex);
+    outputtype_iter.set_end_to(first_txoutindex + output_count);
 
-            // Non-address outputs don't need typeindex or address lookup
-            if output_type.is_not_address() {
-                return (value, output_type, None);
-            }
+    // Pre-allocate result structures
+    let estimated_per_type = (output_count / 8).max(8);
+    let mut transacted = Transacted::default();
+    let mut received_data = AddressTypeToVec::with_capacity(estimated_per_type);
+    let mut address_data =
+        AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::with_capacity(estimated_per_type);
+    let mut txindex_vecs =
+        AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
 
-            let typeindex =
-                txoutindex_to_typeindex.read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
+    // Single pass: read and accumulate
+    for local_idx in 0..output_count {
+        let txoutindex = TxOutIndex::from(first_txoutindex + local_idx);
+        let txindex = txoutindex_to_txindex[local_idx];
 
-            // Look up address data
-            let addr_data_opt = get_address_data(
-                output_type,
-                typeindex,
-                first_addressindexes,
-                loaded_cache,
-                empty_cache,
-                vr,
-                any_address_indexes,
-                addresses_data,
-            );
+        let value = value_iter.next().unwrap();
+        let output_type = outputtype_iter.next().unwrap();
 
-            (
-                value,
-                output_type,
-                Some((typeindex, txindex, value, addr_data_opt)),
-            )
-        })
-        .fold(
-            || {
-                (
-                    Transacted::default(),
-                    AddressTypeToVec::default(),
-                    AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
-                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
-                )
-            },
-            |(mut transacted, mut received_data, mut address_data, mut txindex_vecs),
-             (value, output_type, addr_info)| {
-                transacted.iterate(value, output_type);
+        transacted.iterate(value, output_type);
 
-                if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
-                    received_data
-                        .get_mut(output_type)
-                        .unwrap()
-                        .push((typeindex, value));
+        if output_type.is_not_address() {
+            continue;
+        }
 
-                    if let Some(addr_data) = addr_data_opt {
-                        address_data.insert_for_type(output_type, typeindex, addr_data);
-                    }
+        // typeindex only for addresses (random access)
+        let typeindex =
+            txoutindex_to_typeindex.read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
 
-                    txindex_vecs
-                        .get_mut(output_type)
-                        .unwrap()
-                        .entry(typeindex)
-                        .or_insert_with(TxIndexVec::new)
-                        .push(txindex);
-                }
+        received_data
+            .get_mut(output_type)
+            .unwrap()
+            .push((typeindex, value));
 
-                (transacted, received_data, address_data, txindex_vecs)
-            },
-        )
-        .reduce(
-            || {
-                (
-                    Transacted::default(),
-                    AddressTypeToVec::default(),
-                    AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::default(),
-                    AddressTypeToTypeIndexMap::<TxIndexVec>::default(),
-                )
-            },
-            |(t1, r1, a1, tx1), (t2, r2, a2, tx2)| {
-                (t1 + t2, r1.merge(r2), a1.merge(a2), tx1.merge_vec(tx2))
-            },
+        let addr_data_opt = get_address_data(
+            output_type,
+            typeindex,
+            first_addressindexes,
+            loaded_cache,
+            empty_cache,
+            vr,
+            any_address_indexes,
+            addresses_data,
         );
+
+        if let Some(addr_data) = addr_data_opt {
+            address_data.insert_for_type(output_type, typeindex, addr_data);
+        }
+
+        txindex_vecs
+            .get_mut(output_type)
+            .unwrap()
+            .entry(typeindex)
+            .or_default()
+            .push(txindex);
+    }
 
     OutputsResult {
         transacted,

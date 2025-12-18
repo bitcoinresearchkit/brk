@@ -10,6 +10,7 @@ use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
+use mimalloc::MiMalloc;
 use vecdb::Exit;
 
 #[global_allocator]
