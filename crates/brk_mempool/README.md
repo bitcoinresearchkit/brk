@@ -1,30 +1,57 @@
-# brk_monitor
+# brk_mempool
 
-A lightweight, thread-safe Rust library for maintaining a live, in-memory snapshot of the Bitcoin mempool.
+Real-time Bitcoin mempool monitoring with fee estimation.
+
+## What It Enables
+
+Track mempool state, estimate transaction fees via projected block building, and query address mempool activity. Updates automatically with 1-second sync cycles.
 
 ## Key Features
 
-- **Real-time synchronization**: Polls Bitcoin Core RPC every second to track mempool state
-- **Thread-safe access**: Uses `RwLock` for concurrent reads with minimal contention
-- **Efficient updates**: Only fetches new transactions, with configurable rate limiting (10,000 tx/cycle)
-- **Zero-copy reads**: Exposes mempool via read guards for lock-free iteration
-- **Optimized data structures**: Uses `FxHashMap` for fast lookups and minimal hashing overhead
-- **Automatic cleanup**: Removes confirmed/dropped transactions on each update
+- **Projected blocks**: Simulates Bitcoin Core's block template algorithm with CPFP awareness
+- **Fee estimation**: Multi-tier fee recommendations (fastest, half-hour, hour, economy, minimum)
+- **Address tracking**: Maps addresses to their pending transactions
+- **Dependency handling**: Respects transaction ancestry for accurate fee calculations
+- **Rate-limited rebuilds**: Throttles expensive projections to 1/second
 
-## Design Principles
+## Core API
 
-- **Minimal lock duration**: Lock held only during HashSet operations, never during I/O
-- **Memory efficient**: Stores only missing txids during fetch phase
-- **Simple API**: Just `new()`, `start()`, and `get_txs()`
-- **Production-ready**: Error handling with logging, graceful degradation
+```rust
+let mempool = Mempool::new(&rpc_client);
 
-## Use Cases
+// Start background sync loop
+std::thread::spawn(move || mempool.start());
 
-- Fee estimation and mempool analysis
-- Transaction monitoring and alerts
-- Block template prediction
-- Network research and statistics
+// Query current state
+let fees = mempool.get_fees();
+let info = mempool.get_info();
+let blocks = mempool.get_block_stats();
+let snapshot = mempool.get_snapshot();
 
-## Description
+// Address lookups
+let tracker = mempool.get_addresses();
+```
 
-A clean, performant way to keep Bitcoin's mempool state available in your Rust application without repeatedly querying RPC. Perfect for applications that need frequent mempool access with low latency.
+## Fee Estimation
+
+Returns `RecommendedFees` with sat/vB rates for different confirmation targets:
+
+- `fastest_fee` - Next block
+- `half_hour_fee` - ~3 blocks
+- `hour_fee` - ~6 blocks
+- `economy_fee` - ~144 blocks
+- `minimum_fee` - Relay minimum
+
+## Block Projection
+
+Builds projected blocks by:
+1. Constructing transaction dependency graph
+2. Calculating effective fee rates (including ancestors)
+3. Selecting transactions greedily by ancestor-aware fee rate
+4. Partitioning into ~4MB virtual blocks
+
+## Built On
+
+- `brk_error` for error handling
+- `brk_rpc` for mempool RPC calls
+- `brk_types` for `MempoolInfo`, `MempoolEntryInfo`, `RecommendedFees`

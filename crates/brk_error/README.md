@@ -1,143 +1,16 @@
 # brk_error
 
-Centralized error handling for Bitcoin-related operations and database interactions.
+Unified error types for the Bitcoin Research Kit.
 
-[![Crates.io](https://img.shields.io/crates/v/brk_error.svg)](https://crates.io/crates/brk_error)
-[![Documentation](https://docs.rs/brk_error/badge.svg)](https://docs.rs/brk_error)
+## Core API
 
-## Overview
+- `Error` - Comprehensive enum covering all error cases across the stack
+- `Result<T>` - Convenience alias for `Result<T, Error>`
 
-This crate provides a unified error type that consolidates error handling across Bitcoin blockchain analysis tools. It wraps errors from multiple external libraries including Bitcoin Core RPC, database operations, HTTP requests, and serialization operations into a single `Error` enum.
+## Error Categories
 
-**Key Features:**
+**External integrations**: Bitcoin RPC, consensus encoding, address parsing, JSON serialization, database (fjall, vecdb), HTTP requests (minreq), async runtime (tokio)
 
-- Unified error type covering 11+ different error sources
-- Automatic conversions from external library errors
-- Bitcoin-specific error variants for blockchain operations
-- Database error handling for both Fjall and VecDB storage backends
-- Custom error types for domain-specific validation failures
+**Domain-specific**: Invalid addresses, unknown TXIDs, unsupported types, metric lookup failures with fuzzy suggestions, request weight limits
 
-**Target Use Cases:**
-
-- Applications processing Bitcoin blockchain data
-- Systems requiring unified error handling across multiple storage backends
-- Tools integrating Bitcoin Core RPC with local databases
-
-## Installation
-
-```bash
-cargo add brk_error
-```
-
-## Quick Start
-
-```rust
-use brk_error::{Error, Result};
-
-fn process_transaction() -> Result<()> {
-    // Function automatically converts various error types
-    let data = std::fs::read("transaction.json")?; // IO error auto-converted
-    let parsed: serde_json::Value = serde_json::from_slice(&data)?; // JSON error auto-converted
-
-    // Custom domain errors
-    if data.len() < 32 {
-        return Err(Error::WrongLength);
-    }
-
-    Ok(())
-}
-```
-
-## API Overview
-
-### Core Types
-
-- **`Error`**: Main error enum consolidating all error types
-- **`Result<T, E = Error>`**: Type alias for `std::result::Result` with default `Error` type
-
-### Error Categories
-
-**External Library Errors:**
-
-- `BitcoinRPC`: Bitcoin Core RPC client errors
-- `BitcoinConsensusEncode`: Bitcoin consensus encoding failures
-- `Fjall`/`VecDB`/`SeqDB`: Database operation errors
-- `Minreq`: HTTP request errors
-- `SerdeJson`: JSON serialization errors
-- `Jiff`: Date/time handling errors
-- `ZeroCopyError`: Zero-copy conversion failures
-
-**Domain-Specific Errors:**
-
-- `WrongLength`: Invalid data length for Bitcoin operations
-- `WrongAddressType`: Unsupported Bitcoin address format
-- `UnindexableDate`: Date outside valid blockchain range (before 2009-01-03)
-- `QuickCacheError`: Cache operation failures
-
-**Generic Errors:**
-
-- `Str(&'static str)`: Static string errors
-- `String(String)`: Dynamic string errors
-
-### Key Methods
-
-All external error types automatically convert to `Error` via `From` trait implementations. The error type implements `std::error::Error`, `Debug`, and `Display` traits for comprehensive error reporting.
-
-## Examples
-
-### Bitcoin RPC Integration
-
-```rust
-use brk_error::Result;
-use bitcoincore_rpc::{Client, Auth};
-
-fn get_block_count(client: &Client) -> Result<u64> {
-    let count = client.get_block_count()?; // Auto-converts bitcoincore_rpc::Error
-    Ok(count)
-}
-```
-
-### Database Operations
-
-```rust
-use brk_error::Result;
-
-fn store_transaction_data(db: &fjall::Keyspace, data: &[u8]) -> Result<()> {
-    if data.len() != 32 {
-        return Err(brk_error::Error::WrongLength);
-    }
-
-    db.insert(b"tx_hash", data)?; // Auto-converts fjall::Error
-    Ok(())
-}
-```
-
-### Date Validation
-
-```rust
-use brk_error::{Error, Result};
-use jiff::civil::Date;
-
-fn validate_blockchain_date(date: Date) -> Result<()> {
-    let genesis_date = Date::constant(2009, 1, 3);
-    let earliest_valid = Date::constant(2009, 1, 9);
-
-    if date < genesis_date || (date > genesis_date && date < earliest_valid) {
-        return Err(Error::UnindexableDate);
-    }
-
-    Ok(())
-}
-```
-
-## Code Analysis Summary
-
-**Main Type**: `Error` enum with 24 variants covering external libraries and domain-specific cases \
-**Conversion Traits**: Implements `From` for 10+ external error types enabling automatic error propagation \
-**Error Handling**: Standard Rust error handling with `std::error::Error` trait implementation \
-**Dependencies**: Integrates errors from `bitcoin`, `bitcoincore-rpc`, `fjall`, `vecdb`, `jiff`, `minreq`, `serde_json`, and `zerocopy` crates \
-**Architecture**: Centralized error aggregation pattern with automatic conversions and custom domain errors
-
----
-
-_This README was generated by Claude Code_
+**Network intelligence**: `is_network_permanently_blocked()` distinguishes transient failures (timeouts, rate limits) from permanent blocks (DNS failure, connection refused, TLS errors) to enable smart retry logic

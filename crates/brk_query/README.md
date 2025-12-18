@@ -1,237 +1,72 @@
 # brk_query
 
-Unified data query and formatting interface for Bitcoin datasets with intelligent search and multi-format output.
+Query interface for Bitcoin indexed and computed data.
 
-[![Crates.io](https://img.shields.io/crates/v/brk_query.svg)](https://crates.io/crates/brk_query)
-[![Documentation](https://docs.rs/brk_query/badge.svg)](https://docs.rs/brk_query)
+## What It Enables
 
-## Overview
+Query blocks, transactions, addresses, and 1000+ on-chain metrics through a unified API. Supports pagination, range queries, and multiple output formats.
 
-This crate provides a high-level interface for querying and formatting data from BRK's indexer and computer components. It offers intelligent vector search with fuzzy matching, parameter validation, range queries, and multi-format output (JSON, CSV) with efficient caching and pagination support.
+## Key Features
 
-**Key Features:**
+- **Unified access**: Single entry point to indexer, computer, and mempool data
+- **Metric discovery**: List metrics, filter by index type, fuzzy search
+- **Range queries**: By height, date, or relative offsets (`from=-100`)
+- **Multi-metric bulk queries**: Fetch multiple metrics in one call
+- **Async support**: Tokio-compatible with `AsyncQuery` wrapper
+- **Format flexibility**: JSON, CSV, or raw values
 
-- Unified query interface across indexer and computer data sources
-- Intelligent search with fuzzy matching and helpful error messages
-- Multi-format output: JSON, CSV with proper formatting
-- Range-based data queries with flexible from/to parameters
-- Comprehensive pagination support for large datasets
-- Schema validation with JSON Schema generation for API documentation
-- Efficient caching system for error messages and repeated queries
-
-**Target Use Cases:**
-
-- REST API backends requiring flexible data queries
-- Data export tools supporting multiple output formats
-- Interactive applications with user-friendly error messaging
-- Research platforms requiring structured data access
-
-## Installation
-
-```bash
-cargo add brk_query
-```
-
-## Quick Start
+## Core API
 
 ```rust
-use brk_query::{Interface, Params, Index};
-use brk_indexer::Indexer;
-use brk_computer::Computer;
+let query = Query::build(&reader, &indexer, &computer, Some(mempool));
 
-// Initialize with indexer and computer
-let indexer = Indexer::build(/* config */)?;
-let computer = Computer::build(/* config */)?;
-let interface = Interface::build(&indexer, &computer);
+// Current height
+let height = query.height();
 
-// Query data with parameters
-let params = Params {
+// Metric queries
+let data = query.search_and_format(MetricSelection {
+    vecids: vec!["supply".into()],
     index: Index::Height,
-    ids: vec!["height-to-blockhash".to_string()].into(),
-    from: Some(800000),
-    to: Some(800100),
-    format: Some(Format::JSON),
+    range: DataRange::Last(100),
     ..Default::default()
-};
+})?;
 
-// Search and format results
-let output = interface.search_and_format(params)?;
-println!("{}", output);
+// Block queries
+let info = query.block_info(Height::new(840_000))?;
+
+// Transaction queries
+let tx = query.transaction(&txid)?;
+
+// Address queries
+let stats = query.address_stats(&address)?;
 ```
 
-## API Overview
+## Query Types
 
-### Core Types
+| Domain | Methods |
+|--------|---------|
+| Metrics | `metrics`, `search_and_format`, `metric_to_indexes` |
+| Blocks | `block_info`, `block_txs`, `block_status`, `block_timestamp` |
+| Transactions | `transaction`, `tx_status`, `tx_merkle_proof` |
+| Addresses | `address_stats`, `address_txs`, `address_utxos` |
+| Mining | `difficulty_adjustments`, `hashrate`, `pools`, `epochs` |
+| Mempool | `mempool_info`, `mempool_fees`, `mempool_projected_blocks` |
 
-- **`Interface<'a>`**: Main query interface coordinating indexer and computer access
-- **`Params`**: Query parameters including index, IDs, range, and formatting options
-- **`Index`**: Enumeration of available data indexes (Height, Date, Address, etc.)
-- **`Format`**: Output format specification (JSON, CSV)
-- **`Output`**: Formatted query results with multiple value types
-
-### Key Methods
-
-**`Interface::build(indexer: &Indexer, computer: &Computer) -> Self`**
-Creates interface instance with references to data sources.
-
-**`search(&self, params: &Params) -> Result<Vec<(String, &&dyn AnyCollectableVec)>>`**
-Searches for vectors matching the query parameters with intelligent error handling.
-
-**`format(&self, vecs: Vec<...>, params: &ParamsOpt) -> Result<Output>`**
-Formats search results according to specified output format and range parameters.
-
-**`search_and_format(&self, params: Params) -> Result<Output>`**
-Combined search and formatting operation for single-call data retrieval.
-
-### Query Parameters
-
-**Core Parameters:**
-
-- `index`: Data index to query (height, date, address, etc.)
-- `ids`: Vector IDs to retrieve from the specified index
-- `from`/`to`: Optional range filtering (inclusive start, exclusive end)
-- `format`: Output format (defaults to JSON)
-
-**Pagination Parameters:**
-
-- `offset`: Number of entries to skip
-- `limit`: Maximum entries to return
-
-## Examples
-
-### Basic Data Query
+## Async Usage
 
 ```rust
-use brk_query::{Interface, Params, Index, Format};
+let async_query = AsyncQuery::build(&reader, &indexer, &computer, mempool);
 
-let interface = Interface::build(&indexer, &computer);
+// Run blocking queries in thread pool
+let result = async_query.run(|q| q.block_info(height)).await;
 
-// Query block heights to hashes
-let params = Params {
-    index: Index::Height,
-    ids: vec!["height-to-blockhash".to_string()].into(),
-    from: Some(750000),
-    to: Some(750010),
-    format: Some(Format::JSON),
-    ..Default::default()
-};
-
-match interface.search_and_format(params)? {
-    Output::Json(value) => println!("{}", serde_json::to_string_pretty(&value)?),
-    _ => unreachable!(),
-}
+// Access inner Query
+let height = async_query.inner().height();
 ```
 
-### CSV Export with Range Query
+## Built On
 
-```rust
-use brk_query::{Interface, Params, Index, Format};
-
-// Export price data as CSV
-let params = Params {
-    index: Index::Date,
-    ids: vec!["dateindex-to-price-close".to_string()].into(),
-    from: Some(0),      // From genesis
-    to: Some(5000),     // First ~13 years
-    format: Some(Format::CSV),
-    ..Default::default()
-};
-
-match interface.search_and_format(params)? {
-    Output::CSV(csv_text) => {
-        std::fs::write("bitcoin_prices.csv", csv_text)?;
-        println!("Price data exported to bitcoin_prices.csv");
-    },
-    _ => unreachable!(),
-}
-```
-
-### Intelligent Error Handling
-
-```rust
-use brk_query::{Interface, Params, Index};
-
-// Query with typo in vector ID
-let params = Params {
-    index: Index::Height,
-    ids: vec!["height-to-blockhas".to_string()].into(), // Typo: "blockhas"
-    ..Default::default()
-};
-
-// Interface provides helpful error with suggestions
-match interface.search(&params) {
-    Err(error) => {
-        println!("{}", error);
-        // Output: No vec named "height-to-blockhas" indexed by "height" found.
-        //         Maybe you meant one of the following: ["height-to-blockhash"] ?
-    },
-    Ok(_) => unreachable!(),
-}
-```
-
-## Architecture
-
-### Data Source Integration
-
-The interface acts as a bridge between:
-
-- **Indexer**: Raw blockchain data vectors (blocks, transactions, addresses)
-- **Computer**: Computed analytics vectors (prices, statistics, aggregations)
-- **Unified Access**: Single query interface for both data sources
-
-### Search Implementation
-
-1. **Parameter Validation**: Validates index existence and parameter consistency
-2. **Vector Resolution**: Maps vector IDs to actual data structures
-3. **Fuzzy Matching**: Provides suggestions for mistyped vector names
-4. **Error Caching**: Caches error messages to avoid repeated expensive operations
-
-### Output Formatting
-
-**JSON Output:**
-
-- Single value: Direct value serialization
-- List: Array of values
-- Matrix: Array of arrays for multi-vector queries
-
-**CSV Output:**
-
-- Column headers from vector IDs
-- Row-wise data iteration with proper escaping
-
-### Caching Strategy
-
-- **Error Message Caching**: 1000-entry LRU cache for error messages
-- **Search Result Caching**: Upstream caching in server/client layers
-- **Static Data Caching**: Index and vector metadata cached during initialization
-
-## Configuration
-
-### Index Types
-
-Available indexes include:
-
-- `Height`: Block height-based indexing
-- `Date`: Calendar date indexing
-- `Address`: Bitcoin address indexing
-- `Transaction`: Transaction hash indexing
-- Custom indexes from computer analytics
-
-### Format Options
-
-- **JSON**: Structured data with nested objects/arrays
-- **CSV**: Comma-separated values with proper escaping
-
-## Code Analysis Summary
-
-**Main Structure**: `Interface` struct coordinating between `Indexer` and `Computer` data sources \
-**Query System**: Parameter-driven search with `Params` struct supporting range queries and formatting options \
-**Error Handling**: Intelligent fuzzy matching with cached error messages and helpful suggestions \
-**Output Formats**: Multi-format support (JSON, CSV) with proper data serialization \
-**Caching**: `quick_cache` integration for error messages and expensive operations \
-**Search Logic**: `nucleo-matcher` fuzzy search for user-friendly vector name resolution \
-**Architecture**: Abstraction layer providing unified access to heterogeneous Bitcoin data sources
-
----
-
-_This README was generated by Claude Code_
+- `brk_indexer` for raw indexed data
+- `brk_computer` for derived metrics
+- `brk_mempool` for mempool queries
+- `brk_reader` for raw block access
