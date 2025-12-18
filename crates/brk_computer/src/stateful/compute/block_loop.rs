@@ -8,16 +8,16 @@
 //! 5. Push to height-indexed vectors
 //! 6. Periodically flush checkpoints
 
-use std::{mem, thread};
+use std::thread;
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
 use brk_types::{DateIndex, Height, OutputType, Sats, TypeIndex};
 use log::info;
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
+use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
+use crate::stateful::compute::flush::flush;
 use crate::states::{BlockState, Transacted};
 use crate::utils::OptionExt;
 use crate::{chain, indexes, price};
@@ -29,7 +29,6 @@ use super::{
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, TxInIterators,
     TxOutIterators, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
-    flush::flush_checkpoint as flush_checkpoint_full,
 };
 use crate::stateful::address::AddressTypeToAddressCount;
 use crate::stateful::process::{
@@ -489,7 +488,7 @@ pub fn process_blocks(
             // Drop readers before flush to release mmap handles
             drop(vr);
 
-            flush_checkpoint(
+            flush(
                 vecs,
                 height,
                 chain_state,
@@ -506,7 +505,7 @@ pub fn process_blocks(
     // Final flush
     let _lock = exit.lock();
     drop(vr);
-    flush_checkpoint(
+    flush(
         vecs,
         last_height,
         chain_state,
@@ -553,68 +552,6 @@ fn push_cohort_states(
         v.truncate_push(height)?;
         v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
     })?;
-
-    Ok(())
-}
-
-/// Flush checkpoint to disk.
-///
-/// Flushes all accumulated data including:
-/// - Cohort stateful vectors
-/// - Height-indexed vectors
-/// - Address data caches (loaded and empty)
-/// - Chain state (synced from in-memory to persisted)
-#[allow(clippy::too_many_arguments)]
-fn flush_checkpoint(
-    vecs: &mut Vecs,
-    height: Height,
-    chain_state: &[BlockState],
-    loaded_cache: &mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
-    exit: &Exit,
-) -> Result<()> {
-    info!("Flushing checkpoint at height {}...", height);
-
-    // Flush height-indexed vectors
-    vecs.height_to_unspendable_supply.safe_write(exit)?;
-    vecs.height_to_opreturn_supply.safe_write(exit)?;
-    vecs.addresstype_to_height_to_addr_count.safe_flush(exit)?;
-    vecs.addresstype_to_height_to_empty_addr_count
-        .safe_flush(exit)?;
-
-    // Process and flush address data updates
-    let empty_updates = mem::take(empty_cache);
-    let loaded_updates = mem::take(loaded_cache);
-    flush_checkpoint_full(
-        height,
-        &mut vecs
-            .utxo_cohorts
-            .par_iter_separate_mut()
-            .map(|v| v as &mut dyn DynCohortVecs)
-            .collect::<Vec<_>>()[..],
-        &mut vecs
-            .address_cohorts
-            .par_iter_separate_mut()
-            .map(|v| v as &mut dyn DynCohortVecs)
-            .collect::<Vec<_>>()[..],
-        &mut vecs.any_address_indexes,
-        &mut vecs.addresses_data,
-        empty_updates,
-        loaded_updates,
-        true,
-        exit,
-    )?;
-
-    // Flush txoutindex_to_txinindex with stamp
-    vecs.txoutindex_to_txinindex
-        .stamped_flush_with_changes(height.into())?;
-
-    // Sync in-memory chain_state to persisted and flush
-    vecs.chain_state.truncate_if_needed(Height::ZERO)?;
-    for block_state in chain_state {
-        vecs.chain_state.push(block_state.supply.clone());
-    }
-    vecs.chain_state.stamped_flush_with_changes(height.into())?;
 
     Ok(())
 }
