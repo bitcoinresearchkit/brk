@@ -473,8 +473,6 @@ pub fn process_blocks(
             && height != Height::ZERO
             && height.to_usize() % FLUSH_INTERVAL == 0
         {
-            let _lock = exit.lock();
-
             // Drop readers to release mmap handles
             drop(vr);
 
@@ -488,8 +486,10 @@ pub fn process_blocks(
                 loaded_updates,
             )?;
 
+            let _lock = exit.lock();
+
             // Write to disk (pure I/O) - no changes saved for periodic flushes
-            write(vecs, height, chain_state, false, exit)?;
+            write(vecs, height, chain_state, false)?;
 
             // Recreate readers
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
@@ -512,7 +512,7 @@ pub fn process_blocks(
         )?;
 
         // Write to disk (pure I/O) - save changes for rollback
-        write(vecs, last_height, chain_state, true, exit)?;
+        write(vecs, last_height, chain_state, true)?;
     }
 
     Ok(())

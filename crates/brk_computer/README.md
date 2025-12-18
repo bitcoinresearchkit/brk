@@ -18,7 +18,7 @@ Compute 1000+ on-chain metrics from indexed blockchain data: supply breakdowns, 
 
 ## Core API
 
-```rust
+```rust,ignore
 let mut computer = Computer::forced_import(&outputs_path, &indexer, fetcher)?;
 
 // Compute all metrics for new blocks

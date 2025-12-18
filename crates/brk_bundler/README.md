@@ -16,7 +16,7 @@ Bundle and minify JavaScript modules using Rolldown, with file watching for deve
 
 ## Core API
 
-```rust
+```rust,ignore
 // One-shot build
 let dist = bundle(modules_path, websites_path, "src", false).await?;
 

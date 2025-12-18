@@ -5,7 +5,10 @@ use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use derive_deref::{Deref, DerefMut};
-use vecdb::{Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec, TypedVecIterator};
+use vecdb::{
+    AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec,
+    TypedVecIterator,
+};
 
 use crate::{
     Indexes,
@@ -61,8 +64,19 @@ impl AddressTypeToHeightToAddressCount {
         })?))
     }
 
+    pub fn write(&mut self) -> Result<()> {
+        self.p2pk65.write()?;
+        self.p2pk33.write()?;
+        self.p2pkh.write()?;
+        self.p2sh.write()?;
+        self.p2wpkh.write()?;
+        self.p2wsh.write()?;
+        self.p2tr.write()?;
+        self.p2a.write()?;
+        Ok(())
+    }
+
     pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        use vecdb::AnyStoredVec;
         self.p2pk65.safe_write(exit)?;
         self.p2pk33.safe_write(exit)?;
         self.p2pkh.safe_write(exit)?;

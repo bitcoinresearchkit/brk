@@ -35,7 +35,7 @@ pub trait DynCohortVecs: Send + Sync {
     ) -> Result<()>;
 
     /// Write stateful vectors to disk.
-    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;
+    fn write_stateful_vecs(&mut self, height: Height) -> Result<()>;
 
     /// First phase of post-processing computations.
     #[allow(clippy::too_many_arguments)]

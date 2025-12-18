@@ -5390,7 +5390,6 @@ dependencies = [
  "parking_lot",
  "pco",
  "rawdb",
- "rayon",
  "serde",
  "serde_json",
  "thiserror 2.0.17",

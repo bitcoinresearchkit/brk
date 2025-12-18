@@ -350,15 +350,15 @@ impl UTXOCohorts {
     }
 
     /// Write stateful vectors for separate and aggregate cohorts.
-    pub fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+    pub fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
         // Flush separate cohorts (includes metrics + state)
         self.par_iter_separate_mut()
-            .try_for_each(|v| v.safe_write_stateful_vecs(height, exit))?;
+            .try_for_each(|v| v.write_stateful_vecs(height))?;
 
         // Write aggregate cohorts' metrics (including price_percentiles)
         // Note: aggregate cohorts no longer maintain price_to_amount state
         for v in self.0.iter_aggregate_mut() {
-            v.metrics.safe_write(exit)?;
+            v.metrics.write()?;
         }
         Ok(())
     }

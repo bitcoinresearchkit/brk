@@ -189,8 +189,8 @@ impl DynCohortVecs for UTXOCohortVecs {
         Ok(())
     }
 
-    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.metrics.safe_write(exit)?;
+    fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
+        self.metrics.write()?;
 
         if let Some(state) = self.state.as_mut() {
             state.commit(height)?;

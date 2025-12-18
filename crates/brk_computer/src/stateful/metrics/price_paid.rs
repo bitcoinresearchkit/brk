@@ -112,11 +112,11 @@ impl PricePaidMetrics {
     }
 
     /// Write height-indexed vectors to disk.
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        self.height_to_min_price_paid.safe_write(exit)?;
-        self.height_to_max_price_paid.safe_write(exit)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.height_to_min_price_paid.write()?;
+        self.height_to_max_price_paid.write()?;
         if let Some(price_percentiles) = self.price_percentiles.as_mut() {
-            price_percentiles.safe_write(exit)?;
+            price_percentiles.write()?;
         }
         Ok(())
     }

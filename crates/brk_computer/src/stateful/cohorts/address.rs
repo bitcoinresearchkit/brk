@@ -224,9 +224,9 @@ impl DynCohortVecs for AddressCohortVecs {
         Ok(())
     }
 
-    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.height_to_addr_count.safe_write(exit)?;
-        self.metrics.safe_write(exit)?;
+    fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
+        self.height_to_addr_count.write()?;
+        self.metrics.write()?;
 
         if let Some(state) = self.state.as_mut() {
             state.inner.commit(height)?;

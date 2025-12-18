@@ -131,9 +131,9 @@ impl SupplyMetrics {
     }
 
     /// Write height-indexed vectors to disk.
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        self.height_to_supply.safe_write(exit)?;
-        self.height_to_utxo_count.safe_write(exit)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.height_to_supply.write()?;
+        self.height_to_utxo_count.write()?;
         Ok(())
     }
 

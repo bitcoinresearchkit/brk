@@ -114,10 +114,10 @@ impl ActivityMetrics {
     }
 
     /// Write height-indexed vectors to disk.
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        self.height_to_sent.safe_write(exit)?;
-        self.height_to_satblocks_destroyed.safe_write(exit)?;
-        self.height_to_satdays_destroyed.safe_write(exit)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.height_to_sent.write()?;
+        self.height_to_satblocks_destroyed.write()?;
+        self.height_to_satdays_destroyed.write()?;
         Ok(())
     }
 

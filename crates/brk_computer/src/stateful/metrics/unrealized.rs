@@ -219,15 +219,15 @@ impl UnrealizedMetrics {
     }
 
     /// Write height-indexed vectors to disk.
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        self.height_to_supply_in_profit.safe_write(exit)?;
-        self.height_to_supply_in_loss.safe_write(exit)?;
-        self.height_to_unrealized_profit.safe_write(exit)?;
-        self.height_to_unrealized_loss.safe_write(exit)?;
-        self.dateindex_to_supply_in_profit.safe_write(exit)?;
-        self.dateindex_to_supply_in_loss.safe_write(exit)?;
-        self.dateindex_to_unrealized_profit.safe_write(exit)?;
-        self.dateindex_to_unrealized_loss.safe_write(exit)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.height_to_supply_in_profit.write()?;
+        self.height_to_supply_in_loss.write()?;
+        self.height_to_unrealized_profit.write()?;
+        self.height_to_unrealized_loss.write()?;
+        self.dateindex_to_supply_in_profit.write()?;
+        self.dateindex_to_supply_in_loss.write()?;
+        self.dateindex_to_unrealized_profit.write()?;
+        self.dateindex_to_unrealized_loss.write()?;
         Ok(())
     }
 

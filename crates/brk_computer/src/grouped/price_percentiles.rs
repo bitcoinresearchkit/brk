@@ -82,10 +82,10 @@ impl PricePercentiles {
 }
 
 impl PricePercentiles {
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
+    pub fn write(&mut self) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
             if let Some(dateindex_vec) = vec.dateindex.as_mut() {
-                dateindex_vec.safe_write(exit)?;
+                dateindex_vec.write()?;
             }
         }
         Ok(())

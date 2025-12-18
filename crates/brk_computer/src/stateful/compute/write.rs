@@ -4,9 +4,12 @@
 //! - `process_address_updates`: applies cached address changes to storage
 //! - `flush`: writes all data to disk
 
+use std::time::Instant;
+
 use brk_error::Result;
 use brk_types::Height;
-use vecdb::{AnyStoredVec, Exit, GenericStoredVec, Stamp};
+use log::info;
+use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
 
 use crate::stateful::{
     Vecs,
@@ -61,19 +64,19 @@ pub fn write(
     height: Height,
     chain_state: &[BlockState],
     with_changes: bool,
-    exit: &Exit,
 ) -> Result<()> {
+    info!("Writing to disk...");
+    let i = Instant::now();
+
     // Flush cohort states (separate + aggregate)
-    vecs.utxo_cohorts.safe_write_stateful_vecs(height, exit)?;
-    vecs.address_cohorts
-        .safe_write_stateful_vecs(height, exit)?;
+    vecs.utxo_cohorts.write_stateful_vecs(height)?;
+    vecs.address_cohorts.write_stateful_vecs(height)?;
 
     // Flush height-indexed vectors
-    vecs.height_to_unspendable_supply.safe_write(exit)?;
-    vecs.height_to_opreturn_supply.safe_write(exit)?;
-    vecs.addresstype_to_height_to_addr_count.safe_write(exit)?;
-    vecs.addresstype_to_height_to_empty_addr_count
-        .safe_write(exit)?;
+    vecs.height_to_unspendable_supply.write()?;
+    vecs.height_to_opreturn_supply.write()?;
+    vecs.addresstype_to_height_to_addr_count.write()?;
+    vecs.addresstype_to_height_to_empty_addr_count.write()?;
 
     // Flush large vecs in parallel
     let stamp = Stamp::from(height);
@@ -99,6 +102,8 @@ pub fn write(
     }
     vecs.chain_state
         .stamped_write_maybe_with_changes(stamp, with_changes)?;
+
+    info!("Wrote in {:?}", i.elapsed());
 
     Ok(())
 }

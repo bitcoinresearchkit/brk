@@ -13,7 +13,7 @@ Single dependency to access any BRK component. Enable only what you need via fea
 brk = { version = "0.x", features = ["query", "types"] }
 ```
 
-```rust
+```rust,ignore
 use brk::query::Query;
 use brk::types::Height;
 ```
@@ -41,16 +41,3 @@ use brk::types::Height;
 | `store` | `brk_store` | Key-value storage |
 | `traversable` | `brk_traversable` | Data traversal |
 | `types` | `brk_types` | Domain types |
-
-## Common Combinations
-
-```toml
-# Query-only (read computed data)
-brk = { features = ["query", "types"] }
-
-# Full indexing pipeline
-brk = { features = ["indexer", "computer", "query"] }
-
-# API server
-brk = { features = ["server", "query", "mempool"] }
-```

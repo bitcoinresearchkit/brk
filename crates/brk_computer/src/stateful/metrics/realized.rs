@@ -433,17 +433,17 @@ impl RealizedMetrics {
     }
 
     /// Write height-indexed vectors to disk.
-    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
-        self.height_to_realized_cap.safe_write(exit)?;
-        self.height_to_realized_profit.safe_write(exit)?;
-        self.height_to_realized_loss.safe_write(exit)?;
-        self.height_to_value_created.safe_write(exit)?;
-        self.height_to_value_destroyed.safe_write(exit)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.height_to_realized_cap.write()?;
+        self.height_to_realized_profit.write()?;
+        self.height_to_realized_loss.write()?;
+        self.height_to_value_created.write()?;
+        self.height_to_value_destroyed.write()?;
         if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
-            v.safe_write(exit)?;
+            v.write()?;
         }
         if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
-            v.safe_write(exit)?;
+            v.write()?;
         }
         Ok(())
     }
