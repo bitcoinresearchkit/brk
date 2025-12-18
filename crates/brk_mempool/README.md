@@ -16,7 +16,7 @@ Track mempool state, estimate transaction fees via projected block building, and
 
 ## Core API
 
-```rust
+```rust,ignore
 let mempool = Mempool::new(&rpc_client);
 
 // Start background sync loop

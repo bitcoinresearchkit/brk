@@ -16,7 +16,7 @@ Traverse nested data collections (datasets, grouped metrics) as trees for inspec
 
 ## Core API
 
-```rust
+```rust,ignore
 pub trait Traversable {
     fn to_tree_node(&self) -> TreeNode;
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec>;

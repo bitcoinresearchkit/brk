@@ -17,7 +17,7 @@ Query a Bitcoin Core node for blocks, transactions, mempool data, and chain stat
 
 ## Core API
 
-```rust
+```rust,ignore
 let client = Client::new("http://localhost:8332", Auth::CookieFile(cookie_path))?;
 
 let height = client.get_last_height()?;

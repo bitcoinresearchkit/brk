@@ -17,7 +17,7 @@ Serve BRK data via REST API with OpenAPI documentation, response caching, MCP en
 
 ## Core API
 
-```rust
+```rust,ignore
 let server = Server::new(&async_query, Some(files_path));
 server.serve(true).await?;  // true enables MCP endpoint
 ```
@@ -44,6 +44,10 @@ Uses ETag-based caching with stale-while-revalidate semantics:
 ## Configuration
 
 Server binds to port 3110 by default, auto-incrementing if busy (up to 3210).
+
+## Recommended: mimalloc v3
+
+Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
 
 ## Built On
 

@@ -15,7 +15,7 @@ Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall,
 
 ## Core API
 
-```rust
+```rust,ignore
 brk_logger::init(Some(Path::new("app.log")))?;  // Console + file
 brk_logger::init(None)?;                         // Console only
 
@@ -26,7 +26,7 @@ brk_logger::register_hook(|msg| {
 
 ## Usage
 
-```rust
+```rust,ignore
 use log::info;
 
 fn main() -> std::io::Result<()> {

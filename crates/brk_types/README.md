@@ -32,7 +32,7 @@ Work with Bitcoin primitives (heights, satoshis, addresses, transactions) throug
 
 All types implement standard traits: `Debug`, `Clone`, `Serialize`, `Deserialize`, plus domain-specific operations like `CheckedSub`, `Formattable`, and `PrintableIndex`.
 
-```rust
+```rust,ignore
 use brk_types::{Height, Sats, DateIndex, Date};
 
 let height = Height::new(840_000);

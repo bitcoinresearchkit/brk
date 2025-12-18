@@ -15,7 +15,7 @@ Iterate over Bitcoin blocks with a simple API that automatically chooses between
 
 ## Core API
 
-```rust
+```rust,ignore
 let blocks = Blocks::new(&rpc_client, &reader);
 
 // Various range specifications
@@ -27,7 +27,7 @@ for block in blocks.after(Some(last_known_hash))? { ... }
 
 ## Source Modes
 
-```rust
+```rust,ignore
 // Auto-select (default)
 let blocks = Blocks::new(&client, &reader);
 

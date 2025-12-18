@@ -15,7 +15,7 @@ Generate typed metric catalogs and constants for JavaScript/TypeScript clients. 
 
 ## Core API
 
-```rust
+```rust,ignore
 generate_js_files(&query, &modules_path)?;
 ```
 

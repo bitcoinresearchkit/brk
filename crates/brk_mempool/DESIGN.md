@@ -15,7 +15,7 @@ Instead of rebuilding all projected blocks on every insert/remove:
 
 ### MempoolPackage
 
-```rust
+```rust,ignore
 enum MempoolPackage {
     /// Tx with no unconfirmed parents - can be mined independently
     Independent(MempoolEntry),
@@ -44,7 +44,7 @@ enum MempoolPackage {
 
 ### ProjectedBlock
 
-```rust
+```rust,ignore
 struct ProjectedBlock {
     /// Packages sorted by fee rate (highest first)
     packages: Vec<MempoolPackage>,
@@ -218,7 +218,7 @@ New tx A' replaces A (same inputs, higher fee)
 
 When a tx is removed (confirmed), check all `Pending` entries:
 
-```rust
+```rust,ignore
 fn on_tx_removed(&mut self, txid: Txid) {
     let pending_to_update: Vec<_> = self.pending
         .iter()
@@ -243,7 +243,7 @@ fn on_tx_removed(&mut self, txid: Txid) {
 
 ### Cascade Down (after insert causes overflow)
 
-```rust
+```rust,ignore
 fn cascade_down(&mut self, starting_block: usize) {
     let mut block_idx = starting_block;
 
@@ -277,7 +277,7 @@ fn cascade_down(&mut self, starting_block: usize) {
 
 ### Cascade Up (after remove causes underflow)
 
-```rust
+```rust,ignore
 fn cascade_up(&mut self, starting_block: usize) {
     let mut block_idx = starting_block;
 
@@ -328,7 +328,7 @@ Need to track:
 3. `txid → Vec<Txid>` - descendants waiting for this tx (Pending)
 4. Per-block: sorted packages by fee rate
 
-```rust
+```rust,ignore
 struct MempoolState {
     /// All packages (Independent, Bundle, or Pending)
     packages: FxHashMap<Txid, MempoolPackage>,
@@ -422,7 +422,7 @@ Their solution: rebuild fast rather than update incrementally.
 
 ### Key Optimization: Ancestor Score
 
-```rust
+```rust,ignore
 ancestor_score = (tx.fee + sum(ancestor.fee)) / (tx.weight + sum(ancestor.weight))
 ```
 

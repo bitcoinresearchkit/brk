@@ -16,7 +16,7 @@ Turn benchmark CSV data into publication-ready SVG charts showing disk usage, me
 
 ## Core API
 
-```rust
+```rust,ignore
 let viz = Visualizer::from_cargo_env()?;
 viz.generate_all_charts()?;  // Process all crates in benches/
 ```

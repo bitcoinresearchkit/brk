@@ -16,7 +16,7 @@ Track disk usage, memory consumption (current + peak), and I/O throughput during
 
 ## Core API
 
-```rust
+```rust,ignore
 let mut bencher = Bencher::from_cargo_env("brk_indexer", &data_path)?;
 bencher.start()?;
 

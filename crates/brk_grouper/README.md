@@ -18,7 +18,7 @@ Slice the UTXO set and address population by age, amount, output type, halving e
 
 ## Filter Types
 
-```rust
+```rust,ignore
 pub enum Filter {
     All,
     Term(Term),           // STH/LTH
@@ -31,7 +31,7 @@ pub enum Filter {
 
 ## Core API
 
-```rust
+```rust,ignore
 let filter = Filter::Time(TimeFilter::GreaterOrEqual(155));
 
 // Check membership

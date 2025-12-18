@@ -17,7 +17,7 @@ Query blocks, transactions, addresses, and 1000+ on-chain metrics through a unif
 
 ## Core API
 
-```rust
+```rust,ignore
 let query = Query::build(&reader, &indexer, &computer, Some(mempool));
 
 // Current height
@@ -54,7 +54,7 @@ let stats = query.address_stats(&address)?;
 
 ## Async Usage
 
-```rust
+```rust,ignore
 let async_query = AsyncQuery::build(&reader, &indexer, &computer, mempool);
 
 // Run blocking queries in thread pool
@@ -63,6 +63,10 @@ let result = async_query.run(|q| q.block_info(height)).await;
 // Access inner Query
 let height = async_query.inner().height();
 ```
+
+## Recommended: mimalloc v3
+
+Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
 
 ## Built On
 

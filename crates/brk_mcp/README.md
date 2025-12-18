@@ -28,7 +28,7 @@ Expose BRK's query capabilities to AI assistants via the MCP standard. LLMs can 
 
 ## Usage
 
-```rust
+```rust,ignore
 let mcp = MCP::new(&async_query);
 
 // The MCP server implements ServerHandler for use with rmcp

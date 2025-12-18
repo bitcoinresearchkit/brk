@@ -48,6 +48,10 @@ UTXO and address cohorts support filtering by:
 - **Type**: P2PKH, P2SH, P2WPKH, P2WSH, P2TR
 - **Epoch**: By halving epoch
 
+## Recommended: mimalloc v3
+
+Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
+
 ## Built On
 
 - `brk_indexer` for indexed blockchain data

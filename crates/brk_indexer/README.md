@@ -17,7 +17,7 @@ Transform raw Bitcoin blockchain data into indexed vectors and key-value stores 
 
 ## Core API
 
-```rust
+```rust,ignore
 let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
 // Index new blocks
@@ -59,6 +59,10 @@ let blockhash = indexer.vecs.block.height_to_blockhash.get(height)?;
 | Mac Mini M4 (16GB, external SSD) | 4.9h | 233 GB | 303 GB | 5.4 GB | 11 GB |
 
 Full benchmark data: [`/benches/brk_indexer`](/benches/brk_indexer)
+
+## Recommended: mimalloc v3
+
+Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.
 
 ## Built On
 

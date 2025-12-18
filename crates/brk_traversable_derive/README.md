@@ -16,7 +16,7 @@ Automatically generate tree traversal and export iteration for structs, eliminat
 
 ## Core API
 
-```rust
+```rust,ignore
 #[derive(Traversable)]
 struct MyData {
     pub metrics: MetricsCollection,

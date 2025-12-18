@@ -17,7 +17,7 @@ Stream blocks directly from Bitcoin Core's `blk*.dat` files with parallel parsin
 
 ## Core API
 
-```rust
+```rust,ignore
 let reader = Reader::new(blocks_dir, &rpc_client);
 
 // Stream blocks from height 800,000 to 850,000
