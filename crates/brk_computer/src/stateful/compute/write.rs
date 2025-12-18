@@ -75,21 +75,27 @@ pub fn process_address_updates(
 /// Writes all accumulated data:
 /// - Cohort stateful vectors
 /// - Height-indexed vectors
-/// - Address indexes and data
-/// - Transaction output index mappings
+/// - Address indexes and data (parallel)
+/// - Transaction output index mappings (parallel)
 /// - Chain state
-pub fn flush(
+///
+/// Set `with_changes=true` near chain tip to enable rollback support.
+pub fn write(
     vecs: &mut Vecs,
     height: Height,
     chain_state: &[BlockState],
+    with_changes: bool,
     exit: &Exit,
 ) -> Result<()> {
-    info!("Flushing at height {}...", height);
+    let t0 = Instant::now();
 
     // Flush cohort states (separate + aggregate)
     vecs.utxo_cohorts.safe_flush_stateful_vecs(height, exit)?;
+    let t1 = Instant::now();
+
     vecs.address_cohorts
         .safe_flush_stateful_vecs(height, exit)?;
+    let t2 = Instant::now();
 
     // Flush height-indexed vectors
     vecs.height_to_unspendable_supply.safe_write(exit)?;
@@ -97,22 +103,57 @@ pub fn flush(
     vecs.addresstype_to_height_to_addr_count.safe_flush(exit)?;
     vecs.addresstype_to_height_to_empty_addr_count
         .safe_flush(exit)?;
+    let t3 = Instant::now();
 
-    // Flush address data
+    // Flush large vecs in parallel
     let stamp = Stamp::from(height);
-    vecs.any_address_indexes.flush(stamp, true)?;
-    vecs.addresses_data.flush(stamp, true)?;
+    let any_address_indexes = &mut vecs.any_address_indexes;
+    let addresses_data = &mut vecs.addresses_data;
+    let txoutindex_to_txinindex = &mut vecs.txoutindex_to_txinindex;
 
-    // Flush txoutindex_to_txinindex
-    vecs.txoutindex_to_txinindex
-        .stamped_flush_with_changes(height.into())?;
+    let ((addr_result, addr_idx_time, addr_data_time), (txout_result, txout_time)) = rayon::join(
+        || {
+            let t0 = Instant::now();
+            let r1 = any_address_indexes.write(stamp, with_changes);
+            let t1 = Instant::now();
+            let r2 = addresses_data.write(stamp, with_changes);
+            let t2 = Instant::now();
+            let r = r1.and(r2);
+            (r, t1 - t0, t2 - t1)
+        },
+        || {
+            let t = Instant::now();
+            let r = txoutindex_to_txinindex.stamped_write_maybe_with_changes(stamp, with_changes);
+            (r, t.elapsed())
+        },
+    );
+    addr_result?;
+    txout_result?;
+    let t4 = Instant::now();
+    info!(
+        "  parallel breakdown: addr_idx={:?} addr_data={:?} txout={:?}",
+        addr_idx_time, addr_data_time, txout_time
+    );
 
     // Sync in-memory chain_state to persisted and flush
     vecs.chain_state.truncate_if_needed(Height::ZERO)?;
     for block_state in chain_state {
         vecs.chain_state.push(block_state.supply.clone());
     }
-    vecs.chain_state.stamped_flush_with_changes(height.into())?;
+    vecs.chain_state
+        .stamped_write_maybe_with_changes(stamp, with_changes)?;
+    let t5 = Instant::now();
+
+    info!(
+        "flush: utxo={:?} addr={:?} height={:?} parallel={:?} chain={:?} total={:?} (with_changes={})",
+        t1 - t0,
+        t2 - t1,
+        t3 - t2,
+        t4 - t3,
+        t5 - t4,
+        t5 - t0,
+        with_changes
+    );
 
     Ok(())
 }

@@ -21,7 +21,7 @@ use crate::{
     chain, indexes, price,
     stateful::{
         address::AddressTypeToAddressCount,
-        compute::flush::{flush, process_address_updates},
+        compute::write::{process_address_updates, write},
         process::{
             AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
             build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
@@ -502,28 +502,30 @@ pub fn process_blocks(
                 std::mem::take(&mut loaded_cache),
             )?;
 
-            // Flush to disk (pure I/O)
-            flush(vecs, height, chain_state, exit)?;
+            // Flush to disk (pure I/O) - no changes saved for periodic flushes
+            write(vecs, height, chain_state, false, exit)?;
 
             // Recreate readers after flush to pick up new data
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
         }
     }
 
-    // Final flush
-    let _lock = exit.lock();
-    drop(vr);
+    // Final flush - always save changes for rollback support
+    {
+        let _lock = exit.lock();
+        drop(vr);
 
-    // Process address updates (mutations)
-    process_address_updates(
-        &mut vecs.addresses_data,
-        &mut vecs.any_address_indexes,
-        std::mem::take(&mut empty_cache),
-        std::mem::take(&mut loaded_cache),
-    )?;
+        // Process address updates (mutations)
+        process_address_updates(
+            &mut vecs.addresses_data,
+            &mut vecs.any_address_indexes,
+            std::mem::take(&mut empty_cache),
+            std::mem::take(&mut loaded_cache),
+        )?;
 
-    // Flush to disk (pure I/O)
-    flush(vecs, last_height, chain_state, exit)?;
+        // Flush to disk (pure I/O) - save changes for rollback
+        write(vecs, last_height, chain_state, true, exit)?;
+    }
 
     Ok(())
 }

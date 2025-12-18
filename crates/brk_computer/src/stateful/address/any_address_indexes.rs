@@ -76,9 +76,9 @@ macro_rules! define_any_address_indexes_vecs {
                 Ok(())
             }
 
-            /// Flush all address types with stamp.
-            pub fn flush(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
-                $(self.$field.stamped_flush_maybe_with_changes(stamp, with_changes)?;)*
+            /// Write all address types with stamp.
+            pub fn write(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
+                $(self.$field.stamped_write_maybe_with_changes(stamp, with_changes)?;)*
                 Ok(())
             }
         }

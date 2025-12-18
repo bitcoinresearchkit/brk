@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{AddressBytes, AddressHash, Height, OutputType, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Reader, Stamp, PAGE_SIZE};
+use vecdb::{AnyStoredVec, Database, PAGE_SIZE, Reader, Stamp};
 
 mod address;
 mod blocks;
@@ -78,11 +78,8 @@ impl Vecs {
         self.txin
             .truncate(starting_indexes.height, starting_indexes.txinindex, stamp)?;
 
-        self.txout.truncate(
-            starting_indexes.height,
-            starting_indexes.txoutindex,
-            stamp,
-        )?;
+        self.txout
+            .truncate(starting_indexes.height, starting_indexes.txoutindex, stamp)?;
 
         self.address.truncate(
             starting_indexes.height,
@@ -115,7 +112,8 @@ impl Vecs {
         typeindex: TypeIndex,
         reader: &Reader,
     ) -> Result<Option<AddressBytes>> {
-        self.address.get_bytes_by_type(addresstype, typeindex, reader)
+        self.address
+            .get_bytes_by_type(addresstype, typeindex, reader)
     }
 
     pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
@@ -125,7 +123,7 @@ impl Vecs {
     pub fn flush(&mut self, height: Height) -> Result<()> {
         self.iter_mut_any_stored_vec()
             .par_bridge()
-            .try_for_each(|vec| vec.stamped_flush(Stamp::from(height)))?;
+            .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
         self.db.flush()?;
         Ok(())
     }

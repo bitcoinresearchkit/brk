@@ -56,11 +56,11 @@ impl AddressesDataVecs {
     }
 
     /// Flush both loaded and empty data with stamp.
-    pub fn flush(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
+    pub fn write(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
         self.loaded
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+            .stamped_write_maybe_with_changes(stamp, with_changes)?;
         self.empty
-            .stamped_flush_maybe_with_changes(stamp, with_changes)?;
+            .stamped_write_maybe_with_changes(stamp, with_changes)?;
         Ok(())
     }
 }

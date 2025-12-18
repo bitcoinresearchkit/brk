@@ -10,9 +10,9 @@
 pub mod aggregates;
 mod block_loop;
 mod context;
-mod flush;
 mod readers;
 mod recover;
+mod write;
 
 pub use block_loop::process_blocks;
 pub use context::ComputeContext;
