@@ -31,7 +31,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.8", features = ["compression-full", "trace"] }
-tracing = "0.1.43"
+tracing = "0.1.44"
 
 [dev-dependencies]
 brk_mempool = { workspace = true }
