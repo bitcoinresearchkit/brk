@@ -420,7 +420,7 @@ pub fn process_blocks(
             });
 
             // Main thread: Update UTXO cohorts
-            vecs.utxo_cohorts.receive(transacted, height, block_price);
+            vecs.utxo_cohorts.receive(transacted, height, timestamp, block_price);
             vecs.utxo_cohorts.send(height_to_sent, chain_state);
         });
 

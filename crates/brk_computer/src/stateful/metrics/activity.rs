@@ -42,7 +42,7 @@ impl ActivityMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
         let compute_dollars = cfg.compute_dollars();
-        let sum = VecBuilderOptions::default().add_sum();
+        let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
 
         Ok(Self {
             height_to_sent: EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version + v0)?,
@@ -52,7 +52,7 @@ impl ActivityMetrics {
                 &cfg.name("sent"),
                 Source::None,
                 cfg.version + v0,
-                sum,
+                sum_cum,
                 compute_dollars,
                 cfg.indexes,
             )?,
@@ -75,7 +75,7 @@ impl ActivityMetrics {
                 Source::Compute,
                 cfg.version + v0,
                 cfg.indexes,
-                sum,
+                sum_cum,
             )?,
 
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
@@ -84,7 +84,7 @@ impl ActivityMetrics {
                 Source::Compute,
                 cfg.version + v0,
                 cfg.indexes,
-                sum,
+                sum_cum,
             )?,
         })
     }

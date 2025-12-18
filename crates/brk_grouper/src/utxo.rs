@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use crate::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
-    BySpendableType, ByTerm, Filter,
+    BySpendableType, ByTerm, ByYear, Filter,
 };
 
 #[derive(Default, Clone, Traversable)]
@@ -11,6 +11,7 @@ pub struct UTXOGroups<T> {
     pub all: T,
     pub age_range: ByAgeRange<T>,
     pub epoch: ByEpoch<T>,
+    pub year: ByYear<T>,
     pub min_age: ByMinAge<T>,
     pub ge_amount: ByGreatEqualAmount<T>,
     pub amount_range: ByAmountRange<T>,
@@ -29,6 +30,7 @@ impl<T> UTXOGroups<T> {
             all: create(Filter::All),
             age_range: ByAgeRange::new(&mut create),
             epoch: ByEpoch::new(&mut create),
+            year: ByYear::new(&mut create),
             min_age: ByMinAge::new(&mut create),
             ge_amount: ByGreatEqualAmount::new(&mut create),
             amount_range: ByAmountRange::new(&mut create),
@@ -48,6 +50,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.ge_amount.iter())
             .chain(self.age_range.iter())
             .chain(self.epoch.iter())
+            .chain(self.year.iter())
             .chain(self.amount_range.iter())
             .chain(self.lt_amount.iter())
             .chain(self.type_.iter())
@@ -62,6 +65,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.ge_amount.iter_mut())
             .chain(self.age_range.iter_mut())
             .chain(self.epoch.iter_mut())
+            .chain(self.year.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self.lt_amount.iter_mut())
             .chain(self.type_.iter_mut())
@@ -79,6 +83,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.ge_amount.par_iter_mut())
             .chain(self.age_range.par_iter_mut())
             .chain(self.epoch.par_iter_mut())
+            .chain(self.year.par_iter_mut())
             .chain(self.amount_range.par_iter_mut())
             .chain(self.lt_amount.par_iter_mut())
             .chain(self.type_.par_iter_mut())
@@ -88,6 +93,7 @@ impl<T> UTXOGroups<T> {
         self.age_range
             .iter()
             .chain(self.epoch.iter())
+            .chain(self.year.iter())
             .chain(self.amount_range.iter())
             .chain(self.type_.iter())
     }
@@ -96,6 +102,7 @@ impl<T> UTXOGroups<T> {
         self.age_range
             .iter_mut()
             .chain(self.epoch.iter_mut())
+            .chain(self.year.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self.type_.iter_mut())
     }
@@ -107,6 +114,7 @@ impl<T> UTXOGroups<T> {
         self.age_range
             .par_iter_mut()
             .chain(self.epoch.par_iter_mut())
+            .chain(self.year.par_iter_mut())
             .chain(self.amount_range.par_iter_mut())
             .chain(self.type_.par_iter_mut())
     }

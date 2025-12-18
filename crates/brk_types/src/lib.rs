@@ -152,6 +152,7 @@ mod vout;
 mod vsize;
 mod weekindex;
 mod weight;
+mod year;
 mod yearindex;
 
 pub use address::*;
@@ -304,4 +305,5 @@ pub use vout::*;
 pub use vsize::*;
 pub use weekindex::*;
 pub use weight::*;
+pub use year::*;
 pub use yearindex::*;

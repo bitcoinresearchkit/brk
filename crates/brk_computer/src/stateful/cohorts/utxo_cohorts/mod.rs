@@ -9,11 +9,11 @@ use std::path::Path;
 use brk_error::Result;
 use brk_grouper::{
     AmountFilter, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
-    ByMaxAge, ByMinAge, BySpendableType, ByTerm, Filter, Filtered, StateLevel, Term, TimeFilter,
-    UTXOGroups,
+    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, Term,
+    TimeFilter, UTXOGroups,
 };
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version, Year};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{Database, Exit, IterableVec};
@@ -73,6 +73,27 @@ impl UTXOCohorts {
                 _2: full(Filter::Epoch(HalvingEpoch::new(2)))?,
                 _3: full(Filter::Epoch(HalvingEpoch::new(3)))?,
                 _4: full(Filter::Epoch(HalvingEpoch::new(4)))?,
+            },
+
+            year: ByYear {
+                _2009: full(Filter::Year(Year::new(2009)))?,
+                _2010: full(Filter::Year(Year::new(2010)))?,
+                _2011: full(Filter::Year(Year::new(2011)))?,
+                _2012: full(Filter::Year(Year::new(2012)))?,
+                _2013: full(Filter::Year(Year::new(2013)))?,
+                _2014: full(Filter::Year(Year::new(2014)))?,
+                _2015: full(Filter::Year(Year::new(2015)))?,
+                _2016: full(Filter::Year(Year::new(2016)))?,
+                _2017: full(Filter::Year(Year::new(2017)))?,
+                _2018: full(Filter::Year(Year::new(2018)))?,
+                _2019: full(Filter::Year(Year::new(2019)))?,
+                _2020: full(Filter::Year(Year::new(2020)))?,
+                _2021: full(Filter::Year(Year::new(2021)))?,
+                _2022: full(Filter::Year(Year::new(2022)))?,
+                _2023: full(Filter::Year(Year::new(2023)))?,
+                _2024: full(Filter::Year(Year::new(2024)))?,
+                _2025: full(Filter::Year(Year::new(2025)))?,
+                _2026: full(Filter::Year(Year::new(2026)))?,
             },
 
             type_: BySpendableType {

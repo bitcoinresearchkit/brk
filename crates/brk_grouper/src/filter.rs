@@ -1,4 +1,4 @@
-use brk_types::{HalvingEpoch, OutputType, Sats};
+use brk_types::{HalvingEpoch, OutputType, Sats, Year};
 
 use super::{AmountFilter, CohortContext, Term, TimeFilter};
 
@@ -9,6 +9,7 @@ pub enum Filter {
     Time(TimeFilter),
     Amount(AmountFilter),
     Epoch(HalvingEpoch),
+    Year(Year),
     Type(OutputType),
 }
 
@@ -35,6 +36,7 @@ impl Filter {
             Filter::Time(t) => t.to_name_suffix(),
             Filter::Amount(a) => a.to_name_suffix(),
             Filter::Epoch(e) => format!("epoch_{}", usize::from(*e)),
+            Filter::Year(y) => format!("year_{}", u16::from(*y)),
             Filter::Type(t) => match t {
                 OutputType::P2MS => "p2ms_outputs".to_string(),
                 OutputType::Empty => "empty_outputs".to_string(),
@@ -57,7 +59,7 @@ impl Filter {
         }
 
         let needs_prefix = match self {
-            Filter::All | Filter::Term(_) | Filter::Epoch(_) | Filter::Type(_) => false,
+            Filter::All | Filter::Term(_) | Filter::Epoch(_) | Filter::Year(_) | Filter::Type(_) => false,
             Filter::Time(_) | Filter::Amount(_) => true,
         };
 
