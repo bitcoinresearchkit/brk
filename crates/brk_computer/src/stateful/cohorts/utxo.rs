@@ -9,9 +9,8 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Database, Exit, IterableVec};
 
 use crate::{
-    Indexes,
-    indexes, price,
-    stateful::{CohortVecs, DynCohortVecs, cohorts::UTXOCohortState},
+    Indexes, indexes, price,
+    stateful::{CohortVecs, DynCohortVecs, states::UTXOCohortState},
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig};
@@ -120,14 +119,25 @@ impl DynCohortVecs for UTXOCohortVecs {
                 prev_height = state.import_at_or_before(prev_height)?;
 
                 // Restore supply state from height-indexed vectors
-                state.supply.value = self.metrics.supply.height_to_supply.read_once(prev_height)?;
-                state.supply.utxo_count = *self.metrics.supply.height_to_utxo_count.read_once(prev_height)?;
+                state.supply.value = self
+                    .metrics
+                    .supply
+                    .height_to_supply
+                    .read_once(prev_height)?;
+                state.supply.utxo_count = *self
+                    .metrics
+                    .supply
+                    .height_to_utxo_count
+                    .read_once(prev_height)?;
 
                 // Restore realized cap if present
                 if let Some(realized_metrics) = self.metrics.realized.as_mut()
-                    && let Some(realized_state) = state.realized.as_mut() {
-                        realized_state.cap = realized_metrics.height_to_realized_cap.read_once(prev_height)?;
-                    }
+                    && let Some(realized_state) = state.realized.as_mut()
+                {
+                    realized_state.cap = realized_metrics
+                        .height_to_realized_cap
+                        .read_once(prev_height)?;
+                }
 
                 let result = prev_height.incremented();
                 self.state_starting_height = Some(result);
@@ -179,8 +189,8 @@ impl DynCohortVecs for UTXOCohortVecs {
         Ok(())
     }
 
-    fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        self.metrics.safe_flush(exit)?;
+    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        self.metrics.safe_write(exit)?;
 
         if let Some(state) = self.state.as_mut() {
             state.commit(height)?;

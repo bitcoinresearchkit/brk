@@ -1,6 +1,6 @@
-//! Main block processing loop.
+//! Range-based lookup map.
 //!
-//! Iterates through blocks, processing outputs (receive) and inputs (send) in parallel.
+//! Maps ranges of indices to values for efficient reverse lookups.
 
 use std::collections::BTreeMap;
 

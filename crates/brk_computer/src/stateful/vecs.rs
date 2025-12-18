@@ -3,24 +3,34 @@
 use std::path::Path;
 
 use brk_error::Result;
-use log::info;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, Sats, StoredU64, TxInIndex, TxOutIndex, Version};
+use brk_types::{
+    Dollars, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
+    Sats, StoredU64, TxInIndex, TxOutIndex, Version,
+};
+use log::info;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec,
-    LazyVecFrom1, PAGE_SIZE, PcoVec,
+    AnyStoredVec, AnyVec, BytesVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
+    IterableCloneableVec, LazyVecFrom1, PAGE_SIZE, PcoVec, Stamp, TypedVecIterator, VecIndex,
 };
 
 use crate::{
-    Indexes, SupplyState, chain,
-    grouped::{ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
+    Indexes, chain,
+    grouped::{
+        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
+        VecBuilderOptions,
+    },
     indexes, price,
+    stateful::{
+        compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
+        states::BlockState,
+    },
     utils::OptionExt,
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
+    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, SupplyState, UTXOCohorts,
     address::{AddressTypeToHeightToAddressCount, AddressTypeToIndexesToAddressCount},
     compute::aggregates,
 };
@@ -245,12 +255,6 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        use super::compute::{
-            StartMode, determine_start_mode, process_blocks, recover_state, reset_state,
-        };
-        use crate::states::BlockState;
-        use vecdb::{AnyVec, GenericStoredVec, Stamp, TypedVecIterator, VecIndex};
-
         // 1. Find minimum computed height for recovery
         let chain_state_height = Height::from(self.chain_state.len());
 
@@ -345,7 +349,8 @@ impl Vecs {
         // 2b. Validate computed versions
         let base_version = VERSION;
         self.utxo_cohorts.validate_computed_versions(base_version)?;
-        self.address_cohorts.validate_computed_versions(base_version)?;
+        self.address_cohorts
+            .validate_computed_versions(base_version)?;
 
         // 3. Get last height from indexer
         let last_height = Height::from(

@@ -10,8 +10,7 @@ use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVe
 use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, PricePercentiles, Source, VecBuilderOptions},
-    stateful::cohorts::CohortState,
-    states::Flushable,
+    stateful::states::CohortState,
 };
 
 use super::ImportConfig;
@@ -112,12 +111,12 @@ impl PricePaidMetrics {
         Ok(())
     }
 
-    /// Flush height-indexed vectors to disk.
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    /// Write height-indexed vectors to disk.
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         self.height_to_min_price_paid.safe_write(exit)?;
         self.height_to_max_price_paid.safe_write(exit)?;
         if let Some(price_percentiles) = self.price_percentiles.as_mut() {
-            price_percentiles.safe_flush(exit)?;
+            price_percentiles.safe_write(exit)?;
         }
         Ok(())
     }

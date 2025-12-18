@@ -5,7 +5,10 @@ use brk_types::{CheckedSub, HalvingEpoch, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
-use crate::{states::{BlockState, Transacted}, utils::OptionExt};
+use crate::{
+    stateful::states::{BlockState, Transacted},
+    utils::OptionExt,
+};
 
 use super::UTXOCohorts;
 

@@ -1,12 +1,22 @@
-//! Address data wrapper that tracks its source for flush operations.
+//! Address data types with source tracking for flush operations.
 
-use brk_types::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex};
+use brk_types::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex, TxIndex};
+use smallvec::SmallVec;
+
+/// Loaded address data with source tracking for flush operations.
+pub type LoadedAddressDataWithSource = WithAddressDataSource<LoadedAddressData>;
+
+/// Empty address data with source tracking for flush operations.
+pub type EmptyAddressDataWithSource = WithAddressDataSource<EmptyAddressData>;
+
+/// SmallVec for transaction indexes - most addresses have few transactions per block.
+pub type TxIndexVec = SmallVec<[TxIndex; 4]>;
 
 /// Address data wrapped with its source location for flush operations.
 ///
 /// This enum tracks where the data came from so it can be correctly
 /// updated or created during the flush phase.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum WithAddressDataSource<T> {
     /// Brand new address (never seen before)
     New(T),

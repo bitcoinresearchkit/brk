@@ -17,7 +17,7 @@ use crate::{
         VecBuilderOptions,
     },
     indexes, price,
-    states::SupplyState,
+    stateful::states::SupplyState,
 };
 
 use super::ImportConfig;
@@ -130,8 +130,8 @@ impl SupplyMetrics {
         Ok(())
     }
 
-    /// Flush height-indexed vectors to disk.
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    /// Write height-indexed vectors to disk.
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         self.height_to_supply.safe_write(exit)?;
         self.height_to_utxo_count.safe_write(exit)?;
         Ok(())
@@ -152,12 +152,18 @@ impl SupplyMetrics {
     ) -> Result<()> {
         self.height_to_supply.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_supply).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_supply)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_utxo_count.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_utxo_count).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_utxo_count)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())
@@ -244,7 +250,13 @@ impl SupplyMetrics {
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         _exit: &Exit,
     ) -> Result<()> {
-        let _ = (indexes, price, height_to_supply, height_to_market_cap, dateindex_to_market_cap);
+        let _ = (
+            indexes,
+            price,
+            height_to_supply,
+            height_to_market_cap,
+            dateindex_to_market_cap,
+        );
 
         // Supply relative metrics computed here if needed
         Ok(())

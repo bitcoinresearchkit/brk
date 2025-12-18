@@ -7,11 +7,9 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Dollars, Height, Sats};
 
-use crate::{
-    CachedUnrealizedState, PriceToAmount, RealizedState, SupplyState, UnrealizedState,
-    grouped::PERCENTILES_LEN,
-    utils::OptionExt,
-};
+use crate::{grouped::PERCENTILES_LEN, utils::OptionExt};
+
+use super::{CachedUnrealizedState, PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
 /// State tracked for each cohort during computation.
 #[derive(Clone)]

@@ -9,7 +9,7 @@
 use brk_grouper::AGE_BOUNDARIES;
 use brk_types::{ONE_DAY_IN_SEC, Timestamp};
 
-use crate::states::BlockState;
+use crate::stateful::states::BlockState;
 
 use super::UTXOCohorts;
 

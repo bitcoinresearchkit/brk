@@ -61,16 +61,16 @@ impl AddressTypeToHeightToAddressCount {
         })?))
     }
 
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         use vecdb::AnyStoredVec;
-        self.p2pk65.safe_flush(exit)?;
-        self.p2pk33.safe_flush(exit)?;
-        self.p2pkh.safe_flush(exit)?;
-        self.p2sh.safe_flush(exit)?;
-        self.p2wpkh.safe_flush(exit)?;
-        self.p2wsh.safe_flush(exit)?;
-        self.p2tr.safe_flush(exit)?;
-        self.p2a.safe_flush(exit)?;
+        self.p2pk65.safe_write(exit)?;
+        self.p2pk33.safe_write(exit)?;
+        self.p2pkh.safe_write(exit)?;
+        self.p2sh.safe_write(exit)?;
+        self.p2wpkh.safe_write(exit)?;
+        self.p2wsh.safe_write(exit)?;
+        self.p2tr.safe_write(exit)?;
+        self.p2a.safe_write(exit)?;
         Ok(())
     }
 

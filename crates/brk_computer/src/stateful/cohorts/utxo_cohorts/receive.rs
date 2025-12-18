@@ -3,7 +3,7 @@
 use brk_grouper::{Filter, Filtered};
 use brk_types::{Dollars, Height};
 
-use crate::states::Transacted;
+use crate::stateful::states::Transacted;
 
 use super::UTXOCohorts;
 

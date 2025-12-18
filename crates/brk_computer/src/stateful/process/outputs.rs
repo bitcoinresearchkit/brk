@@ -5,23 +5,17 @@
 //! - Address data for address cohort tracking (optional)
 
 use brk_grouper::ByAddressType;
-use brk_types::{
-    AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TypeIndex,
-};
-use smallvec::SmallVec;
+use brk_types::{AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TypeIndex};
 use vecdb::GenericStoredVec;
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
 };
 use crate::stateful::compute::VecsReaders;
-use crate::states::Transacted;
+use crate::stateful::states::Transacted;
 
 use super::super::address::AddressTypeToVec;
-use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
-
-/// SmallVec for transaction indexes - most addresses have few transactions per block.
-pub type TxIndexVec = SmallVec<[TxIndex; 4]>;
+use super::{AddressCache, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource};
 
 /// Result of processing outputs for a block.
 pub struct OutputsResult {
@@ -52,8 +46,7 @@ pub fn process_outputs(
     typeindexes: &[TypeIndex],
     // Address lookup parameters
     first_addressindexes: &ByAddressType<TypeIndex>,
-    loaded_cache: &AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
@@ -90,8 +83,7 @@ pub fn process_outputs(
             output_type,
             typeindex,
             first_addressindexes,
-            loaded_cache,
-            empty_cache,
+            cache,
             vr,
             any_address_indexes,
             addresses_data,
@@ -125,8 +117,7 @@ fn get_address_data(
     address_type: OutputType,
     typeindex: TypeIndex,
     first_addressindexes: &ByAddressType<TypeIndex>,
-    loaded_cache: &AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
@@ -138,15 +129,7 @@ fn get_address_data(
     }
 
     // Skip if already in cache
-    if loaded_cache
-        .get(address_type)
-        .unwrap()
-        .contains_key(&typeindex)
-        || empty_cache
-            .get(address_type)
-            .unwrap()
-            .contains_key(&typeindex)
-    {
+    if cache.contains(address_type, typeindex) {
         return None;
     }
 

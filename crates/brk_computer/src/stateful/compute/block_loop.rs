@@ -23,18 +23,16 @@ use crate::{
         address::AddressTypeToAddressCount,
         compute::write::{process_address_updates, write},
         process::{
-            AddressLookup, EmptyAddressDataWithSource, InputsResult, LoadedAddressDataWithSource,
-            build_txoutindex_to_height_map, process_inputs, process_outputs, process_received,
-            process_sent, update_tx_counts,
+            AddressCache, InputsResult, build_txoutindex_to_height_map, process_inputs,
+            process_outputs, process_received, process_sent,
         },
+        states::{BlockState, Transacted},
     },
-    states::{BlockState, Transacted},
     utils::OptionExt,
 };
 
 use super::{
     super::{
-        address::AddressTypeToTypeIndexMap,
         cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts},
         vecs::Vecs,
     },
@@ -225,11 +223,7 @@ pub fn process_blocks(
         )
     };
 
-    // Persistent address data caches (accumulate across blocks, flushed at checkpoints)
-    let mut loaded_cache: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource> =
-        AddressTypeToTypeIndexMap::default();
-    let mut empty_cache: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource> =
-        AddressTypeToTypeIndexMap::default();
+    let mut cache = AddressCache::new();
 
     info!("Starting main block iteration...");
 
@@ -304,8 +298,7 @@ pub fn process_blocks(
                     &output_types,
                     &output_typeindexes,
                     &first_addressindexes,
-                    &loaded_cache,
-                    &empty_cache,
+                    &cache,
                     &vr,
                     &vecs.any_address_indexes,
                     &vecs.addresses_data,
@@ -326,8 +319,7 @@ pub fn process_blocks(
                     &txoutindex_to_height,
                     &ir,
                     &first_addressindexes,
-                    &loaded_cache,
-                    &empty_cache,
+                    &cache,
                     &vr,
                     &vecs.any_address_indexes,
                     &vecs.addresses_data,
@@ -347,15 +339,15 @@ pub fn process_blocks(
             (outputs_result, inputs_result)
         });
 
-        // Merge new address data into caches
-        loaded_cache.merge_mut(outputs_result.address_data);
-        loaded_cache.merge_mut(inputs_result.address_data);
+        // Merge new address data into current cache
+        cache.merge_loaded(outputs_result.address_data);
+        cache.merge_loaded(inputs_result.address_data);
 
         // Combine txindex_vecs from outputs and inputs, then update tx_count
         let combined_txindex_vecs = outputs_result
             .txindex_vecs
             .merge_vec(inputs_result.txindex_vecs);
-        update_tx_counts(&mut loaded_cache, &mut empty_cache, combined_txindex_vecs);
+        cache.update_tx_counts(combined_txindex_vecs);
 
         let mut transacted = outputs_result.transacted;
         let mut height_to_sent = inputs_result.height_to_sent;
@@ -398,15 +390,7 @@ pub fn process_blocks(
         thread::scope(|scope| {
             // Spawn address cohort processing in background thread
             scope.spawn(|| {
-                // Create lookup closure that returns None (data was pre-fetched in parallel phase)
-                let get_address_data =
-                    |_output_type, _type_index| -> Option<LoadedAddressDataWithSource> { None };
-
-                let mut lookup = AddressLookup {
-                    get_address_data,
-                    loaded: &mut loaded_cache,
-                    empty: &mut empty_cache,
-                };
+                let mut lookup = cache.as_lookup();
 
                 // Process received outputs (addresses receiving funds)
                 process_received(
@@ -491,39 +475,43 @@ pub fn process_blocks(
         {
             let _lock = exit.lock();
 
-            // Drop readers before flush to release mmap handles
+            // Drop readers to release mmap handles
             drop(vr);
+
+            let (empty_updates, loaded_updates) = cache.take();
 
             // Process address updates (mutations)
             process_address_updates(
                 &mut vecs.addresses_data,
                 &mut vecs.any_address_indexes,
-                std::mem::take(&mut empty_cache),
-                std::mem::take(&mut loaded_cache),
+                empty_updates,
+                loaded_updates,
             )?;
 
-            // Flush to disk (pure I/O) - no changes saved for periodic flushes
+            // Write to disk (pure I/O) - no changes saved for periodic flushes
             write(vecs, height, chain_state, false, exit)?;
 
-            // Recreate readers after flush to pick up new data
+            // Recreate readers
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
         }
     }
 
-    // Final flush - always save changes for rollback support
+    // Final write - always save changes for rollback support
     {
         let _lock = exit.lock();
         drop(vr);
+
+        let (empty_updates, loaded_updates) = cache.take();
 
         // Process address updates (mutations)
         process_address_updates(
             &mut vecs.addresses_data,
             &mut vecs.any_address_indexes,
-            std::mem::take(&mut empty_cache),
-            std::mem::take(&mut loaded_cache),
+            empty_updates,
+            loaded_updates,
         )?;
 
-        // Flush to disk (pure I/O) - save changes for rollback
+        // Write to disk (pure I/O) - save changes for rollback
         write(vecs, last_height, chain_state, true, exit)?;
     }
 

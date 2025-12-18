@@ -5,7 +5,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Sats, Version};
-use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, PcoVec};
+use vecdb::{
+    AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, PcoVec,
+};
 
 use crate::{
     Indexes,
@@ -13,7 +15,7 @@ use crate::{
         ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromDateIndex, Source,
         VecBuilderOptions,
     },
-    states::UnrealizedState,
+    stateful::states::UnrealizedState,
 };
 
 use super::ImportConfig;
@@ -216,8 +218,8 @@ impl UnrealizedMetrics {
         Ok(())
     }
 
-    /// Flush height-indexed vectors to disk.
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    /// Write height-indexed vectors to disk.
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         self.height_to_supply_in_profit.safe_write(exit)?;
         self.height_to_supply_in_loss.safe_write(exit)?;
         self.height_to_unrealized_profit.safe_write(exit)?;
@@ -238,42 +240,66 @@ impl UnrealizedMetrics {
     ) -> Result<()> {
         self.height_to_supply_in_profit.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_supply_in_profit).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_supply_in_profit)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_supply_in_loss.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_supply_in_loss).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_supply_in_loss)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_unrealized_profit.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_unrealized_profit).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_unrealized_profit)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_unrealized_loss.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_unrealized_loss).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_unrealized_loss)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.dateindex_to_supply_in_profit.compute_sum_of_others(
             starting_indexes.dateindex,
-            &others.iter().map(|v| &v.dateindex_to_supply_in_profit).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.dateindex_to_supply_in_profit)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.dateindex_to_supply_in_loss.compute_sum_of_others(
             starting_indexes.dateindex,
-            &others.iter().map(|v| &v.dateindex_to_supply_in_loss).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.dateindex_to_supply_in_loss)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.dateindex_to_unrealized_profit.compute_sum_of_others(
             starting_indexes.dateindex,
-            &others.iter().map(|v| &v.dateindex_to_unrealized_profit).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.dateindex_to_unrealized_profit)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.dateindex_to_unrealized_loss.compute_sum_of_others(
             starting_indexes.dateindex,
-            &others.iter().map(|v| &v.dateindex_to_unrealized_loss).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.dateindex_to_unrealized_loss)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())

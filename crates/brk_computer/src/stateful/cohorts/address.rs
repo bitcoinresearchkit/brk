@@ -15,7 +15,7 @@ use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
-    stateful::cohorts::AddressCohortState,
+    stateful::states::AddressCohortState,
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig};
@@ -224,9 +224,9 @@ impl DynCohortVecs for AddressCohortVecs {
         Ok(())
     }
 
-    fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.height_to_addr_count.safe_write(exit)?;
-        self.metrics.safe_flush(exit)?;
+        self.metrics.safe_write(exit)?;
 
         if let Some(state) = self.state.as_mut() {
             state.inner.commit(height)?;

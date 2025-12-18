@@ -3,7 +3,7 @@ use brk_traversable::{Traversable, TreeNode};
 use brk_types::{DateIndex, Dollars, Version};
 use vecdb::{AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
 
-use crate::{Indexes, indexes, stateful::Flushable};
+use crate::{Indexes, indexes};
 
 use super::{ComputedVecsFromDateIndex, Source, VecBuilderOptions};
 
@@ -62,11 +62,7 @@ impl PricePercentiles {
         Ok(())
     }
 
-    pub fn compute_rest(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
             vec.compute_rest(
                 starting_indexes,
@@ -82,17 +78,6 @@ impl PricePercentiles {
             .iter()
             .position(|&p| p == percentile)
             .and_then(|i| self.vecs[i].as_ref())
-    }
-}
-
-impl Flushable for PricePercentiles {
-    fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
-        for vec in self.vecs.iter_mut().flatten() {
-            if let Some(dateindex_vec) = vec.dateindex.as_mut() {
-                dateindex_vec.safe_flush(exit)?;
-            }
-        }
-        Ok(())
     }
 }
 

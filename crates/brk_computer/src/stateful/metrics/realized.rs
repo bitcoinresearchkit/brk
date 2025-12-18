@@ -14,7 +14,7 @@ use crate::{
         VecBuilderOptions,
     },
     indexes, price,
-    states::RealizedState,
+    stateful::states::RealizedState,
     utils::OptionExt,
 };
 
@@ -411,11 +411,16 @@ impl RealizedMetrics {
 
     /// Push realized state values to height-indexed vectors.
     pub fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
-        self.height_to_realized_cap.truncate_push(height, state.cap)?;
-        self.height_to_realized_profit.truncate_push(height, state.profit)?;
-        self.height_to_realized_loss.truncate_push(height, state.loss)?;
-        self.height_to_value_created.truncate_push(height, state.value_created)?;
-        self.height_to_value_destroyed.truncate_push(height, state.value_destroyed)?;
+        self.height_to_realized_cap
+            .truncate_push(height, state.cap)?;
+        self.height_to_realized_profit
+            .truncate_push(height, state.profit)?;
+        self.height_to_realized_loss
+            .truncate_push(height, state.loss)?;
+        self.height_to_value_created
+            .truncate_push(height, state.value_created)?;
+        self.height_to_value_destroyed
+            .truncate_push(height, state.value_destroyed)?;
 
         if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
             v.truncate_push(height, state.adj_value_created)?;
@@ -427,8 +432,8 @@ impl RealizedMetrics {
         Ok(())
     }
 
-    /// Flush height-indexed vectors to disk.
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+    /// Write height-indexed vectors to disk.
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
         self.height_to_realized_cap.safe_write(exit)?;
         self.height_to_realized_profit.safe_write(exit)?;
         self.height_to_realized_loss.safe_write(exit)?;
@@ -458,55 +463,74 @@ impl RealizedMetrics {
     ) -> Result<()> {
         self.height_to_realized_cap.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_realized_cap).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_realized_cap)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_realized_profit.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_realized_profit).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_realized_profit)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_realized_loss.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_realized_loss).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_realized_loss)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_value_created.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_value_created).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_value_created)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.height_to_value_destroyed.compute_sum_of_others(
             starting_indexes.height,
-            &others.iter().map(|v| &v.height_to_value_destroyed).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| &v.height_to_value_destroyed)
+                .collect::<Vec<_>>(),
             exit,
         )?;
 
         if self.height_to_adjusted_value_created.is_some() {
-            self.height_to_adjusted_value_created.um().compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| {
-                        v.height_to_adjusted_value_created
-                            .as_ref()
-                            .unwrap_or(&v.height_to_value_created)
-                    })
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
-            self.height_to_adjusted_value_destroyed.um().compute_sum_of_others(
-                starting_indexes.height,
-                &others
-                    .iter()
-                    .map(|v| {
-                        v.height_to_adjusted_value_destroyed
-                            .as_ref()
-                            .unwrap_or(&v.height_to_value_destroyed)
-                    })
-                    .collect::<Vec<_>>(),
-                exit,
-            )?;
+            self.height_to_adjusted_value_created
+                .um()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    &others
+                        .iter()
+                        .map(|v| {
+                            v.height_to_adjusted_value_created
+                                .as_ref()
+                                .unwrap_or(&v.height_to_value_created)
+                        })
+                        .collect::<Vec<_>>(),
+                    exit,
+                )?;
+            self.height_to_adjusted_value_destroyed
+                .um()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    &others
+                        .iter()
+                        .map(|v| {
+                            v.height_to_adjusted_value_destroyed
+                                .as_ref()
+                                .unwrap_or(&v.height_to_value_destroyed)
+                        })
+                        .collect::<Vec<_>>(),
+                    exit,
+                )?;
         }
 
         Ok(())

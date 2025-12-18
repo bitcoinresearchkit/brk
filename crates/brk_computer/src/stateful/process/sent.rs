@@ -7,12 +7,12 @@
 
 use brk_error::Result;
 use brk_grouper::{ByAddressType, Filtered};
-use brk_types::{CheckedSub, Dollars, Height, OutputType, Sats, Timestamp, TypeIndex};
+use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
 use vecdb::VecIndex;
 
 use super::super::address::HeightToAddressTypeToVec;
 use super::super::cohorts::AddressCohorts;
-use super::address_lookup::{AddressLookup, LoadedAddressDataWithSource};
+use super::lookup::AddressLookup;
 
 /// Process sent outputs for address cohorts.
 ///
@@ -25,10 +25,10 @@ use super::address_lookup::{AddressLookup, LoadedAddressDataWithSource};
 /// Note: Takes separate price/timestamp slices instead of chain_state to allow
 /// parallel execution with UTXO cohort processing (which mutates chain_state).
 #[allow(clippy::too_many_arguments)]
-pub fn process_sent<F>(
+pub fn process_sent(
     sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
-    lookup: &mut AddressLookup<F>,
+    lookup: &mut AddressLookup<'_>,
     current_price: Option<Dollars>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
@@ -36,10 +36,7 @@ pub fn process_sent<F>(
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
-) -> Result<()>
-where
-    F: FnMut(OutputType, TypeIndex) -> Option<LoadedAddressDataWithSource>,
-{
+) -> Result<()> {
     for (prev_height, by_type) in sent_data.into_iter() {
         let prev_price = height_to_price.map(|v| v[prev_height.to_usize()]);
         let prev_timestamp = height_to_timestamp[prev_height.to_usize()];

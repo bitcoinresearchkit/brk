@@ -10,7 +10,7 @@ use smallvec::{Array, SmallVec};
 use std::collections::hash_map::Entry;
 
 /// A hashmap for each address type, keyed by TypeIndex.
-#[derive(Debug, Deref, DerefMut)]
+#[derive(Debug, Clone, Deref, DerefMut)]
 pub struct AddressTypeToTypeIndexMap<T>(ByAddressType<FxHashMap<TypeIndex, T>>);
 
 impl<T> Default for AddressTypeToTypeIndexMap<T> {

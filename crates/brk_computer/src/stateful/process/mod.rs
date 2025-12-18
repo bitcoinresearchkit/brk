@@ -1,7 +1,7 @@
-mod address_lookup;
-mod empty_addresses;
+mod address_updates;
+mod cache;
 mod inputs;
-mod loaded_addresses;
+mod lookup;
 mod outputs;
 mod range_map;
 mod received;
@@ -9,10 +9,10 @@ mod sent;
 mod tx_counts;
 mod with_source;
 
-pub use address_lookup::*;
-pub use empty_addresses::*;
+pub use address_updates::*;
+pub use cache::*;
 pub use inputs::*;
-pub use loaded_addresses::*;
+pub use lookup::*;
 pub use outputs::*;
 pub use range_map::*;
 pub use received::*;

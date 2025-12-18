@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
-use crate::{indexes, price, Indexes};
+use crate::{Indexes, indexes, price};
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -34,8 +34,8 @@ pub trait DynCohortVecs: Send + Sync {
         date_price: Option<Option<Dollars>>,
     ) -> Result<()>;
 
-    /// Flush stateful vectors to disk.
-    fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;
+    /// Write stateful vectors to disk.
+    fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;
 
     /// First phase of post-processing computations.
     #[allow(clippy::too_many_arguments)]

@@ -22,17 +22,11 @@ mod market;
 mod pools;
 mod price;
 mod stateful;
-// mod stateful_old;
-mod states;
 mod traits;
 mod utils;
 
 use indexes::Indexes;
 use utils::OptionExt;
-
-// pub use pools::*;
-pub use states::PriceToAmount;
-use states::*;
 
 #[derive(Clone, Traversable)]
 pub struct Computer {

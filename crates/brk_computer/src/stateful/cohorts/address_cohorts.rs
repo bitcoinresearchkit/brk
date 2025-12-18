@@ -222,10 +222,10 @@ impl AddressCohorts {
         })
     }
 
-    /// Flush stateful vectors for separate cohorts.
-    pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+    /// Write stateful vectors for separate cohorts.
+    pub fn safe_write_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.par_iter_separate_mut()
-            .try_for_each(|v| v.safe_flush_stateful_vecs(height, exit))
+            .try_for_each(|v| v.safe_write_stateful_vecs(height, exit))
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.

@@ -11,9 +11,9 @@ use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
 
-use crate::{grouped::PERCENTILES_LEN, states::SupplyState, utils::OptionExt};
+use crate::{grouped::PERCENTILES_LEN, utils::OptionExt};
 
-use super::PriceBuckets;
+use super::{PriceBuckets, SupplyState};
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {

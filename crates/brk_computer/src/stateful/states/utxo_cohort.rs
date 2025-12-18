@@ -4,8 +4,7 @@ use brk_error::Result;
 use brk_types::Sats;
 use derive_deref::{Deref, DerefMut};
 
-use super::CohortState;
-use crate::{RealizedState, SupplyState};
+use super::{CohortState, RealizedState, SupplyState};
 
 #[derive(Clone, Deref, DerefMut)]
 pub struct UTXOCohortState(CohortState);

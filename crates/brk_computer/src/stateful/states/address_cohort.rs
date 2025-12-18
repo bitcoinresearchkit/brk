@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Dollars, Height, LoadedAddressData, Sats};
 
-use crate::SupplyState;
+use crate::stateful::states::{RealizedState, SupplyState};
 
 use super::CohortState;
 
@@ -24,12 +24,12 @@ impl AddressCohortState {
     /// Reset state for fresh start.
     pub fn reset(&mut self) {
         self.addr_count = 0;
-        self.inner.supply = crate::SupplyState::default();
+        self.inner.supply = SupplyState::default();
         self.inner.sent = Sats::ZERO;
         self.inner.satblocks_destroyed = Sats::ZERO;
         self.inner.satdays_destroyed = Sats::ZERO;
         if let Some(realized) = self.inner.realized.as_mut() {
-            *realized = crate::RealizedState::NAN;
+            *realized = RealizedState::NAN;
         }
     }
 

@@ -7,10 +7,12 @@
 //!
 //! ```text
 //! stateful/
-//! ├── address/        # Address type handling (indexes, data storage)
+//! ├── address/        # Address type collections (type_vec, type_index_map, etc.)
 //! ├── cohorts/        # Cohort traits and state management
-//! ├── compute/        # Block processing pipeline
-//! └── metrics/        # Metric vectors organized by category
+//! ├── compute/        # Block processing loop and I/O
+//! ├── metrics/        # Metric vectors organized by category
+//! ├── process/        # Transaction processing (inputs, outputs, cache)
+//! └── vecs.rs         # Main vectors container
 //! ```
 //!
 //! ## Data Flow
@@ -26,20 +28,17 @@ pub mod cohorts;
 pub mod compute;
 pub mod metrics;
 mod process;
+mod states;
 mod vecs;
 
-
+use states::*;
 pub use vecs::Vecs;
 
 // Address re-exports
-pub use address::{
-    AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
-};
+pub use address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
 
 // Cohort re-exports
-pub use cohorts::{
-    AddressCohorts, CohortVecs, DynCohortVecs, Flushable, UTXOCohorts,
-};
+pub use cohorts::{AddressCohorts, CohortVecs, DynCohortVecs, UTXOCohorts};
 
 // Compute re-exports
 pub use compute::IndexerReaders;

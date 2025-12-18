@@ -6,11 +6,11 @@
 //! - Empty addresses become non-empty again
 
 use brk_grouper::{ByAddressType, Filtered};
-use brk_types::{Dollars, OutputType, Sats, TypeIndex};
+use brk_types::{Dollars, Sats, TypeIndex};
 
 use super::super::address::AddressTypeToVec;
 use super::super::cohorts::AddressCohorts;
-use super::address_lookup::{AddressLookup, LoadedAddressDataWithSource};
+use super::lookup::AddressLookup;
 
 /// Process received outputs for address cohorts.
 ///
@@ -18,16 +18,14 @@ use super::address_lookup::{AddressLookup, LoadedAddressDataWithSource};
 /// 1. Look up or create address data
 /// 2. Update address balance and cohort membership
 /// 3. Update cohort states (add/subtract for boundary crossings, receive otherwise)
-pub fn process_received<F>(
+pub fn process_received(
     received_data: AddressTypeToVec<(TypeIndex, Sats)>,
     cohorts: &mut AddressCohorts,
-    lookup: &mut AddressLookup<F>,
+    lookup: &mut AddressLookup<'_>,
     price: Option<Dollars>,
     addr_count: &mut ByAddressType<u64>,
     empty_addr_count: &mut ByAddressType<u64>,
-) where
-    F: FnMut(OutputType, TypeIndex) -> Option<LoadedAddressDataWithSource>,
-{
+) {
     for (output_type, vec) in received_data.unwrap().into_iter() {
         if vec.is_empty() {
             continue;

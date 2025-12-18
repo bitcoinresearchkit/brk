@@ -17,15 +17,13 @@ use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
 };
 use crate::stateful::compute::VecsReaders;
-use crate::{
-    stateful::{IndexerReaders, process::RangeMap},
-    states::Transacted,
-};
+use crate::stateful::states::Transacted;
+
+use super::AddressCache;
+use crate::stateful::{IndexerReaders, process::RangeMap};
 
 use super::super::address::HeightToAddressTypeToVec;
-use super::{
-    EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource,
-};
+use super::{LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource};
 
 /// Result of processing inputs for a block.
 pub struct InputsResult {
@@ -69,8 +67,7 @@ pub fn process_inputs(
     ir: &IndexerReaders,
     // Address lookup parameters
     first_addressindexes: &ByAddressType<TypeIndex>,
-    loaded_cache: &AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
@@ -109,8 +106,7 @@ pub fn process_inputs(
                 input_type,
                 typeindex,
                 first_addressindexes,
-                loaded_cache,
-                empty_cache,
+                cache,
                 vr,
                 any_address_indexes,
                 addresses_data,
@@ -188,8 +184,7 @@ fn get_address_data(
     address_type: OutputType,
     typeindex: TypeIndex,
     first_addressindexes: &ByAddressType<TypeIndex>,
-    loaded_cache: &AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    empty_cache: &AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
+    cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
@@ -201,15 +196,7 @@ fn get_address_data(
     }
 
     // Skip if already in cache
-    if loaded_cache
-        .get(address_type)
-        .unwrap()
-        .contains_key(&typeindex)
-        || empty_cache
-            .get(address_type)
-            .unwrap()
-            .contains_key(&typeindex)
-    {
+    if cache.contains(address_type, typeindex) {
         return None;
     }
 

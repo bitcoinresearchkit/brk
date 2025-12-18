@@ -1,37 +1,23 @@
-//! Address data lookup and source tracking.
-//!
-//! Handles looking up existing address data from storage and tracking
-//! whether addresses are new, from storage, or previously empty.
+//! Address data lookup during block processing.
 
-use brk_types::{EmptyAddressData, LoadedAddressData, OutputType, TypeIndex};
+use brk_types::{LoadedAddressData, OutputType, TypeIndex};
 
 use super::super::address::AddressTypeToTypeIndexMap;
-pub use super::WithAddressDataSource;
-
-/// Loaded address data with source tracking for flush operations.
-pub type LoadedAddressDataWithSource = WithAddressDataSource<LoadedAddressData>;
-
-/// Empty address data with source tracking for flush operations.
-pub type EmptyAddressDataWithSource = WithAddressDataSource<EmptyAddressData>;
+use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
 
 /// Context for looking up and storing address data during block processing.
 ///
-/// Uses the same pattern as the original stateful module:
+/// All addresses should be pre-fetched into the cache before using this.
 /// - `loaded`: addresses with non-zero balance (wrapped with source info)
 /// - `empty`: addresses that became empty this block (wrapped with source info)
-pub struct AddressLookup<'a, F> {
-    /// Function to get existing address data from storage
-    pub get_address_data: F,
+pub struct AddressLookup<'a> {
     /// Loaded addresses touched in current block
     pub loaded: &'a mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
     /// Empty addresses touched in current block
     pub empty: &'a mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
 }
 
-impl<'a, F> AddressLookup<'a, F>
-where
-    F: FnMut(OutputType, TypeIndex) -> Option<LoadedAddressDataWithSource>,
-{
+impl<'a> AddressLookup<'a> {
     /// Get or create address data for a receive operation.
     ///
     /// Returns (address_data, is_new, from_empty)
@@ -61,26 +47,15 @@ where
                     return (data, false, true);
                 }
 
-                // Look up from storage or create new
-                match (self.get_address_data)(output_type, type_index) {
-                    Some(data) => {
-                        let is_new = data.is_new();
-                        let from_empty = data.is_from_emptyaddressdata();
-                        let data = entry.insert(data);
-                        (data, is_new, from_empty)
-                    }
-                    None => {
-                        let data = entry.insert(WithAddressDataSource::New(
-                            LoadedAddressData::default(),
-                        ));
-                        (data, true, false)
-                    }
-                }
+                // Not found - create new address
+                let data =
+                    entry.insert(WithAddressDataSource::New(LoadedAddressData::default()));
+                (data, true, false)
             }
         }
     }
 
-    /// Get address data for a send operation (must exist).
+    /// Get address data for a send operation (must exist in cache).
     pub fn get_for_send(
         &mut self,
         output_type: OutputType,
@@ -89,11 +64,8 @@ where
         self.loaded
             .get_mut(output_type)
             .unwrap()
-            .entry(type_index)
-            .or_insert_with(|| {
-                (self.get_address_data)(output_type, type_index)
-                    .expect("Address must exist for send")
-            })
+            .get_mut(&type_index)
+            .expect("Address must exist for send")
     }
 
     /// Move address from loaded to empty set.

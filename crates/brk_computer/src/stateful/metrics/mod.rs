@@ -30,7 +30,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::cohorts::CohortState};
+use crate::{Indexes, indexes, price, stateful::states::CohortState};
 
 /// All metrics for a cohort, organized by category.
 #[derive(Clone, Traversable)]
@@ -105,21 +105,21 @@ impl CohortMetrics {
         Ok(())
     }
 
-    /// Flush height-indexed vectors to disk.
-    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
-        self.supply.safe_flush(exit)?;
-        self.activity.safe_flush(exit)?;
+    /// Write height-indexed vectors to disk.
+    pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
+        self.supply.safe_write(exit)?;
+        self.activity.safe_write(exit)?;
 
         if let Some(realized) = self.realized.as_mut() {
-            realized.safe_flush(exit)?;
+            realized.safe_write(exit)?;
         }
 
         if let Some(unrealized) = self.unrealized.as_mut() {
-            unrealized.safe_flush(exit)?;
+            unrealized.safe_write(exit)?;
         }
 
         if let Some(price_paid) = self.price_paid.as_mut() {
-            price_paid.safe_flush(exit)?;
+            price_paid.safe_write(exit)?;
         }
 
         Ok(())

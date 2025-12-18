@@ -3,7 +3,7 @@ use std::ops::Bound;
 use brk_types::{Dollars, Sats};
 use vecdb::CheckedSub;
 
-use crate::PriceToAmount;
+use super::PriceToAmount;
 
 #[derive(Debug, Default, Clone)]
 pub struct UnrealizedState {
