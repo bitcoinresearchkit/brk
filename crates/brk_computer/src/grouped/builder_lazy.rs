@@ -1,5 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
+use schemars::JsonSchema;
 use vecdb::{FromCoarserIndex, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
 
 use crate::grouped::{EagerVecsBuilder, VecBuilderOptions};
@@ -12,7 +13,7 @@ use super::ComputedVecValue;
 pub struct LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: VecIndex,
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
     S1I: VecIndex,
     S2T: ComputedVecValue,
 {
@@ -30,7 +31,7 @@ const VERSION: Version = Version::ZERO;
 impl<I, T, S1I, S2T> LazyVecsBuilder<I, T, S1I, S2T>
 where
     I: VecIndex,
-    T: ComputedVecValue + 'static,
+    T: ComputedVecValue + JsonSchema + 'static,
     S1I: VecIndex + 'static + FromCoarserIndex<I>,
     S2T: ComputedVecValue,
 {

@@ -12,7 +12,7 @@ use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
 
-use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
+use crate::{constants::DUPLICATE_TXID_PREFIXES, Indexes};
 
 use super::Vecs;
 
@@ -267,7 +267,8 @@ impl Stores {
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
             let mut txoutindex_to_txindex_iter = vecs.txout.txoutindex_to_txindex.iter()?;
-            let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter =
+                vecs.tx.txindex_to_first_txoutindex.iter()?;
             vecs.txout
                 .txoutindex_to_outputtype
                 .iter()?
@@ -303,23 +304,27 @@ impl Stores {
                 });
 
             // Add back outputs that were spent after the rollback point
-            let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
+            let mut txindex_to_first_txoutindex_iter =
+                vecs.tx.txindex_to_first_txoutindex.iter()?;
             let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
             let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
+            let mut txinindex_to_txindex_iter = vecs.txin.txinindex_to_txindex.iter()?;
             vecs.txin
                 .txinindex_to_outpoint
                 .iter()?
+                .enumerate()
                 .skip(starting_indexes.txinindex.to_usize())
-                .for_each(|outpoint: OutPoint| {
+                .for_each(|(txinindex, outpoint): (usize, OutPoint)| {
                     if outpoint.is_coinbase() {
                         return;
                     }
 
-                    let txindex = outpoint.txindex();
+                    let output_txindex = outpoint.txindex();
                     let vout = outpoint.vout();
 
-                    // Calculate txoutindex from txindex and vout
-                    let txoutindex = txindex_to_first_txoutindex_iter.get_unwrap(txindex) + vout;
+                    // Calculate txoutindex from output's txindex and vout
+                    let txoutindex =
+                        txindex_to_first_txoutindex_iter.get_unwrap(output_txindex) + vout;
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
@@ -329,9 +334,16 @@ impl Stores {
                             let addresstype = outputtype;
                             let addressindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
 
+                            // Get the SPENDING tx's index (not the output's tx)
+                            let spending_txindex =
+                                txinindex_to_txindex_iter.get_at_unwrap(txinindex);
+
                             self.addresstype_to_addressindex_and_txindex
                                 .get_mut_unwrap(addresstype)
-                                .remove(AddressIndexTxIndex::from((addressindex, txindex)));
+                                .remove(AddressIndexTxIndex::from((
+                                    addressindex,
+                                    spending_txindex,
+                                )));
 
                             self.addresstype_to_addressindex_and_unspentoutpoint
                                 .get_mut_unwrap(addresstype)

@@ -5,6 +5,7 @@ use brk_types::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
     Version, WeekIndex, YearIndex,
 };
+use schemars::JsonSchema;
 use vecdb::{
     AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, IterableVec,
     PcoVec,
@@ -22,7 +23,7 @@ use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
 #[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
 where
-    T: ComputedVecValue + PartialOrd,
+    T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub height: Option<EagerVec<PcoVec<Height, T>>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
@@ -41,7 +42,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromHeight<T>
 where
-    T: ComputedVecValue + Ord + From<f64> + 'static,
+    T: ComputedVecValue + Ord + From<f64> + JsonSchema + 'static,
     f64: From<T>,
 {
     #[allow(clippy::too_many_arguments)]
@@ -202,7 +203,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromHeight<T>
 where
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();

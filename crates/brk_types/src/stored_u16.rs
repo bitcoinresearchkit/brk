@@ -1,6 +1,7 @@
 use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
@@ -10,7 +11,9 @@ use super::{
     P2WSHAddressIndex, UnknownOutputIndex,
 };
 
-#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
+#[derive(
+    Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema,
+)]
 pub struct StoredU16(u16);
 
 impl StoredU16 {

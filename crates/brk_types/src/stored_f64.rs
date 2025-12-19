@@ -6,12 +6,13 @@ use std::{
 };
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::{Bitcoin, Dollars};
 
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct StoredF64(f64);
 
 impl StoredF64 {

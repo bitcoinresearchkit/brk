@@ -1,10 +1,11 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_types::{CheckedSub, LoadedAddressData, Sats};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, Formattable};
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 pub struct SupplyState {
     pub utxo_count: u64,
     pub value: Sats,

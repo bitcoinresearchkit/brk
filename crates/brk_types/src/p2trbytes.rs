@@ -1,12 +1,13 @@
 use std::fmt;
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, Formattable};
 
 use crate::U8x32;
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash, JsonSchema)]
 pub struct P2TRBytes(U8x32);
 
 impl From<&[u8]> for P2TRBytes {

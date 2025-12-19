@@ -66,53 +66,53 @@ impl Indexes {
         }
     }
 
-    pub fn push_if_needed(&self, vecs: &mut Vecs) -> Result<()> {
+    pub fn checked_push(&self, vecs: &mut Vecs) -> Result<()> {
         let height = self.height;
         vecs.tx
             .height_to_first_txindex
-            .push_if_needed(height, self.txindex)?;
+            .checked_push(height, self.txindex)?;
         vecs.txin
             .height_to_first_txinindex
-            .push_if_needed(height, self.txinindex)?;
+            .checked_push(height, self.txinindex)?;
         vecs.txout
             .height_to_first_txoutindex
-            .push_if_needed(height, self.txoutindex)?;
+            .checked_push(height, self.txoutindex)?;
         vecs.output
             .height_to_first_emptyoutputindex
-            .push_if_needed(height, self.emptyoutputindex)?;
+            .checked_push(height, self.emptyoutputindex)?;
         vecs.output
             .height_to_first_p2msoutputindex
-            .push_if_needed(height, self.p2msoutputindex)?;
+            .checked_push(height, self.p2msoutputindex)?;
         vecs.output
             .height_to_first_opreturnindex
-            .push_if_needed(height, self.opreturnindex)?;
+            .checked_push(height, self.opreturnindex)?;
         vecs.address
             .height_to_first_p2aaddressindex
-            .push_if_needed(height, self.p2aaddressindex)?;
+            .checked_push(height, self.p2aaddressindex)?;
         vecs.output
             .height_to_first_unknownoutputindex
-            .push_if_needed(height, self.unknownoutputindex)?;
+            .checked_push(height, self.unknownoutputindex)?;
         vecs.address
             .height_to_first_p2pk33addressindex
-            .push_if_needed(height, self.p2pk33addressindex)?;
+            .checked_push(height, self.p2pk33addressindex)?;
         vecs.address
             .height_to_first_p2pk65addressindex
-            .push_if_needed(height, self.p2pk65addressindex)?;
+            .checked_push(height, self.p2pk65addressindex)?;
         vecs.address
             .height_to_first_p2pkhaddressindex
-            .push_if_needed(height, self.p2pkhaddressindex)?;
+            .checked_push(height, self.p2pkhaddressindex)?;
         vecs.address
             .height_to_first_p2shaddressindex
-            .push_if_needed(height, self.p2shaddressindex)?;
+            .checked_push(height, self.p2shaddressindex)?;
         vecs.address
             .height_to_first_p2traddressindex
-            .push_if_needed(height, self.p2traddressindex)?;
+            .checked_push(height, self.p2traddressindex)?;
         vecs.address
             .height_to_first_p2wpkhaddressindex
-            .push_if_needed(height, self.p2wpkhaddressindex)?;
+            .checked_push(height, self.p2wpkhaddressindex)?;
         vecs.address
             .height_to_first_p2wshaddressindex
-            .push_if_needed(height, self.p2wshaddressindex)?;
+            .checked_push(height, self.p2wshaddressindex)?;
 
         Ok(())
     }

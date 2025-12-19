@@ -1,10 +1,13 @@
 use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
+#[derive(
+    Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema,
+)]
 pub struct StoredI16(i16);
 
 impl StoredI16 {

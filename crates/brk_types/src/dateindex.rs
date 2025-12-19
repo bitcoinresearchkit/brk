@@ -2,6 +2,7 @@ use std::ops::{Add, Rem};
 
 use brk_error::Error;
 use jiff::Span;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex};
 
@@ -9,7 +10,9 @@ use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, Yea
 
 use super::Date;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema,
+)]
 pub struct DateIndex(u16);
 
 impl DateIndex {

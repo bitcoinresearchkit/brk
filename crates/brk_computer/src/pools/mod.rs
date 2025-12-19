@@ -217,7 +217,7 @@ impl Vecs {
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);
 
-                self.height_to_pool.push_if_needed(height, pool.slug)?;
+                self.height_to_pool.truncate_push(height, pool.slug)?;
                 Ok(())
             })?;
 

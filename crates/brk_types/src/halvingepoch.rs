@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
@@ -11,7 +12,18 @@ use super::Height;
 pub const BLOCKS_PER_HALVING: u32 = 210_000;
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize, Pco,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct HalvingEpoch(u16);
 

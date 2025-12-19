@@ -2,6 +2,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{DifficultyEpoch, Height, Version};
+use schemars::JsonSchema;
 use vecdb::{AnyExportableVec, Database, EagerVec, Exit, ImportableVec, PcoVec};
 
 use crate::{Indexes, indexes};
@@ -11,7 +12,7 @@ use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedVecValue + PartialOrd,
+    T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub height: EagerVec<PcoVec<Height, T>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
@@ -23,7 +24,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedVecValue + Ord + From<f64>,
+    T: ComputedVecValue + Ord + From<f64> + JsonSchema,
     f64: From<T>,
 {
     pub fn forced_import(
@@ -85,7 +86,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromHeightStrict<T>
 where
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();

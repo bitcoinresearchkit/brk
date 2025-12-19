@@ -1,9 +1,10 @@
 use std::ops::Add;
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
 
-#[derive(Debug, Clone, Copy, Serialize, Pco)]
+#[derive(Debug, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct BlkPosition(u64);
 
 impl BlkPosition {

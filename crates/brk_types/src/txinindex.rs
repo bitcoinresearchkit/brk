@@ -1,13 +1,14 @@
 use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::Vin;
 
 #[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco,
+    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco, JsonSchema,
 )]
 pub struct TxInIndex(u64);
 

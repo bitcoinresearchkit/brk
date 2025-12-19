@@ -1,10 +1,11 @@
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, Formattable};
 
 use crate::{LoadedAddressData, Sats};
 
 /// Data of an empty address
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 #[repr(C)]
 pub struct EmptyAddressData {
     /// Total transaction count

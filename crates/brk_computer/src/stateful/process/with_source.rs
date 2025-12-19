@@ -26,16 +26,6 @@ pub enum WithAddressDataSource<T> {
     FromEmpty(EmptyAddressIndex, T),
 }
 
-impl<T> WithAddressDataSource<T> {
-    pub fn is_new(&self) -> bool {
-        matches!(self, Self::New(_))
-    }
-
-    pub fn is_from_emptyaddressdata(&self) -> bool {
-        matches!(self, Self::FromEmpty(..))
-    }
-}
-
 impl<T> std::ops::Deref for WithAddressDataSource<T> {
     type Target = T;
 

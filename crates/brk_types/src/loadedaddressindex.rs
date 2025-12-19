@@ -1,12 +1,15 @@
 use std::ops::Add;
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, Default, Serialize, Pco)]
+#[derive(
+    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, Default, Serialize, Pco, JsonSchema,
+)]
 pub struct LoadedAddressIndex(TypeIndex);
 
 impl From<TypeIndex> for LoadedAddressIndex {

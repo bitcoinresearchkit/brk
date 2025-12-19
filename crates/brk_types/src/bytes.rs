@@ -1,8 +1,22 @@
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::Bytes;
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Bytes,
+    Hash,
+    JsonSchema,
+)]
 pub struct U8x2([u8; 2]);
 impl From<&[u8]> for U8x2 {
     #[inline]
@@ -13,7 +27,20 @@ impl From<&[u8]> for U8x2 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Bytes,
+    Hash,
+    JsonSchema,
+)]
 pub struct U8x20([u8; 20]);
 impl From<&[u8]> for U8x20 {
     #[inline]
@@ -24,7 +51,20 @@ impl From<&[u8]> for U8x20 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Bytes,
+    Hash,
+    JsonSchema,
+)]
 pub struct U8x32([u8; 32]);
 impl From<&[u8]> for U8x32 {
     #[inline]
@@ -35,8 +75,20 @@ impl From<&[u8]> for U8x32 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash, Serialize)]
 pub struct U8x33(#[serde(with = "serde_bytes")] [u8; 33]);
+
+impl JsonSchema for U8x33 {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "U8x33".into()
+    }
+
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        // Represent as a byte string
+        String::json_schema(_gen)
+    }
+}
+
 impl From<&[u8]> for U8x33 {
     #[inline]
     fn from(slice: &[u8]) -> Self {
@@ -46,8 +98,20 @@ impl From<&[u8]> for U8x33 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash, Serialize)]
 pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
+
+impl JsonSchema for U8x65 {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "U8x65".into()
+    }
+
+    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        // Represent as a byte string
+        String::json_schema(_gen)
+    }
+}
+
 impl From<&[u8]> for U8x65 {
     #[inline]
     fn from(slice: &[u8]) -> Self {

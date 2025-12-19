@@ -1,4 +1,5 @@
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
+use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use vecdb::{Formattable, Pco};
 
@@ -6,7 +7,7 @@ use crate::ONE_DAY_IN_SEC_F64;
 
 use super::{DateIndex, Timestamp};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco, JsonSchema)]
 pub struct Date(u32);
 
 impl Date {

@@ -6,7 +6,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use derive_deref::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec,
     TypedVecIterator,
 };
 
@@ -54,6 +54,18 @@ impl From<ByAddressType<EagerVec<PcoVec<Height, StoredU64>>>>
 }
 
 impl AddressTypeToHeightToAddressCount {
+    pub fn min_len(&self) -> usize {
+        self.p2pk65
+            .len()
+            .min(self.p2pk33.len())
+            .min(self.p2pkh.len())
+            .min(self.p2sh.len())
+            .min(self.p2wpkh.len())
+            .min(self.p2wsh.len())
+            .min(self.p2tr.len())
+            .min(self.p2a.len())
+    }
+
     pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self::from(ByAddressType::new_with_name(|type_name| {
             Ok(EagerVec::forced_import(

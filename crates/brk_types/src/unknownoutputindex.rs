@@ -1,13 +1,14 @@
 use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
 #[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco,
+    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco, JsonSchema,
 )]
 pub struct UnknownOutputIndex(TypeIndex);
 

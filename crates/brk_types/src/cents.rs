@@ -1,11 +1,14 @@
 use std::ops::{Add, Div, Mul};
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::Dollars;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema,
+)]
 pub struct Cents(i64);
 
 impl Cents {

@@ -3,12 +3,13 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{Sats, StoredF64};
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Pco)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct Bitcoin(f64);
 
 impl Add for Bitcoin {

@@ -11,3 +11,5 @@ build = "build.rs"
 [dependencies]
 brk_query = { workspace = true }
 brk_types = { workspace = true }
+schemars = { workspace = true }
+vecdb = { workspace = true }

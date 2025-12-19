@@ -1,45 +1,64 @@
 use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
 #[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct P2MSOutputIndex(TypeIndex);
+
 impl From<TypeIndex> for P2MSOutputIndex {
     #[inline]
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
+
 impl From<P2MSOutputIndex> for usize {
     #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(*value)
     }
 }
+
 impl From<P2MSOutputIndex> for u64 {
     #[inline]
     fn from(value: P2MSOutputIndex) -> Self {
         Self::from(*value)
     }
 }
+
 impl From<usize> for P2MSOutputIndex {
     #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }
 }
+
 impl Add<usize> for P2MSOutputIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
     }
 }
+
 impl CheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)

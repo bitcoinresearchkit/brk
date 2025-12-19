@@ -269,7 +269,11 @@ impl Vecs {
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
             .min(Height::from(self.height_to_unspendable_supply.len()))
-            .min(Height::from(self.height_to_opreturn_supply.len()));
+            .min(Height::from(self.height_to_opreturn_supply.len()))
+            .min(Height::from(self.addresstype_to_height_to_addr_count.min_len()))
+            .min(Height::from(
+                self.addresstype_to_height_to_empty_addr_count.min_len(),
+            ));
 
         // 2. Determine start mode and recover/reset state
         let start_mode = determine_start_mode(stateful_min, chain_state_height);

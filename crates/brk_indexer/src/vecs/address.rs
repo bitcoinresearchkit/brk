@@ -208,28 +208,28 @@ impl AddressVecs {
         match bytes {
             AddressBytes::P2PK65(bytes) => self
                 .p2pk65addressindex_to_p2pk65bytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2PK33(bytes) => self
                 .p2pk33addressindex_to_p2pk33bytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2PKH(bytes) => self
                 .p2pkhaddressindex_to_p2pkhbytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2SH(bytes) => self
                 .p2shaddressindex_to_p2shbytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2WPKH(bytes) => self
                 .p2wpkhaddressindex_to_p2wpkhbytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2WSH(bytes) => self
                 .p2wshaddressindex_to_p2wshbytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2TR(bytes) => self
                 .p2traddressindex_to_p2trbytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
             AddressBytes::P2A(bytes) => self
                 .p2aaddressindex_to_p2abytes
-                .push_if_needed(index.into(), *bytes)?,
+                .checked_push(index.into(), *bytes)?,
         };
         Ok(())
     }

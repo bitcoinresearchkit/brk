@@ -64,7 +64,10 @@ impl<T: PriceSource> TrackedSource<T> {
     }
 
     /// Try to fetch, tracking health state
-    fn try_fetch<R>(&mut self, fetch: impl FnOnce(&mut T) -> Option<Result<R>>) -> Option<Result<R>> {
+    fn try_fetch<R>(
+        &mut self,
+        fetch: impl FnOnce(&mut T) -> Option<Result<R>>,
+    ) -> Option<Result<R>> {
         if !self.is_healthy() {
             return Some(Err(Error::FetchFailed(format!(
                 "{} temporarily disabled (recheck in {}s)",

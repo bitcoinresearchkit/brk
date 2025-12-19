@@ -90,6 +90,16 @@ impl AddressCohortState {
         value: Sats,
         price: Option<Dollars>,
     ) {
+        self.receive_outputs(address_data, value, price, 1);
+    }
+
+    pub fn receive_outputs(
+        &mut self,
+        address_data: &mut LoadedAddressData,
+        value: Sats,
+        price: Option<Dollars>,
+        output_count: u32,
+    ) {
         let compute_price = price.is_some();
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
@@ -98,7 +108,7 @@ impl AddressCohortState {
             value: address_data.balance(),
         };
 
-        address_data.receive(value, price);
+        address_data.receive_outputs(value, price, output_count);
 
         let supply_state = SupplyState {
             utxo_count: address_data.utxo_count() as u64,
@@ -107,7 +117,7 @@ impl AddressCohortState {
 
         self.inner.receive_(
             &SupplyState {
-                utxo_count: 1,
+                utxo_count: output_count as u64,
                 value,
             },
             price,

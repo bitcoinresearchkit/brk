@@ -1,6 +1,7 @@
 use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{CheckedSub, StoredU64, Version};
+use schemars::JsonSchema;
 use vecdb::{
     AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec,
     VecIndex, VecValue,
@@ -16,7 +17,7 @@ const VERSION: Version = Version::ZERO;
 pub struct EagerVecsBuilder<I, T>
 where
     I: VecIndex,
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
 {
     pub first: Option<Box<EagerVec<PcoVec<I, T>>>>,
     pub average: Option<Box<EagerVec<PcoVec<I, T>>>>,
@@ -35,7 +36,7 @@ where
 impl<I, T> EagerVecsBuilder<I, T>
 where
     I: VecIndex,
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
 {
     pub fn forced_import(
         db: &Database,
@@ -159,7 +160,12 @@ where
     /// Compute percentiles from sorted values (assumes values is already sorted)
     fn compute_percentiles_from_sorted(&mut self, index: usize, values: &[T]) -> Result<()> {
         if let Some(max) = self.max.as_mut() {
-            max.truncate_push_at(index, *values.last().ok_or(Error::Internal("Empty values for percentiles"))?)?;
+            max.truncate_push_at(
+                index,
+                *values
+                    .last()
+                    .ok_or(Error::Internal("Empty values for percentiles"))?,
+            )?;
         }
         if let Some(pct90) = self.pct90.as_mut() {
             pct90.truncate_push_at(index, get_percentile(values, 0.90))?;

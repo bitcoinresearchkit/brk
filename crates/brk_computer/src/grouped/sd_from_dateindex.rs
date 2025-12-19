@@ -1,9 +1,11 @@
+use std::mem;
+
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
-use vecdb::{PcoVec, 
+use vecdb::{
     AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, IterableVec, VecIndex,
+    GenericStoredVec, IterableVec, PcoVec, VecIndex,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes, utils::OptionExt};
@@ -109,8 +111,14 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         macro_rules! import {
             ($suffix:expr) => {
                 ComputedVecsFromDateIndex::forced_import(
-                    db, &format!("{name}_{}", $suffix), Source::Compute, version, indexes, opts,
-                ).unwrap()
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    Source::Compute,
+                    version,
+                    indexes,
+                    opts,
+                )
+                .unwrap()
             };
         }
 
@@ -183,9 +191,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         source: &impl CollectableVec<DateIndex, StoredF32>,
         price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
-        let sma = sma_opt.unwrap_or_else(|| unsafe {
-            std::mem::transmute(&self.sma.u().dateindex)
-        });
+        let sma = sma_opt.unwrap_or_else(|| unsafe { mem::transmute(&self.sma.u().dateindex) });
 
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
@@ -345,7 +351,11 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             .try_for_each(|v| v.safe_flush(exit))?;
 
         self.mut_stateful_computed().try_for_each(|v| {
-            v.compute_rest(starting_indexes, exit, None as Option<&EagerVec<PcoVec<_, _>>>)
+            v.compute_rest(
+                starting_indexes,
+                exit,
+                None as Option<&EagerVec<PcoVec<_, _>>>,
+            )
         })?;
 
         if let Some(zscore) = self.zscore.as_mut() {
@@ -536,7 +546,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
     fn mut_stateful_date_vecs(
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
-        self.mut_stateful_computed()
-            .map(|c| c.dateindex.um())
+        self.mut_stateful_computed().map(|c| c.dateindex.um())
     }
 }

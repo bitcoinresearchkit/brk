@@ -36,6 +36,8 @@ pub fn process_address_updates(
     empty_updates: AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
     loaded_updates: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
 ) -> Result<()> {
+    info!("Processing address updates...");
+
     let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
     let loaded_result = process_loaded_addresses(addresses_data, loaded_updates)?;
     let all_updates = empty_result.merge(loaded_result);

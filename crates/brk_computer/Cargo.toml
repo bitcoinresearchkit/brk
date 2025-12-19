@@ -27,6 +27,7 @@ log = { workspace = true }
 pco = "0.4.7"
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true }
 smallvec = { workspace = true }
 vecdb = { workspace = true }

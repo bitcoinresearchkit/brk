@@ -1,19 +1,97 @@
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::LazyLock,
+};
 
 use schemars::JsonSchema;
 use serde::Serialize;
 
 use super::Index;
 
+/// Leaf node containing metric metadata
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
+pub struct MetricLeaf {
+    /// The metric name/identifier
+    pub name: String,
+    /// The value type (e.g., "Sats", "StoredF64")
+    pub value_type: String,
+    /// Available indexes for this metric
+    pub indexes: BTreeSet<Index>,
+}
+
+impl MetricLeaf {
+    pub fn new(name: String, value_type: String, indexes: BTreeSet<Index>) -> Self {
+        Self {
+            name,
+            value_type,
+            indexes,
+        }
+    }
+
+    /// Merge another leaf's indexes into this one (union)
+    pub fn merge_indexes(&mut self, other: &MetricLeaf) {
+        self.indexes.extend(other.indexes.iter().copied());
+    }
+}
+
+/// MetricLeaf with JSON Schema for client generation
+#[derive(Debug, Clone, Serialize)]
+pub struct MetricLeafWithSchema {
+    /// The core metric metadata
+    #[serde(flatten)]
+    pub leaf: MetricLeaf,
+    /// JSON Schema for the value type
+    #[serde(skip)]
+    pub schema: serde_json::Value,
+}
+
+impl MetricLeafWithSchema {
+    pub fn new(leaf: MetricLeaf, schema: serde_json::Value) -> Self {
+        Self { leaf, schema }
+    }
+
+    /// The metric name/identifier
+    pub fn name(&self) -> &str {
+        &self.leaf.name
+    }
+
+    /// The value type (e.g., "Sats", "StoredF64")
+    pub fn value_type(&self) -> &str {
+        &self.leaf.value_type
+    }
+
+    /// Available indexes for this metric
+    pub fn indexes(&self) -> &BTreeSet<Index> {
+        &self.leaf.indexes
+    }
+
+    /// Check if this leaf refers to the same metric as another
+    pub fn is_same_metric(&self, other: &MetricLeafWithSchema) -> bool {
+        self.leaf.name == other.leaf.name
+    }
+
+    /// Merge another leaf's indexes into this one (union)
+    pub fn merge_indexes(&mut self, other: &MetricLeafWithSchema) {
+        self.leaf.merge_indexes(&other.leaf);
+    }
+}
+
+impl PartialEq for MetricLeafWithSchema {
+    fn eq(&self, other: &Self) -> bool {
+        self.leaf == other.leaf
+    }
+}
+
+impl Eq for MetricLeafWithSchema {}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 /// Hierarchical tree node for organizing metrics into categories
 pub enum TreeNode {
     /// Branch node containing subcategories
     Branch(BTreeMap<String, TreeNode>),
-    /// Leaf node containing the metric name
-    #[schemars(example = &"price_close", example = &"market_cap", example = &"realized_price")]
-    Leaf(String),
+    /// Leaf node containing metric metadata with schema
+    Leaf(MetricLeafWithSchema),
 }
 
 const BASE: &str = "base";
@@ -55,8 +133,8 @@ impl TreeNode {
 
         for node in tree.values() {
             match node {
-                Self::Leaf(value) => {
-                    Self::merge_node(&mut merged, BASE, &Self::Leaf(value.clone()))?;
+                Self::Leaf(leaf) => {
+                    Self::merge_node(&mut merged, BASE, &Self::Leaf(leaf.clone()))?;
                 }
                 Self::Branch(inner) => {
                     for (key, inner_node) in inner {
@@ -68,33 +146,36 @@ impl TreeNode {
 
         let result = Self::Branch(merged);
 
-        // Check if all leaves have the same value
-        if let Some(common_value) = result.all_leaves_same() {
-            Some(Self::Leaf(common_value))
+        // Check if all leaves have the same name (can be collapsed)
+        if let Some(common_leaf) = result.all_leaves_same() {
+            Some(Self::Leaf(common_leaf))
         } else {
             Some(result)
         }
     }
 
-    /// Checks if all leaves in the tree have the same value.
-    /// Returns Some(value) if all leaves are identical, None otherwise.
-    fn all_leaves_same(&self) -> Option<String> {
+    /// Checks if all leaves in the tree have the same metric name.
+    /// Returns Some(merged_leaf) if all leaves have the same name, None otherwise.
+    /// When merging, indexes are unioned together.
+    fn all_leaves_same(&self) -> Option<MetricLeafWithSchema> {
         match self {
-            Self::Leaf(value) => Some(value.clone()),
+            Self::Leaf(leaf) => Some(leaf.clone()),
             Self::Branch(map) => {
-                let mut common_value: Option<String> = None;
+                let mut common_leaf: Option<MetricLeafWithSchema> = None;
 
                 for node in map.values() {
-                    let node_value = node.all_leaves_same()?;
+                    let node_leaf = node.all_leaves_same()?;
 
-                    match &common_value {
-                        None => common_value = Some(node_value),
-                        Some(existing) if existing != &node_value => return None,
-                        _ => {}
+                    match &mut common_leaf {
+                        None => common_leaf = Some(node_leaf),
+                        Some(existing) if existing.is_same_metric(&node_leaf) => {
+                            existing.merge_indexes(&node_leaf);
+                        }
+                        Some(_) => return None,
                     }
                 }
 
-                common_value
+                common_leaf
             }
         }
     }
@@ -111,39 +192,42 @@ impl TreeNode {
                 target.insert(key.to_string(), node.clone());
                 Some(())
             }
-            Some(existing) => match (&existing, node) {
-                // Same leaf values: ok
-                (Self::Leaf(a), Self::Leaf(b)) if a == b => Some(()),
-                // Different leaf values: conflict
-                (Self::Leaf(a), Self::Leaf(b)) => {
-                    eprintln!("Conflict: Different leaf values for key '{key}'");
-                    eprintln!("  Existing: {a:?}");
-                    eprintln!("  New: {b:?}");
-                    None
-                }
-                (Self::Leaf(leaf), Self::Branch(branch)) => {
-                    let mut new_branch = BTreeMap::new();
-                    new_branch.insert(BASE.to_string(), Self::Leaf(leaf.clone()));
-
-                    for (k, v) in branch {
-                        Self::merge_node(&mut new_branch, k, v)?;
+            Some(existing) => {
+                match (&mut *existing, node) {
+                    (Self::Leaf(a), Self::Leaf(b)) if a.is_same_metric(b) => {
+                        a.merge_indexes(b);
+                        Some(())
                     }
-
-                    *existing = Self::Branch(new_branch);
-                    Some(())
-                }
-                (Self::Branch(_), Self::Leaf(leaf)) => {
-                    Self::merge_node(existing.as_mut_branch(), BASE, &Self::Leaf(leaf.clone()))?;
-                    Some(())
-                }
-                // Both branches: merge recursively
-                (Self::Branch(_), Self::Branch(new_inner)) => {
-                    for (k, v) in new_inner {
-                        Self::merge_node(existing.as_mut_branch(), k, v)?;
+                    (Self::Leaf(a), Self::Leaf(b)) => {
+                        eprintln!("Conflict: Different leaf values for key '{key}'");
+                        eprintln!("  Existing: {a:?}");
+                        eprintln!("  New: {b:?}");
+                        None
                     }
-                    Some(())
+                    (Self::Leaf(leaf), Self::Branch(branch)) => {
+                        let mut new_branch = BTreeMap::new();
+                        new_branch.insert(BASE.to_string(), Self::Leaf(leaf.clone()));
+
+                        for (k, v) in branch {
+                            Self::merge_node(&mut new_branch, k, v)?;
+                        }
+
+                        *existing = Self::Branch(new_branch);
+                        Some(())
+                    }
+                    (Self::Branch(existing_branch), Self::Leaf(leaf)) => {
+                        Self::merge_node(existing_branch, BASE, &Self::Leaf(leaf.clone()))?;
+                        Some(())
+                    }
+                    // Both branches: merge recursively
+                    (Self::Branch(existing_branch), Self::Branch(new_inner)) => {
+                        for (k, v) in new_inner {
+                            Self::merge_node(existing_branch, k, v)?;
+                        }
+                        Some(())
+                    }
                 }
-            },
+            }
         }
     }
 

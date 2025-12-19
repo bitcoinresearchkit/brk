@@ -1,9 +1,10 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
-pub use brk_types::TreeNode;
+pub use brk_types::{Index, MetricLeaf, MetricLeafWithSchema, TreeNode};
 
 #[cfg(feature = "derive")]
 pub use brk_traversable_derive::Traversable;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, BytesVec, BytesVecValue, EagerVec, Formattable, LazyVecFrom1,
@@ -15,18 +16,36 @@ pub trait Traversable {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec>;
 }
 
+/// Helper to create a MetricLeafWithSchema from a vec
+fn make_leaf<I: VecIndex, T: JsonSchema, V: AnyVec>(vec: &V) -> TreeNode {
+    let index_str = I::to_string();
+    let index = Index::try_from(index_str).ok();
+    let indexes = index.into_iter().collect();
+
+    let leaf = MetricLeaf::new(
+        vec.name().to_string(),
+        vec.value_type_to_string().to_string(),
+        indexes,
+    );
+
+    let schema = schemars::SchemaGenerator::default().into_root_schema_for::<T>();
+    let schema_json = serde_json::to_value(schema).unwrap_or_default();
+
+    TreeNode::Leaf(MetricLeafWithSchema::new(leaf, schema_json))
+}
+
 // BytesVec implementation
 impl<I, T> Traversable for BytesVec<I, T>
 where
     I: VecIndex,
-    T: BytesVecValue + Formattable + Serialize,
+    T: BytesVecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -35,14 +54,14 @@ where
 impl<I, T> Traversable for vecdb::ZeroCopyVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::ZeroCopyVecValue + Formattable + Serialize,
+    T: vecdb::ZeroCopyVecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -51,14 +70,14 @@ where
 impl<I, T> Traversable for vecdb::PcoVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::PcoVecValue + Formattable + Serialize,
+    T: vecdb::PcoVecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -67,14 +86,14 @@ where
 impl<I, T> Traversable for vecdb::LZ4Vec<I, T>
 where
     I: VecIndex,
-    T: vecdb::LZ4VecValue + Formattable + Serialize,
+    T: vecdb::LZ4VecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -83,14 +102,14 @@ where
 impl<I, T> Traversable for vecdb::ZstdVec<I, T>
 where
     I: VecIndex,
-    T: vecdb::ZstdVecValue + Formattable + Serialize,
+    T: vecdb::ZstdVecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -98,21 +117,21 @@ where
 impl<V> Traversable for EagerVec<V>
 where
     V: StoredVec,
-    V::T: Formattable + Serialize,
+    V::T: Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<V::I, V::T, _>(self)
     }
 }
 
 impl<I, T, S1I, S1T> Traversable for LazyVecFrom1<I, T, S1I, S1T>
 where
     I: VecIndex,
-    T: VecValue + Formattable + Serialize,
+    T: VecValue + Formattable + Serialize + JsonSchema,
     S1I: VecIndex,
     S1T: VecValue,
 {
@@ -121,14 +140,14 @@ where
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
 impl<I, T, S1I, S1T, S2I, S2T> Traversable for LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>
 where
     I: VecIndex,
-    T: VecValue + Formattable + Serialize,
+    T: VecValue + Formattable + Serialize + JsonSchema,
     S1I: VecIndex,
     S1T: VecValue,
     S2I: VecIndex,
@@ -139,7 +158,7 @@ where
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 
@@ -147,7 +166,7 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> Traversable
     for LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: VecIndex,
-    T: VecValue + Formattable + Serialize,
+    T: VecValue + Formattable + Serialize + JsonSchema,
     S1I: VecIndex,
     S1T: VecValue,
     S2I: VecIndex,
@@ -160,7 +179,7 @@ where
     }
 
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Leaf(self.name().to_string())
+        make_leaf::<I, T, _>(self)
     }
 }
 

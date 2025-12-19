@@ -4,6 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
 };
+use schemars::JsonSchema;
 use vecdb::{
     AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, IterableVec,
     PcoVec,
@@ -16,7 +17,7 @@ use super::{ComputedVecValue, EagerVecsBuilder, Source, VecBuilderOptions};
 #[derive(Clone)]
 pub struct ComputedVecsFromDateIndex<T>
 where
-    T: ComputedVecValue + PartialOrd,
+    T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub dateindex: Option<EagerVec<PcoVec<DateIndex, T>>>,
     pub dateindex_extra: EagerVecsBuilder<DateIndex, T>,
@@ -32,7 +33,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromDateIndex<T>
 where
-    T: ComputedVecValue + 'static,
+    T: ComputedVecValue + JsonSchema + 'static,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
@@ -149,7 +150,7 @@ where
 
 impl<T> Traversable for ComputedVecsFromDateIndex<T>
 where
-    T: ComputedVecValue,
+    T: ComputedVecValue + JsonSchema,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
         let dateindex_extra_node = self.dateindex_extra.to_tree_node();

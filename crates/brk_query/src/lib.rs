@@ -29,7 +29,7 @@ pub use brk_types::{
 pub use r#impl::BLOCK_TXS_PAGE_SIZE;
 pub use output::{LegacyValue, Output, OutputLegacy};
 
-use vecs::Vecs;
+pub use vecs::Vecs;
 
 #[derive(Clone)]
 pub struct Query(Arc<QueryInner<'static>>);

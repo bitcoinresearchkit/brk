@@ -5,6 +5,7 @@ use std::{
 };
 
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::{Serialize, Serializer, ser::SerializeTuple};
 use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
@@ -12,7 +13,7 @@ use crate::StoredF64;
 
 use super::{Cents, Dollars, Sats};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
 #[repr(C)]
 pub struct OHLCCents {
     pub open: Open<Cents>,
@@ -98,7 +99,7 @@ impl Bytes for OHLCCents {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, JsonSchema)]
 #[repr(C)]
 pub struct OHLCDollars {
     pub open: Open<Dollars>,
@@ -210,7 +211,7 @@ impl Bytes for OHLCDollars {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, JsonSchema)]
 #[repr(C)]
 pub struct OHLCSats {
     pub open: Open<Sats>,
@@ -304,7 +305,19 @@ impl Bytes for OHLCSats {
 }
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Deref,
+    DerefMut,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 #[repr(transparent)]
 pub struct Open<T>(T);
@@ -421,7 +434,19 @@ where
 }
 
 #[derive(
-    Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Serialize, Pco,
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 #[repr(transparent)]
 pub struct High<T>(T);
@@ -538,7 +563,19 @@ where
 }
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Deref,
+    DerefMut,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 #[repr(transparent)]
 pub struct Low<T>(T);
@@ -655,7 +692,19 @@ where
 }
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Serialize, Pco,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Deref,
+    DerefMut,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 #[repr(transparent)]
 pub struct Close<T>(T);

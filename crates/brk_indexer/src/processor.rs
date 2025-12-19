@@ -79,7 +79,7 @@ impl<'a> BlockProcessor<'a> {
             return Err(Error::Internal("BlockHash prefix collision"));
         }
 
-        self.indexes.push_if_needed(self.vecs)?;
+        self.indexes.checked_push(self.vecs)?;
 
         self.stores
             .blockhashprefix_to_height
@@ -94,23 +94,23 @@ impl<'a> BlockProcessor<'a> {
         self.vecs
             .block
             .height_to_blockhash
-            .push_if_needed(height, blockhash.clone())?;
+            .checked_push(height, blockhash.clone())?;
         self.vecs
             .block
             .height_to_difficulty
-            .push_if_needed(height, self.block.header.difficulty_float().into())?;
+            .checked_push(height, self.block.header.difficulty_float().into())?;
         self.vecs
             .block
             .height_to_timestamp
-            .push_if_needed(height, Timestamp::from(self.block.header.time))?;
+            .checked_push(height, Timestamp::from(self.block.header.time))?;
         self.vecs
             .block
             .height_to_total_size
-            .push_if_needed(height, self.block.total_size().into())?;
+            .checked_push(height, self.block.total_size().into())?;
         self.vecs
             .block
             .height_to_weight
-            .push_if_needed(height, self.block.weight().into())?;
+            .checked_push(height, self.block.weight().into())?;
 
         Ok(())
     }
@@ -431,21 +431,21 @@ impl<'a> BlockProcessor<'a> {
                 self.vecs
                     .tx
                     .txindex_to_first_txoutindex
-                    .push_if_needed(txindex, txoutindex)?;
+                    .checked_push(txindex, txoutindex)?;
             }
 
             self.vecs
                 .txout
                 .txoutindex_to_value
-                .push_if_needed(txoutindex, sats)?;
+                .checked_push(txoutindex, sats)?;
             self.vecs
                 .txout
                 .txoutindex_to_txindex
-                .push_if_needed(txoutindex, txindex)?;
+                .checked_push(txoutindex, txindex)?;
             self.vecs
                 .txout
                 .txoutindex_to_outputtype
-                .push_if_needed(txoutindex, outputtype)?;
+                .checked_push(txoutindex, outputtype)?;
 
             let typeindex = if let Some(ti) = existing_typeindex {
                 ti
@@ -476,28 +476,28 @@ impl<'a> BlockProcessor<'a> {
                         self.vecs
                             .output
                             .p2msoutputindex_to_txindex
-                            .push_if_needed(self.indexes.p2msoutputindex, txindex)?;
+                            .checked_push(self.indexes.p2msoutputindex, txindex)?;
                         self.indexes.p2msoutputindex.copy_then_increment()
                     }
                     OutputType::OpReturn => {
                         self.vecs
                             .output
                             .opreturnindex_to_txindex
-                            .push_if_needed(self.indexes.opreturnindex, txindex)?;
+                            .checked_push(self.indexes.opreturnindex, txindex)?;
                         self.indexes.opreturnindex.copy_then_increment()
                     }
                     OutputType::Empty => {
                         self.vecs
                             .output
                             .emptyoutputindex_to_txindex
-                            .push_if_needed(self.indexes.emptyoutputindex, txindex)?;
+                            .checked_push(self.indexes.emptyoutputindex, txindex)?;
                         self.indexes.emptyoutputindex.copy_then_increment()
                     }
                     OutputType::Unknown => {
                         self.vecs
                             .output
                             .unknownoutputindex_to_txindex
-                            .push_if_needed(self.indexes.unknownoutputindex, txindex)?;
+                            .checked_push(self.indexes.unknownoutputindex, txindex)?;
                         self.indexes.unknownoutputindex.copy_then_increment()
                     }
                     _ => unreachable!(),
@@ -507,7 +507,7 @@ impl<'a> BlockProcessor<'a> {
             self.vecs
                 .txout
                 .txoutindex_to_typeindex
-                .push_if_needed(txoutindex, typeindex)?;
+                .checked_push(txoutindex, typeindex)?;
 
             if outputtype.is_unspendable() {
                 continue;
@@ -592,17 +592,17 @@ impl<'a> BlockProcessor<'a> {
                 self.vecs
                     .tx
                     .txindex_to_first_txinindex
-                    .push_if_needed(txindex, txinindex)?;
+                    .checked_push(txindex, txinindex)?;
             }
 
             self.vecs
                 .txin
                 .txinindex_to_txindex
-                .push_if_needed(txinindex, txindex)?;
+                .checked_push(txinindex, txindex)?;
             self.vecs
                 .txin
                 .txinindex_to_outpoint
-                .push_if_needed(txinindex, outpoint)?;
+                .checked_push(txinindex, outpoint)?;
 
             let Some((addresstype, addressindex)) = address_info else {
                 continue;
@@ -678,31 +678,31 @@ impl<'a> BlockProcessor<'a> {
             self.vecs
                 .tx
                 .txindex_to_height
-                .push_if_needed(ct.txindex, height)?;
+                .checked_push(ct.txindex, height)?;
             self.vecs
                 .tx
                 .txindex_to_txversion
-                .push_if_needed(ct.txindex, ct.tx.version.into())?;
+                .checked_push(ct.txindex, ct.tx.version.into())?;
             self.vecs
                 .tx
                 .txindex_to_txid
-                .push_if_needed(ct.txindex, ct.txid)?;
+                .checked_push(ct.txindex, ct.txid)?;
             self.vecs
                 .tx
                 .txindex_to_rawlocktime
-                .push_if_needed(ct.txindex, ct.tx.lock_time.into())?;
+                .checked_push(ct.txindex, ct.tx.lock_time.into())?;
             self.vecs
                 .tx
                 .txindex_to_base_size
-                .push_if_needed(ct.txindex, ct.tx.base_size().into())?;
+                .checked_push(ct.txindex, ct.tx.base_size().into())?;
             self.vecs
                 .tx
                 .txindex_to_total_size
-                .push_if_needed(ct.txindex, ct.tx.total_size().into())?;
+                .checked_push(ct.txindex, ct.tx.total_size().into())?;
             self.vecs
                 .tx
                 .txindex_to_is_explicitly_rbf
-                .push_if_needed(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
+                .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
         }
 
         Ok(())

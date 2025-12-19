@@ -5,52 +5,52 @@ use brk_types::{LoadedAddressData, OutputType, TypeIndex};
 use super::super::address::AddressTypeToTypeIndexMap;
 use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
 
+/// Source of an address in lookup - reports where the data came from.
+#[derive(Clone, Copy)]
+pub enum AddressSource {
+    /// Brand new address (never seen before)
+    New,
+    /// Loaded from disk (has existing balance)
+    Loaded,
+    /// Was empty (zero balance), now receiving
+    FromEmpty,
+}
+
 /// Context for looking up and storing address data during block processing.
-///
-/// All addresses should be pre-fetched into the cache before using this.
-/// - `loaded`: addresses with non-zero balance (wrapped with source info)
-/// - `empty`: addresses that became empty this block (wrapped with source info)
 pub struct AddressLookup<'a> {
-    /// Loaded addresses touched in current block
     pub loaded: &'a mut AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
-    /// Empty addresses touched in current block
     pub empty: &'a mut AddressTypeToTypeIndexMap<EmptyAddressDataWithSource>,
 }
 
 impl<'a> AddressLookup<'a> {
-    /// Get or create address data for a receive operation.
-    ///
-    /// Returns (address_data, is_new, from_empty)
     pub fn get_or_create_for_receive(
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> (&mut LoadedAddressDataWithSource, bool, bool) {
+    ) -> (&mut LoadedAddressDataWithSource, AddressSource) {
         use std::collections::hash_map::Entry;
 
         let map = self.loaded.get_mut(output_type).unwrap();
 
         match map.entry(type_index) {
             Entry::Occupied(entry) => {
-                // Entry already exists - check its source
-                let data = entry.into_mut();
-                let is_new = data.is_new();
-                let from_empty = data.is_from_emptyaddressdata();
-                (data, is_new, from_empty)
+                let source = match entry.get() {
+                    WithAddressDataSource::New(_) => AddressSource::New,
+                    WithAddressDataSource::FromLoaded(..) => AddressSource::Loaded,
+                    WithAddressDataSource::FromEmpty(..) => AddressSource::FromEmpty,
+                };
+                (entry.into_mut(), source)
             }
             Entry::Vacant(entry) => {
-                // Check if it was in empty set
                 if let Some(empty_data) =
                     self.empty.get_mut(output_type).unwrap().remove(&type_index)
                 {
-                    let data = entry.insert(empty_data.into());
-                    return (data, false, true);
+                    return (entry.insert(empty_data.into()), AddressSource::FromEmpty);
                 }
-
-                // Not found - create new address
-                let data =
-                    entry.insert(WithAddressDataSource::New(LoadedAddressData::default()));
-                (data, true, false)
+                (
+                    entry.insert(WithAddressDataSource::New(LoadedAddressData::default())),
+                    AddressSource::New,
+                )
             }
         }
     }

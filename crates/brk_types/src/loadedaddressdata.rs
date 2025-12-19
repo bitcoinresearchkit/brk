@@ -1,11 +1,12 @@
 use brk_error::{Error, Result};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, CheckedSub, Formattable};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
 /// Data for a loaded (non-empty) address with current balance
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 #[repr(C)]
 pub struct LoadedAddressData {
     /// Total transaction count
@@ -64,8 +65,12 @@ impl LoadedAddressData {
     }
 
     pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
+        self.receive_outputs(amount, price, 1);
+    }
+
+    pub fn receive_outputs(&mut self, amount: Sats, price: Option<Dollars>, output_count: u32) {
         self.received += amount;
-        self.funded_txo_count += 1;
+        self.funded_txo_count += output_count;
         if let Some(price) = price {
             let added = price * amount;
             self.realized_cap += added;

@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, Formattable};
 
@@ -5,7 +6,7 @@ use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes, JsonSchema)]
 pub struct AnyAddressIndex(TypeIndex);
 
 impl AnyAddressIndex {

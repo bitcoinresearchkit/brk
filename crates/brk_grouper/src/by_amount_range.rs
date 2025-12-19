@@ -6,6 +6,33 @@ use rayon::prelude::*;
 
 use super::{AmountFilter, Filter};
 
+/// Bucket index for amount ranges. Use for cheap comparisons.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AmountBucket(u8);
+
+impl From<Sats> for AmountBucket {
+    #[inline(always)]
+    fn from(value: Sats) -> Self {
+        Self(match value {
+            v if v < Sats::_1 => 0,
+            v if v < Sats::_10 => 1,
+            v if v < Sats::_100 => 2,
+            v if v < Sats::_1K => 3,
+            v if v < Sats::_10K => 4,
+            v if v < Sats::_100K => 5,
+            v if v < Sats::_1M => 6,
+            v if v < Sats::_10M => 7,
+            v if v < Sats::_1BTC => 8,
+            v if v < Sats::_10BTC => 9,
+            v if v < Sats::_100BTC => 10,
+            v if v < Sats::_1K_BTC => 11,
+            v if v < Sats::_10K_BTC => 12,
+            v if v < Sats::_100K_BTC => 13,
+            _ => 14,
+        })
+    }
+}
+
 #[derive(Debug, Default, Clone, Traversable)]
 pub struct ByAmountRange<T> {
     pub _0sats: T,
@@ -35,87 +62,79 @@ impl<T> ByAmountRange<T> {
             _1sat_to_10sats: create(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10))),
             _10sats_to_100sats: create(Filter::Amount(AmountFilter::Range(Sats::_10..Sats::_100))),
             _100sats_to_1k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100..Sats::_1K))),
-            _1k_sats_to_10k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_1K..Sats::_10K))),
-            _10k_sats_to_100k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_10K..Sats::_100K))),
-            _100k_sats_to_1m_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100K..Sats::_1M))),
-            _1m_sats_to_10m_sats: create(Filter::Amount(AmountFilter::Range(Sats::_1M..Sats::_10M))),
+            _1k_sats_to_10k_sats: create(Filter::Amount(AmountFilter::Range(
+                Sats::_1K..Sats::_10K,
+            ))),
+            _10k_sats_to_100k_sats: create(Filter::Amount(AmountFilter::Range(
+                Sats::_10K..Sats::_100K,
+            ))),
+            _100k_sats_to_1m_sats: create(Filter::Amount(AmountFilter::Range(
+                Sats::_100K..Sats::_1M,
+            ))),
+            _1m_sats_to_10m_sats: create(Filter::Amount(AmountFilter::Range(
+                Sats::_1M..Sats::_10M,
+            ))),
             _10m_sats_to_1btc: create(Filter::Amount(AmountFilter::Range(Sats::_10M..Sats::_1BTC))),
-            _1btc_to_10btc: create(Filter::Amount(AmountFilter::Range(Sats::_1BTC..Sats::_10BTC))),
-            _10btc_to_100btc: create(Filter::Amount(AmountFilter::Range(Sats::_10BTC..Sats::_100BTC))),
-            _100btc_to_1k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_100BTC..Sats::_1K_BTC))),
-            _1k_btc_to_10k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_1K_BTC..Sats::_10K_BTC))),
-            _10k_btc_to_100k_btc: create(Filter::Amount(AmountFilter::Range(Sats::_10K_BTC..Sats::_100K_BTC))),
-            _100k_btc_or_more: create(Filter::Amount(AmountFilter::Range(Sats::_100K_BTC..Sats::MAX))),
+            _1btc_to_10btc: create(Filter::Amount(AmountFilter::Range(
+                Sats::_1BTC..Sats::_10BTC,
+            ))),
+            _10btc_to_100btc: create(Filter::Amount(AmountFilter::Range(
+                Sats::_10BTC..Sats::_100BTC,
+            ))),
+            _100btc_to_1k_btc: create(Filter::Amount(AmountFilter::Range(
+                Sats::_100BTC..Sats::_1K_BTC,
+            ))),
+            _1k_btc_to_10k_btc: create(Filter::Amount(AmountFilter::Range(
+                Sats::_1K_BTC..Sats::_10K_BTC,
+            ))),
+            _10k_btc_to_100k_btc: create(Filter::Amount(AmountFilter::Range(
+                Sats::_10K_BTC..Sats::_100K_BTC,
+            ))),
+            _100k_btc_or_more: create(Filter::Amount(AmountFilter::Range(
+                Sats::_100K_BTC..Sats::MAX,
+            ))),
         }
     }
 
-    #[allow(clippy::inconsistent_digit_grouping)]
+    #[inline(always)]
     pub fn get(&self, value: Sats) -> &T {
-        if value == Sats::ZERO {
-            &self._0sats
-        } else if value < Sats::_10 {
-            &self._1sat_to_10sats
-        } else if value < Sats::_100 {
-            &self._10sats_to_100sats
-        } else if value < Sats::_1K {
-            &self._100sats_to_1k_sats
-        } else if value < Sats::_10K {
-            &self._1k_sats_to_10k_sats
-        } else if value < Sats::_100K {
-            &self._10k_sats_to_100k_sats
-        } else if value < Sats::_1M {
-            &self._100k_sats_to_1m_sats
-        } else if value < Sats::_10M {
-            &self._1m_sats_to_10m_sats
-        } else if value < Sats::_1BTC {
-            &self._10m_sats_to_1btc
-        } else if value < Sats::_10BTC {
-            &self._1btc_to_10btc
-        } else if value < Sats::_100BTC {
-            &self._10btc_to_100btc
-        } else if value < Sats::_1K_BTC {
-            &self._100btc_to_1k_btc
-        } else if value < Sats::_10K_BTC {
-            &self._1k_btc_to_10k_btc
-        } else if value < Sats::_100K_BTC {
-            &self._10k_btc_to_100k_btc
-        } else {
-            &self._100k_btc_or_more
+        match AmountBucket::from(value).0 {
+            0 => &self._0sats,
+            1 => &self._1sat_to_10sats,
+            2 => &self._10sats_to_100sats,
+            3 => &self._100sats_to_1k_sats,
+            4 => &self._1k_sats_to_10k_sats,
+            5 => &self._10k_sats_to_100k_sats,
+            6 => &self._100k_sats_to_1m_sats,
+            7 => &self._1m_sats_to_10m_sats,
+            8 => &self._10m_sats_to_1btc,
+            9 => &self._1btc_to_10btc,
+            10 => &self._10btc_to_100btc,
+            11 => &self._100btc_to_1k_btc,
+            12 => &self._1k_btc_to_10k_btc,
+            13 => &self._10k_btc_to_100k_btc,
+            _ => &self._100k_btc_or_more,
         }
     }
 
-    #[allow(clippy::inconsistent_digit_grouping)]
+    #[inline(always)]
     pub fn get_mut(&mut self, value: Sats) -> &mut T {
-        if value == Sats::ZERO {
-            &mut self._0sats
-        } else if value < Sats::_10 {
-            &mut self._1sat_to_10sats
-        } else if value < Sats::_100 {
-            &mut self._10sats_to_100sats
-        } else if value < Sats::_1K {
-            &mut self._100sats_to_1k_sats
-        } else if value < Sats::_10K {
-            &mut self._1k_sats_to_10k_sats
-        } else if value < Sats::_100K {
-            &mut self._10k_sats_to_100k_sats
-        } else if value < Sats::_1M {
-            &mut self._100k_sats_to_1m_sats
-        } else if value < Sats::_10M {
-            &mut self._1m_sats_to_10m_sats
-        } else if value < Sats::_1BTC {
-            &mut self._10m_sats_to_1btc
-        } else if value < Sats::_10BTC {
-            &mut self._1btc_to_10btc
-        } else if value < Sats::_100BTC {
-            &mut self._10btc_to_100btc
-        } else if value < Sats::_1K_BTC {
-            &mut self._100btc_to_1k_btc
-        } else if value < Sats::_10K_BTC {
-            &mut self._1k_btc_to_10k_btc
-        } else if value < Sats::_100K_BTC {
-            &mut self._10k_btc_to_100k_btc
-        } else {
-            &mut self._100k_btc_or_more
+        match AmountBucket::from(value).0 {
+            0 => &mut self._0sats,
+            1 => &mut self._1sat_to_10sats,
+            2 => &mut self._10sats_to_100sats,
+            3 => &mut self._100sats_to_1k_sats,
+            4 => &mut self._1k_sats_to_10k_sats,
+            5 => &mut self._10k_sats_to_100k_sats,
+            6 => &mut self._100k_sats_to_1m_sats,
+            7 => &mut self._1m_sats_to_10m_sats,
+            8 => &mut self._10m_sats_to_1btc,
+            9 => &mut self._1btc_to_10btc,
+            10 => &mut self._10btc_to_100btc,
+            11 => &mut self._100btc_to_1k_btc,
+            12 => &mut self._1k_btc_to_10k_btc,
+            13 => &mut self._10k_btc_to_100k_btc,
+            _ => &mut self._100k_btc_or_more,
         }
     }
 

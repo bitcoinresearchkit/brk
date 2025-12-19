@@ -1,13 +1,26 @@
 use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
 #[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    Serialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct OpReturnIndex(TypeIndex);
 
@@ -17,30 +30,35 @@ impl From<TypeIndex> for OpReturnIndex {
         Self(value)
     }
 }
+
 impl From<OpReturnIndex> for usize {
     #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(*value)
     }
 }
+
 impl From<OpReturnIndex> for u64 {
     #[inline]
     fn from(value: OpReturnIndex) -> Self {
         Self::from(*value)
     }
 }
+
 impl From<usize> for OpReturnIndex {
     #[inline]
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }
 }
+
 impl Add<usize> for OpReturnIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
     }
 }
+
 impl CheckedSub<OpReturnIndex> for OpReturnIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)

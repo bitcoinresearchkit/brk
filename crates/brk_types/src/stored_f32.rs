@@ -7,6 +7,7 @@ use std::{
 };
 
 use derive_deref::Deref;
+use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
@@ -14,7 +15,7 @@ use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct StoredF32(f32);
 
 impl StoredF32 {
