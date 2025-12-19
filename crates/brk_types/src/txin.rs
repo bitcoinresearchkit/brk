@@ -3,8 +3,8 @@ use bitcoin::{Script, ScriptBuf};
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
 
-#[derive(Debug, Clone, JsonSchema)]
 /// Transaction input
+#[derive(Debug, Clone, JsonSchema)]
 pub struct TxIn {
     /// Transaction ID of the output being spent
     #[schemars(example = "0000000000000000000000000000000000000000000000000000000000000000")]

@@ -5,9 +5,12 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Bytes, Formattable};
 
+/// Current supply state tracking UTXO count and total value
 #[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 pub struct SupplyState {
+    /// Number of unspent transaction outputs
     pub utxo_count: u64,
+    /// Total value in satoshis
     pub value: Sats,
 }
 

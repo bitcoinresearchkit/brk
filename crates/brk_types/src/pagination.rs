@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+/// Pagination parameters for paginated API endpoints
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 pub struct Pagination {
     /// Pagination index

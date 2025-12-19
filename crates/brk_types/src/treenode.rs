@@ -35,7 +35,7 @@ impl MetricLeaf {
 }
 
 /// MetricLeaf with JSON Schema for client generation
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct MetricLeafWithSchema {
     /// The core metric metadata
     #[serde(flatten)]
@@ -84,9 +84,9 @@ impl PartialEq for MetricLeafWithSchema {
 
 impl Eq for MetricLeafWithSchema {}
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
 /// Hierarchical tree node for organizing metrics into categories
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
+#[serde(untagged)]
 pub enum TreeNode {
     /// Branch node containing subcategories
     Branch(BTreeMap<String, TreeNode>),

@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
 
+/// Transaction or block weight in weight units (WU)
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct Weight(u64);
 

@@ -7,6 +7,7 @@ use crate::ONE_DAY_IN_SEC_F64;
 
 use super::{DateIndex, Timestamp};
 
+/// Date in YYYYMMDD format stored as u32
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco, JsonSchema)]
 pub struct Date(u32);
 

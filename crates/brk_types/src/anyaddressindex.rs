@@ -6,6 +6,7 @@ use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
+/// Unified index for any address type (loaded or empty)
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes, JsonSchema)]
 pub struct AnyAddressIndex(TypeIndex);
 

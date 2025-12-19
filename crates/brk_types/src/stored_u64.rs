@@ -12,6 +12,7 @@ use super::{
     UnknownOutputIndex, YearIndex,
 };
 
+/// Fixed-size 64-bit unsigned integer optimized for on-disk storage
 #[derive(Debug, Default, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct StoredU64(u64);
 

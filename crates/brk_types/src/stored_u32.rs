@@ -11,6 +11,7 @@ use super::{
     P2WSHAddressIndex, UnknownOutputIndex,
 };
 
+/// Fixed-size 32-bit unsigned integer optimized for on-disk storage
 #[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct StoredU32(u32);
 

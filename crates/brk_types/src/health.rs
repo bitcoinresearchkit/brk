@@ -1,8 +1,8 @@
 use schemars::JsonSchema;
 use serde::Serialize;
 
-#[derive(Debug, Serialize, JsonSchema)]
 /// Server health status
+#[derive(Debug, Serialize, JsonSchema)]
 pub struct Health {
     pub status: &'static str,
     pub service: &'static str,

@@ -15,6 +15,7 @@ use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
+/// Stored 32-bit floating point value
 #[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct StoredF32(f32);
 

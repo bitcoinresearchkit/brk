@@ -3,8 +3,8 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::CheckedSub;
 
-#[derive(Debug, Clone, Serialize, JsonSchema)]
 /// Transaction information compatible with mempool.space API format
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct Transaction {
     #[schemars(example = TxIndex::new(0))]
     pub index: Option<TxIndex>,

@@ -3,8 +3,8 @@ use bitcoin::ScriptBuf;
 use schemars::JsonSchema;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
 
-#[derive(Debug, Clone, JsonSchema)]
 /// Transaction output
+#[derive(Debug, Clone, JsonSchema)]
 pub struct TxOut {
     /// Script pubkey (locking script)
     #[serde(

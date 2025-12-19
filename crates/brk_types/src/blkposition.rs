@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco};
 
+/// Position within a .blk file, encoding file index and byte offset
 #[derive(Debug, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct BlkPosition(u64);
 

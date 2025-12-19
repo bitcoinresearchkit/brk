@@ -13,6 +13,7 @@ use crate::StoredF64;
 
 use super::{Cents, Dollars, Sats};
 
+/// OHLC (Open, High, Low, Close) data in cents
 #[derive(Debug, Default, Clone, JsonSchema)]
 #[repr(C)]
 pub struct OHLCCents {
@@ -99,6 +100,7 @@ impl Bytes for OHLCCents {
     }
 }
 
+/// OHLC (Open, High, Low, Close) data in dollars
 #[derive(Debug, Default, Clone, Copy, JsonSchema)]
 #[repr(C)]
 pub struct OHLCDollars {
@@ -211,6 +213,7 @@ impl Bytes for OHLCDollars {
     }
 }
 
+/// OHLC (Open, High, Low, Close) data in satoshis
 #[derive(Debug, Default, Clone, Copy, JsonSchema)]
 #[repr(C)]
 pub struct OHLCSats {
@@ -304,6 +307,7 @@ impl Bytes for OHLCSats {
     }
 }
 
+/// Opening price value for a time period
 #[derive(
     Debug,
     Default,
@@ -433,6 +437,7 @@ where
     }
 }
 
+/// Highest price value for a time period
 #[derive(
     Debug,
     Default,
@@ -562,6 +567,7 @@ where
     }
 }
 
+/// Lowest price value for a time period
 #[derive(
     Debug,
     Default,
@@ -691,6 +697,7 @@ where
     }
 }
 
+/// Closing price value for a time period
 #[derive(
     Debug,
     Default,

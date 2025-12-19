@@ -12,4 +12,5 @@ build = "build.rs"
 brk_query = { workspace = true }
 brk_types = { workspace = true }
 schemars = { workspace = true }
+serde_json = { workspace = true }
 vecdb = { workspace = true }

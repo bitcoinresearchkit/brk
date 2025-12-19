@@ -3,6 +3,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, Pco, PrintableIndex};
 
+/// Fixed-size boolean value optimized for on-disk storage (stored as u16)
 #[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
 pub struct StoredBool(u16);
 

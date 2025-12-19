@@ -2,8 +2,8 @@ use crate::{Address, AddressChainStats, AddressMempoolStats};
 use schemars::JsonSchema;
 use serde::Serialize;
 
-#[derive(Debug, Serialize, JsonSchema)]
 /// Address information compatible with mempool.space API format
+#[derive(Debug, Serialize, JsonSchema)]
 pub struct AddressStats {
     /// Bitcoin address string
     #[schemars(

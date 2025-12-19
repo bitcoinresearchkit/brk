@@ -12,6 +12,7 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::{Bitcoin, Dollars};
 
+/// Fixed-size 64-bit floating point value optimized for on-disk storage
 #[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct StoredF64(f64);
 

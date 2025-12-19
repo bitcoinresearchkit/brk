@@ -569,6 +569,7 @@ dependencies = [
  "brk_query",
  "brk_types",
  "schemars",
+ "serde_json",
  "vecdb",
 ]
 

@@ -9,6 +9,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{Sats, StoredF64};
 
+/// Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 #[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
 pub struct Bitcoin(f64);
 

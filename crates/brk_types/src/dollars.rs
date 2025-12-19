@@ -14,6 +14,7 @@ use crate::{Low, Open};
 
 use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 
+/// US Dollar amount as floating point
 #[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct Dollars(f64);
 

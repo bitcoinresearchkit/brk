@@ -3,8 +3,8 @@ use serde::Serialize;
 
 use crate::{BlockHash, Height, Timestamp};
 
-#[derive(Debug, Clone, Serialize, JsonSchema)]
 /// Transaction confirmation status
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct TxStatus {
     /// Whether the transaction is confirmed
     #[schemars(example = true)]
