@@ -233,20 +233,21 @@ fn generate_pattern_structs(output: &mut String, patterns: &[StructuralPattern],
 
     for pattern in patterns {
         let is_parameterizable = pattern.is_parameterizable();
+        let generic_params = if pattern.is_generic { "<'a, T>" } else { "<'a>" };
 
         writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
-        writeln!(output, "pub struct {}<'a> {{", pattern.name).unwrap();
+        writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
 
         for field in &pattern.fields {
             let field_name = to_snake_case(&field.name);
-            let type_annotation = field_to_type_annotation(field, metadata);
+            let type_annotation = field_to_type_annotation_generic(field, metadata, pattern.is_generic);
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 
         writeln!(output, "}}\n").unwrap();
 
         // Generate impl block with constructor
-        writeln!(output, "impl<'a> {}<'a> {{", pattern.name).unwrap();
+        writeln!(output, "impl{} {}{} {{", generic_params, pattern.name, generic_params).unwrap();
 
         if is_parameterizable {
             writeln!(output, "    /// Create a new pattern node with accumulated metric name.").unwrap();
@@ -358,16 +359,45 @@ fn generate_tree_path_rust_field(
     }
 }
 
-/// Convert a PatternField to the full type annotation
-fn field_to_type_annotation(field: &PatternField, metadata: &ClientMetadata) -> String {
+/// Convert a PatternField to the full type annotation, with optional generic support
+fn field_to_type_annotation_generic(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+) -> String {
+    field_to_type_annotation_with_generic(field, metadata, is_generic, None)
+}
+
+/// Convert a PatternField to the full type annotation.
+/// - `is_generic`: If true and field.rust_type is "T", use T in the output
+/// - `generic_value_type`: For branch fields that reference a generic pattern, this is the concrete type to substitute
+fn field_to_type_annotation_with_generic(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+    generic_value_type: Option<&str>,
+) -> String {
+    // For generic patterns, use T instead of concrete value type
+    let value_type = if is_generic && field.rust_type == "T" {
+        "T".to_string()
+    } else {
+        field.rust_type.clone()
+    };
+
     if metadata.is_pattern_type(&field.rust_type) {
+        // Check if this pattern is generic and we have a value type
+        if metadata.is_pattern_generic(&field.rust_type) {
+            if let Some(vt) = generic_value_type {
+                return format!("{}<'a, {}>", field.rust_type, vt);
+            }
+        }
         format!("{}<'a>", field.rust_type)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         // Leaf with a reusable accessor pattern
-        format!("{}<'a, {}>", accessor.name, field.rust_type)
+        format!("{}<'a, {}>", accessor.name, value_type)
     } else {
         // Leaf with unique index set - use MetricNode directly
-        format!("MetricNode<'a, {}>", field.rust_type)
+        format!("MetricNode<'a, {}>", value_type)
     }
 }
 
@@ -399,15 +429,16 @@ fn generate_tree_node(
     generated: &mut HashSet<String>,
 ) {
     if let TreeNode::Branch(children) = node {
-        // Build the signature for this node
-        let mut fields: Vec<PatternField> = children
+        // Build the signature for this node, also tracking child fields for generic pattern lookup
+        let mut fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
             .iter()
             .map(|(child_name, child_node)| {
-                let (rust_type, json_type, indexes) = match child_node {
+                let (rust_type, json_type, indexes, child_fields) = match child_node {
                     TreeNode::Leaf(leaf) => (
                         leaf.value_type().to_string(),
                         leaf.schema.get("type").and_then(|v| v.as_str()).unwrap_or("object").to_string(),
                         leaf.indexes().clone(),
+                        None,
                     ),
                     TreeNode::Branch(grandchildren) => {
                         // Get pattern name for this child
@@ -416,18 +447,20 @@ fn generate_tree_node(
                             .get(&child_fields)
                             .cloned()
                             .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new())
+                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new(), Some(child_fields))
                     }
                 };
-                PatternField {
+                (PatternField {
                     name: child_name.clone(),
                     rust_type,
                     json_type,
                     indexes,
-                }
+                }, child_fields)
             })
             .collect();
-        fields.sort_by(|a, b| a.name.cmp(&b.name));
+        fields_with_child_info.sort_by(|a, b| a.0.name.cmp(&b.0.name));
+
+        let fields: Vec<PatternField> = fields_with_child_info.iter().map(|(f, _)| f.clone()).collect();
 
         // Check if this matches a reusable pattern
         if let Some(pattern_name) = pattern_lookup.get(&fields) {
@@ -447,9 +480,13 @@ fn generate_tree_node(
         writeln!(output, "/// Catalog tree node.").unwrap();
         writeln!(output, "pub struct {}<'a> {{", name).unwrap();
 
-        for field in &fields {
+        for (field, child_fields) in &fields_with_child_info {
             let field_name = to_snake_case(&field.name);
-            let type_annotation = field_to_type_annotation(field, metadata);
+            // For generic patterns, extract the value type from child fields
+            let generic_value_type = child_fields.as_ref().and_then(|cf| {
+                metadata.get_generic_value_type(&field.rust_type, cf)
+            });
+            let type_annotation = field_to_type_annotation_with_generic(field, metadata, false, generic_value_type.as_deref());
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 

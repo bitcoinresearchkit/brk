@@ -336,9 +336,12 @@ fn generate_structural_patterns(
 
         // Generate JSDoc typedef
         writeln!(output, "/**").unwrap();
+        if pattern.is_generic {
+            writeln!(output, " * @template T").unwrap();
+        }
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
         for field in &pattern.fields {
-            let js_type = field_to_js_type(field, metadata);
+            let js_type = field_to_js_type_generic(field, metadata, pattern.is_generic);
             writeln!(
                 output,
                 " * @property {{{}}} {}",
@@ -488,17 +491,45 @@ fn generate_tree_path_field(
     }
 }
 
-/// Convert pattern field to JavaScript/JSDoc type
-fn field_to_js_type(field: &PatternField, metadata: &ClientMetadata) -> String {
+/// Convert pattern field to JavaScript/JSDoc type, with optional generic support
+fn field_to_js_type_generic(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+) -> String {
+    field_to_js_type_with_generic_value(field, metadata, is_generic, None)
+}
+
+/// Convert pattern field to JavaScript/JSDoc type.
+/// - `is_generic`: If true and field.rust_type is "T", use T in the output
+/// - `generic_value_type`: For branch fields that reference a generic pattern, this is the concrete type to substitute
+fn field_to_js_type_with_generic_value(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+    generic_value_type: Option<&str>,
+) -> String {
+    // For generic patterns, use T instead of concrete value type
+    let value_type = if is_generic && field.rust_type == "T" {
+        "T".to_string()
+    } else {
+        field.rust_type.clone()
+    };
+
     if metadata.is_pattern_type(&field.rust_type) {
-        // Pattern type - use pattern name directly
+        // Check if this pattern is generic and we have a value type
+        if metadata.is_pattern_generic(&field.rust_type) {
+            if let Some(vt) = generic_value_type {
+                return format!("{}<{}>", field.rust_type, vt);
+            }
+        }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf with accessor - use rust_type as the generic (e.g., DateIndexAccessor<Height>)
-        format!("{}<{}>", accessor.name, field.rust_type)
+        // Leaf with accessor - use value_type as the generic
+        format!("{}<{}>", accessor.name, value_type)
     } else {
-        // Leaf - use rust_type as the generic (e.g., MetricNode<Height>)
-        format!("MetricNode<{}>", field.rust_type)
+        // Leaf - use value_type as the generic
+        format!("MetricNode<{}>", value_type)
     }
 }
 
@@ -533,8 +564,36 @@ fn generate_tree_typedef(
     generated: &mut HashSet<String>,
 ) {
     if let TreeNode::Branch(children) = node {
-        // Build signature
-        let fields = get_node_fields(children, pattern_lookup);
+        // Build signature with child field info for generic pattern lookup
+        let fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
+            .iter()
+            .map(|(child_name, child_node)| {
+                let (rust_type, json_type, indexes, child_fields) = match child_node {
+                    TreeNode::Leaf(leaf) => (
+                        leaf.value_type().to_string(),
+                        leaf.schema.get("type").and_then(|v| v.as_str()).unwrap_or("object").to_string(),
+                        leaf.indexes().clone(),
+                        None,
+                    ),
+                    TreeNode::Branch(grandchildren) => {
+                        let child_fields = get_node_fields(grandchildren, pattern_lookup);
+                        let pattern_name = pattern_lookup
+                            .get(&child_fields)
+                            .cloned()
+                            .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
+                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new(), Some(child_fields))
+                    }
+                };
+                (PatternField {
+                    name: child_name.clone(),
+                    rust_type,
+                    json_type,
+                    indexes,
+                }, child_fields)
+            })
+            .collect();
+
+        let fields: Vec<PatternField> = fields_with_child_info.iter().map(|(f, _)| f.clone()).collect();
 
         // Skip if this matches a pattern (already generated)
         if pattern_lookup.contains_key(&fields)
@@ -551,8 +610,12 @@ fn generate_tree_typedef(
         writeln!(output, "/**").unwrap();
         writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
-        for field in &fields {
-            let js_type = field_to_js_type(field, metadata);
+        for (field, child_fields) in &fields_with_child_info {
+            // For generic patterns, extract the value type from child fields
+            let generic_value_type = child_fields.as_ref().and_then(|cf| {
+                metadata.get_generic_value_type(&field.rust_type, cf)
+            });
+            let js_type = field_to_js_type_with_generic_value(field, metadata, false, generic_value_type.as_deref());
             writeln!(
                 output,
                 " * @property {{{}}} {}",

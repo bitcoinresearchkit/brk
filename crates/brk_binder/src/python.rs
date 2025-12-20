@@ -255,7 +255,12 @@ fn generate_structural_patterns(
     for pattern in patterns {
         let is_parameterizable = pattern.is_parameterizable();
 
-        writeln!(output, "class {}:", pattern.name).unwrap();
+        // For generic patterns, inherit from Generic[T]
+        if pattern.is_generic {
+            writeln!(output, "class {}(Generic[T]):", pattern.name).unwrap();
+        } else {
+            writeln!(output, "class {}:", pattern.name).unwrap();
+        }
         writeln!(
             output,
             "    \"\"\"Pattern struct for repeated tree structure.\"\"\""
@@ -298,7 +303,7 @@ fn generate_parameterized_python_field(
     metadata: &ClientMetadata,
 ) {
     let field_name = to_snake_case(&field.name);
-    let py_type = field_to_python_type(field, metadata);
+    let py_type = field_to_python_type_generic(field, metadata, pattern.is_generic);
 
     // For branch fields, pass the accumulated name to nested pattern
     if metadata.is_pattern_type(&field.rust_type) {
@@ -388,15 +393,48 @@ fn generate_tree_path_python_field(
 
 /// Convert pattern field to Python type annotation
 fn field_to_python_type(field: &PatternField, metadata: &ClientMetadata) -> String {
+    field_to_python_type_generic(field, metadata, false)
+}
+
+/// Convert pattern field to Python type annotation, with optional generic support
+fn field_to_python_type_generic(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+) -> String {
+    field_to_python_type_with_generic_value(field, metadata, is_generic, None)
+}
+
+/// Convert pattern field to Python type annotation.
+/// - `is_generic`: If true and field.rust_type is "T", use T in the output
+/// - `generic_value_type`: For branch fields that reference a generic pattern, this is the concrete type to substitute
+fn field_to_python_type_with_generic_value(
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    is_generic: bool,
+    generic_value_type: Option<&str>,
+) -> String {
+    // For generic patterns, use T instead of concrete value type
+    let value_type = if is_generic && field.rust_type == "T" {
+        "T".to_string()
+    } else {
+        field.rust_type.clone()
+    };
+
     if metadata.is_pattern_type(&field.rust_type) {
-        // Pattern type - use pattern name directly
+        // Check if this pattern is generic and we have a value type
+        if metadata.is_pattern_generic(&field.rust_type) {
+            if let Some(vt) = generic_value_type {
+                return format!("{}[{}]", field.rust_type, vt);
+            }
+        }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf with accessor - use rust_type as the generic (e.g., DateIndexAccessor[Height])
-        format!("{}[{}]", accessor.name, field.rust_type)
+        // Leaf with accessor - use value_type as the generic
+        format!("{}[{}]", accessor.name, value_type)
     } else {
-        // Leaf - use rust_type as the generic (e.g., MetricNode[Height])
-        format!("MetricNode[{}]", field.rust_type)
+        // Leaf - use value_type as the generic
+        format!("MetricNode[{}]", value_type)
     }
 }
 
@@ -431,8 +469,36 @@ fn generate_tree_class(
     generated: &mut HashSet<String>,
 ) {
     if let TreeNode::Branch(children) = node {
-        // Build signature
-        let fields = get_node_fields(children, pattern_lookup);
+        // Build signature with child field info for generic pattern lookup
+        let fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
+            .iter()
+            .map(|(child_name, child_node)| {
+                let (rust_type, json_type, indexes, child_fields) = match child_node {
+                    TreeNode::Leaf(leaf) => (
+                        leaf.value_type().to_string(),
+                        leaf.schema.get("type").and_then(|v| v.as_str()).unwrap_or("object").to_string(),
+                        leaf.indexes().clone(),
+                        None,
+                    ),
+                    TreeNode::Branch(grandchildren) => {
+                        let child_fields = get_node_fields(grandchildren, pattern_lookup);
+                        let pattern_name = pattern_lookup
+                            .get(&child_fields)
+                            .cloned()
+                            .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
+                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new(), Some(child_fields))
+                    }
+                };
+                (PatternField {
+                    name: child_name.clone(),
+                    rust_type,
+                    json_type,
+                    indexes,
+                }, child_fields)
+            })
+            .collect();
+
+        let fields: Vec<PatternField> = fields_with_child_info.iter().map(|(f, _)| f.clone()).collect();
 
         // Skip if this matches a pattern (already generated)
         if pattern_lookup.contains_key(&fields)
@@ -455,8 +521,12 @@ fn generate_tree_class(
         )
         .unwrap();
 
-        for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
-            let py_type = field_to_python_type(field, metadata);
+        for ((field, child_fields_opt), (child_name, child_node)) in fields_with_child_info.iter().zip(children.iter()) {
+            // For generic patterns, extract the value type from child fields
+            let generic_value_type = child_fields_opt.as_ref().and_then(|cf| {
+                metadata.get_generic_value_type(&field.rust_type, cf)
+            });
+            let py_type = field_to_python_type_with_generic_value(field, metadata, false, generic_value_type.as_deref());
             let field_name_py = to_snake_case(&field.name);
 
             if metadata.is_pattern_type(&field.rust_type) {

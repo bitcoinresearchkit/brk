@@ -28,6 +28,8 @@ pub struct ClientMetadata {
     pub used_indexes: BTreeSet<Index>,
     /// Index set patterns - sets of indexes that appear together on metrics
     pub index_set_patterns: Vec<IndexSetPattern>,
+    /// Maps concrete field signatures to pattern names (includes generic pattern mappings)
+    pub concrete_to_pattern: HashMap<Vec<PatternField>, String>,
 }
 
 /// A pattern of indexes that appear together on multiple metrics
@@ -48,6 +50,8 @@ pub struct StructuralPattern {
     pub fields: Vec<PatternField>,
     /// How each field modifies the accumulated name (field_name -> position)
     pub field_positions: HashMap<String, FieldNamePosition>,
+    /// If true, all leaf fields use a type parameter T instead of concrete types
+    pub is_generic: bool,
 }
 
 impl StructuralPattern {
@@ -112,7 +116,7 @@ impl ClientMetadata {
     /// Extract metadata from brk_query::Vecs
     pub fn from_vecs(vecs: &Vecs) -> Self {
         let catalog = vecs.catalog().clone();
-        let structural_patterns = detect_structural_patterns(&catalog);
+        let (structural_patterns, concrete_to_pattern) = detect_structural_patterns(&catalog);
         let (used_indexes, index_set_patterns) = detect_index_patterns(&catalog);
 
         ClientMetadata {
@@ -120,6 +124,7 @@ impl ClientMetadata {
             structural_patterns,
             used_indexes,
             index_set_patterns,
+            concrete_to_pattern,
         }
     }
 
@@ -135,19 +140,47 @@ impl ClientMetadata {
         self.structural_patterns.iter().any(|p| p.name == type_name)
     }
 
-    /// Build a lookup map from field signatures to pattern names
-    pub fn pattern_lookup(&self) -> HashMap<Vec<PatternField>, String> {
-        self.structural_patterns
+    /// Find a pattern by name
+    pub fn find_pattern(&self, name: &str) -> Option<&StructuralPattern> {
+        self.structural_patterns.iter().find(|p| p.name == name)
+    }
+
+    /// Check if a pattern is generic
+    pub fn is_pattern_generic(&self, name: &str) -> bool {
+        self.find_pattern(name).map(|p| p.is_generic).unwrap_or(false)
+    }
+
+    /// Extract the value type from concrete fields for a generic pattern.
+    /// Returns the first leaf field's rust_type if this pattern is generic.
+    pub fn get_generic_value_type(&self, pattern_name: &str, fields: &[PatternField]) -> Option<String> {
+        if !self.is_pattern_generic(pattern_name) {
+            return None;
+        }
+        // Find first leaf field (has indexes)
+        fields
             .iter()
-            .map(|p| (p.fields.clone(), p.name.clone()))
-            .collect()
+            .find(|f| !f.indexes.is_empty())
+            .map(|f| f.rust_type.clone())
+    }
+
+    /// Build a lookup map from field signatures to pattern names.
+    /// Includes both generic pattern signatures and concrete signatures.
+    pub fn pattern_lookup(&self) -> HashMap<Vec<PatternField>, String> {
+        // Start with concrete-to-pattern mappings (includes generic pattern concrete signatures)
+        let mut lookup = self.concrete_to_pattern.clone();
+        // Also add the normalized generic signatures
+        for p in &self.structural_patterns {
+            lookup.insert(p.fields.clone(), p.name.clone());
+        }
+        lookup
     }
 }
 
 /// Detect structural patterns in the tree using a bottom-up approach.
 /// For every branch node, create a signature from its children (sorted field names + types).
 /// Patterns that appear 2+ times are deduplicated.
-fn detect_structural_patterns(tree: &TreeNode) -> Vec<StructuralPattern> {
+/// Returns (patterns, concrete_to_pattern_mapping).
+fn detect_structural_patterns(tree: &TreeNode) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
     // Map from sorted fields signature to pattern name
     let mut signature_to_pattern: HashMap<Vec<PatternField>, String> = HashMap::new();
     // Count how many times each signature appears
@@ -156,19 +189,42 @@ fn detect_structural_patterns(tree: &TreeNode) -> Vec<StructuralPattern> {
     // Process tree bottom-up to resolve all branch types
     resolve_branch_patterns(tree, &mut signature_to_pattern, &mut signature_counts);
 
-    // Build initial list of patterns (only those appearing 2+ times)
+    // First, identify generic patterns by grouping ALL signatures by their normalized form.
+    // Even if each concrete signature appears only once, if 2+ different value types
+    // normalize to the same pattern, we create a generic pattern.
+    let (generic_patterns, generic_mappings) = detect_generic_patterns(&signature_to_pattern);
+
+    // Build non-generic patterns: signatures appearing 2+ times that weren't merged into generics
     let mut patterns: Vec<StructuralPattern> = signature_to_pattern
         .iter()
-        .filter(|(sig, _)| signature_counts.get(*sig).copied().unwrap_or(0) >= 2)
+        .filter(|(sig, _)| {
+            signature_counts.get(*sig).copied().unwrap_or(0) >= 2
+                && !generic_mappings.contains_key(*sig)
+        })
         .map(|(fields, name)| StructuralPattern {
             name: name.clone(),
             fields: fields.clone(),
             field_positions: HashMap::new(),
+            is_generic: false,
         })
         .collect();
 
-    // Build lookup for second pass
-    let pattern_lookup: HashMap<Vec<PatternField>, String> = signature_to_pattern;
+    // Add the generic patterns
+    patterns.extend(generic_patterns);
+
+    // Build lookup for second pass - include all concrete signatures
+    let mut pattern_lookup: HashMap<Vec<PatternField>, String> = HashMap::new();
+    // Add non-generic patterns that appear 2+ times
+    for (sig, name) in &signature_to_pattern {
+        if signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
+            pattern_lookup.insert(sig.clone(), name.clone());
+        }
+    }
+    // Add generic mappings (overwrite if there's overlap)
+    pattern_lookup.extend(generic_mappings.clone());
+
+    // Build the concrete_to_pattern map to return
+    let concrete_to_pattern = pattern_lookup.clone();
 
     // Second pass: analyze field positions by traversing tree instances
     analyze_pattern_field_positions(tree, &mut patterns, &pattern_lookup);
@@ -176,7 +232,93 @@ fn detect_structural_patterns(tree: &TreeNode) -> Vec<StructuralPattern> {
     // Sort by number of fields descending (larger patterns first)
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
 
-    patterns
+    (patterns, concrete_to_pattern)
+}
+
+/// Detect generic patterns by grouping all signatures by their normalized form.
+/// Returns (generic_patterns, concrete_signature -> generic_pattern_name mapping).
+fn detect_generic_patterns(
+    signature_to_pattern: &HashMap<Vec<PatternField>, String>,
+) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
+    // Group signatures by their normalized (generic) form
+    let mut normalized_groups: HashMap<Vec<PatternField>, Vec<(Vec<PatternField>, String)>> = HashMap::new();
+
+    for (fields, name) in signature_to_pattern {
+        if let Some(normalized) = normalize_fields_for_generic(fields) {
+            normalized_groups
+                .entry(normalized)
+                .or_default()
+                .push((fields.clone(), name.clone()));
+        }
+    }
+
+    let mut patterns = Vec::new();
+    let mut mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+
+    // Create generic patterns for groups with 2+ different concrete signatures
+    for (normalized_fields, group) in normalized_groups {
+        if group.len() >= 2 {
+            // Use the first pattern's name as the generic pattern name
+            let generic_name = group[0].1.clone();
+
+            // Map all concrete signatures to this generic pattern
+            for (concrete_fields, _) in &group {
+                mappings.insert(concrete_fields.clone(), generic_name.clone());
+            }
+
+            patterns.push(StructuralPattern {
+                name: generic_name,
+                fields: normalized_fields,
+                field_positions: HashMap::new(),
+                is_generic: true,
+            });
+        }
+    }
+
+    (patterns, mappings)
+}
+
+/// Normalize fields by replacing concrete value types with "T" for generic matching.
+/// Returns None if the pattern is not suitable for generics (e.g., mixed value types).
+fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<Vec<PatternField>> {
+    // Get all leaf field value types
+    let leaf_types: Vec<&str> = fields
+        .iter()
+        .filter(|f| !f.indexes.is_empty()) // Only leaves have indexes
+        .map(|f| f.rust_type.as_str())
+        .collect();
+
+    // Need at least one leaf to be generic
+    if leaf_types.is_empty() {
+        return None;
+    }
+
+    // All leaves must have the same value type
+    let first_type = leaf_types[0];
+    if !leaf_types.iter().all(|t| *t == first_type) {
+        return None;
+    }
+
+    // Create normalized fields with "T" as the value type
+    let normalized: Vec<PatternField> = fields
+        .iter()
+        .map(|f| {
+            if f.indexes.is_empty() {
+                // Branch field - keep as is
+                f.clone()
+            } else {
+                // Leaf field - replace value type with T
+                PatternField {
+                    name: f.name.clone(),
+                    rust_type: "T".to_string(),
+                    json_type: "T".to_string(),
+                    indexes: f.indexes.clone(),
+                }
+            }
+        })
+        .collect();
+
+    Some(normalized)
 }
 
 /// Analyze field positions for all patterns by traversing tree instances.
