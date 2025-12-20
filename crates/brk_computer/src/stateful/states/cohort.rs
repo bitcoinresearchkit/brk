@@ -7,7 +7,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Dollars, Height, Sats};
 
-use crate::{grouped::PERCENTILES_LEN, utils::OptionExt};
+use crate::grouped::PERCENTILES_LEN;
 
 use super::{CachedUnrealizedState, PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
@@ -72,14 +72,21 @@ impl CohortState {
         Ok(())
     }
 
+    /// Apply pending price_to_amount updates. Must be called before reads.
+    pub fn apply_pending(&mut self) {
+        if let Some(p) = self.price_to_amount.as_mut() {
+            p.apply_pending();
+        }
+    }
+
     /// Get first (lowest) price entry in distribution.
     pub fn price_to_amount_first_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.price_to_amount.u().first_key_value()
+        self.price_to_amount.as_ref()?.first_key_value()
     }
 
     /// Get last (highest) price entry in distribution.
     pub fn price_to_amount_last_key_value(&self) -> Option<(&Dollars, &Sats)> {
-        self.price_to_amount.u().last_key_value()
+        self.price_to_amount.as_ref()?.last_key_value()
     }
 
     /// Reset per-block values before processing next block.
@@ -319,7 +326,6 @@ impl CohortState {
     }
 
     /// Compute prices at percentile thresholds.
-    /// Uses O(19 * log n) Fenwick tree queries instead of O(n) iteration.
     pub fn compute_percentile_prices(&self) -> [Dollars; PERCENTILES_LEN] {
         match self.price_to_amount.as_ref() {
             Some(p) if !p.is_empty() => p.compute_percentiles(),
@@ -344,6 +350,11 @@ impl CohortState {
             }
         };
 
+        // Date unrealized: compute from scratch (only at date boundaries, ~144x less frequent)
+        let date_state = date_price.map(|date_price| {
+            CachedUnrealizedState::compute_full_standalone(date_price, price_to_amount)
+        });
+
         // Height unrealized: use incremental cache (O(k) where k = flip range)
         let height_state = if let Some(cache) = self.cached_unrealized.as_mut() {
             cache.get_at_price(height_price, price_to_amount).clone()
@@ -353,11 +364,6 @@ impl CohortState {
             self.cached_unrealized = Some(cache);
             state
         };
-
-        // Date unrealized: compute from scratch (only at date boundaries, ~144x less frequent)
-        let date_state = date_price.map(|date_price| {
-            CachedUnrealizedState::compute_full_standalone(date_price, price_to_amount)
-        });
 
         (height_state, date_state)
     }
@@ -371,19 +377,19 @@ impl CohortState {
     }
 
     /// Get first (lowest) price in distribution.
-    pub fn min_price(&self) -> Option<&Dollars> {
+    pub fn min_price(&self) -> Option<Dollars> {
         self.price_to_amount
             .as_ref()?
             .first_key_value()
-            .map(|(k, _)| k)
+            .map(|(&k, _)| k)
     }
 
     /// Get last (highest) price in distribution.
-    pub fn max_price(&self) -> Option<&Dollars> {
+    pub fn max_price(&self) -> Option<Dollars> {
         self.price_to_amount
             .as_ref()?
             .last_key_value()
-            .map(|(k, _)| k)
+            .map(|(&k, _)| k)
     }
 
     /// Get iterator over price_to_amount for merged percentile computation.

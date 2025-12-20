@@ -1,7 +1,6 @@
 //! Processing spent inputs (UTXOs being spent).
 
-use brk_grouper::{Filter, Filtered, TimeFilter};
-use brk_types::{CheckedSub, HalvingEpoch, Height, Year};
+use brk_types::{CheckedSub, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
@@ -26,15 +25,6 @@ impl UTXOCohorts {
             return;
         }
 
-        // Time-based cohorts: age_range + epoch + year
-        let mut time_cohorts: Vec<_> = self
-            .0
-            .age_range
-            .iter_mut()
-            .chain(self.0.epoch.iter_mut())
-            .chain(self.0.year.iter_mut())
-            .collect();
-
         let last_block = chain_state.last().unwrap();
         let last_timestamp = last_block.timestamp;
         let current_price = last_block.price;
@@ -55,27 +45,45 @@ impl UTXOCohorts {
                 .unwrap()
                 .is_more_than_hour();
 
-            // Update time-based cohorts
-            time_cohorts
-                .iter_mut()
-                .filter(|v| match v.filter() {
-                    Filter::Time(TimeFilter::GreaterOrEqual(from)) => *from <= days_old,
-                    Filter::Time(TimeFilter::LowerThan(to)) => *to > days_old,
-                    Filter::Time(TimeFilter::Range(range)) => range.contains(&days_old),
-                    Filter::Epoch(e) => *e == HalvingEpoch::from(height),
-                    Filter::Year(y) => *y == Year::from(block_state.timestamp),
-                    _ => unreachable!(),
-                })
-                .for_each(|vecs| {
-                    vecs.state.um().send(
-                        &sent.spendable_supply,
-                        current_price,
-                        prev_price,
-                        blocks_old,
-                        days_old_float,
-                        older_than_hour,
-                    );
-                });
+            // Update age range cohort (direct index lookup)
+            self.0
+                .age_range
+                .get_mut_by_days_old(days_old)
+                .state
+                .um()
+                .send(
+                    &sent.spendable_supply,
+                    current_price,
+                    prev_price,
+                    blocks_old,
+                    days_old_float,
+                    older_than_hour,
+                );
+
+            // Update epoch cohort (direct lookup by height)
+            self.0.epoch.mut_vec_from_height(height).state.um().send(
+                &sent.spendable_supply,
+                current_price,
+                prev_price,
+                blocks_old,
+                days_old_float,
+                older_than_hour,
+            );
+
+            // Update year cohort (direct lookup by timestamp)
+            self.0
+                .year
+                .mut_vec_from_timestamp(block_state.timestamp)
+                .state
+                .um()
+                .send(
+                    &sent.spendable_supply,
+                    current_price,
+                    prev_price,
+                    blocks_old,
+                    days_old_float,
+                    older_than_hour,
+                );
 
             // Update output type cohorts
             sent.by_type

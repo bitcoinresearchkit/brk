@@ -6,7 +6,7 @@
 //! - Age metrics (blocks_old, days_old) are tracked for sent UTXOs
 
 use brk_error::Result;
-use brk_grouper::{ByAddressType, Filtered};
+use brk_grouper::{amounts_in_different_buckets, ByAddressType};
 use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
 use vecdb::{VecIndex, unlikely};
 
@@ -57,11 +57,9 @@ pub fn process_sent(
                 let will_be_empty = addr_data.has_1_utxos();
 
                 // Check if crossing cohort boundary
-                let prev_cohort = cohorts.amount_range.get(prev_balance);
-                let new_cohort = cohorts.amount_range.get(new_balance);
-                let filters_differ = prev_cohort.filter() != new_cohort.filter();
+                let crossing_boundary = amounts_in_different_buckets(prev_balance, new_balance);
 
-                if will_be_empty || filters_differ {
+                if will_be_empty || crossing_boundary {
                     // Subtract from old cohort
                     let cohort_state = cohorts
                         .amount_range
@@ -78,7 +76,7 @@ pub fn process_sent(
                             "process_sent: cohort underflow detected!\n\
                             Block context: prev_height={:?}, output_type={:?}, type_index={:?}\n\
                             prev_balance={}, new_balance={}, value={}\n\
-                            will_be_empty={}, filters_differ={}\n\
+                            will_be_empty={}, crossing_boundary={}\n\
                             Address: {:?}",
                             prev_height,
                             output_type,
@@ -87,7 +85,7 @@ pub fn process_sent(
                             new_balance,
                             value,
                             will_be_empty,
-                            filters_differ,
+                            crossing_boundary,
                             addr_data
                         );
                     }

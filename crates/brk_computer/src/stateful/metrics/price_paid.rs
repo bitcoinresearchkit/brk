@@ -154,4 +154,28 @@ impl PricePaidMetrics {
         )?;
         Ok(())
     }
+
+    /// First phase of computed metrics (indexes from height).
+    pub fn compute_rest_part1(
+        &mut self,
+        indexes: &crate::indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.indexes_to_min_price_paid.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_min_price_paid),
+        )?;
+
+        self.indexes_to_max_price_paid.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_max_price_paid),
+        )?;
+
+        Ok(())
+    }
 }

@@ -15,6 +15,7 @@ use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
 use brk_types::{DateIndex, Height, OutputType, Sats, TypeIndex};
 use log::info;
+use rayon::prelude::*;
 use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
@@ -420,7 +421,8 @@ pub fn process_blocks(
             });
 
             // Main thread: Update UTXO cohorts
-            vecs.utxo_cohorts.receive(transacted, height, timestamp, block_price);
+            vecs.utxo_cohorts
+                .receive(transacted, height, timestamp, block_price);
             vecs.utxo_cohorts.send(height_to_sent, chain_state);
         });
 
@@ -542,14 +544,14 @@ fn push_cohort_states(
     dateindex: Option<DateIndex>,
     date_price: Option<Option<brk_types::Dollars>>,
 ) -> Result<()> {
-    utxo_cohorts.iter_separate_mut().try_for_each(|v| {
-        // utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
+    // utxo_cohorts.iter_separate_mut().try_for_each(|v| {
+    utxo_cohorts.par_iter_separate_mut().try_for_each(|v| {
         v.truncate_push(height)?;
         v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
     })?;
 
-    address_cohorts.iter_separate_mut().try_for_each(|v| {
-        // address_cohorts.par_iter_separate_mut().try_for_each(|v| {
+    // address_cohorts.iter_separate_mut().try_for_each(|v| {
+    address_cohorts.par_iter_separate_mut().try_for_each(|v| {
         v.truncate_push(height)?;
         v.compute_then_truncate_push_unrealized_states(height, height_price, dateindex, date_price)
     })?;

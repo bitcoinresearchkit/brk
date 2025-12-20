@@ -1,6 +1,6 @@
 //! Process received outputs for address cohorts.
 
-use brk_grouper::{AmountBucket, ByAddressType};
+use brk_grouper::{amounts_in_different_buckets, ByAddressType};
 use brk_types::{Dollars, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
@@ -60,7 +60,7 @@ pub fn process_received(
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance + total_value;
 
-                if AmountBucket::from(prev_balance) != AmountBucket::from(new_balance) {
+                if amounts_in_different_buckets(prev_balance, new_balance) {
                     // Crossing cohort boundary - subtract from old, add to new
                     let cohort_state = cohorts
                         .amount_range

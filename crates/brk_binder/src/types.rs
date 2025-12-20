@@ -70,7 +70,6 @@ impl PartialEq for PatternField {
 
 impl Eq for PatternField {}
 
-
 impl ClientMetadata {
     /// Extract metadata from brk_query::Vecs
     pub fn from_vecs(vecs: &Vecs) -> Self {
@@ -88,7 +87,9 @@ impl ClientMetadata {
 
     /// Check if an index set matches a pattern
     pub fn find_index_set_pattern(&self, indexes: &BTreeSet<Index>) -> Option<&IndexSetPattern> {
-        self.index_set_patterns.iter().find(|p| &p.indexes == indexes)
+        self.index_set_patterns
+            .iter()
+            .find(|p| &p.indexes == indexes)
     }
 
     /// Check if a type is a pattern (vs a primitive leaf type)
@@ -155,8 +156,12 @@ fn resolve_branch_patterns(
                     ),
                     TreeNode::Branch(_) => {
                         // Branch: recursively get its pattern name
-                        let pattern_name = resolve_branch_patterns(child_node, signature_to_pattern, signature_counts)
-                            .unwrap_or_else(|| "Unknown".to_string());
+                        let pattern_name = resolve_branch_patterns(
+                            child_node,
+                            signature_to_pattern,
+                            signature_counts,
+                        )
+                        .unwrap_or_else(|| "Unknown".to_string());
                         (pattern_name.clone(), pattern_name, BTreeSet::new())
                     }
                 };
@@ -194,7 +199,12 @@ fn generate_pattern_name_from_fields(fields: &[PatternField]) -> String {
     let raw_name = joined.join("_");
 
     // Sanitize: ensure it starts with a letter (prepend "P_" if starts with digit)
-    let sanitized = if raw_name.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+    let sanitized = if raw_name
+        .chars()
+        .next()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
         format!("P_{}", raw_name)
     } else {
         raw_name
@@ -228,11 +238,19 @@ pub fn get_node_fields(
                 ),
                 TreeNode::Branch(grandchildren) => {
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                    let pattern_name = pattern_lookup.get(&child_fields).cloned().unwrap_or_else(|| "Unknown".to_string());
+                    let pattern_name = pattern_lookup
+                        .get(&child_fields)
+                        .cloned()
+                        .unwrap_or_else(|| "Unknown".to_string());
                     (pattern_name.clone(), pattern_name, BTreeSet::new())
                 }
             };
-            PatternField { name: name.clone(), rust_type, json_type, indexes }
+            PatternField {
+                name: name.clone(),
+                rust_type,
+                json_type,
+                indexes,
+            }
         })
         .collect();
     fields.sort_by(|a, b| a.name.cmp(&b.name));
@@ -323,7 +341,7 @@ fn collect_indexes_from_tree(
             index_sets.push(leaf.indexes().clone());
         }
         TreeNode::Branch(children) => {
-            for (_, child) in children {
+            for child in children.values() {
                 collect_indexes_from_tree(child, used_indexes, index_sets);
             }
         }
@@ -340,42 +358,4 @@ fn generate_index_set_name(indexes: &BTreeSet<Index>) -> String {
     // For multiple indexes, create a descriptive name
     let names: Vec<&str> = indexes.iter().map(|i| i.serialize_long()).collect();
     format!("{}Accessor", to_pascal_case(&names.join("_")))
-}
-
-/// Convert a serde_json::Value (JSON Schema) to a JSDoc type annotation
-pub fn schema_to_jsdoc(schema: &serde_json::Value) -> String {
-    if let Some(ty) = schema.get("type").and_then(|v| v.as_str()) {
-        match ty {
-            "null" => "null".to_string(),
-            "boolean" => "boolean".to_string(),
-            "integer" | "number" => "number".to_string(),
-            "string" => "string".to_string(),
-            "array" => {
-                if let Some(items) = schema.get("items") {
-                    format!("{}[]", schema_to_jsdoc(items))
-                } else {
-                    "Array<*>".to_string()
-                }
-            }
-            "object" => "Object".to_string(),
-            _ => "*".to_string(),
-        }
-    } else if schema.get("anyOf").is_some() || schema.get("oneOf").is_some() {
-        let variants = schema
-            .get("anyOf")
-            .or_else(|| schema.get("oneOf"))
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .map(schema_to_jsdoc)
-                    .collect::<Vec<_>>()
-                    .join("|")
-            })
-            .unwrap_or_else(|| "*".to_string());
-        format!("({})", variants)
-    } else if let Some(reference) = schema.get("$ref").and_then(|v| v.as_str()) {
-        reference.rsplit('/').next().unwrap_or("*").to_string()
-    } else {
-        "*".to_string()
-    }
 }

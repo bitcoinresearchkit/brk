@@ -5,8 +5,7 @@
 //! - Address data for address cohort tracking (optional)
 
 use brk_grouper::ByAddressType;
-use brk_types::{AnyAddressDataIndexEnum, LoadedAddressData, OutputType, Sats, TxIndex, TypeIndex};
-use vecdb::GenericStoredVec;
+use brk_types::{OutputType, Sats, TxIndex, TypeIndex};
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
@@ -15,7 +14,7 @@ use crate::stateful::compute::VecsReaders;
 use crate::stateful::states::Transacted;
 
 use super::super::address::AddressTypeToVec;
-use super::{AddressCache, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource};
+use super::{load_uncached_address_data, AddressCache, LoadedAddressDataWithSource, TxIndexVec};
 
 /// Result of processing outputs for a block.
 pub struct OutputsResult {
@@ -79,7 +78,7 @@ pub fn process_outputs(
             .unwrap()
             .push((typeindex, value));
 
-        let addr_data_opt = get_address_data(
+        let addr_data_opt = load_uncached_address_data(
             output_type,
             typeindex,
             first_addressindexes,
@@ -107,50 +106,4 @@ pub fn process_outputs(
         address_data,
         txindex_vecs,
     }
-}
-
-/// Look up address data from storage or determine if new.
-///
-/// Returns None if address is already in loaded or empty cache.
-#[allow(clippy::too_many_arguments)]
-fn get_address_data(
-    address_type: OutputType,
-    typeindex: TypeIndex,
-    first_addressindexes: &ByAddressType<TypeIndex>,
-    cache: &AddressCache,
-    vr: &VecsReaders,
-    any_address_indexes: &AnyAddressIndexesVecs,
-    addresses_data: &AddressesDataVecs,
-) -> Option<LoadedAddressDataWithSource> {
-    // Check if this is a new address (typeindex >= first for this height)
-    let first = *first_addressindexes.get(address_type).unwrap();
-    if first <= typeindex {
-        return Some(WithAddressDataSource::New(LoadedAddressData::default()));
-    }
-
-    // Skip if already in cache
-    if cache.contains(address_type, typeindex) {
-        return None;
-    }
-
-    // Read from storage
-    let reader = vr.address_reader(address_type);
-    let anyaddressindex = any_address_indexes.get(address_type, typeindex, reader);
-
-    Some(match anyaddressindex.to_enum() {
-        AnyAddressDataIndexEnum::Loaded(loaded_index) => {
-            let reader = &vr.anyaddressindex_to_anyaddressdata.loaded;
-            let loaded_data = addresses_data
-                .loaded
-                .get_pushed_or_read_unwrap(loaded_index, reader);
-            WithAddressDataSource::FromLoaded(loaded_index, loaded_data)
-        }
-        AnyAddressDataIndexEnum::Empty(empty_index) => {
-            let reader = &vr.anyaddressindex_to_anyaddressdata.empty;
-            let empty_data = addresses_data
-                .empty
-                .get_pushed_or_read_unwrap(empty_index, reader);
-            WithAddressDataSource::FromEmpty(empty_index, empty_data.into())
-        }
-    })
 }

@@ -151,6 +151,9 @@ impl CohortMetrics {
         date_price: Option<Option<Dollars>>,
         state: &mut CohortState,
     ) -> Result<()> {
+        // Apply pending updates before reading
+        state.apply_pending();
+
         if let (Some(unrealized), Some(price_paid), Some(height_price)) = (
             self.unrealized.as_mut(),
             self.price_paid.as_mut(),
@@ -248,6 +251,14 @@ impl CohortMetrics {
             realized.compute_rest_part1(indexes, price, starting_indexes, exit)?;
         }
 
+        if let Some(unrealized) = self.unrealized.as_mut() {
+            unrealized.compute_rest_part1(price, starting_indexes, exit)?;
+        }
+
+        if let Some(price_paid) = self.price_paid.as_mut() {
+            price_paid.compute_rest_part1(indexes, starting_indexes, exit)?;
+        }
+
         Ok(())
     }
 
@@ -276,6 +287,18 @@ impl CohortMetrics {
             dateindex_to_market_cap,
             exit,
         )?;
+
+        if let Some(realized) = self.realized.as_mut() {
+            realized.compute_rest_part2(
+                indexes,
+                price,
+                starting_indexes,
+                height_to_supply,
+                height_to_market_cap,
+                dateindex_to_market_cap,
+                exit,
+            )?;
+        }
 
         if let Some(relative) = self.relative.as_mut() {
             relative.compute_rest_part2(

@@ -304,4 +304,112 @@ impl UnrealizedMetrics {
         )?;
         Ok(())
     }
+
+    /// First phase of computed metrics.
+    pub fn compute_rest_part1(
+        &mut self,
+        price: Option<&crate::price::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        // Compute supply value (bitcoin + dollars) from sats
+        self.height_to_supply_in_profit_value.compute_rest(
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_supply_in_profit),
+        )?;
+        self.height_to_supply_in_loss_value.compute_rest(
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_supply_in_loss),
+        )?;
+
+        // Compute indexes from dateindex sources
+        self.indexes_to_supply_in_profit.compute_rest(
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.dateindex_to_supply_in_profit),
+        )?;
+
+        self.indexes_to_supply_in_loss.compute_rest(
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.dateindex_to_supply_in_loss),
+        )?;
+
+        self.indexes_to_unrealized_profit.compute_rest(
+            starting_indexes,
+            exit,
+            Some(&self.dateindex_to_unrealized_profit),
+        )?;
+
+        self.indexes_to_unrealized_loss.compute_rest(
+            starting_indexes,
+            exit,
+            Some(&self.dateindex_to_unrealized_loss),
+        )?;
+
+        // total_unrealized_pnl = profit + loss
+        self.height_to_total_unrealized_pnl.compute_add(
+            starting_indexes.height,
+            &self.height_to_unrealized_profit,
+            &self.height_to_unrealized_loss,
+            exit,
+        )?;
+
+        self.indexes_to_total_unrealized_pnl
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_add(
+                    starting_indexes.dateindex,
+                    &self.dateindex_to_unrealized_profit,
+                    &self.dateindex_to_unrealized_loss,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // neg_unrealized_loss = loss * -1
+        self.height_to_neg_unrealized_loss.compute_transform(
+            starting_indexes.height,
+            &self.height_to_unrealized_loss,
+            |(h, v, ..)| (h, v * -1_i64),
+            exit,
+        )?;
+
+        self.indexes_to_neg_unrealized_loss
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_transform(
+                    starting_indexes.dateindex,
+                    &self.dateindex_to_unrealized_loss,
+                    |(h, v, ..)| (h, v * -1_i64),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // net_unrealized_pnl = profit - loss
+        self.height_to_net_unrealized_pnl.compute_subtract(
+            starting_indexes.height,
+            &self.height_to_unrealized_profit,
+            &self.height_to_unrealized_loss,
+            exit,
+        )?;
+
+        self.indexes_to_net_unrealized_pnl
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_subtract(
+                    starting_indexes.dateindex,
+                    &self.dateindex_to_unrealized_profit,
+                    &self.dateindex_to_unrealized_loss,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        Ok(())
+    }
 }

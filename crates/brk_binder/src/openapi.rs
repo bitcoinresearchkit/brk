@@ -1,8 +1,12 @@
+use std::collections::BTreeMap;
 use std::io;
 
-use oas3::spec::{ObjectOrReference, Operation, ParameterIn, PathItem, Schema, SchemaTypeSet};
 use oas3::Spec;
+use oas3::spec::{ObjectOrReference, Operation, ParameterIn, PathItem, Schema, SchemaTypeSet};
 use serde_json::Value;
+
+/// Type schema extracted from OpenAPI components
+pub type TypeSchemas = BTreeMap<String, Value>;
 
 /// Endpoint information extracted from OpenAPI spec
 #[derive(Debug, Clone)]
@@ -45,10 +49,29 @@ pub fn parse_openapi_json(json: &str) -> io::Result<Spec> {
     // Clean up for oas3 compatibility
     clean_for_oas3(&mut value);
 
-    let cleaned_json = serde_json::to_string(&value)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let cleaned_json =
+        serde_json::to_string(&value).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     oas3::from_json(&cleaned_json).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+}
+
+/// Extract type schemas from OpenAPI JSON
+pub fn extract_schemas(json: &str) -> TypeSchemas {
+    let Ok(value) = serde_json::from_str::<Value>(json) else {
+        return BTreeMap::new();
+    };
+
+    value
+        .get("components")
+        .and_then(|c| c.get("schemas"))
+        .and_then(|s| s.as_object())
+        .map(|schemas| {
+            schemas
+                .iter()
+                .map(|(name, schema)| (name.clone(), schema.clone()))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Clean up OpenAPI spec for oas3 compatibility.
@@ -62,10 +85,10 @@ fn clean_for_oas3(value: &mut Value) {
                 map.retain(|k, _| k == "$ref" || k == "summary" || k == "description");
             } else {
                 // Convert boolean schemas to empty object schemas
-                if let Some(schema) = map.get_mut("schema") {
-                    if schema.is_boolean() {
-                        *schema = Value::Object(serde_json::Map::new());
-                    }
+                if let Some(schema) = map.get_mut("schema")
+                    && schema.is_boolean()
+                {
+                    *schema = Value::Object(serde_json::Map::new());
                 }
                 for v in map.values_mut() {
                     clean_for_oas3(v);
@@ -130,7 +153,10 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         method: method.to_string(),
         path: path.to_string(),
         operation_id: operation.operation_id.clone(),
-        summary: operation.summary.clone().or_else(|| operation.description.clone()),
+        summary: operation
+            .summary
+            .clone()
+            .or_else(|| operation.description.clone()),
         tags: operation.tags.clone(),
         path_params,
         query_params,

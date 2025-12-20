@@ -482,7 +482,6 @@ where
         self.first.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_average(&self) -> &EagerVec<PcoVec<I, T>> {
         self.average.u()
     }
@@ -495,27 +494,22 @@ where
         self.max.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_pct90(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct90.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_pct75(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct75.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_median(&self) -> &EagerVec<PcoVec<I, T>> {
         self.median.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_pct25(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct25.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_pct10(&self) -> &EagerVec<PcoVec<I, T>> {
         self.pct10.u()
     }
@@ -528,7 +522,6 @@ where
         self.last.u()
     }
     #[inline]
-    #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &EagerVec<PcoVec<I, T>> {
         self.cumulative.u()
     }
@@ -701,7 +694,6 @@ impl VecBuilderOptions {
         self
     }
 
-    #[allow(unused)]
     pub fn add_median(mut self) -> Self {
         self.median = true;
         self
@@ -717,25 +709,21 @@ impl VecBuilderOptions {
         self
     }
 
-    #[allow(unused)]
     pub fn add_pct90(mut self) -> Self {
         self.pct90 = true;
         self
     }
 
-    #[allow(unused)]
     pub fn add_pct75(mut self) -> Self {
         self.pct75 = true;
         self
     }
 
-    #[allow(unused)]
     pub fn add_pct25(mut self) -> Self {
         self.pct25 = true;
         self
     }
 
-    #[allow(unused)]
     pub fn add_pct10(mut self) -> Self {
         self.pct10 = true;
         self
@@ -746,61 +734,51 @@ impl VecBuilderOptions {
         self
     }
 
-    #[allow(unused)]
     pub fn rm_min(mut self) -> Self {
         self.min = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_max(mut self) -> Self {
         self.max = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_median(mut self) -> Self {
         self.median = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_average(mut self) -> Self {
         self.average = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_sum(mut self) -> Self {
         self.sum = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_pct90(mut self) -> Self {
         self.pct90 = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_pct75(mut self) -> Self {
         self.pct75 = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_pct25(mut self) -> Self {
         self.pct25 = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_pct10(mut self) -> Self {
         self.pct10 = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_cumulative(mut self) -> Self {
         self.cumulative = false;
         self

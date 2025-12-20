@@ -1,6 +1,5 @@
 //! Processing received outputs (new UTXOs).
 
-use brk_grouper::{Filter, Filtered};
 use brk_types::{Dollars, Height, Timestamp};
 
 use crate::stateful::states::Transacted;
@@ -37,16 +36,14 @@ impl UTXOCohorts {
         });
 
         // Update output type cohorts
-        self.type_.iter_mut().for_each(|vecs| {
-            let output_type = match vecs.filter() {
-                Filter::Type(output_type) => *output_type,
-                _ => unreachable!(),
-            };
-            vecs.state
-                .as_mut()
-                .unwrap()
-                .receive(received.by_type.get(output_type), price)
-        });
+        self.type_
+            .iter_typed_mut()
+            .for_each(|(output_type, vecs)| {
+                vecs.state
+                    .as_mut()
+                    .unwrap()
+                    .receive(received.by_type.get(output_type), price)
+            });
 
         // Update amount range cohorts
         received

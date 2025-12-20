@@ -1,6 +1,10 @@
-use super::{Filter, TimeFilter, AGE_BOUNDARIES};
 use brk_traversable::Traversable;
 use rayon::prelude::*;
+
+use super::{
+    Filter, TimeFilter, DAYS_10Y, DAYS_12Y, DAYS_15Y, DAYS_1M, DAYS_1W, DAYS_1Y, DAYS_2M, DAYS_2Y,
+    DAYS_3M, DAYS_3Y, DAYS_4M, DAYS_4Y, DAYS_5M, DAYS_5Y, DAYS_6M, DAYS_6Y, DAYS_7Y, DAYS_8Y,
+};
 
 #[derive(Default, Clone, Traversable)]
 pub struct ByMaxAge<T> {
@@ -30,24 +34,24 @@ impl<T> ByMaxAge<T> {
         F: FnMut(Filter) -> T,
     {
         Self {
-            _1w: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[1]))),
-            _1m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[2]))),
-            _2m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[3]))),
-            _3m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[4]))),
-            _4m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[5]))),
-            _5m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[6]))),
-            _6m: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[7]))),
-            _1y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[8]))),
-            _2y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[9]))),
-            _3y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[10]))),
-            _4y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[11]))),
-            _5y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[12]))),
-            _6y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[13]))),
-            _7y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[14]))),
-            _8y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[15]))),
-            _10y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[16]))),
-            _12y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[17]))),
-            _15y: create(Filter::Time(TimeFilter::LowerThan(AGE_BOUNDARIES[18]))),
+            _1w: create(Filter::Time(TimeFilter::LowerThan(DAYS_1W))),
+            _1m: create(Filter::Time(TimeFilter::LowerThan(DAYS_1M))),
+            _2m: create(Filter::Time(TimeFilter::LowerThan(DAYS_2M))),
+            _3m: create(Filter::Time(TimeFilter::LowerThan(DAYS_3M))),
+            _4m: create(Filter::Time(TimeFilter::LowerThan(DAYS_4M))),
+            _5m: create(Filter::Time(TimeFilter::LowerThan(DAYS_5M))),
+            _6m: create(Filter::Time(TimeFilter::LowerThan(DAYS_6M))),
+            _1y: create(Filter::Time(TimeFilter::LowerThan(DAYS_1Y))),
+            _2y: create(Filter::Time(TimeFilter::LowerThan(DAYS_2Y))),
+            _3y: create(Filter::Time(TimeFilter::LowerThan(DAYS_3Y))),
+            _4y: create(Filter::Time(TimeFilter::LowerThan(DAYS_4Y))),
+            _5y: create(Filter::Time(TimeFilter::LowerThan(DAYS_5Y))),
+            _6y: create(Filter::Time(TimeFilter::LowerThan(DAYS_6Y))),
+            _7y: create(Filter::Time(TimeFilter::LowerThan(DAYS_7Y))),
+            _8y: create(Filter::Time(TimeFilter::LowerThan(DAYS_8Y))),
+            _10y: create(Filter::Time(TimeFilter::LowerThan(DAYS_10Y))),
+            _12y: create(Filter::Time(TimeFilter::LowerThan(DAYS_12Y))),
+            _15y: create(Filter::Time(TimeFilter::LowerThan(DAYS_15Y))),
         }
     }
 

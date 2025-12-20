@@ -1,3 +1,5 @@
+use crate::DAYS_5M;
+
 /// Classification for short-term vs long-term holders.
 /// The threshold is 150 days (approximately 5 months).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -9,7 +11,7 @@ pub enum Term {
 }
 
 impl Term {
-    pub const THRESHOLD_DAYS: usize = 150;
+    pub const THRESHOLD_DAYS: usize = DAYS_5M;
 
     pub fn to_name(&self) -> &'static str {
         match self {

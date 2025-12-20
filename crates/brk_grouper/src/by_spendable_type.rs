@@ -128,6 +128,23 @@ impl<T> BySpendableType<T> {
         ]
         .into_iter()
     }
+
+    pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
+        [
+            (OutputType::P2PK65, &mut self.p2pk65),
+            (OutputType::P2PK33, &mut self.p2pk33),
+            (OutputType::P2PKH, &mut self.p2pkh),
+            (OutputType::P2MS, &mut self.p2ms),
+            (OutputType::P2SH, &mut self.p2sh),
+            (OutputType::P2WPKH, &mut self.p2wpkh),
+            (OutputType::P2WSH, &mut self.p2wsh),
+            (OutputType::P2TR, &mut self.p2tr),
+            (OutputType::P2A, &mut self.p2a),
+            (OutputType::Unknown, &mut self.unknown),
+            (OutputType::Empty, &mut self.empty),
+        ]
+        .into_iter()
+    }
 }
 
 impl<T> Add for BySpendableType<T>

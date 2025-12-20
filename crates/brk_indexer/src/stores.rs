@@ -12,7 +12,7 @@ use log::info;
 use rayon::prelude::*;
 use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
 
-use crate::{constants::DUPLICATE_TXID_PREFIXES, Indexes};
+use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
 
 use super::Vecs;
 
@@ -168,7 +168,7 @@ impl Stores {
             self.addresstype_to_addressindex_and_unspentoutpoint
                 .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
-        ) // Changed from par_iter_mut()
+        )
         .try_for_each(|store| store.commit(height))?;
         info!("Commits done in {:?}", i.elapsed());
 

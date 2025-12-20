@@ -8,7 +8,7 @@ use super::{AmountFilter, Filter};
 
 /// Bucket index for amount ranges. Use for cheap comparisons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct AmountBucket(u8);
+struct AmountBucket(u8);
 
 impl From<Sats> for AmountBucket {
     #[inline(always)]
@@ -31,6 +31,12 @@ impl From<Sats> for AmountBucket {
             _ => 14,
         })
     }
+}
+
+/// Check if two amounts are in different buckets. O(1).
+#[inline(always)]
+pub fn amounts_in_different_buckets(a: Sats, b: Sats) -> bool {
+    AmountBucket::from(a) != AmountBucket::from(b)
 }
 
 #[derive(Debug, Default, Clone, Traversable)]

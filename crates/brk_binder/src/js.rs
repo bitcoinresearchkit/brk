@@ -7,7 +7,7 @@ use std::{
 use brk_query::Query;
 use brk_types::{Index, pools};
 
-use super::VERSION;
+use crate::VERSION;
 
 const AUTO_GENERATED_DISCLAIMER: &str = "//
 // File auto-generated, any modifications will be overwritten

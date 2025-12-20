@@ -8,20 +8,24 @@ use brk_error::{Error, Result};
 use brk_types::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
-use vecdb::{Bytes, unlikely};
+use vecdb::Bytes;
 
-use crate::{grouped::PERCENTILES_LEN, utils::OptionExt};
+use crate::{
+    grouped::{PERCENTILES, PERCENTILES_LEN},
+    utils::OptionExt,
+};
 
-use super::{PriceBuckets, SupplyState};
+use super::SupplyState;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
     pathbuf: PathBuf,
     state: Option<State>,
-    /// Logarithmic buckets for O(log n) percentile queries.
-    /// Rebuilt on load, not persisted.
-    buckets: Option<PriceBuckets>,
+    /// Pending deltas: (total_increment, total_decrement) per price.
+    /// Flushed to BTreeMap before reads and at end of block.
+    pending: FxHashMap<Dollars, (Sats, Sats)>,
 }
 
 const STATE_AT_: &str = "state_at_";
@@ -32,7 +36,7 @@ impl PriceToAmount {
         Self {
             pathbuf: path.join(format!("{name}_price_to_amount")),
             state: None,
-            buckets: None,
+            pending: FxHashMap::default(),
         }
     }
 
@@ -41,20 +45,20 @@ impl PriceToAmount {
         let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
             "No price state found at or before height".into(),
         ))?;
-        let state = State::deserialize(&fs::read(path)?)?;
-
-        // Rebuild buckets from loaded state
-        let mut buckets = PriceBuckets::new();
-        for (&price, &amount) in state.iter() {
-            buckets.increment(price, amount);
-        }
-
-        self.state = Some(state);
-        self.buckets = Some(buckets);
+        self.state = Some(State::deserialize(&fs::read(path)?)?);
+        self.pending.clear();
         Ok(height)
     }
 
+    fn assert_pending_empty(&self) {
+        assert!(
+            self.pending.is_empty(),
+            "PriceToAmount: pending not empty, call apply_pending first"
+        );
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
+        self.assert_pending_empty();
         self.state.u().iter()
     }
 
@@ -63,84 +67,92 @@ impl PriceToAmount {
         &self,
         range: R,
     ) -> impl Iterator<Item = (&Dollars, &Sats)> {
+        self.assert_pending_empty();
         self.state.u().range(range)
     }
 
     pub fn is_empty(&self) -> bool {
-        self.state.u().is_empty()
+        self.pending.is_empty() && self.state.u().is_empty()
     }
 
     pub fn first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.assert_pending_empty();
         self.state.u().first_key_value()
     }
 
     pub fn last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.assert_pending_empty();
         self.state.u().last_key_value()
     }
 
+    /// Accumulate increment in pending batch. O(1).
     pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
-        *self.state.um().entry(price).or_default() += supply_state.value;
-        if let Some(buckets) = self.buckets.as_mut() {
-            buckets.increment(price, supply_state.value);
-        }
+        self.pending.entry(price).or_default().0 += supply_state.value;
     }
 
+    /// Accumulate decrement in pending batch. O(1).
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
-        if let Some(amount) = self.state.um().get_mut(&price) {
-            if unlikely(*amount < supply_state.value) {
-                let amount = *amount;
+        self.pending.entry(price).or_default().1 += supply_state.value;
+    }
+
+    /// Apply pending deltas to BTreeMap. O(k log n) where k = unique prices in pending.
+    /// Must be called before any read operations.
+    pub fn apply_pending(&mut self) {
+        for (price, (inc, dec)) in self.pending.drain() {
+            let entry = self.state.um().entry(price).or_default();
+            *entry += inc;
+            if *entry < dec {
                 panic!(
-                    "PriceToAmount::decrement underflow!\n\
+                    "PriceToAmount::apply_pending underflow!\n\
                     Path: {:?}\n\
                     Price: {}\n\
-                    Bucket amount: {}\n\
-                    Trying to decrement by: {}\n\
-                    Supply state: utxo_count={}, value={}\n\
-                    All buckets: {:?}",
-                    self.pathbuf,
-                    price,
-                    amount,
-                    supply_state.value,
-                    supply_state.utxo_count,
-                    supply_state.value,
-                    self.state.u().iter().collect::<Vec<_>>()
+                    Current + increments: {}\n\
+                    Trying to decrement by: {}",
+                    self.pathbuf, price, entry, dec
                 );
             }
-            *amount -= supply_state.value;
-            if *amount == Sats::ZERO {
+            *entry -= dec;
+            if *entry == Sats::ZERO {
                 self.state.um().remove(&price);
             }
-            if let Some(buckets) = self.buckets.as_mut() {
-                buckets.decrement(price, supply_state.value);
-            }
-        } else {
-            panic!(
-                "PriceToAmount::decrement price not found!\n\
-                Path: {:?}\n\
-                Price: {}\n\
-                Supply state: utxo_count={}, value={}\n\
-                All buckets: {:?}",
-                self.pathbuf,
-                price,
-                supply_state.utxo_count,
-                supply_state.value,
-                self.state.u().iter().collect::<Vec<_>>()
-            );
         }
     }
 
     pub fn init(&mut self) {
         self.state.replace(State::default());
-        self.buckets.replace(PriceBuckets::new());
+        self.pending.clear();
     }
 
-    /// Compute percentile prices using O(log n) Fenwick tree queries.
+    /// Compute percentile prices by iterating the BTreeMap directly.
+    /// O(n) where n = number of unique prices.
     pub fn compute_percentiles(&self) -> [Dollars; PERCENTILES_LEN] {
-        if let Some(buckets) = self.buckets.as_ref() {
-            buckets.compute_percentiles()
-        } else {
-            [Dollars::NAN; PERCENTILES_LEN]
+        self.assert_pending_empty();
+
+        let state = match self.state.as_ref() {
+            Some(s) if !s.is_empty() => s,
+            _ => return [Dollars::NAN; PERCENTILES_LEN],
+        };
+
+        let total: u64 = state.values().map(|&s| u64::from(s)).sum();
+        if total == 0 {
+            return [Dollars::NAN; PERCENTILES_LEN];
         }
+
+        let mut result = [Dollars::NAN; PERCENTILES_LEN];
+        let mut cumsum = 0u64;
+        let mut idx = 0;
+
+        for (&price, &amount) in state.iter() {
+            cumsum += u64::from(amount);
+            while idx < PERCENTILES_LEN
+                && cumsum >= total * u64::from(PERCENTILES[idx]) / 100
+            {
+                result[idx] = price;
+                idx += 1;
+            }
+        }
+
+        result
     }
 
     pub fn clean(&mut self) -> Result<()> {
@@ -170,6 +182,8 @@ impl PriceToAmount {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
+        self.apply_pending();
+
         let files = self.read_dir(Some(height))?;
 
         for (_, path) in files

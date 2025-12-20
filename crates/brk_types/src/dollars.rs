@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     f64,
+    hash::{Hash, Hasher},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul},
 };
@@ -17,6 +18,12 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 /// US Dollar amount as floating point
 #[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct Dollars(f64);
+
+impl Hash for Dollars {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state);
+    }
+}
 
 impl Dollars {
     pub const ZERO: Self = Self(0.0);

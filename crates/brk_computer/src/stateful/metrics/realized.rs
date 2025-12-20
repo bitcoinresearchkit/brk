@@ -4,8 +4,8 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, StoredF32, StoredF64, Version};
-use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};
+use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec};
 
 use crate::{
     Indexes,
@@ -565,6 +565,50 @@ impl RealizedMetrics {
             Some(&self.height_to_realized_loss),
         )?;
 
+        // neg_realized_loss = realized_loss * -1
+        self.indexes_to_neg_realized_loss
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_transform(
+                    starting_indexes.height,
+                    &self.height_to_realized_loss,
+                    |(i, v, ..)| (i, v * -1_i64),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // net_realized_pnl = profit - loss
+        self.indexes_to_net_realized_pnl
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_subtract(
+                    starting_indexes.height,
+                    &self.height_to_realized_profit,
+                    &self.height_to_realized_loss,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // realized_value = profit + loss
+        self.indexes_to_realized_value
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_add(
+                    starting_indexes.height,
+                    &self.height_to_realized_profit,
+                    &self.height_to_realized_loss,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // total_realized_pnl at height level = profit + loss
+        self.height_to_total_realized_pnl.compute_add(
+            starting_indexes.height,
+            &self.height_to_realized_profit,
+            &self.height_to_realized_loss,
+            exit,
+        )?;
+
         self.indexes_to_value_created.compute_rest(
             indexes,
             starting_indexes,
@@ -578,6 +622,265 @@ impl RealizedMetrics {
             exit,
             Some(&self.height_to_value_destroyed),
         )?;
+
+        // Optional: adjusted value
+        if let Some(adjusted_value_created) = self.indexes_to_adjusted_value_created.as_mut() {
+            adjusted_value_created.compute_rest(
+                indexes,
+                starting_indexes,
+                exit,
+                self.height_to_adjusted_value_created.as_ref(),
+            )?;
+        }
+
+        if let Some(adjusted_value_destroyed) = self.indexes_to_adjusted_value_destroyed.as_mut() {
+            adjusted_value_destroyed.compute_rest(
+                indexes,
+                starting_indexes,
+                exit,
+                self.height_to_adjusted_value_destroyed.as_ref(),
+            )?;
+        }
+
+        Ok(())
+    }
+
+    /// Second phase of computed metrics (realized price from realized cap / supply).
+    #[allow(clippy::too_many_arguments)]
+    pub fn compute_rest_part2(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &Indexes,
+        height_to_supply: &impl IterableVec<Height, Bitcoin>,
+        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
+        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
+        exit: &Exit,
+    ) -> Result<()> {
+        // realized_price = realized_cap / supply
+        self.indexes_to_realized_price
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_divide(
+                    starting_indexes.height,
+                    &self.height_to_realized_cap,
+                    height_to_supply,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        if let Some(price) = price {
+            self.indexes_to_realized_price_extra.compute_rest(
+                price,
+                starting_indexes,
+                exit,
+                Some(self.indexes_to_realized_price.dateindex.unwrap_last()),
+            )?;
+        }
+
+        // realized_cap_30d_delta
+        self.indexes_to_realized_cap_30d_delta
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_change(
+                    starting_indexes.dateindex,
+                    self.indexes_to_realized_cap.dateindex.unwrap_last(),
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // total_realized_pnl at dateindex level
+        self.indexes_to_total_realized_pnl
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_add(
+                    starting_indexes.dateindex,
+                    self.indexes_to_realized_profit.dateindex.unwrap_sum(),
+                    self.indexes_to_realized_loss.dateindex.unwrap_sum(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // SOPR = value_created / value_destroyed
+        self.dateindex_to_sopr.compute_divide(
+            starting_indexes.dateindex,
+            self.indexes_to_value_created.dateindex.unwrap_sum(),
+            self.indexes_to_value_destroyed.dateindex.unwrap_sum(),
+            exit,
+        )?;
+
+        self.dateindex_to_sopr_7d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.dateindex_to_sopr,
+            7,
+            exit,
+        )?;
+
+        self.dateindex_to_sopr_30d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.dateindex_to_sopr,
+            30,
+            exit,
+        )?;
+
+        // Optional: adjusted SOPR
+        if let (Some(adjusted_sopr), Some(adj_created), Some(adj_destroyed)) = (
+            self.dateindex_to_adjusted_sopr.as_mut(),
+            self.indexes_to_adjusted_value_created.as_ref(),
+            self.indexes_to_adjusted_value_destroyed.as_ref(),
+        ) {
+            adjusted_sopr.compute_divide(
+                starting_indexes.dateindex,
+                adj_created.dateindex.unwrap_sum(),
+                adj_destroyed.dateindex.unwrap_sum(),
+                exit,
+            )?;
+
+            if let Some(ema_7d) = self.dateindex_to_adjusted_sopr_7d_ema.as_mut() {
+                ema_7d.compute_ema(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_adjusted_sopr.as_ref().unwrap(),
+                    7,
+                    exit,
+                )?;
+            }
+
+            if let Some(ema_30d) = self.dateindex_to_adjusted_sopr_30d_ema.as_mut() {
+                ema_30d.compute_ema(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_adjusted_sopr.as_ref().unwrap(),
+                    30,
+                    exit,
+                )?;
+            }
+        }
+
+        // sell_side_risk_ratio = realized_value / realized_cap
+        self.dateindex_to_sell_side_risk_ratio.compute_percentage(
+            starting_indexes.dateindex,
+            self.indexes_to_realized_value.dateindex.unwrap_sum(),
+            self.indexes_to_realized_cap.dateindex.unwrap_last(),
+            exit,
+        )?;
+
+        self.dateindex_to_sell_side_risk_ratio_7d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.dateindex_to_sell_side_risk_ratio,
+            7,
+            exit,
+        )?;
+
+        self.dateindex_to_sell_side_risk_ratio_30d_ema.compute_ema(
+            starting_indexes.dateindex,
+            &self.dateindex_to_sell_side_risk_ratio,
+            30,
+            exit,
+        )?;
+
+        // Ratios relative to realized cap
+        self.indexes_to_realized_profit_rel_to_realized_cap
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.height,
+                    &self.height_to_realized_profit,
+                    &self.height_to_realized_cap,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_realized_loss_rel_to_realized_cap
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.height,
+                    &self.height_to_realized_loss,
+                    &self.height_to_realized_cap,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_net_realized_pnl_rel_to_realized_cap
+            .compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.height,
+                    self.indexes_to_net_realized_pnl.height.u(),
+                    &self.height_to_realized_cap,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // Net realized PnL cumulative 30d delta
+        self.indexes_to_net_realized_pnl_cumulative_30d_delta
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_change(
+                    starting_indexes.dateindex,
+                    self.indexes_to_net_realized_pnl
+                        .dateindex
+                        .unwrap_cumulative(),
+                    30,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // Relative to realized cap
+        self.indexes_to_net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.dateindex,
+                    self.indexes_to_net_realized_pnl_cumulative_30d_delta
+                        .dateindex
+                        .u(),
+                    self.indexes_to_realized_cap.dateindex.unwrap_last(),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        // Relative to market cap
+        if let Some(dateindex_to_market_cap) = dateindex_to_market_cap {
+            self.indexes_to_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap
+                .compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        self.indexes_to_net_realized_pnl_cumulative_30d_delta
+                            .dateindex
+                            .u(),
+                        dateindex_to_market_cap,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+        }
+
+        // Optional: realized_cap_rel_to_own_market_cap
+        if let (Some(rel_vec), Some(height_to_market_cap)) = (
+            self.indexes_to_realized_cap_rel_to_own_market_cap.as_mut(),
+            height_to_market_cap,
+        ) {
+            rel_vec.compute_all(indexes, starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.height,
+                    &self.height_to_realized_cap,
+                    height_to_market_cap,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+        }
+
+        // Optional: realized_profit_to_loss_ratio
+        if let Some(ratio) = self.dateindex_to_realized_profit_to_loss_ratio.as_mut() {
+            ratio.compute_divide(
+                starting_indexes.dateindex,
+                self.indexes_to_realized_profit.dateindex.unwrap_sum(),
+                self.indexes_to_realized_loss.dateindex.unwrap_sum(),
+                exit,
+            )?;
+        }
 
         Ok(())
     }

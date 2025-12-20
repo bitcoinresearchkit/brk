@@ -223,7 +223,6 @@ where
     pub fn unwrap_first(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
         self.first.u()
     }
-    #[allow(unused)]
     pub fn unwrap_average(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
         self.average.u()
     }
@@ -239,7 +238,6 @@ where
     pub fn unwrap_last(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
         self.last.u()
     }
-    #[allow(unused)]
     pub fn unwrap_cumulative(&self) -> &LazyVecFrom2<I, T, S1I, T, I, S2T> {
         self.cumulative.u()
     }
@@ -307,31 +305,26 @@ impl LazyVecBuilderOptions {
         self
     }
 
-    #[allow(unused)]
     pub fn rm_min(mut self) -> Self {
         self.min = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_max(mut self) -> Self {
         self.max = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_average(mut self) -> Self {
         self.average = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_sum(mut self) -> Self {
         self.sum = false;
         self
     }
 
-    #[allow(unused)]
     pub fn rm_cumulative(mut self) -> Self {
         self.cumulative = false;
         self

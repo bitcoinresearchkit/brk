@@ -452,58 +452,67 @@ impl RelativeMetrics {
 
         // === Supply in Profit/Loss Relative to Own Supply ===
         if let Some(unrealized) = unrealized {
-            self.height_to_supply_in_profit_rel_to_own_supply.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_supply_in_profit_value.bitcoin,
-                &supply.height_to_supply_value.bitcoin,
-                exit,
-            )?;
-            self.height_to_supply_in_loss_rel_to_own_supply.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_supply_in_loss_value.bitcoin,
-                &supply.height_to_supply_value.bitcoin,
-                exit,
-            )?;
+            self.height_to_supply_in_profit_rel_to_own_supply
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_supply_in_profit_value.bitcoin,
+                    &supply.height_to_supply_value.bitcoin,
+                    exit,
+                )?;
+            self.height_to_supply_in_loss_rel_to_own_supply
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_supply_in_loss_value.bitcoin,
+                    &supply.height_to_supply_value.bitcoin,
+                    exit,
+                )?;
 
-            self.indexes_to_supply_in_profit_rel_to_own_supply.compute_all(
-                starting_indexes,
-                exit,
-                |v| {
-                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_profit.bitcoin.dateindex.as_ref()
-                        && let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
-                            v.compute_percentage(
-                                starting_indexes.dateindex,
-                                dateindex_vec,
-                                supply_dateindex,
-                                exit,
-                            )?;
-                        }
+            self.indexes_to_supply_in_profit_rel_to_own_supply
+                .compute_all(starting_indexes, exit, |v| {
+                    if let Some(dateindex_vec) = unrealized
+                        .indexes_to_supply_in_profit
+                        .bitcoin
+                        .dateindex
+                        .as_ref()
+                        && let Some(supply_dateindex) =
+                            supply.indexes_to_supply.bitcoin.dateindex.as_ref()
+                    {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            dateindex_vec,
+                            supply_dateindex,
+                            exit,
+                        )?;
+                    }
                     Ok(())
-                },
-            )?;
+                })?;
 
-            self.indexes_to_supply_in_loss_rel_to_own_supply.compute_all(
-                starting_indexes,
-                exit,
-                |v| {
-                    if let Some(dateindex_vec) = unrealized.indexes_to_supply_in_loss.bitcoin.dateindex.as_ref()
-                        && let Some(supply_dateindex) = supply.indexes_to_supply.bitcoin.dateindex.as_ref() {
-                            v.compute_percentage(
-                                starting_indexes.dateindex,
-                                dateindex_vec,
-                                supply_dateindex,
-                                exit,
-                            )?;
-                        }
+            self.indexes_to_supply_in_loss_rel_to_own_supply
+                .compute_all(starting_indexes, exit, |v| {
+                    if let Some(dateindex_vec) = unrealized
+                        .indexes_to_supply_in_loss
+                        .bitcoin
+                        .dateindex
+                        .as_ref()
+                        && let Some(supply_dateindex) =
+                            supply.indexes_to_supply.bitcoin.dateindex.as_ref()
+                    {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            dateindex_vec,
+                            supply_dateindex,
+                            exit,
+                        )?;
+                    }
                     Ok(())
-                },
-            )?;
+                })?;
         }
 
         // === Supply in Profit/Loss Relative to Circulating Supply ===
         if let (Some(unrealized), Some(v)) = (
             unrealized,
-            self.height_to_supply_in_profit_rel_to_circulating_supply.as_mut(),
+            self.height_to_supply_in_profit_rel_to_circulating_supply
+                .as_mut(),
         ) {
             v.compute_percentage(
                 starting_indexes.height,
@@ -514,7 +523,8 @@ impl RelativeMetrics {
         }
         if let (Some(unrealized), Some(v)) = (
             unrealized,
-            self.height_to_supply_in_loss_rel_to_circulating_supply.as_mut(),
+            self.height_to_supply_in_loss_rel_to_circulating_supply
+                .as_mut(),
         ) {
             v.compute_percentage(
                 starting_indexes.height,
@@ -526,71 +536,398 @@ impl RelativeMetrics {
 
         // === Unrealized vs Market Cap ===
         if let (Some(unrealized), Some(height_to_mc)) = (unrealized, height_to_market_cap) {
-            self.height_to_unrealized_profit_rel_to_market_cap.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_unrealized_profit,
-                height_to_mc,
-                exit,
-            )?;
-            self.height_to_unrealized_loss_rel_to_market_cap.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_unrealized_loss,
-                height_to_mc,
-                exit,
-            )?;
-            self.height_to_neg_unrealized_loss_rel_to_market_cap.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_neg_unrealized_loss,
-                height_to_mc,
-                exit,
-            )?;
-            self.height_to_net_unrealized_pnl_rel_to_market_cap.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_net_unrealized_pnl,
-                height_to_mc,
-                exit,
-            )?;
+            self.height_to_unrealized_profit_rel_to_market_cap
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_profit,
+                    height_to_mc,
+                    exit,
+                )?;
+            self.height_to_unrealized_loss_rel_to_market_cap
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_loss,
+                    height_to_mc,
+                    exit,
+                )?;
+            self.height_to_neg_unrealized_loss_rel_to_market_cap
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_neg_unrealized_loss,
+                    height_to_mc,
+                    exit,
+                )?;
+            self.height_to_net_unrealized_pnl_rel_to_market_cap
+                .compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_net_unrealized_pnl,
+                    height_to_mc,
+                    exit,
+                )?;
         }
 
         if let Some(dateindex_to_mc) = dateindex_to_market_cap
-            && let Some(unrealized) = unrealized {
-                self.indexes_to_unrealized_profit_rel_to_market_cap.compute_all(
-                    starting_indexes,
-                    exit,
-                    |v| {
+            && let Some(unrealized) = unrealized
+        {
+            self.indexes_to_unrealized_profit_rel_to_market_cap
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_profit,
+                        dateindex_to_mc,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            self.indexes_to_unrealized_loss_rel_to_market_cap
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_loss,
+                        dateindex_to_mc,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+        }
+
+        // indexes_to_neg_unrealized_loss_rel_to_market_cap
+        if let Some(dateindex_to_mc) = dateindex_to_market_cap
+            && let Some(unrealized) = unrealized
+        {
+            if let Some(dateindex_vec) =
+                unrealized.indexes_to_neg_unrealized_loss.dateindex.as_ref()
+            {
+                self.indexes_to_neg_unrealized_loss_rel_to_market_cap
+                    .compute_all(starting_indexes, exit, |v| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            &unrealized.dateindex_to_unrealized_profit,
+                            dateindex_vec,
                             dateindex_to_mc,
                             exit,
                         )?;
                         Ok(())
-                    },
+                    })?;
+            }
+            if let Some(dateindex_vec) = unrealized.indexes_to_net_unrealized_pnl.dateindex.as_ref()
+            {
+                self.indexes_to_net_unrealized_pnl_rel_to_market_cap
+                    .compute_all(starting_indexes, exit, |v| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            dateindex_vec,
+                            dateindex_to_mc,
+                            exit,
+                        )?;
+                        Ok(())
+                    })?;
+            }
+        }
+
+        // === Supply in Profit/Loss Relative to Circulating Supply (indexes) ===
+        if let Some(v) = self
+            .indexes_to_supply_in_profit_rel_to_circulating_supply
+            .as_mut()
+            && let Some(unrealized) = unrealized
+            && let Some(dateindex_vec) = unrealized
+                .indexes_to_supply_in_profit
+                .bitcoin
+                .dateindex
+                .as_ref()
+        {
+            v.compute_all(starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.dateindex,
+                    dateindex_vec,
+                    dateindex_to_supply,
+                    exit,
                 )?;
-                self.indexes_to_unrealized_loss_rel_to_market_cap.compute_all(
-                    starting_indexes,
+                Ok(())
+            })?;
+        }
+
+        if let Some(v) = self
+            .indexes_to_supply_in_loss_rel_to_circulating_supply
+            .as_mut()
+            && let Some(unrealized) = unrealized
+            && let Some(dateindex_vec) = unrealized
+                .indexes_to_supply_in_loss
+                .bitcoin
+                .dateindex
+                .as_ref()
+        {
+            v.compute_all(starting_indexes, exit, |vec| {
+                vec.compute_percentage(
+                    starting_indexes.dateindex,
+                    dateindex_vec,
+                    dateindex_to_supply,
                     exit,
-                    |v| {
-                        v.compute_percentage(
-                            starting_indexes.dateindex,
-                            &unrealized.dateindex_to_unrealized_loss,
-                            dateindex_to_mc,
-                            exit,
-                        )?;
-                        Ok(())
-                    },
+                )?;
+                Ok(())
+            })?;
+        }
+
+        // === Unrealized vs Own Market Cap ===
+        // own_market_cap = supply_value.dollars
+        if let Some(unrealized) = unrealized {
+            if let Some(v) = self
+                .height_to_unrealized_profit_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_profit,
+                    supply_dollars,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_unrealized_loss_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_loss,
+                    supply_dollars,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_neg_unrealized_loss_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_neg_unrealized_loss,
+                    supply_dollars,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_net_unrealized_pnl_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_net_unrealized_pnl,
+                    supply_dollars,
+                    exit,
                 )?;
             }
 
-        // TODO: Remaining relative metrics to implement:
-        // - indexes_to_supply_in_profit/loss_rel_to_circulating_supply
-        // - height_to_unrealized_*_rel_to_own_market_cap
-        // - height_to_unrealized_*_rel_to_own_total_unrealized_pnl
-        // - indexes_to_unrealized_*_rel_to_own_market_cap
-        // - indexes_to_unrealized_*_rel_to_own_total_unrealized_pnl
-        // See stateful/common/compute.rs for patterns.
+            // indexes versions
+            if let Some(v) = self
+                .indexes_to_unrealized_profit_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars_dateindex) = supply
+                    .indexes_to_supply
+                    .dollars
+                    .as_ref()
+                    .and_then(|d| d.dateindex.as_ref())
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_profit,
+                        supply_dollars_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+            if let Some(v) = self
+                .indexes_to_unrealized_loss_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars_dateindex) = supply
+                    .indexes_to_supply
+                    .dollars
+                    .as_ref()
+                    .and_then(|d| d.dateindex.as_ref())
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_loss,
+                        supply_dollars_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+            if let Some(v) = self
+                .indexes_to_neg_unrealized_loss_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars_dateindex) = supply
+                    .indexes_to_supply
+                    .dollars
+                    .as_ref()
+                    .and_then(|d| d.dateindex.as_ref())
+                && let Some(neg_loss_dateindex) =
+                    unrealized.indexes_to_neg_unrealized_loss.dateindex.as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        neg_loss_dateindex,
+                        supply_dollars_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+            if let Some(v) = self
+                .indexes_to_net_unrealized_pnl_rel_to_own_market_cap
+                .as_mut()
+                && let Some(supply_dollars_dateindex) = supply
+                    .indexes_to_supply
+                    .dollars
+                    .as_ref()
+                    .and_then(|d| d.dateindex.as_ref())
+                && let Some(net_pnl_dateindex) =
+                    unrealized.indexes_to_net_unrealized_pnl.dateindex.as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        net_pnl_dateindex,
+                        supply_dollars_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
 
-        let _ = dateindex_to_supply;
+            // === Unrealized vs Own Total Unrealized PnL ===
+            if let Some(v) = self
+                .height_to_unrealized_profit_rel_to_own_total_unrealized_pnl
+                .as_mut()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_profit,
+                    &unrealized.height_to_total_unrealized_pnl,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_unrealized_loss_rel_to_own_total_unrealized_pnl
+                .as_mut()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_unrealized_loss,
+                    &unrealized.height_to_total_unrealized_pnl,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
+                .as_mut()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_neg_unrealized_loss,
+                    &unrealized.height_to_total_unrealized_pnl,
+                    exit,
+                )?;
+            }
+            if let Some(v) = self
+                .height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
+                .as_mut()
+            {
+                v.compute_percentage(
+                    starting_indexes.height,
+                    &unrealized.height_to_net_unrealized_pnl,
+                    &unrealized.height_to_total_unrealized_pnl,
+                    exit,
+                )?;
+            }
+
+            // indexes versions for own total unrealized pnl
+            if let Some(v) = self
+                .indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl
+                .as_mut()
+                && let Some(total_pnl_dateindex) = unrealized
+                    .indexes_to_total_unrealized_pnl
+                    .dateindex
+                    .as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_profit,
+                        total_pnl_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+            if let Some(v) = self
+                .indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl
+                .as_mut()
+                && let Some(total_pnl_dateindex) = unrealized
+                    .indexes_to_total_unrealized_pnl
+                    .dateindex
+                    .as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        &unrealized.dateindex_to_unrealized_loss,
+                        total_pnl_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+
+            if let Some(v) = self
+                .indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl
+                .as_mut()
+                && let Some(total_pnl_dateindex) = unrealized
+                    .indexes_to_total_unrealized_pnl
+                    .dateindex
+                    .as_ref()
+                && let Some(neg_loss_dateindex) =
+                    unrealized.indexes_to_neg_unrealized_loss.dateindex.as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        neg_loss_dateindex,
+                        total_pnl_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+
+            if let Some(v) = self
+                .indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl
+                .as_mut()
+                && let Some(total_pnl_dateindex) = unrealized
+                    .indexes_to_total_unrealized_pnl
+                    .dateindex
+                    .as_ref()
+                && let Some(net_pnl_dateindex) =
+                    unrealized.indexes_to_net_unrealized_pnl.dateindex.as_ref()
+            {
+                v.compute_all(starting_indexes, exit, |vec| {
+                    vec.compute_percentage(
+                        starting_indexes.dateindex,
+                        net_pnl_dateindex,
+                        total_pnl_dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
+            }
+        }
+
         Ok(())
     }
 }

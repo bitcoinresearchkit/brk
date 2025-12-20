@@ -129,7 +129,6 @@ where
         })
     }
 
-    // #[allow(unused)]
     // pub fn compute_all<F>(
     //     &mut self,
     //     indexer: &Indexer,
