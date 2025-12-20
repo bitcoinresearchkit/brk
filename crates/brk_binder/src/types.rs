@@ -35,6 +35,14 @@ pub struct StructuralPattern {
     pub fields: Vec<PatternField>,
 }
 
+impl StructuralPattern {
+    /// Returns true if this pattern contains any leaf fields (fields with indexes).
+    /// Patterns with leaves can't use factory functions because leaf.name() is instance-specific.
+    pub fn contains_leaves(&self) -> bool {
+        self.fields.iter().any(|f| !f.indexes.is_empty())
+    }
+}
+
 /// A field in a structural pattern
 #[derive(Debug, Clone, PartialOrd, Ord)]
 pub struct PatternField {

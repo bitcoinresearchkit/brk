@@ -576,18 +576,20 @@ fn generate_tree_initializer(
 
             match child_node {
                 TreeNode::Leaf(leaf) => {
+                    // Use leaf.name() (vec.name()) for API path, not tree path
+                    let metric_path = format!("/{}", leaf.name());
                     if let Some(accessor) = metadata.find_index_set_pattern(leaf.indexes()) {
                         writeln!(
                             output,
                             "{}{}: create{}(this, '{}'){}",
-                            indent_str, field_name, accessor.name, child_path, comma
+                            indent_str, field_name, accessor.name, metric_path, comma
                         )
                         .unwrap();
                     } else {
                         writeln!(
                             output,
                             "{}{}: new MetricNode(this, '{}'){}",
-                            indent_str, field_name, child_path, comma
+                            indent_str, field_name, metric_path, comma
                         )
                         .unwrap();
                     }
