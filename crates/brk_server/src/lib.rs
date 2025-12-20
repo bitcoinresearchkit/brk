@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{panic, path::PathBuf, sync::Arc, time::Duration};
 
 use aide::axum::ApiRouter;
 use axum::{
@@ -143,10 +143,14 @@ impl Server {
             .join("clients");
         if clients_path.exists() {
             let openapi_json = serde_json::to_string(&openapi).unwrap();
-            if let Err(e) = brk_binder::generate_clients(vecs, &openapi_json, &clients_path) {
-                error!("Failed to generate clients: {e}");
-            } else {
-                info!("Generated clients at {}", clients_path.display());
+            let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+                brk_binder::generate_clients(vecs, &openapi_json, &clients_path)
+            }));
+
+            match result {
+                Ok(Ok(())) => info!("Generated clients at {}", clients_path.display()),
+                Ok(Err(e)) => error!("Failed to generate clients: {e}"),
+                Err(_) => error!("Client generation panicked"),
             }
         }
 

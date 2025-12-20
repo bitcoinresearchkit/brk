@@ -8,8 +8,9 @@ use brk_types::{Index, TreeNode};
 use serde_json::Value;
 
 use crate::{
-    ClientMetadata, Endpoint, IndexSetPattern, PatternField, StructuralPattern, TypeSchemas,
-    get_node_fields, to_camel_case, to_pascal_case,
+    ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
+    TypeSchemas, get_first_leaf_name, get_node_fields, get_pattern_instance_base, to_camel_case,
+    to_pascal_case,
 };
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
@@ -330,6 +331,9 @@ fn generate_structural_patterns(
     writeln!(output, "// Reusable structural pattern factories\n").unwrap();
 
     for pattern in patterns {
+        // Check if this pattern is parameterizable (has field positions detected)
+        let is_parameterizable = pattern.is_parameterizable();
+
         // Generate JSDoc typedef
         writeln!(output, "/**").unwrap();
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
@@ -349,13 +353,19 @@ fn generate_structural_patterns(
         writeln!(output, "/**").unwrap();
         writeln!(output, " * Create a {} pattern node", pattern.name).unwrap();
         writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
-        writeln!(output, " * @param {{string}} basePath").unwrap();
+        if is_parameterizable {
+            writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
+        } else {
+            writeln!(output, " * @param {{string}} basePath").unwrap();
+        }
         writeln!(output, " * @returns {{{}}}", pattern.name).unwrap();
         writeln!(output, " */").unwrap();
+
+        let param_name = if is_parameterizable { "acc" } else { "basePath" };
         writeln!(
             output,
-            "function create{}(client, basePath) {{",
-            pattern.name
+            "function create{}(client, {}) {{",
+            pattern.name, param_name
         )
         .unwrap();
         writeln!(output, "  return {{").unwrap();
@@ -366,41 +376,115 @@ fn generate_structural_patterns(
             } else {
                 ""
             };
-            if metadata.is_pattern_type(&field.rust_type) {
-                writeln!(
-                    output,
-                    "    {}: create{}(client, `${{basePath}}/{}`){}",
-                    to_camel_case(&field.name),
-                    field.rust_type,
-                    field.name,
-                    comma
-                )
-                .unwrap();
-            } else if field_uses_accessor(field, metadata) {
-                let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-                writeln!(
-                    output,
-                    "    {}: create{}(client, `${{basePath}}/{}`){}",
-                    to_camel_case(&field.name),
-                    accessor.name,
-                    field.name,
-                    comma
-                )
-                .unwrap();
+
+            if is_parameterizable {
+                generate_parameterized_field(output, field, pattern, metadata, comma);
             } else {
-                writeln!(
-                    output,
-                    "    {}: new MetricNode(client, `${{basePath}}/{}`){}",
-                    to_camel_case(&field.name),
-                    field.name,
-                    comma
-                )
-                .unwrap();
+                generate_tree_path_field(output, field, metadata, comma);
             }
         }
 
         writeln!(output, "  }};").unwrap();
         writeln!(output, "}}\n").unwrap();
+    }
+}
+
+/// Generate a field using parameterized (prepend/append) metric name construction
+fn generate_parameterized_field(
+    output: &mut String,
+    field: &PatternField,
+    pattern: &StructuralPattern,
+    metadata: &ClientMetadata,
+    comma: &str,
+) {
+    let field_name_js = to_camel_case(&field.name);
+
+    // For branch fields, pass the accumulated name to nested pattern
+    if metadata.is_pattern_type(&field.rust_type) {
+        // Get the field position to determine how to transform the accumulated name
+        let child_acc = if let Some(pos) = pattern.get_field_position(&field.name) {
+            match pos {
+                FieldNamePosition::Append(suffix) => format!("`${{acc}}{}`", suffix),
+                FieldNamePosition::Prepend(prefix) => format!("`{}{}`", prefix, "${acc}"),
+                FieldNamePosition::Identity => "acc".to_string(),
+                FieldNamePosition::SetBase(base) => format!("'{}'", base),
+            }
+        } else {
+            // Fallback: append field name
+            format!("`${{acc}}_{}`", field.name)
+        };
+
+        writeln!(
+            output,
+            "    {}: create{}(client, {}){}",
+            field_name_js, field.rust_type, child_acc, comma
+        )
+        .unwrap();
+        return;
+    }
+
+    // For leaf fields, construct the metric path based on position
+    let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
+        match pos {
+            FieldNamePosition::Append(suffix) => format!("`/${{acc}}{suffix}`"),
+            FieldNamePosition::Prepend(prefix) => format!("`/{prefix}${{acc}}`"),
+            FieldNamePosition::Identity => "`/${acc}`".to_string(),
+            FieldNamePosition::SetBase(base) => format!("'/{base}'"),
+        }
+    } else {
+        // Fallback: use field name appended
+        format!("`/${{acc}}_{}`", field.name)
+    };
+
+    if field_uses_accessor(field, metadata) {
+        let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+        writeln!(
+            output,
+            "    {}: create{}(client, {}){}",
+            field_name_js, accessor.name, metric_expr, comma
+        )
+        .unwrap();
+    } else {
+        writeln!(
+            output,
+            "    {}: new MetricNode(client, {}){}",
+            field_name_js, metric_expr, comma
+        )
+        .unwrap();
+    }
+}
+
+/// Generate a field using tree path construction (fallback for non-parameterizable patterns)
+fn generate_tree_path_field(
+    output: &mut String,
+    field: &PatternField,
+    metadata: &ClientMetadata,
+    comma: &str,
+) {
+    let field_name_js = to_camel_case(&field.name);
+
+    if metadata.is_pattern_type(&field.rust_type) {
+        writeln!(
+            output,
+            "    {}: create{}(client, `${{basePath}}/{}`){}",
+            field_name_js, field.rust_type, field.name, comma
+        )
+        .unwrap();
+    } else if field_uses_accessor(field, metadata) {
+        let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+        writeln!(
+            output,
+            "    {}: create{}(client, `${{basePath}}/{}`){}",
+            field_name_js, accessor.name, field.name, comma
+        )
+        .unwrap();
+    } else {
+        writeln!(
+            output,
+            "    {}: new MetricNode(client, `${{basePath}}/{}`){}",
+            field_name_js, field.name, comma
+        )
+        .unwrap();
     }
 }
 
@@ -556,7 +640,7 @@ fn generate_main_client(
 fn generate_tree_initializer(
     output: &mut String,
     node: &TreeNode,
-    path: &str,
+    accumulated_name: &str,
     indent: usize,
     pattern_lookup: &std::collections::HashMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
@@ -566,12 +650,6 @@ fn generate_tree_initializer(
     if let TreeNode::Branch(children) = node {
         for (i, (child_name, child_node)) in children.iter().enumerate() {
             let field_name = to_camel_case(child_name);
-            let child_path = if path.is_empty() {
-                format!("/{}", child_name)
-            } else {
-                format!("{}/{}", path, child_name)
-            };
-
             let comma = if i < children.len() - 1 { "," } else { "" };
 
             match child_node {
@@ -597,18 +675,44 @@ fn generate_tree_initializer(
                 TreeNode::Branch(grandchildren) => {
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
                     if let Some(pattern_name) = pattern_lookup.get(&child_fields) {
+                        // For parameterized patterns, derive accumulated metric name from first leaf
+                        let pattern = metadata
+                            .structural_patterns
+                            .iter()
+                            .find(|p| &p.name == pattern_name);
+                        let is_parameterizable =
+                            pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
+
+                        let arg = if is_parameterizable {
+                            // Get the metric base from the first leaf descendant
+                            get_pattern_instance_base(child_node, child_name)
+                        } else {
+                            // Fallback to tree path for non-parameterizable patterns
+                            if accumulated_name.is_empty() {
+                                format!("/{}", child_name)
+                            } else {
+                                format!("{}/{}", accumulated_name, child_name)
+                            }
+                        };
+
                         writeln!(
                             output,
                             "{}{}: create{}(this, '{}'){}",
-                            indent_str, field_name, pattern_name, child_path, comma
+                            indent_str, field_name, pattern_name, arg, comma
                         )
                         .unwrap();
                     } else {
+                        // Not a pattern - recurse with accumulated name
+                        let child_acc = infer_child_accumulated_name(
+                            child_node,
+                            accumulated_name,
+                            child_name,
+                        );
                         writeln!(output, "{}{}: {{", indent_str, field_name).unwrap();
                         generate_tree_initializer(
                             output,
                             child_node,
-                            &child_path,
+                            &child_acc,
                             indent + 1,
                             pattern_lookup,
                             metadata,
@@ -618,6 +722,34 @@ fn generate_tree_initializer(
                 }
             }
         }
+    }
+}
+
+/// Infer the accumulated metric name for a child node
+fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &str) -> String {
+    // Try to infer from first leaf descendant
+    if let Some(leaf_name) = get_first_leaf_name(node) {
+        // Look for field_name in the leaf metric name
+        if let Some(pos) = leaf_name.find(field_name) {
+            // The field_name appears in the metric - use it as base
+            if pos == 0 {
+                // At start - this is the base
+                return field_name.to_string();
+            } else if leaf_name.chars().nth(pos - 1) == Some('_') {
+                // After underscore - likely an append pattern
+                if parent_acc.is_empty() {
+                    return field_name.to_string();
+                }
+                return format!("{}_{}", parent_acc, field_name);
+            }
+        }
+    }
+
+    // Fallback: append field name
+    if parent_acc.is_empty() {
+        field_name.to_string()
+    } else {
+        format!("{}_{}", parent_acc, field_name)
     }
 }
 

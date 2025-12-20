@@ -1,5 +1,9 @@
-mod js;
+use std::{fs::create_dir_all, io, path::Path};
+
+use brk_query::Vecs;
+
 mod javascript;
+mod js;
 mod openapi;
 mod python;
 mod rust;
@@ -11,10 +15,6 @@ pub use openapi::*;
 pub use python::*;
 pub use rust::*;
 pub use types::*;
-
-use brk_query::Vecs;
-use std::io;
-use std::path::Path;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -29,17 +29,17 @@ pub fn generate_clients(vecs: &Vecs, openapi_json: &str, output_dir: &Path) -> i
 
     // Generate Rust client (uses real brk_types, no schema conversion needed)
     let rust_path = output_dir.join("rust");
-    std::fs::create_dir_all(&rust_path)?;
+    create_dir_all(&rust_path)?;
     generate_rust_client(&metadata, &endpoints, &rust_path)?;
 
     // Generate JavaScript client (needs schemas for type definitions)
     let js_path = output_dir.join("javascript");
-    std::fs::create_dir_all(&js_path)?;
+    create_dir_all(&js_path)?;
     generate_javascript_client(&metadata, &endpoints, &schemas, &js_path)?;
 
     // Generate Python client (needs schemas for type definitions)
     let python_path = output_dir.join("python");
-    std::fs::create_dir_all(&python_path)?;
+    create_dir_all(&python_path)?;
     generate_python_client(&metadata, &endpoints, &schemas, &python_path)?;
 
     Ok(())

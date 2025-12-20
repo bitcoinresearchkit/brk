@@ -1,8 +1,21 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::hash::{Hash, Hasher};
 
 use brk_query::Vecs;
 use brk_types::{Index, TreeNode};
+
+/// How a field modifies the accumulated metric name
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FieldNamePosition {
+    /// Field prepends a prefix: leaf.name() = prefix + accumulated
+    Prepend(String),
+    /// Field appends a suffix: leaf.name() = accumulated + suffix
+    Append(String),
+    /// Field IS the accumulated name (no modification)
+    Identity,
+    /// Field sets a new base name (used at pattern entry points)
+    SetBase(String),
+}
 
 /// Metadata extracted from brk_query for client generation
 #[derive(Debug)]
@@ -33,6 +46,8 @@ pub struct StructuralPattern {
     pub name: String,
     /// Ordered list of child fields (sorted by field name)
     pub fields: Vec<PatternField>,
+    /// How each field modifies the accumulated name (field_name -> position)
+    pub field_positions: HashMap<String, FieldNamePosition>,
 }
 
 impl StructuralPattern {
@@ -40,6 +55,21 @@ impl StructuralPattern {
     /// Patterns with leaves can't use factory functions because leaf.name() is instance-specific.
     pub fn contains_leaves(&self) -> bool {
         self.fields.iter().any(|f| !f.indexes.is_empty())
+    }
+
+    /// Returns true if all leaf fields have consistent name transformations.
+    /// A pattern is parameterizable if we can detect prepend/append patterns.
+    pub fn is_parameterizable(&self) -> bool {
+        !self.field_positions.is_empty()
+            && self.fields.iter().all(|f| {
+                // Branch fields are always OK (they delegate to nested patterns)
+                f.indexes.is_empty() || self.field_positions.contains_key(&f.name)
+            })
+    }
+
+    /// Get the field position for a given field name
+    pub fn get_field_position(&self, field_name: &str) -> Option<&FieldNamePosition> {
+        self.field_positions.get(field_name)
     }
 }
 
@@ -126,17 +156,253 @@ fn detect_structural_patterns(tree: &TreeNode) -> Vec<StructuralPattern> {
     // Process tree bottom-up to resolve all branch types
     resolve_branch_patterns(tree, &mut signature_to_pattern, &mut signature_counts);
 
-    // Build final list of patterns (only those appearing 2+ times)
+    // Build initial list of patterns (only those appearing 2+ times)
     let mut patterns: Vec<StructuralPattern> = signature_to_pattern
-        .into_iter()
-        .filter(|(sig, _)| signature_counts.get(sig).copied().unwrap_or(0) >= 2)
-        .map(|(fields, name)| StructuralPattern { name, fields })
+        .iter()
+        .filter(|(sig, _)| signature_counts.get(*sig).copied().unwrap_or(0) >= 2)
+        .map(|(fields, name)| StructuralPattern {
+            name: name.clone(),
+            fields: fields.clone(),
+            field_positions: HashMap::new(),
+        })
         .collect();
+
+    // Build lookup for second pass
+    let pattern_lookup: HashMap<Vec<PatternField>, String> = signature_to_pattern;
+
+    // Second pass: analyze field positions by traversing tree instances
+    analyze_pattern_field_positions(tree, &mut patterns, &pattern_lookup);
 
     // Sort by number of fields descending (larger patterns first)
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
 
     patterns
+}
+
+/// Analyze field positions for all patterns by traversing tree instances.
+/// For each pattern instance, we compare parent accumulated name with child leaf names.
+fn analyze_pattern_field_positions(
+    tree: &TreeNode,
+    patterns: &mut [StructuralPattern],
+    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+) {
+    // Collect instances: pattern_name -> vec of (accumulated_name, field_name, leaf_name)
+    let mut instances: HashMap<String, Vec<(String, String, String)>> = HashMap::new();
+
+    // Traverse tree and collect instances
+    collect_pattern_instances(tree, "", &mut instances, pattern_lookup);
+
+    // For each pattern, analyze field positions from instances
+    for pattern in patterns.iter_mut() {
+        if let Some(pattern_instances) = instances.get(&pattern.name) {
+            pattern.field_positions = analyze_field_positions_from_instances(pattern_instances);
+        }
+    }
+}
+
+/// Recursively traverse tree and collect pattern instances with accumulated metric names.
+fn collect_pattern_instances(
+    node: &TreeNode,
+    accumulated_name: &str,
+    instances: &mut HashMap<String, Vec<(String, String, String)>>,
+    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+) {
+    if let TreeNode::Branch(children) = node {
+        // Check if this branch matches a pattern
+        let fields = get_node_fields_for_analysis(children, pattern_lookup);
+        if let Some(pattern_name) = pattern_lookup.get(&fields) {
+            // Collect instances for this pattern
+            for (field_name, child_node) in children {
+                if let TreeNode::Leaf(leaf) = child_node {
+                    instances
+                        .entry(pattern_name.clone())
+                        .or_default()
+                        .push((accumulated_name.to_string(), field_name.clone(), leaf.name().to_string()));
+                }
+            }
+        }
+
+        // Continue traversing children
+        for (field_name, child_node) in children {
+            let child_accumulated = match child_node {
+                TreeNode::Leaf(leaf) => leaf.name().to_string(),
+                TreeNode::Branch(_) => {
+                    // For branches, we need to infer the accumulated name
+                    // If there's a leaf descendant, use its name as the basis
+                    if let Some(desc_leaf_name) = get_descendant_leaf_name(child_node) {
+                        // Try to extract what this level contributes
+                        infer_accumulated_name(accumulated_name, field_name, &desc_leaf_name)
+                    } else {
+                        // No descendants - use field name as base
+                        if accumulated_name.is_empty() {
+                            field_name.clone()
+                        } else {
+                            format!("{}_{}", accumulated_name, field_name)
+                        }
+                    }
+                }
+            };
+            collect_pattern_instances(child_node, &child_accumulated, instances, pattern_lookup);
+        }
+    }
+}
+
+/// Get a descendant leaf name from a branch node (first one found)
+fn get_descendant_leaf_name(node: &TreeNode) -> Option<String> {
+    match node {
+        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
+        TreeNode::Branch(children) => {
+            for child in children.values() {
+                if let Some(name) = get_descendant_leaf_name(child) {
+                    return Some(name);
+                }
+            }
+            None
+        }
+    }
+}
+
+/// Infer the accumulated name at this level by analyzing what part of the descendant's name
+/// comes from the current field.
+fn infer_accumulated_name(parent_acc: &str, field_name: &str, descendant_leaf: &str) -> String {
+    // Try to find field_name in the descendant's metric name
+    if let Some(pos) = descendant_leaf.find(field_name) {
+        // Extract the part that corresponds to this level
+        if pos == 0 {
+            // Field is at the start
+            field_name.to_string()
+        } else if pos > 0 && descendant_leaf.chars().nth(pos - 1) == Some('_') {
+            // Field appears after underscore - this is likely an append
+            if parent_acc.is_empty() {
+                field_name.to_string()
+            } else {
+                format!("{}_{}", parent_acc, field_name)
+            }
+        } else {
+            field_name.to_string()
+        }
+    } else {
+        // Field name not directly found - use as is
+        if parent_acc.is_empty() {
+            field_name.to_string()
+        } else {
+            format!("{}_{}", parent_acc, field_name)
+        }
+    }
+}
+
+/// Analyze instances to determine field positions (prepend/append/identity).
+fn analyze_field_positions_from_instances(
+    instances: &[(String, String, String)],
+) -> HashMap<String, FieldNamePosition> {
+    // Group by field name
+    let mut field_instances: HashMap<String, Vec<(String, String)>> = HashMap::new();
+    for (acc, field, leaf) in instances {
+        field_instances
+            .entry(field.clone())
+            .or_default()
+            .push((acc.clone(), leaf.clone()));
+    }
+
+    let mut positions = HashMap::new();
+
+    for (field_name, field_data) in field_instances {
+        if let Some(position) = detect_field_position(&field_data) {
+            positions.insert(field_name, position);
+        }
+    }
+
+    positions
+}
+
+/// Detect the position transformation for a field based on (accumulated, leaf_name) pairs.
+fn detect_field_position(data: &[(String, String)]) -> Option<FieldNamePosition> {
+    if data.is_empty() {
+        return None;
+    }
+
+    // Try to detect pattern from first instance, then validate against others
+    let (first_acc, first_leaf) = &data[0];
+
+    // Case 1: Identity - leaf == accumulated
+    if first_acc == first_leaf {
+        return Some(FieldNamePosition::Identity);
+    }
+
+    // Case 2: Append - leaf = acc + suffix
+    if let Some(suffix) = first_leaf.strip_prefix(first_acc.as_str()) {
+        let suffix = suffix.to_string();
+        // Validate this pattern holds for all instances
+        if data.iter().all(|(acc, leaf)| {
+            if acc.is_empty() {
+                // When acc is empty, leaf should equal suffix (without leading _)
+                leaf == suffix.trim_start_matches('_')
+            } else {
+                leaf.strip_prefix(acc.as_str()) == Some(&suffix)
+            }
+        }) {
+            return Some(FieldNamePosition::Append(suffix));
+        }
+    }
+
+    // Case 3: Prepend - leaf = prefix + acc
+    if let Some(prefix) = first_leaf.strip_suffix(first_acc.as_str()) {
+        let prefix = prefix.to_string();
+        // Validate this pattern holds for all instances
+        if data.iter().all(|(acc, leaf)| {
+            if acc.is_empty() {
+                // When acc is empty, leaf should equal prefix (without trailing _)
+                leaf == prefix.trim_end_matches('_')
+            } else {
+                leaf.strip_suffix(acc.as_str()) == Some(&prefix)
+            }
+        }) {
+            return Some(FieldNamePosition::Prepend(prefix));
+        }
+    }
+
+    // Case 4: SetBase - the field name IS the metric base
+    // This happens at entry points where accumulated is empty
+    if first_acc.is_empty() {
+        return Some(FieldNamePosition::SetBase(first_leaf.clone()));
+    }
+
+    None
+}
+
+/// Get node fields for pattern matching during analysis
+fn get_node_fields_for_analysis(
+    children: &BTreeMap<String, TreeNode>,
+    pattern_lookup: &HashMap<Vec<PatternField>, String>,
+) -> Vec<PatternField> {
+    let mut fields: Vec<PatternField> = children
+        .iter()
+        .map(|(name, node)| {
+            let (rust_type, json_type, indexes) = match node {
+                TreeNode::Leaf(leaf) => (
+                    leaf.value_type().to_string(),
+                    schema_to_json_type(&leaf.schema),
+                    leaf.indexes().clone(),
+                ),
+                TreeNode::Branch(grandchildren) => {
+                    let child_fields = get_node_fields_for_analysis(grandchildren, pattern_lookup);
+                    let pattern_name = pattern_lookup
+                        .get(&child_fields)
+                        .cloned()
+                        .unwrap_or_else(|| "Unknown".to_string());
+                    (pattern_name.clone(), pattern_name, BTreeSet::new())
+                }
+            };
+            PatternField {
+                name: name.clone(),
+                rust_type,
+                json_type,
+                indexes,
+            }
+        })
+        .collect();
+    fields.sort_by(|a, b| a.name.cmp(&b.name));
+    fields
 }
 
 /// Recursively resolve branch patterns bottom-up.
@@ -299,6 +565,35 @@ pub fn to_camel_case(s: &str) -> String {
         None => String::new(),
         Some(first) => first.to_lowercase().collect::<String>() + chars.as_str(),
     }
+}
+
+/// Get the first leaf name from a tree node (used across all generators)
+pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
+    match node {
+        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
+        TreeNode::Branch(children) => {
+            for child in children.values() {
+                if let Some(name) = get_first_leaf_name(child) {
+                    return Some(name);
+                }
+            }
+            None
+        }
+    }
+}
+
+/// Get the metric base for a pattern instance by analyzing the first leaf descendant.
+/// This extracts the common base that all leaves in this pattern instance share.
+pub fn get_pattern_instance_base(node: &TreeNode, field_name: &str) -> String {
+    if let Some(leaf_name) = get_first_leaf_name(node) {
+        // Look for field_name in the leaf metric name
+        if leaf_name.contains(field_name) {
+            // The field name is part of the metric - use it as base
+            return field_name.to_string();
+        }
+    }
+    // Fallback: use field name
+    field_name.to_string()
 }
 
 /// Detect index patterns - collect all indexes and find sets that appear 2+ times

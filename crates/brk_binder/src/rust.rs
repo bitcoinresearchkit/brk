@@ -6,7 +6,7 @@ use std::path::Path;
 
 use brk_types::{Index, TreeNode};
 
-use crate::{ClientMetadata, Endpoint, IndexSetPattern, PatternField, StructuralPattern, get_node_fields, to_pascal_case, to_snake_case};
+use crate::{ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern, get_node_fields, get_pattern_instance_base, to_pascal_case, to_snake_case};
 
 /// Generate Rust client from metadata and OpenAPI endpoints
 pub fn generate_rust_client(
@@ -232,6 +232,8 @@ fn generate_pattern_structs(output: &mut String, patterns: &[StructuralPattern],
     writeln!(output, "// Reusable pattern structs\n").unwrap();
 
     for pattern in patterns {
+        let is_parameterizable = pattern.is_parameterizable();
+
         writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
         writeln!(output, "pub struct {}<'a> {{", pattern.name).unwrap();
 
@@ -245,36 +247,114 @@ fn generate_pattern_structs(output: &mut String, patterns: &[StructuralPattern],
 
         // Generate impl block with constructor
         writeln!(output, "impl<'a> {}<'a> {{", pattern.name).unwrap();
-        writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
+
+        if is_parameterizable {
+            writeln!(output, "    /// Create a new pattern node with accumulated metric name.").unwrap();
+            writeln!(output, "    pub fn new(client: &'a BrkClientBase, acc: &str) -> Self {{").unwrap();
+        } else {
+            writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
+        }
         writeln!(output, "        Self {{").unwrap();
 
         for field in &pattern.fields {
-            let field_name = to_snake_case(&field.name);
-            if metadata.is_pattern_type(&field.rust_type) {
-                writeln!(
-                    output,
-                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
-                    field_name, field.rust_type, field.name
-                ).unwrap();
-            } else if field_uses_accessor(field, metadata) {
-                let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-                writeln!(
-                    output,
-                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
-                    field_name, accessor.name, field.name
-                ).unwrap();
+            if is_parameterizable {
+                generate_parameterized_rust_field(output, field, pattern, metadata);
             } else {
-                writeln!(
-                    output,
-                    "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\"))," ,
-                    field_name, field.name
-                ).unwrap();
+                generate_tree_path_rust_field(output, field, metadata);
             }
         }
 
         writeln!(output, "        }}").unwrap();
         writeln!(output, "    }}").unwrap();
         writeln!(output, "}}\n").unwrap();
+    }
+}
+
+/// Generate a field using parameterized (prepend/append) metric name construction
+fn generate_parameterized_rust_field(
+    output: &mut String,
+    field: &PatternField,
+    pattern: &StructuralPattern,
+    metadata: &ClientMetadata,
+) {
+    let field_name = to_snake_case(&field.name);
+
+    // For branch fields, pass the accumulated name to nested pattern
+    if metadata.is_pattern_type(&field.rust_type) {
+        let child_acc = if let Some(pos) = pattern.get_field_position(&field.name) {
+            match pos {
+                FieldNamePosition::Append(suffix) => format!("&format!(\"{{acc}}{}\")", suffix),
+                FieldNamePosition::Prepend(prefix) => format!("&format!(\"{}{{acc}}\")", prefix),
+                FieldNamePosition::Identity => "acc".to_string(),
+                FieldNamePosition::SetBase(base) => format!("\"{}\"", base),
+            }
+        } else {
+            format!("&format!(\"{{acc}}_{}\")", field.name)
+        };
+
+        writeln!(
+            output,
+            "            {}: {}::new(client, {}),",
+            field_name, field.rust_type, child_acc
+        ).unwrap();
+        return;
+    }
+
+    // For leaf fields, construct the metric path based on position
+    let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
+        match pos {
+            FieldNamePosition::Append(suffix) => format!("format!(\"/{{acc}}{}\")", suffix),
+            FieldNamePosition::Prepend(prefix) => format!("format!(\"/{}{{acc}}\")", prefix),
+            FieldNamePosition::Identity => "format!(\"/{acc}\")".to_string(),
+            FieldNamePosition::SetBase(base) => format!("\"/{}\".to_string()", base),
+        }
+    } else {
+        format!("format!(\"/{{acc}}_{}\")", field.name)
+    };
+
+    if field_uses_accessor(field, metadata) {
+        let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+        writeln!(
+            output,
+            "            {}: {}::new(client, &{}),",
+            field_name, accessor.name, metric_expr
+        ).unwrap();
+    } else {
+        writeln!(
+            output,
+            "            {}: MetricNode::new(client, {}),",
+            field_name, metric_expr
+        ).unwrap();
+    }
+}
+
+/// Generate a field using tree path construction (fallback for non-parameterizable patterns)
+fn generate_tree_path_rust_field(
+    output: &mut String,
+    field: &PatternField,
+    metadata: &ClientMetadata,
+) {
+    let field_name = to_snake_case(&field.name);
+
+    if metadata.is_pattern_type(&field.rust_type) {
+        writeln!(
+            output,
+            "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+            field_name, field.rust_type, field.name
+        ).unwrap();
+    } else if field_uses_accessor(field, metadata) {
+        let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+        writeln!(
+            output,
+            "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+            field_name, accessor.name, field.name
+        ).unwrap();
+    } else {
+        writeln!(
+            output,
+            "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
+            field_name, field.name
+        ).unwrap();
     }
 }
 
@@ -380,27 +460,72 @@ fn generate_tree_node(
         writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
         writeln!(output, "        Self {{").unwrap();
 
-        for field in &fields {
+        for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
             let field_name = to_snake_case(&field.name);
             if metadata.is_pattern_type(&field.rust_type) {
-                writeln!(
-                    output,
-                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
-                    field_name, field.rust_type, field.name
-                ).unwrap();
+                // Check if the pattern is parameterizable
+                let pattern = metadata
+                    .structural_patterns
+                    .iter()
+                    .find(|p| p.name == field.rust_type);
+                let is_parameterizable = pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
+
+                if is_parameterizable {
+                    // Get the metric base from the first leaf descendant
+                    let metric_base = get_pattern_instance_base(child_node, child_name);
+                    writeln!(
+                        output,
+                        "            {}: {}::new(client, \"{}\"),",
+                        field_name, field.rust_type, metric_base
+                    ).unwrap();
+                } else {
+                    writeln!(
+                        output,
+                        "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
+                        field_name, field.rust_type, field.name
+                    ).unwrap();
+                }
             } else if field_uses_accessor(field, metadata) {
+                // Leaf with accessor - get actual metric path from leaf
+                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                    format!("/{}", leaf.name())
+                } else {
+                    format!("{{base_path}}/{}", field.name)
+                };
                 let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-                writeln!(
-                    output,
-                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
-                    field_name, accessor.name, field.name
-                ).unwrap();
+                if metric_path.contains("{base_path}") {
+                    writeln!(
+                        output,
+                        "            {}: {}::new(client, &format!(\"{}\")),",
+                        field_name, accessor.name, metric_path
+                    ).unwrap();
+                } else {
+                    writeln!(
+                        output,
+                        "            {}: {}::new(client, \"{}\"),",
+                        field_name, accessor.name, metric_path
+                    ).unwrap();
+                }
             } else {
-                writeln!(
-                    output,
-                    "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\"))," ,
-                    field_name, field.name
-                ).unwrap();
+                // Leaf without accessor - get actual metric path from leaf
+                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                    format!("/{}", leaf.name())
+                } else {
+                    format!("{{base_path}}/{}", field.name)
+                };
+                if metric_path.contains("{base_path}") {
+                    writeln!(
+                        output,
+                        "            {}: MetricNode::new(client, format!(\"{}\")),",
+                        field_name, metric_path
+                    ).unwrap();
+                } else {
+                    writeln!(
+                        output,
+                        "            {}: MetricNode::new(client, \"{}\".to_string()),",
+                        field_name, metric_path
+                    ).unwrap();
+                }
             }
         }
 
