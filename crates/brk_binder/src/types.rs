@@ -147,13 +147,19 @@ impl ClientMetadata {
 
     /// Check if a pattern is generic
     pub fn is_pattern_generic(&self, name: &str) -> bool {
-        self.find_pattern(name).map(|p| p.is_generic).unwrap_or(false)
+        self.find_pattern(name)
+            .map(|p| p.is_generic)
+            .unwrap_or(false)
     }
 
     /// Extract the value type from concrete fields for a generic pattern.
     /// Returns the first leaf field's rust_type if this pattern is generic.
     /// If the type is a wrapper like `Close<Dollars>`, extracts the inner type `Dollars`.
-    pub fn get_generic_value_type(&self, pattern_name: &str, fields: &[PatternField]) -> Option<String> {
+    pub fn get_generic_value_type(
+        &self,
+        pattern_name: &str,
+        fields: &[PatternField],
+    ) -> Option<String> {
         if !self.is_pattern_generic(pattern_name) {
             return None;
         }
@@ -175,6 +181,19 @@ impl ClientMetadata {
         }
         lookup
     }
+}
+
+use serde_json::Value;
+
+/// Unwrap allOf with a single element, returning the inner schema.
+/// schemars uses allOf for composition, but often with just one $ref.
+pub fn unwrap_allof(schema: &Value) -> &Value {
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array())
+        && all_of.len() == 1
+    {
+        return &all_of[0];
+    }
+    schema
 }
 
 /// Extract inner type from a wrapper generic like `Close<Dollars>` -> `Dollars`.
@@ -202,7 +221,9 @@ pub fn extract_inner_type(type_str: &str) -> String {
 /// For every branch node, create a signature from its children (sorted field names + types).
 /// Patterns that appear 2+ times are deduplicated.
 /// Returns (patterns, concrete_to_pattern_mapping).
-fn detect_structural_patterns(tree: &TreeNode) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
+fn detect_structural_patterns(
+    tree: &TreeNode,
+) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
     // Map from sorted fields signature to pattern name
     let mut signature_to_pattern: HashMap<Vec<PatternField>, String> = HashMap::new();
     // Count how many times each signature appears
@@ -274,7 +295,8 @@ fn detect_generic_patterns(
     signature_to_pattern: &HashMap<Vec<PatternField>, String>,
 ) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
     // Group signatures by their normalized (generic) form
-    let mut normalized_groups: HashMap<Vec<PatternField>, Vec<(Vec<PatternField>, String)>> = HashMap::new();
+    let mut normalized_groups: HashMap<Vec<PatternField>, Vec<(Vec<PatternField>, String)>> =
+        HashMap::new();
 
     for (fields, name) in signature_to_pattern {
         if let Some(normalized) = normalize_fields_for_generic(fields) {
@@ -389,10 +411,11 @@ fn collect_pattern_instances(
             // Collect instances for this pattern
             for (field_name, child_node) in children {
                 if let TreeNode::Leaf(leaf) = child_node {
-                    instances
-                        .entry(pattern_name.clone())
-                        .or_default()
-                        .push((accumulated_name.to_string(), field_name.clone(), leaf.name().to_string()));
+                    instances.entry(pattern_name.clone()).or_default().push((
+                        accumulated_name.to_string(),
+                        field_name.clone(),
+                        leaf.name().to_string(),
+                    ));
                 }
             }
         }
@@ -901,4 +924,3 @@ fn collect_indexes_from_tree(
         }
     }
 }
-

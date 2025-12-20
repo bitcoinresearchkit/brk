@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
     TypeSchemas, extract_inner_type, get_first_leaf_name, get_node_fields,
-    get_pattern_instance_base, to_camel_case, to_pascal_case,
+    get_pattern_instance_base, to_camel_case, to_pascal_case, unwrap_allof,
 };
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
@@ -101,6 +101,9 @@ fn is_primitive_alias(schema: &Value) -> bool {
 
 /// Convert JSON Schema to JavaScript/JSDoc type
 fn schema_to_js_type(schema: &Value) -> String {
+    // Unwrap single-element allOf (schemars uses this for composition)
+    let schema = unwrap_allof(schema);
+
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         return ref_path.rsplit('/').next().unwrap_or("*").to_string();

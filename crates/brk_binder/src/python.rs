@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
     TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, to_pascal_case,
-    to_snake_case,
+    to_snake_case, unwrap_allof,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints
@@ -70,7 +70,13 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 
     writeln!(output, "# Type definitions\n").unwrap();
 
-    for (name, schema) in schemas {
+    // Sort types by dependencies (types that reference other types must come after)
+    let sorted_names = topological_sort_schemas(schemas);
+
+    for name in sorted_names {
+        let Some(schema) = schemas.get(&name) else {
+            continue;
+        };
         if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
             // Object type -> TypedDict
             writeln!(output, "class {}(TypedDict):", name).unwrap();
@@ -89,8 +95,88 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     writeln!(output).unwrap();
 }
 
+/// Topologically sort schema names so dependencies come before dependents.
+/// Types that reference other types (via $ref) must be defined after their dependencies.
+fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
+    use std::collections::{HashMap, HashSet};
+
+    // Build dependency graph
+    let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
+    for (name, schema) in schemas {
+        let mut type_deps = HashSet::new();
+        collect_schema_refs(schema, &mut type_deps);
+        // Only keep deps that are in our schemas
+        type_deps.retain(|d| schemas.contains_key(d));
+        deps.insert(name.clone(), type_deps);
+    }
+
+    // Kahn's algorithm for topological sort
+    let mut in_degree: HashMap<String, usize> = HashMap::new();
+    for name in schemas.keys() {
+        in_degree.insert(name.clone(), 0);
+    }
+    for type_deps in deps.values() {
+        for dep in type_deps {
+            *in_degree.entry(dep.clone()).or_insert(0) += 1;
+        }
+    }
+
+    // Start with types that have no dependents (are not referenced by others)
+    let mut queue: Vec<String> = in_degree
+        .iter()
+        .filter(|(_, count)| **count == 0)
+        .map(|(name, _)| name.clone())
+        .collect();
+    queue.sort(); // Deterministic order
+
+    let mut result = Vec::new();
+    while let Some(name) = queue.pop() {
+        result.push(name.clone());
+        if let Some(type_deps) = deps.get(&name) {
+            for dep in type_deps {
+                if let Some(count) = in_degree.get_mut(dep) {
+                    *count = count.saturating_sub(1);
+                    if *count == 0 {
+                        queue.push(dep.clone());
+                        queue.sort(); // Keep sorted for determinism
+                    }
+                }
+            }
+        }
+    }
+
+    // Reverse so dependencies come first
+    result.reverse();
+    result
+}
+
+/// Collect all type references ($ref) from a schema
+fn collect_schema_refs(schema: &Value, refs: &mut std::collections::HashSet<String>) {
+    match schema {
+        Value::Object(map) => {
+            if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str()) {
+                if let Some(type_name) = ref_path.rsplit('/').next() {
+                    refs.insert(type_name.to_string());
+                }
+            }
+            for value in map.values() {
+                collect_schema_refs(value, refs);
+            }
+        }
+        Value::Array(arr) => {
+            for item in arr {
+                collect_schema_refs(item, refs);
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Convert JSON Schema to Python type
 fn schema_to_python_type(schema: &Value) -> String {
+    // Unwrap single-element allOf (schemars uses this for composition)
+    let schema = unwrap_allof(schema);
+
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         return ref_path.rsplit('/').next().unwrap_or("Any").to_string();
@@ -129,7 +215,7 @@ fn schema_to_python_type(schema: &Value) -> String {
     "Any".to_string()
 }
 
-/// Escape Python reserved keywords by appending underscore
+/// Make a name safe for Python: escape keywords and prefix digit-starting names
 fn escape_python_keyword(name: &str) -> String {
     const PYTHON_KEYWORDS: &[&str] = &[
         "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class",
@@ -137,10 +223,17 @@ fn escape_python_keyword(name: &str) -> String {
         "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return",
         "try", "while", "with", "yield",
     ];
-    if PYTHON_KEYWORDS.contains(&name) {
-        format!("{}_", name)
+    // Names starting with digit need underscore prefix
+    let name = if name.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+        format!("_{}", name)
     } else {
         name.to_string()
+    };
+    // Reserved keywords get underscore suffix
+    if PYTHON_KEYWORDS.contains(&name.as_str()) {
+        format!("{}_", name)
+    } else {
+        name
     }
 }
 
@@ -726,18 +819,20 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         } else {
             writeln!(output, "        params = []").unwrap();
             for param in &endpoint.query_params {
+                // Use safe name for Python variable, original name for API query parameter
+                let safe_name = escape_python_keyword(&param.name);
                 if param.required {
                     writeln!(
                         output,
                         "        params.append(f'{}={{{}}}')",
-                        param.name, param.name
+                        param.name, safe_name
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         output,
                         "        if {} is not None: params.append(f'{}={{{}}}')",
-                        param.name, param.name, param.name
+                        safe_name, param.name, safe_name
                     )
                     .unwrap();
                 }
@@ -759,11 +854,15 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
     if let Some(op_id) = &endpoint.operation_id {
         return to_snake_case(op_id);
     }
-    let parts: Vec<&str> = endpoint
-        .path
-        .split('/')
-        .filter(|s| !s.is_empty() && !s.starts_with('{'))
-        .collect();
+    // Include path parameters as "by_{param}" to differentiate endpoints
+    let mut parts = Vec::new();
+    for segment in endpoint.path.split('/').filter(|s| !s.is_empty()) {
+        if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+            parts.push(format!("by_{}", param));
+        } else {
+            parts.push(segment.to_string());
+        }
+    }
     to_snake_case(&format!("get_{}", parts.join("_")))
 }
 
@@ -779,13 +878,15 @@ fn js_type_to_python(js_type: &str) -> String {
 fn build_method_params(endpoint: &Endpoint) -> String {
     let mut params = Vec::new();
     for param in &endpoint.path_params {
-        params.push(format!(", {}: str", param.name));
+        let safe_name = escape_python_keyword(&param.name);
+        params.push(format!(", {}: str", safe_name));
     }
     for param in &endpoint.query_params {
+        let safe_name = escape_python_keyword(&param.name);
         if param.required {
-            params.push(format!(", {}: str", param.name));
+            params.push(format!(", {}: str", safe_name));
         } else {
-            params.push(format!(", {}: Optional[str] = None", param.name));
+            params.push(format!(", {}: Optional[str] = None", safe_name));
         }
     }
     params.join("")
