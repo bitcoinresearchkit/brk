@@ -9,7 +9,8 @@ use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, get_node_fields, get_pattern_instance_base, to_pascal_case, to_snake_case,
+    TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, to_pascal_case,
+    to_snake_case,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints
@@ -35,7 +36,7 @@ pub fn generate_python_client(
     // Type variable for generic MetricNode
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
-    // Generate type definitions from OpenAPI schemas
+    // Generate type definitions from OpenAPI schemas (now includes leaf types from catalog)
     generate_type_definitions(&mut output, schemas);
 
     // Generate base client class
@@ -75,7 +76,8 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             writeln!(output, "class {}(TypedDict):", name).unwrap();
             for (prop_name, prop_schema) in props {
                 let prop_type = schema_to_python_type(prop_schema);
-                writeln!(output, "    {}: {}", prop_name, prop_type).unwrap();
+                let safe_name = escape_python_keyword(prop_name);
+                writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
             }
             writeln!(output).unwrap();
         } else {
@@ -125,6 +127,21 @@ fn schema_to_python_type(schema: &Value) -> String {
     }
 
     "Any".to_string()
+}
+
+/// Escape Python reserved keywords by appending underscore
+fn escape_python_keyword(name: &str) -> String {
+    const PYTHON_KEYWORDS: &[&str] = &[
+        "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class",
+        "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global",
+        "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return",
+        "try", "while", "with", "yield",
+    ];
+    if PYTHON_KEYWORDS.contains(&name) {
+        format!("{}_", name)
+    } else {
+        name.to_string()
+    }
 }
 
 /// Generate the base BrkClient class with HTTP functionality
@@ -274,7 +291,11 @@ fn generate_structural_patterns(
                 "    def __init__(self, client: BrkClientBase, acc: str):"
             )
             .unwrap();
-            writeln!(output, "        \"\"\"Create pattern node with accumulated metric name.\"\"\"").unwrap();
+            writeln!(
+                output,
+                "        \"\"\"Create pattern node with accumulated metric name.\"\"\""
+            )
+            .unwrap();
         } else {
             writeln!(
                 output,
@@ -415,18 +436,19 @@ fn field_to_python_type_with_generic_value(
     generic_value_type: Option<&str>,
 ) -> String {
     // For generic patterns, use T instead of concrete value type
+    // Also extract inner type from wrappers like Close<Dollars> -> Dollars
     let value_type = if is_generic && field.rust_type == "T" {
         "T".to_string()
     } else {
-        field.rust_type.clone()
+        extract_inner_type(&field.rust_type)
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
         // Check if this pattern is generic and we have a value type
-        if metadata.is_pattern_generic(&field.rust_type) {
-            if let Some(vt) = generic_value_type {
-                return format!("{}[{}]", field.rust_type, vt);
-            }
+        if metadata.is_pattern_generic(&field.rust_type)
+            && let Some(vt) = generic_value_type
+        {
+            return format!("{}[{}]", field.rust_type, vt);
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
@@ -476,7 +498,11 @@ fn generate_tree_class(
                 let (rust_type, json_type, indexes, child_fields) = match child_node {
                     TreeNode::Leaf(leaf) => (
                         leaf.value_type().to_string(),
-                        leaf.schema.get("type").and_then(|v| v.as_str()).unwrap_or("object").to_string(),
+                        leaf.schema
+                            .get("type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("object")
+                            .to_string(),
                         leaf.indexes().clone(),
                         None,
                     ),
@@ -486,19 +512,30 @@ fn generate_tree_class(
                             .get(&child_fields)
                             .cloned()
                             .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new(), Some(child_fields))
+                        (
+                            pattern_name.clone(),
+                            pattern_name,
+                            std::collections::BTreeSet::new(),
+                            Some(child_fields),
+                        )
                     }
                 };
-                (PatternField {
-                    name: child_name.clone(),
-                    rust_type,
-                    json_type,
-                    indexes,
-                }, child_fields)
+                (
+                    PatternField {
+                        name: child_name.clone(),
+                        rust_type,
+                        json_type,
+                        indexes,
+                    },
+                    child_fields,
+                )
             })
             .collect();
 
-        let fields: Vec<PatternField> = fields_with_child_info.iter().map(|(f, _)| f.clone()).collect();
+        let fields: Vec<PatternField> = fields_with_child_info
+            .iter()
+            .map(|(f, _)| f.clone())
+            .collect();
 
         // Skip if this matches a pattern (already generated)
         if pattern_lookup.contains_key(&fields)
@@ -521,12 +558,19 @@ fn generate_tree_class(
         )
         .unwrap();
 
-        for ((field, child_fields_opt), (child_name, child_node)) in fields_with_child_info.iter().zip(children.iter()) {
+        for ((field, child_fields_opt), (child_name, child_node)) in
+            fields_with_child_info.iter().zip(children.iter())
+        {
             // For generic patterns, extract the value type from child fields
-            let generic_value_type = child_fields_opt.as_ref().and_then(|cf| {
-                metadata.get_generic_value_type(&field.rust_type, cf)
-            });
-            let py_type = field_to_python_type_with_generic_value(field, metadata, false, generic_value_type.as_deref());
+            let generic_value_type = child_fields_opt
+                .as_ref()
+                .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+            let py_type = field_to_python_type_with_generic_value(
+                field,
+                metadata,
+                false,
+                generic_value_type.as_deref(),
+            );
             let field_name_py = to_snake_case(&field.name);
 
             if metadata.is_pattern_type(&field.rust_type) {
@@ -654,7 +698,11 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = endpoint.response_type.as_deref().unwrap_or("Any");
+        let return_type = endpoint
+            .response_type
+            .as_deref()
+            .map(js_type_to_python)
+            .unwrap_or_else(|| "Any".to_string());
 
         // Build method signature
         let params = build_method_params(endpoint);
@@ -716,7 +764,16 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
         .split('/')
         .filter(|s| !s.is_empty() && !s.starts_with('{'))
         .collect();
-    format!("get_{}", parts.join("_"))
+    to_snake_case(&format!("get_{}", parts.join("_")))
+}
+
+/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]")
+fn js_type_to_python(js_type: &str) -> String {
+    if let Some(inner) = js_type.strip_suffix("[]") {
+        format!("List[{}]", js_type_to_python(inner))
+    } else {
+        js_type.to_string()
+    }
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {

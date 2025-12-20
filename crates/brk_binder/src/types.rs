@@ -152,6 +152,7 @@ impl ClientMetadata {
 
     /// Extract the value type from concrete fields for a generic pattern.
     /// Returns the first leaf field's rust_type if this pattern is generic.
+    /// If the type is a wrapper like `Close<Dollars>`, extracts the inner type `Dollars`.
     pub fn get_generic_value_type(&self, pattern_name: &str, fields: &[PatternField]) -> Option<String> {
         if !self.is_pattern_generic(pattern_name) {
             return None;
@@ -160,7 +161,7 @@ impl ClientMetadata {
         fields
             .iter()
             .find(|f| !f.indexes.is_empty())
-            .map(|f| f.rust_type.clone())
+            .map(|f| extract_inner_type(&f.rust_type))
     }
 
     /// Build a lookup map from field signatures to pattern names.
@@ -176,6 +177,27 @@ impl ClientMetadata {
     }
 }
 
+/// Extract inner type from a wrapper generic like `Close<Dollars>` -> `Dollars`.
+/// Also handles malformed types like `Dollars>` (from vecdb's short_type_name which
+/// extracts "Dollars>" from "Close<brk_types::Dollars>" using rsplit("::")).
+/// If not a generic, returns the type as-is.
+pub fn extract_inner_type(type_str: &str) -> String {
+    // Handle proper generic wrappers like `Close<Dollars>` -> `Dollars`
+    if let Some(start) = type_str.find('<') {
+        if let Some(end) = type_str.rfind('>') {
+            if start < end {
+                return type_str[start + 1..end].to_string();
+            }
+        }
+    }
+    // Handle malformed types like `Dollars>` (trailing > without <)
+    // This happens due to vecdb's short_type_name using rsplit("::")
+    if type_str.ends_with('>') && !type_str.contains('<') {
+        return type_str.trim_end_matches('>').to_string();
+    }
+    type_str.to_string()
+}
+
 /// Detect structural patterns in the tree using a bottom-up approach.
 /// For every branch node, create a signature from its children (sorted field names + types).
 /// Patterns that appear 2+ times are deduplicated.
@@ -185,9 +207,20 @@ fn detect_structural_patterns(tree: &TreeNode) -> (Vec<StructuralPattern>, HashM
     let mut signature_to_pattern: HashMap<Vec<PatternField>, String> = HashMap::new();
     // Count how many times each signature appears
     let mut signature_counts: HashMap<Vec<PatternField>, usize> = HashMap::new();
+    // Map normalized signatures to names (so patterns differing only in value type share names)
+    let mut normalized_to_name: HashMap<Vec<PatternField>, String> = HashMap::new();
+    // Track name usage to append index for duplicates
+    let mut name_counts: HashMap<String, usize> = HashMap::new();
 
     // Process tree bottom-up to resolve all branch types
-    resolve_branch_patterns(tree, &mut signature_to_pattern, &mut signature_counts);
+    resolve_branch_patterns(
+        tree,
+        "root",
+        &mut signature_to_pattern,
+        &mut signature_counts,
+        &mut normalized_to_name,
+        &mut name_counts,
+    );
 
     // First, identify generic patterns by grouping ALL signatures by their normalized form.
     // Even if each concrete signature appears only once, if 2+ different value types
@@ -551,8 +584,11 @@ fn get_node_fields_for_analysis(
 /// Returns the pattern name for this node if it's a branch, or None if it's a leaf.
 fn resolve_branch_patterns(
     node: &TreeNode,
+    field_name: &str, // The field name in the parent where this node appears
     signature_to_pattern: &mut HashMap<Vec<PatternField>, String>,
     signature_counts: &mut HashMap<Vec<PatternField>, usize>,
+    normalized_to_name: &mut HashMap<Vec<PatternField>, String>, // Normalized sig -> name
+    name_counts: &mut HashMap<String, usize>,
 ) -> Option<String> {
     match node {
         TreeNode::Leaf(_) => {
@@ -574,8 +610,11 @@ fn resolve_branch_patterns(
                         // Branch: recursively get its pattern name
                         let pattern_name = resolve_branch_patterns(
                             child_node,
+                            child_name,
                             signature_to_pattern,
                             signature_counts,
+                            normalized_to_name,
+                            name_counts,
                         )
                         .unwrap_or_else(|| "Unknown".to_string());
                         (pattern_name.clone(), pattern_name, BTreeSet::new())
@@ -596,37 +635,74 @@ fn resolve_branch_patterns(
             // Increment count for this signature
             *signature_counts.entry(fields.clone()).or_insert(0) += 1;
 
-            // Get or create pattern name for this signature
-            let pattern_name = signature_to_pattern
-                .entry(fields.clone())
-                .or_insert_with(|| generate_pattern_name_from_fields(&fields))
-                .clone();
+            // Get or create pattern name - use normalized signature for naming
+            // so patterns that differ only in value type get the same name
+            let pattern_name = if let Some(existing) = signature_to_pattern.get(&fields) {
+                existing.clone()
+            } else {
+                // Check if normalized form already has a name
+                let normalized = normalize_fields_for_naming(&fields);
+                let name = normalized_to_name
+                    .entry(normalized)
+                    .or_insert_with(|| generate_pattern_name(field_name, name_counts))
+                    .clone();
+                signature_to_pattern.insert(fields.clone(), name.clone());
+                name
+            };
 
             Some(pattern_name)
         }
     }
 }
 
-/// Generate a sanitized pattern name from fields.
-/// Names must be valid identifiers in all target languages (Rust, JS, Python).
-fn generate_pattern_name_from_fields(fields: &[PatternField]) -> String {
-    // Join field names with underscores, then convert to PascalCase
-    let joined: Vec<&str> = fields.iter().map(|f| f.name.as_str()).collect();
-    let raw_name = joined.join("_");
+/// Normalize fields for naming: replace value types with a placeholder
+/// so patterns with same structure but different value types get the same name.
+fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
+    fields
+        .iter()
+        .map(|f| {
+            if f.indexes.is_empty() {
+                // Branch field - keep rust_type (it's a pattern name)
+                f.clone()
+            } else {
+                // Leaf field - normalize value type
+                PatternField {
+                    name: f.name.clone(),
+                    rust_type: "_".to_string(),
+                    json_type: "_".to_string(),
+                    indexes: f.indexes.clone(),
+                }
+            }
+        })
+        .collect()
+}
 
-    // Sanitize: ensure it starts with a letter (prepend "P_" if starts with digit)
-    let sanitized = if raw_name
+/// Generate a pattern name from the field name where it's used.
+/// Appends an index if the same base name is used multiple times.
+fn generate_pattern_name(field_name: &str, name_counts: &mut HashMap<String, usize>) -> String {
+    let pascal = to_pascal_case(field_name);
+
+    // Sanitize: ensure it starts with a letter (prepend "_" if starts with digit)
+    let base_name = if pascal
         .chars()
         .next()
         .map(|c| c.is_ascii_digit())
         .unwrap_or(false)
     {
-        format!("P_{}", raw_name)
+        format!("_{}", pascal)
     } else {
-        raw_name
+        pascal
     };
 
-    to_pascal_case(&sanitized)
+    // Track usage count and append index if needed
+    let count = name_counts.entry(base_name.clone()).or_insert(0);
+    *count += 1;
+
+    if *count == 1 {
+        base_name
+    } else {
+        format!("{}{}", base_name, count)
+    }
 }
 
 /// Extract JSON type from JSON Schema
@@ -675,7 +751,10 @@ pub fn get_node_fields(
 
 /// Convert a metric name to PascalCase (for struct/class names)
 pub fn to_pascal_case(s: &str) -> String {
-    s.split('_')
+    // Normalize separators: replace - with _
+    let normalized = s.replace('-', "_");
+    normalized
+        .split('_')
         .map(|word| {
             let mut chars = word.chars();
             match chars.next() {
@@ -689,6 +768,19 @@ pub fn to_pascal_case(s: &str) -> String {
 /// Convert a metric name to snake_case (already snake_case, but sanitize)
 pub fn to_snake_case(s: &str) -> String {
     let sanitized = s.replace('-', "_");
+
+    // Prefix with _ if starts with digit
+    let sanitized = if sanitized
+        .chars()
+        .next()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
+        format!("_{}", sanitized)
+    } else {
+        sanitized
+    };
+
     // Handle Rust keywords
     match sanitized.as_str() {
         "type" | "const" | "static" | "match" | "if" | "else" | "loop" | "while" | "for"
@@ -703,9 +795,21 @@ pub fn to_snake_case(s: &str) -> String {
 pub fn to_camel_case(s: &str) -> String {
     let pascal = to_pascal_case(s);
     let mut chars = pascal.chars();
-    match chars.next() {
+    let result = match chars.next() {
         None => String::new(),
         Some(first) => first.to_lowercase().collect::<String>() + chars.as_str(),
+    };
+
+    // Prefix with _ if starts with digit
+    if result
+        .chars()
+        .next()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
+        format!("_{}", result)
+    } else {
+        result
     }
 }
 
@@ -760,8 +864,13 @@ fn detect_index_patterns(tree: &TreeNode) -> (BTreeSet<Index>, Vec<IndexSetPatte
     let mut patterns: Vec<IndexSetPattern> = index_set_counts
         .into_iter()
         .filter(|(indexes, count)| *count >= 2 && !indexes.is_empty())
-        .map(|(indexes, _)| IndexSetPattern {
-            name: generate_index_set_name(&indexes),
+        .enumerate()
+        .map(|(i, (indexes, _))| IndexSetPattern {
+            name: if i == 0 {
+                "Indexes".to_string()
+            } else {
+                format!("Indexes{}", i + 1)
+            },
             indexes,
         })
         .collect();
@@ -793,14 +902,3 @@ fn collect_indexes_from_tree(
     }
 }
 
-/// Generate a name for an index set pattern
-fn generate_index_set_name(indexes: &BTreeSet<Index>) -> String {
-    if indexes.len() == 1 {
-        let index = indexes.iter().next().unwrap();
-        return format!("{}Accessor", to_pascal_case(index.serialize_long()));
-    }
-
-    // For multiple indexes, create a descriptive name
-    let names: Vec<&str> = indexes.iter().map(|i| i.serialize_long()).collect();
-    format!("{}Accessor", to_pascal_case(&names.join("_")))
-}

@@ -25,7 +25,10 @@ pub fn generate_clients(vecs: &Vecs, openapi_json: &str, output_dir: &Path) -> i
     // Parse OpenAPI spec
     let spec = parse_openapi_json(openapi_json)?;
     let endpoints = extract_endpoints(&spec);
-    let schemas = extract_schemas(openapi_json);
+    let mut schemas = extract_schemas(openapi_json);
+
+    // Collect leaf type schemas from the catalog and merge into schemas
+    collect_leaf_type_schemas(&metadata.catalog, &mut schemas);
 
     // Generate Rust client (uses real brk_types, no schema conversion needed)
     let rust_path = output_dir.join("rust");
@@ -43,4 +46,28 @@ pub fn generate_clients(vecs: &Vecs, openapi_json: &str, output_dir: &Path) -> i
     generate_python_client(&metadata, &endpoints, &schemas, &python_path)?;
 
     Ok(())
+}
+
+use brk_types::TreeNode;
+
+/// Recursively collect leaf type schemas from the tree and add to schemas map.
+/// Only adds schemas that aren't already present (OpenAPI schemas take precedence).
+fn collect_leaf_type_schemas(node: &TreeNode, schemas: &mut TypeSchemas) {
+    match node {
+        TreeNode::Leaf(leaf) => {
+            // Extract the inner type name (e.g., "Dollars" from "Close<Dollars>")
+            let type_name = extract_inner_type(leaf.value_type());
+
+            // Only add if not already present (OpenAPI schemas take precedence)
+            if !schemas.contains_key(&type_name) {
+                // The leaf schema is the schemars-generated JSON schema
+                schemas.insert(type_name, leaf.schema.clone());
+            }
+        }
+        TreeNode::Branch(children) => {
+            for child in children.values() {
+                collect_leaf_type_schemas(child, schemas);
+            }
+        }
+    }
 }

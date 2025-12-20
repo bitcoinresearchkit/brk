@@ -6,7 +6,10 @@ use std::path::Path;
 
 use brk_types::{Index, TreeNode};
 
-use crate::{ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern, get_node_fields, get_pattern_instance_base, to_pascal_case, to_snake_case};
+use crate::{
+    ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
+    extract_inner_type, get_node_fields, get_pattern_instance_base, to_pascal_case, to_snake_case,
+};
 
 /// Generate Rust client from metadata and OpenAPI endpoints
 pub fn generate_rust_client(
@@ -185,7 +188,12 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     writeln!(output, "// Index accessor structs\n").unwrap();
 
     for pattern in patterns {
-        writeln!(output, "/// Index accessor for metrics with {} indexes.", pattern.indexes.len()).unwrap();
+        writeln!(
+            output,
+            "/// Index accessor for metrics with {} indexes.",
+            pattern.indexes.len()
+        )
+        .unwrap();
         writeln!(output, "pub struct {}<'a, T> {{", pattern.name).unwrap();
 
         for index in &pattern.indexes {
@@ -197,8 +205,17 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
         writeln!(output, "}}\n").unwrap();
 
         // Generate impl block with constructor
-        writeln!(output, "impl<'a, T: DeserializeOwned> {}<'a, T> {{", pattern.name).unwrap();
-        writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
+        writeln!(
+            output,
+            "impl<'a, T: DeserializeOwned> {}<'a, T> {{",
+            pattern.name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+        )
+        .unwrap();
         writeln!(output, "        Self {{").unwrap();
 
         for index in &pattern.indexes {
@@ -208,7 +225,8 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
                 output,
                 "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
                 field_name, path_segment
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         writeln!(output, "            _marker: PhantomData,").unwrap();
@@ -224,7 +242,11 @@ fn index_to_field_name(index: &Index) -> String {
 }
 
 /// Generate pattern structs (those appearing 2+ times)
-fn generate_pattern_structs(output: &mut String, patterns: &[StructuralPattern], metadata: &ClientMetadata) {
+fn generate_pattern_structs(
+    output: &mut String,
+    patterns: &[StructuralPattern],
+    metadata: &ClientMetadata,
+) {
     if patterns.is_empty() {
         return;
     }
@@ -233,27 +255,49 @@ fn generate_pattern_structs(output: &mut String, patterns: &[StructuralPattern],
 
     for pattern in patterns {
         let is_parameterizable = pattern.is_parameterizable();
-        let generic_params = if pattern.is_generic { "<'a, T>" } else { "<'a>" };
+        let generic_params = if pattern.is_generic {
+            "<'a, T>"
+        } else {
+            "<'a>"
+        };
 
         writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
         writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
 
         for field in &pattern.fields {
             let field_name = to_snake_case(&field.name);
-            let type_annotation = field_to_type_annotation_generic(field, metadata, pattern.is_generic);
+            let type_annotation =
+                field_to_type_annotation_generic(field, metadata, pattern.is_generic);
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 
         writeln!(output, "}}\n").unwrap();
 
         // Generate impl block with constructor
-        writeln!(output, "impl{} {}{} {{", generic_params, pattern.name, generic_params).unwrap();
+        writeln!(
+            output,
+            "impl{} {}{} {{",
+            generic_params, pattern.name, generic_params
+        )
+        .unwrap();
 
         if is_parameterizable {
-            writeln!(output, "    /// Create a new pattern node with accumulated metric name.").unwrap();
-            writeln!(output, "    pub fn new(client: &'a BrkClientBase, acc: &str) -> Self {{").unwrap();
+            writeln!(
+                output,
+                "    /// Create a new pattern node with accumulated metric name."
+            )
+            .unwrap();
+            writeln!(
+                output,
+                "    pub fn new(client: &'a BrkClientBase, acc: &str) -> Self {{"
+            )
+            .unwrap();
         } else {
-            writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
+            writeln!(
+                output,
+                "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+            )
+            .unwrap();
         }
         writeln!(output, "        Self {{").unwrap();
 
@@ -297,7 +341,8 @@ fn generate_parameterized_rust_field(
             output,
             "            {}: {}::new(client, {}),",
             field_name, field.rust_type, child_acc
-        ).unwrap();
+        )
+        .unwrap();
         return;
     }
 
@@ -319,13 +364,15 @@ fn generate_parameterized_rust_field(
             output,
             "            {}: {}::new(client, &{}),",
             field_name, accessor.name, metric_expr
-        ).unwrap();
+        )
+        .unwrap();
     } else {
         writeln!(
             output,
             "            {}: MetricNode::new(client, {}),",
             field_name, metric_expr
-        ).unwrap();
+        )
+        .unwrap();
     }
 }
 
@@ -342,20 +389,23 @@ fn generate_tree_path_rust_field(
             output,
             "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
             field_name, field.rust_type, field.name
-        ).unwrap();
+        )
+        .unwrap();
     } else if field_uses_accessor(field, metadata) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
             "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
             field_name, accessor.name, field.name
-        ).unwrap();
+        )
+        .unwrap();
     } else {
         writeln!(
             output,
             "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
             field_name, field.name
-        ).unwrap();
+        )
+        .unwrap();
     }
 }
 
@@ -378,18 +428,19 @@ fn field_to_type_annotation_with_generic(
     generic_value_type: Option<&str>,
 ) -> String {
     // For generic patterns, use T instead of concrete value type
+    // Also extract inner type from wrappers like Close<Dollars> -> Dollars
     let value_type = if is_generic && field.rust_type == "T" {
         "T".to_string()
     } else {
-        field.rust_type.clone()
+        extract_inner_type(&field.rust_type)
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
         // Check if this pattern is generic and we have a value type
-        if metadata.is_pattern_generic(&field.rust_type) {
-            if let Some(vt) = generic_value_type {
-                return format!("{}<'a, {}>", field.rust_type, vt);
-            }
+        if metadata.is_pattern_generic(&field.rust_type)
+            && let Some(vt) = generic_value_type
+        {
+            return format!("{}<'a, {}>", field.rust_type, vt);
         }
         format!("{}<'a>", field.rust_type)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
@@ -407,16 +458,19 @@ fn field_uses_accessor(field: &PatternField, metadata: &ClientMetadata) -> bool 
 }
 
 /// Generate the catalog tree structure
-fn generate_tree(
-    output: &mut String,
-    catalog: &TreeNode,
-    metadata: &ClientMetadata,
-) {
+fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
     let mut generated = HashSet::new();
-    generate_tree_node(output, "CatalogTree", catalog, &pattern_lookup, metadata, &mut generated);
+    generate_tree_node(
+        output,
+        "CatalogTree",
+        catalog,
+        &pattern_lookup,
+        metadata,
+        &mut generated,
+    );
 }
 
 /// Recursively generate tree nodes
@@ -436,7 +490,11 @@ fn generate_tree_node(
                 let (rust_type, json_type, indexes, child_fields) = match child_node {
                     TreeNode::Leaf(leaf) => (
                         leaf.value_type().to_string(),
-                        leaf.schema.get("type").and_then(|v| v.as_str()).unwrap_or("object").to_string(),
+                        leaf.schema
+                            .get("type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("object")
+                            .to_string(),
                         leaf.indexes().clone(),
                         None,
                     ),
@@ -447,20 +505,31 @@ fn generate_tree_node(
                             .get(&child_fields)
                             .cloned()
                             .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (pattern_name.clone(), pattern_name, std::collections::BTreeSet::new(), Some(child_fields))
+                        (
+                            pattern_name.clone(),
+                            pattern_name,
+                            std::collections::BTreeSet::new(),
+                            Some(child_fields),
+                        )
                     }
                 };
-                (PatternField {
-                    name: child_name.clone(),
-                    rust_type,
-                    json_type,
-                    indexes,
-                }, child_fields)
+                (
+                    PatternField {
+                        name: child_name.clone(),
+                        rust_type,
+                        json_type,
+                        indexes,
+                    },
+                    child_fields,
+                )
             })
             .collect();
         fields_with_child_info.sort_by(|a, b| a.0.name.cmp(&b.0.name));
 
-        let fields: Vec<PatternField> = fields_with_child_info.iter().map(|(f, _)| f.clone()).collect();
+        let fields: Vec<PatternField> = fields_with_child_info
+            .iter()
+            .map(|(f, _)| f.clone())
+            .collect();
 
         // Check if this matches a reusable pattern
         if let Some(pattern_name) = pattern_lookup.get(&fields) {
@@ -483,10 +552,15 @@ fn generate_tree_node(
         for (field, child_fields) in &fields_with_child_info {
             let field_name = to_snake_case(&field.name);
             // For generic patterns, extract the value type from child fields
-            let generic_value_type = child_fields.as_ref().and_then(|cf| {
-                metadata.get_generic_value_type(&field.rust_type, cf)
-            });
-            let type_annotation = field_to_type_annotation_with_generic(field, metadata, false, generic_value_type.as_deref());
+            let generic_value_type = child_fields
+                .as_ref()
+                .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+            let type_annotation = field_to_type_annotation_with_generic(
+                field,
+                metadata,
+                false,
+                generic_value_type.as_deref(),
+            );
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 
@@ -494,7 +568,11 @@ fn generate_tree_node(
 
         // Generate impl block
         writeln!(output, "impl<'a> {}<'a> {{", name).unwrap();
-        writeln!(output, "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{").unwrap();
+        writeln!(
+            output,
+            "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+        )
+        .unwrap();
         writeln!(output, "        Self {{").unwrap();
 
         for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
@@ -514,13 +592,15 @@ fn generate_tree_node(
                         output,
                         "            {}: {}::new(client, \"{}\"),",
                         field_name, field.rust_type, metric_base
-                    ).unwrap();
+                    )
+                    .unwrap();
                 } else {
                     writeln!(
                         output,
-                        "            {}: {}::new(client, &format!(\"{{base_path}}/{}\"))," ,
+                        "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
                         field_name, field.rust_type, field.name
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
             } else if field_uses_accessor(field, metadata) {
                 // Leaf with accessor - get actual metric path from leaf
@@ -535,13 +615,15 @@ fn generate_tree_node(
                         output,
                         "            {}: {}::new(client, &format!(\"{}\")),",
                         field_name, accessor.name, metric_path
-                    ).unwrap();
+                    )
+                    .unwrap();
                 } else {
                     writeln!(
                         output,
                         "            {}: {}::new(client, \"{}\"),",
                         field_name, accessor.name, metric_path
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
             } else {
                 // Leaf without accessor - get actual metric path from leaf
@@ -555,13 +637,15 @@ fn generate_tree_node(
                         output,
                         "            {}: MetricNode::new(client, format!(\"{}\")),",
                         field_name, metric_path
-                    ).unwrap();
+                    )
+                    .unwrap();
                 } else {
                     writeln!(
                         output,
                         "            {}: MetricNode::new(client, \"{}\".to_string()),",
                         field_name, metric_path
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
             }
         }
@@ -576,7 +660,14 @@ fn generate_tree_node(
                 let child_fields = get_node_fields(grandchildren, pattern_lookup);
                 if !pattern_lookup.contains_key(&child_fields) {
                     let child_struct_name = format!("{}_{}", name, to_pascal_case(child_name));
-                    generate_tree_node(output, &child_struct_name, child_node, pattern_lookup, metadata, generated);
+                    generate_tree_node(
+                        output,
+                        &child_struct_name,
+                        child_node,
+                        pattern_lookup,
+                        metadata,
+                        generated,
+                    );
                 }
             }
         }
@@ -629,14 +720,28 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = endpoint.response_type.as_deref().unwrap_or("serde_json::Value");
+        let return_type = endpoint
+            .response_type
+            .as_deref()
+            .map(js_type_to_rust)
+            .unwrap_or_else(|| "serde_json::Value".to_string());
 
         // Build doc comment
-        writeln!(output, "    /// {}", endpoint.summary.as_deref().unwrap_or(&method_name)).unwrap();
+        writeln!(
+            output,
+            "    /// {}",
+            endpoint.summary.as_deref().unwrap_or(&method_name)
+        )
+        .unwrap();
 
         // Build method signature
         let params = build_method_params(endpoint);
-        writeln!(output, "    pub fn {}(&self{}) -> Result<{}> {{", method_name, params, return_type).unwrap();
+        writeln!(
+            output,
+            "    pub fn {}(&self{}) -> Result<{}> {{",
+            method_name, params, return_type
+        )
+        .unwrap();
 
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
@@ -647,13 +752,28 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             writeln!(output, "        let mut query = Vec::new();").unwrap();
             for param in &endpoint.query_params {
                 if param.required {
-                    writeln!(output, "        query.push(format!(\"{}={{}}\", {}));", param.name, param.name).unwrap();
+                    writeln!(
+                        output,
+                        "        query.push(format!(\"{}={{}}\", {}));",
+                        param.name, param.name
+                    )
+                    .unwrap();
                 } else {
-                    writeln!(output, "        if let Some(v) = {} {{ query.push(format!(\"{}={{}}\", v)); }}", param.name, param.name).unwrap();
+                    writeln!(
+                        output,
+                        "        if let Some(v) = {} {{ query.push(format!(\"{}={{}}\", v)); }}",
+                        param.name, param.name
+                    )
+                    .unwrap();
                 }
             }
             writeln!(output, "        let query_str = if query.is_empty() {{ String::new() }} else {{ format!(\"?{{}}\", query.join(\"&\")) }};").unwrap();
-            writeln!(output, "        self.base.get(&format!(\"{}{{}}\", query_str))", path).unwrap();
+            writeln!(
+                output,
+                "        self.base.get(&format!(\"{}{{}}\", query_str))",
+                path
+            )
+            .unwrap();
         }
 
         writeln!(output, "    }}\n").unwrap();
@@ -664,8 +784,12 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
     if let Some(op_id) = &endpoint.operation_id {
         return to_snake_case(op_id);
     }
-    let parts: Vec<&str> = endpoint.path.split('/').filter(|s| !s.is_empty() && !s.starts_with('{')).collect();
-    format!("get_{}", parts.join("_"))
+    let parts: Vec<&str> = endpoint
+        .path
+        .split('/')
+        .filter(|s| !s.is_empty() && !s.starts_with('{'))
+        .collect();
+    to_snake_case(&format!("get_{}", parts.join("_")))
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {
@@ -691,4 +815,19 @@ fn build_path_template(path: &str, path_params: &[super::Parameter]) -> String {
         result = result.replace(&placeholder, &interpolation);
     }
     result
+}
+
+/// Convert JS-style type to Rust type (e.g., "Txid[]" -> "Vec<Txid>")
+fn js_type_to_rust(js_type: &str) -> String {
+    if let Some(inner) = js_type.strip_suffix("[]") {
+        format!("Vec<{}>", js_type_to_rust(inner))
+    } else {
+        match js_type {
+            "string" => "String".to_string(),
+            "number" => "f64".to_string(),
+            "boolean" => "bool".to_string(),
+            "*" => "serde_json::Value".to_string(),
+            other => other.to_string(),
+        }
+    }
 }
