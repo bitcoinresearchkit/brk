@@ -6,7 +6,7 @@ use std::path::Path;
 
 use brk_types::{Index, TreeNode};
 
-use super::{ClientMetadata, Endpoint, IndexSetPattern, PatternField, StructuralPattern, get_node_fields, to_camel_case, to_pascal_case, to_snake_case};
+use super::{ClientMetadata, Endpoint, IndexSetPattern, PatternField, StructuralPattern, get_node_fields, to_camel_case, to_pascal_case};
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
 pub fn generate_javascript_client(
@@ -50,6 +50,14 @@ fn generate_base_client(output: &mut String) {
  * @property {{number}} [timeout] - Request timeout in milliseconds
  */
 
+const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
+const _runIdle = (fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
+
+/** @type {{Promise<Cache | null>}} */
+const _cachePromise = _isBrowser
+  ? caches.open('__BRK_CLIENT__').catch(() => null)
+  : Promise.resolve(null);
+
 /**
  * Custom error class for BRK client errors
  */
@@ -75,73 +83,73 @@ class MetricNode {{
    * @param {{string}} path
    */
   constructor(client, path) {{
-    this.client = client;
-    this.path = path;
+    this._client = client;
+    this._path = path;
   }}
 
   /**
    * Fetch all data points for this metric.
-   * @returns {{Promise<T[]>}}
+   * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
+   * @returns {{Promise<T[] | null>}}
    */
-  async get() {{
-    return this.client.get(this.path);
+  get(onUpdate) {{
+    return this._client.get(this._path, onUpdate);
   }}
 
   /**
-   * Fetch data points within a date range.
-   * @param {{string}} from
-   * @param {{string}} to
-   * @returns {{Promise<T[]>}}
+   * Fetch data points within a range.
+   * @param {{string | number}} from
+   * @param {{string | number}} to
+   * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
+   * @returns {{Promise<T[] | null>}}
    */
-  async getRange(from, to) {{
-    return this.client.get(`${{this.path}}?from=${{from}}&to=${{to}}`);
+  getRange(from, to, onUpdate) {{
+    return this._client.get(`${{this._path}}?from=${{from}}&to=${{to}}`, onUpdate);
   }}
 }}
 
 /**
- * Base HTTP client for making requests
+ * Base HTTP client for making requests with caching support
  */
 class BrkClientBase {{
   /**
    * @param {{BrkClientOptions|string}} options
    */
   constructor(options) {{
-    if (typeof options === 'string') {{
-      this.baseUrl = options;
-      this.timeout = 30000;
-    }} else {{
-      this.baseUrl = options.baseUrl;
-      this.timeout = options.timeout || 30000;
-    }}
+    const isString = typeof options === 'string';
+    this.baseUrl = isString ? options : options.baseUrl;
+    this.timeout = isString ? 5000 : (options.timeout ?? 5000);
   }}
 
   /**
-   * Make a GET request
+   * Make a GET request with stale-while-revalidate caching
    * @template T
    * @param {{string}} path
-   * @returns {{Promise<T>}}
+   * @param {{(value: T) => void}} [onUpdate] - Called when data is available
+   * @returns {{Promise<T | null>}}
    */
-  async get(path) {{
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+  async get(path, onUpdate) {{
+    const url = `${{this.baseUrl}}${{path}}`;
+    const cache = await _cachePromise;
+    const cachedRes = await cache?.match(url);
+    const cachedJson = cachedRes ? await cachedRes.json() : null;
+
+    if (cachedJson) onUpdate?.(cachedJson);
+    if (!globalThis.navigator?.onLine) return cachedJson;
 
     try {{
-      const response = await fetch(`${{this.baseUrl}}${{path}}`, {{
-        signal: controller.signal,
-      }});
+      const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
+      if (!res.ok) throw new BrkError(`HTTP ${{res.status}}`, res.status);
+      if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) return cachedJson;
 
-      if (!response.ok) {{
-        throw new BrkError(`HTTP error: ${{response.status}}`, response.status);
-      }}
-
-      return response.json();
-    }} catch (error) {{
-      if (error.name === 'AbortError') {{
-        throw new BrkError('Request timeout');
-      }}
-      throw error;
-    }} finally {{
-      clearTimeout(timeoutId);
+      const cloned = res.clone();
+      const json = await res.json();
+      onUpdate?.(json);
+      if (cache) _runIdle(() => cache.put(url, cloned));
+      return json;
+    }} catch (e) {{
+      if (cachedJson) return cachedJson;
+      throw e;
     }}
   }}
 }}
@@ -183,7 +191,7 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
 
         for (i, index) in pattern.indexes.iter().enumerate() {
             let field_name = index_to_camel_case(index);
-            let path_segment = index.serialize_short();
+            let path_segment = index.serialize_long();
             let comma = if i < pattern.indexes.len() - 1 { "," } else { "" };
             writeln!(
                 output,
@@ -197,10 +205,9 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     }
 }
 
-/// Convert an Index to a camelCase field name (e.g., DateIndex -> byDate)
+/// Convert an Index to a camelCase field name (e.g., DateIndex -> byDateIndex)
 fn index_to_camel_case(index: &Index) -> String {
-    let short = index.serialize_short();
-    format!("by{}", to_pascal_case(&to_snake_case(short)))
+    format!("by{}", to_pascal_case(index.serialize_long()))
 }
 
 /// Generate structural pattern factory functions

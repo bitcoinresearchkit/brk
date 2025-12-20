@@ -334,11 +334,11 @@ fn collect_indexes_from_tree(
 fn generate_index_set_name(indexes: &BTreeSet<Index>) -> String {
     if indexes.len() == 1 {
         let index = indexes.iter().next().unwrap();
-        return format!("{}Accessor", to_pascal_case(index.serialize_short()));
+        return format!("{}Accessor", to_pascal_case(index.serialize_long()));
     }
 
     // For multiple indexes, create a descriptive name
-    let names: Vec<&str> = indexes.iter().map(|i| i.serialize_short()).collect();
+    let names: Vec<&str> = indexes.iter().map(|i| i.serialize_long()).collect();
     format!("{}Accessor", to_pascal_case(&names.join("_")))
 }
 

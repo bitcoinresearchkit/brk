@@ -5,15 +5,15 @@ use brk_types::{LoadedAddressData, OutputType, TypeIndex};
 use super::super::address::AddressTypeToTypeIndexMap;
 use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
 
-/// Source of an address in lookup - reports where the data came from.
+/// Tracking status of an address - determines cohort update strategy.
 #[derive(Clone, Copy)]
-pub enum AddressSource {
+pub enum TrackingStatus {
     /// Brand new address (never seen before)
     New,
-    /// Loaded from disk (has existing balance)
-    Loaded,
-    /// Was empty (zero balance), now receiving
-    FromEmpty,
+    /// Already tracked in a cohort (has existing balance)
+    Tracked,
+    /// Was in empty cache, now rejoining a cohort
+    WasEmpty,
 }
 
 /// Context for looking up and storing address data during block processing.
@@ -27,7 +27,7 @@ impl<'a> AddressLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> (&mut LoadedAddressDataWithSource, AddressSource) {
+    ) -> (&mut LoadedAddressDataWithSource, TrackingStatus) {
         use std::collections::hash_map::Entry;
 
         let map = self.loaded.get_mut(output_type).unwrap();
@@ -40,36 +40,38 @@ impl<'a> AddressLookup<'a> {
                 // - If wrapper is New AND funded_txo_count == 0: hasn't received yet,
                 //   was just created in process_outputs this block → New
                 // - If wrapper is New AND funded_txo_count > 0: received in previous
-                //   block but still in cache (no flush) → Loaded
-                // - If wrapper is FromLoaded/FromEmpty: loaded from storage → use wrapper
-                let source = match entry.get() {
+                //   block but still in cache (no flush) → Tracked
+                // - If wrapper is FromLoaded: loaded from storage → Tracked
+                // - If wrapper is FromEmpty AND utxo_count == 0: still empty → WasEmpty
+                // - If wrapper is FromEmpty AND utxo_count > 0: already received → Tracked
+                let status = match entry.get() {
                     WithAddressDataSource::New(data) => {
                         if data.funded_txo_count == 0 {
-                            AddressSource::New
+                            TrackingStatus::New
                         } else {
-                            AddressSource::Loaded
+                            TrackingStatus::Tracked
                         }
                     }
-                    WithAddressDataSource::FromLoaded(..) => AddressSource::Loaded,
+                    WithAddressDataSource::FromLoaded(..) => TrackingStatus::Tracked,
                     WithAddressDataSource::FromEmpty(_, data) => {
                         if data.utxo_count() == 0 {
-                            AddressSource::FromEmpty
+                            TrackingStatus::WasEmpty
                         } else {
-                            AddressSource::Loaded
+                            TrackingStatus::Tracked
                         }
                     }
                 };
-                (entry.into_mut(), source)
+                (entry.into_mut(), status)
             }
             Entry::Vacant(entry) => {
                 if let Some(empty_data) =
                     self.empty.get_mut(output_type).unwrap().remove(&type_index)
                 {
-                    return (entry.insert(empty_data.into()), AddressSource::FromEmpty);
+                    return (entry.insert(empty_data.into()), TrackingStatus::WasEmpty);
                 }
                 (
                     entry.insert(WithAddressDataSource::New(LoadedAddressData::default())),
-                    AddressSource::New,
+                    TrackingStatus::New,
                 )
             }
         }

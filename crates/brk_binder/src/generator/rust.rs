@@ -203,7 +203,7 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
 
         for index in &pattern.indexes {
             let field_name = index_to_field_name(index);
-            let path_segment = index.serialize_short();
+            let path_segment = index.serialize_long();
             writeln!(
                 output,
                 "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
@@ -218,10 +218,9 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     }
 }
 
-/// Convert an Index to a snake_case field name (e.g., DateIndex -> by_date)
+/// Convert an Index to a snake_case field name (e.g., DateIndex -> by_date_index)
 fn index_to_field_name(index: &Index) -> String {
-    let short = index.serialize_short();
-    format!("by_{}", to_snake_case(short))
+    format!("by_{}", to_snake_case(index.serialize_long()))
 }
 
 /// Generate pattern structs (those appearing 2+ times)

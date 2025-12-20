@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 
 use super::super::address::AddressTypeToVec;
 use super::super::cohorts::AddressCohorts;
-use super::lookup::{AddressLookup, AddressSource};
+use super::lookup::{AddressLookup, TrackingStatus};
 
 pub fn process_received(
     received_data: AddressTypeToVec<(TypeIndex, Sats)>,
@@ -31,23 +31,23 @@ pub fn process_received(
         }
 
         for (type_index, (total_value, output_count)) in aggregated {
-            let (addr_data, source) = lookup.get_or_create_for_receive(output_type, type_index);
+            let (addr_data, status) = lookup.get_or_create_for_receive(output_type, type_index);
 
-            match source {
-                AddressSource::New => {
+            match status {
+                TrackingStatus::New => {
                     *addr_count.get_mut(output_type).unwrap() += 1;
                 }
-                AddressSource::FromEmpty => {
+                TrackingStatus::WasEmpty => {
                     *addr_count.get_mut(output_type).unwrap() += 1;
                     *empty_addr_count.get_mut(output_type).unwrap() -= 1;
                 }
-                AddressSource::Loaded => {}
+                TrackingStatus::Tracked => {}
             }
 
-            let is_new_entry = matches!(source, AddressSource::New | AddressSource::FromEmpty);
+            let is_new_entry = matches!(status, TrackingStatus::New | TrackingStatus::WasEmpty);
 
             if is_new_entry {
-                // New/from-empty address - just add to cohort
+                // New/was-empty address - just add to cohort
                 addr_data.receive_outputs(total_value, price, output_count);
                 cohorts
                     .amount_range
