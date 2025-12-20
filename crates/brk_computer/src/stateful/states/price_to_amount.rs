@@ -9,7 +9,7 @@ use brk_types::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use serde::{Deserialize, Serialize};
-use vecdb::Bytes;
+use vecdb::{Bytes, unlikely};
 
 use crate::{grouped::PERCENTILES_LEN, utils::OptionExt};
 
@@ -87,6 +87,25 @@ impl PriceToAmount {
 
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
         if let Some(amount) = self.state.um().get_mut(&price) {
+            if unlikely(*amount < supply_state.value) {
+                let amount = *amount;
+                panic!(
+                    "PriceToAmount::decrement underflow!\n\
+                    Path: {:?}\n\
+                    Price: {}\n\
+                    Bucket amount: {}\n\
+                    Trying to decrement by: {}\n\
+                    Supply state: utxo_count={}, value={}\n\
+                    All buckets: {:?}",
+                    self.pathbuf,
+                    price,
+                    amount,
+                    supply_state.value,
+                    supply_state.utxo_count,
+                    supply_state.value,
+                    self.state.u().iter().collect::<Vec<_>>()
+                );
+            }
             *amount -= supply_state.value;
             if *amount == Sats::ZERO {
                 self.state.um().remove(&price);
@@ -95,8 +114,18 @@ impl PriceToAmount {
                 buckets.decrement(price, supply_state.value);
             }
         } else {
-            dbg!(price, &self.pathbuf);
-            unreachable!();
+            panic!(
+                "PriceToAmount::decrement price not found!\n\
+                Path: {:?}\n\
+                Price: {}\n\
+                Supply state: utxo_count={}, value={}\n\
+                All buckets: {:?}",
+                self.pathbuf,
+                price,
+                supply_state.utxo_count,
+                supply_state.value,
+                self.state.u().iter().collect::<Vec<_>>()
+            );
         }
     }
 

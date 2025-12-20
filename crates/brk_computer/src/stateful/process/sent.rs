@@ -8,7 +8,7 @@
 use brk_error::Result;
 use brk_grouper::{ByAddressType, Filtered};
 use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
-use vecdb::VecIndex;
+use vecdb::{VecIndex, unlikely};
 
 use super::super::address::HeightToAddressTypeToVec;
 use super::super::cohorts::AddressCohorts;
@@ -63,13 +63,36 @@ pub fn process_sent(
 
                 if will_be_empty || filters_differ {
                     // Subtract from old cohort
-                    cohorts
+                    let cohort_state = cohorts
                         .amount_range
                         .get_mut(prev_balance)
                         .state
                         .as_mut()
-                        .unwrap()
-                        .subtract(addr_data);
+                        .unwrap();
+
+                    // Debug info for tracking down underflow issues
+                    if unlikely(
+                        cohort_state.inner.supply.utxo_count < addr_data.utxo_count() as u64,
+                    ) {
+                        panic!(
+                            "process_sent: cohort underflow detected!\n\
+                            Block context: prev_height={:?}, output_type={:?}, type_index={:?}\n\
+                            prev_balance={}, new_balance={}, value={}\n\
+                            will_be_empty={}, filters_differ={}\n\
+                            Address: {:?}",
+                            prev_height,
+                            output_type,
+                            type_index,
+                            prev_balance,
+                            new_balance,
+                            value,
+                            will_be_empty,
+                            filters_differ,
+                            addr_data
+                        );
+                    }
+
+                    cohort_state.subtract(addr_data);
 
                     // Update address data
                     addr_data.send(value, prev_price)?;

@@ -8,27 +8,29 @@ Generate typed API clients for **Rust, JavaScript, and Python** with:
 
 ## Current State
 
-### What Exists
+### What's Working ✅
 
-1. **`js.rs`**: Generates compressed metric catalogs for JS (constants only, no HTTP client)
-2. **`tree.rs`**: (kept for reference, not compiled) Brainstorming output for pattern extraction
-3. **`generator/`**: Module structure for client generation
-   - `types.rs`: Intermediate representation (`ClientMetadata`, `MetricInfo`, `IndexPattern`, `schema_to_jsdoc`)
-   - `rust.rs`: Rust client generation (stub)
-   - `javascript.rs`: JavaScript + JSDoc client generation ✅ IMPLEMENTED
-   - `python.rs`: Python client generation (stub)
+1. **JS + JSDoc generator**: Generates `client.js` with full JSDoc type annotations
+2. **Python generator**: Generates `client.py` with type hints and httpx
+3. **Rust generator**: Generates `client.rs` with strong typing and reqwest
+4. **schemars integration**: JSON schemas embedded in `MetricLeafWithSchema` for type info
+5. **Tree navigation**: `client.tree.blocks.difficulty.fetch()` pattern
+6. **OpenAPI integration**: All GET endpoints generate typed methods
+7. **Server integration**: brk_server calls brk_binder on startup (when clients/ dir exists)
 
-### What's Working
+### Generated Output
 
-- **JS + JSDoc generator**: Generates `client.js` with full JSDoc type annotations
-- **schemars integration**: JSON schemas embedded in `MetricLeafWithSchema` for type info
-- **Tree navigation**: `client.tree.blocks.difficulty.fetch()` pattern
+When `crates/brk_binder/clients/` directory exists, running the server generates:
 
-### What's Missing
-
-- OpenAPI integration for non-metric endpoints
-- Python client implementation
-- Rust client implementation
+```
+crates/brk_binder/clients/
+├── javascript/
+│   └── client.js      # JS + JSDoc with tree + API methods
+├── python/
+│   └── client.py      # Python with type hints + httpx
+└── rust/
+    └── client.rs      # Rust with reqwest + strong typing
+```
 
 ## Target Architecture
 
@@ -56,13 +58,13 @@ const data = await client.tree.supply.active.by_date.fetch();
 ```python
 # Python
 client = BrkClient("http://localhost:3000")
-data = await client.tree.supply.active.by_date.fetch()
+data = client.tree.supply.active.by_date.fetch()
 ```
 
 ```rust
 // Rust
-let client = BrkClient::new("http://localhost:3000");
-let data = client.tree.supply.active.by_date.fetch().await?;
+let client = BrkClient::new("http://localhost:3000")?;
+let data = client.tree().supply.active.by_date.fetch()?;
 ```
 
 ## Implementation Details
@@ -78,19 +80,11 @@ Each tree leaf becomes a "smart node" holding a client reference:
  * @template T
  */
 class MetricNode {
-  /**
-   * @param {BrkClientBase} client
-   * @param {string} path
-   */
   constructor(client, path) {
     this._client = client;
     this._path = path;
   }
 
-  /**
-   * Fetch the metric value
-   * @returns {Promise<T>}
-   */
   async fetch() {
     return this._client.get(this._path);
   }
@@ -100,30 +94,30 @@ class MetricNode {
 ```python
 # Python
 class MetricNode(Generic[T]):
-    def __init__(self, client: BrkClient, path: str):
+    def __init__(self, client: BrkClientBase, path: str):
         self._client = client
         self._path = path
 
-    async def fetch(self) -> T:
-        return await self._client.get(self._path)
+    def fetch(self) -> T:
+        return self._client.get(self._path)
 ```
 
 ```rust
 // Rust
-pub struct MetricNode<T> {
-    client: Arc<BrkClient>,
+pub struct MetricNode<'a, T> {
+    client: &'a BrkClientBase,
     path: &'static str,
-    _phantom: PhantomData<T>,
+    _marker: PhantomData<T>,
 }
 
-impl<T: DeserializeOwned> MetricNode<T> {
-    pub async fn fetch(&self) -> Result<T, BrkError> {
-        self.client.get(&self.path).await
+impl<'a, T: DeserializeOwned> MetricNode<'a, T> {
+    pub fn fetch(&self) -> Result<T> {
+        self.client.get(self.path)
     }
 }
 ```
 
-### Pattern Reuse (from tree.rs)
+### Pattern Reuse
 
 To avoid 20k+ individual types, reuse structural patterns:
 
@@ -142,17 +136,6 @@ struct Supply {
 }
 ```
 
-### Rust Client: Using brk_types
-
-The Rust client should import `brk_types` rather than generating duplicate types:
-
-```rust
-use brk_types::{Height, Sats, DateIndex, ...};
-
-// Response types come from brk_types
-pub struct MetricNode<T: brk_types::Metric> { ... }
-```
-
 ## Type Discovery Solution ✅ IMPLEMENTED
 
 ### The Problem
@@ -163,45 +146,9 @@ Type information was erased at runtime because metrics are stored as `&dyn AnyEx
 
 Use `std::any::type_name::<T>()` with caching to extract short type names.
 
-> **Note**: Unlike `PrintableIndex` which needs `to_possible_strings()` for parsing from
-> multiple string representations, for values we only need output, so `type_name` suffices.
-
 #### Implementation (vecdb)
 
-Added `short_type_name<T>()` helper in `traits/printable.rs`:
-
-```rust
-pub fn short_type_name<T: 'static>() -> &'static str {
-    static CACHE: OnceLock<Mutex<HashMap<&'static str, &'static str>>> = OnceLock::new();
-
-    let full: &'static str = std::any::type_name::<T>();
-    // ... caching logic, extracts "Sats" from "brk_types::sats::Sats"
-}
-```
-
-Added `value_type_to_string()` to `AnyVec` trait in `traits/any.rs`:
-
-```rust
-pub trait AnyVec: Send + Sync {
-    // ... existing methods
-    fn value_type_to_string(&self) -> &'static str;
-}
-```
-
-Implemented in all vec variants:
-- `variants/eager/mod.rs`
-- `variants/lazy/from1/mod.rs`, `from2/mod.rs`, `from3/mod.rs`
-- `variants/raw/inner/mod.rs`
-- `variants/compressed/inner/mod.rs`
-- `variants/macros.rs` (for wrapper types)
-
-```rust
-fn value_type_to_string(&self) -> &'static str {
-    short_type_name::<V::T>()
-}
-```
-
-**No changes needed to brk_types** - works automatically for all types.
+Added `short_type_name<T>()` helper and `value_type_to_string()` to `AnyVec` trait.
 
 ### Result
 
@@ -219,26 +166,11 @@ for (metric_name, index_to_vec) in &vecs.metric_to_index_to_vec {
 }
 ```
 
-This enables fully typed client generation.
-
 ## TreeNode Enhancement ✅ IMPLEMENTED
-
-### The Problem
-
-`TreeNode::Leaf` originally held just a `String` (the metric name), losing type and index information.
-
-### The Solution
 
 Changed `TreeNode::Leaf(String)` to `TreeNode::Leaf(MetricLeafWithSchema)` where:
 
 ```rust
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
-pub struct MetricLeaf {
-    pub name: String,
-    pub value_type: String,
-    pub indexes: BTreeSet<Index>,
-}
-
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct MetricLeafWithSchema {
     #[serde(flatten)]
@@ -248,113 +180,68 @@ pub struct MetricLeafWithSchema {
 }
 ```
 
-#### Implementation
+## OpenAPI Integration ✅ IMPLEMENTED
 
-**brk_types/src/treenode.rs**:
-- Added `MetricLeaf` struct with `name`, `value_type`, and `indexes`
-- Added `MetricLeafWithSchema` wrapper with JSON schema
-- Helper methods: `name()`, `value_type()`, `indexes()`, `is_same_metric()`, `merge_indexes()`
-- Updated `TreeNode` enum to use `Leaf(MetricLeafWithSchema)`
+### Flow
 
-**brk_traversable/src/lib.rs**:
-- Added `make_leaf<I, T, V>()` helper that creates `MetricLeafWithSchema` with schema from schemars
-- Updated all `Traversable::to_tree_node()` implementations with `JsonSchema` bounds
-- Schema generated via `schemars::SchemaGenerator::default().into_root_schema_for::<T>()`
+1. brk_server creates OpenAPI spec via aide
+2. On startup, serializes spec to JSON string
+3. Passes JSON to `brk_binder::generate_clients()`
+4. brk_binder parses with `oas3` crate (supports OpenAPI 3.1)
+5. Generates typed methods for all GET endpoints
 
-**vecdb** (schemars feature):
-- Added optional `schemars` dependency
-- Added `AnySchemaVec` trait with blanket impl for `TypedVec where T: JsonSchema`
+### Why oas3?
 
-### Result
-
-The catalog tree now includes full type information and JSON schema at each leaf:
-
-```rust
-TreeNode::Leaf(MetricLeafWithSchema {
-    leaf: MetricLeaf {
-        name: "difficulty".to_string(),
-        value_type: "StoredF64".to_string(),
-        indexes: btreeset![Index::Height, Index::Date],
-    },
-    schema: json!({ "type": "number" }),  // schemars-generated
-})
-```
-
-When trees are merged/simplified, indexes are unioned together.
-
-### 2. Async Runtime
-
-- TypeScript: Native `Promise`
-- Python: `asyncio` or sync variant?
-- Rust: `tokio` assumed, or feature-flag for other runtimes?
-
-### 3. Error Handling
-
-- HTTP errors (4xx, 5xx)
-- Deserialization errors
-- Network errors
-- Should errors be typed per language?
-
-### 4. Additional Client Features
-
-- Request timeout configuration
-- Retry logic
-- Rate limiting
-- Caching
-- Batch requests (fetch multiple metrics at once)
+aide generates OpenAPI 3.1 specs. The `openapiv3` crate only supports 3.0.x.
+The `oas3` crate supports OpenAPI 3.1.x parsing.
 
 ## Tasks
 
 ### Phase 0: Type Infrastructure ✅ COMPLETE
 
-- [x] **vecdb**: Add `short_type_name<T>()` helper in `traits/printable.rs`
-- [x] **vecdb**: Add `value_type_to_string()` to `AnyVec` trait
-- [x] **vecdb**: Implement in all vec variants (eager, lazy, raw, compressed, macros)
-- [x] **vecdb**: Add optional `schemars` feature with `AnySchemaVec` trait
-- [x] **brk_types**: Enhance `TreeNode::Leaf` to include `MetricLeafWithSchema`
-- [x] **brk_types**: Add `JsonSchema` derives to all value types
-- [x] **brk_traversable**: Update all `to_tree_node()` implementations with schemars integration
-- [x] **brk_query**: Export `Vecs` publicly for client generation
-- [x] **brk_binder**: Set up generator module structure
-- [x] **brk**: Verify compilation
+- [x] vecdb: Add `short_type_name<T>()` and `value_type_to_string()`
+- [x] vecdb: Add optional `schemars` feature with `AnySchemaVec` trait
+- [x] brk_types: Enhance `TreeNode::Leaf` to include `MetricLeafWithSchema`
+- [x] brk_traversable: Update all `to_tree_node()` with schemars integration
+- [x] brk_binder: Set up generator module structure
 
 ### Phase 1: JavaScript Client ✅ COMPLETE
 
 - [x] Define `MetricNode` class with JSDoc generics
 - [x] Define `BrkClient` with base HTTP functionality
-- [x] Implement `ClientMetadata::from_vecs()` to extract metadata
 - [x] Generate `client.js` with full JSDoc type annotations
-- [x] Use `schema_to_jsdoc()` to convert JSON schemas to JSDoc types
 - [x] Tree navigation: `client.tree.category.metric.fetch()`
+- [x] API methods from OpenAPI endpoints
 
-### Phase 2: OpenAPI Integration (NEXT)
+### Phase 2: OpenAPI Integration ✅ COMPLETE
 
-- [ ] Add `openapiv3` crate dependency
-- [ ] Parse OpenAPI spec from aide (brk_server generates this)
-- [ ] Extract non-metric endpoint definitions (health, info, catalog, etc.)
-- [ ] Generate methods for each endpoint with proper types
-- [ ] Merge with tree-based metric access
+- [x] Add `oas3` crate dependency (OpenAPI 3.1 support)
+- [x] brk_server passes OpenAPI JSON to brk_binder on startup
+- [x] Parse OpenAPI spec and extract endpoint definitions
+- [x] Generate typed methods for each GET endpoint
 
-### Phase 3: Python Client
+### Phase 3: Python Client ✅ COMPLETE
 
-- [ ] Define `MetricNode` class with type hints
-- [ ] Define `BrkClient` with httpx/aiohttp
-- [ ] Generate typed methods from OpenAPI
-- [ ] Generate tree navigation
+- [x] Define `MetricNode` class with type hints
+- [x] Define `BrkClient` with httpx
+- [x] Generate typed methods from OpenAPI
+- [x] Generate tree navigation
 
-### Phase 4: Rust Client
+### Phase 4: Rust Client ✅ COMPLETE
 
-- [ ] Define `MetricNode<T>` struct using `brk_types`
-- [ ] Define `BrkClient` with reqwest
-- [ ] Import types from `brk_types` instead of generating
-- [ ] Generate tree navigation with proper lifetimes
+- [x] Define `MetricNode<T>` struct with lifetimes
+- [x] Define `BrkClient` with reqwest (blocking)
+- [x] Generate tree navigation with proper lifetimes
+- [x] Generate typed methods from OpenAPI
 
 ### Phase 5: Polish
 
+- [x] Switch from `openapiv3` to `oas3` crate
 - [ ] Error types per language
 - [ ] Documentation generation
 - [ ] Tests
 - [ ] Example usage in each language
+- [ ] Async Rust client variant
 
 ## File Structure
 
@@ -362,17 +249,27 @@ When trees are merged/simplified, indexes are unioned together.
 crates/brk_binder/
 ├── src/
 │   ├── lib.rs
-│   ├── js.rs           # JS constants generation (existing)
-│   ├── tree.rs         # Pattern extraction (reference only, not compiled)
+│   ├── js.rs              # JS constants generation (existing)
 │   └── generator/
-│       ├── mod.rs
-│       ├── types.rs    # ClientMetadata, MetricInfo, IndexPattern, schema_to_jsdoc
-│       ├── javascript.rs  # JavaScript + JSDoc client generation ✅
-│       ├── python.rs      # Python client generation (stub)
-│       └── rust.rs        # Rust client generation (stub)
+│       ├── mod.rs         # generate_clients() entry point
+│       ├── types.rs       # ClientMetadata, MetricInfo, IndexPattern
+│       ├── openapi.rs     # OpenAPI 3.1 spec parsing (oas3)
+│       ├── javascript.rs  # JavaScript + JSDoc client ✅
+│       ├── python.rs      # Python client ✅
+│       └── rust.rs        # Rust client ✅
+├── clients/               # Generated output (gitignored)
+│   ├── javascript/
+│   ├── python/
+│   └── rust/
 ├── Cargo.toml
 ├── README.md
-└── DESIGN.md           # This file
+└── DESIGN.md
+
+crates/brk_server/
+└── src/
+    ├── lib.rs             # Calls brk_binder::generate_clients() on startup
+    └── api/
+        └── openapi.rs     # create_openapi() for aide
 ```
 
 ## Dependencies
@@ -381,11 +278,19 @@ crates/brk_binder/
 [dependencies]
 brk_query = { workspace = true }
 brk_types = { workspace = true }
+oas3 = "0.20"                # OpenAPI 3.1 spec parsing
 schemars = { workspace = true }
 serde_json = { workspace = true }
-vecdb = { workspace = true }
+```
 
-# For OpenAPI integration (Phase 2):
-# openapiv3 = "2"         # OpenAPI parsing
-# serde_yaml = "0.9"      # If parsing YAML specs
+## Usage
+
+To generate clients:
+
+```bash
+# Create the output directory
+mkdir -p crates/brk_binder/clients
+
+# Run the server (generates clients on startup)
+cargo run -p brk_server
 ```

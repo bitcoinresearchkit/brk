@@ -2,6 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_types::{Dollars, Height, LoadedAddressData, Sats};
+use vecdb::unlikely;
 
 use crate::stateful::states::{RealizedState, SupplyState};
 
@@ -136,11 +137,46 @@ impl AddressCohortState {
     }
 
     pub fn subtract(&mut self, addressdata: &LoadedAddressData) {
-        self.addr_count = self.addr_count.checked_sub(1).unwrap();
+        let addr_supply: SupplyState = addressdata.into();
+        let realized_price = addressdata.realized_price();
+
+        // Check for potential underflow before it happens
+        if unlikely(self.inner.supply.utxo_count < addr_supply.utxo_count) {
+            panic!(
+                "AddressCohortState::subtract underflow!\n\
+                Cohort state: addr_count={}, supply={}\n\
+                Address being subtracted: {}\n\
+                Address supply: {}\n\
+                Realized price: {}\n\
+                This means the address is not properly tracked in this cohort.",
+                self.addr_count, self.inner.supply, addressdata, addr_supply, realized_price
+            );
+        }
+        if unlikely(self.inner.supply.value < addr_supply.value) {
+            panic!(
+                "AddressCohortState::subtract value underflow!\n\
+                Cohort state: addr_count={}, supply={}\n\
+                Address being subtracted: {}\n\
+                Address supply: {}\n\
+                Realized price: {}\n\
+                This means the address is not properly tracked in this cohort.",
+                self.addr_count, self.inner.supply, addressdata, addr_supply, realized_price
+            );
+        }
+
+        self.addr_count = self.addr_count.checked_sub(1).unwrap_or_else(|| {
+            panic!(
+                "AddressCohortState::subtract addr_count underflow! addr_count=0\n\
+                Address being subtracted: {}\n\
+                Realized price: {}",
+                addressdata, realized_price
+            )
+        });
+
         self.inner.decrement_(
-            &addressdata.into(),
+            &addr_supply,
             addressdata.realized_cap,
-            addressdata.realized_price(),
+            realized_price,
         );
     }
 

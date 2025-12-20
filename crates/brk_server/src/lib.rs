@@ -89,6 +89,7 @@ impl Server {
             .on_failure(())
             .on_eos(());
 
+        let vecs = state.query.inner().vecs();
         let router = ApiRouter::new()
             .add_api_routes()
             .add_mcp_routes(&state.query, mcp)
@@ -133,10 +134,25 @@ impl Server {
         info!("Starting server on port {port}...");
 
         let mut openapi = create_openapi();
+        let router = router.finish_api(&mut openapi);
+
+        let clients_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("brk_binder")
+            .join("clients");
+        if clients_path.exists() {
+            let openapi_json = serde_json::to_string(&openapi).unwrap();
+            if let Err(e) = brk_binder::generate_clients(vecs, &openapi_json, &clients_path) {
+                error!("Failed to generate clients: {e}");
+            } else {
+                info!("Generated clients at {}", clients_path.display());
+            }
+        }
+
         serve(
             listener,
             router
-                .finish_api(&mut openapi)
                 .layer(Extension(Arc::new(openapi)))
                 .into_make_service(),
         )

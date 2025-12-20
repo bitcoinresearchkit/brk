@@ -34,10 +34,30 @@ impl<'a> AddressLookup<'a> {
 
         match map.entry(type_index) {
             Entry::Occupied(entry) => {
+                // Address is in cache. Need to determine if it's been processed
+                // by process_received (added to a cohort) or just loaded this block.
+                //
+                // - If wrapper is New AND funded_txo_count == 0: hasn't received yet,
+                //   was just created in process_outputs this block → New
+                // - If wrapper is New AND funded_txo_count > 0: received in previous
+                //   block but still in cache (no flush) → Loaded
+                // - If wrapper is FromLoaded/FromEmpty: loaded from storage → use wrapper
                 let source = match entry.get() {
-                    WithAddressDataSource::New(_) => AddressSource::New,
+                    WithAddressDataSource::New(data) => {
+                        if data.funded_txo_count == 0 {
+                            AddressSource::New
+                        } else {
+                            AddressSource::Loaded
+                        }
+                    }
                     WithAddressDataSource::FromLoaded(..) => AddressSource::Loaded,
-                    WithAddressDataSource::FromEmpty(..) => AddressSource::FromEmpty,
+                    WithAddressDataSource::FromEmpty(_, data) => {
+                        if data.utxo_count() == 0 {
+                            AddressSource::FromEmpty
+                        } else {
+                            AddressSource::Loaded
+                        }
+                    }
                 };
                 (entry.into_mut(), source)
             }

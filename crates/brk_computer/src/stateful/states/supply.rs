@@ -39,8 +39,22 @@ impl AddAssign<&SupplyState> for SupplyState {
 
 impl SubAssign<&SupplyState> for SupplyState {
     fn sub_assign(&mut self, rhs: &Self) {
-        self.utxo_count = self.utxo_count.checked_sub(rhs.utxo_count).unwrap();
-        self.value = self.value.checked_sub(rhs.value).unwrap();
+        self.utxo_count = self.utxo_count.checked_sub(rhs.utxo_count).unwrap_or_else(|| {
+            panic!(
+                "SupplyState underflow: cohort utxo_count {} < address utxo_count {}. \
+                This indicates a desync between cohort state and address data. \
+                Try deleting the compute cache and restarting fresh.",
+                self.utxo_count, rhs.utxo_count
+            )
+        });
+        self.value = self.value.checked_sub(rhs.value).unwrap_or_else(|| {
+            panic!(
+                "SupplyState underflow: cohort value {} < address value {}. \
+                This indicates a desync between cohort state and address data. \
+                Try deleting the compute cache and restarting fresh.",
+                self.value, rhs.value
+            )
+        });
     }
 }
 

@@ -62,13 +62,30 @@ pub fn process_received(
 
                 if AmountBucket::from(prev_balance) != AmountBucket::from(new_balance) {
                     // Crossing cohort boundary - subtract from old, add to new
-                    cohorts
+                    let cohort_state = cohorts
                         .amount_range
                         .get_mut(prev_balance)
                         .state
                         .as_mut()
-                        .unwrap()
-                        .subtract(addr_data);
+                        .unwrap();
+
+                    // Debug info for tracking down underflow issues
+                    if cohort_state.inner.supply.utxo_count < addr_data.utxo_count() as u64 {
+                        panic!(
+                            "process_received: cohort underflow detected!\n\
+                            output_type={:?}, type_index={:?}\n\
+                            prev_balance={}, new_balance={}, total_value={}\n\
+                            Address: {:?}",
+                            output_type,
+                            type_index,
+                            prev_balance,
+                            new_balance,
+                            total_value,
+                            addr_data
+                        );
+                    }
+
+                    cohort_state.subtract(addr_data);
                     addr_data.receive_outputs(total_value, price, output_count);
                     cohorts
                         .amount_range

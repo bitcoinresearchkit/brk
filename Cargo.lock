@@ -568,6 +568,7 @@ version = "0.1.0-alpha.0"
 dependencies = [
  "brk_query",
  "brk_types",
+ "oas3",
  "schemars",
  "serde_json",
  "vecdb",
@@ -1203,6 +1204,7 @@ version = "0.1.0-alpha.0"
 dependencies = [
  "aide",
  "axum",
+ "brk_binder",
  "brk_computer",
  "brk_error",
  "brk_fetcher",
@@ -1364,9 +1366,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.49"
+version = "1.2.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90583009037521a116abf44494efecd645ba48b6622457080f080b85544e2215"
+checksum = "9f50d563227a1c37cc0a263f64eca3334388c01c5e4c4861a9def205c614383c"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -3220,6 +3222,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "oas3"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16f67c885c7b19aaf652e84102035258ecb4e0425a4f71037e187798e367bd87"
+dependencies = [
+ "derive_more",
+ "http",
+ "log",
+ "once_cell",
+ "regex",
+ "semver",
+ "serde",
+ "serde_json",
+ "url",
+]
+
+[[package]]
 name = "objc2"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4198,7 +4217,7 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "libc",
  "log",
@@ -5388,7 +5407,7 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "ctrlc",
  "log",
@@ -5407,7 +5426,7 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "quote",
  "syn 2.0.111",
