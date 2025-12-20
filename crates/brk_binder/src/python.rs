@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, to_pascal_case,
-    to_snake_case, unwrap_allof,
+    TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, is_enum_schema,
+    to_pascal_case, to_snake_case, unwrap_allof,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints
@@ -28,7 +28,7 @@ pub fn generate_python_client(
     writeln!(output, "from __future__ import annotations").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, TypedDict"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict"
     )
     .unwrap();
     writeln!(output, "import httpx\n").unwrap();
@@ -86,6 +86,10 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
                 writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
             }
             writeln!(output).unwrap();
+        } else if is_enum_schema(schema) {
+            // Enum type -> Literal union
+            let py_type = schema_to_python_type(schema);
+            writeln!(output, "{} = {}", name, py_type).unwrap();
         } else {
             // Primitive type alias
             let py_type = schema_to_python_type(schema);
@@ -147,6 +151,17 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
 
     // Reverse so dependencies come first
     result.reverse();
+
+    // Add any types that weren't processed (e.g., due to circular refs or other edge cases)
+    let result_set: HashSet<_> = result.iter().cloned().collect();
+    let mut missing: Vec<_> = schemas
+        .keys()
+        .filter(|k| !result_set.contains(*k))
+        .cloned()
+        .collect();
+    missing.sort();
+    result.extend(missing);
+
     result
 }
 
@@ -180,6 +195,18 @@ fn schema_to_python_type(schema: &Value) -> String {
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         return ref_path.rsplit('/').next().unwrap_or("Any").to_string();
+    }
+
+    // Handle enum (array of string values)
+    if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
+        let literals: Vec<String> = enum_values
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| format!("\"{}\"", s))
+            .collect();
+        if !literals.is_empty() {
+            return format!("Literal[{}]", literals.join(", "));
+        }
     }
 
     // Handle type field
@@ -786,7 +813,7 @@ fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
 /// Generate API methods from OpenAPI endpoints
 fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
     for endpoint in endpoints {
-        if endpoint.method != "GET" {
+        if !endpoint.should_generate() {
             continue;
         }
 

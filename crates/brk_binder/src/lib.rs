@@ -60,21 +60,34 @@ use serde_json::Value;
 
 /// Recursively collect leaf type schemas from the tree and add to schemas map.
 /// Only adds schemas that aren't already present (OpenAPI schemas take precedence).
-/// Also collects definitions from schemars-generated schemas (for referenced types).
+/// Collects definitions from schemars-generated schemas (for referenced types).
 fn collect_leaf_type_schemas(node: &TreeNode, schemas: &mut TypeSchemas) {
     match node {
         TreeNode::Leaf(leaf) => {
-            // Extract the inner type name (e.g., "Dollars" from "Close<Dollars>")
-            let type_name = extract_inner_type(leaf.value_type());
-
-            // Only add if not already present (OpenAPI schemas take precedence)
-            if !schemas.contains_key(&type_name) {
-                // The leaf schema is the schemars-generated JSON schema
-                schemas.insert(type_name, leaf.schema.clone());
-            }
-
-            // Also collect any definitions from the schema (schemars puts referenced types here)
+            // Collect definitions from the schema (schemars puts type schemas here)
+            // This includes the inner types like `Bitcoin` from `Close<Bitcoin>`
             collect_schema_definitions(&leaf.schema, schemas);
+
+            // Get the type name for this leaf
+            let type_name = extract_inner_type(leaf.value_type());
+            if !schemas.contains_key(&type_name) {
+                // Unwrap single-element allOf
+                let schema = unwrap_allof(&leaf.schema);
+
+                // Add the schema if it's usable:
+                // - Simple type (has "type")
+                // - Object type with properties (complex types like OHLCCents, EmptyAddressData)
+                // - Enum type (has "enum" or "oneOf")
+                // - Or a $ref to another type
+                let has_type = schema.get("type").is_some();
+                let has_properties = schema.get("properties").is_some();
+                let has_enum = schema.get("enum").is_some() || schema.get("oneOf").is_some();
+                let is_ref = schema.get("$ref").is_some();
+
+                if has_type || has_properties || has_enum || is_ref {
+                    schemas.insert(type_name, schema.clone());
+                }
+            }
         }
         TreeNode::Branch(children) => {
             for child in children.values() {

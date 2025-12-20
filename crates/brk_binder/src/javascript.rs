@@ -97,6 +97,7 @@ fn is_primitive_alias(schema: &Value) -> bool {
         && schema.get("items").is_none()
         && schema.get("anyOf").is_none()
         && schema.get("oneOf").is_none()
+        && schema.get("enum").is_none()
 }
 
 /// Convert JSON Schema to JavaScript/JSDoc type
@@ -107,6 +108,18 @@ fn schema_to_js_type(schema: &Value) -> String {
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         return ref_path.rsplit('/').next().unwrap_or("*").to_string();
+    }
+
+    // Handle enum (array of string values)
+    if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
+        let literals: Vec<String> = enum_values
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| format!("\"{}\"", s))
+            .collect();
+        if !literals.is_empty() {
+            return format!("({})", literals.join("|"));
+        }
     }
 
     // Handle type field
@@ -844,7 +857,7 @@ fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &
 /// Generate API methods
 fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
     for endpoint in endpoints {
-        if endpoint.method != "GET" {
+        if !endpoint.should_generate() {
             continue;
         }
 

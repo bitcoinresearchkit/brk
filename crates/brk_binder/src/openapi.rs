@@ -27,6 +27,16 @@ pub struct Endpoint {
     pub query_params: Vec<Parameter>,
     /// Response type (simplified)
     pub response_type: Option<String>,
+    /// Whether this endpoint is deprecated
+    pub deprecated: bool,
+}
+
+impl Endpoint {
+    /// Returns true if this endpoint should be included in client generation.
+    /// Only non-deprecated GET endpoints are included.
+    pub fn should_generate(&self) -> bool {
+        self.method == "GET" && !self.deprecated
+    }
 }
 
 /// Parameter information
@@ -161,6 +171,7 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         path_params,
         query_params,
         response_type,
+        deprecated: operation.deprecated.unwrap_or(false),
     })
 }
 

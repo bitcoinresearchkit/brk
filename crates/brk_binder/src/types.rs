@@ -196,6 +196,13 @@ pub fn unwrap_allof(schema: &Value) -> &Value {
     schema
 }
 
+/// Check if a schema represents an enum type.
+/// Enums have either an "enum" array or "oneOf" without properties.
+pub fn is_enum_schema(schema: &Value) -> bool {
+    schema.get("enum").is_some()
+        || (schema.get("oneOf").is_some() && schema.get("properties").is_none())
+}
+
 /// Extract inner type from a wrapper generic like `Close<Dollars>` -> `Dollars`.
 /// Also handles malformed types like `Dollars>` (from vecdb's short_type_name which
 /// extracts "Dollars>" from "Close<brk_types::Dollars>" using rsplit("::")).
@@ -706,7 +713,7 @@ fn generate_pattern_name(field_name: &str, name_counts: &mut HashMap<String, usi
     let pascal = to_pascal_case(field_name);
 
     // Sanitize: ensure it starts with a letter (prepend "_" if starts with digit)
-    let base_name = if pascal
+    let sanitized = if pascal
         .chars()
         .next()
         .map(|c| c.is_ascii_digit())
@@ -716,6 +723,9 @@ fn generate_pattern_name(field_name: &str, name_counts: &mut HashMap<String, usi
     } else {
         pascal
     };
+
+    // Add "Pattern" suffix to avoid conflicts with type aliases (e.g., Sats = int vs class Sats)
+    let base_name = format!("{}Pattern", sanitized);
 
     // Track usage count and append index if needed
     let count = name_counts.entry(base_name.clone()).or_insert(0);

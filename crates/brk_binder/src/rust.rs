@@ -715,7 +715,7 @@ impl BrkClient {{
 /// Generate API methods from OpenAPI endpoints
 fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
     for endpoint in endpoints {
-        if endpoint.method != "GET" {
+        if !endpoint.should_generate() {
             continue;
         }
 
