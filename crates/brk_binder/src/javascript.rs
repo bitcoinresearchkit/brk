@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
     TypeSchemas, extract_inner_type, get_first_leaf_name, get_node_fields,
-    get_pattern_instance_base, to_camel_case, to_pascal_case, unwrap_allof,
+    get_pattern_instance_base, to_camel_case, to_pascal_case,
 };
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
@@ -100,10 +100,43 @@ fn is_primitive_alias(schema: &Value) -> bool {
         && schema.get("enum").is_none()
 }
 
+/// Convert a single JSON type string to JavaScript type
+fn json_type_to_js(ty: &str, schema: &Value) -> String {
+    match ty {
+        "integer" | "number" => "number".to_string(),
+        "boolean" => "boolean".to_string(),
+        "string" => "string".to_string(),
+        "null" => "null".to_string(),
+        "array" => {
+            let item_type = schema
+                .get("items")
+                .map(schema_to_js_type)
+                .unwrap_or_else(|| "*".to_string());
+            format!("{}[]", item_type)
+        }
+        "object" => {
+            // Check if it has additionalProperties (dict-like)
+            if let Some(add_props) = schema.get("additionalProperties") {
+                let value_type = schema_to_js_type(add_props);
+                return format!("Object.<string, {}>", value_type);
+            }
+            "Object".to_string()
+        }
+        _ => "*".to_string(),
+    }
+}
+
 /// Convert JSON Schema to JavaScript/JSDoc type
 fn schema_to_js_type(schema: &Value) -> String {
-    // Unwrap single-element allOf (schemars uses this for composition)
-    let schema = unwrap_allof(schema);
+    // Handle allOf (try each element until we find a resolvable type)
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
+        for item in all_of {
+            let resolved = schema_to_js_type(item);
+            if resolved != "*" {
+                return resolved;
+            }
+        }
+    }
 
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
@@ -122,23 +155,39 @@ fn schema_to_js_type(schema: &Value) -> String {
         }
     }
 
-    // Handle type field
-    if let Some(ty) = schema.get("type").and_then(|t| t.as_str()) {
-        return match ty {
-            "integer" | "number" => "number".to_string(),
-            "boolean" => "boolean".to_string(),
-            "string" => "string".to_string(),
-            "null" => "null".to_string(),
-            "array" => {
-                let item_type = schema
-                    .get("items")
-                    .map(schema_to_js_type)
-                    .unwrap_or_else(|| "*".to_string());
-                format!("{}[]", item_type)
+    // Handle type field (can be string or array of strings)
+    if let Some(ty) = schema.get("type") {
+        // Handle array of types like ["string", "null"] for Optional
+        if let Some(type_array) = ty.as_array() {
+            let types: Vec<String> = type_array
+                .iter()
+                .filter_map(|t| t.as_str())
+                .filter(|t| *t != "null")
+                .map(|t| json_type_to_js(t, schema))
+                .collect();
+            let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
+
+            if types.len() == 1 {
+                let base_type = &types[0];
+                return if has_null {
+                    format!("?{}", base_type)
+                } else {
+                    base_type.clone()
+                };
+            } else if !types.is_empty() {
+                let union = format!("({})", types.join("|"));
+                return if has_null {
+                    format!("?{}", union)
+                } else {
+                    union
+                };
             }
-            "object" => "Object".to_string(),
-            _ => "*".to_string(),
-        };
+        }
+
+        // Handle single type string
+        if let Some(ty_str) = ty.as_str() {
+            return json_type_to_js(ty_str, schema);
+        }
     }
 
     // Handle anyOf/oneOf
@@ -148,7 +197,22 @@ fn schema_to_js_type(schema: &Value) -> String {
         .and_then(|v| v.as_array())
     {
         let types: Vec<String> = variants.iter().map(schema_to_js_type).collect();
+        // Filter out * and null for cleaner unions
+        let filtered: Vec<_> = types.iter().filter(|t| *t != "*").collect();
+        if !filtered.is_empty() {
+            return format!("({})", filtered.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("|"));
+        }
         return format!("({})", types.join("|"));
+    }
+
+    // Check for format hint without type (common in OpenAPI)
+    if let Some(format) = schema.get("format").and_then(|f| f.as_str()) {
+        return match format {
+            "int32" | "int64" => "number".to_string(),
+            "float" | "double" => "number".to_string(),
+            "date" | "date-time" => "string".to_string(),
+            _ => "*".to_string(),
+        };
     }
 
     "*".to_string()

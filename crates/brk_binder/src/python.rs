@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
     TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, is_enum_schema,
-    to_pascal_case, to_snake_case, unwrap_allof,
+    to_pascal_case, to_snake_case,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints
@@ -187,10 +187,44 @@ fn collect_schema_refs(schema: &Value, refs: &mut std::collections::HashSet<Stri
     }
 }
 
+/// Convert a single JSON type string to Python type
+fn json_type_to_python(ty: &str, schema: &Value) -> String {
+    match ty {
+        "integer" => "int".to_string(),
+        "number" => "float".to_string(),
+        "boolean" => "bool".to_string(),
+        "string" => "str".to_string(),
+        "null" => "None".to_string(),
+        "array" => {
+            let item_type = schema
+                .get("items")
+                .map(schema_to_python_type)
+                .unwrap_or_else(|| "Any".to_string());
+            format!("List[{}]", item_type)
+        }
+        "object" => {
+            // Check if it has additionalProperties (dict-like)
+            if let Some(add_props) = schema.get("additionalProperties") {
+                let value_type = schema_to_python_type(add_props);
+                return format!("dict[str, {}]", value_type);
+            }
+            "dict".to_string()
+        }
+        _ => "Any".to_string(),
+    }
+}
+
 /// Convert JSON Schema to Python type
 fn schema_to_python_type(schema: &Value) -> String {
-    // Unwrap single-element allOf (schemars uses this for composition)
-    let schema = unwrap_allof(schema);
+    // Handle allOf (try each element until we find a resolvable type)
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
+        for item in all_of {
+            let resolved = schema_to_python_type(item);
+            if resolved != "Any" {
+                return resolved;
+            }
+        }
+    }
 
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
@@ -209,24 +243,39 @@ fn schema_to_python_type(schema: &Value) -> String {
         }
     }
 
-    // Handle type field
-    if let Some(ty) = schema.get("type").and_then(|t| t.as_str()) {
-        return match ty {
-            "integer" => "int".to_string(),
-            "number" => "float".to_string(),
-            "boolean" => "bool".to_string(),
-            "string" => "str".to_string(),
-            "null" => "None".to_string(),
-            "array" => {
-                let item_type = schema
-                    .get("items")
-                    .map(schema_to_python_type)
-                    .unwrap_or_else(|| "Any".to_string());
-                format!("List[{}]", item_type)
+    // Handle type field (can be string or array of strings)
+    if let Some(ty) = schema.get("type") {
+        // Handle array of types like ["string", "null"] for Optional
+        if let Some(type_array) = ty.as_array() {
+            let types: Vec<String> = type_array
+                .iter()
+                .filter_map(|t| t.as_str())
+                .filter(|t| *t != "null") // Filter out null for cleaner Optional handling
+                .map(|t| json_type_to_python(t, schema))
+                .collect();
+            let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
+
+            if types.len() == 1 {
+                let base_type = &types[0];
+                return if has_null {
+                    format!("Optional[{}]", base_type)
+                } else {
+                    base_type.clone()
+                };
+            } else if !types.is_empty() {
+                let union = types.join(" | ");
+                return if has_null {
+                    format!("Optional[{}]", union)
+                } else {
+                    union
+                };
             }
-            "object" => "dict".to_string(),
-            _ => "Any".to_string(),
-        };
+        }
+
+        // Handle single type string
+        if let Some(ty_str) = ty.as_str() {
+            return json_type_to_python(ty_str, schema);
+        }
     }
 
     // Handle anyOf/oneOf
@@ -236,7 +285,22 @@ fn schema_to_python_type(schema: &Value) -> String {
         .and_then(|v| v.as_array())
     {
         let types: Vec<String> = variants.iter().map(schema_to_python_type).collect();
+        // Filter out Any and null for cleaner unions
+        let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
+        if !filtered.is_empty() {
+            return filtered.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" | ");
+        }
         return types.join(" | ");
+    }
+
+    // Check for format hint without type (common in OpenAPI)
+    if let Some(format) = schema.get("format").and_then(|f| f.as_str()) {
+        return match format {
+            "int32" | "int64" => "int".to_string(),
+            "float" | "double" => "float".to_string(),
+            "date" | "date-time" => "str".to_string(),
+            _ => "Any".to_string(),
+        };
     }
 
     "Any".to_string()
