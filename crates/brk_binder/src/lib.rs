@@ -1,3 +1,36 @@
+//! Client library generator for BRK.
+//!
+//! This crate generates typed client libraries in multiple languages (Rust, JavaScript, Python)
+//! from the BRK metric catalog and OpenAPI specification.
+//!
+//! # Usage
+//!
+//! ```ignore
+//! use brk_binder::generate_clients;
+//! use brk_query::Vecs;
+//! use std::path::Path;
+//!
+//! let vecs = Vecs::load("path/to/data")?;
+//! let openapi_json = std::fs::read_to_string("openapi.json")?;
+//! generate_clients(&vecs, &openapi_json, Path::new("output"))?;
+//! ```
+//!
+//! # Architecture
+//!
+//! The generator works in several phases:
+//!
+//! 1. **Metadata extraction** - Analyzes the metric catalog tree to detect:
+//!    - Structural patterns (repeated tree shapes)
+//!    - Index set patterns (common index combinations)
+//!    - Generic patterns (structures that differ only in value type)
+//!
+//! 2. **Schema collection** - Merges OpenAPI schemas with schemars-generated type schemas
+//!
+//! 3. **Code generation** - Produces language-specific clients:
+//!    - Rust: Uses `brk_types` directly, generates structs with lifetimes
+//!    - JavaScript: Generates JSDoc-typed ES modules with factory functions
+//!    - Python: Generates typed classes with TypedDict and Generic support
+
 use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::Path};
 
 use brk_query::Vecs;

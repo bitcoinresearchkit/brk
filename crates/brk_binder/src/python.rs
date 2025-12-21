@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, extract_inner_type, get_node_fields, get_pattern_instance_base, is_enum_schema,
-    to_pascal_case, to_snake_case,
+    TypeSchemas, extract_inner_type, get_fields_with_child_info, get_node_fields,
+    get_pattern_instance_base, is_enum_schema, to_pascal_case, to_snake_case,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints
@@ -561,7 +561,7 @@ fn generate_parameterized_python_field(
         format!("f'/{{acc}}_{}'", field.name)
     };
 
-    if field_uses_accessor(field, metadata) {
+    if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -595,7 +595,7 @@ fn generate_tree_path_python_field(
             field_name, py_type, field.rust_type, field.name
         )
         .unwrap();
-    } else if field_uses_accessor(field, metadata) {
+    } else if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -661,10 +661,6 @@ fn field_to_python_type_with_generic_value(
     }
 }
 
-/// Check if a field should use an index accessor
-fn field_uses_accessor(field: &PatternField, metadata: &ClientMetadata) -> bool {
-    metadata.find_index_set_pattern(&field.indexes).is_some()
-}
 
 /// Generate tree classes
 fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -691,179 +687,132 @@ fn generate_tree_class(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    if let TreeNode::Branch(children) = node {
-        // Build signature with child field info for generic pattern lookup
-        let fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
-            .iter()
-            .map(|(child_name, child_node)| {
-                let (rust_type, json_type, indexes, child_fields) = match child_node {
-                    TreeNode::Leaf(leaf) => (
-                        leaf.value_type().to_string(),
-                        leaf.schema
-                            .get("type")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("object")
-                            .to_string(),
-                        leaf.indexes().clone(),
-                        None,
-                    ),
-                    TreeNode::Branch(grandchildren) => {
-                        let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                        let pattern_name = pattern_lookup
-                            .get(&child_fields)
-                            .cloned()
-                            .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (
-                            pattern_name.clone(),
-                            pattern_name,
-                            std::collections::BTreeSet::new(),
-                            Some(child_fields),
-                        )
-                    }
-                };
-                (
-                    PatternField {
-                        name: child_name.clone(),
-                        rust_type,
-                        json_type,
-                        indexes,
-                    },
-                    child_fields,
+    let TreeNode::Branch(children) = node else {
+        return;
+    };
+
+    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
+    let fields: Vec<PatternField> = fields_with_child_info
+        .iter()
+        .map(|(f, _)| f.clone())
+        .collect();
+
+    // Skip if this matches a pattern (already generated)
+    if pattern_lookup.contains_key(&fields) && pattern_lookup.get(&fields) != Some(&name.to_string())
+    {
+        return;
+    }
+
+    if generated.contains(name) {
+        return;
+    }
+    generated.insert(name.to_string());
+
+    writeln!(output, "class {}:", name).unwrap();
+    writeln!(output, "    \"\"\"Catalog tree node.\"\"\"").unwrap();
+    writeln!(output, "    ").unwrap();
+    writeln!(
+        output,
+        "    def __init__(self, client: BrkClientBase, base_path: str = ''):"
+    )
+    .unwrap();
+
+    for ((field, child_fields_opt), (child_name, child_node)) in
+        fields_with_child_info.iter().zip(children.iter())
+    {
+        let generic_value_type = child_fields_opt
+            .as_ref()
+            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+        let py_type = field_to_python_type_with_generic_value(
+            field,
+            metadata,
+            false,
+            generic_value_type.as_deref(),
+        );
+        let field_name_py = to_snake_case(&field.name);
+
+        if metadata.is_pattern_type(&field.rust_type) {
+            let pattern = metadata.find_pattern(&field.rust_type);
+            let is_parameterizable = pattern.is_some_and(|p| p.is_parameterizable());
+
+            if is_parameterizable {
+                let metric_base = get_pattern_instance_base(child_node, child_name);
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, '{}')",
+                    field_name_py, py_type, field.rust_type, metric_base
                 )
-            })
-            .collect();
-
-        let fields: Vec<PatternField> = fields_with_child_info
-            .iter()
-            .map(|(f, _)| f.clone())
-            .collect();
-
-        // Skip if this matches a pattern (already generated)
-        if pattern_lookup.contains_key(&fields)
-            && pattern_lookup.get(&fields) != Some(&name.to_string())
-        {
-            return;
-        }
-
-        if generated.contains(name) {
-            return;
-        }
-        generated.insert(name.to_string());
-
-        writeln!(output, "class {}:", name).unwrap();
-        writeln!(output, "    \"\"\"Catalog tree node.\"\"\"").unwrap();
-        writeln!(output, "    ").unwrap();
-        writeln!(
-            output,
-            "    def __init__(self, client: BrkClientBase, base_path: str = ''):"
-        )
-        .unwrap();
-
-        for ((field, child_fields_opt), (child_name, child_node)) in
-            fields_with_child_info.iter().zip(children.iter())
-        {
-            // For generic patterns, extract the value type from child fields
-            let generic_value_type = child_fields_opt
-                .as_ref()
-                .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
-            let py_type = field_to_python_type_with_generic_value(
-                field,
-                metadata,
-                false,
-                generic_value_type.as_deref(),
-            );
-            let field_name_py = to_snake_case(&field.name);
-
-            if metadata.is_pattern_type(&field.rust_type) {
-                // Check if the pattern is parameterizable
-                let pattern = metadata
-                    .structural_patterns
-                    .iter()
-                    .find(|p| p.name == field.rust_type);
-                let is_parameterizable = pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
-
-                if is_parameterizable {
-                    // Get the metric base from the first leaf descendant
-                    let metric_base = get_pattern_instance_base(child_node, child_name);
-                    writeln!(
-                        output,
-                        "        self.{}: {} = {}(client, '{}')",
-                        field_name_py, py_type, field.rust_type, metric_base
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
-                        field_name_py, py_type, field.rust_type, field.name
-                    )
-                    .unwrap();
-                }
-            } else if field_uses_accessor(field, metadata) {
-                // Leaf with accessor - get actual metric path from leaf
-                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                    format!("/{}", leaf.name())
-                } else {
-                    format!("{{base_path}}/{}", field.name)
-                };
-                let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-                if metric_path.contains("{base_path}") {
-                    writeln!(
-                        output,
-                        "        self.{}: {} = {}(client, f'{}')",
-                        field_name_py, py_type, accessor.name, metric_path
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "        self.{}: {} = {}(client, '{}')",
-                        field_name_py, py_type, accessor.name, metric_path
-                    )
-                    .unwrap();
-                }
+                .unwrap();
             } else {
-                // Leaf without accessor - get actual metric path from leaf
-                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                    format!("/{}", leaf.name())
-                } else {
-                    format!("{{base_path}}/{}", field.name)
-                };
-                if metric_path.contains("{base_path}") {
-                    writeln!(
-                        output,
-                        "        self.{}: {} = MetricNode(client, f'{}')",
-                        field_name_py, py_type, metric_path
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "        self.{}: {} = MetricNode(client, '{}')",
-                        field_name_py, py_type, metric_path
-                    )
-                    .unwrap();
-                }
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                    field_name_py, py_type, field.rust_type, field.name
+                )
+                .unwrap();
+            }
+        } else if metadata.field_uses_accessor(field) {
+            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                format!("/{}", leaf.name())
+            } else {
+                format!("{{base_path}}/{}", field.name)
+            };
+            let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+            if metric_path.contains("{base_path}") {
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, f'{}')",
+                    field_name_py, py_type, accessor.name, metric_path
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, '{}')",
+                    field_name_py, py_type, accessor.name, metric_path
+                )
+                .unwrap();
+            }
+        } else {
+            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                format!("/{}", leaf.name())
+            } else {
+                format!("{{base_path}}/{}", field.name)
+            };
+            if metric_path.contains("{base_path}") {
+                writeln!(
+                    output,
+                    "        self.{}: {} = MetricNode(client, f'{}')",
+                    field_name_py, py_type, metric_path
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "        self.{}: {} = MetricNode(client, '{}')",
+                    field_name_py, py_type, metric_path
+                )
+                .unwrap();
             }
         }
+    }
 
-        writeln!(output).unwrap();
+    writeln!(output).unwrap();
 
-        // Generate child classes
-        for (child_name, child_node) in children {
-            if let TreeNode::Branch(grandchildren) = child_node {
-                let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                if !pattern_lookup.contains_key(&child_fields) {
-                    let child_class_name = format!("{}_{}", name, to_pascal_case(child_name));
-                    generate_tree_class(
-                        output,
-                        &child_class_name,
-                        child_node,
-                        pattern_lookup,
-                        metadata,
-                        generated,
-                    );
-                }
+    // Generate child classes
+    for (child_name, child_node) in children {
+        if let TreeNode::Branch(grandchildren) = child_node {
+            let child_fields = get_node_fields(grandchildren, pattern_lookup);
+            if !pattern_lookup.contains_key(&child_fields) {
+                let child_class_name = format!("{}_{}", name, to_pascal_case(child_name));
+                generate_tree_class(
+                    output,
+                    &child_class_name,
+                    child_node,
+                    pattern_lookup,
+                    metadata,
+                    generated,
+                );
             }
         }
     }
@@ -963,19 +912,7 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 }
 
 fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
-    if let Some(op_id) = &endpoint.operation_id {
-        return to_snake_case(op_id);
-    }
-    // Include path parameters as "by_{param}" to differentiate endpoints
-    let mut parts = Vec::new();
-    for segment in endpoint.path.split('/').filter(|s| !s.is_empty()) {
-        if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-            parts.push(format!("by_{}", param));
-        } else {
-            parts.push(segment.to_string());
-        }
-    }
-    to_snake_case(&format!("get_{}", parts.join("_")))
+    to_snake_case(&endpoint.operation_name())
 }
 
 /// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "number" -> "int")

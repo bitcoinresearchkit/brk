@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, extract_inner_type, get_first_leaf_name, get_node_fields,
-    get_pattern_instance_base, to_camel_case, to_pascal_case,
+    TypeSchemas, extract_inner_type, get_fields_with_child_info, get_first_leaf_name,
+    get_node_fields, get_pattern_instance_base, to_camel_case, to_pascal_case,
 };
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
@@ -534,7 +534,7 @@ fn generate_parameterized_field(
         format!("`/${{acc}}_{}`", field.name)
     };
 
-    if field_uses_accessor(field, metadata) {
+    if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -568,7 +568,7 @@ fn generate_tree_path_field(
             field_name_js, field.rust_type, field.name, comma
         )
         .unwrap();
-    } else if field_uses_accessor(field, metadata) {
+    } else if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -629,10 +629,6 @@ fn field_to_js_type_with_generic_value(
     }
 }
 
-/// Check if a field should use an index accessor
-fn field_uses_accessor(field: &PatternField, metadata: &ClientMetadata) -> bool {
-    metadata.find_index_set_pattern(&field.indexes).is_some()
-}
 
 /// Generate tree typedefs
 fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -659,105 +655,65 @@ fn generate_tree_typedef(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    if let TreeNode::Branch(children) = node {
-        // Build signature with child field info for generic pattern lookup
-        let fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
-            .iter()
-            .map(|(child_name, child_node)| {
-                let (rust_type, json_type, indexes, child_fields) = match child_node {
-                    TreeNode::Leaf(leaf) => (
-                        leaf.value_type().to_string(),
-                        leaf.schema
-                            .get("type")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("object")
-                            .to_string(),
-                        leaf.indexes().clone(),
-                        None,
-                    ),
-                    TreeNode::Branch(grandchildren) => {
-                        let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                        let pattern_name = pattern_lookup
-                            .get(&child_fields)
-                            .cloned()
-                            .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (
-                            pattern_name.clone(),
-                            pattern_name,
-                            std::collections::BTreeSet::new(),
-                            Some(child_fields),
-                        )
-                    }
-                };
-                (
-                    PatternField {
-                        name: child_name.clone(),
-                        rust_type,
-                        json_type,
-                        indexes,
-                    },
-                    child_fields,
-                )
-            })
-            .collect();
+    let TreeNode::Branch(children) = node else {
+        return;
+    };
 
-        let fields: Vec<PatternField> = fields_with_child_info
-            .iter()
-            .map(|(f, _)| f.clone())
-            .collect();
+    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
+    let fields: Vec<PatternField> = fields_with_child_info
+        .iter()
+        .map(|(f, _)| f.clone())
+        .collect();
 
-        // Skip if this matches a pattern (already generated)
-        if pattern_lookup.contains_key(&fields)
-            && pattern_lookup.get(&fields) != Some(&name.to_string())
-        {
-            return;
-        }
+    // Skip if this matches a pattern (already generated)
+    if pattern_lookup.contains_key(&fields) && pattern_lookup.get(&fields) != Some(&name.to_string())
+    {
+        return;
+    }
 
-        if generated.contains(name) {
-            return;
-        }
-        generated.insert(name.to_string());
+    if generated.contains(name) {
+        return;
+    }
+    generated.insert(name.to_string());
 
-        writeln!(output, "/**").unwrap();
-        writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
+    writeln!(output, "/**").unwrap();
+    writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
-        for (field, child_fields) in &fields_with_child_info {
-            // For generic patterns, extract the value type from child fields
-            let generic_value_type = child_fields
-                .as_ref()
-                .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
-            let js_type = field_to_js_type_with_generic_value(
-                field,
-                metadata,
-                false,
-                generic_value_type.as_deref(),
-            );
-            writeln!(
-                output,
-                " * @property {{{}}} {}",
-                js_type,
-                to_camel_case(&field.name)
-            )
-            .unwrap();
-        }
+    for (field, child_fields) in &fields_with_child_info {
+        let generic_value_type = child_fields
+            .as_ref()
+            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+        let js_type = field_to_js_type_with_generic_value(
+            field,
+            metadata,
+            false,
+            generic_value_type.as_deref(),
+        );
+        writeln!(
+            output,
+            " * @property {{{}}} {}",
+            js_type,
+            to_camel_case(&field.name)
+        )
+        .unwrap();
+    }
 
-        writeln!(output, " */\n").unwrap();
+    writeln!(output, " */\n").unwrap();
 
-        // Generate child typedefs
-        for (child_name, child_node) in children {
-            if let TreeNode::Branch(grandchildren) = child_node {
-                let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                if !pattern_lookup.contains_key(&child_fields) {
-                    let child_type_name = format!("{}_{}", name, to_pascal_case(child_name));
-                    generate_tree_typedef(
-                        output,
-                        &child_type_name,
-                        child_node,
-                        pattern_lookup,
-                        metadata,
-                        generated,
-                    );
-                }
+    // Generate child typedefs
+    for (child_name, child_node) in children {
+        if let TreeNode::Branch(grandchildren) = child_node {
+            let child_fields = get_node_fields(grandchildren, pattern_lookup);
+            if !pattern_lookup.contains_key(&child_fields) {
+                let child_type_name = format!("{}_{}", name, to_pascal_case(child_name));
+                generate_tree_typedef(
+                    output,
+                    &child_type_name,
+                    child_node,
+                    pattern_lookup,
+                    metadata,
+                    generated,
+                );
             }
         }
     }
@@ -1007,15 +963,7 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 }
 
 fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
-    if let Some(op_id) = &endpoint.operation_id {
-        return to_camel_case(op_id);
-    }
-    let parts: Vec<&str> = endpoint
-        .path
-        .split('/')
-        .filter(|s| !s.is_empty() && !s.starts_with('{'))
-        .collect();
-    format!("get{}", to_pascal_case(&parts.join("_")))
+    to_camel_case(&endpoint.operation_name())
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {

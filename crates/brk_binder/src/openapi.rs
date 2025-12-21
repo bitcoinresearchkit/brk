@@ -37,6 +37,28 @@ impl Endpoint {
     pub fn should_generate(&self) -> bool {
         self.method == "GET" && !self.deprecated
     }
+
+    /// Returns the operation ID or generates one from the path.
+    /// The returned string uses the raw case from the spec (typically camelCase).
+    pub fn operation_name(&self) -> String {
+        if let Some(op_id) = &self.operation_id {
+            return op_id.clone();
+        }
+        // Generate from path: /api/blocks/{hash} -> "get_api_blocks_by_hash"
+        let parts: Vec<String> = self
+            .path
+            .split('/')
+            .filter(|s| !s.is_empty())
+            .map(|segment| {
+                if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                    format!("by_{}", param)
+                } else {
+                    segment.to_string()
+                }
+            })
+            .collect();
+        format!("get_{}", parts.join("_"))
+    }
 }
 
 /// Parameter information

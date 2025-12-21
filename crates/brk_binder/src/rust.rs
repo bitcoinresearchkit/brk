@@ -8,7 +8,8 @@ use brk_types::{Index, TreeNode};
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    extract_inner_type, get_node_fields, get_pattern_instance_base, to_pascal_case, to_snake_case,
+    extract_inner_type, get_fields_with_child_info, get_node_fields, get_pattern_instance_base,
+    to_pascal_case, to_snake_case,
 };
 
 /// Generate Rust client from metadata and OpenAPI endpoints
@@ -358,7 +359,7 @@ fn generate_parameterized_rust_field(
         format!("format!(\"/{{acc}}_{}\")", field.name)
     };
 
-    if field_uses_accessor(field, metadata) {
+    if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -391,7 +392,7 @@ fn generate_tree_path_rust_field(
             field_name, field.rust_type, field.name
         )
         .unwrap();
-    } else if field_uses_accessor(field, metadata) {
+    } else if metadata.field_uses_accessor(field) {
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
@@ -452,11 +453,6 @@ fn field_to_type_annotation_with_generic(
     }
 }
 
-/// Check if a field should use an index accessor
-fn field_uses_accessor(field: &PatternField, metadata: &ClientMetadata) -> bool {
-    metadata.find_index_set_pattern(&field.indexes).is_some()
-}
-
 /// Generate the catalog tree structure
 fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree\n").unwrap();
@@ -482,193 +478,142 @@ fn generate_tree_node(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    if let TreeNode::Branch(children) = node {
-        // Build the signature for this node, also tracking child fields for generic pattern lookup
-        let mut fields_with_child_info: Vec<(PatternField, Option<Vec<PatternField>>)> = children
-            .iter()
-            .map(|(child_name, child_node)| {
-                let (rust_type, json_type, indexes, child_fields) = match child_node {
-                    TreeNode::Leaf(leaf) => (
-                        leaf.value_type().to_string(),
-                        leaf.schema
-                            .get("type")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("object")
-                            .to_string(),
-                        leaf.indexes().clone(),
-                        None,
-                    ),
-                    TreeNode::Branch(grandchildren) => {
-                        // Get pattern name for this child
-                        let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                        let pattern_name = pattern_lookup
-                            .get(&child_fields)
-                            .cloned()
-                            .unwrap_or_else(|| format!("{}_{}", name, to_pascal_case(child_name)));
-                        (
-                            pattern_name.clone(),
-                            pattern_name,
-                            std::collections::BTreeSet::new(),
-                            Some(child_fields),
-                        )
-                    }
-                };
-                (
-                    PatternField {
-                        name: child_name.clone(),
-                        rust_type,
-                        json_type,
-                        indexes,
-                    },
-                    child_fields,
+    let TreeNode::Branch(children) = node else {
+        return;
+    };
+
+    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
+    let fields: Vec<PatternField> = fields_with_child_info
+        .iter()
+        .map(|(f, _)| f.clone())
+        .collect();
+
+    // Skip if this matches a pattern (already generated separately)
+    if let Some(pattern_name) = pattern_lookup.get(&fields)
+        && pattern_name != name
+    {
+        return;
+    }
+
+    if generated.contains(name) {
+        return;
+    }
+    generated.insert(name.to_string());
+
+    writeln!(output, "/// Catalog tree node.").unwrap();
+    writeln!(output, "pub struct {}<'a> {{", name).unwrap();
+
+    for (field, child_fields) in &fields_with_child_info {
+        let field_name = to_snake_case(&field.name);
+        let generic_value_type = child_fields
+            .as_ref()
+            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+        let type_annotation = field_to_type_annotation_with_generic(
+            field,
+            metadata,
+            false,
+            generic_value_type.as_deref(),
+        );
+        writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
+    }
+
+    writeln!(output, "}}\n").unwrap();
+
+    // Generate impl block
+    writeln!(output, "impl<'a> {}<'a> {{", name).unwrap();
+    writeln!(
+        output,
+        "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+    )
+    .unwrap();
+    writeln!(output, "        Self {{").unwrap();
+
+    for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
+        let field_name = to_snake_case(&field.name);
+        if metadata.is_pattern_type(&field.rust_type) {
+            let pattern = metadata.find_pattern(&field.rust_type);
+            let is_parameterizable = pattern.is_some_and(|p| p.is_parameterizable());
+
+            if is_parameterizable {
+                let metric_base = get_pattern_instance_base(child_node, child_name);
+                writeln!(
+                    output,
+                    "            {}: {}::new(client, \"{}\"),",
+                    field_name, field.rust_type, metric_base
                 )
-            })
-            .collect();
-        fields_with_child_info.sort_by(|a, b| a.0.name.cmp(&b.0.name));
-
-        let fields: Vec<PatternField> = fields_with_child_info
-            .iter()
-            .map(|(f, _)| f.clone())
-            .collect();
-
-        // Check if this matches a reusable pattern
-        if let Some(pattern_name) = pattern_lookup.get(&fields) {
-            // This node matches a pattern that will be generated separately
-            // Don't generate it here, it's already in pattern_structs
-            if pattern_name != name {
-                return;
-            }
-        }
-
-        // Generate this struct if not already generated
-        if generated.contains(name) {
-            return;
-        }
-        generated.insert(name.to_string());
-
-        writeln!(output, "/// Catalog tree node.").unwrap();
-        writeln!(output, "pub struct {}<'a> {{", name).unwrap();
-
-        for (field, child_fields) in &fields_with_child_info {
-            let field_name = to_snake_case(&field.name);
-            // For generic patterns, extract the value type from child fields
-            let generic_value_type = child_fields
-                .as_ref()
-                .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
-            let type_annotation = field_to_type_annotation_with_generic(
-                field,
-                metadata,
-                false,
-                generic_value_type.as_deref(),
-            );
-            writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
-        }
-
-        writeln!(output, "}}\n").unwrap();
-
-        // Generate impl block
-        writeln!(output, "impl<'a> {}<'a> {{", name).unwrap();
-        writeln!(
-            output,
-            "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
-        )
-        .unwrap();
-        writeln!(output, "        Self {{").unwrap();
-
-        for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
-            let field_name = to_snake_case(&field.name);
-            if metadata.is_pattern_type(&field.rust_type) {
-                // Check if the pattern is parameterizable
-                let pattern = metadata
-                    .structural_patterns
-                    .iter()
-                    .find(|p| p.name == field.rust_type);
-                let is_parameterizable = pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
-
-                if is_parameterizable {
-                    // Get the metric base from the first leaf descendant
-                    let metric_base = get_pattern_instance_base(child_node, child_name);
-                    writeln!(
-                        output,
-                        "            {}: {}::new(client, \"{}\"),",
-                        field_name, field.rust_type, metric_base
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
-                        field_name, field.rust_type, field.name
-                    )
-                    .unwrap();
-                }
-            } else if field_uses_accessor(field, metadata) {
-                // Leaf with accessor - get actual metric path from leaf
-                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                    format!("/{}", leaf.name())
-                } else {
-                    format!("{{base_path}}/{}", field.name)
-                };
-                let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-                if metric_path.contains("{base_path}") {
-                    writeln!(
-                        output,
-                        "            {}: {}::new(client, &format!(\"{}\")),",
-                        field_name, accessor.name, metric_path
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "            {}: {}::new(client, \"{}\"),",
-                        field_name, accessor.name, metric_path
-                    )
-                    .unwrap();
-                }
+                .unwrap();
             } else {
-                // Leaf without accessor - get actual metric path from leaf
-                let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                    format!("/{}", leaf.name())
-                } else {
-                    format!("{{base_path}}/{}", field.name)
-                };
-                if metric_path.contains("{base_path}") {
-                    writeln!(
-                        output,
-                        "            {}: MetricNode::new(client, format!(\"{}\")),",
-                        field_name, metric_path
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "            {}: MetricNode::new(client, \"{}\".to_string()),",
-                        field_name, metric_path
-                    )
-                    .unwrap();
-                }
+                writeln!(
+                    output,
+                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+                    field_name, field.rust_type, field.name
+                )
+                .unwrap();
+            }
+        } else if metadata.field_uses_accessor(field) {
+            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                format!("/{}", leaf.name())
+            } else {
+                format!("{{base_path}}/{}", field.name)
+            };
+            let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
+            if metric_path.contains("{base_path}") {
+                writeln!(
+                    output,
+                    "            {}: {}::new(client, &format!(\"{}\")),",
+                    field_name, accessor.name, metric_path
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "            {}: {}::new(client, \"{}\"),",
+                    field_name, accessor.name, metric_path
+                )
+                .unwrap();
+            }
+        } else {
+            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
+                format!("/{}", leaf.name())
+            } else {
+                format!("{{base_path}}/{}", field.name)
+            };
+            if metric_path.contains("{base_path}") {
+                writeln!(
+                    output,
+                    "            {}: MetricNode::new(client, format!(\"{}\")),",
+                    field_name, metric_path
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "            {}: MetricNode::new(client, \"{}\".to_string()),",
+                    field_name, metric_path
+                )
+                .unwrap();
             }
         }
+    }
 
-        writeln!(output, "        }}").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output, "}}\n").unwrap();
+    writeln!(output, "        }}").unwrap();
+    writeln!(output, "    }}").unwrap();
+    writeln!(output, "}}\n").unwrap();
 
-        // Recursively generate child nodes that aren't patterns
-        for (child_name, child_node) in children {
-            if let TreeNode::Branch(grandchildren) = child_node {
-                let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                if !pattern_lookup.contains_key(&child_fields) {
-                    let child_struct_name = format!("{}_{}", name, to_pascal_case(child_name));
-                    generate_tree_node(
-                        output,
-                        &child_struct_name,
-                        child_node,
-                        pattern_lookup,
-                        metadata,
-                        generated,
-                    );
-                }
+    // Recursively generate child nodes that aren't patterns
+    for (child_name, child_node) in children {
+        if let TreeNode::Branch(grandchildren) = child_node {
+            let child_fields = get_node_fields(grandchildren, pattern_lookup);
+            if !pattern_lookup.contains_key(&child_fields) {
+                let child_struct_name = format!("{}_{}", name, to_pascal_case(child_name));
+                generate_tree_node(
+                    output,
+                    &child_struct_name,
+                    child_node,
+                    pattern_lookup,
+                    metadata,
+                    generated,
+                );
             }
         }
     }
@@ -781,15 +726,7 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 }
 
 fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
-    if let Some(op_id) = &endpoint.operation_id {
-        return to_snake_case(op_id);
-    }
-    let parts: Vec<&str> = endpoint
-        .path
-        .split('/')
-        .filter(|s| !s.is_empty() && !s.starts_with('{'))
-        .collect();
-    to_snake_case(&format!("get_{}", parts.join("_")))
+    to_snake_case(&endpoint.operation_name())
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {
