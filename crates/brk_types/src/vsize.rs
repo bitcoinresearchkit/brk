@@ -2,13 +2,27 @@ use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
 use crate::Weight;
 
 /// Virtual size in vbytes (weight / 4, rounded up)
-#[derive(Debug, Default, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
+#[derive(
+    Debug,
+    Default,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
+)]
 pub struct VSize(u64);
 
 impl VSize {
@@ -49,7 +63,10 @@ impl From<usize> for VSize {
 impl From<f64> for VSize {
     #[inline]
     fn from(value: f64) -> Self {
-        debug_assert!(value >= 0.0 && value.fract() == 0.0, "VSize must be a non-negative integer");
+        debug_assert!(
+            value >= 0.0 && value.fract() == 0.0,
+            "VSize must be a non-negative integer"
+        );
         Self(value as u64)
     }
 }

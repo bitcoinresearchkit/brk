@@ -1,6 +1,7 @@
 use std::io::Write;
 
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 use vecdb::AnySerializableVec;
 
@@ -8,7 +9,7 @@ use vecdb::AnySerializableVec;
 ///
 /// All metric data endpoints return this structure when format is JSON.
 /// This type is not instantiated - use `MetricData::serialize()` to write JSON bytes directly.
-#[derive(JsonSchema)]
+#[derive(JsonSchema, Deserialize)]
 pub struct MetricData {
     /// Total number of data points in the metric
     pub total: usize,

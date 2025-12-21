@@ -13,6 +13,7 @@ full = [
     "bencher",
     "binder",
     "bundler",
+    "client",
     "computer",
     "error",
     "fetcher",
@@ -33,6 +34,7 @@ full = [
 bencher = ["brk_bencher"]
 binder = ["brk_binder"]
 bundler = ["brk_bundler"]
+client = ["brk_client"]
 computer = ["brk_computer"]
 error = ["brk_error"]
 fetcher = ["brk_fetcher"]
@@ -54,6 +56,7 @@ types = ["brk_types"]
 brk_bencher = { workspace = true, optional = true }
 brk_binder = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
+brk_client = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_error = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }

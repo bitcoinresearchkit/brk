@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::Timestamp;
 
 /// A single hashrate data point.
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct HashrateEntry {
     /// Unix timestamp.
     pub timestamp: Timestamp,

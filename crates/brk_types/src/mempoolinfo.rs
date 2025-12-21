@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Sats, Transaction, VSize};
 
 /// Mempool statistics
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MempoolInfo {
     /// Number of transactions in the mempool
     pub count: usize,

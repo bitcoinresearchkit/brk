@@ -4,12 +4,12 @@ use std::{
 };
 
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::Index;
 
 /// Leaf node containing metric metadata
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
 pub struct MetricLeaf {
     /// The metric name/identifier
     pub name: String,
@@ -35,7 +35,7 @@ impl MetricLeaf {
 }
 
 /// MetricLeaf with JSON Schema for client generation
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MetricLeafWithSchema {
     /// The core metric metadata
     #[serde(flatten)]
@@ -85,7 +85,7 @@ impl PartialEq for MetricLeafWithSchema {
 impl Eq for MetricLeafWithSchema {}
 
 /// Hierarchical tree node for organizing metrics into categories
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum TreeNode {
     /// Branch node containing subcategories

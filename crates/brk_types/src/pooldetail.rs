@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Pool, PoolSlug};
 
@@ -62,7 +62,7 @@ impl From<&'static Pool> for PoolDetailInfo {
 }
 
 /// Block counts for different time periods
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolBlockCounts {
     /// Total blocks mined (all time)
     pub all: u32,
@@ -77,7 +77,7 @@ pub struct PoolBlockCounts {
 }
 
 /// Pool's share of total blocks for different time periods
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolBlockShares {
     /// Share of all blocks (0.0 - 1.0)
     pub all: f64,

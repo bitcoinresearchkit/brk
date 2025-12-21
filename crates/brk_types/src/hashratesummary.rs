@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{DifficultyEntry, HashrateEntry};
 
 /// Summary of network hashrate and difficulty data.
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct HashrateSummary {
     /// Historical hashrate data points.
     pub hashrates: Vec<HashrateEntry>,

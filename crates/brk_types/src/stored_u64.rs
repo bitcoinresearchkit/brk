@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{
@@ -13,7 +13,21 @@ use super::{
 };
 
 /// Fixed-size 64-bit unsigned integer optimized for on-disk storage
-#[derive(Debug, Default, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
+#[derive(
+    Debug,
+    Default,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
+)]
 pub struct StoredU64(u64);
 
 impl StoredU64 {

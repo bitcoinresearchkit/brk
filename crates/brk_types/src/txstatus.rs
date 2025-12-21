@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{BlockHash, Height, Timestamp};
 
 /// Transaction confirmation status
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TxStatus {
     /// Whether the transaction is confirmed
     #[schemars(example = true)]

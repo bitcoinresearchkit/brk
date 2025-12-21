@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{Height, Timestamp};
 
 /// A single difficulty data point.
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct DifficultyEntry {
     /// Unix timestamp of the difficulty adjustment.
     pub timestamp: Timestamp,

@@ -1,10 +1,10 @@
 use bitcoin::{absolute::LockTime, locktime::absolute::LOCK_TIME_THRESHOLD};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
 /// Transaction locktime
-#[derive(Debug, Clone, Copy, Serialize, Pco, JsonSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct RawLockTime(u32);
 
 impl From<LockTime> for RawLockTime {

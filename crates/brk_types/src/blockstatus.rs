@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{BlockHash, Height};
 
 /// Block status indicating whether block is in the best chain
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BlockStatus {
     /// Whether this block is in the best chain
     pub in_best_chain: bool,

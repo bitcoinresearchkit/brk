@@ -1,10 +1,10 @@
 use crate::{TxOut, Txid, Vout};
 use bitcoin::{Script, ScriptBuf};
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer, ser::SerializeStruct};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 
 /// Transaction input
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct TxIn {
     /// Transaction ID of the output being spent
     #[schemars(example = "0000000000000000000000000000000000000000000000000000000000000000")]

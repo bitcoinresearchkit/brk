@@ -1,11 +1,11 @@
 use crate::{Sats, TypeIndex};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// Address statistics on the blockchain (confirmed transactions only)
 ///
 /// Based on mempool.space's format with type_index extension.
-#[derive(Debug, Default, Serialize, JsonSchema)]
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 pub struct AddressChainStats {
     /// Total number of transaction outputs that funded this address
     #[schemars(example = 5)]

@@ -1,12 +1,12 @@
 use schemars::JsonSchema;
 use serde::ser::SerializeTuple;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{Height, Timestamp};
 
 /// A single difficulty adjustment entry.
 /// Serializes as array: [timestamp, height, difficulty, change_percent]
-#[derive(Debug, JsonSchema)]
+#[derive(Debug, Deserialize, JsonSchema)]
 pub struct DifficultyAdjustmentEntry {
     pub timestamp: Timestamp,
     pub height: Height,

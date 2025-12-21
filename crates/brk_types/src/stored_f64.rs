@@ -7,13 +7,13 @@ use std::{
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::{Bitcoin, Dollars};
 
 /// Fixed-size 64-bit floating point value optimized for on-disk storage
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct StoredF64(f64);
 
 impl StoredF64 {

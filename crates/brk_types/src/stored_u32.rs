@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Div, Mul};
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{
@@ -12,7 +12,21 @@ use super::{
 };
 
 /// Fixed-size 32-bit unsigned integer optimized for on-disk storage
-#[derive(Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Default,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
+)]
 pub struct StoredU32(u32);
 
 impl StoredU32 {

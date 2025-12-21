@@ -1,11 +1,11 @@
 use bitcoin::hex::DisplayHex;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AddressBytes, OutputType};
 
 /// Address validation result
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AddressValidation {
     /// Whether the address is valid
     pub isvalid: bool,

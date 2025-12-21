@@ -2,11 +2,24 @@ use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
 /// Transaction or block weight in weight units (WU)
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
+)]
 pub struct Weight(u64);
 
 impl Weight {

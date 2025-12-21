@@ -527,6 +527,7 @@ dependencies = [
  "brk_bencher",
  "brk_binder",
  "brk_bundler",
+ "brk_client",
  "brk_computer",
  "brk_error",
  "brk_fetcher",
@@ -612,6 +613,15 @@ dependencies = [
  "toml",
  "vecdb",
  "zip",
+]
+
+[[package]]
+name = "brk_client"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "brk_types",
+ "minreq",
+ "serde",
 ]
 
 [[package]]
@@ -4217,7 +4227,7 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "libc",
  "log",
@@ -5407,7 +5417,7 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "ctrlc",
  "log",
@@ -5426,7 +5436,7 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "quote",
  "syn 2.0.111",

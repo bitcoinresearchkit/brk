@@ -4,13 +4,13 @@ use std::{
 };
 
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{Sats, StoredF64};
 
 /// Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
-#[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct Bitcoin(f64);
 
 impl Add for Bitcoin {

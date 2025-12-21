@@ -44,6 +44,7 @@ brk_bencher = { version = "0.1.0-alpha.1", path = "crates/brk_bencher" }
 brk_binder = { version = "0.1.0-alpha.1", path = "crates/brk_binder" }
 brk_bundler = { version = "0.1.0-alpha.1", path = "crates/brk_bundler" }
 brk_cli = { version = "0.1.0-alpha.1", path = "crates/brk_cli" }
+brk_client = { version = "0.1.0-alpha.1", path = "crates/brk_client" }
 brk_computer = { version = "0.1.0-alpha.1", path = "crates/brk_computer" }
 brk_error = { version = "0.1.0-alpha.1", path = "crates/brk_error" }
 brk_fetcher = { version = "0.1.0-alpha.1", path = "crates/brk_fetcher" }

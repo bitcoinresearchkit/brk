@@ -1,10 +1,12 @@
-use crate::{FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, VSize, Weight};
+use crate::{
+    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, VSize, Weight,
+};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::CheckedSub;
 
 /// Transaction information compatible with mempool.space API format
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Transaction {
     #[schemars(example = TxIndex::new(0))]
     pub index: Option<TxIndex>,

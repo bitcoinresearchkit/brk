@@ -12,6 +12,10 @@ pub use brk_binder as binder;
 #[doc(inline)]
 pub use brk_bundler as bundler;
 
+#[cfg(feature = "client")]
+#[doc(inline)]
+pub use brk_client as client;
+
 #[cfg(feature = "computer")]
 #[doc(inline)]
 pub use brk_computer as computer;

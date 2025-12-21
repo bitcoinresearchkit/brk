@@ -2,13 +2,26 @@ use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::Vout;
 
 #[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Pco, JsonSchema,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct TxOutIndex(u64);
 

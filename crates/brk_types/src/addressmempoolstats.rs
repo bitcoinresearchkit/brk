@@ -1,13 +1,13 @@
 use crate::{Sats, TxOut};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 ///
 /// Address statistics in the mempool (unconfirmed transactions only)
 ///
 /// Based on mempool.space's format.
 ///
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AddressMempoolStats {
     /// Number of unconfirmed transaction outputs funding this address
     #[schemars(example = 0)]

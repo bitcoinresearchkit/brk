@@ -1,12 +1,12 @@
 use brk_error::{Error, Result};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, CheckedSub, Formattable};
 
 use crate::{Bitcoin, Dollars, EmptyAddressData, Sats};
 
 /// Data for a loaded (non-empty) address with current balance
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[repr(C)]
 pub struct LoadedAddressData {
     /// Total transaction count
@@ -51,13 +51,15 @@ impl LoadedAddressData {
 
     #[inline]
     pub fn utxo_count(&self) -> u32 {
-        self.funded_txo_count.checked_sub(self.spent_txo_count).unwrap_or_else(|| {
-            panic!(
-                "LoadedAddressData corruption: spent_txo_count ({}) > funded_txo_count ({}). \
+        self.funded_txo_count
+            .checked_sub(self.spent_txo_count)
+            .unwrap_or_else(|| {
+                panic!(
+                    "LoadedAddressData corruption: spent_txo_count ({}) > funded_txo_count ({}). \
                 Address data: {:?}",
-                self.spent_txo_count, self.funded_txo_count, self
-            )
-        })
+                    self.spent_txo_count, self.funded_txo_count, self
+                )
+            })
     }
 
     #[inline]

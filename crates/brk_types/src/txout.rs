@@ -1,10 +1,10 @@
 use crate::{Address, AddressBytes, OutputType, Sats};
 use bitcoin::ScriptBuf;
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer, ser::SerializeStruct};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 
 /// Transaction output
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct TxOut {
     /// Script pubkey (locking script)
     #[serde(
