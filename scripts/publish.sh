@@ -35,10 +35,16 @@ echo "Working from: $(pwd)"
 
 for crate in "${CRATES[@]}"; do
     cd "$crate"
-    cargo publish
+    cargo publish --color=always 2>&1 | tee /tmp/publish_$$.log
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        if ! grep -q "already exists on" /tmp/publish_$$.log; then
+            rm -f /tmp/publish_$$.log
+            exit 1
+        fi
+    fi
+    rm -f /tmp/publish_$$.log
     cd ..
     echo ""
-    sleep 10
 done
 
 echo "Done!"
