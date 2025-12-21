@@ -9,7 +9,7 @@ use brk_types::{
 use log::error;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator};
+use vecdb::{AnyVec, GenericStoredVec, TypedVecIterator, likely};
 
 use crate::{Indexes, Readers, Stores, Vecs, constants::*};
 
@@ -628,7 +628,7 @@ impl<'a> BlockProcessor<'a> {
 
     /// Check for TXID collisions (only for known duplicate TXIDs).
     pub fn check_txid_collisions(&self, txs: &[ComputedTx]) -> Result<()> {
-        if !self.check_collisions {
+        if likely(!self.check_collisions) {
             return Ok(());
         }
 

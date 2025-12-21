@@ -16,8 +16,8 @@ derive_deref = { workspace = true }
 itoa = "1.0.15"
 jiff = { workspace = true }
 num_enum = "0.7.5"
-rapidhash = "4.1.1"
-ryu = "1.0.20"
+rapidhash = "4.2.0"
+ryu = "1.0.21"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

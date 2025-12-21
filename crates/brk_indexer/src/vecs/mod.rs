@@ -122,6 +122,7 @@ impl Vecs {
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
         self.iter_mut_any_stored_vec()
+            // self.par_iter_mut_any_stored_vec()
             .par_bridge()
             .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
         self.db.flush()?;
@@ -160,6 +161,16 @@ impl Vecs {
             .chain(self.address.iter_mut_any())
             .chain(self.output.iter_mut_any())
     }
+
+    // fn par_iter_mut_any_stored_vec(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    //     self.block
+    //         .iter_mut_any()
+    //         .chain(self.tx.iter_mut_any())
+    //         .chain(self.txin.iter_mut_any())
+    //         .chain(self.txout.iter_mut_any())
+    //         .chain(self.address.iter_mut_any())
+    //         .chain(self.output.iter_mut_any())
+    // }
 
     pub fn db(&self) -> &Database {
         &self.db
