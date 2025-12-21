@@ -81,18 +81,18 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             // Object type -> TypedDict
             writeln!(output, "class {}(TypedDict):", name).unwrap();
             for (prop_name, prop_schema) in props {
-                let prop_type = schema_to_python_type(prop_schema);
+                let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
                 let safe_name = escape_python_keyword(prop_name);
                 writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
             }
             writeln!(output).unwrap();
         } else if is_enum_schema(schema) {
             // Enum type -> Literal union
-            let py_type = schema_to_python_type(schema);
+            let py_type = schema_to_python_type_ctx(schema, Some(&name));
             writeln!(output, "{} = {}", name, py_type).unwrap();
         } else {
             // Primitive type alias
-            let py_type = schema_to_python_type(schema);
+            let py_type = schema_to_python_type_ctx(schema, Some(&name));
             writeln!(output, "{} = {}", name, py_type).unwrap();
         }
     }
@@ -169,10 +169,10 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
 fn collect_schema_refs(schema: &Value, refs: &mut std::collections::HashSet<String>) {
     match schema {
         Value::Object(map) => {
-            if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str()) {
-                if let Some(type_name) = ref_path.rsplit('/').next() {
-                    refs.insert(type_name.to_string());
-                }
+            if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str())
+                && let Some(type_name) = ref_path.rsplit('/').next()
+            {
+                refs.insert(type_name.to_string());
             }
             for value in map.values() {
                 collect_schema_refs(value, refs);
@@ -188,7 +188,7 @@ fn collect_schema_refs(schema: &Value, refs: &mut std::collections::HashSet<Stri
 }
 
 /// Convert a single JSON type string to Python type
-fn json_type_to_python(ty: &str, schema: &Value) -> String {
+fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> String {
     match ty {
         "integer" => "int".to_string(),
         "number" => "float".to_string(),
@@ -198,14 +198,14 @@ fn json_type_to_python(ty: &str, schema: &Value) -> String {
         "array" => {
             let item_type = schema
                 .get("items")
-                .map(schema_to_python_type)
+                .map(|s| schema_to_python_type_ctx(s, current_type))
                 .unwrap_or_else(|| "Any".to_string());
             format!("List[{}]", item_type)
         }
         "object" => {
             // Check if it has additionalProperties (dict-like)
             if let Some(add_props) = schema.get("additionalProperties") {
-                let value_type = schema_to_python_type(add_props);
+                let value_type = schema_to_python_type_ctx(add_props, current_type);
                 return format!("dict[str, {}]", value_type);
             }
             "dict".to_string()
@@ -214,12 +214,12 @@ fn json_type_to_python(ty: &str, schema: &Value) -> String {
     }
 }
 
-/// Convert JSON Schema to Python type
-fn schema_to_python_type(schema: &Value) -> String {
+/// Convert JSON Schema to Python type with context for detecting self-references
+fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
     // Handle allOf (try each element until we find a resolvable type)
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
-            let resolved = schema_to_python_type(item);
+            let resolved = schema_to_python_type_ctx(item, current_type);
             if resolved != "Any" {
                 return resolved;
             }
@@ -228,7 +228,12 @@ fn schema_to_python_type(schema: &Value) -> String {
 
     // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
-        return ref_path.rsplit('/').next().unwrap_or("Any").to_string();
+        let type_name = ref_path.rsplit('/').next().unwrap_or("Any");
+        // Quote self-references to handle recursive types
+        if current_type == Some(type_name) {
+            return format!("\"{}\"", type_name);
+        }
+        return type_name.to_string();
     }
 
     // Handle enum (array of string values)
@@ -251,7 +256,7 @@ fn schema_to_python_type(schema: &Value) -> String {
                 .iter()
                 .filter_map(|t| t.as_str())
                 .filter(|t| *t != "null") // Filter out null for cleaner Optional handling
-                .map(|t| json_type_to_python(t, schema))
+                .map(|t| json_type_to_python(t, schema, current_type))
                 .collect();
             let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
 
@@ -274,7 +279,7 @@ fn schema_to_python_type(schema: &Value) -> String {
 
         // Handle single type string
         if let Some(ty_str) = ty.as_str() {
-            return json_type_to_python(ty_str, schema);
+            return json_type_to_python(ty_str, schema, current_type);
         }
     }
 
@@ -284,11 +289,18 @@ fn schema_to_python_type(schema: &Value) -> String {
         .or_else(|| schema.get("oneOf"))
         .and_then(|v| v.as_array())
     {
-        let types: Vec<String> = variants.iter().map(schema_to_python_type).collect();
+        let types: Vec<String> = variants
+            .iter()
+            .map(|v| schema_to_python_type_ctx(v, current_type))
+            .collect();
         // Filter out Any and null for cleaner unions
         let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
         if !filtered.is_empty() {
-            return filtered.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" | ");
+            return filtered
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(" | ");
         }
         return types.join(" | ");
     }
@@ -315,7 +327,12 @@ fn escape_python_keyword(name: &str) -> String {
         "try", "while", "with", "yield",
     ];
     // Names starting with digit need underscore prefix
-    let name = if name.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+    let name = if name
+        .chars()
+        .next()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
         format!("_{}", name)
     } else {
         name.to_string()
@@ -906,7 +923,11 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
         if endpoint.query_params.is_empty() {
-            writeln!(output, "        return self.get(f'{}')", path).unwrap();
+            if endpoint.path_params.is_empty() {
+                writeln!(output, "        return self.get('{}')", path).unwrap();
+            } else {
+                writeln!(output, "        return self.get(f'{}')", path).unwrap();
+            }
         } else {
             writeln!(output, "        params = []").unwrap();
             for param in &endpoint.query_params {
@@ -957,12 +978,20 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
     to_snake_case(&format!("get_{}", parts.join("_")))
 }
 
-/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]")
+/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "number" -> "int")
 fn js_type_to_python(js_type: &str) -> String {
     if let Some(inner) = js_type.strip_suffix("[]") {
         format!("List[{}]", js_type_to_python(inner))
     } else {
-        js_type.to_string()
+        match js_type {
+            "number" => "int".to_string(),
+            "boolean" => "bool".to_string(),
+            "string" => "str".to_string(),
+            "null" => "None".to_string(),
+            "Object" | "object" => "dict".to_string(),
+            "*" => "Any".to_string(),
+            _ => js_type.to_string(),
+        }
     }
 }
 
@@ -987,7 +1016,9 @@ fn build_path_template(path: &str, path_params: &[super::Parameter]) -> String {
     let mut result = path.to_string();
     for param in path_params {
         let placeholder = format!("{{{}}}", param.name);
-        let interpolation = format!("{{{{{}}}}}", param.name);
+        // Use escaped name for Python variable interpolation in f-string
+        let safe_name = escape_python_keyword(&param.name);
+        let interpolation = format!("{{{}}}", safe_name);
         result = result.replace(&placeholder, &interpolation);
     }
     result

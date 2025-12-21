@@ -209,12 +209,11 @@ pub fn is_enum_schema(schema: &Value) -> bool {
 /// If not a generic, returns the type as-is.
 pub fn extract_inner_type(type_str: &str) -> String {
     // Handle proper generic wrappers like `Close<Dollars>` -> `Dollars`
-    if let Some(start) = type_str.find('<') {
-        if let Some(end) = type_str.rfind('>') {
-            if start < end {
-                return type_str[start + 1..end].to_string();
-            }
-        }
+    if let Some(start) = type_str.find('<')
+        && let Some(end) = type_str.rfind('>')
+        && start < end
+    {
+        return type_str[start + 1..end].to_string();
     }
     // Handle malformed types like `Dollars>` (trailing > without <)
     // This happens due to vecdb's short_type_name using rsplit("::")

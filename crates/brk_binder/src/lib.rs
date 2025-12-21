@@ -1,4 +1,4 @@
-use std::{fs::create_dir_all, io, path::Path};
+use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::Path};
 
 use brk_query::Vecs;
 
@@ -70,7 +70,8 @@ fn collect_leaf_type_schemas(node: &TreeNode, schemas: &mut TypeSchemas) {
 
             // Get the type name for this leaf
             let type_name = extract_inner_type(leaf.value_type());
-            if !schemas.contains_key(&type_name) {
+
+            if let Entry::Vacant(e) = schemas.entry(type_name) {
                 // Unwrap single-element allOf
                 let schema = unwrap_allof(&leaf.schema);
 
@@ -85,7 +86,7 @@ fn collect_leaf_type_schemas(node: &TreeNode, schemas: &mut TypeSchemas) {
                 let is_ref = schema.get("$ref").is_some();
 
                 if has_type || has_properties || has_enum || is_ref {
-                    schemas.insert(type_name, schema.clone());
+                    e.insert(schema.clone());
                 }
             }
         }

@@ -58,7 +58,7 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     writeln!(output, "// Type definitions\n").unwrap();
 
     for (name, schema) in schemas {
-        let js_type = schema_to_js_type(schema);
+        let js_type = schema_to_js_type_ctx(schema, Some(name));
 
         if is_primitive_alias(schema) {
             // Simple type alias: @typedef {number} Height
@@ -68,7 +68,7 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             writeln!(output, "/**").unwrap();
             writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
             for (prop_name, prop_schema) in props {
-                let prop_type = schema_to_js_type(prop_schema);
+                let prop_type = schema_to_js_type_ctx(prop_schema, Some(name));
                 let required = schema
                     .get("required")
                     .and_then(|r| r.as_array())
@@ -101,7 +101,7 @@ fn is_primitive_alias(schema: &Value) -> bool {
 }
 
 /// Convert a single JSON type string to JavaScript type
-fn json_type_to_js(ty: &str, schema: &Value) -> String {
+fn json_type_to_js(ty: &str, schema: &Value, current_type: Option<&str>) -> String {
     match ty {
         "integer" | "number" => "number".to_string(),
         "boolean" => "boolean".to_string(),
@@ -110,15 +110,16 @@ fn json_type_to_js(ty: &str, schema: &Value) -> String {
         "array" => {
             let item_type = schema
                 .get("items")
-                .map(schema_to_js_type)
+                .map(|s| schema_to_js_type_ctx(s, current_type))
                 .unwrap_or_else(|| "*".to_string());
             format!("{}[]", item_type)
         }
         "object" => {
             // Check if it has additionalProperties (dict-like)
             if let Some(add_props) = schema.get("additionalProperties") {
-                let value_type = schema_to_js_type(add_props);
-                return format!("Object.<string, {}>", value_type);
+                let value_type = schema_to_js_type_ctx(add_props, current_type);
+                // Use TypeScript index signature syntax for recursive types
+                return format!("{{ [key: string]: {} }}", value_type);
             }
             "Object".to_string()
         }
@@ -126,12 +127,12 @@ fn json_type_to_js(ty: &str, schema: &Value) -> String {
     }
 }
 
-/// Convert JSON Schema to JavaScript/JSDoc type
-fn schema_to_js_type(schema: &Value) -> String {
+/// Convert JSON Schema to JavaScript/JSDoc type with context for recursive types
+fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
     // Handle allOf (try each element until we find a resolvable type)
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
-            let resolved = schema_to_js_type(item);
+            let resolved = schema_to_js_type_ctx(item, current_type);
             if resolved != "*" {
                 return resolved;
             }
@@ -163,7 +164,7 @@ fn schema_to_js_type(schema: &Value) -> String {
                 .iter()
                 .filter_map(|t| t.as_str())
                 .filter(|t| *t != "null")
-                .map(|t| json_type_to_js(t, schema))
+                .map(|t| json_type_to_js(t, schema, current_type))
                 .collect();
             let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
 
@@ -186,7 +187,7 @@ fn schema_to_js_type(schema: &Value) -> String {
 
         // Handle single type string
         if let Some(ty_str) = ty.as_str() {
-            return json_type_to_js(ty_str, schema);
+            return json_type_to_js(ty_str, schema, current_type);
         }
     }
 
@@ -196,11 +197,21 @@ fn schema_to_js_type(schema: &Value) -> String {
         .or_else(|| schema.get("oneOf"))
         .and_then(|v| v.as_array())
     {
-        let types: Vec<String> = variants.iter().map(schema_to_js_type).collect();
+        let types: Vec<String> = variants
+            .iter()
+            .map(|v| schema_to_js_type_ctx(v, current_type))
+            .collect();
         // Filter out * and null for cleaner unions
         let filtered: Vec<_> = types.iter().filter(|t| *t != "*").collect();
         if !filtered.is_empty() {
-            return format!("({})", filtered.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("|"));
+            return format!(
+                "({})",
+                filtered
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join("|")
+            );
         }
         return format!("({})", types.join("|"));
     }
