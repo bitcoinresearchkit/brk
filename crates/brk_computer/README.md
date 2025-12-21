@@ -48,6 +48,18 @@ UTXO and address cohorts support filtering by:
 - **Type**: P2PKH, P2SH, P2WPKH, P2WSH, P2TR
 - **Epoch**: By halving epoch
 
+## Performance
+
+### End-to-End
+
+Full pipeline benchmarks (indexer + computer):
+
+| Machine | Time | Disk | Peak Disk | Memory | Peak Memory |
+|---------|------|------|-----------|--------|-------------|
+| MBP M3 Pro (36GB, internal SSD) | 5.2h | 341 GB | 415 GB | 6.4 GB | 12 GB |
+
+Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk`](/benches/brk)
+
 ## Recommended: mimalloc v3
 
 Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to reduce memory usage.

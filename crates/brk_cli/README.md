@@ -37,6 +37,14 @@ brk --help
 4. **Server**: REST API + MCP endpoint
 5. **Bundler**: JS bundling for web interface (if enabled)
 
+## Performance
+
+| Machine | Time | Disk | Peak Disk | Memory | Peak Memory |
+|---------|------|------|-----------|--------|-------------|
+| MBP M3 Pro (36GB, internal SSD) | 5.2h | 341 GB | 415 GB | 6.4 GB | 12 GB |
+
+Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk`](/benches/brk)
+
 ## Built On
 
 - `brk_indexer` for blockchain indexing

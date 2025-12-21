@@ -58,7 +58,7 @@ let blockhash = indexer.vecs.block.height_to_blockhash.get(height)?;
 | MBP M3 Pro (36GB, internal SSD) | 3.1h | 233 GB | 307 GB | 5.5 GB | 11 GB |
 | Mac Mini M4 (16GB, external SSD) | 4.9h | 233 GB | 303 GB | 5.4 GB | 11 GB |
 
-Full benchmark data: [`/benches/brk_indexer`](/benches/brk_indexer)
+Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/brk_indexer`](/benches/brk_indexer)
 
 ## Recommended: mimalloc v3
 
