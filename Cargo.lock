@@ -522,7 +522,7 @@ dependencies = [
 
 [[package]]
 name = "brk"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_bencher",
  "brk_binder",
@@ -547,7 +547,7 @@ dependencies = [
 
 [[package]]
 name = "brk_bencher"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_logger",
@@ -557,14 +557,14 @@ dependencies = [
 
 [[package]]
 name = "brk_bencher_visualizer"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "plotters",
 ]
 
 [[package]]
 name = "brk_binder"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_query",
  "brk_types",
@@ -576,7 +576,7 @@ dependencies = [
 
 [[package]]
 name = "brk_bundler"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_rolldown",
  "log",
@@ -587,7 +587,7 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_binder",
  "brk_bundler",
@@ -616,7 +616,7 @@ dependencies = [
 
 [[package]]
 name = "brk_computer"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "brk_bencher",
@@ -646,7 +646,7 @@ dependencies = [
 
 [[package]]
 name = "brk_error"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -661,7 +661,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_logger",
@@ -673,7 +673,7 @@ dependencies = [
 
 [[package]]
 name = "brk_grouper"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_traversable",
@@ -684,7 +684,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "brk_bencher",
@@ -709,7 +709,7 @@ dependencies = [
 
 [[package]]
 name = "brk_iterator"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_reader",
@@ -719,7 +719,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "env_logger",
  "jiff",
@@ -730,7 +730,7 @@ dependencies = [
 
 [[package]]
 name = "brk_mcp"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "aide",
  "brk_query",
@@ -742,7 +742,7 @@ dependencies = [
 
 [[package]]
 name = "brk_mempool"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_logger",
@@ -757,7 +757,7 @@ dependencies = [
 
 [[package]]
 name = "brk_query"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "brk_computer",
@@ -780,7 +780,7 @@ dependencies = [
 
 [[package]]
 name = "brk_reader"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "brk_error",
@@ -1187,7 +1187,7 @@ dependencies = [
 
 [[package]]
 name = "brk_rpc"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -1200,7 +1200,7 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "aide",
  "axum",
@@ -1231,7 +1231,7 @@ dependencies = [
 
 [[package]]
 name = "brk_store"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_error",
  "brk_types",
@@ -1255,7 +1255,7 @@ dependencies = [
 
 [[package]]
 name = "brk_traversable"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "brk_traversable_derive",
  "brk_types",
@@ -1267,7 +1267,7 @@ dependencies = [
 
 [[package]]
 name = "brk_traversable_derive"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1276,7 +1276,7 @@ dependencies = [
 
 [[package]]
 name = "brk_types"
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "bitcoin",
  "brk_error",
