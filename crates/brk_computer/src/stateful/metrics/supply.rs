@@ -5,6 +5,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, StoredU64, Version};
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec,
     TypedVecIterator,
@@ -135,6 +136,15 @@ impl SupplyMetrics {
         self.height_to_supply.write()?;
         self.height_to_utxo_count.write()?;
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        vec![
+            &mut self.height_to_supply as &mut dyn AnyStoredVec,
+            &mut self.height_to_utxo_count as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 
     /// Validate computed versions against base version.

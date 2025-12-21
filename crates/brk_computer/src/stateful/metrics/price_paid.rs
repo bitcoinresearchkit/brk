@@ -5,6 +5,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Version};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
 
 use crate::{
@@ -119,6 +120,24 @@ impl PricePaidMetrics {
             price_percentiles.write()?;
         }
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
+            &mut self.height_to_min_price_paid,
+            &mut self.height_to_max_price_paid,
+        ];
+        if let Some(pp) = self.price_percentiles.as_mut() {
+            vecs.extend(
+                pp.vecs
+                    .iter_mut()
+                    .flatten()
+                    .filter_map(|v| v.dateindex.as_mut())
+                    .map(|v| v as &mut dyn AnyStoredVec),
+            );
+        }
+        vecs.into_par_iter()
     }
 
     /// Validate computed versions or reset if mismatched.

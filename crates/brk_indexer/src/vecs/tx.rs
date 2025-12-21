@@ -4,6 +4,7 @@ use brk_types::{
     Height, RawLockTime, StoredBool, StoredU32, TxInIndex, TxIndex, TxOutIndex, TxVersion, Txid,
     Version,
 };
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
 #[derive(Clone, Traversable)]
@@ -60,7 +61,7 @@ impl TxVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_first_txindex as &mut dyn AnyStoredVec,
             &mut self.txindex_to_height,
@@ -73,6 +74,6 @@ impl TxVecs {
             &mut self.txindex_to_first_txinindex,
             &mut self.txindex_to_first_txoutindex,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 }

@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, OutPoint, TxInIndex, TxIndex, Version};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
 #[derive(Clone, Traversable)]
@@ -29,12 +30,12 @@ impl TxinVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_first_txinindex as &mut dyn AnyStoredVec,
             &mut self.txinindex_to_outpoint,
             &mut self.txinindex_to_txindex,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 }

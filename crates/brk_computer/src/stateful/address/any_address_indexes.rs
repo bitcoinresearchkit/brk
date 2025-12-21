@@ -7,6 +7,7 @@ use brk_types::{
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
     TypeIndex, Version,
 };
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportOptions, ImportableVec, Reader, Stamp,
 };
@@ -80,6 +81,11 @@ macro_rules! define_any_address_indexes_vecs {
             pub fn write(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
                 $(self.$field.stamped_write_maybe_with_changes(stamp, with_changes)?;)*
                 Ok(())
+            }
+
+            /// Returns a parallel iterator over all vecs for parallel writing.
+            pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+                vec![$(&mut self.$field as &mut dyn AnyStoredVec),*].into_par_iter()
             }
         }
     };

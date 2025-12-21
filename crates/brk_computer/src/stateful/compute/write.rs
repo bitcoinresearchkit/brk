@@ -53,11 +53,11 @@ pub fn process_address_updates(
 
 /// Flush checkpoint to disk (pure I/O, no processing).
 ///
-/// Writes all accumulated data:
-/// - Cohort stateful vectors
+/// Writes all accumulated data in parallel:
+/// - Cohort stateful vectors (parallel internally)
 /// - Height-indexed vectors
-/// - Address indexes and data (parallel)
-/// - Transaction output index mappings (parallel)
+/// - Address indexes and data
+/// - Transaction output index mappings
 /// - Chain state
 ///
 /// Set `with_changes=true` near chain tip to enable rollback support.
@@ -67,43 +67,48 @@ pub fn write(
     chain_state: &[BlockState],
     with_changes: bool,
 ) -> Result<()> {
+    use rayon::prelude::*;
+
     info!("Writing to disk...");
     let i = Instant::now();
 
-    // Flush cohort states (separate + aggregate)
-    vecs.utxo_cohorts.write_stateful_vecs(height)?;
-    vecs.address_cohorts.write_stateful_vecs(height)?;
-
-    // Flush height-indexed vectors
-    vecs.height_to_unspendable_supply.write()?;
-    vecs.height_to_opreturn_supply.write()?;
-    vecs.addresstype_to_height_to_addr_count.write()?;
-    vecs.addresstype_to_height_to_empty_addr_count.write()?;
-
-    // Flush large vecs in parallel
     let stamp = Stamp::from(height);
-    let any_address_indexes = &mut vecs.any_address_indexes;
-    let addresses_data = &mut vecs.addresses_data;
-    let txoutindex_to_txinindex = &mut vecs.txoutindex_to_txinindex;
 
-    let (addr_result, txout_result) = rayon::join(
-        || {
-            any_address_indexes
-                .write(stamp, with_changes)
-                .and(addresses_data.write(stamp, with_changes))
-        },
-        || txoutindex_to_txinindex.stamped_write_maybe_with_changes(stamp, with_changes),
-    );
-    addr_result?;
-    txout_result?;
-
-    // Sync in-memory chain_state to persisted and flush
+    // Prepare chain_state before parallel write
     vecs.chain_state.truncate_if_needed(Height::ZERO)?;
     for block_state in chain_state {
         vecs.chain_state.push(block_state.supply.clone());
     }
-    vecs.chain_state
-        .stamped_write_maybe_with_changes(stamp, with_changes)?;
+
+    // Write all vecs in parallel using chained iterators
+    vecs.any_address_indexes
+        .par_iter_mut()
+        .chain(vecs.addresses_data.par_iter_mut())
+        .chain(vecs.addresstype_to_height_to_addr_count.par_iter_mut())
+        .chain(
+            vecs.addresstype_to_height_to_empty_addr_count
+                .par_iter_mut(),
+        )
+        .chain(rayon::iter::once(
+            &mut vecs.txoutindex_to_txinindex as &mut dyn AnyStoredVec,
+        ))
+        .chain(rayon::iter::once(
+            &mut vecs.chain_state as &mut dyn AnyStoredVec,
+        ))
+        .chain(rayon::iter::once(
+            &mut vecs.height_to_unspendable_supply as &mut dyn AnyStoredVec,
+        ))
+        .chain(rayon::iter::once(
+            &mut vecs.height_to_opreturn_supply as &mut dyn AnyStoredVec,
+        ))
+        .chain(vecs.utxo_cohorts.par_iter_vecs_mut())
+        .chain(vecs.address_cohorts.par_iter_vecs_mut())
+        .try_for_each(|v| v.any_stamped_write_maybe_with_changes(stamp, with_changes))?;
+
+    // Commit states after vec writes
+    let cleanup = with_changes;
+    vecs.utxo_cohorts.commit_all_states(height, cleanup)?;
+    vecs.address_cohorts.commit_all_states(height, cleanup)?;
 
     info!("Wrote in {:?}", i.elapsed());
 

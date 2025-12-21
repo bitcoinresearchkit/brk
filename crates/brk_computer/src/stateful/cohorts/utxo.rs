@@ -6,7 +6,8 @@ use brk_error::Result;
 use brk_grouper::{CohortContext, Filter, Filtered, StateLevel};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{Database, Exit, IterableVec};
+use rayon::prelude::*;
+use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{
     Indexes, indexes, price,
@@ -86,6 +87,19 @@ impl UTXOCohortVecs {
         if let Some(state) = self.state.as_mut() {
             state.reset();
         }
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.metrics.par_iter_mut()
+    }
+
+    /// Commit state to disk (separate from vec writes for parallelization).
+    pub fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.write(height, cleanup)?;
+        }
+        Ok(())
     }
 }
 
@@ -186,16 +200,6 @@ impl DynCohortVecs for UTXOCohortVecs {
                 state,
             )?;
         }
-        Ok(())
-    }
-
-    fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
-        self.metrics.write()?;
-
-        if let Some(state) = self.state.as_mut() {
-            state.commit(height)?;
-        }
-
         Ok(())
     }
 

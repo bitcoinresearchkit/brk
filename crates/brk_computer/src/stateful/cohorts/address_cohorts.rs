@@ -11,7 +11,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{Database, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
 
@@ -222,10 +222,20 @@ impl AddressCohorts {
         })
     }
 
-    /// Write stateful vectors for separate cohorts.
-    pub fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        // Collect all vecs from all cohorts
+        self.0
+            .iter_mut()
+            .flat_map(|v| v.par_iter_vecs_mut().collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+            .into_par_iter()
+    }
+
+    /// Commit all states to disk (separate from vec writes for parallelization).
+    pub fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.par_iter_separate_mut()
-            .try_for_each(|v| v.write_stateful_vecs(height))
+            .try_for_each(|v| v.write_state(height, cleanup))
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.

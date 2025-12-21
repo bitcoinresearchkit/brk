@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BlockHash, Height, StoredF64, StoredU64, Timestamp, Version, Weight};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
 #[derive(Clone, Traversable)]
@@ -38,7 +39,7 @@ impl BlockVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_blockhash as &mut dyn AnyStoredVec,
             &mut self.height_to_difficulty,
@@ -46,6 +47,6 @@ impl BlockVecs {
             &mut self.height_to_total_size,
             &mut self.height_to_weight,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 }

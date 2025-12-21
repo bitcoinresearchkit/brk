@@ -144,9 +144,7 @@ impl PriceToAmount {
 
         for (&price, &amount) in state.iter() {
             cumsum += u64::from(amount);
-            while idx < PERCENTILES_LEN
-                && cumsum >= total * u64::from(PERCENTILES[idx]) / 100
-            {
+            while idx < PERCENTILES_LEN && cumsum >= total * u64::from(PERCENTILES[idx]) / 100 {
                 result[idx] = price;
                 idx += 1;
             }
@@ -181,16 +179,19 @@ impl PriceToAmount {
             .collect::<BTreeMap<Height, PathBuf>>())
     }
 
-    pub fn flush(&mut self, height: Height) -> Result<()> {
+    /// Flush state to disk, optionally cleaning up old state files.
+    pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.apply_pending();
 
-        let files = self.read_dir(Some(height))?;
+        if cleanup {
+            let files = self.read_dir(Some(height))?;
 
-        for (_, path) in files
-            .iter()
-            .take(files.len().saturating_sub(STATE_TO_KEEP - 1))
-        {
-            fs::remove_file(path)?;
+            for (_, path) in files
+                .iter()
+                .take(files.len().saturating_sub(STATE_TO_KEEP - 1))
+            {
+                fs::remove_file(path)?;
+            }
         }
 
         fs::write(self.path_state(height), self.state.u().serialize()?)?;

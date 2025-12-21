@@ -5,6 +5,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec};
 
 use crate::{
@@ -446,6 +447,24 @@ impl RealizedMetrics {
             v.write()?;
         }
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
+            &mut self.height_to_realized_cap,
+            &mut self.height_to_realized_profit,
+            &mut self.height_to_realized_loss,
+            &mut self.height_to_value_created,
+            &mut self.height_to_value_destroyed,
+        ];
+        if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
+            vecs.push(v);
+        }
+        if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
+            vecs.push(v);
+        }
+        vecs.into_par_iter()
     }
 
     /// Validate computed versions against base version.

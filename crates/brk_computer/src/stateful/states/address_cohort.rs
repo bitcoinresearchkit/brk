@@ -173,14 +173,11 @@ impl AddressCohortState {
             )
         });
 
-        self.inner.decrement_(
-            &addr_supply,
-            addressdata.realized_cap,
-            realized_price,
-        );
+        self.inner
+            .decrement_(&addr_supply, addressdata.realized_cap, realized_price);
     }
 
-    pub fn commit(&mut self, height: Height) -> Result<()> {
-        self.inner.commit(height)
+    pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        self.inner.write(height, cleanup)
     }
 }

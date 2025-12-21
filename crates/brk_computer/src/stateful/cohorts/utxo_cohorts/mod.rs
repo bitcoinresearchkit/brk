@@ -9,16 +9,18 @@ use std::path::Path;
 use brk_error::Result;
 use brk_grouper::{
     AmountFilter, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount,
-    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, Term,
-    TimeFilter, UTXOGroups, DAYS_10Y, DAYS_12Y, DAYS_15Y, DAYS_1D, DAYS_1M, DAYS_1W, DAYS_1Y,
+    ByMaxAge, ByMinAge, BySpendableType, ByTerm, ByYear, DAYS_1D, DAYS_1M, DAYS_1W, DAYS_1Y,
     DAYS_2M, DAYS_2Y, DAYS_3M, DAYS_3Y, DAYS_4M, DAYS_4Y, DAYS_5M, DAYS_5Y, DAYS_6M, DAYS_6Y,
-    DAYS_7Y, DAYS_8Y,
+    DAYS_7Y, DAYS_8Y, DAYS_10Y, DAYS_12Y, DAYS_15Y, Filter, Filtered, StateLevel, Term, TimeFilter,
+    UTXOGroups,
 };
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version, Year};
+use brk_types::{
+    Bitcoin, DateIndex, Dollars, HalvingEpoch, Height, OutputType, Sats, Version, Year,
+};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{Database, Exit, IterableVec};
+use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{
     Indexes,
@@ -372,18 +374,20 @@ impl UTXOCohorts {
         })
     }
 
-    /// Write stateful vectors for separate and aggregate cohorts.
-    pub fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
-        // Flush separate cohorts (includes metrics + state)
-        self.par_iter_separate_mut()
-            .try_for_each(|v| v.write_stateful_vecs(height))?;
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        // Collect all vecs from all cohorts (separate + aggregate)
+        self.0
+            .iter_mut()
+            .flat_map(|v| v.par_iter_vecs_mut().collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+            .into_par_iter()
+    }
 
-        // Write aggregate cohorts' metrics (including price_percentiles)
-        // Note: aggregate cohorts no longer maintain price_to_amount state
-        for v in self.0.iter_aggregate_mut() {
-            v.metrics.write()?;
-        }
-        Ok(())
+    /// Commit all states to disk (separate from vec writes for parallelization).
+    pub fn commit_all_states(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        self.par_iter_separate_mut()
+            .try_for_each(|v| v.write_state(height, cleanup))
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.

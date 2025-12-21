@@ -6,6 +6,7 @@ use brk_types::{
     P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex,
     P2WSHBytes, TypeIndex, Version,
 };
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Reader, Stamp,
     TypedVecIterator,
@@ -136,7 +137,7 @@ impl AddressVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_first_p2pk65addressindex as &mut dyn AnyStoredVec,
             &mut self.height_to_first_p2pk33addressindex,
@@ -155,7 +156,7 @@ impl AddressVecs {
             &mut self.p2traddressindex_to_p2trbytes,
             &mut self.p2aaddressindex_to_p2abytes,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 
     /// Get address bytes by output type, using the reader for the specific address type.

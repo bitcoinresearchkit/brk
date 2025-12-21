@@ -3,6 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{
     EmptyOutputIndex, Height, OpReturnIndex, P2MSOutputIndex, TxIndex, UnknownOutputIndex, Version,
 };
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
 #[derive(Clone, Traversable)]
@@ -77,7 +78,7 @@ impl OutputVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_first_emptyoutputindex as &mut dyn AnyStoredVec,
             &mut self.height_to_first_opreturnindex,
@@ -88,6 +89,6 @@ impl OutputVecs {
             &mut self.p2msoutputindex_to_txindex,
             &mut self.unknownoutputindex_to_txindex,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 }

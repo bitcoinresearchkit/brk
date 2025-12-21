@@ -5,6 +5,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
 
 use crate::{
@@ -119,6 +120,16 @@ impl ActivityMetrics {
         self.height_to_satblocks_destroyed.write()?;
         self.height_to_satdays_destroyed.write()?;
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        vec![
+            &mut self.height_to_sent as &mut dyn AnyStoredVec,
+            &mut self.height_to_satblocks_destroyed as &mut dyn AnyStoredVec,
+            &mut self.height_to_satdays_destroyed as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 
     /// Validate computed versions against base version.

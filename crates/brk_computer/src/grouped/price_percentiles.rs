@@ -1,7 +1,10 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{DateIndex, Dollars, Version};
-use vecdb::{AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec};
+use rayon::prelude::*;
+use vecdb::{
+    AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec,
+};
 
 use crate::{Indexes, indexes};
 
@@ -89,6 +92,17 @@ impl PricePercentiles {
             }
         }
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.vecs
+            .iter_mut()
+            .flatten()
+            .filter_map(|v| v.dateindex.as_mut())
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect::<Vec<_>>()
+            .into_par_iter()
     }
 
     /// Validate computed versions or reset if mismatched.

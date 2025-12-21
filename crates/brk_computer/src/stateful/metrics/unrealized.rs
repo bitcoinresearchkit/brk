@@ -5,6 +5,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Sats, Version};
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, PcoVec,
 };
@@ -229,6 +230,21 @@ impl UnrealizedMetrics {
         self.dateindex_to_unrealized_profit.write()?;
         self.dateindex_to_unrealized_loss.write()?;
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        vec![
+            &mut self.height_to_supply_in_profit as &mut dyn AnyStoredVec,
+            &mut self.height_to_supply_in_loss as &mut dyn AnyStoredVec,
+            &mut self.height_to_unrealized_profit as &mut dyn AnyStoredVec,
+            &mut self.height_to_unrealized_loss as &mut dyn AnyStoredVec,
+            &mut self.dateindex_to_supply_in_profit as &mut dyn AnyStoredVec,
+            &mut self.dateindex_to_supply_in_loss as &mut dyn AnyStoredVec,
+            &mut self.dateindex_to_unrealized_profit as &mut dyn AnyStoredVec,
+            &mut self.dateindex_to_unrealized_loss as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 
     /// Compute aggregate values from separate cohorts.

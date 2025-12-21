@@ -121,16 +121,14 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.iter_mut_any_stored_vec()
-            // self.par_iter_mut_any_stored_vec()
-            .par_bridge()
+        self.par_iter_mut_any_stored_vec()
             .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
         self.db.flush()?;
         Ok(())
     }
 
     pub fn starting_height(&mut self) -> Height {
-        self.iter_mut_any_stored_vec()
+        self.par_iter_mut_any_stored_vec()
             .map(|vec| {
                 let h = Height::from(vec.stamp());
                 if h > Height::ZERO { h.incremented() } else { h }
@@ -152,25 +150,17 @@ impl Vecs {
         self.address.iter_hashes_from(address_type, height)
     }
 
-    fn iter_mut_any_stored_vec(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    fn par_iter_mut_any_stored_vec(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.block
-            .iter_mut_any()
-            .chain(self.tx.iter_mut_any())
-            .chain(self.txin.iter_mut_any())
-            .chain(self.txout.iter_mut_any())
-            .chain(self.address.iter_mut_any())
-            .chain(self.output.iter_mut_any())
+            .par_iter_mut_any()
+            .chain(self.tx.par_iter_mut_any())
+            .chain(self.txin.par_iter_mut_any())
+            .chain(self.txout.par_iter_mut_any())
+            .chain(self.address.par_iter_mut_any())
+            .chain(self.output.par_iter_mut_any())
     }
-
-    // fn par_iter_mut_any_stored_vec(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
-    //     self.block
-    //         .iter_mut_any()
-    //         .chain(self.tx.iter_mut_any())
-    //         .chain(self.txin.iter_mut_any())
-    //         .chain(self.txout.iter_mut_any())
-    //         .chain(self.address.iter_mut_any())
-    //         .chain(self.output.iter_mut_any())
-    // }
 
     pub fn db(&self) -> &Database {
         &self.db

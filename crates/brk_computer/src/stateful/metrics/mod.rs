@@ -28,7 +28,8 @@ use brk_error::Result;
 use brk_grouper::Filter;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
-use vecdb::{Exit, IterableVec};
+use rayon::prelude::*;
+use vecdb::{AnyStoredVec, Exit, IterableVec};
 
 use crate::{Indexes, indexes, price, stateful::states::CohortState};
 
@@ -123,6 +124,28 @@ impl CohortMetrics {
         }
 
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
+
+        vecs.extend(self.supply.par_iter_mut().collect::<Vec<_>>());
+        vecs.extend(self.activity.par_iter_mut().collect::<Vec<_>>());
+
+        if let Some(realized) = self.realized.as_mut() {
+            vecs.extend(realized.par_iter_mut().collect::<Vec<_>>());
+        }
+
+        if let Some(unrealized) = self.unrealized.as_mut() {
+            vecs.extend(unrealized.par_iter_mut().collect::<Vec<_>>());
+        }
+
+        if let Some(price_paid) = self.price_paid.as_mut() {
+            vecs.extend(price_paid.par_iter_mut().collect::<Vec<_>>());
+        }
+
+        vecs.into_par_iter()
     }
 
     /// Validate computed versions against base version.

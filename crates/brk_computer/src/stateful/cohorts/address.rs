@@ -6,6 +6,7 @@ use brk_error::Result;
 use brk_grouper::{CohortContext, Filter, Filtered};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec,
     PcoVec,
@@ -112,6 +113,20 @@ impl AddressCohortVecs {
             .len()
             .min(self.metrics.supply.min_len())
             .min(self.metrics.activity.min_len())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        rayon::iter::once(&mut self.height_to_addr_count as &mut dyn AnyStoredVec)
+            .chain(self.metrics.par_iter_mut())
+    }
+
+    /// Commit state to disk (separate from vec writes for parallelization).
+    pub fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
+        if let Some(state) = self.state.as_mut() {
+            state.inner.write(height, cleanup)?;
+        }
+        Ok(())
     }
 }
 
@@ -221,17 +236,6 @@ impl DynCohortVecs for AddressCohortVecs {
                 &mut state.inner,
             )?;
         }
-        Ok(())
-    }
-
-    fn write_stateful_vecs(&mut self, height: Height) -> Result<()> {
-        self.height_to_addr_count.write()?;
-        self.metrics.write()?;
-
-        if let Some(state) = self.state.as_mut() {
-            state.inner.commit(height)?;
-        }
-
         Ok(())
     }
 

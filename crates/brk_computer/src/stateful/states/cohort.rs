@@ -369,9 +369,9 @@ impl CohortState {
     }
 
     /// Flush state to disk at checkpoint.
-    pub fn commit(&mut self, height: Height) -> Result<()> {
+    pub fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
         if let Some(p) = self.price_to_amount.as_mut() {
-            p.flush(height)?;
+            p.write(height, cleanup)?;
         }
         Ok(())
     }

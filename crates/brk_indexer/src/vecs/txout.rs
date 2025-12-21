@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, OutputType, Sats, TxIndex, TxOutIndex, TypeIndex, Version};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
 #[derive(Clone, Traversable)]
@@ -37,7 +38,7 @@ impl TxoutVecs {
         Ok(())
     }
 
-    pub fn iter_mut_any(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+    pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.height_to_first_txoutindex as &mut dyn AnyStoredVec,
             &mut self.txoutindex_to_value,
@@ -45,6 +46,6 @@ impl TxoutVecs {
             &mut self.txoutindex_to_typeindex,
             &mut self.txoutindex_to_txindex,
         ]
-        .into_iter()
+        .into_par_iter()
     }
 }

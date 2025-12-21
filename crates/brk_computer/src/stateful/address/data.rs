@@ -5,6 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::{
     EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, Version,
 };
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportOptions, ImportableVec, Stamp,
 };
@@ -62,5 +63,14 @@ impl AddressesDataVecs {
         self.empty
             .stamped_write_maybe_with_changes(stamp, with_changes)?;
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        vec![
+            &mut self.loaded as &mut dyn AnyStoredVec,
+            &mut self.empty as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 }

@@ -34,9 +34,6 @@ pub trait DynCohortVecs: Send + Sync {
         date_price: Option<Option<Dollars>>,
     ) -> Result<()>;
 
-    /// Write stateful vectors to disk.
-    fn write_stateful_vecs(&mut self, height: Height) -> Result<()>;
-
     /// First phase of post-processing computations.
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part1(

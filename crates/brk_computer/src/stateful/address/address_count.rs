@@ -5,6 +5,7 @@ use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use derive_deref::{Deref, DerefMut};
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec,
     TypedVecIterator,
@@ -86,6 +87,22 @@ impl AddressTypeToHeightToAddressCount {
         self.p2tr.write()?;
         self.p2a.write()?;
         Ok(())
+    }
+
+    /// Returns a parallel iterator over all vecs for parallel writing.
+    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        let inner = &mut self.0;
+        [
+            &mut inner.p2pk65 as &mut dyn AnyStoredVec,
+            &mut inner.p2pk33 as &mut dyn AnyStoredVec,
+            &mut inner.p2pkh as &mut dyn AnyStoredVec,
+            &mut inner.p2sh as &mut dyn AnyStoredVec,
+            &mut inner.p2wpkh as &mut dyn AnyStoredVec,
+            &mut inner.p2wsh as &mut dyn AnyStoredVec,
+            &mut inner.p2tr as &mut dyn AnyStoredVec,
+            &mut inner.p2a as &mut dyn AnyStoredVec,
+        ]
+        .into_par_iter()
     }
 
     pub fn safe_write(&mut self, exit: &Exit) -> Result<()> {
