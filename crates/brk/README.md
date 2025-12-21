@@ -22,7 +22,6 @@ use brk::types::Height;
 
 | Feature | Crate | Description |
 |---------|-------|-------------|
-| `bencher` | `brk_bencher` | Resource monitoring |
 | `binder` | `brk_binder` | Client code generation |
 | `bundler` | `brk_bundler` | JS bundling |
 | `computer` | `brk_computer` | Metric computation |

@@ -1,9 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-#[cfg(feature = "bencher")]
-#[doc(inline)]
-pub use brk_bencher as bencher;
-
 #[cfg(feature = "binder")]
 #[doc(inline)]
 pub use brk_binder as binder;

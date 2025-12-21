@@ -10,7 +10,6 @@ build = "build.rs"
 
 [dependencies]
 bitcoin = { workspace = true }
-brk_bencher = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_grouper = { workspace = true }
@@ -33,5 +32,6 @@ smallvec = { workspace = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]
+brk_bencher = { workspace = true }
 color-eyre = { workspace = true }
 mimalloc = { workspace = true }

@@ -10,7 +10,6 @@ build = "build.rs"
 
 [features]
 full = [
-    "bencher",
     "binder",
     "bundler",
     "computer",
@@ -30,7 +29,6 @@ full = [
     "traversable",
     "types",
 ]
-bencher = ["brk_bencher"]
 binder = ["brk_binder"]
 bundler = ["brk_bundler"]
 computer = ["brk_computer"]
@@ -51,7 +49,6 @@ traversable = ["brk_traversable"]
 types = ["brk_types"]
 
 [dependencies]
-brk_bencher = { workspace = true, optional = true }
 brk_binder = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
