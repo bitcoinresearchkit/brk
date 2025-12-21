@@ -13,7 +13,7 @@ bitcoin = { workspace = true }
 brk_error = { workspace = true }
 byteview = { workspace = true }
 derive_deref = { workspace = true }
-itoa = "1.0.15"
+itoa = "1.0.16"
 jiff = { workspace = true }
 num_enum = "0.7.5"
 rapidhash = "4.2.0"
