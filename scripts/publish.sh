@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-# BRK crates publish script
 # Order determined by topological sort of dependency graph
-
 CRATES=(
     brk_bundler
     brk_error
@@ -18,6 +16,7 @@ CRATES=(
     brk_store
     brk_traversable
     brk_grouper
+    brk_bencher
     brk_indexer
     brk_computer
     brk_query
@@ -35,13 +34,11 @@ cd "$CRATES_DIR" || { echo "Failed to cd to crates directory"; exit 1; }
 echo "Working from: $(pwd)"
 
 for crate in "${CRATES[@]}"; do
-    echo "=== Publishing $crate ==="
     cd "$crate"
     cargo publish
     cd ..
     echo ""
-    # Give crates.io time to index (required for dependencies)
-    sleep 1
+    sleep 10
 done
 
 echo "Done!"

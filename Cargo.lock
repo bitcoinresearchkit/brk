@@ -524,6 +524,7 @@ dependencies = [
 name = "brk"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "brk_bencher",
  "brk_binder",
  "brk_bundler",
  "brk_computer",
