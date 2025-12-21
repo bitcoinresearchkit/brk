@@ -11,7 +11,6 @@ Serve BRK data via REST API with OpenAPI documentation, response caching, MCP en
 - **OpenAPI spec**: Auto-generated documentation at `/api/openapi.json`
 - **Response caching**: LRU cache with 5000 entries for repeated queries
 - **Compression**: Brotli, gzip, deflate, zstd support
-- **MCP endpoint**: Server-Sent Events transport at `/mcp/sse`
 - **Static files**: Optional web interface hosting
 - **Request logging**: Colorized status/latency logging
 
@@ -32,7 +31,7 @@ server.serve(true).await?;  // true enables MCP endpoint
 | `/api/metrics` | Metric catalog and data queries |
 | `/api/mining/*` | Hashrate, difficulty, pools, epochs |
 | `/api/mempool/*` | Fee estimates, projected blocks |
-| `/mcp/sse` | MCP Server-Sent Events endpoint |
+| `/mcp` | MCP endpoint (if enabled) |
 
 ## Caching
 

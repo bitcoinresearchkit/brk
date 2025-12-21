@@ -37,7 +37,7 @@ let mcp = MCP::new(&async_query);
 
 ## Integration
 
-The MCP server is integrated into `brk_server` and exposed at `/mcp/sse` endpoint for SSE-based MCP transport.
+The MCP server is integrated into `brk_server` and exposed at `/mcp` endpoint for MCP transport.
 
 ## Built On
 
