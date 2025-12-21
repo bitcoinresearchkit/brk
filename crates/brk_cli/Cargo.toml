@@ -38,4 +38,4 @@ name = "brk"
 path = "src/main.rs"
 
 [package.metadata.dist]
-dist = false
+dist = true
