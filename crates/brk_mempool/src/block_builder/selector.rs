@@ -4,10 +4,10 @@ use brk_types::FeeRate;
 use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
+use super::BLOCK_VSIZE;
 use super::graph::Graph;
 use super::heap_entry::HeapEntry;
 use super::package::Package;
-use super::BLOCK_VSIZE;
 use crate::types::PoolIndex;
 
 /// Select transactions from the graph and group into CPFP packages.
@@ -25,7 +25,7 @@ pub fn select_packages(graph: &mut Graph, num_blocks: usize) -> Vec<Package> {
         let node = &graph[entry.pool_index];
 
         // Skip if already selected or entry is stale
-        if node.selected || entry.is_stale(node) {
+        if node.selected {
             continue;
         }
 
@@ -80,13 +80,18 @@ fn select_with_ancestors(graph: &mut Graph, pool_idx: PoolIndex) -> SmallVec<[Po
 }
 
 /// Update descendants' ancestor scores after selecting a tx.
-fn update_descendants(graph: &mut Graph, selected_idx: PoolIndex, heap: &mut BinaryHeap<HeapEntry>) {
+fn update_descendants(
+    graph: &mut Graph,
+    selected_idx: PoolIndex,
+    heap: &mut BinaryHeap<HeapEntry>,
+) {
     let selected_fee = graph[selected_idx].fee;
     let selected_vsize = graph[selected_idx].vsize;
 
     // Track visited to avoid double-updates in diamond patterns
     let mut visited: FxHashSet<PoolIndex> = FxHashSet::default();
-    let mut stack: SmallVec<[PoolIndex; 16]> = graph[selected_idx].children.iter().copied().collect();
+    let mut stack: SmallVec<[PoolIndex; 16]> =
+        graph[selected_idx].children.iter().copied().collect();
 
     while let Some(child_idx) = stack.pop() {
         if !visited.insert(child_idx) {

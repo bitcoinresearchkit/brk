@@ -4,9 +4,8 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_types::TxIndex;
 use mimalloc::MiMalloc;
-use vecdb::{Exit, GenericStoredVec};
+use vecdb::{AnyStoredVec, Exit};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -21,7 +20,7 @@ pub fn main() -> Result<()> {
 }
 
 fn run() -> Result<()> {
-    brk_logger::init(Some(Path::new(".log")))?;
+    brk_logger::init(None)?;
 
     let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".brk");
     // let outputs_dir = Path::new("../../_outputs");
@@ -35,62 +34,8 @@ fn run() -> Result<()> {
 
     let computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
-    let txindex = TxIndex::new(134217893);
-
-    dbg!(
-        indexer
-            .vecs
-            .tx
-            .txindex_to_txid
-            .read_once(txindex)
-            .unwrap()
-            .to_string()
-    );
-    let first_txinindex = indexer
-        .vecs
-        .tx
-        .txindex_to_first_txinindex
-        .read_once(txindex)?;
-    dbg!(first_txinindex);
-    let first_txoutindex = indexer
-        .vecs
-        .tx
-        .txindex_to_first_txoutindex
-        .read_once(txindex)?;
-    dbg!(first_txoutindex);
-    let input_count = *computer.indexes.txindex_to_input_count.read_once(txindex)?;
-    dbg!(input_count);
-    let output_count = *computer
-        .indexes
-        .txindex_to_output_count
-        .read_once(txindex)?;
-    dbg!(output_count);
-
-    let _ = dbg!(computer.chain.txinindex_to_value.read_once(first_txinindex));
-    let _ = dbg!(
-        computer
-            .chain
-            .txinindex_to_value
-            .read_once(first_txinindex + 1)
-    );
-    let _ = dbg!(
-        indexer
-            .vecs
-            .txout
-            .txoutindex_to_value
-            .read_once(first_txoutindex)
-    );
-    let _ = dbg!(
-        indexer
-            .vecs
-            .txout
-            .txoutindex_to_value
-            .read_once(first_txoutindex + 1)
-    );
-    let _ = dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
-    let _ = dbg!(computer.chain.txindex_to_input_value.read_once(txindex));
-    let _ = dbg!(computer.chain.txindex_to_output_value.read_once(txindex));
-    // dbg!(computer.indexes.txindex_to_txindex.ge(txindex));
+    let _a = dbg!(computer.chain.txinindex_to_value.region().meta());
+    let _b = dbg!(indexer.vecs.txout.txoutindex_to_value.region().meta());
 
     Ok(())
 }
