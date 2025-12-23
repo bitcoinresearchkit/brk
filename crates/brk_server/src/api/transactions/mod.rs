@@ -5,7 +5,7 @@ use axum::{
     response::Redirect,
     routing::get,
 };
-use brk_types::{Transaction, TxOutspend, TxStatus, TxidParam, TxidVout};
+use brk_types::{Hex, Transaction, TxOutspend, TxStatus, TxidParam, TxidVout};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
@@ -82,7 +82,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.",
                     )
-                    .ok_response::<String>()
+                    .ok_response::<Hex>()
                     .not_modified()
                     .bad_request()
                     .not_found()
