@@ -10,7 +10,8 @@ use brk_query::{
 };
 use brk_traversable::TreeNode;
 use brk_types::{
-    Index, IndexInfo, LimitParam, MetricCount, MetricData, MetricParam, MetricWithIndex, Metrics,
+    Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam, MetricWithIndex,
+    Metrics,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -118,8 +119,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .metrics_tag()
                     .summary("Search metrics")
                     .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
-                    .ok_response::<Vec<String>>()
-                    .not_modified(),
+                    .ok_response::<Vec<Metric>>()
+                    .not_modified()
+                    .server_error(),
             ),
         )
         .api_route(
@@ -146,7 +148,8 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     )
                     .ok_response::<Vec<Index>>()
                     .not_modified()
-                    .not_found(),
+                    .not_found()
+                    .server_error(),
             ),
         )
         .api_route(
