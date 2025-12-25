@@ -6,7 +6,7 @@ use brk_types::{
     Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid, TxidParam,
     TxidPrefix, Vin, Vout, Weight,
 };
-use vecdb::{GenericStoredVec, TypedVecIterator};
+use vecdb::{GenericStoredVec, IterableVec, TypedVecIterator};
 
 use crate::Query;
 
@@ -119,9 +119,10 @@ impl Query {
         let txoutindex = first_txoutindex + vout;
 
         // Look up spend status
-        let computer = self.computer();
-        let txinindex = computer
-            .stateful
+        let indexer = self.indexer();
+        let txinindex = indexer
+            .vecs
+            .txout
             .txoutindex_to_txinindex
             .read_once(txoutindex)?;
 
@@ -167,8 +168,7 @@ impl Query {
         let output_count = usize::from(next_first_txoutindex) - usize::from(first_txoutindex);
 
         // Get spend status for each output
-        let computer = self.computer();
-        let mut txoutindex_to_txinindex_iter = computer.stateful.txoutindex_to_txinindex.iter()?;
+        let mut txoutindex_to_txinindex_iter = indexer.vecs.txout.txoutindex_to_txinindex.iter()?;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -220,7 +220,7 @@ impl Query {
         let mut txindex_to_first_txoutindex_iter =
             indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
         let mut txinindex_to_outpoint_iter = indexer.vecs.txin.txinindex_to_outpoint.iter()?;
-        let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
+        let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter();
 
         // Build inputs with prevout information
         let input: Vec<TxIn> = tx

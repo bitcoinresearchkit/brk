@@ -25,7 +25,6 @@ impl<T> GroupedByType<T> {
             OutputType::Empty => &self.spendable.empty,
             OutputType::Unknown => &self.spendable.unknown,
             OutputType::OpReturn => &self.unspendable.opreturn,
-            _ => unreachable!(),
         }
     }
 
@@ -43,7 +42,6 @@ impl<T> GroupedByType<T> {
             OutputType::Unknown => &mut self.spendable.unknown,
             OutputType::Empty => &mut self.spendable.empty,
             OutputType::OpReturn => &mut self.unspendable.opreturn,
-            _ => unreachable!(),
         }
     }
 }

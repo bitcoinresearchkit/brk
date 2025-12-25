@@ -6,8 +6,11 @@ use brk_types::{AddressBytes, AddressHash, Height, OutputType, TypeIndex, Versio
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, PAGE_SIZE, Reader, Stamp};
 
+use crate::parallel_import;
+
 mod address;
 mod blocks;
+mod macros;
 mod output;
 mod tx;
 mod txin;
@@ -35,15 +38,51 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
+        log::debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
+        log::debug!("Setting min len...");
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        let block = BlockVecs::forced_import(&db, version)?;
-        let tx = TxVecs::forced_import(&db, version)?;
-        let txin = TxinVecs::forced_import(&db, version)?;
-        let txout = TxoutVecs::forced_import(&db, version)?;
-        let address = AddressVecs::forced_import(&db, version)?;
-        let output = OutputVecs::forced_import(&db, version)?;
+        log::debug!("Importing sub-vecs in parallel...");
+        let (block, tx, txin, txout, address, output) = parallel_import! {
+            block = {
+                log::debug!("Importing BlockVecs...");
+                let r = BlockVecs::forced_import(&db, version);
+                log::debug!("BlockVecs imported.");
+                r
+            },
+            tx = {
+                log::debug!("Importing TxVecs...");
+                let r = TxVecs::forced_import(&db, version);
+                log::debug!("TxVecs imported.");
+                r
+            },
+            txin = {
+                log::debug!("Importing TxinVecs...");
+                let r = TxinVecs::forced_import(&db, version);
+                log::debug!("TxinVecs imported.");
+                r
+            },
+            txout = {
+                log::debug!("Importing TxoutVecs...");
+                let r = TxoutVecs::forced_import(&db, version);
+                log::debug!("TxoutVecs imported.");
+                r
+            },
+            address = {
+                log::debug!("Importing AddressVecs...");
+                let r = AddressVecs::forced_import(&db, version);
+                log::debug!("AddressVecs imported.");
+                r
+            },
+            output = {
+                log::debug!("Importing OutputVecs...");
+                let r = OutputVecs::forced_import(&db, version);
+                log::debug!("OutputVecs imported.");
+                r
+            },
+        };
+        log::debug!("Sub-vecs imported.");
 
         let this = Self {
             db,
@@ -55,13 +94,16 @@ impl Vecs {
             output,
         };
 
+        log::debug!("Retaining regions...");
         this.db.retain_regions(
             this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
 
+        log::debug!("Compacting database...");
         this.db.compact()?;
+        log::debug!("Vecs import complete.");
 
         Ok(this)
     }

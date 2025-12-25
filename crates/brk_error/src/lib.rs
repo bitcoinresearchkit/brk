@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{io, result, time};
+use std::{io, path::PathBuf, result, time};
 
 use thiserror::Error;
 
@@ -123,6 +123,13 @@ pub enum Error {
 
     #[error("Fetch failed after retries: {0}")]
     FetchFailed(String),
+
+    #[error("Version mismatch at {path:?}: expected {expected}, found {found}")]
+    VersionMismatch {
+        path: PathBuf,
+        expected: usize,
+        found: usize,
+    },
 }
 
 

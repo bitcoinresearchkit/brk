@@ -1,24 +1,20 @@
 //! Parallel input processing.
-//!
-//! Processes a block's inputs (spent UTXOs) in parallel, building:
-//! - height_to_sent: map from creation height -> Transacted for sends
-//! - Address data for address cohort tracking (optional)
 
 use brk_grouper::ByAddressType;
-use brk_types::{Height, OutPoint, OutputType, Sats, TxInIndex, TxIndex, TxOutIndex, TypeIndex};
+use brk_types::{Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-use vecdb::{BytesVec, GenericStoredVec};
 
-use crate::stateful::address::{
-    AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
+use crate::stateful::{
+    address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
+    compute::VecsReaders,
+    states::Transacted,
 };
-use crate::stateful::compute::VecsReaders;
-use crate::stateful::states::Transacted;
-use crate::stateful::{IndexerReaders, process::RangeMap};
 
-use super::super::address::HeightToAddressTypeToVec;
-use super::{load_uncached_address_data, AddressCache, LoadedAddressDataWithSource, TxIndexVec};
+use super::{
+    super::address::HeightToAddressTypeToVec, AddressCache, LoadedAddressDataWithSource,
+    TxIndexVec, load_uncached_address_data,
+};
 
 /// Result of processing inputs for a block.
 pub struct InputsResult {
@@ -30,8 +26,6 @@ pub struct InputsResult {
     pub address_data: AddressTypeToTypeIndexMap<LoadedAddressDataWithSource>,
     /// Transaction indexes per address for tx_count tracking.
     pub txindex_vecs: AddressTypeToTypeIndexMap<TxIndexVec>,
-    /// Updates to txoutindex_to_txinindex: (spent txoutindex, spending txinindex).
-    pub txoutindex_to_txinindex_updates: Vec<(TxOutIndex, TxInIndex)>,
 }
 
 /// Process inputs (spent UTXOs) for a block.
@@ -49,52 +43,32 @@ pub struct InputsResult {
 /// expensive merge overhead from rayon's fold/reduce pattern.
 #[allow(clippy::too_many_arguments)]
 pub fn process_inputs(
-    first_txinindex: usize,
     input_count: usize,
     txinindex_to_txindex: &[TxIndex],
-    // Pre-collected outpoints (from reusable iterator with page caching)
-    outpoints: &[OutPoint],
-    txindex_to_first_txoutindex: &BytesVec<TxIndex, TxOutIndex>,
-    txoutindex_to_value: &BytesVec<TxOutIndex, Sats>,
-    txoutindex_to_outputtype: &BytesVec<TxOutIndex, OutputType>,
-    txoutindex_to_typeindex: &BytesVec<TxOutIndex, TypeIndex>,
-    txoutindex_to_height: &RangeMap<TxOutIndex, Height>,
-    ir: &IndexerReaders,
-    // Address lookup parameters
+    txinindex_to_value: &[Sats],
+    txinindex_to_outputtype: &[OutputType],
+    txinindex_to_typeindex: &[TypeIndex],
+    txinindex_to_prev_height: &[Height],
     first_addressindexes: &ByAddressType<TypeIndex>,
     cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> InputsResult {
-    // Parallel reads - collect all input data (outpoints already in memory)
     let items: Vec<_> = (0..input_count)
         .into_par_iter()
         .map(|local_idx| {
-            let txinindex = TxInIndex::from(first_txinindex + local_idx);
             let txindex = txinindex_to_txindex[local_idx];
 
-            // Get outpoint from pre-collected vec and resolve to txoutindex
-            let outpoint = outpoints[local_idx];
-            let first_txoutindex = txindex_to_first_txoutindex
-                .read_unwrap(outpoint.txindex(), &ir.txindex_to_first_txoutindex);
-            let txoutindex = first_txoutindex + outpoint.vout();
+            let prev_height = *txinindex_to_prev_height.get(local_idx).unwrap();
+            let value = *txinindex_to_value.get(local_idx).unwrap();
+            let input_type = *txinindex_to_outputtype.get(local_idx).unwrap();
 
-            // Get creation height
-            let prev_height = *txoutindex_to_height.get(txoutindex).unwrap();
-
-            // Get value and type from the output being spent
-            let value = txoutindex_to_value.read_unwrap(txoutindex, &ir.txoutindex_to_value);
-            let input_type =
-                txoutindex_to_outputtype.read_unwrap(txoutindex, &ir.txoutindex_to_outputtype);
-
-            // Non-address inputs don't need typeindex or address lookup
             if input_type.is_not_address() {
-                return (txinindex, txoutindex, prev_height, value, input_type, None);
+                return (prev_height, value, input_type, None);
             }
 
-            let typeindex =
-                txoutindex_to_typeindex.read_unwrap(txoutindex, &ir.txoutindex_to_typeindex);
+            let typeindex = *txinindex_to_typeindex.get(local_idx).unwrap();
 
             // Look up address data
             let addr_data_opt = load_uncached_address_data(
@@ -108,8 +82,6 @@ pub fn process_inputs(
             );
 
             (
-                txinindex,
-                txoutindex,
                 prev_height,
                 value,
                 input_type,
@@ -131,15 +103,12 @@ pub fn process_inputs(
         AddressTypeToTypeIndexMap::<LoadedAddressDataWithSource>::with_capacity(estimated_per_type);
     let mut txindex_vecs =
         AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
-    let mut txoutindex_to_txinindex_updates = Vec::with_capacity(input_count);
 
-    for (txinindex, txoutindex, prev_height, value, output_type, addr_info) in items {
+    for (prev_height, value, output_type, addr_info) in items {
         height_to_sent
             .entry(prev_height)
             .or_default()
             .iterate(value, output_type);
-
-        txoutindex_to_txinindex_updates.push((txoutindex, txinindex));
 
         if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
             sent_data
@@ -167,7 +136,5 @@ pub fn process_inputs(
         sent_data,
         address_data,
         txindex_vecs,
-        txoutindex_to_txinindex_updates,
     }
 }
-

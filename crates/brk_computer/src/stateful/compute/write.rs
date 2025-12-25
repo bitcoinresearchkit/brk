@@ -90,9 +90,6 @@ pub fn write(
                 .par_iter_mut(),
         )
         .chain(rayon::iter::once(
-            &mut vecs.txoutindex_to_txinindex as &mut dyn AnyStoredVec,
-        ))
-        .chain(rayon::iter::once(
             &mut vecs.chain_state as &mut dyn AnyStoredVec,
         ))
         .chain(rayon::iter::once(

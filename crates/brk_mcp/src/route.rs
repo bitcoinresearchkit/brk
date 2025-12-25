@@ -1,39 +1,26 @@
-use aide::axum::ApiRouter;
-use brk_query::AsyncQuery;
+use std::sync::Arc;
+
+use axum::Router;
 use brk_rmcp::transport::{
     StreamableHttpServerConfig,
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
 };
-
 use log::info;
 
 use crate::MCP;
 
-pub trait MCPRoutes {
-    fn add_mcp_routes(self, query: &AsyncQuery, mcp: bool) -> Self;
-}
+/// Create an MCP service router.
+pub fn mcp_router(base_url: String, openapi_json: Arc<String>) -> Router {
+    info!("Setting up MCP...");
 
-impl<T> MCPRoutes for ApiRouter<T>
-where
-    T: Clone + Send + Sync + 'static,
-{
-    fn add_mcp_routes(self, query: &AsyncQuery, mcp: bool) -> Self {
-        if !mcp {
-            return self;
-        }
+    let service = StreamableHttpService::new(
+        move || Ok(MCP::new(base_url.clone(), openapi_json.as_str())),
+        LocalSessionManager::default().into(),
+        StreamableHttpServerConfig {
+            stateful_mode: false,
+            ..Default::default()
+        },
+    );
 
-        let query = query.clone();
-        let service = StreamableHttpService::new(
-            move || Ok(MCP::new(&query)),
-            LocalSessionManager::default().into(),
-            StreamableHttpServerConfig {
-                stateful_mode: false,
-                ..Default::default()
-            },
-        );
-
-        info!("Setting MCP...");
-
-        self.nest_service("/mcp", service)
-    }
+    Router::new().nest_service("/mcp", service)
 }

@@ -6,6 +6,8 @@ use brk_types::{
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
+use crate::parallel_import;
+
 #[derive(Clone, Traversable)]
 pub struct OutputVecs {
     // Height to first output index (per output type)
@@ -22,31 +24,34 @@ pub struct OutputVecs {
 
 impl OutputVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+        let (
+            height_to_first_emptyoutputindex,
+            height_to_first_opreturnindex,
+            height_to_first_p2msoutputindex,
+            height_to_first_unknownoutputindex,
+            emptyoutputindex_to_txindex,
+            opreturnindex_to_txindex,
+            p2msoutputindex_to_txindex,
+            unknownoutputindex_to_txindex,
+        ) = parallel_import! {
+            height_to_first_emptyoutputindex = PcoVec::forced_import(db, "first_emptyoutputindex", version),
+            height_to_first_opreturnindex = PcoVec::forced_import(db, "first_opreturnindex", version),
+            height_to_first_p2msoutputindex = PcoVec::forced_import(db, "first_p2msoutputindex", version),
+            height_to_first_unknownoutputindex = PcoVec::forced_import(db, "first_unknownoutputindex", version),
+            emptyoutputindex_to_txindex = PcoVec::forced_import(db, "txindex", version),
+            opreturnindex_to_txindex = PcoVec::forced_import(db, "txindex", version),
+            p2msoutputindex_to_txindex = PcoVec::forced_import(db, "txindex", version),
+            unknownoutputindex_to_txindex = PcoVec::forced_import(db, "txindex", version),
+        };
         Ok(Self {
-            height_to_first_emptyoutputindex: PcoVec::forced_import(
-                db,
-                "first_emptyoutputindex",
-                version,
-            )?,
-            height_to_first_opreturnindex: PcoVec::forced_import(
-                db,
-                "first_opreturnindex",
-                version,
-            )?,
-            height_to_first_p2msoutputindex: PcoVec::forced_import(
-                db,
-                "first_p2msoutputindex",
-                version,
-            )?,
-            height_to_first_unknownoutputindex: PcoVec::forced_import(
-                db,
-                "first_unknownoutputindex",
-                version,
-            )?,
-            emptyoutputindex_to_txindex: PcoVec::forced_import(db, "txindex", version)?,
-            opreturnindex_to_txindex: PcoVec::forced_import(db, "txindex", version)?,
-            p2msoutputindex_to_txindex: PcoVec::forced_import(db, "txindex", version)?,
-            unknownoutputindex_to_txindex: PcoVec::forced_import(db, "txindex", version)?,
+            height_to_first_emptyoutputindex,
+            height_to_first_opreturnindex,
+            height_to_first_p2msoutputindex,
+            height_to_first_unknownoutputindex,
+            emptyoutputindex_to_txindex,
+            opreturnindex_to_txindex,
+            p2msoutputindex_to_txindex,
+            unknownoutputindex_to_txindex,
         })
     }
 

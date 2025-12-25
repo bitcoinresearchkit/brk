@@ -7,6 +7,8 @@ use brk_types::{
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
+use crate::parallel_import;
+
 #[derive(Clone, Traversable)]
 pub struct TxVecs {
     pub height_to_first_txindex: PcoVec<Height, TxIndex>,
@@ -23,17 +25,40 @@ pub struct TxVecs {
 
 impl TxVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+        let (
+            height_to_first_txindex,
+            txindex_to_height,
+            txindex_to_txid,
+            txindex_to_txversion,
+            txindex_to_rawlocktime,
+            txindex_to_base_size,
+            txindex_to_total_size,
+            txindex_to_is_explicitly_rbf,
+            txindex_to_first_txinindex,
+            txindex_to_first_txoutindex,
+        ) = parallel_import! {
+            height_to_first_txindex = PcoVec::forced_import(db, "first_txindex", version),
+            txindex_to_height = PcoVec::forced_import(db, "height", version),
+            txindex_to_txid = BytesVec::forced_import(db, "txid", version),
+            txindex_to_txversion = PcoVec::forced_import(db, "txversion", version),
+            txindex_to_rawlocktime = PcoVec::forced_import(db, "rawlocktime", version),
+            txindex_to_base_size = PcoVec::forced_import(db, "base_size", version),
+            txindex_to_total_size = PcoVec::forced_import(db, "total_size", version),
+            txindex_to_is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
+            txindex_to_first_txinindex = PcoVec::forced_import(db, "first_txinindex", version),
+            txindex_to_first_txoutindex = BytesVec::forced_import(db, "first_txoutindex", version),
+        };
         Ok(Self {
-            height_to_first_txindex: PcoVec::forced_import(db, "first_txindex", version)?,
-            txindex_to_height: PcoVec::forced_import(db, "height", version)?,
-            txindex_to_txid: BytesVec::forced_import(db, "txid", version)?,
-            txindex_to_txversion: PcoVec::forced_import(db, "txversion", version)?,
-            txindex_to_rawlocktime: PcoVec::forced_import(db, "rawlocktime", version)?,
-            txindex_to_base_size: PcoVec::forced_import(db, "base_size", version)?,
-            txindex_to_total_size: PcoVec::forced_import(db, "total_size", version)?,
-            txindex_to_is_explicitly_rbf: PcoVec::forced_import(db, "is_explicitly_rbf", version)?,
-            txindex_to_first_txinindex: PcoVec::forced_import(db, "first_txinindex", version)?,
-            txindex_to_first_txoutindex: BytesVec::forced_import(db, "first_txoutindex", version)?,
+            height_to_first_txindex,
+            txindex_to_height,
+            txindex_to_txid,
+            txindex_to_txversion,
+            txindex_to_rawlocktime,
+            txindex_to_base_size,
+            txindex_to_total_size,
+            txindex_to_is_explicitly_rbf,
+            txindex_to_first_txinindex,
+            txindex_to_first_txoutindex,
         })
     }
 

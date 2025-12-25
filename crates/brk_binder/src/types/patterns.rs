@@ -1,19 +1,24 @@
 //! Pattern detection for structural patterns in the metric tree.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
 use brk_types::TreeNode;
 
 use super::{
-    case::to_pascal_case, schema::schema_to_json_type, FieldNamePosition, PatternField,
-    StructuralPattern,
+    FieldNamePosition, PatternField, StructuralPattern, case::to_pascal_case,
+    schema::schema_to_json_type,
+    tree::{get_first_leaf_name, get_node_fields},
 };
 
 /// Detect structural patterns in the tree using a bottom-up approach.
-/// Returns (patterns, concrete_to_pattern_mapping).
+/// Returns (patterns, concrete_to_pattern, concrete_to_type_param).
 pub fn detect_structural_patterns(
     tree: &TreeNode,
-) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
+) -> (
+    Vec<StructuralPattern>,
+    HashMap<Vec<PatternField>, String>,
+    HashMap<Vec<PatternField>, String>,
+) {
     let mut signature_to_pattern: HashMap<Vec<PatternField>, String> = HashMap::new();
     let mut signature_counts: HashMap<Vec<PatternField>, usize> = HashMap::new();
     let mut normalized_to_name: HashMap<Vec<PatternField>, String> = HashMap::new();
@@ -29,8 +34,9 @@ pub fn detect_structural_patterns(
         &mut name_counts,
     );
 
-    // Identify generic patterns
-    let (generic_patterns, generic_mappings) = detect_generic_patterns(&signature_to_pattern);
+    // Identify generic patterns (also extracts type params)
+    let (generic_patterns, generic_mappings, type_mappings) =
+        detect_generic_patterns(&signature_to_pattern);
 
     // Build non-generic patterns: signatures appearing 2+ times that weren't merged into generics
     let mut patterns: Vec<StructuralPattern> = signature_to_pattern
@@ -64,33 +70,43 @@ pub fn detect_structural_patterns(
     analyze_pattern_field_positions(tree, &mut patterns, &pattern_lookup);
 
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
-    (patterns, concrete_to_pattern)
+    (patterns, concrete_to_pattern, type_mappings)
 }
 
 /// Detect generic patterns by grouping signatures by their normalized form.
+/// Returns (patterns, concrete_to_pattern, concrete_to_type_param).
 fn detect_generic_patterns(
     signature_to_pattern: &HashMap<Vec<PatternField>, String>,
-) -> (Vec<StructuralPattern>, HashMap<Vec<PatternField>, String>) {
-    let mut normalized_groups: HashMap<Vec<PatternField>, Vec<(Vec<PatternField>, String)>> =
-        HashMap::new();
+) -> (
+    Vec<StructuralPattern>,
+    HashMap<Vec<PatternField>, String>,
+    HashMap<Vec<PatternField>, String>,
+) {
+    // Group by normalized form, tracking the extracted type for each concrete signature
+    let mut normalized_groups: HashMap<
+        Vec<PatternField>,
+        Vec<(Vec<PatternField>, String, String)>,
+    > = HashMap::new();
 
     for (fields, name) in signature_to_pattern {
-        if let Some(normalized) = normalize_fields_for_generic(fields) {
+        if let Some((normalized, extracted_type)) = normalize_fields_for_generic(fields) {
             normalized_groups
                 .entry(normalized)
                 .or_default()
-                .push((fields.clone(), name.clone()));
+                .push((fields.clone(), name.clone(), extracted_type));
         }
     }
 
     let mut patterns = Vec::new();
-    let mut mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+    let mut pattern_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+    let mut type_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
 
     for (normalized_fields, group) in normalized_groups {
         if group.len() >= 2 {
             let generic_name = group[0].1.clone();
-            for (concrete_fields, _) in &group {
-                mappings.insert(concrete_fields.clone(), generic_name.clone());
+            for (concrete_fields, _, extracted_type) in &group {
+                pattern_mappings.insert(concrete_fields.clone(), generic_name.clone());
+                type_mappings.insert(concrete_fields.clone(), extracted_type.clone());
             }
             patterns.push(StructuralPattern {
                 name: generic_name,
@@ -101,11 +117,12 @@ fn detect_generic_patterns(
         }
     }
 
-    (patterns, mappings)
+    (patterns, pattern_mappings, type_mappings)
 }
 
 /// Normalize fields by replacing concrete value types with "T".
-fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<Vec<PatternField>> {
+/// Returns (normalized_fields, extracted_type) where extracted_type is the concrete type replaced.
+fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternField>, String)> {
     let leaf_types: Vec<&str> = fields
         .iter()
         .filter(|f| f.is_leaf())
@@ -137,7 +154,7 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<Vec<PatternFi
         })
         .collect();
 
-    Some(normalized)
+    Some((normalized, super::extract_inner_type(first_type)))
 }
 
 /// Recursively resolve branch patterns bottom-up.
@@ -266,7 +283,7 @@ fn collect_pattern_instances(
         return;
     };
 
-    let fields = get_node_fields_for_analysis(children, pattern_lookup);
+    let fields = get_node_fields(children, pattern_lookup);
     if let Some(pattern_name) = pattern_lookup.get(&fields) {
         for (field_name, child_node) in children {
             if let TreeNode::Leaf(leaf) = child_node {
@@ -283,7 +300,7 @@ fn collect_pattern_instances(
         let child_accumulated = match child_node {
             TreeNode::Leaf(leaf) => leaf.name().to_string(),
             TreeNode::Branch(_) => {
-                if let Some(desc_leaf_name) = get_descendant_leaf_name(child_node) {
+                if let Some(desc_leaf_name) = get_first_leaf_name(child_node) {
                     infer_accumulated_name(accumulated_name, field_name, &desc_leaf_name)
                 } else if accumulated_name.is_empty() {
                     field_name.clone()
@@ -293,13 +310,6 @@ fn collect_pattern_instances(
             }
         };
         collect_pattern_instances(child_node, &child_accumulated, instances, pattern_lookup);
-    }
-}
-
-fn get_descendant_leaf_name(node: &TreeNode) -> Option<String> {
-    match node {
-        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
-        TreeNode::Branch(children) => children.values().find_map(get_descendant_leaf_name),
     }
 }
 
@@ -322,40 +332,6 @@ fn infer_accumulated_name(parent_acc: &str, field_name: &str, descendant_leaf: &
     } else {
         format!("{}_{}", parent_acc, field_name)
     }
-}
-
-fn get_node_fields_for_analysis(
-    children: &BTreeMap<String, TreeNode>,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
-) -> Vec<PatternField> {
-    let mut fields: Vec<PatternField> = children
-        .iter()
-        .map(|(name, node)| {
-            let (rust_type, json_type, indexes) = match node {
-                TreeNode::Leaf(leaf) => (
-                    leaf.value_type().to_string(),
-                    schema_to_json_type(&leaf.schema),
-                    leaf.indexes().clone(),
-                ),
-                TreeNode::Branch(grandchildren) => {
-                    let child_fields = get_node_fields_for_analysis(grandchildren, pattern_lookup);
-                    let pattern_name = pattern_lookup
-                        .get(&child_fields)
-                        .cloned()
-                        .unwrap_or_else(|| "Unknown".to_string());
-                    (pattern_name.clone(), pattern_name, BTreeSet::new())
-                }
-            };
-            PatternField {
-                name: name.clone(),
-                rust_type,
-                json_type,
-                indexes,
-            }
-        })
-        .collect();
-    fields.sort_by(|a, b| a.name.cmp(&b.name));
-    fields
 }
 
 fn analyze_field_positions_from_instances(

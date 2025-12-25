@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::Path, thread, time::Instant};
+use std::{fs, path::Path, thread, time::Instant};
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
@@ -11,6 +11,7 @@ use vecdb::Exit;
 mod constants;
 mod indexes;
 mod processor;
+mod range_map;
 mod readers;
 mod stores;
 mod vecs;
@@ -18,6 +19,7 @@ mod vecs;
 use constants::*;
 pub use indexes::*;
 pub use processor::*;
+pub use range_map::*;
 pub use readers::*;
 pub use stores::*;
 pub use vecs::*;
@@ -30,6 +32,19 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
+        match Self::forced_import_inner(outputs_dir) {
+            Ok(result) => Ok(result),
+            Err(Error::VersionMismatch { path, .. }) => {
+                let indexed_path = outputs_dir.join("indexed");
+                info!("Version mismatch at {path:?}, deleting {indexed_path:?} and retrying");
+                fs::remove_dir_all(&indexed_path)?;
+                Self::forced_import(outputs_dir)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn forced_import_inner(outputs_dir: &Path) -> Result<Self> {
         info!("Increasing number of open files limit...");
         let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
         rlimit::setrlimit(
@@ -129,6 +144,13 @@ impl Indexer {
 
         let mut readers = Readers::new(&self.vecs);
 
+        // Build txindex -> height map from existing data for efficient lookups
+        let mut txindex_to_height = RangeMap::new();
+        for (height, first_txindex) in self.vecs.tx.height_to_first_txindex.into_iter().enumerate()
+        {
+            txindex_to_height.insert(first_txindex, Height::from(height));
+        }
+
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
 
@@ -138,6 +160,9 @@ impl Indexer {
             info!("Indexing block {height}...");
 
             indexes.height = height;
+
+            // Insert current block's first_txindex -> height before processing inputs
+            txindex_to_height.insert(indexes.txindex, height);
 
             // Used to check rapidhash collisions
             let block_check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO;
@@ -150,6 +175,7 @@ impl Indexer {
                 vecs,
                 stores,
                 readers: &readers,
+                txindex_to_height: &txindex_to_height,
             };
 
             // Phase 1: Process block metadata

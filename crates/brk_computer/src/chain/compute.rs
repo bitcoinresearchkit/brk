@@ -4,7 +4,7 @@ use brk_types::{
     CheckedSub, FeeRate, HalvingEpoch, Height, ONE_DAY_IN_SEC_F64, Sats, StoredF32, StoredF64,
     StoredU32, StoredU64, Timestamp, TxOutIndex, TxVersion,
 };
-use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex, unlikely};
+use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex, unlikely};
 
 use crate::{grouped::ComputedVecsFromHeight, indexes, price, utils::OptionExt, Indexes};
 
@@ -275,39 +275,11 @@ impl Vecs {
         // TxInIndex
         // ---
 
-        let txindex_to_first_txoutindex = &indexer.vecs.tx.txindex_to_first_txoutindex;
-        let txindex_to_first_txoutindex_reader = txindex_to_first_txoutindex.create_reader();
-        let txoutindex_to_value = &indexer.vecs.txout.txoutindex_to_value;
-        let txoutindex_to_value_reader = indexer.vecs.txout.txoutindex_to_value.create_reader();
-        self.txinindex_to_value.compute_transform(
-            starting_indexes.txinindex,
-            &indexer.vecs.txin.txinindex_to_outpoint,
-            |(txinindex, outpoint, ..)| {
-                if unlikely(outpoint.is_coinbase()) {
-                    return (txinindex, Sats::MAX);
-                }
-                let txoutindex = txindex_to_first_txoutindex
-                    .read_unwrap(outpoint.txindex(), &txindex_to_first_txoutindex_reader)
-                    + outpoint.vout();
-
-                let value = if unlikely(txoutindex == TxOutIndex::COINBASE) {
-                    unreachable!()
-                } else {
-                    txoutindex_to_value
-                        .unchecked_read(txoutindex, &txoutindex_to_value_reader)
-                        .unwrap()
-                };
-
-                (txinindex, value)
-            },
-            exit,
-        )?;
-
         self.txindex_to_input_value.compute_sum_from_indexes(
             starting_indexes.txindex,
             &indexer.vecs.tx.txindex_to_first_txinindex,
             &indexes.txindex_to_input_count,
-            &self.txinindex_to_value,
+            &indexer.vecs.txin.txinindex_to_value,
             exit,
         )?;
 
@@ -393,7 +365,8 @@ impl Vecs {
                 let mut txindex_to_first_txoutindex_iter =
                     indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
                 let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-                let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
+                let mut txoutindex_to_txoutdata_iter =
+                    indexer.vecs.txout.txoutindex_to_txoutdata.iter()?;
                 vec.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.tx.height_to_first_txindex,
@@ -405,8 +378,9 @@ impl Vecs {
                         let mut sats = Sats::ZERO;
                         (first_txoutindex..first_txoutindex + usize::from(output_count)).for_each(
                             |txoutindex| {
-                                sats += txoutindex_to_value_iter
-                                    .get_unwrap(TxOutIndex::from(txoutindex));
+                                sats += txoutindex_to_txoutdata_iter
+                                    .get_unwrap(TxOutIndex::from(txoutindex))
+                                    .value;
                             },
                         );
                         (height, sats)

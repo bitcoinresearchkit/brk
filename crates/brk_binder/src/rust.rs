@@ -12,11 +12,13 @@ use crate::{
     to_pascal_case, to_snake_case,
 };
 
-/// Generate Rust client from metadata and OpenAPI endpoints
+/// Generate Rust client from metadata and OpenAPI endpoints.
+///
+/// `output_path` is the full path to the output file (e.g., "crates/brk_client/src/lib.rs").
 pub fn generate_rust_client(
     metadata: &ClientMetadata,
     endpoints: &[Endpoint],
-    output_dir: &Path,
+    output_path: &Path,
 ) -> io::Result<()> {
     let mut output = String::new();
 
@@ -47,7 +49,7 @@ pub fn generate_rust_client(
     // Generate main client with API methods
     generate_main_client(&mut output, endpoints);
 
-    fs::write(output_dir.join("client.rs"), output)?;
+    fs::write(output_path, output)?;
 
     Ok(())
 }
@@ -55,7 +57,7 @@ pub fn generate_rust_client(
 fn generate_imports(output: &mut String) {
     writeln!(
         output,
-        r#"use std::marker::PhantomData;
+        r#"use std::sync::Arc;
 use serde::de::DeserializeOwned;
 use brk_types::*;
 
@@ -88,14 +90,14 @@ pub type Result<T> = std::result::Result<T, BrkError>;
 #[derive(Debug, Clone)]
 pub struct BrkClientOptions {{
     pub base_url: String,
-    pub timeout_ms: u64,
+    pub timeout_secs: u64,
 }}
 
 impl Default for BrkClientOptions {{
     fn default() -> Self {{
         Self {{
             base_url: "http://localhost:3000".to_string(),
-            timeout_ms: 30000,
+            timeout_secs: 30,
         }}
     }}
 }}
@@ -104,36 +106,41 @@ impl Default for BrkClientOptions {{
 #[derive(Debug, Clone)]
 pub struct BrkClientBase {{
     base_url: String,
-    client: reqwest::blocking::Client,
+    timeout_secs: u64,
 }}
 
 impl BrkClientBase {{
     /// Create a new client with the given base URL.
-    pub fn new(base_url: impl Into<String>) -> Result<Self> {{
-        let base_url = base_url.into();
-        let client = reqwest::blocking::Client::new();
-        Ok(Self {{ base_url, client }})
+    pub fn new(base_url: impl Into<String>) -> Self {{
+        Self {{
+            base_url: base_url.into(),
+            timeout_secs: 30,
+        }}
     }}
 
     /// Create a new client with options.
-    pub fn with_options(options: BrkClientOptions) -> Result<Self> {{
-        let client = reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_millis(options.timeout_ms))
-            .build()
-            .map_err(|e| BrkError {{ message: e.to_string() }})?;
-        Ok(Self {{
+    pub fn with_options(options: BrkClientOptions) -> Self {{
+        Self {{
             base_url: options.base_url,
-            client,
-        }})
+            timeout_secs: options.timeout_secs,
+        }}
     }}
 
     /// Make a GET request.
     pub fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T> {{
         let url = format!("{{}}{{}}", self.base_url, path);
-        self.client
-            .get(&url)
+        let response = minreq::get(&url)
+            .with_timeout(self.timeout_secs)
             .send()
-            .map_err(|e| BrkError {{ message: e.to_string() }})?
+            .map_err(|e| BrkError {{ message: e.to_string() }})?;
+
+        if response.status_code >= 400 {{
+            return Err(BrkError {{
+                message: format!("HTTP {{}}", response.status_code),
+            }});
+        }}
+
+        response
             .json()
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
@@ -148,18 +155,18 @@ fn generate_metric_node(output: &mut String) {
     writeln!(
         output,
         r#"/// A metric node that can fetch data for different indexes.
-pub struct MetricNode<'a, T> {{
-    client: &'a BrkClientBase,
+pub struct MetricNode<T> {{
+    client: Arc<BrkClientBase>,
     path: String,
-    _marker: PhantomData<T>,
+    _marker: std::marker::PhantomData<T>,
 }}
 
-impl<'a, T: DeserializeOwned> MetricNode<'a, T> {{
-    pub fn new(client: &'a BrkClientBase, path: String) -> Self {{
+impl<T: DeserializeOwned> MetricNode<T> {{
+    pub fn new(client: Arc<BrkClientBase>, path: String) -> Self {{
         Self {{
             client,
             path,
-            _marker: PhantomData,
+            _marker: std::marker::PhantomData,
         }}
     }}
 
@@ -168,7 +175,7 @@ impl<'a, T: DeserializeOwned> MetricNode<'a, T> {{
         self.client.get(&self.path)
     }}
 
-    /// Fetch data points within a date range.
+    /// Fetch data points within a range.
     pub fn get_range(&self, from: &str, to: &str) -> Result<Vec<T>> {{
         let path = format!("{{}}?from={{}}&to={{}}", self.path, from, to);
         self.client.get(&path)
@@ -195,26 +202,20 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
             pattern.indexes.len()
         )
         .unwrap();
-        writeln!(output, "pub struct {}<'a, T> {{", pattern.name).unwrap();
+        writeln!(output, "pub struct {}<T> {{", pattern.name).unwrap();
 
         for index in &pattern.indexes {
             let field_name = index_to_field_name(index);
-            writeln!(output, "    pub {}: MetricNode<'a, T>,", field_name).unwrap();
+            writeln!(output, "    pub {}: MetricNode<T>,", field_name).unwrap();
         }
 
-        writeln!(output, "    _marker: PhantomData<T>,").unwrap();
         writeln!(output, "}}\n").unwrap();
 
         // Generate impl block with constructor
+        writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", pattern.name).unwrap();
         writeln!(
             output,
-            "impl<'a, T: DeserializeOwned> {}<'a, T> {{",
-            pattern.name
-        )
-        .unwrap();
-        writeln!(
-            output,
-            "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+            "    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {{"
         )
         .unwrap();
         writeln!(output, "        Self {{").unwrap();
@@ -224,13 +225,12 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
             let path_segment = index.serialize_long();
             writeln!(
                 output,
-                "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
+                "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}/{}\")),",
                 field_name, path_segment
             )
             .unwrap();
         }
 
-        writeln!(output, "            _marker: PhantomData,").unwrap();
         writeln!(output, "        }}").unwrap();
         writeln!(output, "    }}").unwrap();
         writeln!(output, "}}\n").unwrap();
@@ -256,11 +256,7 @@ fn generate_pattern_structs(
 
     for pattern in patterns {
         let is_parameterizable = pattern.is_parameterizable();
-        let generic_params = if pattern.is_generic {
-            "<'a, T>"
-        } else {
-            "<'a>"
-        };
+        let generic_params = if pattern.is_generic { "<T>" } else { "" };
 
         writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
         writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
@@ -275,10 +271,15 @@ fn generate_pattern_structs(
         writeln!(output, "}}\n").unwrap();
 
         // Generate impl block with constructor
+        let impl_generic = if pattern.is_generic {
+            "<T: DeserializeOwned>"
+        } else {
+            ""
+        };
         writeln!(
             output,
             "impl{} {}{} {{",
-            generic_params, pattern.name, generic_params
+            impl_generic, pattern.name, generic_params
         )
         .unwrap();
 
@@ -290,13 +291,13 @@ fn generate_pattern_structs(
             .unwrap();
             writeln!(
                 output,
-                "    pub fn new(client: &'a BrkClientBase, acc: &str) -> Self {{"
+                "    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {{"
             )
             .unwrap();
         } else {
             writeln!(
                 output,
-                "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+                "    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {{"
             )
             .unwrap();
         }
@@ -340,7 +341,7 @@ fn generate_parameterized_rust_field(
 
         writeln!(
             output,
-            "            {}: {}::new(client, {}),",
+            "            {}: {}::new(client.clone(), {}),",
             field_name, field.rust_type, child_acc
         )
         .unwrap();
@@ -363,14 +364,14 @@ fn generate_parameterized_rust_field(
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
-            "            {}: {}::new(client, &{}),",
+            "            {}: {}::new(client.clone(), &{}),",
             field_name, accessor.name, metric_expr
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "            {}: MetricNode::new(client, {}),",
+            "            {}: MetricNode::new(client.clone(), {}),",
             field_name, metric_expr
         )
         .unwrap();
@@ -388,7 +389,7 @@ fn generate_tree_path_rust_field(
     if metadata.is_pattern_type(&field.rust_type) {
         writeln!(
             output,
-            "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
             field_name, field.rust_type, field.name
         )
         .unwrap();
@@ -396,14 +397,14 @@ fn generate_tree_path_rust_field(
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
-            "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
             field_name, accessor.name, field.name
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "            {}: MetricNode::new(client, format!(\"{{base_path}}/{}\")),",
+            "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}/{}\")),",
             field_name, field.name
         )
         .unwrap();
@@ -441,15 +442,16 @@ fn field_to_type_annotation_with_generic(
         if metadata.is_pattern_generic(&field.rust_type)
             && let Some(vt) = generic_value_type
         {
-            return format!("{}<'a, {}>", field.rust_type, vt);
+            return format!("{}<{}>", field.rust_type, vt);
         }
-        format!("{}<'a>", field.rust_type)
+        // Non-generic pattern has no type params
+        field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         // Leaf with a reusable accessor pattern
-        format!("{}<'a, {}>", accessor.name, value_type)
+        format!("{}<{}>", accessor.name, value_type)
     } else {
         // Leaf with unique index set - use MetricNode directly
-        format!("MetricNode<'a, {}>", value_type)
+        format!("MetricNode<{}>", value_type)
     }
 }
 
@@ -501,29 +503,27 @@ fn generate_tree_node(
     generated.insert(name.to_string());
 
     writeln!(output, "/// Catalog tree node.").unwrap();
-    writeln!(output, "pub struct {}<'a> {{", name).unwrap();
+    writeln!(output, "pub struct {} {{", name).unwrap();
 
     for (field, child_fields) in &fields_with_child_info {
         let field_name = to_snake_case(&field.name);
+        // Look up type parameter for generic patterns
         let generic_value_type = child_fields
             .as_ref()
-            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
-        let type_annotation = field_to_type_annotation_with_generic(
-            field,
-            metadata,
-            false,
-            generic_value_type.as_deref(),
-        );
+            .and_then(|cf| metadata.get_type_param(cf))
+            .map(String::as_str);
+        let type_annotation =
+            field_to_type_annotation_with_generic(field, metadata, false, generic_value_type);
         writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
     }
 
     writeln!(output, "}}\n").unwrap();
 
     // Generate impl block
-    writeln!(output, "impl<'a> {}<'a> {{", name).unwrap();
+    writeln!(output, "impl {} {{", name).unwrap();
     writeln!(
         output,
-        "    pub fn new(client: &'a BrkClientBase, base_path: &str) -> Self {{"
+        "    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {{"
     )
     .unwrap();
     writeln!(output, "        Self {{").unwrap();
@@ -538,14 +538,14 @@ fn generate_tree_node(
                 let metric_base = get_pattern_instance_base(child_node, child_name);
                 writeln!(
                     output,
-                    "            {}: {}::new(client, \"{}\"),",
+                    "            {}: {}::new(client.clone(), \"{}\"),",
                     field_name, field.rust_type, metric_base
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "            {}: {}::new(client, &format!(\"{{base_path}}/{}\")),",
+                    "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
                     field_name, field.rust_type, field.name
                 )
                 .unwrap();
@@ -560,14 +560,14 @@ fn generate_tree_node(
             if metric_path.contains("{base_path}") {
                 writeln!(
                     output,
-                    "            {}: {}::new(client, &format!(\"{}\")),",
+                    "            {}: {}::new(client.clone(), &format!(\"{}\")),",
                     field_name, accessor.name, metric_path
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "            {}: {}::new(client, \"{}\"),",
+                    "            {}: {}::new(client.clone(), \"{}\"),",
                     field_name, accessor.name, metric_path
                 )
                 .unwrap();
@@ -581,14 +581,14 @@ fn generate_tree_node(
             if metric_path.contains("{base_path}") {
                 writeln!(
                     output,
-                    "            {}: MetricNode::new(client, format!(\"{}\")),",
+                    "            {}: MetricNode::new(client.clone(), format!(\"{}\")),",
                     field_name, metric_path
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "            {}: MetricNode::new(client, \"{}\".to_string()),",
+                    "            {}: MetricNode::new(client.clone(), \"{}\".to_string()),",
                     field_name, metric_path
                 )
                 .unwrap();
@@ -625,27 +625,28 @@ fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
         output,
         r#"/// Main BRK client with catalog tree and API methods.
 pub struct BrkClient {{
-    base: BrkClientBase,
+    base: Arc<BrkClientBase>,
+    tree: CatalogTree,
 }}
 
 impl BrkClient {{
     /// Create a new client with the given base URL.
-    pub fn new(base_url: impl Into<String>) -> Result<Self> {{
-        Ok(Self {{
-            base: BrkClientBase::new(base_url)?,
-        }})
+    pub fn new(base_url: impl Into<String>) -> Self {{
+        let base = Arc::new(BrkClientBase::new(base_url));
+        let tree = CatalogTree::new(base.clone(), "");
+        Self {{ base, tree }}
     }}
 
     /// Create a new client with options.
-    pub fn with_options(options: BrkClientOptions) -> Result<Self> {{
-        Ok(Self {{
-            base: BrkClientBase::with_options(options)?,
-        }})
+    pub fn with_options(options: BrkClientOptions) -> Self {{
+        let base = Arc::new(BrkClientBase::with_options(options));
+        let tree = CatalogTree::new(base.clone(), "");
+        Self {{ base, tree }}
     }}
 
     /// Get the catalog tree for navigating metrics.
-    pub fn tree(&self) -> CatalogTree<'_> {{
-        CatalogTree::new(&self.base, "")
+    pub fn tree(&self) -> &CatalogTree {{
+        &self.tree
     }}
 "#
     )
@@ -678,6 +679,12 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             endpoint.summary.as_deref().unwrap_or(&method_name)
         )
         .unwrap();
+        if let Some(desc) = &endpoint.description
+            && endpoint.summary.as_ref() != Some(desc)
+        {
+            writeln!(output, "    ///").unwrap();
+            writeln!(output, "    /// {}", desc).unwrap();
+        }
 
         // Build method signature
         let params = build_method_params(endpoint);

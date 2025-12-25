@@ -27,7 +27,6 @@ pub struct RecoveredState {
 pub fn recover_state(
     height: Height,
     chain_state_rollback: vecdb::Result<Stamp>,
-    txoutindex_rollback: vecdb::Result<Stamp>,
     any_address_indexes: &mut AnyAddressIndexesVecs,
     addresses_data: &mut AddressesDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
@@ -42,7 +41,6 @@ pub fn recover_state(
     // Verify rollback consistency - all must agree on the same height
     let consistent_height = rollback_states(
         chain_state_rollback,
-        txoutindex_rollback,
         address_indexes_rollback,
         address_data_rollback,
     );
@@ -127,7 +125,6 @@ pub enum StartMode {
 /// otherwise returns Height::ZERO (need fresh start).
 fn rollback_states(
     chain_state_rollback: vecdb::Result<Stamp>,
-    txoutindex_rollback: vecdb::Result<Stamp>,
     address_indexes_rollbacks: Result<Vec<Stamp>>,
     address_data_rollbacks: Result<[Stamp; 2]>,
 ) -> Height {
@@ -135,11 +132,6 @@ fn rollback_states(
 
     // All rollbacks must succeed - any error means fresh start
     let Ok(s) = chain_state_rollback else {
-        return Height::ZERO;
-    };
-    heights.insert(Height::from(s).incremented());
-
-    let Ok(s) = txoutindex_rollback else {
         return Height::ZERO;
     };
     heights.insert(Height::from(s).incremented());

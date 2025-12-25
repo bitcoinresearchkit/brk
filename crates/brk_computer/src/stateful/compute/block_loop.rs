@@ -24,8 +24,8 @@ use crate::{
         address::AddressTypeToAddressCount,
         compute::write::{process_address_updates, write},
         process::{
-            AddressCache, InputsResult, build_txoutindex_to_height_map, process_inputs,
-            process_outputs, process_received, process_sent,
+            AddressCache, InputsResult, process_inputs, process_outputs, process_received,
+            process_sent,
         },
         states::{BlockState, Transacted},
     },
@@ -38,8 +38,8 @@ use super::{
         vecs::Vecs,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, IndexerReaders, TxInIterators,
-    TxOutIterators, VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, TxInIterators, TxOutIterators,
+    VecsReaders, build_txinindex_to_txindex, build_txoutindex_to_txindex,
 };
 
 /// Process all blocks from starting_height to last_height.
@@ -124,15 +124,8 @@ pub fn process_blocks(
     let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
     let mut dateindex_to_price_iter = dateindex_to_price.map(|v| v.into_iter());
 
-    info!("Building txoutindex_to_height map...");
-
-    // Build txoutindex -> height map for input processing
-    let txoutindex_to_height = build_txoutindex_to_height_map(height_to_first_txoutindex);
-
     info!("Creating readers...");
 
-    // Create readers for parallel data access
-    let ir = IndexerReaders::new(indexer);
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
     // Create reusable iterators for sequential txout/txin reads (16KB buffered)
@@ -273,14 +266,14 @@ pub fn process_blocks(
 
         // Collect output/input data using reusable iterators (16KB buffered reads)
         // Must be done before thread::scope since iterators aren't Send
-        let (output_values, output_types, output_typeindexes) =
-            txout_iters.collect_block_outputs(first_txoutindex, output_count);
+        let txoutdata_vec = txout_iters.collect_block_outputs(first_txoutindex, output_count);
 
-        let input_outpoints = if input_count > 1 {
-            txin_iters.collect_block_outpoints(first_txinindex + 1, input_count - 1)
-        } else {
-            Vec::new()
-        };
+        let (input_values, input_prev_heights, input_outputtypes, input_typeindexes) =
+            if input_count > 1 {
+                txin_iters.collect_block_inputs(first_txinindex + 1, input_count - 1)
+            } else {
+                (Vec::new(), Vec::new(), Vec::new(), Vec::new())
+            };
 
         // Process outputs and inputs in parallel with tick-tock
         let (outputs_result, inputs_result) = thread::scope(|scope| {
@@ -293,11 +286,8 @@ pub fn process_blocks(
             let outputs_handle = scope.spawn(|| {
                 // Process outputs (receive)
                 process_outputs(
-                    output_count,
                     &txoutindex_to_txindex,
-                    &output_values,
-                    &output_types,
-                    &output_typeindexes,
+                    &txoutdata_vec,
                     &first_addressindexes,
                     &cache,
                     &vr,
@@ -309,16 +299,12 @@ pub fn process_blocks(
             // Process inputs (send) - skip coinbase input
             let inputs_result = if input_count > 1 {
                 process_inputs(
-                    first_txinindex + 1, // Skip coinbase
                     input_count - 1,
                     &txinindex_to_txindex[1..], // Skip coinbase
-                    &input_outpoints,
-                    &indexer.vecs.tx.txindex_to_first_txoutindex,
-                    &indexer.vecs.txout.txoutindex_to_value,
-                    &indexer.vecs.txout.txoutindex_to_outputtype,
-                    &indexer.vecs.txout.txoutindex_to_typeindex,
-                    &txoutindex_to_height,
-                    &ir,
+                    &input_values,
+                    &input_outputtypes,
+                    &input_typeindexes,
+                    &input_prev_heights,
                     &first_addressindexes,
                     &cache,
                     &vr,
@@ -331,7 +317,6 @@ pub fn process_blocks(
                     sent_data: Default::default(),
                     address_data: Default::default(),
                     txindex_vecs: Default::default(),
-                    txoutindex_to_txinindex_updates: Default::default(),
                 }
             };
 
@@ -425,12 +410,6 @@ pub fn process_blocks(
                 .receive(transacted, height, timestamp, block_price);
             vecs.utxo_cohorts.send(height_to_sent, chain_state);
         });
-
-        // Update txoutindex_to_txinindex
-        vecs.update_txoutindex_to_txinindex(
-            output_count,
-            inputs_result.txoutindex_to_txinindex_updates,
-        )?;
 
         // Push to height-indexed vectors
         vecs.height_to_unspendable_supply

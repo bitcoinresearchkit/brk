@@ -14,7 +14,7 @@ use axum::{
 };
 use brk_error::Result;
 use brk_logger::OwoColorize;
-use brk_mcp::route::MCPRoutes;
+use brk_mcp::route::mcp_router;
 use brk_query::AsyncQuery;
 use log::{error, info};
 use quick_cache::sync::Cache;
@@ -92,7 +92,6 @@ impl Server {
         let vecs = state.query.inner().vecs();
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_mcp_routes(&state.query, mcp)
             .add_files_routes(state.path.as_ref())
             .route(
                 "/discord",
@@ -136,23 +135,33 @@ impl Server {
         let mut openapi = create_openapi();
         let router = router.finish_api(&mut openapi);
 
-        let clients_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        let workspace_root: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent()
+            .and_then(|p| p.parent())
             .unwrap()
-            .join("brk_binder")
-            .join("clients");
-        if clients_path.exists() {
-            let openapi_json = serde_json::to_string(&openapi).unwrap();
-            let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-                brk_binder::generate_clients(vecs, &openapi_json, &clients_path)
-            }));
+            .into();
+        let output_paths = brk_binder::ClientOutputPaths::new()
+            .rust(workspace_root.join("crates/brk_client/src/lib.rs"))
+            .javascript(workspace_root.join("modules/brk-client/index.js"))
+            .python(workspace_root.join("packages/brk_client/__init__.py"));
 
-            match result {
-                Ok(Ok(())) => info!("Generated clients at {}", clients_path.display()),
-                Ok(Err(e)) => error!("Failed to generate clients: {e}"),
-                Err(_) => error!("Client generation panicked"),
-            }
+        let openapi_json = Arc::new(serde_json::to_string(&openapi).unwrap());
+        let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+            brk_binder::generate_clients(vecs, &openapi_json, &output_paths)
+        }));
+
+        match result {
+            Ok(Ok(())) => info!("Generated clients"),
+            Ok(Err(e)) => error!("Failed to generate clients: {e}"),
+            Err(_) => error!("Client generation panicked"),
         }
+
+        let router = if mcp {
+            let base_url = format!("http://127.0.0.1:{port}");
+            router.merge(mcp_router(base_url, openapi_json))
+        } else {
+            router
+        };
 
         serve(
             listener,

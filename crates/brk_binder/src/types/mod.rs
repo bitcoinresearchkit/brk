@@ -39,14 +39,16 @@ pub struct ClientMetadata {
     /// Index set patterns - sets of indexes that appear together on metrics
     pub index_set_patterns: Vec<IndexSetPattern>,
     /// Maps concrete field signatures to pattern names
-    pub concrete_to_pattern: HashMap<Vec<PatternField>, String>,
+    concrete_to_pattern: HashMap<Vec<PatternField>, String>,
+    /// Maps concrete field signatures to their type parameter (for generic patterns)
+    concrete_to_type_param: HashMap<Vec<PatternField>, String>,
 }
 
 impl ClientMetadata {
     /// Extract metadata from brk_query::Vecs.
     pub fn from_vecs(vecs: &Vecs) -> Self {
         let catalog = vecs.catalog().clone();
-        let (structural_patterns, concrete_to_pattern) =
+        let (structural_patterns, concrete_to_pattern, concrete_to_type_param) =
             patterns::detect_structural_patterns(&catalog);
         let (used_indexes, index_set_patterns) = tree::detect_index_patterns(&catalog);
 
@@ -56,6 +58,7 @@ impl ClientMetadata {
             used_indexes,
             index_set_patterns,
             concrete_to_pattern,
+            concrete_to_type_param,
         }
     }
 
@@ -81,19 +84,9 @@ impl ClientMetadata {
         self.find_pattern(name).is_some_and(|p| p.is_generic)
     }
 
-    /// Extract the value type from concrete fields for a generic pattern.
-    pub fn get_generic_value_type(
-        &self,
-        pattern_name: &str,
-        fields: &[PatternField],
-    ) -> Option<String> {
-        if !self.is_pattern_generic(pattern_name) {
-            return None;
-        }
-        fields
-            .iter()
-            .find(|f| f.is_leaf())
-            .map(|f| extract_inner_type(&f.rust_type))
+    /// Get the type parameter for a generic pattern given its concrete fields.
+    pub fn get_type_param(&self, fields: &[PatternField]) -> Option<&String> {
+        self.concrete_to_type_param.get(fields)
     }
 
     /// Build a lookup map from field signatures to pattern names.

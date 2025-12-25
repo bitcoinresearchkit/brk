@@ -4,6 +4,8 @@ use brk_types::{BlockHash, Height, StoredF64, StoredU64, Timestamp, Version, Wei
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Database, GenericStoredVec, ImportableVec, PcoVec, Stamp};
 
+use crate::parallel_import;
+
 #[derive(Clone, Traversable)]
 pub struct BlockVecs {
     pub height_to_blockhash: BytesVec<Height, BlockHash>,
@@ -16,12 +18,25 @@ pub struct BlockVecs {
 
 impl BlockVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+        let (
+            height_to_blockhash,
+            height_to_difficulty,
+            height_to_timestamp,
+            height_to_total_size,
+            height_to_weight,
+        ) = parallel_import! {
+            height_to_blockhash = BytesVec::forced_import(db, "blockhash", version),
+            height_to_difficulty = PcoVec::forced_import(db, "difficulty", version),
+            height_to_timestamp = PcoVec::forced_import(db, "timestamp", version),
+            height_to_total_size = PcoVec::forced_import(db, "total_size", version),
+            height_to_weight = PcoVec::forced_import(db, "weight", version),
+        };
         Ok(Self {
-            height_to_blockhash: BytesVec::forced_import(db, "blockhash", version)?,
-            height_to_difficulty: PcoVec::forced_import(db, "difficulty", version)?,
-            height_to_timestamp: PcoVec::forced_import(db, "timestamp", version)?,
-            height_to_total_size: PcoVec::forced_import(db, "total_size", version)?,
-            height_to_weight: PcoVec::forced_import(db, "weight", version)?,
+            height_to_blockhash,
+            height_to_difficulty,
+            height_to_timestamp,
+            height_to_total_size,
+            height_to_weight,
         })
     }
 

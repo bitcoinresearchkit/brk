@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_types::Version;
 use fjall::{Database, Keyspace};
 
@@ -30,16 +30,14 @@ impl StoreMeta {
 
         let partition = open_partition_handle()?;
 
-        if Version::try_from(Self::path_version_(path).as_path())
-            .is_ok_and(|prev_version| version != prev_version)
+        if let Ok(prev_version) = Version::try_from(Self::path_version_(path).as_path())
+            && version != prev_version
         {
-            todo!();
-            // fs::remove_dir_all(path)?;
-            // // Doesn't exist
-            // // database.delete_partition(partition)?;
-            // fs::create_dir(path)?;
-            // database.persist(PersistMode::SyncAll)?;
-            // partition = open_partition_handle()?;
+            return Err(Error::VersionMismatch {
+                path: path.to_path_buf(),
+                expected: u64::from(version) as usize,
+                found: u64::from(prev_version) as usize,
+            });
         }
 
         let slf = Self {

@@ -24,6 +24,8 @@ use vecdb::{CheckedSub, Formattable, Pco};
 pub struct TypeIndex(u32);
 
 impl TypeIndex {
+    pub const COINBASE: Self = Self(u32::MAX);
+
     pub fn new(i: u32) -> Self {
         Self(i)
     }

@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
-use brk_query::{AsyncQuery, MetricSelection, Pagination, PaginationIndex};
+use std::sync::Arc;
+
 use brk_rmcp::{
     ErrorData as McpError, RoleServer, ServerHandler,
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
@@ -8,135 +9,68 @@ use brk_rmcp::{
     service::RequestContext,
     tool, tool_handler, tool_router,
 };
-use brk_types::Metric;
 use log::info;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 pub mod route;
 
 #[derive(Clone)]
 pub struct MCP {
-    query: AsyncQuery,
+    base_url: Arc<String>,
+    openapi_json: Arc<String>,
     tool_router: ToolRouter<MCP>,
 }
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Parameters for fetching from the REST API.
+#[derive(Deserialize, JsonSchema)]
+pub struct FetchParams {
+    /// API path (e.g., "/api/blocks" or "/api/metrics/list")
+    pub path: String,
+    /// Optional query string (e.g., "page=0" or "from=-1&to=-10")
+    pub query: Option<String>,
+}
 
 #[tool_router]
 impl MCP {
-    pub fn new(query: &AsyncQuery) -> Self {
+    pub fn new(base_url: impl Into<String>, openapi_json: impl Into<String>) -> Self {
         Self {
-            query: query.clone(),
+            base_url: Arc::new(base_url.into()),
+            openapi_json: Arc::new(openapi_json.into()),
             tool_router: Self::tool_router(),
         }
     }
 
-    #[tool(description = "
-Get the count of unique metrics.
-")]
-    async fn get_metric_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: distinct_metric_count");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.query.sync(|q| q.distinct_metric_count())).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get the count of all metrics. (distinct metrics multiplied by the number of indexes supported by each one)
-")]
-    async fn get_vec_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: total_metric_count");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.query.sync(|q| q.total_metric_count())).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get the list of all existing indexes and their accepted variants.
-")]
-    async fn get_indexes(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_indexes");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.query.inner().indexes()).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get a paginated list of all existing vec ids.
-There are up to 1,000 values per page.
-If the `page` param is omitted, it will default to the first page.
-")]
-    async fn get_vecids(
-        &self,
-        Parameters(pagination): Parameters<Pagination>,
-    ) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_metrics");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.query.sync(|q| q.metrics(pagination))).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get a paginated list of all vec ids which support a given index.
-There are up to 1,000 values per page.
-If the `page` param is omitted, it will default to the first page.
-")]
-    async fn get_index_to_vecids(
-        &self,
-        Parameters(paginated_index): Parameters<PaginationIndex>,
-    ) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_index_to_vecids");
-        let result = self
-            .query
-            .inner()
-            .index_to_vecids(paginated_index)
-            .unwrap_or_default();
-        Ok(CallToolResult::success(vec![
-            Content::json(result).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get a list of all indexes supported by a given vec id.
-The list will be empty if the vec id isn't correct.
-")]
-    async fn get_vecid_to_indexes(
-        &self,
-        Parameters(metric): Parameters<Metric>,
-    ) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_vecid_to_indexes");
-        Ok(CallToolResult::success(vec![
-            Content::json(self.query.inner().metric_to_indexes(metric)).unwrap(),
-        ]))
-    }
-
-    #[tool(description = "
-Get one or multiple vecs depending on given parameters.
-The response's format will depend on the given parameters, it will be:
-- A value: If requested only one vec and the given range returns one value (for example: `from=-1`)
-- A list: If requested only one vec and the given range returns multiple values (for example: `from=-1000&count=100` or `from=-444&to=-333`)
-- A matrix: When multiple vecs are requested, even if they each return one value.
-")]
-    async fn get_vecs(
-        &self,
-        Parameters(params): Parameters<MetricSelection>,
-    ) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_vecs");
+    #[tool(description = "Get the OpenAPI specification describing all available REST API endpoints.")]
+    async fn get_openapi(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_openapi");
         Ok(CallToolResult::success(vec![Content::text(
-            match self.query.run(move |q| q.search_and_format_legacy(params)).await {
-                Ok(output) => output.to_string(),
-                Err(e) => format!("Error:\n{e}"),
-            },
+            self.openapi_json.as_str(),
         )]))
     }
 
-    #[tool(description = "
-Get the running version of the Bitcoin Research Kit.
-")]
-    async fn get_version(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_version");
-        Ok(CallToolResult::success(vec![Content::text(format!(
-            "v{VERSION}"
-        ))]))
+    #[tool(description = "Call a REST API endpoint. Use get_openapi first to discover available endpoints.")]
+    async fn fetch(
+        &self,
+        Parameters(params): Parameters<FetchParams>,
+    ) -> Result<CallToolResult, McpError> {
+        info!("mcp: fetch {}", params.path);
+
+        let url = match &params.query {
+            Some(q) if !q.is_empty() => format!("{}{}?{}", self.base_url, params.path, q),
+            _ => format!("{}{}", self.base_url, params.path),
+        };
+
+        match minreq::get(&url).send() {
+            Ok(response) => {
+                let body = response.as_str().unwrap_or("").to_string();
+                Ok(CallToolResult::success(vec![Content::text(body)]))
+            }
+            Err(e) => Err(McpError::internal_error(
+                format!("HTTP request failed: {e}"),
+                None,
+            )),
+        }
     }
 }
 
@@ -149,17 +83,13 @@ impl ServerHandler for MCP {
             server_info: Implementation::from_build_env(),
             instructions: Some(
                 "
-This server provides an interface to communicate with a running instance of the Bitcoin Research Kit (also called brk or BRK).
+Bitcoin Research Kit (BRK) - Bitcoin on-chain metrics and market data.
 
-Multiple tools are at your disposal including ones to fetch all sorts of Bitcoin on-chain metrics and market prices.
+Workflow:
+1. Call get_openapi to get the full API specification
+2. Use fetch to call any endpoint described in the spec
 
-If you're unsure which datasets are available, try out different tools before browsing the web. Each tool gives important information about BRK's capabilities.
-
-Vectors can also be called 'Vecs', 'Arrays' or 'Datasets', they can all be used interchangeably.
-
-An 'Index' (or indexes) is the timeframe of a dataset.
-
-'VecId' (or vecids) are the name of the dataset and what it represents.
+Example: fetch with path=\"/api/metrics/list\" to list metrics.
 "
                 .to_string(),
             ),

@@ -39,8 +39,3 @@ pub use address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexe
 
 // Cohort re-exports
 pub use cohorts::{AddressCohorts, CohortVecs, DynCohortVecs, UTXOCohorts};
-
-// Compute re-exports
-pub use compute::IndexerReaders;
-
-// Metrics re-exports

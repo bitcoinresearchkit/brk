@@ -142,11 +142,10 @@ impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
                 let bytes = &script.as_bytes()[2..];
                 Ok(Self::P2A(Box::new(P2ABytes::from(bytes))))
             }
-            OutputType::P2MS => Err(Error::WrongAddressType),
-            OutputType::Unknown => Err(Error::WrongAddressType),
-            OutputType::Empty => Err(Error::WrongAddressType),
-            OutputType::OpReturn => Err(Error::WrongAddressType),
-            _ => unreachable!(),
+            OutputType::P2MS
+            | OutputType::Unknown
+            | OutputType::Empty
+            | OutputType::OpReturn => Err(Error::WrongAddressType),
         }
     }
 }

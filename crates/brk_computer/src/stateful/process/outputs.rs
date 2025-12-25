@@ -5,7 +5,7 @@
 //! - Address data for address cohort tracking (optional)
 
 use brk_grouper::ByAddressType;
-use brk_types::{OutputType, Sats, TxIndex, TypeIndex};
+use brk_types::{Sats, TxIndex, TxOutData, TypeIndex};
 
 use crate::stateful::address::{
     AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
@@ -37,19 +37,16 @@ pub struct OutputsResult {
 /// 4. Track address-specific data for address cohort processing
 #[allow(clippy::too_many_arguments)]
 pub fn process_outputs(
-    output_count: usize,
     txoutindex_to_txindex: &[TxIndex],
-    // Pre-collected output data (from reusable iterators with 16KB buffered reads)
-    values: &[Sats],
-    output_types: &[OutputType],
-    typeindexes: &[TypeIndex],
-    // Address lookup parameters
+    txoutdata_vec: &[TxOutData],
     first_addressindexes: &ByAddressType<TypeIndex>,
     cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> OutputsResult {
+    let output_count = txoutdata_vec.len();
+
     // Pre-allocate result structures
     let estimated_per_type = (output_count / 8).max(8);
     let mut transacted = Transacted::default();
@@ -60,10 +57,10 @@ pub fn process_outputs(
         AddressTypeToTypeIndexMap::<TxIndexVec>::with_capacity(estimated_per_type);
 
     // Single pass: read from pre-collected vecs and accumulate
-    for local_idx in 0..output_count {
+    for (local_idx, txoutdata) in txoutdata_vec.iter().enumerate() {
         let txindex = txoutindex_to_txindex[local_idx];
-        let value = values[local_idx];
-        let output_type = output_types[local_idx];
+        let value = txoutdata.value;
+        let output_type = txoutdata.outputtype;
 
         transacted.iterate(value, output_type);
 
@@ -71,7 +68,7 @@ pub fn process_outputs(
             continue;
         }
 
-        let typeindex = typeindexes[local_idx];
+        let typeindex = txoutdata.typeindex;
 
         received_data
             .get_mut(output_type)

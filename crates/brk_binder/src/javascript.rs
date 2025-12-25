@@ -13,12 +13,14 @@ use crate::{
     get_node_fields, get_pattern_instance_base, to_camel_case, to_pascal_case,
 };
 
-/// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints
+/// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints.
+///
+/// `output_path` is the full path to the output file (e.g., "modules/brk-client/index.js").
 pub fn generate_javascript_client(
     metadata: &ClientMetadata,
     endpoints: &[Endpoint],
     schemas: &TypeSchemas,
-    output_dir: &Path,
+    output_path: &Path,
 ) -> io::Result<()> {
     let mut output = String::new();
 
@@ -44,7 +46,7 @@ pub fn generate_javascript_client(
     // Generate the main client class with tree and API methods
     generate_main_client(&mut output, &metadata.catalog, metadata, endpoints);
 
-    fs::write(output_dir.join("client.js"), output)?;
+    fs::write(output_path, output)?;
 
     Ok(())
 }
@@ -446,13 +448,21 @@ fn generate_structural_patterns(
         // Generate factory function
         writeln!(output, "/**").unwrap();
         writeln!(output, " * Create a {} pattern node", pattern.name).unwrap();
+        if pattern.is_generic {
+            writeln!(output, " * @template T").unwrap();
+        }
         writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
         if is_parameterizable {
             writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
         } else {
             writeln!(output, " * @param {{string}} basePath").unwrap();
         }
-        writeln!(output, " * @returns {{{}}}", pattern.name).unwrap();
+        let return_type = if pattern.is_generic {
+            format!("{}<T>", pattern.name)
+        } else {
+            pattern.name.clone()
+        };
+        writeln!(output, " * @returns {{{}}}", return_type).unwrap();
         writeln!(output, " */").unwrap();
 
         let param_name = if is_parameterizable {
@@ -613,11 +623,17 @@ fn field_to_js_type_with_generic_value(
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
-        // Check if this pattern is generic and we have a value type
-        if metadata.is_pattern_generic(&field.rust_type)
-            && let Some(vt) = generic_value_type
-        {
-            return format!("{}<{}>", field.rust_type, vt);
+        // Check if this pattern is generic
+        if metadata.is_pattern_generic(&field.rust_type) {
+            if let Some(vt) = generic_value_type {
+                return format!("{}<{}>", field.rust_type, vt);
+            } else if is_generic {
+                // Propagate T when inside a generic pattern
+                return format!("{}<T>", field.rust_type);
+            } else {
+                // Generic pattern without known type - use unknown
+                return format!("{}<unknown>", field.rust_type);
+            }
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
@@ -628,7 +644,6 @@ fn field_to_js_type_with_generic_value(
         format!("MetricNode<{}>", value_type)
     }
 }
-
 
 /// Generate tree typedefs
 fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -666,7 +681,8 @@ fn generate_tree_typedef(
         .collect();
 
     // Skip if this matches a pattern (already generated)
-    if pattern_lookup.contains_key(&fields) && pattern_lookup.get(&fields) != Some(&name.to_string())
+    if pattern_lookup.contains_key(&fields)
+        && pattern_lookup.get(&fields) != Some(&name.to_string())
     {
         return;
     }
@@ -680,15 +696,13 @@ fn generate_tree_typedef(
     writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
     for (field, child_fields) in &fields_with_child_info {
+        // Look up type parameter for generic patterns
         let generic_value_type = child_fields
             .as_ref()
-            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
-        let js_type = field_to_js_type_with_generic_value(
-            field,
-            metadata,
-            false,
-            generic_value_type.as_deref(),
-        );
+            .and_then(|cf| metadata.get_type_param(cf))
+            .map(String::as_str);
+        let js_type =
+            field_to_js_type_with_generic_value(field, metadata, false, generic_value_type);
         writeln!(
             output,
             " * @property {{{}}} {}",
@@ -898,6 +912,11 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         writeln!(output, "  /**").unwrap();
         if let Some(summary) = &endpoint.summary {
             writeln!(output, "   * {}", summary).unwrap();
+        }
+        if let Some(desc) = &endpoint.description
+            && endpoint.summary.as_ref() != Some(desc)
+        {
+            writeln!(output, "   * @description {}", desc).unwrap();
         }
 
         for param in &endpoint.path_params {

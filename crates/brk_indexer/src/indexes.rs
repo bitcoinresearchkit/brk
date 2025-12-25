@@ -45,7 +45,6 @@ impl Indexes {
             OutputType::P2WPKH => *self.p2wpkhaddressindex,
             OutputType::P2WSH => *self.p2wshaddressindex,
             OutputType::Unknown => *self.unknownoutputindex,
-            _ => unreachable!(),
         }
     }
 
@@ -225,7 +224,7 @@ impl From<(Height, &mut Vecs, &Stores)> for Indexes {
 
         let txoutindex = starting_index(
             &vecs.txout.height_to_first_txoutindex,
-            &vecs.txout.txoutindex_to_value,
+            &vecs.txout.txoutindex_to_txoutdata,
             height,
         )
         .unwrap();

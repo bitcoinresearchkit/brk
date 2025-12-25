@@ -12,6 +12,8 @@ use vecdb::{
     TypedVecIterator,
 };
 
+use crate::parallel_import;
+
 #[derive(Clone, Traversable)]
 pub struct AddressVecs {
     // Height to first address index (per address type)
@@ -36,55 +38,58 @@ pub struct AddressVecs {
 
 impl AddressVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+        let (
+            height_to_first_p2pk65addressindex,
+            height_to_first_p2pk33addressindex,
+            height_to_first_p2pkhaddressindex,
+            height_to_first_p2shaddressindex,
+            height_to_first_p2wpkhaddressindex,
+            height_to_first_p2wshaddressindex,
+            height_to_first_p2traddressindex,
+            height_to_first_p2aaddressindex,
+            p2pk65addressindex_to_p2pk65bytes,
+            p2pk33addressindex_to_p2pk33bytes,
+            p2pkhaddressindex_to_p2pkhbytes,
+            p2shaddressindex_to_p2shbytes,
+            p2wpkhaddressindex_to_p2wpkhbytes,
+            p2wshaddressindex_to_p2wshbytes,
+            p2traddressindex_to_p2trbytes,
+            p2aaddressindex_to_p2abytes,
+        ) = parallel_import! {
+            height_to_first_p2pk65addressindex = PcoVec::forced_import(db, "first_p2pk65addressindex", version),
+            height_to_first_p2pk33addressindex = PcoVec::forced_import(db, "first_p2pk33addressindex", version),
+            height_to_first_p2pkhaddressindex = PcoVec::forced_import(db, "first_p2pkhaddressindex", version),
+            height_to_first_p2shaddressindex = PcoVec::forced_import(db, "first_p2shaddressindex", version),
+            height_to_first_p2wpkhaddressindex = PcoVec::forced_import(db, "first_p2wpkhaddressindex", version),
+            height_to_first_p2wshaddressindex = PcoVec::forced_import(db, "first_p2wshaddressindex", version),
+            height_to_first_p2traddressindex = PcoVec::forced_import(db, "first_p2traddressindex", version),
+            height_to_first_p2aaddressindex = PcoVec::forced_import(db, "first_p2aaddressindex", version),
+            p2pk65addressindex_to_p2pk65bytes = BytesVec::forced_import(db, "p2pk65bytes", version),
+            p2pk33addressindex_to_p2pk33bytes = BytesVec::forced_import(db, "p2pk33bytes", version),
+            p2pkhaddressindex_to_p2pkhbytes = BytesVec::forced_import(db, "p2pkhbytes", version),
+            p2shaddressindex_to_p2shbytes = BytesVec::forced_import(db, "p2shbytes", version),
+            p2wpkhaddressindex_to_p2wpkhbytes = BytesVec::forced_import(db, "p2wpkhbytes", version),
+            p2wshaddressindex_to_p2wshbytes = BytesVec::forced_import(db, "p2wshbytes", version),
+            p2traddressindex_to_p2trbytes = BytesVec::forced_import(db, "p2trbytes", version),
+            p2aaddressindex_to_p2abytes = BytesVec::forced_import(db, "p2abytes", version),
+        };
         Ok(Self {
-            height_to_first_p2pk65addressindex: PcoVec::forced_import(
-                db,
-                "first_p2pk65addressindex",
-                version,
-            )?,
-            height_to_first_p2pk33addressindex: PcoVec::forced_import(
-                db,
-                "first_p2pk33addressindex",
-                version,
-            )?,
-            height_to_first_p2pkhaddressindex: PcoVec::forced_import(
-                db,
-                "first_p2pkhaddressindex",
-                version,
-            )?,
-            height_to_first_p2shaddressindex: PcoVec::forced_import(
-                db,
-                "first_p2shaddressindex",
-                version,
-            )?,
-            height_to_first_p2wpkhaddressindex: PcoVec::forced_import(
-                db,
-                "first_p2wpkhaddressindex",
-                version,
-            )?,
-            height_to_first_p2wshaddressindex: PcoVec::forced_import(
-                db,
-                "first_p2wshaddressindex",
-                version,
-            )?,
-            height_to_first_p2traddressindex: PcoVec::forced_import(
-                db,
-                "first_p2traddressindex",
-                version,
-            )?,
-            height_to_first_p2aaddressindex: PcoVec::forced_import(
-                db,
-                "first_p2aaddressindex",
-                version,
-            )?,
-            p2pk65addressindex_to_p2pk65bytes: BytesVec::forced_import(db, "p2pk65bytes", version)?,
-            p2pk33addressindex_to_p2pk33bytes: BytesVec::forced_import(db, "p2pk33bytes", version)?,
-            p2pkhaddressindex_to_p2pkhbytes: BytesVec::forced_import(db, "p2pkhbytes", version)?,
-            p2shaddressindex_to_p2shbytes: BytesVec::forced_import(db, "p2shbytes", version)?,
-            p2wpkhaddressindex_to_p2wpkhbytes: BytesVec::forced_import(db, "p2wpkhbytes", version)?,
-            p2wshaddressindex_to_p2wshbytes: BytesVec::forced_import(db, "p2wshbytes", version)?,
-            p2traddressindex_to_p2trbytes: BytesVec::forced_import(db, "p2trbytes", version)?,
-            p2aaddressindex_to_p2abytes: BytesVec::forced_import(db, "p2abytes", version)?,
+            height_to_first_p2pk65addressindex,
+            height_to_first_p2pk33addressindex,
+            height_to_first_p2pkhaddressindex,
+            height_to_first_p2shaddressindex,
+            height_to_first_p2wpkhaddressindex,
+            height_to_first_p2wshaddressindex,
+            height_to_first_p2traddressindex,
+            height_to_first_p2aaddressindex,
+            p2pk65addressindex_to_p2pk65bytes,
+            p2pk33addressindex_to_p2pk33bytes,
+            p2pkhaddressindex_to_p2pkhbytes,
+            p2shaddressindex_to_p2shbytes,
+            p2wpkhaddressindex_to_p2wpkhbytes,
+            p2wshaddressindex_to_p2wshbytes,
+            p2traddressindex_to_p2trbytes,
+            p2aaddressindex_to_p2abytes,
         })
     }
 

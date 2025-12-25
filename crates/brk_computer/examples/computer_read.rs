@@ -35,7 +35,7 @@ fn run() -> Result<()> {
     let computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
     let _a = dbg!(computer.chain.txinindex_to_value.region().meta());
-    let _b = dbg!(indexer.vecs.txout.txoutindex_to_value.region().meta());
+    let _b = dbg!(indexer.vecs.txout.txoutindex_to_txoutdata.region().meta());
 
     Ok(())
 }

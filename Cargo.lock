@@ -742,11 +742,12 @@ dependencies = [
 name = "brk_mcp"
 version = "0.1.0-alpha.1"
 dependencies = [
- "aide",
- "brk_query",
+ "axum",
  "brk_rmcp",
- "brk_types",
  "log",
+ "minreq",
+ "schemars",
+ "serde",
  "serde_json",
 ]
 
@@ -2780,9 +2781,9 @@ checksum = "7ee5b5339afb4c41626dde77b7a611bd4f2c202b897852b4bcf5d03eddc61010"
 
 [[package]]
 name = "jiff"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49cce2b81f2098e7e3efc35bc2e0a6b7abec9d34128283d7a26fa8f32a6dbb35"
+checksum = "a87d9b8105c23642f50cbbae03d1f75d8422c5cb98ce7ee9271f7ff7505be6b8"
 dependencies = [
  "jiff-static",
  "jiff-tzdb-platform",
@@ -2795,9 +2796,9 @@ dependencies = [
 
 [[package]]
 name = "jiff-static"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "980af8b43c3ad5d8d349ace167ec8170839f753a42d233ba19e08afe1850fa69"
+checksum = "b787bebb543f8969132630c51fd0afab173a86c6abae56ff3b9e5e3e3f9f6e58"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3635,14 +3636,15 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.16.0"
+version = "11.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82835b74b32841714c1342b1636992d19622d4ec19666b55edb4c654fb6eb719"
+checksum = "5467a6fd6e1b2a0cc25f4f89a5ece8594213427e430ba8f0a8f900808553cb1e"
 dependencies = [
  "cfg-if",
  "fast-glob",
  "indexmap",
  "json-strip-comments",
+ "nodejs-built-in-modules",
  "once_cell",
  "papaya",
  "parking_lot",
@@ -4235,8 +4237,6 @@ dependencies = [
 [[package]]
 name = "rawdb"
 version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c73aead6409391fb8d52ca74985f75983c61a81247de5d78312b7134dd1818a"
 dependencies = [
  "libc",
  "log",
@@ -5427,8 +5427,6 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 [[package]]
 name = "vecdb"
 version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8386c4148b31b9ba931394b0e97f5fc8d5f1644c5b55cdae52611e18227aee5"
 dependencies = [
  "ctrlc",
  "log",
@@ -5436,6 +5434,7 @@ dependencies = [
  "parking_lot",
  "pco",
  "rawdb",
+ "schemars",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
@@ -5447,8 +5446,6 @@ dependencies = [
 [[package]]
 name = "vecdb_derive"
 version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54a57c4efc56bf5aa76ccf39e52bc4d3154848c13996a1c0779dec4fd21eaf4a"
 dependencies = [
  "quote",
  "syn 2.0.111",
@@ -6042,9 +6039,9 @@ checksum = "40990edd51aae2c2b6907af74ffb635029d5788228222c4bb811e9351c0caad3"
 
 [[package]]
 name = "zmij"
-version = "0.1.7"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e404bcd8afdaf006e529269d3e85a743f9480c3cef60034d77860d02964f3ba"
+checksum = "d0095ecd462946aa3927d9297b63ef82fb9a5316d7a37d134eeb36e58228615a"
 
 [[package]]
 name = "zopfli"

@@ -5,7 +5,8 @@ use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
     AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height, OutPoint,
-    OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
+    OutputType, StoredString, TxInIndex, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
+    Vout,
 };
 use fjall::{Database, PersistMode};
 use log::info;
@@ -270,20 +271,14 @@ impl Stores {
             let mut txindex_to_first_txoutindex_iter =
                 vecs.tx.txindex_to_first_txoutindex.iter()?;
             vecs.txout
-                .txoutindex_to_outputtype
+                .txoutindex_to_txoutdata
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txoutindex.to_usize())
-                .zip(
-                    vecs.txout
-                        .txoutindex_to_typeindex
-                        .iter()?
-                        .skip(starting_indexes.txoutindex.to_usize()),
-                )
-                .filter(|((_, outputtype), _): &((usize, OutputType), TypeIndex)| {
-                    outputtype.is_address()
-                })
-                .for_each(|((txoutindex, addresstype), addressindex)| {
+                .filter(|(_, txoutdata)| txoutdata.outputtype.is_address())
+                .for_each(|(txoutindex, txoutdata)| {
+                    let addresstype = txoutdata.outputtype;
+                    let addressindex = txoutdata.typeindex;
                     let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
                     self.addresstype_to_addressindex_and_txindex
@@ -303,20 +298,22 @@ impl Stores {
                         .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
                 });
 
-            // Add back outputs that were spent after the rollback point
+            // Collect outputs that were spent after the rollback point
+            // We need to: 1) reset their spend status, 2) restore address stores
             let mut txindex_to_first_txoutindex_iter =
                 vecs.tx.txindex_to_first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
+            let mut txoutindex_to_txoutdata_iter = vecs.txout.txoutindex_to_txoutdata.iter()?;
             let mut txinindex_to_txindex_iter = vecs.txin.txinindex_to_txindex.iter()?;
-            vecs.txin
+
+            let outputs_to_unspend: Vec<_> = vecs
+                .txin
                 .txinindex_to_outpoint
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txinindex.to_usize())
-                .for_each(|(txinindex, outpoint): (usize, OutPoint)| {
+                .filter_map(|(txinindex, outpoint): (usize, OutPoint)| {
                     if outpoint.is_coinbase() {
-                        return;
+                        return None;
                     }
 
                     let output_txindex = outpoint.txindex();
@@ -328,29 +325,38 @@ impl Stores {
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
-                        let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
+                        let txoutdata = txoutindex_to_txoutdata_iter.get_unwrap(txoutindex);
+                        let spending_txindex =
+                            txinindex_to_txindex_iter.get_at_unwrap(txinindex);
 
-                        if outputtype.is_address() {
-                            let addresstype = outputtype;
-                            let addressindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
-
-                            // Get the SPENDING tx's index (not the output's tx)
-                            let spending_txindex =
-                                txinindex_to_txindex_iter.get_at_unwrap(txinindex);
-
-                            self.addresstype_to_addressindex_and_txindex
-                                .get_mut_unwrap(addresstype)
-                                .remove(AddressIndexTxIndex::from((
-                                    addressindex,
-                                    spending_txindex,
-                                )));
-
-                            self.addresstype_to_addressindex_and_unspentoutpoint
-                                .get_mut_unwrap(addresstype)
-                                .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
-                        }
+                        Some((txoutindex, outpoint, txoutdata, spending_txindex))
+                    } else {
+                        None
                     }
-                });
+                })
+                .collect();
+
+            // Now process the collected outputs (iterators dropped, can mutate vecs)
+            for (txoutindex, outpoint, txoutdata, spending_txindex) in outputs_to_unspend {
+                // Reset spend status back to unspent
+                vecs.txout
+                    .txoutindex_to_txinindex
+                    .update(txoutindex, TxInIndex::UNSPENT)?;
+
+                // Restore address stores if this is an address output
+                if txoutdata.outputtype.is_address() {
+                    let addresstype = txoutdata.outputtype;
+                    let addressindex = txoutdata.typeindex;
+
+                    self.addresstype_to_addressindex_and_txindex
+                        .get_mut_unwrap(addresstype)
+                        .remove(AddressIndexTxIndex::from((addressindex, spending_txindex)));
+
+                    self.addresstype_to_addressindex_and_unspentoutpoint
+                        .get_mut_unwrap(addresstype)
+                        .insert(AddressIndexOutPoint::from((addressindex, outpoint)), Unit);
+                }
+            }
         } else {
             unreachable!();
         }

@@ -27,13 +27,56 @@
 //! 2. **Schema collection** - Merges OpenAPI schemas with schemars-generated type schemas
 //!
 //! 3. **Code generation** - Produces language-specific clients:
-//!    - Rust: Uses `brk_types` directly, generates structs with lifetimes
+//!    - Rust: Uses `brk_types` directly, generates structs with Arc-based sharing
 //!    - JavaScript: Generates JSDoc-typed ES modules with factory functions
 //!    - Python: Generates typed classes with TypedDict and Generic support
 
-use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::Path};
+use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::PathBuf};
 
 use brk_query::Vecs;
+
+/// Output path configuration for each language client.
+///
+/// Each path should be the full path to the output file, not just a directory.
+/// Parent directories will be created automatically if they don't exist.
+///
+/// # Example
+/// ```ignore
+/// let paths = ClientOutputPaths::new()
+///     .rust("crates/brk_client/src/lib.rs")
+///     .javascript("modules/brk-client/index.js")
+///     .python("packages/brk_client/__init__.py");
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct ClientOutputPaths {
+    /// Full path to Rust client file (e.g., "crates/brk_client/src/lib.rs")
+    pub rust: Option<PathBuf>,
+    /// Full path to JavaScript client file (e.g., "modules/brk-client/index.js")
+    pub javascript: Option<PathBuf>,
+    /// Full path to Python client file (e.g., "packages/brk_client/__init__.py")
+    pub python: Option<PathBuf>,
+}
+
+impl ClientOutputPaths {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn rust(mut self, path: impl Into<PathBuf>) -> Self {
+        self.rust = Some(path.into());
+        self
+    }
+
+    pub fn javascript(mut self, path: impl Into<PathBuf>) -> Self {
+        self.javascript = Some(path.into());
+        self
+    }
+
+    pub fn python(mut self, path: impl Into<PathBuf>) -> Self {
+        self.python = Some(path.into());
+        self
+    }
+}
 
 mod javascript;
 mod js;
@@ -51,8 +94,25 @@ pub use types::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Generate all client libraries from the query vecs and OpenAPI JSON
-pub fn generate_clients(vecs: &Vecs, openapi_json: &str, output_dir: &Path) -> io::Result<()> {
+/// Generate all client libraries from the query vecs and OpenAPI JSON.
+///
+/// Uses `ClientOutputPaths` to specify the output file path for each language.
+/// Only languages with a configured path will be generated.
+///
+/// # Example
+/// ```ignore
+/// let paths = ClientOutputPaths::new()
+///     .rust("crates/brk_client/src/lib.rs")
+///     .javascript("modules/brk-client/index.js")
+///     .python("packages/brk_client/__init__.py");
+///
+/// generate_clients(&vecs, &openapi_json, &paths)?;
+/// ```
+pub fn generate_clients(
+    vecs: &Vecs,
+    openapi_json: &str,
+    output_paths: &ClientOutputPaths,
+) -> io::Result<()> {
     let metadata = ClientMetadata::from_vecs(vecs);
 
     // Parse OpenAPI spec
@@ -71,19 +131,28 @@ pub fn generate_clients(vecs: &Vecs, openapi_json: &str, output_dir: &Path) -> i
     }
 
     // Generate Rust client (uses real brk_types, no schema conversion needed)
-    let rust_path = output_dir.join("rust");
-    create_dir_all(&rust_path)?;
-    generate_rust_client(&metadata, &endpoints, &rust_path)?;
+    if let Some(rust_path) = &output_paths.rust {
+        if let Some(parent) = rust_path.parent() {
+            create_dir_all(parent)?;
+        }
+        generate_rust_client(&metadata, &endpoints, rust_path)?;
+    }
 
     // Generate JavaScript client (needs schemas for type definitions)
-    let js_path = output_dir.join("javascript");
-    create_dir_all(&js_path)?;
-    generate_javascript_client(&metadata, &endpoints, &schemas, &js_path)?;
+    if let Some(js_path) = &output_paths.javascript {
+        if let Some(parent) = js_path.parent() {
+            create_dir_all(parent)?;
+        }
+        generate_javascript_client(&metadata, &endpoints, &schemas, js_path)?;
+    }
 
     // Generate Python client (needs schemas for type definitions)
-    let python_path = output_dir.join("python");
-    create_dir_all(&python_path)?;
-    generate_python_client(&metadata, &endpoints, &schemas, &python_path)?;
+    if let Some(python_path) = &output_paths.python {
+        if let Some(parent) = python_path.parent() {
+            create_dir_all(parent)?;
+        }
+        generate_python_client(&metadata, &endpoints, &schemas, python_path)?;
+    }
 
     Ok(())
 }

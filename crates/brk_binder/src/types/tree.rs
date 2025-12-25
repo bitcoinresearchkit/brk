@@ -59,42 +59,6 @@ pub fn get_node_fields(
     fields
 }
 
-/// Like get_node_fields but takes a parent name for generating child pattern names.
-pub fn get_node_fields_with_parent(
-    children: &BTreeMap<String, TreeNode>,
-    parent_name: &str,
-    pattern_lookup: &HashMap<Vec<PatternField>, String>,
-) -> Vec<PatternField> {
-    let mut fields: Vec<PatternField> = children
-        .iter()
-        .map(|(name, node)| {
-            let (rust_type, json_type, indexes) = match node {
-                TreeNode::Leaf(leaf) => (
-                    leaf.value_type().to_string(),
-                    schema_to_json_type(&leaf.schema),
-                    leaf.indexes().clone(),
-                ),
-                TreeNode::Branch(grandchildren) => {
-                    let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                    let pattern_name = pattern_lookup
-                        .get(&child_fields)
-                        .cloned()
-                        .unwrap_or_else(|| format!("{}_{}", parent_name, to_pascal_case(name)));
-                    (pattern_name.clone(), pattern_name, BTreeSet::new())
-                }
-            };
-            PatternField {
-                name: name.clone(),
-                rust_type,
-                json_type,
-                indexes,
-            }
-        })
-        .collect();
-    fields.sort_by(|a, b| a.name.cmp(&b.name));
-    fields
-}
-
 /// Get fields with child field information for generic pattern lookup.
 /// Returns (field, child_fields) pairs where child_fields is Some for branches.
 pub fn get_fields_with_child_info(

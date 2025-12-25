@@ -17,8 +17,10 @@ pub struct Endpoint {
     pub path: String,
     /// Operation ID (e.g., "getBlockByHash")
     pub operation_id: Option<String>,
-    /// Summary/description
+    /// Short summary
     pub summary: Option<String>,
+    /// Detailed description
+    pub description: Option<String>,
     /// Tags for grouping
     pub tags: Vec<String>,
     /// Path parameters
@@ -185,10 +187,8 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         method: method.to_string(),
         path: path.to_string(),
         operation_id: operation.operation_id.clone(),
-        summary: operation
-            .summary
-            .clone()
-            .or_else(|| operation.description.clone()),
+        summary: operation.summary.clone(),
+        description: operation.description.clone(),
         tags: operation.tags.clone(),
         path_params,
         query_params,

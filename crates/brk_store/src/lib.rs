@@ -277,6 +277,7 @@ where
                     ingestion.write(ByteView::from(key), ByteView::from(value))?;
                 }
                 Item::Tomb(key) => {
+                    // TODO: switch to write_weak_tombstone when lsm-tree ingestion API supports it
                     ingestion.write_tombstone(ByteView::from(key))?;
                 }
             }

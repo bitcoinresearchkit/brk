@@ -13,12 +13,14 @@ use crate::{
     get_pattern_instance_base, is_enum_schema, to_pascal_case, to_snake_case,
 };
 
-/// Generate Python client from metadata and OpenAPI endpoints
+/// Generate Python client from metadata and OpenAPI endpoints.
+///
+/// `output_path` is the full path to the output file (e.g., "packages/brk_client/__init__.py").
 pub fn generate_python_client(
     metadata: &ClientMetadata,
     endpoints: &[Endpoint],
     schemas: &TypeSchemas,
-    output_dir: &Path,
+    output_path: &Path,
 ) -> io::Result<()> {
     let mut output = String::new();
 
@@ -57,7 +59,7 @@ pub fn generate_python_client(
     // Generate main client with tree and API methods
     generate_main_client(&mut output, endpoints);
 
-    fs::write(output_dir.join("client.py"), output)?;
+    fs::write(output_path, output)?;
 
     Ok(())
 }
@@ -720,14 +722,16 @@ fn generate_tree_class(
     for ((field, child_fields_opt), (child_name, child_node)) in
         fields_with_child_info.iter().zip(children.iter())
     {
+        // Look up type parameter for generic patterns
         let generic_value_type = child_fields_opt
             .as_ref()
-            .and_then(|cf| metadata.get_generic_value_type(&field.rust_type, cf));
+            .and_then(|cf| metadata.get_type_param(cf))
+            .map(String::as_str);
         let py_type = field_to_python_type_with_generic_value(
             field,
             metadata,
             false,
-            generic_value_type.as_deref(),
+            generic_value_type,
         );
         let field_name_py = to_snake_case(&field.name);
 
@@ -864,8 +868,19 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         .unwrap();
 
         // Docstring
-        if let Some(summary) = &endpoint.summary {
-            writeln!(output, "        \"\"\"{}\"\"\"", summary).unwrap();
+        match (&endpoint.summary, &endpoint.description) {
+            (Some(summary), Some(desc)) if summary != desc => {
+                writeln!(output, "        \"\"\"{}.", summary.trim_end_matches('.')).unwrap();
+                writeln!(output).unwrap();
+                writeln!(output, "        {}\"\"\"", desc).unwrap();
+            }
+            (Some(summary), _) => {
+                writeln!(output, "        \"\"\"{}\"\"\"", summary).unwrap();
+            }
+            (None, Some(desc)) => {
+                writeln!(output, "        \"\"\"{}\"\"\"", desc).unwrap();
+            }
+            (None, None) => {}
         }
 
         // Build path
