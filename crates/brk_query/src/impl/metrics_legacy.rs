@@ -1,5 +1,3 @@
-//! Deprecated metrics formatting without MetricData wrapper.
-
 use brk_error::{Error, Result};
 use brk_types::Format;
 use vecdb::AnyExportableVec;

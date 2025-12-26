@@ -1,7 +1,3 @@
-//! Realized cap and profit/loss metrics.
-//!
-//! These metrics require price data and track realized value based on acquisition price.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};

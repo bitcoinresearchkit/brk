@@ -1,7 +1,6 @@
 use brk_types::{FeeRate, Sats, VSize};
 
-use crate::entry::Entry;
-use crate::types::SelectedTx;
+use crate::{entry::Entry, types::SelectedTx};
 
 /// Statistics for a single projected block.
 #[derive(Debug, Clone, Default)]

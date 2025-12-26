@@ -1,18 +1,12 @@
-//! Process sent outputs for address cohorts.
-//!
-//! Updates address cohort states when addresses send funds:
-//! - Addresses may cross cohort boundaries
-//! - Addresses may become empty (0 balance)
-//! - Age metrics (blocks_old, days_old) are tracked for sent UTXOs
-
 use brk_error::Result;
-use brk_grouper::{amounts_in_different_buckets, ByAddressType};
+use brk_grouper::{AmountBucket, ByAddressType};
 use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
 use vecdb::{VecIndex, unlikely};
 
-use super::super::address::HeightToAddressTypeToVec;
-use super::super::cohorts::AddressCohorts;
-use super::lookup::AddressLookup;
+use super::{
+    super::{address::HeightToAddressTypeToVec, cohorts::AddressCohorts},
+    lookup::AddressLookup,
+};
 
 /// Process sent outputs for address cohorts.
 ///
@@ -49,6 +43,10 @@ pub fn process_sent(
             .is_more_than_hour();
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
+            // Cache mutable refs for this address type
+            let type_addr_count = addr_count.get_mut(output_type).unwrap();
+            let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
+
             for (type_index, value) in vec {
                 let addr_data = lookup.get_for_send(output_type, type_index);
 
@@ -56,14 +54,16 @@ pub fn process_sent(
                 let new_balance = prev_balance.checked_sub(value).unwrap();
                 let will_be_empty = addr_data.has_1_utxos();
 
-                // Check if crossing cohort boundary
-                let crossing_boundary = amounts_in_different_buckets(prev_balance, new_balance);
+                // Compute buckets once
+                let prev_bucket = AmountBucket::from(prev_balance);
+                let new_bucket = AmountBucket::from(new_balance);
+                let crossing_boundary = prev_bucket != new_bucket;
 
                 if will_be_empty || crossing_boundary {
                     // Subtract from old cohort
                     let cohort_state = cohorts
                         .amount_range
-                        .get_mut(prev_balance)
+                        .get_mut_by_bucket(prev_bucket)
                         .state
                         .as_mut()
                         .unwrap();
@@ -101,8 +101,8 @@ pub fn process_sent(
                             unreachable!()
                         }
 
-                        *addr_count.get_mut(output_type).unwrap() -= 1;
-                        *empty_addr_count.get_mut(output_type).unwrap() += 1;
+                        *type_addr_count -= 1;
+                        *type_empty_count += 1;
 
                         // Move from loaded to empty
                         lookup.move_to_empty(output_type, type_index);
@@ -110,7 +110,7 @@ pub fn process_sent(
                         // Add to new cohort
                         cohorts
                             .amount_range
-                            .get_mut(new_balance)
+                            .get_mut_by_bucket(new_bucket)
                             .state
                             .as_mut()
                             .unwrap()
@@ -120,7 +120,7 @@ pub fn process_sent(
                     // Address staying in same cohort - update in place
                     cohorts
                         .amount_range
-                        .get_mut(new_balance)
+                        .get_mut_by_bucket(new_bucket)
                         .state
                         .as_mut()
                         .unwrap()

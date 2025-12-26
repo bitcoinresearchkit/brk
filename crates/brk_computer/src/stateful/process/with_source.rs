@@ -1,5 +1,3 @@
-//! Address data types with source tracking for flush operations.
-
 use brk_types::{EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex, TxIndex};
 use smallvec::SmallVec;
 

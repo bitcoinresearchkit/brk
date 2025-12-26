@@ -1,7 +1,3 @@
-//! Transaction activity metrics.
-//!
-//! These metrics track amounts sent and destruction of satoshi-days/blocks.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};

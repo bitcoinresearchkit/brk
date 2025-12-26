@@ -1,10 +1,8 @@
-//! Output processing for block indexing.
-
 use brk_error::{Error, Result};
 use brk_grouper::ByAddressType;
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType,
-    Sats, TxInIndex, TxIndex, TxOutData, TxOutIndex, TypeIndex, Unit, Vout,
+    Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -13,7 +11,6 @@ use vecdb::GenericStoredVec;
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
 
 impl<'a> BlockProcessor<'a> {
-    /// Process outputs in parallel.
     pub fn process_outputs(&self) -> Result<Vec<ProcessedOutput<'a>>> {
         let height = self.height;
         let check_collisions = self.check_collisions;
@@ -21,7 +18,6 @@ impl<'a> BlockProcessor<'a> {
         let base_txindex = self.indexes.txindex;
         let base_txoutindex = self.indexes.txoutindex;
 
-        // Same pattern as inputs: collect then parallelize for maximum parallelism
         self.block
             .txdata
             .iter()
@@ -120,7 +116,6 @@ impl<'a> BlockProcessor<'a> {
             .collect()
     }
 
-    /// Finalize outputs sequentially (stores addresses, tracks UTXOs).
     pub fn finalize_outputs(
         &mut self,
         txouts: Vec<ProcessedOutput>,
@@ -129,7 +124,6 @@ impl<'a> BlockProcessor<'a> {
         let height = self.height;
         let mut already_added_addresshash: ByAddressType<FxHashMap<AddressHash, TypeIndex>> =
             ByAddressType::default();
-        // Pre-size based on the number of same-block spent outpoints
         let mut same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo> =
             FxHashMap::with_capacity_and_hasher(
                 same_block_spent_outpoints.len(),
@@ -217,15 +211,18 @@ impl<'a> BlockProcessor<'a> {
                 }
             };
 
-            let txoutdata = TxOutData::new(sats, outputtype, typeindex);
             self.vecs
                 .txout
-                .txoutindex_to_txoutdata
-                .checked_push(txoutindex, txoutdata)?;
+                .txoutindex_to_value
+                .checked_push(txoutindex, sats)?;
             self.vecs
                 .txout
-                .txoutindex_to_txinindex
-                .checked_push(txoutindex, TxInIndex::UNSPENT)?;
+                .txoutindex_to_outputtype
+                .checked_push(txoutindex, outputtype)?;
+            self.vecs
+                .txout
+                .txoutindex_to_typeindex
+                .checked_push(txoutindex, typeindex)?;
 
             if outputtype.is_unspendable() {
                 continue;
@@ -251,8 +248,6 @@ impl<'a> BlockProcessor<'a> {
                     SameBlockOutputInfo {
                         outputtype,
                         typeindex,
-                        value: sats,
-                        txoutindex,
                     },
                 );
             } else if outputtype.is_address() {

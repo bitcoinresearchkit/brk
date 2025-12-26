@@ -1,5 +1,3 @@
-//! Main Vecs struct for stateful computation.
-
 use std::path::Path;
 
 use brk_error::Result;
@@ -21,7 +19,7 @@ use crate::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
         VecBuilderOptions,
     },
-    indexes, price,
+    indexes, price, txins,
     stateful::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
         states::BlockState,
@@ -43,9 +41,6 @@ pub struct Vecs {
     #[traversable(skip)]
     db: Database,
 
-    // ---
-    // States
-    // ---
     pub chain_state: BytesVec<Height, SupplyState>,
     pub any_address_indexes: AnyAddressIndexesVecs,
     pub addresses_data: AddressesDataVecs,
@@ -57,9 +52,6 @@ pub struct Vecs {
     pub addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount,
     pub addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount,
 
-    // ---
-    // Computed
-    // ---
     pub addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount,
     pub addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
@@ -245,6 +237,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        txins: &txins::Vecs,
         chain: &chain::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &mut Indexes,
@@ -365,6 +358,7 @@ impl Vecs {
                 self,
                 indexer,
                 indexes,
+                txins,
                 chain,
                 price,
                 starting_height,

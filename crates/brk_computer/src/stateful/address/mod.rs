@@ -1,15 +1,3 @@
-//! Address handling with macro-generated code for 8 address types.
-//!
-//! This module provides:
-//! - `AnyAddressIndexesVecs` for storing address indexes by type
-//! - `AddressesDataVecs` for storing address data (loaded/empty)
-//! - `AddressTypeToTypeIndexMap` for per-type hashmaps
-//! - `AddressTypeToVec` for per-type vectors
-//! - `HeightToAddressTypeToVec` for height-keyed per-type vectors
-//! - `AddressTypeToAddressCount` for runtime address counts
-//! - `AddressTypeToHeightToAddressCount` for height-indexed address counts
-//! - `AddressTypeToIndexesToAddressCount` for computed address counts
-
 mod address_count;
 mod any_address_indexes;
 mod data;

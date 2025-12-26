@@ -245,10 +245,6 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> Result<Indexes> {
-        // ---
-        // TxIndex
-        // ---
-
         self.txindex_to_input_count.compute_count_from_indexes(
             starting_indexes.txindex,
             &indexer.vecs.tx.txindex_to_first_txinindex,
@@ -269,10 +265,6 @@ impl Vecs {
             &indexer.vecs.tx.txindex_to_txid,
             exit,
         )?;
-
-        // ---
-        // Height
-        // ---
 
         self.height_to_height.compute_from_index(
             starting_indexes.height,
@@ -317,10 +309,6 @@ impl Vecs {
         )?;
 
         let decremented_starting_height = starting_indexes.height.decremented().unwrap_or_default();
-
-        // ---
-        // DateIndex
-        // ---
 
         let starting_dateindex = self
             .height_to_dateindex
@@ -370,10 +358,6 @@ impl Vecs {
             exit,
         )?;
 
-        // ---
-        // WeekIndex
-        // ---
-
         let starting_weekindex = self
             .dateindex_to_weekindex
             .into_iter()
@@ -407,10 +391,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // ---
-        // DifficultyEpoch
-        // ---
-
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
             .into_iter()
@@ -442,10 +422,6 @@ impl Vecs {
                 &self.height_to_date,
                 exit,
             )?;
-
-        // ---
-        // MonthIndex
-        // ---
 
         let starting_monthindex = self
             .dateindex_to_monthindex
@@ -479,10 +455,6 @@ impl Vecs {
                 &self.dateindex_to_date,
                 exit,
             )?;
-
-        // ---
-        // QuarterIndex
-        // ---
 
         let starting_quarterindex = self
             .monthindex_to_quarterindex
@@ -518,10 +490,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // ---
-        // SemesterIndex
-        // ---
-
         let starting_semesterindex = self
             .monthindex_to_semesterindex
             .into_iter()
@@ -556,10 +524,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // ---
-        // YearIndex
-        // ---
-
         let starting_yearindex = self
             .monthindex_to_yearindex
             .into_iter()
@@ -591,9 +555,6 @@ impl Vecs {
                 &self.monthindex_to_monthindex,
                 exit,
             )?;
-        // ---
-        // HalvingEpoch
-        // ---
 
         let starting_halvingepoch = self
             .height_to_halvingepoch
@@ -618,10 +579,6 @@ impl Vecs {
             &self.halvingepoch_to_first_height,
             exit,
         )?;
-
-        // ---
-        // DecadeIndex
-        // ---
 
         let starting_decadeindex = self
             .yearindex_to_decadeindex

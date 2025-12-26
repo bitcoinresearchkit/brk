@@ -1,5 +1,3 @@
-//! Address cohort vectors with metrics and state.
-
 use std::path::Path;
 
 use brk_error::Result;
@@ -19,8 +17,7 @@ use crate::{
     stateful::states::AddressCohortState,
 };
 
-use super::super::metrics::{CohortMetrics, ImportConfig};
-use super::traits::{CohortVecs, DynCohortVecs};
+use super::{super::metrics::{CohortMetrics, ImportConfig}, traits::{CohortVecs, DynCohortVecs}};
 
 const VERSION: Version = Version::ZERO;
 

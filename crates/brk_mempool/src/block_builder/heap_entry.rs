@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use brk_types::{Sats, VSize};
 
 use super::tx_node::TxNode;
@@ -44,18 +46,18 @@ impl PartialEq for HeapEntry {
 impl Eq for HeapEntry {}
 
 impl PartialOrd for HeapEntry {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for HeapEntry {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         // Higher fee rate = higher priority
         if self.has_higher_fee_rate_than(other) {
-            std::cmp::Ordering::Greater
+            Ordering::Greater
         } else if other.has_higher_fee_rate_than(self) {
-            std::cmp::Ordering::Less
+            Ordering::Less
         } else {
             // Tiebreaker: lower index first (deterministic)
             other.pool_index.cmp(&self.pool_index)

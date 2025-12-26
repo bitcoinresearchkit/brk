@@ -1,5 +1,3 @@
-//! Per-address-type vector.
-
 use brk_grouper::ByAddressType;
 use derive_deref::{Deref, DerefMut};
 

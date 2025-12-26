@@ -22,8 +22,10 @@ use brk::types::Height;
 
 | Feature | Crate | Description |
 |---------|-------|-------------|
+| `bencher` | `brk_bencher` | Benchmarking utilities |
 | `binder` | `brk_binder` | Client code generation |
 | `bundler` | `brk_bundler` | JS bundling |
+| `client` | `brk_client` | Generated Rust API client |
 | `computer` | `brk_computer` | Metric computation |
 | `error` | `brk_error` | Error types |
 | `fetcher` | `brk_fetcher` | Price data fetching |
@@ -40,3 +42,5 @@ use brk::types::Height;
 | `store` | `brk_store` | Key-value storage |
 | `traversable` | `brk_traversable` | Data traversal |
 | `types` | `brk_types` | Domain types |
+
+Use `full` to enable all features.

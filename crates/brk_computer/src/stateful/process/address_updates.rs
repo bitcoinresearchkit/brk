@@ -1,10 +1,3 @@
-//! Address data update processing for flush operations.
-//!
-//! Handles transitions between loaded (non-zero balance) and empty (zero balance) states:
-//! - New addresses: push to storage
-//! - Updated addresses: update in place
-//! - State transitions: delete from source, push to destination
-
 use brk_error::Result;
 use brk_types::{
     AnyAddressIndex, EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex,

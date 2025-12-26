@@ -1,5 +1,3 @@
-//! Height to AddressTypeToVec hashmap.
-
 use brk_types::Height;
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;

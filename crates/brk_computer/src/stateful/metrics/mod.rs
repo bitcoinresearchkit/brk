@@ -1,13 +1,3 @@
-//! Metric vectors organized by category.
-//!
-//! Instead of a single 80+ field struct, metrics are grouped into logical categories:
-//! - `supply`: Supply and UTXO count metrics (always computed)
-//! - `activity`: Transaction activity metrics (always computed)
-//! - `realized`: Realized cap, profit/loss, SOPR (requires price)
-//! - `unrealized`: Unrealized profit/loss (requires price)
-//! - `price`: Price paid metrics and percentiles (requires price)
-//! - `relative`: Ratios relative to market cap, etc. (requires price)
-
 mod activity;
 mod config;
 mod price_paid;

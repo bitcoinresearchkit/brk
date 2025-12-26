@@ -1,5 +1,3 @@
-//! Deprecated handler for legacy endpoints - returns raw data without MetricData wrapper.
-
 use std::time::Duration;
 
 use axum::{

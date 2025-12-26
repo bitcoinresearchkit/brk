@@ -1,10 +1,3 @@
-//! Aggregate cohort computation.
-//!
-//! After block processing, compute derived metrics:
-//! 1. Overlapping cohorts (e.g., ">=1d" from sum of age_range cohorts)
-//! 2. Index-based transforms (height -> dateindex, etc.)
-//! 3. Relative metrics (supply ratios, market cap ratios)
-
 use brk_error::Result;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height};
 use log::info;

@@ -1,7 +1,3 @@
-//! Price paid metrics and percentiles.
-//!
-//! Tracks min/max price paid for UTXOs and price distribution percentiles.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Version};

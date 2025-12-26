@@ -1,8 +1,4 @@
-use std::collections::HashSet;
-use std::fmt::Write as FmtWrite;
-use std::fs;
-use std::io;
-use std::path::Path;
+use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
 use brk_types::{Index, TreeNode};
 
@@ -22,31 +18,17 @@ pub fn generate_rust_client(
 ) -> io::Result<()> {
     let mut output = String::new();
 
-    // Header
     writeln!(output, "// Auto-generated BRK Rust client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
     writeln!(output, "#![allow(non_camel_case_types)]").unwrap();
     writeln!(output, "#![allow(dead_code)]\n").unwrap();
 
-    // Imports
     generate_imports(&mut output);
-
-    // Generate base client
     generate_base_client(&mut output);
-
-    // Generate MetricNode
     generate_metric_node(&mut output);
-
-    // Generate index accessor structs (for each unique set of indexes)
     generate_index_accessors(&mut output, &metadata.index_set_patterns);
-
-    // Generate pattern structs (reusable, appearing 2+ times)
     generate_pattern_structs(&mut output, &metadata.structural_patterns, metadata);
-
-    // Generate tree - each node uses its pattern or is generated inline
     generate_tree(&mut output, &metadata.catalog, metadata);
-
-    // Generate main client with API methods
     generate_main_client(&mut output, endpoints);
 
     fs::write(output_path, output)?;
@@ -187,7 +169,6 @@ impl<T: DeserializeOwned> MetricNode<T> {{
     .unwrap();
 }
 
-/// Generate index accessor structs for each unique set of indexes
 fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     if patterns.is_empty() {
         return;
@@ -237,12 +218,10 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     }
 }
 
-/// Convert an Index to a snake_case field name (e.g., DateIndex -> by_date_index)
 fn index_to_field_name(index: &Index) -> String {
     format!("by_{}", to_snake_case(index.serialize_long()))
 }
 
-/// Generate pattern structs (those appearing 2+ times)
 fn generate_pattern_structs(
     output: &mut String,
     patterns: &[StructuralPattern],
@@ -317,7 +296,6 @@ fn generate_pattern_structs(
     }
 }
 
-/// Generate a field using parameterized (prepend/append) metric name construction
 fn generate_parameterized_rust_field(
     output: &mut String,
     field: &PatternField,
@@ -326,7 +304,6 @@ fn generate_parameterized_rust_field(
 ) {
     let field_name = to_snake_case(&field.name);
 
-    // For branch fields, pass the accumulated name to nested pattern
     if metadata.is_pattern_type(&field.rust_type) {
         let child_acc = if let Some(pos) = pattern.get_field_position(&field.name) {
             match pos {
@@ -348,7 +325,6 @@ fn generate_parameterized_rust_field(
         return;
     }
 
-    // For leaf fields, construct the metric path based on position
     let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
         match pos {
             FieldNamePosition::Append(suffix) => format!("format!(\"/{{acc}}{}\")", suffix),
@@ -378,7 +354,6 @@ fn generate_parameterized_rust_field(
     }
 }
 
-/// Generate a field using tree path construction (fallback for non-parameterizable patterns)
 fn generate_tree_path_rust_field(
     output: &mut String,
     field: &PatternField,
@@ -411,7 +386,6 @@ fn generate_tree_path_rust_field(
     }
 }
 
-/// Convert a PatternField to the full type annotation, with optional generic support
 fn field_to_type_annotation_generic(
     field: &PatternField,
     metadata: &ClientMetadata,
@@ -420,17 +394,12 @@ fn field_to_type_annotation_generic(
     field_to_type_annotation_with_generic(field, metadata, is_generic, None)
 }
 
-/// Convert a PatternField to the full type annotation.
-/// - `is_generic`: If true and field.rust_type is "T", use T in the output
-/// - `generic_value_type`: For branch fields that reference a generic pattern, this is the concrete type to substitute
 fn field_to_type_annotation_with_generic(
     field: &PatternField,
     metadata: &ClientMetadata,
     is_generic: bool,
     generic_value_type: Option<&str>,
 ) -> String {
-    // For generic patterns, use T instead of concrete value type
-    // Also extract inner type from wrappers like Close<Dollars> -> Dollars
     let value_type = if is_generic && field.rust_type == "T" {
         "T".to_string()
     } else {
@@ -438,24 +407,19 @@ fn field_to_type_annotation_with_generic(
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
-        // Check if this pattern is generic and we have a value type
         if metadata.is_pattern_generic(&field.rust_type)
             && let Some(vt) = generic_value_type
         {
             return format!("{}<{}>", field.rust_type, vt);
         }
-        // Non-generic pattern has no type params
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf with a reusable accessor pattern
         format!("{}<{}>", accessor.name, value_type)
     } else {
-        // Leaf with unique index set - use MetricNode directly
         format!("MetricNode<{}>", value_type)
     }
 }
 
-/// Generate the catalog tree structure
 fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree\n").unwrap();
 
@@ -471,7 +435,6 @@ fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetad
     );
 }
 
-/// Recursively generate tree nodes
 fn generate_tree_node(
     output: &mut String,
     name: &str,
@@ -490,7 +453,6 @@ fn generate_tree_node(
         .map(|(f, _)| f.clone())
         .collect();
 
-    // Skip if this matches a pattern (already generated separately)
     if let Some(pattern_name) = pattern_lookup.get(&fields)
         && pattern_name != name
     {
@@ -519,7 +481,6 @@ fn generate_tree_node(
 
     writeln!(output, "}}\n").unwrap();
 
-    // Generate impl block
     writeln!(output, "impl {} {{", name).unwrap();
     writeln!(
         output,
@@ -600,7 +561,6 @@ fn generate_tree_node(
     writeln!(output, "    }}").unwrap();
     writeln!(output, "}}\n").unwrap();
 
-    // Recursively generate child nodes that aren't patterns
     for (child_name, child_node) in children {
         if let TreeNode::Branch(grandchildren) = child_node {
             let child_fields = get_node_fields(grandchildren, pattern_lookup);
@@ -619,7 +579,6 @@ fn generate_tree_node(
     }
 }
 
-/// Generate the main client struct
 fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(
         output,
@@ -652,13 +611,11 @@ impl BrkClient {{
     )
     .unwrap();
 
-    // Generate API methods
     generate_api_methods(output, endpoints);
 
     writeln!(output, "}}").unwrap();
 }
 
-/// Generate API methods from OpenAPI endpoints
 fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
     for endpoint in endpoints {
         if !endpoint.should_generate() {
@@ -672,7 +629,6 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             .map(js_type_to_rust)
             .unwrap_or_else(|| "serde_json::Value".to_string());
 
-        // Build doc comment
         writeln!(
             output,
             "    /// {}",
@@ -686,7 +642,6 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             writeln!(output, "    /// {}", desc).unwrap();
         }
 
-        // Build method signature
         let params = build_method_params(endpoint);
         writeln!(
             output,
@@ -695,7 +650,6 @@ fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         )
         .unwrap();
 
-        // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
         if endpoint.query_params.is_empty() {
@@ -761,7 +715,6 @@ fn build_path_template(path: &str, path_params: &[super::Parameter]) -> String {
     result
 }
 
-/// Convert JS-style type to Rust type (e.g., "Txid[]" -> "Vec<Txid>")
 fn js_type_to_rust(js_type: &str) -> String {
     if let Some(inner) = js_type.strip_suffix("[]") {
         format!("Vec<{}>", js_type_to_rust(inner))

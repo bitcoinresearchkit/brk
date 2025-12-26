@@ -1,5 +1,3 @@
-//! Block metadata processing.
-
 use brk_error::{Error, Result};
 use brk_types::{BlockHashPrefix, Timestamp};
 use log::error;
@@ -8,13 +6,11 @@ use vecdb::GenericStoredVec;
 use super::BlockProcessor;
 
 impl BlockProcessor<'_> {
-    /// Process block metadata (blockhash, difficulty, timestamp, etc.)
     pub fn process_block_metadata(&mut self) -> Result<()> {
         let height = self.height;
         let blockhash = self.block.hash();
         let blockhash_prefix = BlockHashPrefix::from(blockhash);
 
-        // Check for blockhash prefix collision
         if self
             .stores
             .blockhashprefix_to_height

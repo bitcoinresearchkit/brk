@@ -1,9 +1,7 @@
 use brk_types::RecommendedFees;
 
-use super::fees;
-use super::stats::{self, BlockStats};
-use crate::entry::Entry;
-use crate::types::{SelectedTx, TxIndex};
+use super::{fees, stats::{self, BlockStats}};
+use crate::{entry::Entry, types::{SelectedTx, TxIndex}};
 
 /// Immutable snapshot of projected blocks.
 #[derive(Debug, Clone, Default)]

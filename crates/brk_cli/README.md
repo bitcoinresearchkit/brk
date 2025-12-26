@@ -15,6 +15,12 @@ Run a full BRK instance: index the blockchain, compute metrics, serve the API, a
 - **Collision checking**: Optional TXID collision validation mode
 - **Memory optimized**: Uses mimalloc allocator, 512MB stack for deep recursion
 
+## Install
+
+```bash
+cargo install --locked brk_cli
+```
+
 ## Usage
 
 ```bash

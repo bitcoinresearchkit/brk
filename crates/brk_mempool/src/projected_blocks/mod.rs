@@ -1,5 +1,3 @@
-//! Projected block building and fee estimation.
-
 mod fees;
 mod snapshot;
 mod stats;

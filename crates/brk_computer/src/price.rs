@@ -469,9 +469,6 @@ impl Vecs {
             exit,
         )?;
 
-        // self.halvingepoch_to_price_ohlc
-        //     .compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
-
         self.decadeindex_to_price_ohlc.compute_transform4(
             starting_indexes.decadeindex,
             self.timeindexes_to_price_open.decadeindex.unwrap_first(),
@@ -797,9 +794,6 @@ impl Vecs {
             },
             exit,
         )?;
-
-        // self.halvingepoch_to_price_ohlc
-        //     _in_sats.compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
 
         self.decadeindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.decadeindex,

@@ -1,20 +1,16 @@
-//! Output processing.
-//!
-//! Processes a block's outputs (new UTXOs), building:
-//! - Transacted: aggregated supply by output type and amount range
-//! - Address data for address cohort tracking (optional)
-
 use brk_grouper::ByAddressType;
-use brk_types::{Sats, TxIndex, TxOutData, TypeIndex};
+use brk_types::{Sats, TxIndex, TypeIndex};
 
-use crate::stateful::address::{
-    AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs,
+use crate::stateful::{
+    address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
+    compute::{TxOutData, VecsReaders},
+    states::Transacted,
 };
-use crate::stateful::compute::VecsReaders;
-use crate::stateful::states::Transacted;
 
-use super::super::address::AddressTypeToVec;
-use super::{load_uncached_address_data, AddressCache, LoadedAddressDataWithSource, TxIndexVec};
+use super::{
+    super::address::AddressTypeToVec,
+    load_uncached_address_data, AddressCache, LoadedAddressDataWithSource, TxIndexVec,
+};
 
 /// Result of processing outputs for a block.
 pub struct OutputsResult {

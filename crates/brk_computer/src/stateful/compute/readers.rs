@@ -1,31 +1,42 @@
-//! Cached readers for efficient data access during computation.
-//!
-//! Readers provide mmap-based access to indexed data without repeated syscalls.
-
 use brk_grouper::{ByAddressType, ByAnyAddress};
 use brk_indexer::Indexer;
 use brk_types::{
-    Height, OutputType, Sats, StoredU64, TxInIndex, TxIndex, TxOutData, TxOutIndex, TypeIndex,
+    Height, OutPoint, OutputType, Sats, StoredU64, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
 };
 use vecdb::{
     BoxedVecIterator, BytesVecIterator, GenericStoredVec, PcodecVecIterator, Reader, VecIndex,
     VecIterator,
 };
 
-use crate::stateful::address::{AddressesDataVecs, AnyAddressIndexesVecs};
+use crate::{
+    stateful::{address::{AddressesDataVecs, AnyAddressIndexesVecs}, RangeMap},
+    txins,
+};
+
+/// Output data collected from separate vecs.
+#[derive(Debug, Clone, Copy)]
+pub struct TxOutData {
+    pub value: Sats,
+    pub outputtype: OutputType,
+    pub typeindex: TypeIndex,
+}
 
 /// Reusable iterators for txout vectors (16KB buffered reads).
 ///
 /// Iterators are created once and re-positioned each block to avoid
 /// creating new file handles repeatedly.
 pub struct TxOutIterators<'a> {
-    txoutdata_iter: BytesVecIterator<'a, TxOutIndex, TxOutData>,
+    value_iter: BytesVecIterator<'a, TxOutIndex, Sats>,
+    outputtype_iter: BytesVecIterator<'a, TxOutIndex, OutputType>,
+    typeindex_iter: BytesVecIterator<'a, TxOutIndex, TypeIndex>,
 }
 
 impl<'a> TxOutIterators<'a> {
     pub fn new(indexer: &'a Indexer) -> Self {
         Self {
-            txoutdata_iter: indexer.vecs.txout.txoutindex_to_txoutdata.into_iter(),
+            value_iter: indexer.vecs.txout.txoutindex_to_value.into_iter(),
+            outputtype_iter: indexer.vecs.txout.txoutindex_to_outputtype.into_iter(),
+            typeindex_iter: indexer.vecs.txout.txoutindex_to_typeindex.into_iter(),
         }
     }
 
@@ -36,7 +47,11 @@ impl<'a> TxOutIterators<'a> {
         output_count: usize,
     ) -> Vec<TxOutData> {
         (first_txoutindex..first_txoutindex + output_count)
-            .map(|i| self.txoutdata_iter.get_at_unwrap(i))
+            .map(|i| TxOutData {
+                value: self.value_iter.get_at_unwrap(i),
+                outputtype: self.outputtype_iter.get_at_unwrap(i),
+                typeindex: self.typeindex_iter.get_at_unwrap(i),
+            })
             .collect()
     }
 }
@@ -44,26 +59,34 @@ impl<'a> TxOutIterators<'a> {
 /// Reusable iterators for txin vectors (PcoVec - avoids repeated page decompression).
 pub struct TxInIterators<'a> {
     value_iter: PcodecVecIterator<'a, TxInIndex, Sats>,
-    prev_height_iter: PcodecVecIterator<'a, TxInIndex, Height>,
+    outpoint_iter: PcodecVecIterator<'a, TxInIndex, OutPoint>,
     outputtype_iter: PcodecVecIterator<'a, TxInIndex, OutputType>,
     typeindex_iter: PcodecVecIterator<'a, TxInIndex, TypeIndex>,
+    txindex_to_height: &'a mut RangeMap<TxIndex, Height>,
 }
 
 impl<'a> TxInIterators<'a> {
-    pub fn new(indexer: &'a Indexer) -> Self {
+    pub fn new(
+        indexer: &'a Indexer,
+        txins: &'a txins::Vecs,
+        txindex_to_height: &'a mut RangeMap<TxIndex, Height>,
+    ) -> Self {
         Self {
-            value_iter: indexer.vecs.txin.txinindex_to_value.into_iter(),
-            prev_height_iter: indexer.vecs.txin.txinindex_to_prev_height.into_iter(),
+            value_iter: txins.txinindex_to_value.into_iter(),
+            outpoint_iter: indexer.vecs.txin.txinindex_to_outpoint.into_iter(),
             outputtype_iter: indexer.vecs.txin.txinindex_to_outputtype.into_iter(),
             typeindex_iter: indexer.vecs.txin.txinindex_to_typeindex.into_iter(),
+            txindex_to_height,
         }
     }
 
     /// Collect input data for a block range using buffered iteration.
+    /// Computes prev_height on-the-fly from outpoint using RangeMap lookup.
     pub fn collect_block_inputs(
         &mut self,
         first_txinindex: usize,
         input_count: usize,
+        current_height: Height,
     ) -> (Vec<Sats>, Vec<Height>, Vec<OutputType>, Vec<TypeIndex>) {
         let mut values = Vec::with_capacity(input_count);
         let mut prev_heights = Vec::with_capacity(input_count);
@@ -72,7 +95,17 @@ impl<'a> TxInIterators<'a> {
 
         for i in first_txinindex..first_txinindex + input_count {
             values.push(self.value_iter.get_at_unwrap(i));
-            prev_heights.push(self.prev_height_iter.get_at_unwrap(i));
+
+            let outpoint = self.outpoint_iter.get_at_unwrap(i);
+            let prev_height = if outpoint.is_coinbase() {
+                current_height
+            } else {
+                self.txindex_to_height
+                    .get(outpoint.txindex())
+                    .unwrap_or(current_height)
+            };
+            prev_heights.push(prev_height);
+
             outputtypes.push(self.outputtype_iter.get_at_unwrap(i));
             typeindexes.push(self.typeindex_iter.get_at_unwrap(i));
         }

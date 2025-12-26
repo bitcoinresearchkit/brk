@@ -1,6 +1,8 @@
-use std::fs::File;
-use std::io::{self, Write};
-use std::path::Path;
+use std::{
+    fs::File,
+    io::{self, Write},
+    path::Path,
+};
 
 #[cfg(target_os = "linux")]
 use std::fs;

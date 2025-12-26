@@ -1,8 +1,4 @@
-use std::collections::HashSet;
-use std::fmt::Write as FmtWrite;
-use std::fs;
-use std::io;
-use std::path::Path;
+use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
 use brk_types::{Index, TreeNode};
 use serde_json::Value;
@@ -24,26 +20,14 @@ pub fn generate_javascript_client(
 ) -> io::Result<()> {
     let mut output = String::new();
 
-    // Header
     writeln!(output, "// Auto-generated BRK JavaScript client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
 
-    // Generate type definitions from OpenAPI schemas
     generate_type_definitions(&mut output, schemas);
-
-    // Generate the base client class
     generate_base_client(&mut output);
-
-    // Generate index accessor factory functions
     generate_index_accessors(&mut output, &metadata.index_set_patterns);
-
-    // Generate structural pattern factory functions
     generate_structural_patterns(&mut output, &metadata.structural_patterns, metadata);
-
-    // Generate tree JSDoc typedefs
     generate_tree_typedefs(&mut output, &metadata.catalog, metadata);
-
-    // Generate the main client class with tree and API methods
     generate_main_client(&mut output, &metadata.catalog, metadata, endpoints);
 
     fs::write(output_path, output)?;
@@ -51,7 +35,6 @@ pub fn generate_javascript_client(
     Ok(())
 }
 
-/// Generate JSDoc type definitions from OpenAPI schemas
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     if schemas.is_empty() {
         return;
@@ -63,10 +46,8 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         let js_type = schema_to_js_type_ctx(schema, Some(name));
 
         if is_primitive_alias(schema) {
-            // Simple type alias: @typedef {number} Height
             writeln!(output, "/** @typedef {{{}}} {} */", js_type, name).unwrap();
         } else if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
-            // Object type with properties
             writeln!(output, "/**").unwrap();
             writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
             for (prop_name, prop_schema) in props {
@@ -86,14 +67,12 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             }
             writeln!(output, " */").unwrap();
         } else {
-            // Other schemas - just typedef
             writeln!(output, "/** @typedef {{{}}} {} */", js_type, name).unwrap();
         }
     }
     writeln!(output).unwrap();
 }
 
-/// Check if schema represents a primitive type alias (like Height = number)
 fn is_primitive_alias(schema: &Value) -> bool {
     schema.get("properties").is_none()
         && schema.get("items").is_none()
@@ -102,7 +81,6 @@ fn is_primitive_alias(schema: &Value) -> bool {
         && schema.get("enum").is_none()
 }
 
-/// Convert a single JSON type string to JavaScript type
 fn json_type_to_js(ty: &str, schema: &Value, current_type: Option<&str>) -> String {
     match ty {
         "integer" | "number" => "number".to_string(),
@@ -117,10 +95,8 @@ fn json_type_to_js(ty: &str, schema: &Value, current_type: Option<&str>) -> Stri
             format!("{}[]", item_type)
         }
         "object" => {
-            // Check if it has additionalProperties (dict-like)
             if let Some(add_props) = schema.get("additionalProperties") {
                 let value_type = schema_to_js_type_ctx(add_props, current_type);
-                // Use TypeScript index signature syntax for recursive types
                 return format!("{{ [key: string]: {} }}", value_type);
             }
             "Object".to_string()
@@ -129,9 +105,7 @@ fn json_type_to_js(ty: &str, schema: &Value, current_type: Option<&str>) -> Stri
     }
 }
 
-/// Convert JSON Schema to JavaScript/JSDoc type with context for recursive types
 fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
-    // Handle allOf (try each element until we find a resolvable type)
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
             let resolved = schema_to_js_type_ctx(item, current_type);
@@ -141,12 +115,10 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
         }
     }
 
-    // Handle $ref
     if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
         return ref_path.rsplit('/').next().unwrap_or("*").to_string();
     }
 
-    // Handle enum (array of string values)
     if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
         let literals: Vec<String> = enum_values
             .iter()
@@ -158,9 +130,7 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
         }
     }
 
-    // Handle type field (can be string or array of strings)
     if let Some(ty) = schema.get("type") {
-        // Handle array of types like ["string", "null"] for Optional
         if let Some(type_array) = ty.as_array() {
             let types: Vec<String> = type_array
                 .iter()
@@ -187,13 +157,11 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
             }
         }
 
-        // Handle single type string
         if let Some(ty_str) = ty.as_str() {
             return json_type_to_js(ty_str, schema, current_type);
         }
     }
 
-    // Handle anyOf/oneOf
     if let Some(variants) = schema
         .get("anyOf")
         .or_else(|| schema.get("oneOf"))
@@ -203,7 +171,6 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
             .iter()
             .map(|v| schema_to_js_type_ctx(v, current_type))
             .collect();
-        // Filter out * and null for cleaner unions
         let filtered: Vec<_> = types.iter().filter(|t| *t != "*").collect();
         if !filtered.is_empty() {
             return format!(
@@ -218,7 +185,6 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
         return format!("({})", types.join("|"));
     }
 
-    // Check for format hint without type (common in OpenAPI)
     if let Some(format) = schema.get("format").and_then(|f| f.as_str()) {
         return match format {
             "int32" | "int64" => "number".to_string(),
@@ -231,7 +197,6 @@ fn schema_to_js_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
     "*".to_string()
 }
 
-/// Generate the base BrkClient class with HTTP functionality
 fn generate_base_client(output: &mut String) {
     writeln!(
         output,
@@ -350,7 +315,6 @@ class BrkClientBase {{
     .unwrap();
 }
 
-/// Generate index accessor factory functions
 fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     if patterns.is_empty() {
         return;
@@ -359,7 +323,6 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     writeln!(output, "// Index accessor factory functions\n").unwrap();
 
     for pattern in patterns {
-        // Generate JSDoc typedef for the accessor
         writeln!(output, "/**").unwrap();
         writeln!(output, " * @template T").unwrap();
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
@@ -406,12 +369,10 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
     }
 }
 
-/// Convert an Index to a camelCase field name (e.g., DateIndex -> byDateIndex)
 fn index_to_camel_case(index: &Index) -> String {
     format!("by{}", to_pascal_case(index.serialize_long()))
 }
 
-/// Generate structural pattern factory functions
 fn generate_structural_patterns(
     output: &mut String,
     patterns: &[StructuralPattern],
@@ -424,10 +385,8 @@ fn generate_structural_patterns(
     writeln!(output, "// Reusable structural pattern factories\n").unwrap();
 
     for pattern in patterns {
-        // Check if this pattern is parameterizable (has field positions detected)
         let is_parameterizable = pattern.is_parameterizable();
 
-        // Generate JSDoc typedef
         writeln!(output, "/**").unwrap();
         if pattern.is_generic {
             writeln!(output, " * @template T").unwrap();
@@ -497,7 +456,6 @@ fn generate_structural_patterns(
     }
 }
 
-/// Generate a field using parameterized (prepend/append) metric name construction
 fn generate_parameterized_field(
     output: &mut String,
     field: &PatternField,
@@ -507,9 +465,7 @@ fn generate_parameterized_field(
 ) {
     let field_name_js = to_camel_case(&field.name);
 
-    // For branch fields, pass the accumulated name to nested pattern
     if metadata.is_pattern_type(&field.rust_type) {
-        // Get the field position to determine how to transform the accumulated name
         let child_acc = if let Some(pos) = pattern.get_field_position(&field.name) {
             match pos {
                 FieldNamePosition::Append(suffix) => format!("`${{acc}}{}`", suffix),
@@ -518,7 +474,6 @@ fn generate_parameterized_field(
                 FieldNamePosition::SetBase(base) => format!("'{}'", base),
             }
         } else {
-            // Fallback: append field name
             format!("`${{acc}}_{}`", field.name)
         };
 
@@ -531,7 +486,6 @@ fn generate_parameterized_field(
         return;
     }
 
-    // For leaf fields, construct the metric path based on position
     let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
         match pos {
             FieldNamePosition::Append(suffix) => format!("`/${{acc}}{suffix}`"),
@@ -540,7 +494,6 @@ fn generate_parameterized_field(
             FieldNamePosition::SetBase(base) => format!("'/{base}'"),
         }
     } else {
-        // Fallback: use field name appended
         format!("`/${{acc}}_{}`", field.name)
     };
 
@@ -562,7 +515,6 @@ fn generate_parameterized_field(
     }
 }
 
-/// Generate a field using tree path construction (fallback for non-parameterizable patterns)
 fn generate_tree_path_field(
     output: &mut String,
     field: &PatternField,
@@ -596,7 +548,6 @@ fn generate_tree_path_field(
     }
 }
 
-/// Convert pattern field to JavaScript/JSDoc type, with optional generic support
 fn field_to_js_type_generic(
     field: &PatternField,
     metadata: &ClientMetadata,
@@ -605,17 +556,12 @@ fn field_to_js_type_generic(
     field_to_js_type_with_generic_value(field, metadata, is_generic, None)
 }
 
-/// Convert pattern field to JavaScript/JSDoc type.
-/// - `is_generic`: If true and field.rust_type is "T", use T in the output
-/// - `generic_value_type`: For branch fields that reference a generic pattern, this is the concrete type to substitute
 fn field_to_js_type_with_generic_value(
     field: &PatternField,
     metadata: &ClientMetadata,
     is_generic: bool,
     generic_value_type: Option<&str>,
 ) -> String {
-    // For generic patterns, use T instead of concrete value type
-    // Also extract inner type from wrappers like Close<Dollars> -> Dollars
     let value_type = if is_generic && field.rust_type == "T" {
         "T".to_string()
     } else {
@@ -623,29 +569,23 @@ fn field_to_js_type_with_generic_value(
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
-        // Check if this pattern is generic
         if metadata.is_pattern_generic(&field.rust_type) {
             if let Some(vt) = generic_value_type {
                 return format!("{}<{}>", field.rust_type, vt);
             } else if is_generic {
-                // Propagate T when inside a generic pattern
                 return format!("{}<T>", field.rust_type);
             } else {
-                // Generic pattern without known type - use unknown
                 return format!("{}<unknown>", field.rust_type);
             }
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf with accessor - use value_type as the generic
         format!("{}<{}>", accessor.name, value_type)
     } else {
-        // Leaf - use value_type as the generic
         format!("MetricNode<{}>", value_type)
     }
 }
 
-/// Generate tree typedefs
 fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree typedefs\n").unwrap();
 
@@ -661,7 +601,6 @@ fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &Cl
     );
 }
 
-/// Recursively generate tree typedefs
 fn generate_tree_typedef(
     output: &mut String,
     name: &str,
@@ -680,7 +619,6 @@ fn generate_tree_typedef(
         .map(|(f, _)| f.clone())
         .collect();
 
-    // Skip if this matches a pattern (already generated)
     if pattern_lookup.contains_key(&fields)
         && pattern_lookup.get(&fields) != Some(&name.to_string())
     {
@@ -696,7 +634,6 @@ fn generate_tree_typedef(
     writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
     for (field, child_fields) in &fields_with_child_info {
-        // Look up type parameter for generic patterns
         let generic_value_type = child_fields
             .as_ref()
             .and_then(|cf| metadata.get_type_param(cf))
@@ -714,7 +651,6 @@ fn generate_tree_typedef(
 
     writeln!(output, " */\n").unwrap();
 
-    // Generate child typedefs
     for (child_name, child_node) in children {
         if let TreeNode::Branch(grandchildren) = child_node {
             let child_fields = get_node_fields(grandchildren, pattern_lookup);
@@ -733,7 +669,6 @@ fn generate_tree_typedef(
     }
 }
 
-/// Generate main client
 fn generate_main_client(
     output: &mut String,
     catalog: &TreeNode,
@@ -760,7 +695,6 @@ fn generate_main_client(
     writeln!(output, "    this.tree = this._buildTree('');").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
-    // Generate _buildTree method
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @private").unwrap();
     writeln!(output, "   * @param {{string}} basePath").unwrap();
@@ -772,12 +706,10 @@ fn generate_main_client(
     writeln!(output, "    }};").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
-    // Generate API methods
     generate_api_methods(output, endpoints);
 
     writeln!(output, "}}\n").unwrap();
 
-    // Export
     writeln!(
         output,
         "export {{ BrkClient, BrkClientBase, BrkError, MetricNode }};"
@@ -785,7 +717,6 @@ fn generate_main_client(
     .unwrap();
 }
 
-/// Generate tree initializer
 fn generate_tree_initializer(
     output: &mut String,
     node: &TreeNode,
@@ -803,7 +734,6 @@ fn generate_tree_initializer(
 
             match child_node {
                 TreeNode::Leaf(leaf) => {
-                    // Use leaf.name() (vec.name()) for API path, not tree path
                     let metric_path = format!("/{}", leaf.name());
                     if let Some(accessor) = metadata.find_index_set_pattern(leaf.indexes()) {
                         writeln!(
@@ -824,7 +754,6 @@ fn generate_tree_initializer(
                 TreeNode::Branch(grandchildren) => {
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
                     if let Some(pattern_name) = pattern_lookup.get(&child_fields) {
-                        // For parameterized patterns, derive accumulated metric name from first leaf
                         let pattern = metadata
                             .structural_patterns
                             .iter()
@@ -833,10 +762,8 @@ fn generate_tree_initializer(
                             pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
 
                         let arg = if is_parameterizable {
-                            // Get the metric base from the first leaf descendant
                             get_pattern_instance_base(child_node, child_name)
                         } else {
-                            // Fallback to tree path for non-parameterizable patterns
                             if accumulated_name.is_empty() {
                                 format!("/{}", child_name)
                             } else {
@@ -851,7 +778,6 @@ fn generate_tree_initializer(
                         )
                         .unwrap();
                     } else {
-                        // Not a pattern - recurse with accumulated name
                         let child_acc =
                             infer_child_accumulated_name(child_node, accumulated_name, child_name);
                         writeln!(output, "{}{}: {{", indent_str, field_name).unwrap();
@@ -871,18 +797,12 @@ fn generate_tree_initializer(
     }
 }
 
-/// Infer the accumulated metric name for a child node
 fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &str) -> String {
-    // Try to infer from first leaf descendant
     if let Some(leaf_name) = get_first_leaf_name(node) {
-        // Look for field_name in the leaf metric name
         if let Some(pos) = leaf_name.find(field_name) {
-            // The field_name appears in the metric - use it as base
             if pos == 0 {
-                // At start - this is the base
                 return field_name.to_string();
             } else if leaf_name.chars().nth(pos - 1) == Some('_') {
-                // After underscore - likely an append pattern
                 if parent_acc.is_empty() {
                     return field_name.to_string();
                 }
@@ -891,7 +811,6 @@ fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &
         }
     }
 
-    // Fallback: append field name
     if parent_acc.is_empty() {
         field_name.to_string()
     } else {
@@ -899,7 +818,6 @@ fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &
     }
 }
 
-/// Generate API methods
 fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
     for endpoint in endpoints {
         if !endpoint.should_generate() {

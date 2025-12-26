@@ -1,8 +1,3 @@
-//! Block processing for indexing.
-//!
-//! This module handles the extraction and storage of all indexed data from blocks.
-//! Processing is split into phases that can be parallelized where possible.
-
 mod metadata;
 mod tx;
 mod txin;
@@ -13,7 +8,7 @@ pub use types::*;
 
 use brk_types::{Block, Height, TxInIndex, TxIndex, TxOutIndex};
 
-use crate::{Indexes, RangeMap, Readers, Stores, Vecs};
+use crate::{Indexes, Readers, Stores, Vecs};
 
 /// Processes a single block, extracting and storing all indexed data.
 pub struct BlockProcessor<'a> {
@@ -24,7 +19,6 @@ pub struct BlockProcessor<'a> {
     pub vecs: &'a mut Vecs,
     pub stores: &'a mut Stores,
     pub readers: &'a Readers,
-    pub txindex_to_height: &'a RangeMap<TxIndex, Height>,
 }
 
 impl BlockProcessor<'_> {

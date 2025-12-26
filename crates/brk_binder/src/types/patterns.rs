@@ -1,5 +1,3 @@
-//! Pattern detection for structural patterns in the metric tree.
-
 use std::collections::{BTreeSet, HashMap};
 
 use brk_types::TreeNode;

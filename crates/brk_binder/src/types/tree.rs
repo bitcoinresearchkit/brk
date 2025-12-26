@@ -1,5 +1,3 @@
-//! Tree traversal utilities.
-
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use brk_types::{Index, TreeNode};

@@ -1,9 +1,11 @@
-use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{self, Write};
-use std::os::unix::fs::MetadataExt;
-use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::{self, Write},
+    os::unix::fs::MetadataExt,
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
 
 pub struct DiskMonitor {
     cache: HashMap<PathBuf, (u64, SystemTime)>, // path -> (bytes_used, mtime)

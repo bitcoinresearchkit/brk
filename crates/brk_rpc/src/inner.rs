@@ -1,8 +1,9 @@
+use std::{thread::sleep, time::Duration};
+
 use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, jsonrpc};
 use brk_error::Result;
 use log::info;
 use parking_lot::RwLock;
-use std::time::Duration;
 
 pub use bitcoincore_rpc::Auth;
 
@@ -55,7 +56,7 @@ impl ClientInner {
                     "Retrying to connect to Bitcoin Core (attempt {}/{})",
                     attempt, max_retries
                 );
-                std::thread::sleep(delay);
+                sleep(delay);
             }
 
             match f() {
@@ -96,7 +97,7 @@ impl ClientInner {
                     attempt, self.max_retries
                 );
                 self.recreate().ok();
-                std::thread::sleep(self.retry_delay);
+                sleep(self.retry_delay);
             }
 
             match f(&self.client.read()) {

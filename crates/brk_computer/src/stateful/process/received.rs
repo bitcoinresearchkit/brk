@@ -1,12 +1,11 @@
-//! Process received outputs for address cohorts.
-
-use brk_grouper::{amounts_in_different_buckets, ByAddressType};
+use brk_grouper::{AmountBucket, ByAddressType};
 use brk_types::{Dollars, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
-use super::super::address::AddressTypeToVec;
-use super::super::cohorts::AddressCohorts;
-use super::lookup::{AddressLookup, TrackingStatus};
+use super::{
+    super::{address::AddressTypeToVec, cohorts::AddressCohorts},
+    lookup::{AddressLookup, TrackingStatus},
+};
 
 pub fn process_received(
     received_data: AddressTypeToVec<(TypeIndex, Sats)>,
@@ -20,6 +19,10 @@ pub fn process_received(
         if vec.is_empty() {
             continue;
         }
+
+        // Cache mutable refs for this address type
+        let type_addr_count = addr_count.get_mut(output_type).unwrap();
+        let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
 
         // Aggregate receives by address - each address processed exactly once
         // Track (total_value, output_count) for correct UTXO counting
@@ -35,11 +38,11 @@ pub fn process_received(
 
             match status {
                 TrackingStatus::New => {
-                    *addr_count.get_mut(output_type).unwrap() += 1;
+                    *type_addr_count += 1;
                 }
                 TrackingStatus::WasEmpty => {
-                    *addr_count.get_mut(output_type).unwrap() += 1;
-                    *empty_addr_count.get_mut(output_type).unwrap() -= 1;
+                    *type_addr_count += 1;
+                    *type_empty_count -= 1;
                 }
                 TrackingStatus::Tracked => {}
             }
@@ -49,9 +52,10 @@ pub fn process_received(
             if is_new_entry {
                 // New/was-empty address - just add to cohort
                 addr_data.receive_outputs(total_value, price, output_count);
+                let new_bucket = AmountBucket::from(total_value);
                 cohorts
                     .amount_range
-                    .get_mut(total_value) // new_balance = 0 + total_value
+                    .get_mut_by_bucket(new_bucket)
                     .state
                     .as_mut()
                     .unwrap()
@@ -59,12 +63,14 @@ pub fn process_received(
             } else {
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance + total_value;
+                let prev_bucket = AmountBucket::from(prev_balance);
+                let new_bucket = AmountBucket::from(new_balance);
 
-                if amounts_in_different_buckets(prev_balance, new_balance) {
+                if let Some((old_bucket, new_bucket)) = prev_bucket.transition_to(new_bucket) {
                     // Crossing cohort boundary - subtract from old, add to new
                     let cohort_state = cohorts
                         .amount_range
-                        .get_mut(prev_balance)
+                        .get_mut_by_bucket(old_bucket)
                         .state
                         .as_mut()
                         .unwrap();
@@ -89,7 +95,7 @@ pub fn process_received(
                     addr_data.receive_outputs(total_value, price, output_count);
                     cohorts
                         .amount_range
-                        .get_mut(new_balance)
+                        .get_mut_by_bucket(new_bucket)
                         .state
                         .as_mut()
                         .unwrap()
@@ -98,7 +104,7 @@ pub fn process_received(
                     // Staying in same cohort - just receive
                     cohorts
                         .amount_range
-                        .get_mut(new_balance)
+                        .get_mut_by_bucket(new_bucket)
                         .state
                         .as_mut()
                         .unwrap()

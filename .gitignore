@@ -12,6 +12,7 @@ bridge/
 
 # Ignored
 _*
+/*.md
 
 # Logs
 *.log*

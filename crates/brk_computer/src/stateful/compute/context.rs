@@ -1,5 +1,3 @@
-//! Computation context holding shared state during block processing.
-
 use brk_types::{Dollars, Height, Timestamp};
 use vecdb::VecIndex;
 

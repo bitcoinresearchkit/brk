@@ -1,10 +1,3 @@
-//! Bitcoin mempool monitor with fee estimation.
-//!
-//! Provides real-time mempool tracking with:
-//! - Fee estimation via projected blocks
-//! - Address mempool stats
-//! - CPFP-aware block building
-
 mod addresses;
 mod block_builder;
 mod entry;

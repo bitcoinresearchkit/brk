@@ -1,5 +1,3 @@
-//! JSON Schema utilities.
-
 use serde_json::Value;
 
 /// Unwrap allOf with a single element, returning the inner schema.

@@ -1,5 +1,3 @@
-//! Container for all Address cohorts organized by filter type.
-
 use std::path::Path;
 
 use brk_error::Result;

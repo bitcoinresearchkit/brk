@@ -1,25 +1,15 @@
-//! Main block processing loop.
-//!
-//! Iterates through blocks and processes each one:
-//! 1. Reset per-block state values
-//! 2. Tick-tock age transitions
-//! 3. Process outputs (receive) in parallel
-//! 4. Process inputs (send) in parallel
-//! 5. Push to height-indexed vectors
-//! 6. Periodically flush checkpoints
-
 use std::thread;
 
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
-use brk_types::{DateIndex, Height, OutputType, Sats, TypeIndex};
+use brk_types::{DateIndex, Height, OutputType, Sats, TxIndex, TypeIndex};
 use log::info;
 use rayon::prelude::*;
 use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
-    chain, indexes, price,
+    chain, indexes, price, txins,
     stateful::{
         address::AddressTypeToAddressCount,
         compute::write::{process_address_updates, write},
@@ -36,6 +26,7 @@ use super::{
     super::{
         cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts},
         vecs::Vecs,
+        RangeMap,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, TxInIterators, TxOutIterators,
@@ -48,6 +39,7 @@ pub fn process_blocks(
     vecs: &mut Vecs,
     indexer: &Indexer,
     indexes: &indexes::Vecs,
+    txins: &txins::Vecs,
     chain: &chain::Vecs,
     price: Option<&price::Vecs>,
     starting_height: Height,
@@ -128,9 +120,19 @@ pub fn process_blocks(
 
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
+    // Build txindex -> height lookup map for efficient prev_height computation
+    info!("Building txindex_to_height map...");
+    let mut txindex_to_height: RangeMap<TxIndex, Height> = {
+        let mut map = RangeMap::with_capacity(last_height.to_usize() + 1);
+        for first_txindex in indexer.vecs.tx.height_to_first_txindex.into_iter() {
+            map.push(first_txindex);
+        }
+        map
+    };
+
     // Create reusable iterators for sequential txout/txin reads (16KB buffered)
     let mut txout_iters = TxOutIterators::new(indexer);
-    let mut txin_iters = TxInIterators::new(indexer);
+    let mut txin_iters = TxInIterators::new(indexer, txins, &mut txindex_to_height);
 
     info!("Creating address iterators...");
 
@@ -270,7 +272,7 @@ pub fn process_blocks(
 
         let (input_values, input_prev_heights, input_outputtypes, input_typeindexes) =
             if input_count > 1 {
-                txin_iters.collect_block_inputs(first_txinindex + 1, input_count - 1)
+                txin_iters.collect_block_inputs(first_txinindex + 1, input_count - 1, height)
             } else {
                 (Vec::new(), Vec::new(), Vec::new(), Vec::new())
             };

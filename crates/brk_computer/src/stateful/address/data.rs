@@ -1,5 +1,3 @@
-//! Storage for address data (loaded and empty addresses).
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{

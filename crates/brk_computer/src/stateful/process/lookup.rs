@@ -1,9 +1,9 @@
-//! Address data lookup during block processing.
-
 use brk_types::{LoadedAddressData, OutputType, TypeIndex};
 
-use super::super::address::AddressTypeToTypeIndexMap;
-use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource};
+use super::{
+    super::address::AddressTypeToTypeIndexMap,
+    EmptyAddressDataWithSource, LoadedAddressDataWithSource, WithAddressDataSource,
+};
 
 /// Tracking status of an address - determines cohort update strategy.
 #[derive(Clone, Copy)]

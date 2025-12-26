@@ -1,5 +1,3 @@
-//! Traits for cohort vector operations.
-
 use brk_error::Result;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};

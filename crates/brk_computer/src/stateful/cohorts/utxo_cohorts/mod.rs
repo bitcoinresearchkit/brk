@@ -1,5 +1,3 @@
-//! Container for all UTXO cohorts organized by filter type.
-
 mod receive;
 mod send;
 mod tick_tock;

@@ -5,8 +5,7 @@ use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
     AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height, OutPoint,
-    OutputType, StoredString, TxInIndex, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version,
-    Vout,
+    OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall::{Database, PersistMode};
 use log::info;
@@ -171,7 +170,7 @@ impl Stores {
                 .map(|s| s as &mut dyn AnyStore),
         )
         .try_for_each(|store| store.commit(height))?;
-        info!("Commits done in {:?}", i.elapsed());
+        info!("Stores committed in {:?}", i.elapsed());
 
         let i = Instant::now();
         self.db.persist(PersistMode::SyncData)?;
@@ -270,39 +269,44 @@ impl Stores {
             let mut txoutindex_to_txindex_iter = vecs.txout.txoutindex_to_txindex.iter()?;
             let mut txindex_to_first_txoutindex_iter =
                 vecs.tx.txindex_to_first_txoutindex.iter()?;
-            vecs.txout
-                .txoutindex_to_txoutdata
-                .iter()?
-                .enumerate()
-                .skip(starting_indexes.txoutindex.to_usize())
-                .filter(|(_, txoutdata)| txoutdata.outputtype.is_address())
-                .for_each(|(txoutindex, txoutdata)| {
-                    let addresstype = txoutdata.outputtype;
-                    let addressindex = txoutdata.typeindex;
-                    let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
+            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
 
-                    self.addresstype_to_addressindex_and_txindex
-                        .get_mut_unwrap(addresstype)
-                        .remove(AddressIndexTxIndex::from((addressindex, txindex)));
+            for txoutindex in starting_indexes.txoutindex.to_usize()
+                ..vecs.txout.txoutindex_to_outputtype.len()
+            {
+                let outputtype = txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
+                if !outputtype.is_address() {
+                    continue;
+                }
 
-                    let vout = Vout::from(
-                        txoutindex.to_usize()
-                            - txindex_to_first_txoutindex_iter
-                                .get_unwrap(txindex)
-                                .to_usize(),
-                    );
-                    let outpoint = OutPoint::new(txindex, vout);
+                let addresstype = outputtype;
+                let addressindex = txoutindex_to_typeindex_iter.get_at_unwrap(txoutindex);
+                let txindex = txoutindex_to_txindex_iter.get_at_unwrap(txoutindex);
 
-                    self.addresstype_to_addressindex_and_unspentoutpoint
-                        .get_mut_unwrap(addresstype)
-                        .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
-                });
+                self.addresstype_to_addressindex_and_txindex
+                    .get_mut_unwrap(addresstype)
+                    .remove(AddressIndexTxIndex::from((addressindex, txindex)));
+
+                let vout = Vout::from(
+                    txoutindex
+                        - txindex_to_first_txoutindex_iter
+                            .get_unwrap(txindex)
+                            .to_usize(),
+                );
+                let outpoint = OutPoint::new(txindex, vout);
+
+                self.addresstype_to_addressindex_and_unspentoutpoint
+                    .get_mut_unwrap(addresstype)
+                    .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
+            }
 
             // Collect outputs that were spent after the rollback point
             // We need to: 1) reset their spend status, 2) restore address stores
             let mut txindex_to_first_txoutindex_iter =
                 vecs.tx.txindex_to_first_txoutindex.iter()?;
-            let mut txoutindex_to_txoutdata_iter = vecs.txout.txoutindex_to_txoutdata.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
             let mut txinindex_to_txindex_iter = vecs.txin.txinindex_to_txindex.iter()?;
 
             let outputs_to_unspend: Vec<_> = vecs
@@ -325,11 +329,11 @@ impl Stores {
 
                     // Only process if this output was created before the rollback point
                     if txoutindex < starting_indexes.txoutindex {
-                        let txoutdata = txoutindex_to_txoutdata_iter.get_unwrap(txoutindex);
-                        let spending_txindex =
-                            txinindex_to_txindex_iter.get_at_unwrap(txinindex);
+                        let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
+                        let typeindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
+                        let spending_txindex = txinindex_to_txindex_iter.get_at_unwrap(txinindex);
 
-                        Some((txoutindex, outpoint, txoutdata, spending_txindex))
+                        Some((outpoint, outputtype, typeindex, spending_txindex))
                     } else {
                         None
                     }
@@ -337,16 +341,11 @@ impl Stores {
                 .collect();
 
             // Now process the collected outputs (iterators dropped, can mutate vecs)
-            for (txoutindex, outpoint, txoutdata, spending_txindex) in outputs_to_unspend {
-                // Reset spend status back to unspent
-                vecs.txout
-                    .txoutindex_to_txinindex
-                    .update(txoutindex, TxInIndex::UNSPENT)?;
-
+            for (outpoint, outputtype, typeindex, spending_txindex) in outputs_to_unspend {
                 // Restore address stores if this is an address output
-                if txoutdata.outputtype.is_address() {
-                    let addresstype = txoutdata.outputtype;
-                    let addressindex = txoutdata.typeindex;
+                if outputtype.is_address() {
+                    let addresstype = outputtype;
+                    let addressindex = typeindex;
 
                     self.addresstype_to_addressindex_and_txindex
                         .get_mut_unwrap(addresstype)

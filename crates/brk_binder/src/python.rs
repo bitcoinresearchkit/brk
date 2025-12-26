@@ -1,8 +1,4 @@
-use std::collections::HashSet;
-use std::fmt::Write as FmtWrite;
-use std::fs;
-use std::io;
-use std::path::Path;
+use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
 use brk_types::{Index, TreeNode};
 use serde_json::Value;
@@ -24,7 +20,6 @@ pub fn generate_python_client(
 ) -> io::Result<()> {
     let mut output = String::new();
 
-    // Header
     writeln!(output, "# Auto-generated BRK Python client").unwrap();
     writeln!(output, "# Do not edit manually\n").unwrap();
     writeln!(output, "from __future__ import annotations").unwrap();
@@ -34,29 +29,14 @@ pub fn generate_python_client(
     )
     .unwrap();
     writeln!(output, "import httpx\n").unwrap();
-
-    // Type variable for generic MetricNode
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
-    // Generate type definitions from OpenAPI schemas (now includes leaf types from catalog)
     generate_type_definitions(&mut output, schemas);
-
-    // Generate base client class
     generate_base_client(&mut output);
-
-    // Generate MetricNode class
     generate_metric_node(&mut output);
-
-    // Generate index accessor classes
     generate_index_accessors(&mut output, &metadata.index_set_patterns);
-
-    // Generate structural pattern classes
     generate_structural_patterns(&mut output, &metadata.structural_patterns, metadata);
-
-    // Generate tree classes
     generate_tree_classes(&mut output, &metadata.catalog, metadata);
-
-    // Generate main client with tree and API methods
     generate_main_client(&mut output, endpoints);
 
     fs::write(output_path, output)?;
@@ -64,7 +44,6 @@ pub fn generate_python_client(
     Ok(())
 }
 
-/// Generate Python type definitions from OpenAPI schemas
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     if schemas.is_empty() {
         return;
@@ -72,7 +51,6 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 
     writeln!(output, "# Type definitions\n").unwrap();
 
-    // Sort types by dependencies (types that reference other types must come after)
     let sorted_names = topological_sort_schemas(schemas);
 
     for name in sorted_names {
@@ -80,7 +58,6 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             continue;
         };
         if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
-            // Object type -> TypedDict
             writeln!(output, "class {}(TypedDict):", name).unwrap();
             for (prop_name, prop_schema) in props {
                 let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
@@ -89,11 +66,9 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             }
             writeln!(output).unwrap();
         } else if is_enum_schema(schema) {
-            // Enum type -> Literal union
             let py_type = schema_to_python_type_ctx(schema, Some(&name));
             writeln!(output, "{} = {}", name, py_type).unwrap();
         } else {
-            // Primitive type alias
             let py_type = schema_to_python_type_ctx(schema, Some(&name));
             writeln!(output, "{} = {}", name, py_type).unwrap();
         }
@@ -101,7 +76,7 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     writeln!(output).unwrap();
 }
 
-/// Topologically sort schema names so dependencies come before dependents.
+/// Topologically sort schema names so dependencies come before dependents (avoids forward references).
 /// Types that reference other types (via $ref) must be defined after their dependencies.
 fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     use std::collections::{HashMap, HashSet};
@@ -205,7 +180,6 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
             format!("List[{}]", item_type)
         }
         "object" => {
-            // Check if it has additionalProperties (dict-like)
             if let Some(add_props) = schema.get("additionalProperties") {
                 let value_type = schema_to_python_type_ctx(add_props, current_type);
                 return format!("dict[str, {}]", value_type);
@@ -218,7 +192,6 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
 
 /// Convert JSON Schema to Python type with context for detecting self-references
 fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
-    // Handle allOf (try each element until we find a resolvable type)
     if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
         for item in all_of {
             let resolved = schema_to_python_type_ctx(item, current_type);
@@ -250,9 +223,7 @@ fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> Stri
         }
     }
 
-    // Handle type field (can be string or array of strings)
     if let Some(ty) = schema.get("type") {
-        // Handle array of types like ["string", "null"] for Optional
         if let Some(type_array) = ty.as_array() {
             let types: Vec<String> = type_array
                 .iter()
@@ -279,13 +250,11 @@ fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> Stri
             }
         }
 
-        // Handle single type string
         if let Some(ty_str) = ty.as_str() {
             return json_type_to_python(ty_str, schema, current_type);
         }
     }
 
-    // Handle anyOf/oneOf
     if let Some(variants) = schema
         .get("anyOf")
         .or_else(|| schema.get("oneOf"))
@@ -295,7 +264,6 @@ fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> Stri
             .iter()
             .map(|v| schema_to_python_type_ctx(v, current_type))
             .collect();
-        // Filter out Any and null for cleaner unions
         let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
         if !filtered.is_empty() {
             return filtered

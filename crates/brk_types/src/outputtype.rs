@@ -13,23 +13,23 @@ use crate::AddressBytes;
 #[repr(u16)]
 /// Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
 pub enum OutputType {
-    P2PK65 = 0,
-    P2PK33 = 1,
-    P2PKH = 2,
-    P2MS = 3,
-    P2SH = 4,
-    OpReturn = 5,
-    P2WPKH = 6,
-    P2WSH = 7,
-    P2TR = 8,
-    P2A = 9,
-    Empty = u16::MAX - 1,
-    Unknown = u16::MAX,
+    P2PK65,
+    P2PK33,
+    P2PKH,
+    P2MS,
+    P2SH,
+    OpReturn,
+    P2WPKH,
+    P2WSH,
+    P2TR,
+    P2A,
+    Empty,
+    Unknown,
 }
 
 impl OutputType {
     fn is_valid(value: u16) -> bool {
-        value <= Self::P2A as u16 || value >= Self::Empty as u16
+        value <= Self::Unknown as u16
     }
 
     pub fn is_spendable(&self) -> bool {

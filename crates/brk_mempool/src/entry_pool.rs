@@ -1,8 +1,7 @@
 use brk_types::TxidPrefix;
 use rustc_hash::FxHashMap;
 
-use crate::entry::Entry;
-use crate::types::TxIndex;
+use crate::{entry::Entry, types::TxIndex};
 
 /// Pool of mempool entries with slot recycling.
 ///

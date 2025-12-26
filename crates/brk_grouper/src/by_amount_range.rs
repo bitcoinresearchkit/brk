@@ -6,9 +6,27 @@ use rayon::prelude::*;
 
 use super::{AmountFilter, Filter};
 
-/// Bucket index for amount ranges. Use for cheap comparisons.
+/// Bucket index for amount ranges. Use for cheap comparisons and direct lookups.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct AmountBucket(u8);
+pub struct AmountBucket(u8);
+
+impl AmountBucket {
+    /// Returns (self, other) if buckets differ, None if same.
+    /// Use with `ByAmountRange::get_mut_by_bucket` to avoid recomputing.
+    #[inline(always)]
+    pub fn transition_to(self, other: Self) -> Option<(Self, Self)> {
+        if self != other {
+            Some((self, other))
+        } else {
+            None
+        }
+    }
+
+    #[inline(always)]
+    pub fn index(self) -> u8 {
+        self.0
+    }
+}
 
 impl From<Sats> for AmountBucket {
     #[inline(always)]
@@ -125,7 +143,14 @@ impl<T> ByAmountRange<T> {
 
     #[inline(always)]
     pub fn get_mut(&mut self, value: Sats) -> &mut T {
-        match AmountBucket::from(value).0 {
+        self.get_mut_by_bucket(AmountBucket::from(value))
+    }
+
+    /// Get mutable reference by pre-computed bucket index.
+    /// Use with `AmountBucket::transition_to` to avoid recomputing bucket.
+    #[inline(always)]
+    pub fn get_mut_by_bucket(&mut self, bucket: AmountBucket) -> &mut T {
+        match bucket.0 {
             0 => &mut self._0sats,
             1 => &mut self._1sat_to_10sats,
             2 => &mut self._10sats_to_100sats,

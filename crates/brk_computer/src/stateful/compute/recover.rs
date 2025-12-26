@@ -1,17 +1,14 @@
-//! State recovery logic for checkpoint/resume.
-//!
-//! Determines starting height and imports saved state from checkpoints.
-
-use std::cmp::Ordering;
-use std::collections::BTreeSet;
+use std::{cmp::Ordering, collections::BTreeSet};
 
 use brk_error::Result;
 use brk_types::Height;
 use vecdb::Stamp;
 
-use super::super::AddressesDataVecs;
-use super::super::address::AnyAddressIndexesVecs;
-use super::super::cohorts::{AddressCohorts, UTXOCohorts};
+use super::super::{
+    AddressesDataVecs,
+    address::AnyAddressIndexesVecs,
+    cohorts::{AddressCohorts, UTXOCohorts},
+};
 
 /// Result of state recovery.
 pub struct RecoveredState {

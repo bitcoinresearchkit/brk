@@ -1,5 +1,3 @@
-//! TXID computation and collision checking.
-
 use brk_error::{Error, Result};
 use brk_types::{StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
@@ -10,7 +8,6 @@ use crate::constants::DUPLICATE_TXIDS;
 use super::{BlockProcessor, ComputedTx};
 
 impl<'a> BlockProcessor<'a> {
-    /// Compute TXIDs in parallel (CPU-intensive operation).
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
         let will_check_collisions =
             self.check_collisions && self.stores.txidprefix_to_txindex.needs(self.height);
@@ -44,7 +41,7 @@ impl<'a> BlockProcessor<'a> {
             .collect()
     }
 
-    /// Check for TXID collisions (only for known duplicate TXIDs).
+    /// Only for known duplicate TXIDs (BIP-30).
     pub fn check_txid_collisions(&self, txs: &[ComputedTx]) -> Result<()> {
         if likely(!self.check_collisions) {
             return Ok(());
@@ -56,7 +53,6 @@ impl<'a> BlockProcessor<'a> {
                 continue;
             };
 
-            // In case if we start at an already parsed height
             if ct.txindex == prev_txindex {
                 continue;
             }
@@ -80,7 +76,6 @@ impl<'a> BlockProcessor<'a> {
         Ok(())
     }
 
-    /// Store transaction metadata.
     pub fn store_transaction_metadata(&mut self, txs: Vec<ComputedTx>) -> Result<()> {
         let height = self.height;
 

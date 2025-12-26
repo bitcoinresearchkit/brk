@@ -1,7 +1,3 @@
-//! Relative metrics (ratios to market cap, realized cap, supply, etc.)
-//!
-//! These are computed ratios comparing cohort metrics to global metrics.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};

@@ -7,7 +7,8 @@ use crate::Vecs;
 /// These provide consistent snapshots for reading while the main vectors are being modified.
 pub struct Readers {
     pub txindex_to_first_txoutindex: Reader,
-    pub txoutindex_to_txoutdata: Reader,
+    pub txoutindex_to_outputtype: Reader,
+    pub txoutindex_to_typeindex: Reader,
     pub addressbytes: ByAddressType<Reader>,
 }
 
@@ -15,7 +16,8 @@ impl Readers {
     pub fn new(vecs: &Vecs) -> Self {
         Self {
             txindex_to_first_txoutindex: vecs.tx.txindex_to_first_txoutindex.create_reader(),
-            txoutindex_to_txoutdata: vecs.txout.txoutindex_to_txoutdata.create_reader(),
+            txoutindex_to_outputtype: vecs.txout.txoutindex_to_outputtype.create_reader(),
+            txoutindex_to_typeindex: vecs.txout.txoutindex_to_typeindex.create_reader(),
             addressbytes: ByAddressType {
                 p2pk65: vecs
                     .address

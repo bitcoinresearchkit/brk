@@ -1,9 +1,3 @@
-//! State flushing logic for checkpoints.
-//!
-//! Separates processing (mutations) from flushing (I/O):
-//! - `process_address_updates`: applies cached address changes to storage
-//! - `flush`: writes all data to disk
-
 use std::time::Instant;
 
 use brk_error::Result;

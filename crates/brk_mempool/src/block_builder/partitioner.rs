@@ -1,5 +1,4 @@
-use super::package::Package;
-use super::BLOCK_VSIZE;
+use super::{BLOCK_VSIZE, package::Package};
 use crate::types::SelectedTx;
 
 /// How many packages to look ahead when current doesn't fit.

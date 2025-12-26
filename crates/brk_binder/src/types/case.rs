@@ -1,5 +1,3 @@
-//! Case conversion utilities for identifiers.
-
 /// Convert a string to PascalCase (e.g., "fee_rate" -> "FeeRate").
 pub fn to_pascal_case(s: &str) -> String {
     s.replace('-', "_")

@@ -1,5 +1,3 @@
-//! Processing spent inputs (UTXOs being spent).
-
 use brk_types::{CheckedSub, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;

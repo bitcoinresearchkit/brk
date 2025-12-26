@@ -46,6 +46,16 @@ impl TxIndex {
     pub fn to_ne_bytes(&self) -> [u8; 4] {
         self.0.to_ne_bytes()
     }
+
+    #[inline(always)]
+    pub fn is_coinbase(self) -> bool {
+        self == Self::COINBASE
+    }
+
+    #[inline(always)]
+    pub fn is_not_coinbase(self) -> bool {
+        self != Self::COINBASE
+    }
 }
 
 impl Add<TxIndex> for TxIndex {

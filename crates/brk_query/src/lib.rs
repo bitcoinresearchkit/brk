@@ -10,16 +10,13 @@ use brk_reader::Reader;
 use brk_types::Height;
 use vecdb::AnyStoredVec;
 
-// Infrastructure modules
 #[cfg(feature = "tokio")]
 mod r#async;
 mod output;
 mod vecs;
 
-// Query impl blocks (extend Query with domain methods)
 mod r#impl;
 
-// Re-exports
 #[cfg(feature = "tokio")]
 pub use r#async::*;
 pub use brk_types::{

@@ -1,5 +1,3 @@
-//! Parallel input processing.
-
 use brk_grouper::ByAddressType;
 use brk_types::{Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;

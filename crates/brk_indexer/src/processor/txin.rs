@@ -1,9 +1,7 @@
-//! Input processing for block indexing.
-
 use brk_error::{Error, Result};
 use brk_types::{
-    AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, Sats, TxInIndex, TxIndex,
-    TxOutIndex, Txid, TxidPrefix, TypeIndex, Unit, Vin, Vout,
+    AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, TxInIndex, TxIndex, Txid,
+    TxidPrefix, TypeIndex, Unit, Vin, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -12,12 +10,6 @@ use vecdb::GenericStoredVec;
 use super::{BlockProcessor, ComputedTx, InputSource, SameBlockOutputInfo};
 
 impl<'a> BlockProcessor<'a> {
-    /// Process inputs in parallel.
-    ///
-    /// Uses collect().into_par_iter() pattern because:
-    /// 1. The inner work (store lookups, vector reads) is expensive
-    /// 2. We want to parallelize across ALL inputs, not just per-transaction
-    /// 3. The intermediate allocation (~8KB per block) is negligible compared to parallelism gains
     pub fn process_inputs<'c>(
         &self,
         txs: &[ComputedTx<'c>],
@@ -102,30 +94,25 @@ impl<'a> BlockProcessor<'a> {
 
                     let outpoint = OutPoint::new(prev_txindex, vout);
 
-                    let txoutdata = self
+                    let outputtype = self
                         .vecs
                         .txout
-                        .txoutindex_to_txoutdata
-                        .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_txoutdata)?
-                        .ok_or(Error::Internal("Missing txout data"))?;
+                        .txoutindex_to_outputtype
+                        .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_outputtype)?
+                        .ok_or(Error::Internal("Missing outputtype"))?;
 
-                    let value = txoutdata.value;
-                    let outputtype = txoutdata.outputtype;
-                    let typeindex = txoutdata.typeindex;
-
-                    let height = self
-                        .txindex_to_height
-                        .get(prev_txindex)
-                        .ok_or(Error::Internal("Missing height in txindex_to_height map"))?;
+                    let typeindex = self
+                        .vecs
+                        .txout
+                        .txoutindex_to_typeindex
+                        .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_typeindex)?
+                        .ok_or(Error::Internal("Missing typeindex"))?;
 
                     Ok((
                         txinindex,
                         InputSource::PreviousBlock {
                             vin,
-                            value,
-                            height,
                             txindex,
-                            txoutindex,
                             outpoint,
                             outputtype,
                             typeindex,
@@ -138,7 +125,6 @@ impl<'a> BlockProcessor<'a> {
         Ok(txins)
     }
 
-    /// Collect same-block spent outpoints.
     pub fn collect_same_block_spent_outpoints(
         txins: &[(TxInIndex, InputSource)],
     ) -> FxHashSet<OutPoint> {
@@ -157,66 +143,41 @@ impl<'a> BlockProcessor<'a> {
             .collect()
     }
 
-    /// Finalize inputs sequentially (stores outpoints, updates address UTXOs).
     pub fn finalize_inputs(
         &mut self,
         txins: Vec<(TxInIndex, InputSource)>,
-        same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
+        mut same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo>,
     ) -> Result<()> {
         let height = self.height;
 
         for (txinindex, input_source) in txins {
-            let (prev_height, vin, txindex, value, outpoint, txoutindex, outputtype, typeindex) =
-                match input_source {
-                    InputSource::PreviousBlock {
-                        height,
-                        vin,
-                        txindex,
-                        txoutindex,
-                        value,
-                        outpoint,
-                        outputtype,
-                        typeindex,
-                    } => (
-                        height, vin, txindex, value, outpoint, txoutindex, outputtype, typeindex,
-                    ),
-                    InputSource::SameBlock {
-                        txindex,
-                        txin,
-                        vin,
-                        outpoint,
-                    } => {
-                        if outpoint.is_coinbase() {
-                            (
-                                height,
-                                vin,
-                                txindex,
-                                Sats::COINBASE,
-                                outpoint,
-                                TxOutIndex::COINBASE,
-                                OutputType::Unknown,
-                                TypeIndex::COINBASE,
-                            )
-                        } else {
-                            let info = same_block_output_info
-                                .remove(&outpoint)
-                                .ok_or(Error::Internal("Same-block output not found"))
-                                .inspect_err(|_| {
-                                    dbg!(&same_block_output_info, txin);
-                                })?;
-                            (
-                                height,
-                                vin,
-                                txindex,
-                                info.value,
-                                outpoint,
-                                info.txoutindex,
-                                info.outputtype,
-                                info.typeindex,
-                            )
-                        }
+            let (vin, txindex, outpoint, outputtype, typeindex) = match input_source {
+                InputSource::PreviousBlock {
+                    vin,
+                    txindex,
+                    outpoint,
+                    outputtype,
+                    typeindex,
+                } => (vin, txindex, outpoint, outputtype, typeindex),
+                InputSource::SameBlock {
+                    txindex,
+                    txin,
+                    vin,
+                    outpoint,
+                } => {
+                    if outpoint.is_coinbase() {
+                        (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE)
+                    } else {
+                        let info = same_block_output_info
+                            .remove(&outpoint)
+                            .ok_or(Error::Internal("Same-block output not found"))
+                            .inspect_err(|_| {
+                                dbg!(&same_block_output_info, txin);
+                            })?;
+                        (vin, txindex, outpoint, info.outputtype, info.typeindex)
                     }
-                };
+                }
+            };
 
             if vin.is_zero() {
                 self.vecs
@@ -235,28 +196,12 @@ impl<'a> BlockProcessor<'a> {
                 .checked_push(txinindex, outpoint)?;
             self.vecs
                 .txin
-                .txinindex_to_value
-                .checked_push(txinindex, value)?;
-            self.vecs
-                .txin
-                .txinindex_to_prev_height
-                .checked_push(txinindex, prev_height)?;
-            self.vecs
-                .txin
                 .txinindex_to_outputtype
                 .checked_push(txinindex, outputtype)?;
             self.vecs
                 .txin
                 .txinindex_to_typeindex
                 .checked_push(txinindex, typeindex)?;
-
-            // Update txoutindex_to_txinindex for non-coinbase inputs
-            if !txoutindex.is_coinbase() {
-                self.vecs
-                    .txout
-                    .txoutindex_to_txinindex
-                    .update(txoutindex, txinindex)?;
-            }
 
             if !outputtype.is_address() {
                 continue;

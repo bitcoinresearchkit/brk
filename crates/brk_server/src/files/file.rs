@@ -32,9 +32,26 @@ fn any_handler(
     let files_path = state.path.as_ref().unwrap();
 
     if let Some(path) = path.as_ref() {
-        let path = path.0.replace("..", "").replace("\\", "");
+        // Sanitize path components to prevent traversal attacks
+        let sanitized: String = path
+            .0
+            .split('/')
+            .filter(|component| !component.is_empty() && *component != "." && *component != "..")
+            .collect::<Vec<_>>()
+            .join("/");
 
-        let mut path = files_path.join(&path);
+        let mut path = files_path.join(&sanitized);
+
+        // Canonicalize and verify the path stays within the allowed directory
+        if let Ok(canonical) = path.canonicalize()
+            && let Ok(canonical_base) = files_path.canonicalize()
+            && !canonical.starts_with(&canonical_base)
+        {
+            let mut response: Response<Body> =
+                (StatusCode::FORBIDDEN, "Access denied".to_string()).into_response();
+            response.headers_mut().insert_cors();
+            return response;
+        }
 
         if !path.exists() || path.is_dir() {
             if path.extension().is_some() {

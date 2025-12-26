@@ -1,7 +1,3 @@
-//! Transaction count tracking per address.
-//!
-//! Updates tx_count on address data after deduplicating transaction indexes.
-
 use crate::stateful::address::AddressTypeToTypeIndexMap;
 
 use super::{EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec};

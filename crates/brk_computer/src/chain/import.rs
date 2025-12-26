@@ -18,9 +18,9 @@ use crate::{
 };
 
 use super::{
-    Vecs, TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DECADE, TARGET_BLOCKS_PER_MONTH,
+    TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DECADE, TARGET_BLOCKS_PER_MONTH,
     TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
-    TARGET_BLOCKS_PER_YEAR,
+    TARGET_BLOCKS_PER_YEAR, Vecs,
 };
 
 impl Vecs {
@@ -42,7 +42,6 @@ impl Vecs {
         let v4 = Version::new(4);
         let v5 = Version::new(5);
 
-        // Helper macros for common patterns
         macro_rules! eager {
             ($name:expr) => {
                 EagerVec::forced_import(&db, $name, version + v0)?
@@ -124,8 +123,6 @@ impl Vecs {
                 .add_sum()
                 .add_cumulative()
         };
-
-        let txinindex_to_value = eager!("value");
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
@@ -451,7 +448,6 @@ impl Vecs {
             indexes_to_inputs_per_sec: computed_di!("inputs_per_sec", v2, last()),
 
             txindex_to_is_coinbase,
-            txinindex_to_value,
             txindex_to_input_value,
             txindex_to_output_value,
             txindex_to_fee,

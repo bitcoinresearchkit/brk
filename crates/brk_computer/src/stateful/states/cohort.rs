@@ -1,7 +1,3 @@
-//! Cohort state tracking during computation.
-//!
-//! This state is maintained in memory during block processing and periodically flushed.
-
 use std::path::Path;
 
 use brk_error::Result;

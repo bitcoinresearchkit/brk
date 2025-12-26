@@ -224,7 +224,7 @@ impl From<(Height, &mut Vecs, &Stores)> for Indexes {
 
         let txoutindex = starting_index(
             &vecs.txout.height_to_first_txoutindex,
-            &vecs.txout.txoutindex_to_txoutdata,
+            &vecs.txout.txoutindex_to_value,
             height,
         )
         .unwrap();

@@ -1,5 +1,3 @@
-//! UTXO cohort vectors with metrics and state.
-
 use std::path::Path;
 
 use brk_error::Result;

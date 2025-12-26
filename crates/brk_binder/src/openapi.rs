@@ -1,5 +1,4 @@
-use std::collections::BTreeMap;
-use std::io;
+use std::{collections::BTreeMap, io};
 
 use oas3::Spec;
 use oas3::spec::{ObjectOrReference, Operation, ParameterIn, PathItem, Schema, SchemaTypeSet};

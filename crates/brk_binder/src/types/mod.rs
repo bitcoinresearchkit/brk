@@ -1,5 +1,3 @@
-//! Types and utilities for client generation.
-
 mod case;
 mod patterns;
 mod schema;

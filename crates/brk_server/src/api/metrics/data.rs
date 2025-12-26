@@ -1,5 +1,3 @@
-//! Handler for single metric data endpoint.
-
 use std::time::Duration;
 
 use axum::{

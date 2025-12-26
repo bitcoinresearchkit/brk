@@ -1,11 +1,3 @@
-//! Age-based state transitions for UTXO cohorts.
-//!
-//! When a new block arrives, UTXOs age. Some cross day boundaries
-//! and need to move between age-based cohorts.
-//!
-//! Optimization: Instead of iterating all ~800k blocks O(n), we binary search
-//! for blocks at each day boundary O(k * log n) where k = number of boundaries.
-
 use brk_grouper::AGE_BOUNDARIES;
 use brk_types::{ONE_DAY_IN_SEC, Timestamp};
 

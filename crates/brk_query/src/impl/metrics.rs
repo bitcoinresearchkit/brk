@@ -8,8 +8,7 @@ use brk_types::{
 };
 use vecdb::AnyExportableVec;
 
-use crate::vecs::{IndexToVec, MetricToVec};
-use crate::{DataRangeFormat, MetricSelection, Output, Query};
+use crate::{vecs::{IndexToVec, MetricToVec}, DataRangeFormat, MetricSelection, Output, Query};
 
 /// Estimated bytes per column header
 const CSV_HEADER_BYTES_PER_COL: usize = 10;

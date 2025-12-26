@@ -126,8 +126,10 @@ impl Vecs {
         let mut txindex_to_first_txoutindex_iter =
             indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-        let mut txoutindex_to_txoutdata_iter =
-            indexer.vecs.txout.txoutindex_to_txoutdata.iter()?;
+        let mut txoutindex_to_outputtype_iter =
+            indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
+        let mut txoutindex_to_typeindex_iter =
+            indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
         let mut p2pk65addressindex_to_p2pk65bytes_iter = indexer
             .vecs
             .address
@@ -180,9 +182,8 @@ impl Vecs {
                 let pool = (*txoutindex..(*txoutindex + *outputcount))
                     .map(TxOutIndex::from)
                     .find_map(|txoutindex| {
-                        let txoutdata = txoutindex_to_txoutdata_iter.get_unwrap(txoutindex);
-                        let outputtype = txoutdata.outputtype;
-                        let typeindex = txoutdata.typeindex;
+                        let outputtype = txoutindex_to_outputtype_iter.get_unwrap(txoutindex);
+                        let typeindex = txoutindex_to_typeindex_iter.get_unwrap(txoutindex);
 
                         match outputtype {
                             OutputType::P2PK65 => Some(AddressBytes::from(

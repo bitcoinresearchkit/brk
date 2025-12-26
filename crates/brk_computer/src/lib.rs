@@ -23,6 +23,8 @@ mod pools;
 mod price;
 mod stateful;
 mod traits;
+mod txins;
+mod txouts;
 mod utils;
 
 use indexes::Indexes;
@@ -40,6 +42,8 @@ pub struct Computer {
     pub pools: pools::Vecs,
     pub price: Option<price::Vecs>,
     pub stateful: stateful::Vecs,
+    pub txins: txins::Vecs,
+    pub txouts: txouts::Vecs,
 }
 
 const VERSION: Version = Version::new(4);
@@ -60,7 +64,7 @@ impl Computer {
         let big_thread = || thread::Builder::new().stack_size(STACK_SIZE);
 
         let i = Instant::now();
-        let (indexes, fetched, blks) = thread::scope(|s| -> Result<_> {
+        let (indexes, fetched, blks, txins, txouts) = thread::scope(|s| -> Result<_> {
             let fetched_handle = fetcher
                 .map(|fetcher| {
                     big_thread().spawn_scoped(s, move || {
@@ -72,13 +76,21 @@ impl Computer {
             let blks_handle = big_thread()
                 .spawn_scoped(s, || blks::Vecs::forced_import(&computed_path, VERSION))?;
 
+            let txins_handle = big_thread()
+                .spawn_scoped(s, || txins::Vecs::forced_import(&computed_path, VERSION))?;
+
+            let txouts_handle = big_thread()
+                .spawn_scoped(s, || txouts::Vecs::forced_import(&computed_path, VERSION))?;
+
             let indexes = indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?;
             let fetched = fetched_handle.map(|h| h.join().unwrap()).transpose()?;
             let blks = blks_handle.join().unwrap()?;
+            let txins = txins_handle.join().unwrap()?;
+            let txouts = txouts_handle.join().unwrap()?;
 
-            Ok((indexes, fetched, blks))
+            Ok((indexes, fetched, blks, txins, txouts))
         })?;
-        info!("Imported indexes/fetched/blks in {:?}", i.elapsed());
+        info!("Imported indexes/fetched/blks/txins/txouts in {:?}", i.elapsed());
 
         let i = Instant::now();
         let (price, constants, market) = thread::scope(|s| -> Result<_> {
@@ -144,8 +156,10 @@ impl Computer {
             pools,
             cointime,
             indexes,
+            txins,
             fetched,
             price,
+            txouts,
         })
     }
 
@@ -195,19 +209,32 @@ impl Computer {
                 Ok(())
             });
 
-            let chain = scope.spawn(|| -> Result<()> {
-                info!("Computing chain...");
+            // Txins must complete before txouts (txouts needs txinindex_to_txoutindex)
+            // and before chain (chain needs txinindex_to_value)
+            info!("Computing txins...");
+            let i = Instant::now();
+            self.txins.compute(indexer, &starting_indexes, exit)?;
+            info!("Computed txins in {:?}", i.elapsed());
+
+            let txouts = scope.spawn(|| -> Result<()> {
+                info!("Computing txouts...");
                 let i = Instant::now();
-                self.chain.compute(
-                    indexer,
-                    &self.indexes,
-                    &starting_indexes,
-                    self.price.as_ref(),
-                    exit,
-                )?;
-                info!("Computed chain in {:?}", i.elapsed());
+                self.txouts.compute(indexer, &self.txins, &starting_indexes, exit)?;
+                info!("Computed txouts in {:?}", i.elapsed());
                 Ok(())
             });
+
+            info!("Computing chain...");
+            let i = Instant::now();
+            self.chain.compute(
+                indexer,
+                &self.indexes,
+                &self.txins,
+                &starting_indexes,
+                self.price.as_ref(),
+                exit,
+            )?;
+            info!("Computed chain in {:?}", i.elapsed());
 
             if let Some(price) = self.price.as_ref() {
                 info!("Computing market...");
@@ -218,7 +245,7 @@ impl Computer {
 
             blks.join().unwrap()?;
             constants.join().unwrap()?;
-            chain.join().unwrap()?;
+            txouts.join().unwrap()?;
             Ok(())
         })?;
 
@@ -244,6 +271,7 @@ impl Computer {
             self.stateful.compute(
                 indexer,
                 &self.indexes,
+                &self.txins,
                 &self.chain,
                 self.price.as_ref(),
                 &mut starting_indexes,

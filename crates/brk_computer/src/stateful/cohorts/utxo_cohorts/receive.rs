@@ -1,5 +1,3 @@
-//! Processing received outputs (new UTXOs).
-
 use brk_types::{Dollars, Height, Timestamp};
 
 use crate::stateful::states::Transacted;

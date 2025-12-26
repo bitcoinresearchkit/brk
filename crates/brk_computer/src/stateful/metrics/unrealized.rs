@@ -1,7 +1,3 @@
-//! Unrealized profit/loss metrics.
-//!
-//! These metrics track paper gains/losses based on current vs acquisition price.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Sats, Version};

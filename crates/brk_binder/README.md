@@ -4,39 +4,43 @@ Code generation for BRK client libraries.
 
 ## What It Enables
 
-Generate typed metric catalogs and constants for JavaScript/TypeScript clients. Keeps frontend code in sync with available metrics without manual maintenance.
+Generate typed client libraries for Rust, JavaScript/TypeScript, and Python from the OpenAPI specification. Keeps frontend code in sync with available metrics and API endpoints without manual maintenance.
 
 ## Key Features
 
-- **Metric catalog**: Generates `metrics.js` with all metric IDs and their supported indexes
-- **Compression**: Metric names compressed via word-to-base62 mapping for smaller bundles
-- **Mining pools**: Generates `pools.js` with pool ID to name mapping
-- **Version sync**: Generates `version.js` matching server version
+- **Multi-language**: Generates Rust, JavaScript, and Python clients
+- **OpenAPI-driven**: Extracts endpoints and schemas from the OpenAPI spec
+- **Metric catalog**: Includes all metric IDs and their supported indexes
+- **Type definitions**: Generates types/interfaces from JSON Schema
+- **Selective output**: Generate only the languages you need
 
 ## Core API
 
 ```rust,ignore
-generate_js_files(&query, &modules_path)?;
+use brk_binder::{generate_clients, ClientOutputPaths};
+
+let paths = ClientOutputPaths::new()
+    .rust("crates/brk_client/src/lib.rs")
+    .javascript("modules/brk-client/index.js")
+    .python("packages/brk_client/__init__.py");
+
+generate_clients(&vecs, &openapi_json, &paths)?;
 ```
 
-## Generated Files
+## Generated Clients
 
-```
-modules/brk-client/generated/
-├── version.js    # export const VERSION = "vX.Y.Z"
-├── metrics.js    # INDEXES, COMPRESSED_METRIC_TO_INDEXES
-└── pools.js      # POOL_ID_TO_POOL_NAME
-```
+| Language | Contents |
+|----------|----------|
+| Rust | Typed API client using `brk_types`, metric catalog |
+| JavaScript | ES module with JSDoc types, metric catalog, fetch helpers |
+| Python | Typed client with dataclasses, metric catalog |
 
-## Metric Compression
-
-To minimize bundle size, metric names are compressed:
-1. Extract all words from metric names
-2. Sort by frequency
-3. Map to base52 codes (A-Z, a-z)
-4. Store compressed metric → index group mapping
+Each client includes:
+- All REST API endpoints as typed functions
+- Complete metric catalog with index information
+- Type definitions for request/response schemas
 
 ## Built On
 
 - `brk_query` for metric enumeration
-- `brk_types` for mining pool data
+- `brk_types` for type schemas

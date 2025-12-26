@@ -4,10 +4,7 @@ use brk_types::FeeRate;
 use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
-use super::BLOCK_VSIZE;
-use super::graph::Graph;
-use super::heap_entry::HeapEntry;
-use super::package::Package;
+use super::{BLOCK_VSIZE, graph::Graph, heap_entry::HeapEntry, package::Package};
 use crate::types::PoolIndex;
 
 /// Select transactions from the graph and group into CPFP packages.

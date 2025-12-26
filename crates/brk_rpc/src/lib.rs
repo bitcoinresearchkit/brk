@@ -1,7 +1,10 @@
-use std::env;
-use std::path::{Path, PathBuf};
-use std::thread::sleep;
-use std::{mem, sync::Arc, time::Duration};
+use std::{
+    env, mem,
+    path::{Path, PathBuf},
+    sync::Arc,
+    thread::sleep,
+    time::Duration,
+};
 
 use bitcoin::{block::Header, consensus::encode};
 use bitcoincore_rpc::{

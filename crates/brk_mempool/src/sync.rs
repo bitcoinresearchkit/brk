@@ -4,7 +4,7 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use brk_error::Result;
@@ -15,12 +15,14 @@ use log::{debug, error};
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
 
-use crate::addresses::AddressTracker;
-use crate::block_builder::build_projected_blocks;
-use crate::entry::Entry;
-use crate::entry_pool::EntryPool;
-use crate::projected_blocks::{BlockStats, RecommendedFees, Snapshot};
-use crate::tx_store::TxStore;
+use crate::{
+    addresses::AddressTracker,
+    block_builder::build_projected_blocks,
+    entry::Entry,
+    entry_pool::EntryPool,
+    projected_blocks::{BlockStats, RecommendedFees, Snapshot},
+    tx_store::TxStore,
+};
 
 /// Max new txs to fetch full data for per update cycle (for address tracking).
 const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
@@ -44,16 +46,13 @@ impl Mempool {
 pub struct MempoolInner {
     client: Client,
 
-    // Mempool state
     info: RwLock<MempoolInfo>,
     txs: RwLock<TxStore>,
     addresses: RwLock<AddressTracker>,
     entries: RwLock<EntryPool>,
 
-    // Projected blocks snapshot
     snapshot: RwLock<Snapshot>,
 
-    // Rate limiting
     dirty: AtomicBool,
     last_rebuild_ms: AtomicU64,
 }
@@ -205,8 +204,8 @@ impl MempoolInner {
             return;
         }
 
-        let now_ms = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let now_ms = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
 

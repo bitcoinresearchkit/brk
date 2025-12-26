@@ -1,5 +1,3 @@
-//! Storage for address indexes by type.
-
 use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{

@@ -1,15 +1,12 @@
-//! Address data cache for flush intervals.
-//!
-//! Accumulates address data across blocks within a flush interval.
-//! Data is flushed to disk at checkpoints.
-
 use brk_grouper::ByAddressType;
 use brk_types::{AnyAddressDataIndexEnum, LoadedAddressData, OutputType, TypeIndex};
 use vecdb::GenericStoredVec;
 
-use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
-use super::super::compute::VecsReaders;
 use super::{
+    super::{
+        address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
+        compute::VecsReaders,
+    },
     AddressLookup, EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec,
     WithAddressDataSource,
 };

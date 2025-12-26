@@ -1,13 +1,10 @@
-//! Per-address-type hashmap keyed by TypeIndex.
-
-use std::mem;
+use std::{collections::hash_map::Entry, mem};
 
 use brk_grouper::ByAddressType;
 use brk_types::{OutputType, TypeIndex};
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
 use smallvec::{Array, SmallVec};
-use std::collections::hash_map::Entry;
 
 /// A hashmap for each address type, keyed by TypeIndex.
 #[derive(Debug, Clone, Deref, DerefMut)]

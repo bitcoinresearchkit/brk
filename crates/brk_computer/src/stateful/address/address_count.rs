@@ -1,5 +1,3 @@
-//! Address count types per address type.
-
 use brk_error::Result;
 use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;

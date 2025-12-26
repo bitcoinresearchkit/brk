@@ -6,7 +6,7 @@ use brk_types::{
 };
 use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex, unlikely};
 
-use crate::{grouped::ComputedVecsFromHeight, indexes, price, utils::OptionExt, Indexes};
+use crate::{grouped::ComputedVecsFromHeight, indexes, price, txins, utils::OptionExt, Indexes};
 
 use super::{Vecs, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F32, TARGET_BLOCKS_PER_DAY_F64};
 
@@ -15,11 +15,12 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        txins: &txins::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, price, exit)?;
+        self.compute_(indexer, indexes, txins, starting_indexes, price, exit)?;
         self.db.compact()?;
         Ok(())
     }
@@ -28,6 +29,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        txins: &txins::Vecs,
         starting_indexes: &Indexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
@@ -271,15 +273,11 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        // ---
-        // TxInIndex
-        // ---
-
         self.txindex_to_input_value.compute_sum_from_indexes(
             starting_indexes.txindex,
             &indexer.vecs.tx.txindex_to_first_txinindex,
             &indexes.txindex_to_input_count,
-            &indexer.vecs.txin.txinindex_to_value,
+            &txins.txinindex_to_value,
             exit,
         )?;
 
@@ -365,8 +363,8 @@ impl Vecs {
                 let mut txindex_to_first_txoutindex_iter =
                     indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
                 let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
-                let mut txoutindex_to_txoutdata_iter =
-                    indexer.vecs.txout.txoutindex_to_txoutdata.iter()?;
+                let mut txoutindex_to_value_iter =
+                    indexer.vecs.txout.txoutindex_to_value.iter()?;
                 vec.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.tx.height_to_first_txindex,
@@ -378,9 +376,8 @@ impl Vecs {
                         let mut sats = Sats::ZERO;
                         (first_txoutindex..first_txoutindex + usize::from(output_count)).for_each(
                             |txoutindex| {
-                                sats += txoutindex_to_txoutdata_iter
-                                    .get_unwrap(TxOutIndex::from(txoutindex))
-                                    .value;
+                                sats += txoutindex_to_value_iter
+                                    .get_unwrap(TxOutIndex::from(txoutindex));
                             },
                         );
                         (height, sats)

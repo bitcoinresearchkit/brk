@@ -5,7 +5,7 @@ use brk_traversable::Traversable;
 use brk_types::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FeeRate, HalvingEpoch, Height,
     MonthIndex, QuarterIndex, Sats, SemesterIndex, StoredBool, StoredF32, StoredF64, StoredU32,
-    StoredU64, Timestamp, TxInIndex, TxIndex, VSize, WeekIndex, Weight, YearIndex,
+    StoredU64, Timestamp, TxIndex, VSize, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{Database, EagerVec, LazyVecFrom1, LazyVecFrom2, PcoVec};
 
@@ -86,7 +86,6 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<VSize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU64>,
-    pub txinindex_to_value: EagerVec<PcoVec<TxInIndex, Sats>>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredU64>,

@@ -29,7 +29,7 @@ fn main() -> Result<()> {
         indexer
             .vecs
             .txout
-            .txoutindex_to_txoutdata
+            .txoutindex_to_value
             .iter()?
             .enumerate()
             .take(200)

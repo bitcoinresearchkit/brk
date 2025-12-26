@@ -7,7 +7,7 @@ use brk_types::{
     AddressIndexTxIndex, AddressStats, AnyAddressDataIndexEnum, OutputType, Sats, TxIndex,
     TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
 };
-use vecdb::{IterableVec, TypedVecIterator};
+use vecdb::TypedVecIterator;
 
 use crate::Query;
 
@@ -169,7 +169,7 @@ impl Query {
         let mut txindex_to_txid_iter = vecs.tx.txindex_to_txid.iter()?;
         let mut txindex_to_height_iter = vecs.tx.txindex_to_height.iter()?;
         let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut txoutindex_to_value_iter = vecs.txout.txoutindex_to_value.iter();
+        let mut txoutindex_to_value_iter = vecs.txout.txoutindex_to_value.iter()?;
         let mut height_to_blockhash_iter = vecs.block.height_to_blockhash.iter()?;
         let mut height_to_timestamp_iter = vecs.block.height_to_timestamp.iter()?;
 
