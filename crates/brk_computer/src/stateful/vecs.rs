@@ -19,11 +19,12 @@ use crate::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
         VecBuilderOptions,
     },
-    indexes, price, txins,
+    indexes, price,
     stateful::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
         states::BlockState,
     },
+    txins,
     utils::OptionExt,
 };
 
@@ -75,7 +76,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db_path = parent.join("stateful");
+        let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");
 
         let db = Database::open(&db_path)?;
@@ -112,7 +113,7 @@ impl Vecs {
             |index, _| Some(index),
         );
 
-        Ok(Self {
+        let this = Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", v0)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
@@ -221,7 +222,16 @@ impl Vecs {
             emptyaddressindex_to_emptyaddressindex,
 
             db,
-        })
+        };
+
+        this.db.retain_regions(
+            this.iter_any_exportable()
+                .flat_map(|v| v.region_names())
+                .collect(),
+        )?;
+        this.db.compact()?;
+
+        Ok(this)
     }
 
     /// Main computation loop.

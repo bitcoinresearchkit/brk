@@ -48,7 +48,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

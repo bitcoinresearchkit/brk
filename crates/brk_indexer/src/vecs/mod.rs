@@ -94,16 +94,12 @@ impl Vecs {
             output,
         };
 
-        log::debug!("Retaining regions...");
         this.db.retain_regions(
             this.iter_any_exportable()
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
-        log::debug!("Compacting database...");
         this.db.compact()?;
-        log::debug!("Vecs import complete.");
 
         Ok(this)
     }

@@ -31,7 +31,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join("chain"))?;
+        let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version + Version::ZERO;
@@ -463,7 +463,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

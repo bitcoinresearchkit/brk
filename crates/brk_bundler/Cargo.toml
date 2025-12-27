@@ -12,6 +12,6 @@ build = "build.rs"
 log = { workspace = true }
 notify = "8.2.0"
 # rolldown = { path = "../../../rolldown/crates/rolldown", package = "brk_rolldown" }
-rolldown = { version = "0.5.1", package = "brk_rolldown" }
+rolldown = { version = "0.6.0", package = "brk_rolldown" }
 sugar_path = "1.2.1"
 tokio = { workspace = true }

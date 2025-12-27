@@ -18,6 +18,7 @@ use vecdb::{
 };
 
 const VERSION: Version = Version::ZERO;
+pub const DB_NAME: &str = "indexes";
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -101,7 +102,7 @@ impl Vecs {
         parent_version: Version,
         indexer: &Indexer,
     ) -> Result<Self> {
-        let db = Database::open(&parent.join("indexes"))?;
+        let db = Database::open(&parent.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let version = parent_version + VERSION;
@@ -222,7 +223,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

@@ -34,3 +34,6 @@ expand.rs
 # Benchmarks
 [0-9]/
 /benches
+
+# AI
+.claude

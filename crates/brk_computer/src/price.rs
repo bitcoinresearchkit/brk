@@ -16,6 +16,8 @@ use super::{
     indexes,
 };
 
+pub const DB_NAME: &str = "price";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -71,26 +73,44 @@ const VERSION_IN_SATS: Version = Version::ZERO;
 
 impl Vecs {
     pub fn forced_import(parent: &Path, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let db = Database::open(&parent.join("price"))?;
+        let db = Database::open(&parent.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let v = version + VERSION;
         let v_sats = version + VERSION + VERSION_IN_SATS;
 
         macro_rules! eager {
-            ($name:expr) => { EagerVec::forced_import(&db, $name, v)? };
+            ($name:expr) => {
+                EagerVec::forced_import(&db, $name, v)?
+            };
         }
         macro_rules! eager_sats {
-            ($name:expr) => { EagerVec::forced_import(&db, $name, v_sats)? };
+            ($name:expr) => {
+                EagerVec::forced_import(&db, $name, v_sats)?
+            };
         }
         macro_rules! computed_di {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v, indexes, $opts)?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    v,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! computed_di_sats {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, v_sats, indexes, $opts)?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    v_sats,
+                    indexes,
+                    $opts,
+                )?
             };
         }
         macro_rules! computed_h {
@@ -162,7 +182,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

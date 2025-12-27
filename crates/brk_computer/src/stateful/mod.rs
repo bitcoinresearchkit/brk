@@ -11,5 +11,7 @@ use states::*;
 pub use range_map::RangeMap;
 pub use vecs::Vecs;
 
+pub const DB_NAME: &str = "stateful";
+
 pub use address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
 pub use cohorts::{AddressCohorts, CohortVecs, DynCohortVecs, UTXOCohorts};

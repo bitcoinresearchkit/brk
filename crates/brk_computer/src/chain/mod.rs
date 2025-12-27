@@ -14,6 +14,8 @@ use crate::grouped::{
     ComputedVecsFromHeight, ComputedVecsFromTxindex,
 };
 
+pub const DB_NAME: &str = "chain";
+
 pub(crate) const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;
 pub(crate) const TARGET_BLOCKS_PER_DAY_F32: f32 = 144.0;
 pub(crate) const TARGET_BLOCKS_PER_DAY: u64 = 144;

@@ -12,6 +12,8 @@ use vecdb::{
 
 use super::Indexes;
 
+pub const DB_NAME: &str = "blks";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -22,7 +24,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(parent_path: &Path, parent_version: Version) -> Result<Self> {
-        let db = Database::open(&parent_path.join("blks"))?;
+        let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let version = parent_version + Version::ZERO;
@@ -39,7 +41,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)
@@ -70,7 +71,8 @@ impl Vecs {
 
         let Some(min_height) = indexer
             .vecs
-            .tx.txindex_to_height
+            .tx
+            .txindex_to_height
             .iter()?
             .get(min_txindex)
             .map(|h| h.min(starting_indexes.height))

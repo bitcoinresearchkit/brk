@@ -16,6 +16,8 @@ use super::{
     indexes, price, stateful,
 };
 
+pub const DB_NAME: &str = "cointime";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -56,7 +58,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join("cointime"))?;
+        let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
@@ -174,7 +176,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

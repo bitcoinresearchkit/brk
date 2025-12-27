@@ -13,6 +13,8 @@ use super::{
     indexes,
 };
 
+pub const DB_NAME: &str = "constants";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -39,7 +41,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join("constants"))?;
+        let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let version = parent_version + Version::ZERO;
@@ -166,7 +168,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

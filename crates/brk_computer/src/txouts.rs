@@ -12,6 +12,8 @@ use vecdb::{
 
 use super::{Indexes, txins};
 
+pub const DB_NAME: &str = "txouts";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -20,7 +22,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(parent_path: &Path, parent_version: Version) -> Result<Self> {
-        let db = Database::open(&parent_path.join("txouts"))?;
+        let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let version = parent_version + Version::ZERO;

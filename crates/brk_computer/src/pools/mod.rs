@@ -19,6 +19,8 @@ use crate::{
     price,
 };
 
+pub const DB_NAME: &str = "pools";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
@@ -35,7 +37,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join("pools"))?;
+        let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
         let pools = pools();
 
@@ -66,7 +68,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)
@@ -129,8 +130,7 @@ impl Vecs {
         let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
         let mut txoutindex_to_outputtype_iter =
             indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
-        let mut txoutindex_to_typeindex_iter =
-            indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
+        let mut txoutindex_to_typeindex_iter = indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
         let mut p2pk65addressindex_to_p2pk65bytes_iter = indexer
             .vecs
             .address

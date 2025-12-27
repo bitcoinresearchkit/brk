@@ -21,7 +21,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = Database::open(&parent_path.join("market"))?;
+        let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let version = parent_version + Version::ZERO;
@@ -32,20 +32,49 @@ impl Vecs {
 
         macro_rules! computed_di {
             ($name:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + v0, indexes, last.clone())?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    version + v0,
+                    indexes,
+                    last.clone(),
+                )?
             };
             ($name:expr, $v:expr) => {
-                ComputedVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + $v, indexes, last.clone())?
+                ComputedVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    version + $v,
+                    indexes,
+                    last.clone(),
+                )?
             };
         }
         macro_rules! ratio_di {
             ($name:expr) => {
-                ComputedRatioVecsFromDateIndex::forced_import(&db, $name, Source::Compute, version + v0, indexes, true)?
+                ComputedRatioVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    Source::Compute,
+                    version + v0,
+                    indexes,
+                    true,
+                )?
             };
         }
         macro_rules! sd_di {
             ($name:expr, $window:expr, $v:expr) => {
-                ComputedStandardDeviationVecsFromDateIndex::forced_import(&db, $name, $window, Source::Compute, version + $v, indexes, StandardDeviationVecsOptions::default())?
+                ComputedStandardDeviationVecsFromDateIndex::forced_import(
+                    &db,
+                    $name,
+                    $window,
+                    Source::Compute,
+                    version + $v,
+                    indexes,
+                    StandardDeviationVecsOptions::default(),
+                )?
             };
         }
         macro_rules! eager_h {
@@ -239,7 +268,6 @@ impl Vecs {
                 .flat_map(|v| v.region_names())
                 .collect(),
         )?;
-
         this.db.compact()?;
 
         Ok(this)

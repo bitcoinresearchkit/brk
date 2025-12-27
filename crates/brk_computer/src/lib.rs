@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{path::Path, thread, time::Instant};
+use std::{fs, path::Path, thread, time::Instant};
 
 use brk_error::Result;
 use brk_fetcher::Fetcher;
@@ -147,7 +147,7 @@ impl Computer {
 
         info!("Total import time: {:?}", import_start.elapsed());
 
-        Ok(Self {
+        let this = Self {
             constants,
             market,
             stateful,
@@ -160,7 +160,50 @@ impl Computer {
             fetched,
             price,
             txouts,
-        })
+        };
+
+        Self::retain_databases(&computed_path)?;
+
+        Ok(this)
+    }
+
+    /// Removes database folders that are no longer in use.
+    fn retain_databases(computed_path: &Path) -> Result<()> {
+        const EXPECTED_DBS: &[&str] = &[
+            blks::DB_NAME,
+            chain::DB_NAME,
+            cointime::DB_NAME,
+            constants::DB_NAME,
+            indexes::DB_NAME,
+            market::DB_NAME,
+            pools::DB_NAME,
+            price::DB_NAME,
+            stateful::DB_NAME,
+            txins::DB_NAME,
+            txouts::DB_NAME,
+        ];
+
+        if !computed_path.exists() {
+            return Ok(());
+        }
+
+        for entry in fs::read_dir(computed_path)? {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+
+            if !file_type.is_dir() {
+                continue;
+            }
+
+            if let Some(name) = entry.file_name().to_str() {
+                if !EXPECTED_DBS.contains(&name) {
+                    info!("Removing obsolete database folder: {}", name);
+                    fs::remove_dir_all(entry.path())?;
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn compute(

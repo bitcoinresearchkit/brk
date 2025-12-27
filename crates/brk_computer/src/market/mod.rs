@@ -10,6 +10,8 @@ use crate::grouped::{
     ComputedVecsFromDateIndex,
 };
 
+pub const DB_NAME: &str = "market";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     pub(crate) db: Database,

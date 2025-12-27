@@ -3,17 +3,15 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use log::error;
 use notify::{EventKind, RecursiveMode, Watcher};
 use rolldown::{
-    Bundler, BundlerOptions, InlineConstConfig, InlineConstMode, InlineConstOption,
+    Bundler, BundlerConfig, BundlerOptions, InlineConstConfig, InlineConstMode, InlineConstOption,
     OptimizationOption, RawMinifyOptions, SourceMapType,
 };
 use sugar_path::SugarPath;
-use tokio::sync::Mutex;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -59,7 +57,7 @@ pub async fn bundle(
 
     // dbg!(BundlerOptions::default());
 
-    let mut bundler = Bundler::new(BundlerOptions {
+    let bundler_options = BundlerOptions {
         input: Some(vec![format!("./{source_folder}/scripts/entry.js").into()]),
         dir: Some("./dist/scripts".to_string()),
         cwd: Some(absolute_websites_path),
@@ -88,8 +86,9 @@ pub async fn bundle(
             ..Default::default()
         }),
         ..Default::default()
-    })
-    .unwrap();
+    };
+
+    let mut bundler = Bundler::new(bundler_options.clone()).unwrap();
 
     if let Err(error) = bundler.write().await {
         error!("{error:?}");
@@ -170,7 +169,8 @@ pub async fn bundle(
             .watch(&absolute_modules_path_clone, RecursiveMode::Recursive)
             .unwrap();
 
-        let watcher = rolldown::Watcher::new(vec![Arc::new(Mutex::new(bundler))], None).unwrap();
+        let config = BundlerConfig::new(bundler_options, vec![]);
+        let watcher = rolldown::Watcher::new(config, None).unwrap();
 
         watcher.start().await;
     });
