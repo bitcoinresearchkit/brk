@@ -62,6 +62,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
+        let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
     }

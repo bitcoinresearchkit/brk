@@ -12,7 +12,7 @@ use vecdb::{
 
 use super::Indexes;
 
-const ONE_GB: usize = 1024 * 1024 * 1024;
+const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -50,24 +50,31 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, starting_indexes, exit)?;
+        let _lock = exit.lock();
+        self.db.compact()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         let target = indexer.vecs.txin.txinindex_to_outpoint.len();
         if target == 0 {
             return Ok(());
         }
 
-        let min = self
-            .txinindex_to_txoutindex
-            .len()
-            .min(self.txinindex_to_value.len())
-            .min(starting_indexes.txinindex.to_usize());
+        let len1 = self.txinindex_to_txoutindex.len();
+        let len2 = self.txinindex_to_value.len();
+        let starting = starting_indexes.txinindex.to_usize();
+        let min = len1.min(len2).min(starting);
 
         if min >= target {
             return Ok(());
         }
-
-        info!("TxIns: computing {} entries ({} to {})", target - min, min, target);
-
-        const BATCH_SIZE: usize = ONE_GB / size_of::<Entry>();
 
         let mut outpoint_iter = indexer.vecs.txin.txinindex_to_outpoint.iter()?;
         let mut first_txoutindex_iter = indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
@@ -116,16 +123,18 @@ impl Vecs {
                     .truncate_push(entry.txinindex, entry.value)?;
             }
 
+            if batch_end < target {
+                info!("TxIns: {:.2}%", batch_end as f64 / target as f64 * 100.0);
+            }
+
+            let _lock = exit.lock();
+            self.txinindex_to_txoutindex.write()?;
+            self.txinindex_to_value.write()?;
+            self.db.flush()?;
+
             batch_start = batch_end;
         }
 
-        {
-            let _lock = exit.lock();
-            self.txinindex_to_txoutindex.flush()?;
-            self.txinindex_to_value.flush()?;
-        }
-
-        self.db.compact()?;
         Ok(())
     }
 }

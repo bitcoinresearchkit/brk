@@ -81,14 +81,14 @@ impl PricePaidMetrics {
             height,
             state
                 .price_to_amount_first_key_value()
-                .map(|(&dollars, _)| dollars)
+                .map(|(dollars, _)| dollars)
                 .unwrap_or(Dollars::NAN),
         )?;
         self.height_to_max_price_paid.truncate_push(
             height,
             state
                 .price_to_amount_last_key_value()
-                .map(|(&dollars, _)| dollars)
+                .map(|(dollars, _)| dollars)
                 .unwrap_or(Dollars::NAN),
         )?;
         Ok(())

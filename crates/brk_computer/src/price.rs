@@ -176,6 +176,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexes, starting_indexes, fetched, exit)?;
+        let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
     }

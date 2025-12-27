@@ -1,11 +1,12 @@
 use std::{
     collections::BTreeMap,
     fs,
+    ops::Bound,
     path::{Path, PathBuf},
 };
 
 use brk_error::{Error, Result};
-use brk_types::{Dollars, Height, Sats};
+use brk_types::{CentsCompact, Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use rustc_hash::FxHashMap;
@@ -25,7 +26,7 @@ pub struct PriceToAmount {
     state: Option<State>,
     /// Pending deltas: (total_increment, total_decrement) per price.
     /// Flushed to BTreeMap before reads and at end of block.
-    pending: FxHashMap<Dollars, (Sats, Sats)>,
+    pending: FxHashMap<CentsCompact, (Sats, Sats)>,
 }
 
 const STATE_AT_: &str = "state_at_";
@@ -57,49 +58,71 @@ impl PriceToAmount {
         );
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
+    pub fn iter(&self) -> impl Iterator<Item = (Dollars, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().iter()
+        self.state.u().iter().map(|(k, v)| (k.to_dollars(), v))
     }
 
-    /// Iterate over entries in a price range with custom bounds.
-    pub fn range<R: std::ops::RangeBounds<Dollars>>(
+    /// Iterate over entries in a price range with explicit bounds.
+    pub fn range(
         &self,
-        range: R,
-    ) -> impl Iterator<Item = (&Dollars, &Sats)> {
+        bounds: (Bound<Dollars>, Bound<Dollars>),
+    ) -> impl Iterator<Item = (Dollars, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().range(range)
+
+        let start = match bounds.0 {
+            Bound::Included(d) => Bound::Included(CentsCompact::from(d)),
+            Bound::Excluded(d) => Bound::Excluded(CentsCompact::from(d)),
+            Bound::Unbounded => Bound::Unbounded,
+        };
+
+        let end = match bounds.1 {
+            Bound::Included(d) => Bound::Included(CentsCompact::from(d)),
+            Bound::Excluded(d) => Bound::Excluded(CentsCompact::from(d)),
+            Bound::Unbounded => Bound::Unbounded,
+        };
+
+        self.state
+            .u()
+            .range((start, end))
+            .map(|(k, v)| (k.to_dollars(), v))
     }
 
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty() && self.state.u().is_empty()
     }
 
-    pub fn first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+    pub fn first_key_value(&self) -> Option<(Dollars, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().first_key_value()
+        self.state
+            .u()
+            .first_key_value()
+            .map(|(k, v)| (k.to_dollars(), v))
     }
 
-    pub fn last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+    pub fn last_key_value(&self) -> Option<(Dollars, &Sats)> {
         self.assert_pending_empty();
-        self.state.u().last_key_value()
+        self.state
+            .u()
+            .last_key_value()
+            .map(|(k, v)| (k.to_dollars(), v))
     }
 
     /// Accumulate increment in pending batch. O(1).
     pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
-        self.pending.entry(price).or_default().0 += supply_state.value;
+        self.pending.entry(CentsCompact::from(price)).or_default().0 += supply_state.value;
     }
 
     /// Accumulate decrement in pending batch. O(1).
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
-        self.pending.entry(price).or_default().1 += supply_state.value;
+        self.pending.entry(CentsCompact::from(price)).or_default().1 += supply_state.value;
     }
 
     /// Apply pending deltas to BTreeMap. O(k log n) where k = unique prices in pending.
     /// Must be called before any read operations.
     pub fn apply_pending(&mut self) {
-        for (price, (inc, dec)) in self.pending.drain() {
-            let entry = self.state.um().entry(price).or_default();
+        for (cents, (inc, dec)) in self.pending.drain() {
+            let entry = self.state.um().entry(cents).or_default();
             *entry += inc;
             if *entry < dec {
                 panic!(
@@ -108,12 +131,15 @@ impl PriceToAmount {
                     Price: {}\n\
                     Current + increments: {}\n\
                     Trying to decrement by: {}",
-                    self.pathbuf, price, entry, dec
+                    self.pathbuf,
+                    cents.to_dollars(),
+                    entry,
+                    dec
                 );
             }
             *entry -= dec;
             if *entry == Sats::ZERO {
-                self.state.um().remove(&price);
+                self.state.um().remove(&cents);
             }
         }
     }
@@ -142,10 +168,10 @@ impl PriceToAmount {
         let mut cumsum = 0u64;
         let mut idx = 0;
 
-        for (&price, &amount) in state.iter() {
+        for (&cents, &amount) in state.iter() {
             cumsum += u64::from(amount);
             while idx < PERCENTILES_LEN && cumsum >= total * u64::from(PERCENTILES[idx]) / 100 {
-                result[idx] = price;
+                result[idx] = cents.to_dollars();
                 idx += 1;
             }
         }
@@ -208,15 +234,14 @@ impl PriceToAmount {
 }
 
 #[derive(Clone, Default, Debug, Deref, DerefMut, Serialize, Deserialize)]
-struct State(BTreeMap<Dollars, Sats>);
+struct State(BTreeMap<CentsCompact, Sats>);
 
 const COMPRESSION_LEVEL: usize = 4;
 
 impl State {
     fn serialize(&self) -> vecdb::Result<Vec<u8>> {
-        let keys: Vec<f64> = self.keys().cloned().map(f64::from).collect();
-
-        let values: Vec<u64> = self.values().cloned().map(u64::from).collect();
+        let keys: Vec<i32> = self.keys().map(|k| i32::from(*k)).collect();
+        let values: Vec<u64> = self.values().map(|v| u64::from(*v)).collect();
 
         let compressed_keys = simpler_compress(&keys, COMPRESSION_LEVEL)?;
         let compressed_values = simpler_compress(&values, COMPRESSION_LEVEL)?;
@@ -234,13 +259,13 @@ impl State {
         let entry_count = usize::from_bytes(&data[0..8])?;
         let keys_len = usize::from_bytes(&data[8..16])?;
 
-        let keys: Vec<f64> = simple_decompress(&data[16..16 + keys_len])?;
+        let keys: Vec<i32> = simple_decompress(&data[16..16 + keys_len])?;
         let values: Vec<u64> = simple_decompress(&data[16 + keys_len..])?;
 
-        let map: BTreeMap<Dollars, Sats> = keys
+        let map: BTreeMap<CentsCompact, Sats> = keys
             .into_iter()
             .zip(values)
-            .map(|(k, v)| (Dollars::from(k), Sats::from(v)))
+            .map(|(k, v)| (CentsCompact::from(k), Sats::from(v)))
             .collect();
 
         assert_eq!(map.len(), entry_count);

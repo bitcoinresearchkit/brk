@@ -25,6 +25,9 @@ impl OutPoint {
 
     #[inline(always)]
     pub fn vout(self) -> Vout {
+        if self.is_coinbase() {
+            return Vout::MAX;
+        }
         Vout::from(self.0 as u32)
     }
 

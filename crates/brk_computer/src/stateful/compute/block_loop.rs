@@ -473,6 +473,7 @@ pub fn process_blocks(
 
             // Write to disk (pure I/O) - no changes saved for periodic flushes
             write(vecs, height, chain_state, false)?;
+            vecs.flush()?;
 
             // Recreate readers
             vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);

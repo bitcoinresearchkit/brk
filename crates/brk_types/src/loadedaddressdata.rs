@@ -30,6 +30,9 @@ impl LoadedAddressData {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
 
+    /// Max realized price for CentsCompact (i32::MAX / 100)
+    const MAX_REALIZED_PRICE: f64 = 21_000_000.0;
+
     pub fn realized_price(&self) -> Dollars {
         let p = (self.realized_cap / Bitcoin::from(self.balance())).round_to(4);
         if p.is_negative() {
@@ -41,7 +44,7 @@ impl LoadedAddressData {
             ));
             panic!("");
         }
-        p
+        p.min(Dollars::from(Self::MAX_REALIZED_PRICE))
     }
 
     #[inline]

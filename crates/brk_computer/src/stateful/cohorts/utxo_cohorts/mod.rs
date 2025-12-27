@@ -437,7 +437,7 @@ impl UTXOCohorts {
                 let state = sub.state.as_ref()?;
                 let entries: Vec<(Dollars, Sats)> = state
                     .price_to_amount_iter()?
-                    .map(|(&p, &a)| (p, a))
+                    .map(|(p, &a)| (p, a))
                     .collect();
                 Some((sub.filter().clone(), state.supply.value, entries))
             })

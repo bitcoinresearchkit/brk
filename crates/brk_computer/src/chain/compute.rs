@@ -21,6 +21,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, txins, starting_indexes, price, exit)?;
+        let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
     }

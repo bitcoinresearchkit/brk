@@ -3,6 +3,7 @@ use std::time::Instant;
 use brk_error::Result;
 use brk_types::Height;
 use log::info;
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
 
 use crate::stateful::{
@@ -61,9 +62,8 @@ pub fn write(
     chain_state: &[BlockState],
     with_changes: bool,
 ) -> Result<()> {
-    use rayon::prelude::*;
-
     info!("Writing to disk...");
+
     let i = Instant::now();
 
     let stamp = Stamp::from(height);
@@ -74,7 +74,6 @@ pub fn write(
         vecs.chain_state.push(block_state.supply.clone());
     }
 
-    // Write all vecs in parallel using chained iterators
     vecs.any_address_indexes
         .par_iter_mut()
         .chain(vecs.addresses_data.par_iter_mut())

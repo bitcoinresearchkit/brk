@@ -76,12 +76,12 @@ impl CohortState {
     }
 
     /// Get first (lowest) price entry in distribution.
-    pub fn price_to_amount_first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+    pub fn price_to_amount_first_key_value(&self) -> Option<(Dollars, &Sats)> {
         self.price_to_amount.as_ref()?.first_key_value()
     }
 
     /// Get last (highest) price entry in distribution.
-    pub fn price_to_amount_last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+    pub fn price_to_amount_last_key_value(&self) -> Option<(Dollars, &Sats)> {
         self.price_to_amount.as_ref()?.last_key_value()
     }
 
@@ -377,7 +377,7 @@ impl CohortState {
         self.price_to_amount
             .as_ref()?
             .first_key_value()
-            .map(|(&k, _)| k)
+            .map(|(k, _)| k)
     }
 
     /// Get last (highest) price in distribution.
@@ -385,12 +385,12 @@ impl CohortState {
         self.price_to_amount
             .as_ref()?
             .last_key_value()
-            .map(|(&k, _)| k)
+            .map(|(k, _)| k)
     }
 
     /// Get iterator over price_to_amount for merged percentile computation.
     /// Returns None if price data is not tracked for this cohort.
-    pub fn price_to_amount_iter(&self) -> Option<impl Iterator<Item = (&Dollars, &Sats)>> {
+    pub fn price_to_amount_iter(&self) -> Option<impl Iterator<Item = (Dollars, &Sats)>> {
         self.price_to_amount.as_ref().map(|p| p.iter())
     }
 }

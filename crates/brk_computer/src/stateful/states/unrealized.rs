@@ -133,7 +133,7 @@ impl CachedUnrealizedState {
         // Handle flipped entries (only iterate the small range between prices)
         if new_price > old_price {
             // Price went up: entries where old < price <= new flip from loss to profit
-            for (&price, &sats) in
+            for (price, &sats) in
                 price_to_amount.range((Bound::Excluded(old_price), Bound::Included(new_price)))
             {
                 // Move from loss to profit
@@ -170,7 +170,7 @@ impl CachedUnrealizedState {
             }
         } else if new_price < old_price {
             // Price went down: entries where new < price <= old flip from profit to loss
-            for (&price, &sats) in
+            for (price, &sats) in
                 price_to_amount.range((Bound::Excluded(new_price), Bound::Included(old_price)))
             {
                 // Move from profit to loss
@@ -209,7 +209,7 @@ impl CachedUnrealizedState {
     ) -> UnrealizedState {
         let mut state = UnrealizedState::ZERO;
 
-        for (&price, &sats) in price_to_amount.iter() {
+        for (price, &sats) in price_to_amount.iter() {
             if price <= current_price {
                 state.supply_in_profit += sats;
                 if price < current_price {
