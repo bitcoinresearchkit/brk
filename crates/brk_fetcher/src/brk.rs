@@ -118,6 +118,11 @@ impl BRK {
         )))
     }
 
+    pub fn ping() -> Result<()> {
+        minreq::get(API_URL)
+            .send()?;
+        Ok(())
+    }
 }
 
 impl PriceSource for BRK {
@@ -139,6 +144,10 @@ impl PriceSource for BRK {
 
     fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>> {
         Some(self.get_from_height(height))
+    }
+
+    fn ping(&self) -> Result<()> {
+        Self::ping()
     }
 
     fn clear(&mut self) {

@@ -17,6 +17,7 @@ where
     S1T: ComputedVecValue,
 {
     pub dateindex: Option<LazyVecFrom1<DateIndex, T, DateIndex, S1T>>,
+    pub dateindex_extra: LazyTransformBuilder<DateIndex, T, S1T>,
     pub weekindex: LazyTransformBuilder<WeekIndex, T, S1T>,
     pub monthindex: LazyTransformBuilder<MonthIndex, T, S1T>,
     pub quarterindex: LazyTransformBuilder<QuarterIndex, T, S1T>,
@@ -41,6 +42,7 @@ where
         let v = version + VERSION;
         Self {
             dateindex: dateindex_source.map(|s| LazyVecFrom1::transformed::<F>(name, v, s)),
+            dateindex_extra: LazyTransformBuilder::from_eager::<F>(name, v, &source.dateindex_extra),
             weekindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.weekindex),
             monthindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.monthindex),
             quarterindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.quarterindex),
@@ -57,11 +59,17 @@ where
     S1T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
+        let dateindex_extra_node = self.dateindex_extra.to_tree_node();
         brk_traversable::TreeNode::Branch(
             [
                 self.dateindex
                     .as_ref()
                     .map(|v| ("dateindex".to_string(), v.to_tree_node())),
+                if dateindex_extra_node.is_empty() {
+                    None
+                } else {
+                    Some(("dateindex_extra".to_string(), dateindex_extra_node))
+                },
                 Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
                 Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
                 Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
@@ -86,6 +94,7 @@ where
         if let Some(ref dateindex) = self.dateindex {
             regular_iter = Box::new(regular_iter.chain(dateindex.iter_any_exportable()));
         }
+        regular_iter = Box::new(regular_iter.chain(self.dateindex_extra.iter_any_exportable()));
         regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_exportable()));
         regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_exportable()));
         regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_exportable()));

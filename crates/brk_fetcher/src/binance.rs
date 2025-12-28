@@ -203,6 +203,11 @@ impl Binance {
         format!("https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&{query}")
     }
 
+    pub fn ping() -> Result<()> {
+        minreq::get("https://api.binance.com/api/v3/ping")
+            .send()?;
+        Ok(())
+    }
 }
 
 impl PriceSource for Binance {
@@ -224,6 +229,10 @@ impl PriceSource for Binance {
 
     fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
         None // Binance doesn't support height-based queries
+    }
+
+    fn ping(&self) -> Result<()> {
+        Self::ping()
     }
 
     fn clear(&mut self) {

@@ -166,4 +166,19 @@ How to fix this:
         self.brk.clear();
         self.brk.reset_health();
     }
+
+    /// Ping all sources and return results for each
+    pub fn ping(&self) -> Vec<(&'static str, Result<()>)> {
+        let mut results = Vec::new();
+
+        if let Some(binance) = &self.binance {
+            results.push((binance.name(), binance.ping()));
+        }
+        if let Some(kraken) = &self.kraken {
+            results.push((kraken.name(), kraken.ping()));
+        }
+        results.push((self.brk.name(), self.brk.ping()));
+
+        results
+    }
 }

@@ -214,35 +214,6 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
     }
 }
 
-pub trait ComputeFromSats<I> {
-    fn compute_from_sats(
-        &mut self,
-        max_from: I,
-        sats: &impl IterableVec<I, Sats>,
-        exit: &Exit,
-    ) -> Result<()>;
-}
-
-impl<I> ComputeFromSats<I> for EagerVec<PcoVec<I, Bitcoin>>
-where
-    I: VecIndex,
-{
-    fn compute_from_sats(
-        &mut self,
-        max_from: I,
-        sats: &impl IterableVec<I, Sats>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.compute_transform(
-            max_from,
-            sats,
-            |(i, sats, _)| (i, Bitcoin::from(sats)),
-            exit,
-        )?;
-        Ok(())
-    }
-}
-
 pub trait ComputeFromBitcoin<I> {
     fn compute_from_bitcoin(
         &mut self,

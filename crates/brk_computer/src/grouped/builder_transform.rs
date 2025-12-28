@@ -135,6 +135,21 @@ where
 impl<I, T, S1T> LazyTransformBuilder<I, T, S1T>
 where
     I: VecIndex,
+    T: ComputedVecValue + JsonSchema,
+    S1T: ComputedVecValue,
+{
+    pub fn unwrap_sum(&self) -> &LazyVecFrom1<I, T, I, S1T> {
+        self.sum.as_ref().unwrap()
+    }
+
+    pub fn unwrap_cumulative(&self) -> &LazyVecFrom1<I, T, I, S1T> {
+        self.cumulative.as_ref().unwrap()
+    }
+}
+
+impl<I, T, S1T> LazyTransformBuilder<I, T, S1T>
+where
+    I: VecIndex,
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {

@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, PcoVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, IterableCloneableVec, PcoVec};
 
 use crate::{
     Indexes,
-    grouped::ComputedVecsFromDateIndex,
+    grouped::{ComputedVecsFromDateIndex, LazyVecsFromDateIndex, SatsToBitcoin},
     indexes, price,
-    traits::{ComputeFromBitcoin, ComputeFromSats},
+    traits::ComputeFromBitcoin,
     utils::OptionExt,
 };
 
@@ -16,7 +16,7 @@ use super::{Source, VecBuilderOptions};
 #[derive(Clone, Traversable)]
 pub struct ComputedValueVecsFromDateIndex {
     pub sats: ComputedVecsFromDateIndex<Sats>,
-    pub bitcoin: ComputedVecsFromDateIndex<Bitcoin>,
+    pub bitcoin: LazyVecsFromDateIndex<Bitcoin, Sats>,
     pub dollars: Option<ComputedVecsFromDateIndex<Dollars>>,
 }
 
@@ -33,23 +33,27 @@ impl ComputedValueVecsFromDateIndex {
         compute_dollars: bool,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
+        let sats = ComputedVecsFromDateIndex::forced_import(
+            db,
+            name,
+            source.clone(),
+            version + VERSION,
+            indexes,
+            options,
+        )?;
+
+        let sats_source = source.vec().or(sats.dateindex.as_ref().map(|v| v.boxed_clone()));
+
+        let bitcoin = LazyVecsFromDateIndex::from_computed::<SatsToBitcoin>(
+            &format!("{name}_btc"),
+            version + VERSION,
+            sats_source,
+            &sats,
+        );
+
         Ok(Self {
-            sats: ComputedVecsFromDateIndex::forced_import(
-                db,
-                name,
-                source,
-                version + VERSION,
-                indexes,
-                options,
-            )?,
-            bitcoin: ComputedVecsFromDateIndex::forced_import(
-                db,
-                &format!("{name}_btc"),
-                Source::Compute,
-                version + VERSION,
-                indexes,
-                options,
-            )?,
+            sats,
+            bitcoin,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     db,
@@ -92,28 +96,14 @@ impl ComputedValueVecsFromDateIndex {
         if let Some(dateindex) = dateindex {
             self.sats
                 .compute_rest(starting_indexes, exit, Some(dateindex))?;
-
-            self.bitcoin.compute_all(starting_indexes, exit, |v| {
-                v.compute_from_sats(starting_indexes.dateindex, dateindex, exit)
-            })?;
         } else {
             let dateindex: Option<&PcoVec<DateIndex, Sats>> = None;
-
             self.sats.compute_rest(starting_indexes, exit, dateindex)?;
-
-            self.bitcoin.compute_all(starting_indexes, exit, |v| {
-                v.compute_from_sats(
-                    starting_indexes.dateindex,
-                    self.sats.dateindex.u(),
-                    exit,
-                )
-            })?;
         }
 
         let dateindex_to_bitcoin = self.bitcoin.dateindex.u();
         let dateindex_to_price_close = price
-            .as_ref()
-            .unwrap()
+            .u()
             .timeindexes_to_price_close
             .dateindex
             .as_ref()

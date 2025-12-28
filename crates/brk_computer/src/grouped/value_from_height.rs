@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{CollectableVec, Database, EagerVec, Exit, PcoVec};
+use vecdb::{CollectableVec, Database, EagerVec, Exit, IterableCloneableVec, PcoVec};
 
 use crate::{
     Indexes,
-    grouped::Source,
+    grouped::{LazyVecsFromHeight, SatsToBitcoin, Source},
     indexes, price,
-    traits::{ComputeFromBitcoin, ComputeFromSats},
+    traits::ComputeFromBitcoin,
     utils::OptionExt,
 };
 
@@ -16,7 +16,7 @@ use super::{ComputedVecsFromHeight, VecBuilderOptions};
 #[derive(Clone, Traversable)]
 pub struct ComputedValueVecsFromHeight {
     pub sats: ComputedVecsFromHeight<Sats>,
-    pub bitcoin: ComputedVecsFromHeight<Bitcoin>,
+    pub bitcoin: LazyVecsFromHeight<Bitcoin, Sats>,
     pub dollars: Option<ComputedVecsFromHeight<Dollars>>,
 }
 
@@ -33,23 +33,29 @@ impl ComputedValueVecsFromHeight {
         compute_dollars: bool,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
+        let sats = ComputedVecsFromHeight::forced_import(
+            db,
+            name,
+            source.clone(),
+            version + VERSION,
+            indexes,
+            options,
+        )?;
+
+        let sats_source = source
+            .vec()
+            .unwrap_or_else(|| sats.height.as_ref().unwrap().boxed_clone());
+
+        let bitcoin = LazyVecsFromHeight::from_computed::<SatsToBitcoin>(
+            &format!("{name}_btc"),
+            version + VERSION,
+            sats_source,
+            &sats,
+        );
+
         Ok(Self {
-            sats: ComputedVecsFromHeight::forced_import(
-                db,
-                name,
-                source,
-                version + VERSION,
-                indexes,
-                options,
-            )?,
-            bitcoin: ComputedVecsFromHeight::forced_import(
-                db,
-                &format!("{name}_btc"),
-                Source::Compute,
-                version + VERSION,
-                indexes,
-                options,
-            )?,
+            sats,
+            bitcoin,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     db,
@@ -94,28 +100,13 @@ impl ComputedValueVecsFromHeight {
         if let Some(height) = height {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(height))?;
-
-            self.bitcoin
-                .compute_all(indexes, starting_indexes, exit, |v| {
-                    v.compute_from_sats(starting_indexes.height, height, exit)
-                })?;
         } else {
             let height: Option<&PcoVec<Height, Sats>> = None;
-
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, height)?;
-
-            self.bitcoin
-                .compute_all(indexes, starting_indexes, exit, |v| {
-                    v.compute_from_sats(
-                        starting_indexes.height,
-                        self.sats.height.u(),
-                        exit,
-                    )
-                })?;
         }
 
-        let height_to_bitcoin = self.bitcoin.height.u();
+        let height_to_bitcoin = &self.bitcoin.height;
         let height_to_price_close = &price.u().chainindexes_to_price_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {

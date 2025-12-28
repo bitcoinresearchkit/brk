@@ -93,6 +93,12 @@ impl Kraken {
     fn url(interval: usize) -> String {
         format!("https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval={interval}")
     }
+
+    pub fn ping() -> Result<()> {
+        minreq::get("https://api.kraken.com/0/public/Time")
+            .send()?;
+        Ok(())
+    }
 }
 
 impl PriceSource for Kraken {
@@ -114,6 +120,10 @@ impl PriceSource for Kraken {
 
     fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
         None // Kraken doesn't support height-based queries
+    }
+
+    fn ping(&self) -> Result<()> {
+        Self::ping()
     }
 
     fn clear(&mut self) {

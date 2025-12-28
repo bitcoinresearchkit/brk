@@ -2,7 +2,10 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
+    PcoVec,
+};
 
 use crate::{
     Indexes,
@@ -41,18 +44,21 @@ impl ActivityMetrics {
         let compute_dollars = cfg.compute_dollars();
         let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
 
-        Ok(Self {
-            height_to_sent: EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version + v0)?,
+        let height_to_sent: EagerVec<PcoVec<Height, Sats>> =
+            EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version + v0)?;
+        let indexes_to_sent = ComputedValueVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("sent"),
+            Source::Vec(height_to_sent.boxed_clone()),
+            cfg.version + v0,
+            sum_cum,
+            compute_dollars,
+            cfg.indexes,
+        )?;
 
-            indexes_to_sent: ComputedValueVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("sent"),
-                Source::None,
-                cfg.version + v0,
-                sum_cum,
-                compute_dollars,
-                cfg.indexes,
-            )?,
+        Ok(Self {
+            height_to_sent,
+            indexes_to_sent,
 
             height_to_satblocks_destroyed: EagerVec::forced_import(
                 cfg.db,

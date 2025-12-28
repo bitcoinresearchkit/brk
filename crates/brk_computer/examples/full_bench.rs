@@ -8,7 +8,7 @@ use std::{
 use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_error::Result;
-use brk_fetcher::Fetcher;
+use brk_fetcher::{Fetcher, PriceSource};
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
@@ -55,6 +55,8 @@ fn run() -> Result<()> {
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let fetcher = Fetcher::import(true, None)?;
+
+    info!("Ping: {:?}", fetcher.brk.ping()?);
 
     let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 

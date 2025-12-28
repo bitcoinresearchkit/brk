@@ -113,32 +113,40 @@ impl Vecs {
             |index, _| Some(index),
         );
 
+        let height_to_unspendable_supply: EagerVec<PcoVec<Height, Sats>> =
+            EagerVec::forced_import(&db, "unspendable_supply", v0)?;
+        let indexes_to_unspendable_supply = ComputedValueVecsFromHeight::forced_import(
+            &db,
+            "unspendable_supply",
+            Source::Vec(height_to_unspendable_supply.boxed_clone()),
+            v0,
+            VecBuilderOptions::default().add_last(),
+            compute_dollars,
+            indexes,
+        )?;
+
+        let height_to_opreturn_supply: EagerVec<PcoVec<Height, Sats>> =
+            EagerVec::forced_import(&db, "opreturn_supply", v0)?;
+        let indexes_to_opreturn_supply = ComputedValueVecsFromHeight::forced_import(
+            &db,
+            "opreturn_supply",
+            Source::Vec(height_to_opreturn_supply.boxed_clone()),
+            v0,
+            VecBuilderOptions::default().add_last(),
+            compute_dollars,
+            indexes,
+        )?;
+
         let this = Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", v0)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            height_to_unspendable_supply: EagerVec::forced_import(&db, "unspendable_supply", v0)?,
-            indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
-                &db,
-                "unspendable_supply",
-                Source::None,
-                v0,
-                VecBuilderOptions::default().add_last(),
-                compute_dollars,
-                indexes,
-            )?,
-            height_to_opreturn_supply: EagerVec::forced_import(&db, "opreturn_supply", v0)?,
-            indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
-                &db,
-                "opreturn_supply",
-                Source::None,
-                v0,
-                VecBuilderOptions::default().add_last(),
-                compute_dollars,
-                indexes,
-            )?,
+            height_to_unspendable_supply,
+            indexes_to_unspendable_supply,
+            height_to_opreturn_supply,
+            indexes_to_opreturn_supply,
 
             indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 &db,

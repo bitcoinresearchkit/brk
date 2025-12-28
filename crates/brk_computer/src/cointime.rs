@@ -459,11 +459,7 @@ impl Vecs {
                     vec.compute_divide(
                         starting_indexes.height,
                         self.indexes_to_investor_cap.height.u(),
-                        self.indexes_to_active_supply
-                            .bitcoin
-                            .height
-                            .as_ref()
-                            .unwrap(),
+                        &self.indexes_to_active_supply.bitcoin.height,
                         exit,
                     )?;
                     Ok(())

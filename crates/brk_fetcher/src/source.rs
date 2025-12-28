@@ -24,6 +24,9 @@ pub trait PriceSource {
     /// Fetch OHLC by block height. Returns None if unsupported.
     fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>>;
 
+    /// Check if the source is reachable
+    fn ping(&self) -> Result<()>;
+
     /// Clear cached data
     fn clear(&mut self);
 }
@@ -126,6 +129,10 @@ impl<T: PriceSource> PriceSource for TrackedSource<T> {
 
     fn get_height(&mut self, height: Height) -> Option<Result<OHLCCents>> {
         self.try_fetch(|s| s.get_height(height))
+    }
+
+    fn ping(&self) -> Result<()> {
+        self.source.ping()
     }
 
     fn clear(&mut self) {
