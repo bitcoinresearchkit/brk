@@ -9,7 +9,6 @@ use super::{ComputedVecValue, ComputedVecsFromDateIndex, LazyTransformBuilder};
 
 const VERSION: Version = Version::ZERO;
 
-/// Fully lazy version of `ComputedVecsFromDateIndex` where all vecs are lazy transforms.
 #[derive(Clone)]
 pub struct LazyVecsFromDateIndex<T, S1T = T>
 where
@@ -42,11 +41,19 @@ where
         let v = version + VERSION;
         Self {
             dateindex: dateindex_source.map(|s| LazyVecFrom1::transformed::<F>(name, v, s)),
-            dateindex_extra: LazyTransformBuilder::from_eager::<F>(name, v, &source.dateindex_extra),
+            dateindex_extra: LazyTransformBuilder::from_eager::<F>(
+                name,
+                v,
+                &source.dateindex_extra,
+            ),
             weekindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.weekindex),
             monthindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.monthindex),
             quarterindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.quarterindex),
-            semesterindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.semesterindex),
+            semesterindex: LazyTransformBuilder::from_lazy::<F, _, _>(
+                name,
+                v,
+                &source.semesterindex,
+            ),
             yearindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.yearindex),
             decadeindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.decadeindex),
         }

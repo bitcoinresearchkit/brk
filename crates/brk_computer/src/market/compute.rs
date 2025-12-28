@@ -1,14 +1,13 @@
 use std::thread;
 
 use brk_error::Result;
-use brk_types::{Date, DateIndex, Dollars, StoredF32, StoredU16};
-use vecdb::{EagerVec, Exit, GenericStoredVec, PcoVec, TypedVecIterator, VecIndex};
+use brk_types::{Date, DateIndex, StoredF32, StoredU16};
+use vecdb::{Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use crate::{
-    price,
+    Indexes, price,
     traits::{ComputeDCAAveragePriceViaLen, ComputeDCAStackViaLen, ComputeDrawdown},
     utils::OptionExt,
-    Indexes,
 };
 
 use super::Vecs;
@@ -576,57 +575,20 @@ impl Vecs {
             Ok(())
         })?;
 
-        self.indexes_to_price_200d_sma_x0_8
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_price_200d_sma
-                        .price
-                        .as_ref()
-                        .unwrap()
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    |(i, v, ..)| (i, v * 0.8),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_price_200d_sma_x2_4
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_price_200d_sma
-                        .price
-                        .as_ref()
-                        .unwrap()
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    |(i, v, ..)| (i, v * 2.4),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
         self.indexes_to_1d_returns_1w_sd.compute_all(
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.u(),
-            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
         self.indexes_to_1d_returns_1m_sd.compute_all(
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.u(),
-            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
         self.indexes_to_1d_returns_1y_sd.compute_all(
             starting_indexes,
             exit,
             self._1d_price_returns.dateindex.u(),
-            None as Option<&EagerVec<PcoVec<DateIndex, Dollars>>>,
         )?;
 
         self.indexes_to_price_1w_volatility

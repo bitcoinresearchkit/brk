@@ -17,9 +17,9 @@ use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
+use brk_alloc::Mimalloc;
 use brk_server::{Server, VERSION};
 use log::info;
-use mimalloc::MiMalloc;
 use vecdb::Exit;
 
 mod config;
@@ -27,9 +27,6 @@ mod paths;
 mod website;
 
 use crate::{config::Config, paths::*};
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> color_eyre::Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -59,6 +56,16 @@ pub fn run() -> color_eyre::Result<()> {
     let blocks = Blocks::new(&client, &reader);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
+
+    // Pre-run indexer if too far behind, then drop and reimport to reduce memory
+    let chain_height = client.get_last_height()?;
+    let indexed_height = indexer.vecs.starting_height();
+    if u32::from(chain_height) - u32::from(indexed_height) > 1000 {
+        indexer.index(&blocks, &client, &exit)?;
+        drop(indexer);
+        Mimalloc::collect();
+        indexer = Indexer::forced_import(&config.brkdir())?;
+    }
 
     let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
@@ -154,6 +161,8 @@ pub fn run() -> color_eyre::Result<()> {
         } else {
             indexer.index(&blocks, &client, &exit)?
         };
+
+        Mimalloc::collect_if_wasted_above(500);
 
         computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 

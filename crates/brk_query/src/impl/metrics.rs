@@ -236,9 +236,13 @@ impl Query {
     }
 
     pub fn metric_count(&self) -> MetricCount {
+        let total = self.total_metric_count();
+        let lazy = self.lazy_metric_count();
         MetricCount {
             distinct_metrics: self.distinct_metric_count(),
-            total_endpoints: self.total_metric_count(),
+            total_endpoints: total,
+            lazy_endpoints: lazy,
+            stored_endpoints: total - lazy,
         }
     }
 
@@ -248,6 +252,10 @@ impl Query {
 
     pub fn total_metric_count(&self) -> usize {
         self.vecs().total_metric_count
+    }
+
+    pub fn lazy_metric_count(&self) -> usize {
+        self.vecs().lazy_metric_count
     }
 
     pub fn indexes(&self) -> &[IndexInfo] {

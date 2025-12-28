@@ -16,6 +16,7 @@ pub struct Vecs<'a> {
     pub indexes: Vec<IndexInfo>,
     pub distinct_metric_count: usize,
     pub total_metric_count: usize,
+    pub lazy_metric_count: usize,
     catalog: Option<TreeNode>,
     matcher: Option<QuickMatch<'a>>,
     metric_to_indexes: BTreeMap<&'a str, Vec<Index>>,
@@ -61,6 +62,12 @@ impl<'a> Vecs<'a> {
             .values()
             .map(|tree| tree.len())
             .sum::<usize>();
+        this.lazy_metric_count = this
+            .index_to_metric_to_vec
+            .values()
+            .flat_map(|tree| tree.values())
+            .filter(|vec| vec.region_names().is_empty())
+            .count();
         this.indexes = this
             .index_to_metric_to_vec
             .keys()

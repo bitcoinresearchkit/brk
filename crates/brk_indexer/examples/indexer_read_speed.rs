@@ -3,10 +3,6 @@ use std::{fs, path::Path, time::Instant};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::Sats;
-use mimalloc::MiMalloc;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 fn run_benchmark(indexer: &Indexer) -> (Sats, std::time::Duration, usize) {
     let start = Instant::now();

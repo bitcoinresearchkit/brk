@@ -1,21 +1,18 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
-use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, LazyVecFrom1, PcoVec};
-
-use crate::{
-    Indexes,
-    grouped::{SatsToBitcoin, Source},
-    price,
-    traits::ComputeFromBitcoin,
-    utils::OptionExt,
+use brk_types::{Bitcoin, Close, Dollars, Height, Sats, Version};
+use vecdb::{
+    Database, EagerVec, ImportableVec, IterableBoxedVec, IterableCloneableVec, LazyVecFrom1,
+    LazyVecFrom2, PcoVec,
 };
+
+use crate::grouped::{ClosePriceTimesSats, SatsToBitcoin, Source};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedHeightValueVecs {
     pub sats: Option<EagerVec<PcoVec<Height, Sats>>>,
     pub bitcoin: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
-    pub dollars: Option<EagerVec<PcoVec<Height, Dollars>>>,
+    pub dollars: Option<LazyVecFrom2<Height, Dollars, Height, Close<Dollars>, Height, Sats>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -26,74 +23,35 @@ impl ComputedHeightValueVecs {
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
-        compute_dollars: bool,
+        price_source: Option<IterableBoxedVec<Height, Close<Dollars>>>,
     ) -> Result<Self> {
         let sats = source
             .is_compute()
             .then(|| EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap());
 
-        let bitcoin = match &source {
-            Source::Compute => LazyVecFrom1::transformed::<SatsToBitcoin>(
-                &format!("{name}_btc"),
+        let sats_source: IterableBoxedVec<Height, Sats> = source
+            .vec()
+            .unwrap_or_else(|| sats.as_ref().unwrap().boxed_clone());
+
+        let bitcoin = LazyVecFrom1::transformed::<SatsToBitcoin>(
+            &format!("{name}_btc"),
+            version + VERSION + Version::ZERO,
+            sats_source.clone(),
+        );
+
+        let dollars = price_source.map(|price| {
+            LazyVecFrom2::transformed::<ClosePriceTimesSats>(
+                &format!("{name}_usd"),
                 version + VERSION + Version::ZERO,
-                sats.as_ref().unwrap().boxed_clone(),
-            ),
-            Source::Vec(boxed) => LazyVecFrom1::transformed::<SatsToBitcoin>(
-                &format!("{name}_btc"),
-                version + VERSION + Version::ZERO,
-                boxed.clone(),
-            ),
-            Source::None => {
-                panic!("Source::None not supported for lazy bitcoin - use Source::Vec instead")
-            }
-        };
+                price,
+                sats_source.clone(),
+            )
+        });
 
         Ok(Self {
             sats,
             bitcoin,
-            dollars: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    db,
-                    &format!("{name}_usd"),
-                    version + VERSION + Version::ZERO,
-                )
-                .unwrap()
-            }),
+            dollars,
         })
-    }
-
-    pub fn compute_all<F>(
-        &mut self,
-        price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-        mut compute: F,
-    ) -> Result<()>
-    where
-        F: FnMut(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
-    {
-        compute(self.sats.um())?;
-
-        self.compute_rest(price, starting_indexes, exit)?;
-
-        Ok(())
-    }
-
-    pub fn compute_rest(
-        &mut self,
-        price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.compute_from_bitcoin(
-                starting_indexes.height,
-                &self.bitcoin,
-                &price.u().chainindexes_to_price_close.height,
-                exit,
-            )?;
-        }
-
-        Ok(())
     }
 }

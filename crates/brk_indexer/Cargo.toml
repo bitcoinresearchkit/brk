@@ -27,6 +27,6 @@ rustc-hash = { workspace = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]
+brk_alloc = { workspace = true }
 brk_bencher = { workspace = true }
 color-eyre = { workspace = true }
-mimalloc = { workspace = true }

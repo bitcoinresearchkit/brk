@@ -579,6 +579,9 @@ fn field_to_js_type_with_generic_value(
             return format!("{}<{}>", field.rust_type, type_param);
         }
         field.rust_type.clone()
+    } else if field.is_branch() {
+        // Non-pattern branch struct
+        field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         format!("{}<{}>", accessor.name, value_type)
     } else {

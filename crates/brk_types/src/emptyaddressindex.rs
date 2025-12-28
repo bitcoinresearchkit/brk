@@ -2,13 +2,25 @@ use std::ops::Add;
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, Serialize, Pco, JsonSchema,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Deref,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct EmptyAddressIndex(TypeIndex);
 

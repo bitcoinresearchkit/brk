@@ -2,12 +2,25 @@ use std::fmt;
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 use crate::U8x65;
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Bytes,
+    Hash,
+    JsonSchema,
+)]
 pub struct P2PK65Bytes(U8x65);
 
 impl From<&[u8]> for P2PK65Bytes {

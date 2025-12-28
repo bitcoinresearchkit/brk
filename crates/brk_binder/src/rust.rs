@@ -417,6 +417,9 @@ fn field_to_type_annotation_with_generic(
             return format!("{}<{}>", field.rust_type, type_param);
         }
         field.rust_type.clone()
+    } else if field.is_branch() {
+        // Non-pattern branch struct
+        field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         format!("{}<{}>", accessor.name, value_type)
     } else {
@@ -537,7 +540,16 @@ fn generate_tree_node(
                 )
                 .unwrap();
             }
+        } else if field.is_branch() {
+            // Non-pattern branch - instantiate the nested struct
+            writeln!(
+                output,
+                "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+                field_name, field.rust_type, field.name
+            )
+            .unwrap();
         } else {
+            // Leaf - use MetricNode
             let metric_path = if let TreeNode::Leaf(leaf) = child_node {
                 format!("/{}", leaf.name())
             } else {

@@ -2,12 +2,25 @@ use std::fmt;
 
 use derive_deref::Deref;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 use crate::U8x2;
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Bytes, Hash, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Bytes,
+    Hash,
+    JsonSchema,
+)]
 pub struct P2ABytes(U8x2);
 
 impl From<&[u8]> for P2ABytes {

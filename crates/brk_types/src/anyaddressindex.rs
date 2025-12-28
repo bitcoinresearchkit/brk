@@ -1,5 +1,7 @@
+use std::fmt;
+
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 use crate::{EmptyAddressIndex, LoadedAddressIndex, TypeIndex};
@@ -42,8 +44,18 @@ impl Serialize for AnyAddressIndex {
     }
 }
 
-impl std::fmt::Display for AnyAddressIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'de> Deserialize<'de> for AnyAddressIndex {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let variant = AnyAddressDataIndexEnum::deserialize(deserializer)?;
+        Ok(Self::from(variant))
+    }
+}
+
+impl fmt::Display for AnyAddressIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
@@ -55,7 +67,7 @@ impl Formattable for AnyAddressIndex {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AnyAddressDataIndexEnum {
     Loaded(LoadedAddressIndex),
@@ -70,6 +82,16 @@ impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
             Self::Empty(EmptyAddressIndex::from(uvalue - MIN_EMPTY_INDEX))
         } else {
             Self::Loaded(LoadedAddressIndex::from(value.0))
+        }
+    }
+}
+
+impl From<AnyAddressDataIndexEnum> for AnyAddressIndex {
+    #[inline]
+    fn from(value: AnyAddressDataIndexEnum) -> Self {
+        match value {
+            AnyAddressDataIndexEnum::Loaded(idx) => Self::from(idx),
+            AnyAddressDataIndexEnum::Empty(idx) => Self::from(idx),
         }
     }
 }

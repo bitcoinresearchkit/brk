@@ -1,18 +1,19 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
-use vecdb::{PcoVec, 
+use vecdb::{
     AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
-    TypedVecIterator, VecIndex,
+    PcoVec, VecIndex,
 };
 
 use crate::{
     Indexes,
     grouped::{
-        ComputedStandardDeviationVecsFromDateIndex, StandardDeviationVecsOptions, source::Source,
+        ComputedStandardDeviationVecsFromDateIndex, LazyVecsFrom2FromDateIndex, PriceTimesRatio,
+        StandardDeviationVecsOptions, source::Source,
     },
     indexes, price,
-    utils::{get_percentile, OptionExt},
+    utils::{OptionExt, get_percentile},
 };
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
@@ -30,12 +31,12 @@ pub struct ComputedRatioVecsFromDateIndex {
     pub ratio_pct5: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub ratio_pct2: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub ratio_pct1: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub ratio_pct99_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct98_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct95_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct5_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct2_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub ratio_pct1_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub ratio_pct99_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct98_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct95_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct5_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct2_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct1_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
 
     pub ratio_sd: Option<ComputedStandardDeviationVecsFromDateIndex>,
     pub ratio_4y_sd: Option<ComputedStandardDeviationVecsFromDateIndex>,
@@ -61,23 +62,60 @@ impl ComputedRatioVecsFromDateIndex {
         macro_rules! import {
             ($suffix:expr) => {
                 ComputedVecsFromDateIndex::forced_import(
-                    db, &format!("{name}_{}", $suffix), Source::Compute, v, indexes, opts,
-                ).unwrap()
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    Source::Compute,
+                    v,
+                    indexes,
+                    opts,
+                )
+                .unwrap()
             };
         }
+        // Create sources first so lazy vecs can reference them
+        let price = source.is_compute().then(|| {
+            ComputedVecsFromDateIndex::forced_import(db, name, Source::Compute, v, indexes, opts)
+                .unwrap()
+        });
+
         macro_rules! import_sd {
             ($suffix:expr, $days:expr) => {
                 ComputedStandardDeviationVecsFromDateIndex::forced_import(
-                    db, &format!("{name}_{}", $suffix), $days, Source::Compute, v, indexes,
+                    db,
+                    &format!("{name}_{}", $suffix),
+                    $days,
+                    Source::Compute,
+                    v,
+                    indexes,
                     StandardDeviationVecsOptions::default().add_all(),
-                ).unwrap()
+                    price.as_ref(),
+                )
+                .unwrap()
+            };
+        }
+
+        let ratio_pct99 = extended.then(|| import!("ratio_pct99"));
+        let ratio_pct98 = extended.then(|| import!("ratio_pct98"));
+        let ratio_pct95 = extended.then(|| import!("ratio_pct95"));
+        let ratio_pct5 = extended.then(|| import!("ratio_pct5"));
+        let ratio_pct2 = extended.then(|| import!("ratio_pct2"));
+        let ratio_pct1 = extended.then(|| import!("ratio_pct1"));
+
+        // Create lazy usd vecs from price and ratio sources
+        macro_rules! lazy_usd {
+            ($ratio:expr, $suffix:expr) => {
+                price.as_ref().zip($ratio.as_ref()).map(|(p, r)| {
+                    LazyVecsFrom2FromDateIndex::from_computed::<PriceTimesRatio>(
+                        &format!("{name}_{}", $suffix),
+                        v,
+                        p,
+                        r,
+                    )
+                })
             };
         }
 
         Ok(Self {
-            price: source.is_compute().then(|| {
-                ComputedVecsFromDateIndex::forced_import(db, name, Source::Compute, v, indexes, opts).unwrap()
-            }),
             ratio: import!("ratio"),
             ratio_1w_sma: extended.then(|| import!("ratio_1w_sma")),
             ratio_1m_sma: extended.then(|| import!("ratio_1m_sma")),
@@ -85,18 +123,19 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_1y_sd: extended.then(|| import_sd!("ratio_1y", 365)),
             ratio_2y_sd: extended.then(|| import_sd!("ratio_2y", 2 * 365)),
             ratio_4y_sd: extended.then(|| import_sd!("ratio_4y", 4 * 365)),
-            ratio_pct99: extended.then(|| import!("ratio_pct99")),
-            ratio_pct98: extended.then(|| import!("ratio_pct98")),
-            ratio_pct95: extended.then(|| import!("ratio_pct95")),
-            ratio_pct5: extended.then(|| import!("ratio_pct5")),
-            ratio_pct2: extended.then(|| import!("ratio_pct2")),
-            ratio_pct1: extended.then(|| import!("ratio_pct1")),
-            ratio_pct99_usd: extended.then(|| import!("ratio_pct99_usd")),
-            ratio_pct98_usd: extended.then(|| import!("ratio_pct98_usd")),
-            ratio_pct95_usd: extended.then(|| import!("ratio_pct95_usd")),
-            ratio_pct5_usd: extended.then(|| import!("ratio_pct5_usd")),
-            ratio_pct2_usd: extended.then(|| import!("ratio_pct2_usd")),
-            ratio_pct1_usd: extended.then(|| import!("ratio_pct1_usd")),
+            ratio_pct99_usd: lazy_usd!(&ratio_pct99, "ratio_pct99_usd"),
+            ratio_pct98_usd: lazy_usd!(&ratio_pct98, "ratio_pct98_usd"),
+            ratio_pct95_usd: lazy_usd!(&ratio_pct95, "ratio_pct95_usd"),
+            ratio_pct5_usd: lazy_usd!(&ratio_pct5, "ratio_pct5_usd"),
+            ratio_pct2_usd: lazy_usd!(&ratio_pct2, "ratio_pct2_usd"),
+            ratio_pct1_usd: lazy_usd!(&ratio_pct1, "ratio_pct1_usd"),
+            price,
+            ratio_pct99,
+            ratio_pct98,
+            ratio_pct95,
+            ratio_pct5,
+            ratio_pct2,
+            ratio_pct1,
         })
     }
 
@@ -128,9 +167,8 @@ impl ComputedRatioVecsFromDateIndex {
     ) -> Result<()> {
         let closes = price.timeindexes_to_price_close.dateindex.u();
 
-        let price = price_opt.unwrap_or_else(|| unsafe {
-            std::mem::transmute(&self.price.u().dateindex)
-        });
+        let price =
+            price_opt.unwrap_or_else(|| unsafe { std::mem::transmute(&self.price.u().dateindex) });
 
         self.ratio.compute_all(starting_indexes, exit, |v| {
             v.compute_transform2(
@@ -283,83 +321,18 @@ impl ComputedRatioVecsFromDateIndex {
             None as Option<&EagerVec<PcoVec<_, _>>>,
         )?;
 
-        let date_to_price = price_opt.unwrap_or_else(|| unsafe {
-            std::mem::transmute(&self.price.u().dateindex)
-        });
-
-        self.ratio_pct99_usd
-            .as_mut()
-            .unwrap()
-            .compute_all(starting_indexes, exit, |vec| {
-                let mut iter = self
-                    .ratio_pct99
-                    .as_ref()
-                    .unwrap()
-                    .dateindex
-                    .as_ref()
-                    .unwrap()
-                    .into_iter();
-                vec.compute_transform(
-                    starting_indexes.dateindex,
-                    date_to_price,
-                    |(i, price, ..)| {
-                        let multiplier = iter.get_unwrap(i);
-                        (i, price * multiplier)
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        let compute_usd =
-            |usd: Option<&mut ComputedVecsFromDateIndex<Dollars>>,
-             source: Option<&ComputedVecsFromDateIndex<StoredF32>>| {
-                usd.unwrap().compute_all(starting_indexes, exit, |vec| {
-                    let mut iter = source.unwrap().dateindex.u().into_iter();
-                    vec.compute_transform(
-                        starting_indexes.dateindex,
-                        date_to_price,
-                        |(i, price, ..)| {
-                            let multiplier = iter.get_unwrap(i);
-                            (i, price * multiplier)
-                        },
-                        exit,
-                    )?;
-                    Ok(())
-                })
-            };
-
-        compute_usd(self.ratio_pct1_usd.as_mut(), self.ratio_pct1.as_ref())?;
-        compute_usd(self.ratio_pct2_usd.as_mut(), self.ratio_pct2.as_ref())?;
-        compute_usd(self.ratio_pct5_usd.as_mut(), self.ratio_pct5.as_ref())?;
-        compute_usd(self.ratio_pct95_usd.as_mut(), self.ratio_pct95.as_ref())?;
-        compute_usd(self.ratio_pct98_usd.as_mut(), self.ratio_pct98.as_ref())?;
-        compute_usd(self.ratio_pct99_usd.as_mut(), self.ratio_pct99.as_ref())?;
-
-        self.ratio_sd.um().compute_all(
-            starting_indexes,
-            exit,
-            self.ratio.dateindex.u(),
-            Some(date_to_price),
-        )?;
-        self.ratio_4y_sd.um().compute_all(
-            starting_indexes,
-            exit,
-            self.ratio.dateindex.u(),
-            Some(date_to_price),
-        )?;
-        self.ratio_2y_sd.um().compute_all(
-            starting_indexes,
-            exit,
-            self.ratio.dateindex.u(),
-            Some(date_to_price),
-        )?;
-        self.ratio_1y_sd.um().compute_all(
-            starting_indexes,
-            exit,
-            self.ratio.dateindex.u(),
-            Some(date_to_price),
-        )?;
+        self.ratio_sd
+            .um()
+            .compute_all(starting_indexes, exit, self.ratio.dateindex.u())?;
+        self.ratio_4y_sd
+            .um()
+            .compute_all(starting_indexes, exit, self.ratio.dateindex.u())?;
+        self.ratio_2y_sd
+            .um()
+            .compute_all(starting_indexes, exit, self.ratio.dateindex.u())?;
+        self.ratio_1y_sd
+            .um()
+            .compute_all(starting_indexes, exit, self.ratio.dateindex.u())?;
 
         Ok(())
     }

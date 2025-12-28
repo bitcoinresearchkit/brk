@@ -10,8 +10,9 @@ use vecdb::{
 use crate::{
     Indexes,
     grouped::{
-        ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromHeight, Source,
-        VecBuilderOptions,
+        ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromHeight,
+        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyHeightValueVecs,
+        LazyValueVecsFromDateIndex, Source, VecBuilderOptions,
     },
     indexes, price,
     stateful::states::SupplyState,
@@ -37,11 +38,11 @@ pub struct SupplyMetrics {
     /// UTXO count indexed by various dimensions
     pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredU64>,
 
-    /// Half of supply value (used for computing median)
-    pub height_to_supply_half_value: ComputedHeightValueVecs,
+    /// Half of supply value (used for computing median) - lazy from supply_value
+    pub height_to_supply_half_value: LazyHeightValueVecs,
 
-    /// Half of supply indexed by date
-    pub indexes_to_supply_half: ComputedValueVecsFromDateIndex,
+    /// Half of supply indexed by date - lazy from indexes_to_supply
+    pub indexes_to_supply_half: LazyValueVecsFromDateIndex,
 }
 
 impl SupplyMetrics {
@@ -55,27 +56,48 @@ impl SupplyMetrics {
         let height_to_supply: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(cfg.db, &cfg.name("supply"), cfg.version + v0)?;
 
+        let price_source = cfg
+            .price
+            .map(|p| p.chainindexes_to_price_close.height.boxed_clone());
+
         let height_to_supply_value = ComputedHeightValueVecs::forced_import(
             cfg.db,
             &cfg.name("supply"),
             Source::Vec(height_to_supply.boxed_clone()),
             cfg.version + v0,
-            compute_dollars,
+            price_source.clone(),
         )?;
+
+        let indexes_to_supply = ComputedValueVecsFromDateIndex::forced_import(
+            cfg.db,
+            &cfg.name("supply"),
+            Source::Compute,
+            cfg.version + v1,
+            last,
+            compute_dollars,
+            cfg.indexes,
+        )?;
+
+        // Create lazy supply_half from supply sources
+        let height_to_supply_half_value =
+            LazyHeightValueVecs::from_sources::<HalveSats, HalveSatsToBitcoin, HalfClosePriceTimesSats>(
+                &cfg.name("supply_half"),
+                height_to_supply.boxed_clone(),
+                price_source,
+                cfg.version + v0,
+            );
+
+        let indexes_to_supply_half =
+            LazyValueVecsFromDateIndex::from_source::<HalveSats, HalveSatsToBitcoin, HalveDollars>(
+                &cfg.name("supply_half"),
+                &indexes_to_supply,
+                cfg.version + v0,
+            );
 
         Ok(Self {
             height_to_supply,
             height_to_supply_value,
-
-            indexes_to_supply: ComputedValueVecsFromDateIndex::forced_import(
-                cfg.db,
-                &cfg.name("supply"),
-                Source::Compute,
-                cfg.version + v1,
-                last,
-                compute_dollars,
-                cfg.indexes,
-            )?,
+            indexes_to_supply,
 
             height_to_utxo_count: EagerVec::forced_import(
                 cfg.db,
@@ -92,23 +114,8 @@ impl SupplyMetrics {
                 last,
             )?,
 
-            height_to_supply_half_value: ComputedHeightValueVecs::forced_import(
-                cfg.db,
-                &cfg.name("supply_half"),
-                Source::Compute,
-                cfg.version + v0,
-                compute_dollars,
-            )?,
-
-            indexes_to_supply_half: ComputedValueVecsFromDateIndex::forced_import(
-                cfg.db,
-                &cfg.name("supply_half"),
-                Source::Compute,
-                cfg.version + v0,
-                last,
-                compute_dollars,
-                cfg.indexes,
-            )?,
+            height_to_supply_half_value,
+            indexes_to_supply_half,
         })
     }
 
@@ -183,9 +190,6 @@ impl SupplyMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_supply_value
-            .compute_rest(price, starting_indexes, exit)?;
-
         self.indexes_to_supply
             .compute_all(price, starting_indexes, exit, |v| {
                 let mut dateindex_to_height_count_iter =
@@ -213,28 +217,6 @@ impl SupplyMetrics {
             exit,
             Some(&self.height_to_utxo_count),
         )?;
-
-        self.height_to_supply_half_value
-            .compute_all(price, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_supply,
-                    |(h, v, ..)| (h, v / 2),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_supply_half
-            .compute_all(price, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
-                    |(i, sats, ..)| (i, sats / 2),
-                    exit,
-                )?;
-                Ok(())
-            })?;
 
         Ok(())
     }

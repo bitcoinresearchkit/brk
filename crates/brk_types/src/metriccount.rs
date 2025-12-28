@@ -10,4 +10,10 @@ pub struct MetricCount {
     /// Total number of metric-index combinations across all timeframes
     #[schemars(example = 21000)]
     pub total_endpoints: usize,
+    /// Number of lazy (computed on-the-fly) metric-index combinations
+    #[schemars(example = 5000)]
+    pub lazy_endpoints: usize,
+    /// Number of eager (stored on disk) metric-index combinations
+    #[schemars(example = 16000)]
+    pub stored_endpoints: usize,
 }

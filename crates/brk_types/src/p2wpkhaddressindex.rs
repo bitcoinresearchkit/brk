@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
@@ -19,6 +19,7 @@ use crate::TypeIndex;
     DerefMut,
     Default,
     Serialize,
+    Deserialize,
     Pco,
     JsonSchema,
 )]

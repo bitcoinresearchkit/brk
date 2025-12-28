@@ -1,9 +1,12 @@
-use std::ops::{Add, Rem};
+use std::{
+    fmt,
+    ops::{Add, Rem},
+};
 
 use brk_error::Error;
 use jiff::Span;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex};
 
 use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, YearIndex};
@@ -11,7 +14,18 @@ use crate::{DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, WeekIndex, Yea
 use super::Date;
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Pco, JsonSchema,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Pco,
+    JsonSchema,
 )]
 pub struct DateIndex(u16);
 
@@ -227,8 +241,8 @@ impl PrintableIndex for DateIndex {
     }
 }
 
-impl std::fmt::Display for DateIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for DateIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)

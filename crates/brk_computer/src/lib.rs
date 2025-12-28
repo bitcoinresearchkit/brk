@@ -96,11 +96,8 @@ impl Computer {
         );
 
         let i = Instant::now();
-        let (price, constants, market) = thread::scope(|s| -> Result<_> {
-            let constants_handle = big_thread().spawn_scoped(s, || {
-                constants::Vecs::forced_import(&computed_path, VERSION, &indexes)
-            })?;
-
+        let constants = constants::Vecs::new(VERSION, &indexes);
+        let (price, market) = thread::scope(|s| -> Result<_> {
             let market_handle = big_thread().spawn_scoped(s, || {
                 market::Vecs::forced_import(&computed_path, VERSION, &indexes)
             })?;
@@ -109,10 +106,9 @@ impl Computer {
                 .is_some()
                 .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
 
-            let constants = constants_handle.join().unwrap()?;
             let market = market_handle.join().unwrap()?;
 
-            Ok((price, constants, market))
+            Ok((price, market))
         })?;
         info!("Imported price/constants/market in {:?}", i.elapsed());
 
@@ -176,7 +172,6 @@ impl Computer {
             blks::DB_NAME,
             chain::DB_NAME,
             cointime::DB_NAME,
-            constants::DB_NAME,
             indexes::DB_NAME,
             market::DB_NAME,
             pools::DB_NAME,
@@ -246,15 +241,6 @@ impl Computer {
                 Ok(())
             });
 
-            let constants = scope.spawn(|| -> Result<()> {
-                info!("Computing constants...");
-                let i = Instant::now();
-                self.constants
-                    .compute(&self.indexes, &starting_indexes, exit)?;
-                info!("Computed constants in {:?}", i.elapsed());
-                Ok(())
-            });
-
             // Txins must complete before txouts (txouts needs txinindex_to_txoutindex)
             // and before chain (chain needs txinindex_to_value)
             info!("Computing txins...");
@@ -291,7 +277,6 @@ impl Computer {
             }
 
             blks.join().unwrap()?;
-            constants.join().unwrap()?;
             txouts.join().unwrap()?;
             Ok(())
         })?;

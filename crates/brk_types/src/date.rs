@@ -1,6 +1,8 @@
+use std::fmt;
+
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Visitor};
 use vecdb::{Formattable, Pco};
 
 use crate::ONE_DAY_IN_SEC_F64;
@@ -118,8 +120,49 @@ impl Serialize for Date {
     }
 }
 
-impl std::fmt::Display for Date {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<'de> Deserialize<'de> for Date {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DateVisitor;
+
+        impl Visitor<'_> for DateVisitor {
+            type Value = Date;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a date string in YYYY-MM-DD format")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                // Parse YYYY-MM-DD format
+                if v.len() != 10 {
+                    return Err(E::invalid_length(v.len(), &self));
+                }
+
+                let year: u16 = v[0..4]
+                    .parse()
+                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
+                let month: u8 = v[5..7]
+                    .parse()
+                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
+                let day: u8 = v[8..10]
+                    .parse()
+                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
+
+                Ok(Date::new(year, month, day))
+            }
+        }
+
+        deserializer.deserialize_str(DateVisitor)
+    }
+}
+
+impl fmt::Display for Date {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = itoa::Buffer::new();
 
         f.write_str(buf.format(self.year()))?;

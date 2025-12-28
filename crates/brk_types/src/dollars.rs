@@ -48,6 +48,10 @@ impl Dollars {
     pub fn is_zero(&self) -> bool {
         self.0 == 0.0
     }
+
+    pub fn halved(self) -> Self {
+        Self(self.0 / 2.0)
+    }
 }
 
 impl From<f32> for Dollars {

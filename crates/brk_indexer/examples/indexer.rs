@@ -5,16 +5,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+use brk_alloc::Mimalloc;
 use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
-use mimalloc::MiMalloc;
 use vecdb::Exit;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -51,6 +48,8 @@ fn main() -> color_eyre::Result<()> {
         let i = Instant::now();
         indexer.checked_index(&blocks, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
+
+        Mimalloc::collect_if_wasted_above(500);
 
         sleep(Duration::from_secs(60));
     }

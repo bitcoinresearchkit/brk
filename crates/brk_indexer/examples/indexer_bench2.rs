@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -12,11 +13,7 @@ use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
-use mimalloc::MiMalloc;
 use vecdb::Exit;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> Result<()> {
     brk_logger::init(None)?;
@@ -58,6 +55,8 @@ fn main() -> Result<()> {
         let i = Instant::now();
         indexer.index(&blocks, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
+
+        Mimalloc::collect_if_wasted_above(500);
 
         sleep(Duration::from_secs(60));
     }

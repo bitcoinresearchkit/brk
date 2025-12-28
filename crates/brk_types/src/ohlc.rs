@@ -6,7 +6,11 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
-use serde::{Serialize, Serializer, ser::SerializeTuple};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{SeqAccess, Visitor},
+    ser::SerializeTuple,
+};
 use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
 use crate::StoredF64;
@@ -60,6 +64,58 @@ impl Serialize for OHLCCents {
         tup.end()
     }
 }
+
+macro_rules! impl_ohlc_deserialize {
+    ($ohlc_type:ty, $inner_type:ty) => {
+        impl<'de> Deserialize<'de> for $ohlc_type {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                struct OHLCVisitor;
+
+                impl<'de> Visitor<'de> for OHLCVisitor {
+                    type Value = $ohlc_type;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a tuple of 4 elements (open, high, low, close)")
+                    }
+
+                    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+                    where
+                        A: SeqAccess<'de>,
+                    {
+                        let open = seq
+                            .next_element::<$inner_type>()?
+                            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                        let high = seq
+                            .next_element::<$inner_type>()?
+                            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                        let low = seq
+                            .next_element::<$inner_type>()?
+                            .ok_or_else(|| serde::de::Error::invalid_length(2, &self))?;
+                        let close = seq
+                            .next_element::<$inner_type>()?
+                            .ok_or_else(|| serde::de::Error::invalid_length(3, &self))?;
+
+                        Ok(Self::Value {
+                            open: Open::new(open),
+                            high: High::new(high),
+                            low: Low::new(low),
+                            close: Close::new(close),
+                        })
+                    }
+                }
+
+                deserializer.deserialize_tuple(4, OHLCVisitor)
+            }
+        }
+    };
+}
+
+impl_ohlc_deserialize!(OHLCCents, Cents);
+impl_ohlc_deserialize!(OHLCDollars, Dollars);
+impl_ohlc_deserialize!(OHLCSats, Sats);
 
 impl Display for OHLCCents {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

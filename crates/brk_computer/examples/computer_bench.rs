@@ -1,5 +1,6 @@
 use std::{env, path::Path, thread, time::Instant};
 
+use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_error::Result;
@@ -9,11 +10,7 @@ use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use log::{debug, info};
-use mimalloc::MiMalloc;
 use vecdb::Exit;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn main() -> Result<()> {
     // Can't increase main thread's stack size, thus we need to use another thread
@@ -64,6 +61,8 @@ fn run() -> Result<()> {
     let i = Instant::now();
     let starting_indexes = indexer.index(&blocks, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
+
+    Mimalloc::collect_if_wasted_above(500);
 
     let i = Instant::now();
     computer.compute(&indexer, starting_indexes, &reader, &exit)?;

@@ -4,13 +4,15 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, BoxedVecIterator, CollectableVec, Database, EagerVec, Exit,
-    GenericStoredVec, IterableVec, PcoVec, VecIndex,
+    AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
+    PcoVec, VecIndex,
 };
 
 use crate::{Indexes, grouped::source::Source, indexes, utils::OptionExt};
 
-use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
+use super::{
+    ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, PriceTimesRatio, VecBuilderOptions,
+};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedStandardDeviationVecsFromDateIndex {
@@ -35,19 +37,19 @@ pub struct ComputedStandardDeviationVecsFromDateIndex {
     pub m2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub m3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
 
-    pub _0sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p0_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p1sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p1_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p2sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p2_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub p3sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m0_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m1sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m1_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m2sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m2_5sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub m3sd_usd: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub _0sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub p3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub m3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -104,6 +106,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
+        price: Option<&ComputedVecsFromDateIndex<Dollars>>,
     ) -> Result<Self> {
         let opts = VecBuilderOptions::default().add_last();
         let version = parent_version + Version::ONE;
@@ -122,36 +125,70 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             };
         }
 
+        // Create sources first so lazy vecs can reference them
+        let sma_vec = sma.is_compute().then(|| import!("sma"));
+        let p0_5sd = options.bands().then(|| import!("p0_5sd"));
+        let p1sd = options.bands().then(|| import!("p1sd"));
+        let p1_5sd = options.bands().then(|| import!("p1_5sd"));
+        let p2sd = options.bands().then(|| import!("p2sd"));
+        let p2_5sd = options.bands().then(|| import!("p2_5sd"));
+        let p3sd = options.bands().then(|| import!("p3sd"));
+        let m0_5sd = options.bands().then(|| import!("m0_5sd"));
+        let m1sd = options.bands().then(|| import!("m1sd"));
+        let m1_5sd = options.bands().then(|| import!("m1_5sd"));
+        let m2sd = options.bands().then(|| import!("m2sd"));
+        let m2_5sd = options.bands().then(|| import!("m2_5sd"));
+        let m3sd = options.bands().then(|| import!("m3sd"));
+
+        // Create lazy USD vecs from price and band sources
+        macro_rules! lazy_usd {
+            ($band:expr, $suffix:expr) => {
+                price
+                    .zip($band.as_ref())
+                    .filter(|_| options.price_bands())
+                    .map(|(p, b)| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<PriceTimesRatio>(
+                            &format!("{name}_{}", $suffix),
+                            version,
+                            p,
+                            b,
+                        )
+                    })
+            };
+        }
+
         Ok(Self {
             days,
-            sma: sma.is_compute().then(|| import!("sma")),
             sd: import!("sd"),
-            p0_5sd: options.bands().then(|| import!("p0_5sd")),
-            p1sd: options.bands().then(|| import!("p1sd")),
-            p1_5sd: options.bands().then(|| import!("p1_5sd")),
-            p2sd: options.bands().then(|| import!("p2sd")),
-            p2_5sd: options.bands().then(|| import!("p2_5sd")),
-            p3sd: options.bands().then(|| import!("p3sd")),
-            m0_5sd: options.bands().then(|| import!("m0_5sd")),
-            m1sd: options.bands().then(|| import!("m1sd")),
-            m1_5sd: options.bands().then(|| import!("m1_5sd")),
-            m2sd: options.bands().then(|| import!("m2sd")),
-            m2_5sd: options.bands().then(|| import!("m2_5sd")),
-            m3sd: options.bands().then(|| import!("m3sd")),
-            _0sd_usd: options.price_bands().then(|| import!("0sd_usd")),
-            p0_5sd_usd: options.price_bands().then(|| import!("p0_5sd_usd")),
-            p1sd_usd: options.price_bands().then(|| import!("p1sd_usd")),
-            p1_5sd_usd: options.price_bands().then(|| import!("p1_5sd_usd")),
-            p2sd_usd: options.price_bands().then(|| import!("p2sd_usd")),
-            p2_5sd_usd: options.price_bands().then(|| import!("p2_5sd_usd")),
-            p3sd_usd: options.price_bands().then(|| import!("p3sd_usd")),
-            m0_5sd_usd: options.price_bands().then(|| import!("m0_5sd_usd")),
-            m1sd_usd: options.price_bands().then(|| import!("m1sd_usd")),
-            m1_5sd_usd: options.price_bands().then(|| import!("m1_5sd_usd")),
-            m2sd_usd: options.price_bands().then(|| import!("m2sd_usd")),
-            m2_5sd_usd: options.price_bands().then(|| import!("m2_5sd_usd")),
-            m3sd_usd: options.price_bands().then(|| import!("m3sd_usd")),
             zscore: options.zscore().then(|| import!("zscore")),
+            // Lazy USD vecs
+            _0sd_usd: lazy_usd!(&sma_vec, "0sd_usd"),
+            p0_5sd_usd: lazy_usd!(&p0_5sd, "p0_5sd_usd"),
+            p1sd_usd: lazy_usd!(&p1sd, "p1sd_usd"),
+            p1_5sd_usd: lazy_usd!(&p1_5sd, "p1_5sd_usd"),
+            p2sd_usd: lazy_usd!(&p2sd, "p2sd_usd"),
+            p2_5sd_usd: lazy_usd!(&p2_5sd, "p2_5sd_usd"),
+            p3sd_usd: lazy_usd!(&p3sd, "p3sd_usd"),
+            m0_5sd_usd: lazy_usd!(&m0_5sd, "m0_5sd_usd"),
+            m1sd_usd: lazy_usd!(&m1sd, "m1sd_usd"),
+            m1_5sd_usd: lazy_usd!(&m1_5sd, "m1_5sd_usd"),
+            m2sd_usd: lazy_usd!(&m2sd, "m2sd_usd"),
+            m2_5sd_usd: lazy_usd!(&m2_5sd, "m2_5sd_usd"),
+            m3sd_usd: lazy_usd!(&m3sd, "m3sd_usd"),
+            // Stored band sources
+            sma: sma_vec,
+            p0_5sd,
+            p1sd,
+            p1_5sd,
+            p2sd,
+            p2_5sd,
+            p3sd,
+            m0_5sd,
+            m1sd,
+            m1_5sd,
+            m2sd,
+            m2_5sd,
+            m3sd,
         })
     }
 
@@ -160,7 +197,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
@@ -179,17 +215,15 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             })?;
 
         let sma_opt: Option<&EagerVec<PcoVec<DateIndex, StoredF32>>> = None;
-        self.compute_rest(starting_indexes, exit, sma_opt, source, price_opt)
+        self.compute_rest(starting_indexes, exit, sma_opt, source)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn compute_rest(
         &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
         sma_opt: Option<&impl IterableVec<DateIndex, StoredF32>>,
         source: &impl CollectableVec<DateIndex, StoredF32>,
-        price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
         let sma = sma_opt.unwrap_or_else(|| unsafe { mem::transmute(&self.sma.u().dateindex) });
 
@@ -370,153 +404,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                 Ok(())
             })?;
         }
-
-        let Some(price) = price_opt else {
-            return Ok(());
-        };
-
-        let compute_usd =
-            |usd: &mut ComputedVecsFromDateIndex<Dollars>,
-             mut iter: BoxedVecIterator<DateIndex, StoredF32>| {
-                usd.compute_all(starting_indexes, exit, |vec| {
-                    vec.compute_transform(
-                        starting_indexes.dateindex,
-                        price,
-                        |(i, price, ..)| {
-                            let multiplier = iter.get_unwrap(i);
-                            (i, price * multiplier)
-                        },
-                        exit,
-                    )?;
-                    Ok(())
-                })
-            };
-
-        if self._0sd_usd.is_none() {
-            return Ok(());
-        }
-
-        compute_usd(self._0sd_usd.um(), sma.iter())?;
-        compute_usd(
-            self.p0_5sd_usd.um(),
-            self.p0_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.p1sd_usd.um(),
-            self.p1sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.p1_5sd_usd.um(),
-            self.p1_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.p2sd_usd.um(),
-            self.p2sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.p2_5sd_usd.um(),
-            self.p2_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.p3sd_usd.um(),
-            self.p3sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m0_5sd_usd.um(),
-            self.m0_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m1sd_usd.um(),
-            self.m1sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m1_5sd_usd.um(),
-            self.m1_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m2sd_usd.um(),
-            self.m2sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m2_5sd_usd.um(),
-            self.m2_5sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
-        compute_usd(
-            self.m3sd_usd.um(),
-            self.m3sd
-                .as_ref()
-                .unwrap()
-                .dateindex
-                .as_ref()
-                .unwrap()
-                .iter(),
-        )?;
 
         Ok(())
     }

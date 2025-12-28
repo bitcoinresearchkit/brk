@@ -24,8 +24,8 @@ brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 clap = { version = "4.5.53", features = ["derive", "string"] }
 color-eyre = { workspace = true }
+brk_alloc = { workspace = true }
 log = { workspace = true }
-mimalloc = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }

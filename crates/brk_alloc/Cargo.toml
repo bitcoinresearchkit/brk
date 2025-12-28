@@ -1,0 +1,13 @@
+[package]
+name = "brk_alloc"
+description = "Global allocator and memory utilities for brk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+libmimalloc-sys = { version = "0.1.44", features = ["extended"] }
+log = { workspace = true }
+mimalloc = { version = "0.1.48", features = ["v3"] }

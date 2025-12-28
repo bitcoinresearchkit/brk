@@ -2,11 +2,11 @@ use std::ops::{Add, AddAssign, SubAssign};
 
 use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 /// Current supply state tracking UTXO count and total value
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SupplyState {
     /// Number of unspent transaction outputs
     pub utxo_count: u64,

@@ -7,7 +7,7 @@ use vecdb::{Database, EagerVec, PcoVec};
 
 use crate::grouped::{
     ComputedRatioVecsFromDateIndex, ComputedStandardDeviationVecsFromDateIndex,
-    ComputedVecsFromDateIndex,
+    ComputedVecsFromDateIndex, LazyVecsFromDateIndex,
 };
 
 pub const DB_NAME: &str = "market";
@@ -74,8 +74,8 @@ pub struct Vecs {
     pub indexes_to_price_200w_ema: ComputedRatioVecsFromDateIndex,
     pub indexes_to_price_4y_ema: ComputedRatioVecsFromDateIndex,
 
-    pub indexes_to_price_200d_sma_x2_4: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_200d_sma_x0_8: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_200d_sma_x2_4: LazyVecsFromDateIndex<Dollars>,
+    pub indexes_to_price_200d_sma_x0_8: LazyVecsFromDateIndex<Dollars>,
 
     pub price_1d_ago: ComputedVecsFromDateIndex<Dollars>,
     pub price_1w_ago: ComputedVecsFromDateIndex<Dollars>,

@@ -4,13 +4,13 @@ use std::{
 };
 
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
 use super::{Sats, VSize};
 
 /// Fee rate in sats/vB
-#[derive(Debug, Default, Clone, Copy, Serialize, Pco, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct FeeRate(f64);
 
 impl FeeRate {

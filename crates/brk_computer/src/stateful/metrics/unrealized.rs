@@ -142,19 +142,23 @@ impl UnrealizedMetrics {
         let height_to_supply_in_loss: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version + v0)?;
 
+        let price_source = cfg
+            .price
+            .map(|p| p.chainindexes_to_price_close.height.boxed_clone());
+
         let height_to_supply_in_profit_value = ComputedHeightValueVecs::forced_import(
             cfg.db,
             &cfg.name("supply_in_profit"),
             Source::Vec(height_to_supply_in_profit.boxed_clone()),
             cfg.version + v0,
-            compute_dollars,
+            price_source.clone(),
         )?;
         let height_to_supply_in_loss_value = ComputedHeightValueVecs::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             Source::Vec(height_to_supply_in_loss.boxed_clone()),
             cfg.version + v0,
-            compute_dollars,
+            price_source,
         )?;
 
         Ok(Self {
@@ -341,13 +345,6 @@ impl UnrealizedMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // Compute supply value from sats
-        self.height_to_supply_in_profit_value
-            .compute_rest(price, starting_indexes, exit)?;
-        self.height_to_supply_in_loss_value
-            .compute_rest(price, starting_indexes, exit)?;
-
-        // Compute indexes from dateindex sources
         self.indexes_to_supply_in_profit.compute_rest(
             price,
             starting_indexes,

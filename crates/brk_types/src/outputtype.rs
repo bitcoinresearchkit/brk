@@ -1,13 +1,26 @@
 use bitcoin::{AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
 use brk_error::Error;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
 use crate::AddressBytes;
 
-#[derive(Debug, Clone, Copy, Display, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Display,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Hash,
+)]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 #[repr(u16)]

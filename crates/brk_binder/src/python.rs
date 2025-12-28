@@ -625,6 +625,9 @@ fn field_to_python_type_with_generic_value(
             return format!("{}[{}]", field.rust_type, type_param);
         }
         field.rust_type.clone()
+    } else if field.is_branch() {
+        // Non-pattern branch struct
+        field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         // Leaf with accessor - use value_type as the generic
         format!("{}[{}]", accessor.name, value_type)
@@ -744,7 +747,16 @@ fn generate_tree_class(
                 )
                 .unwrap();
             }
+        } else if field.is_branch() {
+            // Non-pattern branch - instantiate the nested class
+            writeln!(
+                output,
+                "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                field_name_py, py_type, field.rust_type, field.name
+            )
+            .unwrap();
         } else {
+            // Leaf - use MetricNode
             let metric_path = if let TreeNode::Leaf(leaf) = child_node {
                 format!("/{}", leaf.name())
             } else {

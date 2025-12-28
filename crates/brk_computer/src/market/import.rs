@@ -3,12 +3,13 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec, PAGE_SIZE};
+use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, PAGE_SIZE};
 
 use crate::{
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedStandardDeviationVecsFromDateIndex,
-        ComputedVecsFromDateIndex, Source, StandardDeviationVecsOptions, VecBuilderOptions,
+        ComputedVecsFromDateIndex, DollarsTimesTenths, LazyVecsFromDateIndex, Source,
+        StandardDeviationVecsOptions, VecBuilderOptions,
     },
     indexes,
 };
@@ -74,6 +75,7 @@ impl Vecs {
                     version + $v,
                     indexes,
                     StandardDeviationVecsOptions::default(),
+                    None, // No USD conversion for market returns
                 )?
             };
         }
@@ -87,6 +89,25 @@ impl Vecs {
                 EagerVec::forced_import(&db, $name, version + $v)?
             };
         }
+
+        let indexes_to_price_200d_sma = ratio_di!("price_200d_sma");
+        let price_200d_sma_source = indexes_to_price_200d_sma.price.as_ref().unwrap();
+        let indexes_to_price_200d_sma_x2_4 = LazyVecsFromDateIndex::from_computed::<
+            DollarsTimesTenths<24>,
+        >(
+            "price_200d_sma_x2_4",
+            version + v0,
+            price_200d_sma_source.dateindex.as_ref().map(|v| v.boxed_clone()),
+            price_200d_sma_source,
+        );
+        let indexes_to_price_200d_sma_x0_8 = LazyVecsFromDateIndex::from_computed::<
+            DollarsTimesTenths<8>,
+        >(
+            "price_200d_sma_x0_8",
+            version + v0,
+            price_200d_sma_source.dateindex.as_ref().map(|v| v.boxed_clone()),
+            price_200d_sma_source,
+        );
 
         let this = Self {
             height_to_price_ath: eager_h!("price_ath", v0),
@@ -112,7 +133,7 @@ impl Vecs {
             indexes_to_price_55d_sma: ratio_di!("price_55d_sma"),
             indexes_to_price_89d_sma: ratio_di!("price_89d_sma"),
             indexes_to_price_144d_sma: ratio_di!("price_144d_sma"),
-            indexes_to_price_200d_sma: ratio_di!("price_200d_sma"),
+            indexes_to_price_200d_sma,
             indexes_to_price_1y_sma: ratio_di!("price_1y_sma"),
             indexes_to_price_2y_sma: ratio_di!("price_2y_sma"),
             indexes_to_price_200w_sma: ratio_di!("price_200w_sma"),
@@ -247,8 +268,8 @@ impl Vecs {
             dca_class_2016_returns: computed_di!("dca_class_2016_returns"),
             dca_class_2015_returns: computed_di!("dca_class_2015_returns"),
 
-            indexes_to_price_200d_sma_x2_4: computed_di!("price_200d_sma_x2_4"),
-            indexes_to_price_200d_sma_x0_8: computed_di!("price_200d_sma_x0_8"),
+            indexes_to_price_200d_sma_x2_4,
+            indexes_to_price_200d_sma_x0_8,
             dateindex_to_price_true_range: eager_di!("price_true_range", v0),
             dateindex_to_price_true_range_2w_sum: eager_di!("price_true_range_2w_sum", v0),
             indexes_to_price_1w_min: computed_di!("price_1w_min", v1),

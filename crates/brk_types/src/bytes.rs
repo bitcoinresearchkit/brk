@@ -1,6 +1,6 @@
 use derive_deref::{Deref, DerefMut};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
 
 #[derive(
@@ -13,6 +13,7 @@ use vecdb::Bytes;
     PartialOrd,
     Ord,
     Serialize,
+    Deserialize,
     Bytes,
     Hash,
     JsonSchema,
@@ -37,6 +38,7 @@ impl From<&[u8]> for U8x2 {
     PartialOrd,
     Ord,
     Serialize,
+    Deserialize,
     Bytes,
     Hash,
     JsonSchema,
@@ -61,6 +63,7 @@ impl From<&[u8]> for U8x20 {
     PartialOrd,
     Ord,
     Serialize,
+    Deserialize,
     Bytes,
     Hash,
     JsonSchema,
@@ -75,7 +78,20 @@ impl From<&[u8]> for U8x32 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash, Serialize)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Bytes,
+    Hash,
+    Serialize,
+    Deserialize,
+)]
 pub struct U8x33(#[serde(with = "serde_bytes")] [u8; 33]);
 
 impl JsonSchema for U8x33 {
@@ -98,7 +114,20 @@ impl From<&[u8]> for U8x33 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash, Serialize)]
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Bytes,
+    Hash,
+    Serialize,
+    Deserialize,
+)]
 pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
 
 impl JsonSchema for U8x65 {

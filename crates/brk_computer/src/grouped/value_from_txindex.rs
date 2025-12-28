@@ -111,45 +111,6 @@ impl ComputedValueVecsFromTxindex {
         })
     }
 
-    // pub fn compute_all<F>(
-    //     &mut self,
-    //     indexer: &Indexer,
-    //     indexes: &indexes::Vecs,
-    //     price: Option<&marketprice::Vecs>,
-    //     starting_indexes: &Indexes,
-    //     exit: &Exit,
-    //     mut compute: F,
-    // ) -> Result<()>
-    // where
-    //     F: FnMut(
-    //         &mut EagerVec<PcoVec<TxIndex, Sats>>,
-    //         &Indexer,
-    //         &indexes::Vecs,
-    //         &Indexes,
-    //         &Exit,
-    //     ) -> Result<()>,
-    // {
-    //     compute(
-    //         self.sats.txindex.um(),
-    //         indexer,
-    //         indexes,
-    //         starting_indexes,
-    //         exit,
-    //     )?;
-
-    //     let txindex: Option<&PcoVec<TxIndex, Sats>> = None;
-    //     self.compute_rest(
-    //         indexer,
-    //         indexes,
-    //         fetched,
-    //         starting_indexes,
-    //         exit,
-    //         txindex,
-    //     )?;
-
-    //     Ok(())
-    // }
-
     pub fn compute_rest(
         &mut self,
         indexer: &Indexer,
