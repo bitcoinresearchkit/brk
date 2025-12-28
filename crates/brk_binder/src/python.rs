@@ -726,27 +726,13 @@ fn generate_tree_class(
                 .unwrap();
             }
         } else if metadata.field_uses_accessor(field) {
-            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                format!("/{}", leaf.name())
-            } else {
-                format!("{{base_path}}/{}", field.name)
-            };
             let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-            if metric_path.contains("{base_path}") {
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, f'{}')",
-                    field_name_py, py_type, accessor.name, metric_path
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, '{}')",
-                    field_name_py, py_type, accessor.name, metric_path
-                )
-                .unwrap();
-            }
+            writeln!(
+                output,
+                "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                field_name_py, py_type, accessor.name, field.name
+            )
+            .unwrap();
         } else if field.is_branch() {
             // Non-pattern branch - instantiate the nested class
             writeln!(
@@ -756,27 +742,13 @@ fn generate_tree_class(
             )
             .unwrap();
         } else {
-            // Leaf - use MetricNode
-            let metric_path = if let TreeNode::Leaf(leaf) = child_node {
-                format!("/{}", leaf.name())
-            } else {
-                format!("{{base_path}}/{}", field.name)
-            };
-            if metric_path.contains("{base_path}") {
-                writeln!(
-                    output,
-                    "        self.{}: {} = MetricNode(client, f'{}')",
-                    field_name_py, py_type, metric_path
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "        self.{}: {} = MetricNode(client, '{}')",
-                    field_name_py, py_type, metric_path
-                )
-                .unwrap();
-            }
+            // Leaf - use MetricNode with base_path
+            writeln!(
+                output,
+                "        self.{}: {} = MetricNode(client, f'{{base_path}}/{}')",
+                field_name_py, py_type, field.name
+            )
+            .unwrap();
         }
     }
 

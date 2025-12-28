@@ -1,67 +1,70 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, Version};
-use vecdb::{
-    EagerVec, Exit, ImportableVec, IterableCloneableVec, IterableVec, LazyVecFrom1, LazyVecFrom2,
-    Negate, PcoVec,
-};
+use brk_types::{Bitcoin, Dollars, Height, Sats, StoredF32, StoredF64, Version};
+use vecdb::{IterableCloneableVec, LazyVecFrom2};
 
-use crate::{
-    Indexes,
-    grouped::{
-        ComputedVecsFromDateIndex, ComputedVecsFromHeight, LazyVecsFrom2FromDateIndex,
-        LazyVecsFromDateIndex, NegPercentageDollarsF32, NegRatio32, PercentageDollarsF32,
-        PercentageSatsF64, Ratio32, Source, VecBuilderOptions,
-    },
-    indexes,
+use crate::grouped::{
+    LazyVecsFrom2FromDateIndex, NegPercentageDollarsF32, NegRatio32, PercentageBtcF64,
+    PercentageDollarsF32, PercentageSatsF64, Ratio32,
 };
 
 use super::{ImportConfig, SupplyMetrics, UnrealizedMetrics};
 
 /// Relative metrics comparing cohort values to global values.
+/// All `rel_to_` vecs are lazy - computed on-demand from their sources.
 #[derive(Clone, Traversable)]
 pub struct RelativeMetrics {
-    // === Supply Relative to Circulating Supply ===
-    pub indexes_to_supply_rel_to_circulating_supply: Option<ComputedVecsFromHeight<StoredF64>>,
+    // === Supply Relative to Circulating Supply (lazy from global supply) ===
+    pub indexes_to_supply_rel_to_circulating_supply:
+        Option<LazyVecsFrom2FromDateIndex<StoredF64, Sats, Sats>>,
 
-    // === Supply in Profit/Loss Relative to Own Supply ===
-    pub height_to_supply_in_profit_rel_to_own_supply: EagerVec<PcoVec<Height, StoredF64>>,
-    pub height_to_supply_in_loss_rel_to_own_supply: EagerVec<PcoVec<Height, StoredF64>>,
+    // === Supply in Profit/Loss Relative to Own Supply (lazy) ===
+    pub height_to_supply_in_profit_rel_to_own_supply:
+        LazyVecFrom2<Height, StoredF64, Height, Bitcoin, Height, Bitcoin>,
+    pub height_to_supply_in_loss_rel_to_own_supply:
+        LazyVecFrom2<Height, StoredF64, Height, Bitcoin, Height, Bitcoin>,
     pub indexes_to_supply_in_profit_rel_to_own_supply:
         LazyVecsFrom2FromDateIndex<StoredF64, Sats, Sats>,
     pub indexes_to_supply_in_loss_rel_to_own_supply:
         LazyVecsFrom2FromDateIndex<StoredF64, Sats, Sats>,
 
-    // === Supply in Profit/Loss Relative to Circulating Supply ===
+    // === Supply in Profit/Loss Relative to Circulating Supply (lazy from global supply) ===
     pub height_to_supply_in_profit_rel_to_circulating_supply:
-        Option<EagerVec<PcoVec<Height, StoredF64>>>,
+        Option<LazyVecFrom2<Height, StoredF64, Height, Bitcoin, Height, Bitcoin>>,
     pub height_to_supply_in_loss_rel_to_circulating_supply:
-        Option<EagerVec<PcoVec<Height, StoredF64>>>,
+        Option<LazyVecFrom2<Height, StoredF64, Height, Bitcoin, Height, Bitcoin>>,
     pub indexes_to_supply_in_profit_rel_to_circulating_supply:
-        Option<ComputedVecsFromDateIndex<StoredF64>>,
+        Option<LazyVecsFrom2FromDateIndex<StoredF64, Sats, Sats>>,
     pub indexes_to_supply_in_loss_rel_to_circulating_supply:
-        Option<ComputedVecsFromDateIndex<StoredF64>>,
+        Option<LazyVecsFrom2FromDateIndex<StoredF64, Sats, Sats>>,
 
-    // === Unrealized vs Market Cap ===
-    pub height_to_unrealized_profit_rel_to_market_cap: EagerVec<PcoVec<Height, StoredF32>>,
-    pub height_to_unrealized_loss_rel_to_market_cap: EagerVec<PcoVec<Height, StoredF32>>,
+    // === Unrealized vs Market Cap (lazy from global market cap) ===
+    pub height_to_unrealized_profit_rel_to_market_cap:
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
+    pub height_to_unrealized_loss_rel_to_market_cap:
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub height_to_neg_unrealized_loss_rel_to_market_cap:
-        LazyVecFrom1<Height, StoredF32, Height, StoredF32>,
-    pub height_to_net_unrealized_pnl_rel_to_market_cap: EagerVec<PcoVec<Height, StoredF32>>,
-    pub indexes_to_unrealized_profit_rel_to_market_cap: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_unrealized_loss_rel_to_market_cap: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_neg_unrealized_loss_rel_to_market_cap: LazyVecsFromDateIndex<StoredF32>,
-    pub indexes_to_net_unrealized_pnl_rel_to_market_cap: ComputedVecsFromDateIndex<StoredF32>,
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
+    pub height_to_net_unrealized_pnl_rel_to_market_cap:
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
+    pub indexes_to_unrealized_profit_rel_to_market_cap:
+        Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
+    pub indexes_to_unrealized_loss_rel_to_market_cap:
+        Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
+    pub indexes_to_neg_unrealized_loss_rel_to_market_cap:
+        Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
+    pub indexes_to_net_unrealized_pnl_rel_to_market_cap:
+        Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
 
-    // === Unrealized vs Own Market Cap (optional) ===
+    // === Unrealized vs Own Market Cap (lazy) ===
     pub height_to_unrealized_profit_rel_to_own_market_cap:
-        Option<EagerVec<PcoVec<Height, StoredF32>>>,
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub height_to_unrealized_loss_rel_to_own_market_cap:
-        Option<EagerVec<PcoVec<Height, StoredF32>>>,
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub height_to_neg_unrealized_loss_rel_to_own_market_cap:
-        Option<LazyVecFrom1<Height, StoredF32, Height, StoredF32>>,
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub height_to_net_unrealized_pnl_rel_to_own_market_cap:
-        Option<EagerVec<PcoVec<Height, StoredF32>>>,
+        Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub indexes_to_unrealized_profit_rel_to_own_market_cap:
         Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
     pub indexes_to_unrealized_loss_rel_to_own_market_cap:
@@ -71,7 +74,7 @@ pub struct RelativeMetrics {
     pub indexes_to_net_unrealized_pnl_rel_to_own_market_cap:
         Option<LazyVecsFrom2FromDateIndex<StoredF32, Dollars, Dollars>>,
 
-    // === Unrealized vs Own Total Unrealized PnL (optional) ===
+    // === Unrealized vs Own Total Unrealized PnL (lazy) ===
     pub height_to_unrealized_profit_rel_to_own_total_unrealized_pnl:
         Option<LazyVecFrom2<Height, StoredF32, Height, Dollars, Height, Dollars>>,
     pub height_to_unrealized_loss_rel_to_own_total_unrealized_pnl:
@@ -92,176 +95,66 @@ pub struct RelativeMetrics {
 
 impl RelativeMetrics {
     /// Import relative metrics from database.
+    ///
+    /// All `rel_to_` metrics are lazy - computed on-demand from their sources.
+    /// `all_supply` provides global sources for `*_rel_to_market_cap` and `*_rel_to_circulating_supply`.
     pub fn forced_import(
         cfg: &ImportConfig,
         unrealized: &UnrealizedMetrics,
         supply: &SupplyMetrics,
+        all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let v0 = Version::ZERO;
         let v1 = Version::ONE;
         let v2 = Version::new(2);
         let extended = cfg.extended();
         let compute_rel_to_all = cfg.compute_rel_to_all();
-        let last = VecBuilderOptions::default().add_last();
 
-        // Create sources for lazy neg vecs
-        let height_to_unrealized_loss_rel_to_market_cap: EagerVec<PcoVec<Height, StoredF32>> =
-            EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("unrealized_loss_rel_to_market_cap"),
-                cfg.version + v0,
-            )?;
+        // Global sources from "all" cohort
+        let global_supply_sats = all_supply.map(|s| &s.indexes_to_supply.sats);
+        let global_supply_btc = all_supply.map(|s| &s.height_to_supply_value.bitcoin);
+        let global_market_cap = all_supply.and_then(|s| s.indexes_to_supply.dollars.as_ref());
+        let global_market_cap_height =
+            all_supply.and_then(|s| s.height_to_supply_value.dollars.as_ref());
 
-        let height_to_neg_unrealized_loss_rel_to_market_cap = LazyVecFrom1::transformed::<Negate>(
-            &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
-            cfg.version + v0,
-            height_to_unrealized_loss_rel_to_market_cap.boxed_clone(),
-        );
-
-        let indexes_to_unrealized_loss_rel_to_market_cap =
-            ComputedVecsFromDateIndex::forced_import(
-                cfg.db,
-                &cfg.name("unrealized_loss_rel_to_market_cap"),
-                Source::Compute,
-                cfg.version + v1,
-                cfg.indexes,
-                last,
-            )?;
-
-        let indexes_to_neg_unrealized_loss_rel_to_market_cap =
-            LazyVecsFromDateIndex::from_computed::<Negate>(
-                &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
-                cfg.version + v1,
-                indexes_to_unrealized_loss_rel_to_market_cap
-                    .dateindex
-                    .as_ref()
-                    .map(|v| v.boxed_clone()),
-                &indexes_to_unrealized_loss_rel_to_market_cap,
-            );
-
-        // Optional: own market cap vecs
-        let height_to_unrealized_loss_rel_to_own_market_cap: Option<
-            EagerVec<PcoVec<Height, StoredF32>>,
-        > = (extended && compute_rel_to_all)
-            .then(|| {
-                EagerVec::forced_import(
-                    cfg.db,
-                    &cfg.name("unrealized_loss_rel_to_own_market_cap"),
-                    cfg.version + v1,
-                )
-            })
-            .transpose()?;
-
-        let height_to_neg_unrealized_loss_rel_to_own_market_cap =
-            height_to_unrealized_loss_rel_to_own_market_cap
-                .as_ref()
-                .map(|source| {
-                    LazyVecFrom1::transformed::<Negate>(
-                        &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
-                        cfg.version + v1,
-                        source.boxed_clone(),
-                    )
-                });
-
-        // Optional: own total unrealized pnl vecs (lazy from unrealized sources)
-        let height_to_unrealized_profit_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecFrom2::transformed::<Ratio32>(
-                &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v0,
-                unrealized.height_to_unrealized_profit.boxed_clone(),
-                unrealized.height_to_total_unrealized_pnl.boxed_clone(),
-            )
-        });
-
-        let height_to_unrealized_loss_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecFrom2::transformed::<Ratio32>(
-                &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v0,
-                unrealized.height_to_unrealized_loss.boxed_clone(),
-                unrealized.height_to_total_unrealized_pnl.boxed_clone(),
-            )
-        });
-
-        let height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecFrom2::transformed::<NegRatio32>(
-                &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v0,
-                unrealized.height_to_unrealized_loss.boxed_clone(),
-                unrealized.height_to_total_unrealized_pnl.boxed_clone(),
-            )
-        });
-
-        let height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecFrom2::transformed::<Ratio32>(
-                &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v1,
-                unrealized.height_to_net_unrealized_pnl.boxed_clone(),
-                unrealized.height_to_total_unrealized_pnl.boxed_clone(),
-            )
-        });
-
-        let indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
-                &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v1,
-                &unrealized.indexes_to_unrealized_profit,
-                &unrealized.indexes_to_total_unrealized_pnl,
-            )
-        });
-
-        let indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
-                &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v1,
-                &unrealized.indexes_to_unrealized_loss,
-                &unrealized.indexes_to_total_unrealized_pnl,
-            )
-        });
-
-        let indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecsFrom2FromDateIndex::from_computed::<NegRatio32>(
-                &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v1,
-                &unrealized.indexes_to_unrealized_loss,
-                &unrealized.indexes_to_total_unrealized_pnl,
-            )
-        });
-
-        let indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl = extended.then(|| {
-            LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
-                &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
-                cfg.version + v1,
-                &unrealized.indexes_to_net_unrealized_pnl,
-                &unrealized.indexes_to_total_unrealized_pnl,
-            )
-        });
+        // Own market cap source
+        let own_market_cap = supply.indexes_to_supply.dollars.as_ref();
+        let own_market_cap_height = supply.height_to_supply_value.dollars.as_ref();
 
         Ok(Self {
-            // === Supply Relative to Circulating Supply ===
-            indexes_to_supply_rel_to_circulating_supply: compute_rel_to_all
-                .then(|| {
-                    ComputedVecsFromHeight::forced_import(
-                        cfg.db,
-                        &cfg.name("supply_rel_to_circulating_supply"),
-                        Source::Compute,
-                        cfg.version + v1,
-                        cfg.indexes,
-                        last,
-                    )
-                })
-                .transpose()?,
+            // === Supply Relative to Circulating Supply (lazy from global supply) ===
+            indexes_to_supply_rel_to_circulating_supply: (compute_rel_to_all
+                && global_supply_sats.is_some())
+            .then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageSatsF64>(
+                    &cfg.name("supply_rel_to_circulating_supply"),
+                    cfg.version + v1,
+                    &supply.indexes_to_supply.sats,
+                    global_supply_sats.unwrap(),
+                )
+            }),
 
-            // === Supply in Profit/Loss Relative to Own Supply ===
-            height_to_supply_in_profit_rel_to_own_supply: EagerVec::forced_import(
-                cfg.db,
+            // === Supply in Profit/Loss Relative to Own Supply (lazy) ===
+            height_to_supply_in_profit_rel_to_own_supply: LazyVecFrom2::transformed::<
+                PercentageBtcF64,
+            >(
                 &cfg.name("supply_in_profit_rel_to_own_supply"),
                 cfg.version + v1,
-            )?,
-            height_to_supply_in_loss_rel_to_own_supply: EagerVec::forced_import(
-                cfg.db,
+                unrealized
+                    .height_to_supply_in_profit_value
+                    .bitcoin
+                    .boxed_clone(),
+                supply.height_to_supply_value.bitcoin.boxed_clone(),
+            ),
+            height_to_supply_in_loss_rel_to_own_supply: LazyVecFrom2::transformed::<PercentageBtcF64>(
                 &cfg.name("supply_in_loss_rel_to_own_supply"),
                 cfg.version + v1,
-            )?,
+                unrealized
+                    .height_to_supply_in_loss_value
+                    .bitcoin
+                    .boxed_clone(),
+                supply.height_to_supply_value.bitcoin.boxed_clone(),
+            ),
             indexes_to_supply_in_profit_rel_to_own_supply:
                 LazyVecsFrom2FromDateIndex::from_computed::<PercentageSatsF64>(
                     &cfg.name("supply_in_profit_rel_to_own_supply"),
@@ -278,412 +171,283 @@ impl RelativeMetrics {
                 &supply.indexes_to_supply.sats,
             ),
 
-            // === Supply in Profit/Loss Relative to Circulating Supply ===
-            height_to_supply_in_profit_rel_to_circulating_supply: compute_rel_to_all
-                .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("supply_in_profit_rel_to_circulating_supply"),
-                        cfg.version + v1,
-                    )
-                })
-                .transpose()?,
-            height_to_supply_in_loss_rel_to_circulating_supply: compute_rel_to_all
-                .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("supply_in_loss_rel_to_circulating_supply"),
-                        cfg.version + v1,
-                    )
-                })
-                .transpose()?,
-            indexes_to_supply_in_profit_rel_to_circulating_supply: compute_rel_to_all
-                .then(|| {
-                    ComputedVecsFromDateIndex::forced_import(
-                        cfg.db,
-                        &cfg.name("supply_in_profit_rel_to_circulating_supply"),
-                        Source::Compute,
-                        cfg.version + v1,
-                        cfg.indexes,
-                        last,
-                    )
-                })
-                .transpose()?,
-            indexes_to_supply_in_loss_rel_to_circulating_supply: compute_rel_to_all
-                .then(|| {
-                    ComputedVecsFromDateIndex::forced_import(
-                        cfg.db,
-                        &cfg.name("supply_in_loss_rel_to_circulating_supply"),
-                        Source::Compute,
-                        cfg.version + v1,
-                        cfg.indexes,
-                        last,
-                    )
-                })
-                .transpose()?,
+            // === Supply in Profit/Loss Relative to Circulating Supply (lazy from global supply) ===
+            height_to_supply_in_profit_rel_to_circulating_supply: (compute_rel_to_all
+                && global_supply_btc.is_some())
+            .then(|| {
+                LazyVecFrom2::transformed::<PercentageBtcF64>(
+                    &cfg.name("supply_in_profit_rel_to_circulating_supply"),
+                    cfg.version + v1,
+                    unrealized
+                        .height_to_supply_in_profit_value
+                        .bitcoin
+                        .boxed_clone(),
+                    global_supply_btc.unwrap().boxed_clone(),
+                )
+            }),
+            height_to_supply_in_loss_rel_to_circulating_supply: (compute_rel_to_all
+                && global_supply_btc.is_some())
+            .then(|| {
+                LazyVecFrom2::transformed::<PercentageBtcF64>(
+                    &cfg.name("supply_in_loss_rel_to_circulating_supply"),
+                    cfg.version + v1,
+                    unrealized
+                        .height_to_supply_in_loss_value
+                        .bitcoin
+                        .boxed_clone(),
+                    global_supply_btc.unwrap().boxed_clone(),
+                )
+            }),
+            indexes_to_supply_in_profit_rel_to_circulating_supply: (compute_rel_to_all
+                && global_supply_sats.is_some())
+            .then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageSatsF64>(
+                    &cfg.name("supply_in_profit_rel_to_circulating_supply"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_supply_in_profit.sats,
+                    global_supply_sats.unwrap(),
+                )
+            }),
+            indexes_to_supply_in_loss_rel_to_circulating_supply: (compute_rel_to_all
+                && global_supply_sats.is_some())
+            .then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageSatsF64>(
+                    &cfg.name("supply_in_loss_rel_to_circulating_supply"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_supply_in_loss.sats,
+                    global_supply_sats.unwrap(),
+                )
+            }),
 
-            // === Unrealized vs Market Cap ===
-            height_to_unrealized_profit_rel_to_market_cap: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("unrealized_profit_rel_to_market_cap"),
-                cfg.version + v0,
-            )?,
-            height_to_unrealized_loss_rel_to_market_cap,
-            height_to_neg_unrealized_loss_rel_to_market_cap,
-            height_to_net_unrealized_pnl_rel_to_market_cap: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("net_unrealized_pnl_rel_to_market_cap"),
-                cfg.version + v1,
-            )?,
-            indexes_to_unrealized_profit_rel_to_market_cap:
-                ComputedVecsFromDateIndex::forced_import(
-                    cfg.db,
+            // === Unrealized vs Market Cap (lazy from global market cap) ===
+            height_to_unrealized_profit_rel_to_market_cap: global_market_cap_height.map(|mc| {
+                LazyVecFrom2::transformed::<PercentageDollarsF32>(
                     &cfg.name("unrealized_profit_rel_to_market_cap"),
-                    Source::Compute,
-                    cfg.version + v1,
-                    cfg.indexes,
-                    last,
-                )?,
-            indexes_to_unrealized_loss_rel_to_market_cap,
-            indexes_to_neg_unrealized_loss_rel_to_market_cap,
-            indexes_to_net_unrealized_pnl_rel_to_market_cap:
-                ComputedVecsFromDateIndex::forced_import(
-                    cfg.db,
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_profit.boxed_clone(),
+                    mc.boxed_clone(),
+                )
+            }),
+            height_to_unrealized_loss_rel_to_market_cap: global_market_cap_height.map(|mc| {
+                LazyVecFrom2::transformed::<PercentageDollarsF32>(
+                    &cfg.name("unrealized_loss_rel_to_market_cap"),
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_loss.boxed_clone(),
+                    mc.boxed_clone(),
+                )
+            }),
+            height_to_neg_unrealized_loss_rel_to_market_cap: global_market_cap_height.map(|mc| {
+                LazyVecFrom2::transformed::<NegPercentageDollarsF32>(
+                    &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_loss.boxed_clone(),
+                    mc.boxed_clone(),
+                )
+            }),
+            height_to_net_unrealized_pnl_rel_to_market_cap: global_market_cap_height.map(|mc| {
+                LazyVecFrom2::transformed::<PercentageDollarsF32>(
                     &cfg.name("net_unrealized_pnl_rel_to_market_cap"),
-                    Source::Compute,
                     cfg.version + v1,
-                    cfg.indexes,
-                    last,
-                )?,
+                    unrealized.height_to_net_unrealized_pnl.boxed_clone(),
+                    mc.boxed_clone(),
+                )
+            }),
+            indexes_to_unrealized_profit_rel_to_market_cap: global_market_cap.map(|mc| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                    &cfg.name("unrealized_profit_rel_to_market_cap"),
+                    cfg.version + v2,
+                    &unrealized.indexes_to_unrealized_profit,
+                    mc,
+                )
+            }),
+            indexes_to_unrealized_loss_rel_to_market_cap: global_market_cap.map(|mc| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                    &cfg.name("unrealized_loss_rel_to_market_cap"),
+                    cfg.version + v2,
+                    &unrealized.indexes_to_unrealized_loss,
+                    mc,
+                )
+            }),
+            indexes_to_neg_unrealized_loss_rel_to_market_cap: global_market_cap.map(|mc| {
+                LazyVecsFrom2FromDateIndex::from_computed::<NegPercentageDollarsF32>(
+                    &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
+                    cfg.version + v2,
+                    &unrealized.indexes_to_unrealized_loss,
+                    mc,
+                )
+            }),
+            indexes_to_net_unrealized_pnl_rel_to_market_cap: global_market_cap.map(|mc| {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                    &cfg.name("net_unrealized_pnl_rel_to_market_cap"),
+                    cfg.version + v2,
+                    &unrealized.indexes_to_net_unrealized_pnl,
+                    mc,
+                )
+            }),
 
-            // === Unrealized vs Own Market Cap (optional) ===
+            // === Unrealized vs Own Market Cap (lazy, optional) ===
             height_to_unrealized_profit_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("unrealized_profit_rel_to_own_market_cap"),
-                        cfg.version + v1,
-                    )
+                    own_market_cap_height.map(|mc| {
+                        LazyVecFrom2::transformed::<PercentageDollarsF32>(
+                            &cfg.name("unrealized_profit_rel_to_own_market_cap"),
+                            cfg.version + v1,
+                            unrealized.height_to_unrealized_profit.boxed_clone(),
+                            mc.boxed_clone(),
+                        )
+                    })
                 })
-                .transpose()?,
-            height_to_unrealized_loss_rel_to_own_market_cap,
-            height_to_neg_unrealized_loss_rel_to_own_market_cap,
+                .flatten(),
+            height_to_unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
+                .then(|| {
+                    own_market_cap_height.map(|mc| {
+                        LazyVecFrom2::transformed::<PercentageDollarsF32>(
+                            &cfg.name("unrealized_loss_rel_to_own_market_cap"),
+                            cfg.version + v1,
+                            unrealized.height_to_unrealized_loss.boxed_clone(),
+                            mc.boxed_clone(),
+                        )
+                    })
+                })
+                .flatten(),
+            height_to_neg_unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
+                .then(|| {
+                    own_market_cap_height.map(|mc| {
+                        LazyVecFrom2::transformed::<NegPercentageDollarsF32>(
+                            &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
+                            cfg.version + v1,
+                            unrealized.height_to_unrealized_loss.boxed_clone(),
+                            mc.boxed_clone(),
+                        )
+                    })
+                })
+                .flatten(),
             height_to_net_unrealized_pnl_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
-                        cfg.version + v2,
-                    )
+                    own_market_cap_height.map(|mc| {
+                        LazyVecFrom2::transformed::<PercentageDollarsF32>(
+                            &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
+                            cfg.version + v2,
+                            unrealized.height_to_net_unrealized_pnl.boxed_clone(),
+                            mc.boxed_clone(),
+                        )
+                    })
                 })
-                .transpose()?,
+                .flatten(),
             indexes_to_unrealized_profit_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    supply
-                        .indexes_to_supply
-                        .dollars
-                        .as_ref()
-                        .map(|supply_dollars| {
-                            LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
-                                &cfg.name("unrealized_profit_rel_to_own_market_cap"),
-                                cfg.version + v2,
-                                &unrealized.indexes_to_unrealized_profit,
-                                supply_dollars,
-                            )
-                        })
+                    own_market_cap.map(|mc| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                            &cfg.name("unrealized_profit_rel_to_own_market_cap"),
+                            cfg.version + v2,
+                            &unrealized.indexes_to_unrealized_profit,
+                            mc,
+                        )
+                    })
                 })
                 .flatten(),
             indexes_to_unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    supply
-                        .indexes_to_supply
-                        .dollars
-                        .as_ref()
-                        .map(|supply_dollars| {
-                            LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
-                                &cfg.name("unrealized_loss_rel_to_own_market_cap"),
-                                cfg.version + v2,
-                                &unrealized.indexes_to_unrealized_loss,
-                                supply_dollars,
-                            )
-                        })
+                    own_market_cap.map(|mc| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                            &cfg.name("unrealized_loss_rel_to_own_market_cap"),
+                            cfg.version + v2,
+                            &unrealized.indexes_to_unrealized_loss,
+                            mc,
+                        )
+                    })
                 })
                 .flatten(),
             indexes_to_neg_unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    supply
-                        .indexes_to_supply
-                        .dollars
-                        .as_ref()
-                        .map(|supply_dollars| {
-                            LazyVecsFrom2FromDateIndex::from_computed::<NegPercentageDollarsF32>(
-                                &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
-                                cfg.version + v2,
-                                &unrealized.indexes_to_unrealized_loss,
-                                supply_dollars,
-                            )
-                        })
+                    own_market_cap.map(|mc| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<NegPercentageDollarsF32>(
+                            &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
+                            cfg.version + v2,
+                            &unrealized.indexes_to_unrealized_loss,
+                            mc,
+                        )
+                    })
                 })
                 .flatten(),
             indexes_to_net_unrealized_pnl_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
-                    supply
-                        .indexes_to_supply
-                        .dollars
-                        .as_ref()
-                        .map(|supply_dollars| {
-                            LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
-                                &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
-                                cfg.version + v2,
-                                &unrealized.indexes_to_net_unrealized_pnl,
-                                supply_dollars,
-                            )
-                        })
+                    own_market_cap.map(|mc| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<PercentageDollarsF32>(
+                            &cfg.name("net_unrealized_pnl_rel_to_own_market_cap"),
+                            cfg.version + v2,
+                            &unrealized.indexes_to_net_unrealized_pnl,
+                            mc,
+                        )
+                    })
                 })
                 .flatten(),
 
-            // === Unrealized vs Own Total Unrealized PnL (optional) ===
-            height_to_unrealized_profit_rel_to_own_total_unrealized_pnl,
-            height_to_unrealized_loss_rel_to_own_total_unrealized_pnl,
-            height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl,
-            height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl,
-            indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl,
-            indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl,
-            indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl,
-            indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl,
+            // === Unrealized vs Own Total Unrealized PnL (lazy, optional) ===
+            height_to_unrealized_profit_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecFrom2::transformed::<Ratio32>(
+                    &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_profit.boxed_clone(),
+                    unrealized.height_to_total_unrealized_pnl.boxed_clone(),
+                )
+            }),
+            height_to_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecFrom2::transformed::<Ratio32>(
+                    &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_loss.boxed_clone(),
+                    unrealized.height_to_total_unrealized_pnl.boxed_clone(),
+                )
+            }),
+            height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecFrom2::transformed::<NegRatio32>(
+                    &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v0,
+                    unrealized.height_to_unrealized_loss.boxed_clone(),
+                    unrealized.height_to_total_unrealized_pnl.boxed_clone(),
+                )
+            }),
+            height_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecFrom2::transformed::<Ratio32>(
+                    &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v1,
+                    unrealized.height_to_net_unrealized_pnl.boxed_clone(),
+                    unrealized.height_to_total_unrealized_pnl.boxed_clone(),
+                )
+            }),
+            indexes_to_unrealized_profit_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
+                    &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_unrealized_profit,
+                    &unrealized.indexes_to_total_unrealized_pnl,
+                )
+            }),
+            indexes_to_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
+                    &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_unrealized_loss,
+                    &unrealized.indexes_to_total_unrealized_pnl,
+                )
+            }),
+            indexes_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<NegRatio32>(
+                    &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_unrealized_loss,
+                    &unrealized.indexes_to_total_unrealized_pnl,
+                )
+            }),
+            indexes_to_net_unrealized_pnl_rel_to_own_total_unrealized_pnl: extended.then(|| {
+                LazyVecsFrom2FromDateIndex::from_computed::<Ratio32>(
+                    &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
+                    cfg.version + v1,
+                    &unrealized.indexes_to_net_unrealized_pnl,
+                    &unrealized.indexes_to_total_unrealized_pnl,
+                )
+            }),
         })
-    }
-
-    /// Second phase of computed metrics (ratios, relative values).
-    ///
-    /// This computes percentage ratios comparing cohort metrics to global metrics:
-    /// - Supply relative to circulating supply
-    /// - Supply in profit/loss relative to own supply and circulating supply
-    /// - Unrealized profit/loss relative to market cap, total unrealized
-    ///
-    /// See `stateful/common/compute.rs` lines 800-1200 for the full original implementation.
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2(
-        &mut self,
-        indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
-        height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
-        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        supply: &SupplyMetrics,
-        unrealized: Option<&super::UnrealizedMetrics>,
-        exit: &Exit,
-    ) -> Result<()> {
-        // === Supply Relative to Circulating Supply ===
-        if let Some(v) = self.indexes_to_supply_rel_to_circulating_supply.as_mut() {
-            v.compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_percentage(
-                    starting_indexes.height,
-                    &supply.height_to_supply_value.bitcoin,
-                    height_to_supply,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        }
-
-        // === Supply in Profit/Loss Relative to Own Supply ===
-        // Note: indexes_to_* versions are now lazy (LazyVecsFrom2FromDateIndex)
-        if let Some(unrealized) = unrealized {
-            self.height_to_supply_in_profit_rel_to_own_supply
-                .compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_supply_in_profit_value.bitcoin,
-                    &supply.height_to_supply_value.bitcoin,
-                    exit,
-                )?;
-            self.height_to_supply_in_loss_rel_to_own_supply
-                .compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_supply_in_loss_value.bitcoin,
-                    &supply.height_to_supply_value.bitcoin,
-                    exit,
-                )?;
-        }
-
-        // === Supply in Profit/Loss Relative to Circulating Supply ===
-        if let (Some(unrealized), Some(v)) = (
-            unrealized,
-            self.height_to_supply_in_profit_rel_to_circulating_supply
-                .as_mut(),
-        ) {
-            v.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_supply_in_profit_value.bitcoin,
-                height_to_supply,
-                exit,
-            )?;
-        }
-        if let (Some(unrealized), Some(v)) = (
-            unrealized,
-            self.height_to_supply_in_loss_rel_to_circulating_supply
-                .as_mut(),
-        ) {
-            v.compute_percentage(
-                starting_indexes.height,
-                &unrealized.height_to_supply_in_loss_value.bitcoin,
-                height_to_supply,
-                exit,
-            )?;
-        }
-
-        // === Unrealized vs Market Cap ===
-        if let (Some(unrealized), Some(height_to_mc)) = (unrealized, height_to_market_cap) {
-            self.height_to_unrealized_profit_rel_to_market_cap
-                .compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_unrealized_profit,
-                    height_to_mc,
-                    exit,
-                )?;
-            self.height_to_unrealized_loss_rel_to_market_cap
-                .compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_unrealized_loss,
-                    height_to_mc,
-                    exit,
-                )?;
-            self.height_to_net_unrealized_pnl_rel_to_market_cap
-                .compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_net_unrealized_pnl,
-                    height_to_mc,
-                    exit,
-                )?;
-        }
-
-        if let Some(dateindex_to_mc) = dateindex_to_market_cap
-            && let Some(unrealized) = unrealized
-        {
-            self.indexes_to_unrealized_profit_rel_to_market_cap
-                .compute_all(starting_indexes, exit, |v| {
-                    v.compute_percentage(
-                        starting_indexes.dateindex,
-                        &unrealized.dateindex_to_unrealized_profit,
-                        dateindex_to_mc,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-            self.indexes_to_unrealized_loss_rel_to_market_cap
-                .compute_all(starting_indexes, exit, |v| {
-                    v.compute_percentage(
-                        starting_indexes.dateindex,
-                        &unrealized.dateindex_to_unrealized_loss,
-                        dateindex_to_mc,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-        }
-
-        if let Some(dateindex_to_mc) = dateindex_to_market_cap
-            && let Some(unrealized) = unrealized
-            && let Some(dateindex_vec) = unrealized.indexes_to_net_unrealized_pnl.dateindex.as_ref()
-        {
-            self.indexes_to_net_unrealized_pnl_rel_to_market_cap
-                .compute_all(starting_indexes, exit, |v| {
-                    v.compute_percentage(
-                        starting_indexes.dateindex,
-                        dateindex_vec,
-                        dateindex_to_mc,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-        }
-
-        // === Supply in Profit/Loss Relative to Circulating Supply (indexes) ===
-        if let Some(v) = self
-            .indexes_to_supply_in_profit_rel_to_circulating_supply
-            .as_mut()
-            && let Some(unrealized) = unrealized
-            && let Some(dateindex_vec) = unrealized
-                .indexes_to_supply_in_profit
-                .bitcoin
-                .dateindex
-                .as_ref()
-        {
-            v.compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    dateindex_vec,
-                    dateindex_to_supply,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        }
-
-        if let Some(v) = self
-            .indexes_to_supply_in_loss_rel_to_circulating_supply
-            .as_mut()
-            && let Some(unrealized) = unrealized
-            && let Some(dateindex_vec) = unrealized
-                .indexes_to_supply_in_loss
-                .bitcoin
-                .dateindex
-                .as_ref()
-        {
-            v.compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    dateindex_vec,
-                    dateindex_to_supply,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        }
-
-        // === Unrealized vs Own Market Cap ===
-        // own_market_cap = supply_value.dollars
-        // Note: indexes_to_* versions are now lazy (LazyVecsFrom2FromDateIndex)
-        if let Some(unrealized) = unrealized {
-            if let Some(v) = self
-                .height_to_unrealized_profit_rel_to_own_market_cap
-                .as_mut()
-                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
-            {
-                v.compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_unrealized_profit,
-                    supply_dollars,
-                    exit,
-                )?;
-            }
-            if let Some(v) = self
-                .height_to_unrealized_loss_rel_to_own_market_cap
-                .as_mut()
-                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
-            {
-                v.compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_unrealized_loss,
-                    supply_dollars,
-                    exit,
-                )?;
-            }
-            if let Some(v) = self
-                .height_to_net_unrealized_pnl_rel_to_own_market_cap
-                .as_mut()
-                && let Some(supply_dollars) = supply.height_to_supply_value.dollars.as_ref()
-            {
-                v.compute_percentage(
-                    starting_indexes.height,
-                    &unrealized.height_to_net_unrealized_pnl,
-                    supply_dollars,
-                    exit,
-                )?;
-            }
-        }
-
-        Ok(())
     }
 }

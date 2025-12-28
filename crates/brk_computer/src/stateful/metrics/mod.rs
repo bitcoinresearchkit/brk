@@ -50,7 +50,11 @@ pub struct CohortMetrics {
 
 impl CohortMetrics {
     /// Import all metrics from database.
-    pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+    ///
+    /// `all_supply` is the supply metrics from the "all" cohort, used as global
+    /// sources for `*_rel_to_market_cap` and `*_rel_to_circulating_supply` ratios.
+    /// Pass `None` for the "all" cohort itself.
+    pub fn forced_import(cfg: &ImportConfig, all_supply: Option<&SupplyMetrics>) -> Result<Self> {
         let compute_dollars = cfg.compute_dollars();
 
         let supply = SupplyMetrics::forced_import(cfg)?;
@@ -61,7 +65,7 @@ impl CohortMetrics {
 
         let relative = unrealized
             .as_ref()
-            .map(|u| RelativeMetrics::forced_import(cfg, u, &supply))
+            .map(|u| RelativeMetrics::forced_import(cfg, u, &supply, all_supply))
             .transpose()?;
 
         Ok(Self {
@@ -290,7 +294,6 @@ impl CohortMetrics {
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -303,20 +306,6 @@ impl CohortMetrics {
                 height_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
-                exit,
-            )?;
-        }
-
-        if let Some(relative) = self.relative.as_mut() {
-            relative.compute_rest_part2(
-                indexes,
-                starting_indexes,
-                height_to_supply,
-                dateindex_to_supply,
-                height_to_market_cap,
-                dateindex_to_market_cap,
-                &self.supply,
-                self.unrealized.as_ref(),
                 exit,
             )?;
         }

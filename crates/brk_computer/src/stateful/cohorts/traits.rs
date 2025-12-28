@@ -61,7 +61,6 @@ pub trait CohortVecs: DynCohortVecs {
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,

@@ -51,7 +51,10 @@ impl<'a> ComputeContext<'a> {
 
     /// Get price at height (None if no price data or height out of range).
     pub fn price_at(&self, height: Height) -> Option<Dollars> {
-        self.height_to_price.as_ref()?.get(height.to_usize()).copied()
+        self.height_to_price
+            .as_ref()?
+            .get(height.to_usize())
+            .copied()
     }
 
     /// Get timestamp at height.

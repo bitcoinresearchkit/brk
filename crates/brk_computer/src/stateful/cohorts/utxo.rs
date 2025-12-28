@@ -12,7 +12,7 @@ use crate::{
     stateful::{CohortVecs, DynCohortVecs, states::UTXOCohortState},
 };
 
-use super::super::metrics::{CohortMetrics, ImportConfig};
+use super::super::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
 
 /// UTXO cohort with metrics and optional runtime state.
 #[derive(Clone, Traversable)]
@@ -31,6 +31,10 @@ pub struct UTXOCohortVecs {
 
 impl UTXOCohortVecs {
     /// Import UTXO cohort from database.
+    ///
+    /// `all_supply` is the supply metrics from the "all" cohort, used as global
+    /// sources for `*_rel_to_market_cap` ratios. Pass `None` for the "all" cohort itself.
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
         filter: Filter,
@@ -39,6 +43,7 @@ impl UTXOCohortVecs {
         price: Option<&price::Vecs>,
         states_path: &Path,
         state_level: StateLevel,
+        all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
         let full_name = filter.to_full_name(CohortContext::Utxo);
@@ -65,7 +70,7 @@ impl UTXOCohortVecs {
                 None
             },
 
-            metrics: CohortMetrics::forced_import(&cfg)?,
+            metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
         })
     }
 
@@ -233,7 +238,6 @@ impl CohortVecs for UTXOCohortVecs {
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -243,7 +247,6 @@ impl CohortVecs for UTXOCohortVecs {
             price,
             starting_indexes,
             height_to_supply,
-            dateindex_to_supply,
             height_to_market_cap,
             dateindex_to_market_cap,
             exit,

@@ -13,7 +13,7 @@ use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
 
-use super::{AddressCohortVecs, CohortVecs};
+use super::{super::metrics::SupplyMetrics, AddressCohortVecs, CohortVecs};
 
 const VERSION: Version = Version::new(0);
 
@@ -23,19 +23,23 @@ pub struct AddressCohorts(AddressGroups<AddressCohortVecs>);
 
 impl AddressCohorts {
     /// Import all Address cohorts from database.
+    ///
+    /// `all_supply` is the supply metrics from the UTXO "all" cohort, used as global
+    /// sources for `*_rel_to_market_cap` ratios.
     pub fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: &Path,
+        all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let v = version + VERSION + Version::ZERO;
 
         // Helper to create a cohort - only amount_range cohorts have state
         let create = |filter: Filter, has_state: bool| -> Result<AddressCohortVecs> {
             let states_path = if has_state { Some(states_path) } else { None };
-            AddressCohortVecs::forced_import(db, filter, v, indexes, price, states_path)
+            AddressCohortVecs::forced_import(db, filter, v, indexes, price, states_path, all_supply)
         };
 
         let full = |f: Filter| create(f, true);
@@ -183,20 +187,18 @@ impl AddressCohorts {
 
     /// Second phase of post-processing: compute relative metrics.
     #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<S, D, HM, DM>(
+    pub fn compute_rest_part2<S, HM, DM>(
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &S,
-        dateindex_to_supply: &D,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,
         exit: &Exit,
     ) -> Result<()>
     where
         S: IterableVec<Height, Bitcoin> + Sync,
-        D: IterableVec<DateIndex, Bitcoin> + Sync,
         HM: IterableVec<Height, Dollars> + Sync,
         DM: IterableVec<DateIndex, Dollars> + Sync,
     {
@@ -206,7 +208,6 @@ impl AddressCohorts {
                 price,
                 starting_indexes,
                 height_to_supply,
-                dateindex_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
                 exit,

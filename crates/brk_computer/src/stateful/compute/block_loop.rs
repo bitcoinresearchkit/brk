@@ -55,14 +55,6 @@ pub fn process_blocks(
         return Ok(());
     }
 
-    info!(
-        "Processing blocks {} to {} (compute_dollars: {}, price_data: {})...",
-        ctx.starting_height,
-        ctx.last_height,
-        ctx.compute_dollars,
-        ctx.price.is_some()
-    );
-
     // References to vectors using correct field paths
     // From indexer.vecs:
     let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;

@@ -18,7 +18,7 @@ use crate::{
 };
 
 use super::{
-    super::metrics::{CohortMetrics, ImportConfig},
+    super::metrics::{CohortMetrics, ImportConfig, SupplyMetrics},
     traits::{CohortVecs, DynCohortVecs},
 };
 
@@ -47,6 +47,9 @@ pub struct AddressCohortVecs {
 
 impl AddressCohortVecs {
     /// Import address cohort from database.
+    ///
+    /// `all_supply` is the supply metrics from the "all" cohort, used as global
+    /// sources for `*_rel_to_market_cap` ratios. Pass `None` if not available.
     pub fn forced_import(
         db: &Database,
         filter: Filter,
@@ -54,6 +57,7 @@ impl AddressCohortVecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         states_path: Option<&Path>,
+        all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
         let full_name = filter.to_full_name(CohortContext::Address);
@@ -73,7 +77,7 @@ impl AddressCohortVecs {
             state: states_path
                 .map(|path| AddressCohortState::new(path, &full_name, compute_dollars)),
 
-            metrics: CohortMetrics::forced_import(&cfg)?,
+            metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
 
             height_to_addr_count: EagerVec::forced_import(
                 db,
@@ -288,7 +292,6 @@ impl CohortVecs for AddressCohortVecs {
         price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -298,7 +301,6 @@ impl CohortVecs for AddressCohortVecs {
             price,
             starting_indexes,
             height_to_supply,
-            dateindex_to_supply,
             height_to_market_cap,
             dateindex_to_market_cap,
             exit,

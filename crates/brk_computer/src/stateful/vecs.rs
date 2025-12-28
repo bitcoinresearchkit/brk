@@ -89,6 +89,16 @@ impl Vecs {
 
         let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, price, &states_path)?;
 
+        // Create address cohorts with reference to utxo "all" cohort's supply for global ratios
+        let address_cohorts = AddressCohorts::forced_import(
+            &db,
+            version,
+            indexes,
+            price,
+            &states_path,
+            Some(&utxo_cohorts.all.metrics.supply),
+        )?;
+
         // Create address data BytesVecs first so we can also use them for identity mappings
         let loadedaddressindex_to_loadedaddressdata = BytesVec::forced_import_with(
             vecdb::ImportOptions::new(&db, "loadedaddressdata", v0)
@@ -212,14 +222,7 @@ impl Vecs {
                 )?,
 
             utxo_cohorts,
-
-            address_cohorts: AddressCohorts::forced_import(
-                &db,
-                version,
-                indexes,
-                price,
-                &states_path,
-            )?,
+            address_cohorts,
 
             any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, v0)?,
             addresses_data: AddressesDataVecs {
@@ -347,10 +350,6 @@ impl Vecs {
                 })
                 .collect();
 
-            info!(
-                "State recovery: resumed from checkpoint at height {}",
-                recovered_height
-            );
             (recovered_height, chain_state)
         };
 
@@ -453,16 +452,6 @@ impl Vecs {
             .bitcoin
             .clone();
 
-        let dateindex_to_supply = self
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .indexes_to_supply
-            .bitcoin
-            .dateindex
-            .clone();
-
         let height_to_market_cap = self.height_to_market_cap.clone();
 
         let dateindex_to_market_cap = self
@@ -470,7 +459,6 @@ impl Vecs {
             .as_ref()
             .map(|v| v.dateindex.u().clone());
 
-        let dateindex_to_supply_ref = dateindex_to_supply.u();
         let height_to_market_cap_ref = height_to_market_cap.as_ref();
         let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
 
@@ -481,7 +469,6 @@ impl Vecs {
             price,
             starting_indexes,
             height_to_supply,
-            dateindex_to_supply_ref,
             height_to_market_cap_ref,
             dateindex_to_market_cap_ref,
             exit,
