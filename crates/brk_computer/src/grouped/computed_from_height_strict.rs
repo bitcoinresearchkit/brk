@@ -3,11 +3,13 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DifficultyEpoch, Height, Version};
 use schemars::JsonSchema;
-use vecdb::{AnyExportableVec, Database, EagerVec, Exit, ImportableVec, PcoVec};
+use vecdb::{
+    AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec,
+};
 
 use crate::{Indexes, indexes};
 
-use super::{ComputedVecValue, EagerVecsBuilder, VecBuilderOptions};
+use super::{ComputedVecValue, EagerVecsBuilder, LazyVecsBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
@@ -16,7 +18,7 @@ where
 {
     pub height: EagerVec<PcoVec<Height, T>>,
     pub height_extra: EagerVecsBuilder<Height, T>,
-    pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
+    pub difficultyepoch: LazyVecsBuilder<DifficultyEpoch, T, Height, DifficultyEpoch>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 
@@ -31,6 +33,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
+        indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
         let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO)?;
@@ -45,21 +48,22 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            height,
-            height_extra,
-            difficultyepoch: EagerVecsBuilder::forced_import(
-                db,
+            difficultyepoch: LazyVecsBuilder::forced_import(
                 name,
                 version + VERSION + Version::ZERO,
-                options,
-            )?,
+                Some(height.boxed_clone()),
+                &height_extra,
+                indexes.difficultyepoch_to_difficultyepoch.boxed_clone(),
+                options.into(),
+            ),
+            height,
+            height_extra,
             // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 
     pub fn compute<F>(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -71,14 +75,6 @@ where
 
         self.height_extra
             .extend(starting_indexes.height, &self.height, exit)?;
-
-        self.difficultyepoch.compute(
-            starting_indexes.difficultyepoch,
-            &self.height,
-            &indexes.difficultyepoch_to_first_height,
-            &indexes.difficultyepoch_to_height_count,
-            exit,
-        )?;
 
         Ok(())
     }

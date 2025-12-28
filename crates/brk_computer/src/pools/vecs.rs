@@ -1,12 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{Database, Exit, GenericStoredVec, IterableVec, VecIndex, Version};
+use vecdb::{Database, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, VecIndex, Version};
 
 use crate::{
     chain,
     grouped::{
-        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
+        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
+        LazyVecsFrom2FromDateIndex, LazyVecsFrom2FromHeight, PercentageU32F32, Source,
         VecBuilderOptions,
     },
     indexes::{self, Indexes},
@@ -25,11 +26,11 @@ pub struct Vecs {
     pub indexes_to_subsidy: ComputedValueVecsFromHeight,
     pub indexes_to_fee: ComputedValueVecsFromHeight,
     pub indexes_to_coinbase: ComputedValueVecsFromHeight,
-    pub indexes_to_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_1d_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_1w_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_1m_dominance: ComputedVecsFromDateIndex<StoredF32>,
-    pub indexes_to_1y_dominance: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes_to_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1d_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1m_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1y_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
     pub indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
 }
 
@@ -40,6 +41,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
+        chain: &chain::Vecs,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
         let compute_dollars = price.is_some();
@@ -61,19 +63,59 @@ impl Vecs {
             };
         }
 
+        let indexes_to_blocks_mined = ComputedVecsFromHeight::forced_import(
+            db,
+            &suffix("blocks_mined"),
+            Source::Compute,
+            version,
+            indexes,
+            sum_cum,
+        )?;
+
+        let indexes_to_1w_blocks_mined = import_di!("1w_blocks_mined");
+        let indexes_to_1m_blocks_mined = import_di!("1m_blocks_mined");
+        let indexes_to_1y_blocks_mined = import_di!("1y_blocks_mined");
+
         Ok(Self {
-            slug,
-            indexes_to_blocks_mined: ComputedVecsFromHeight::forced_import(
-                db,
-                &suffix("blocks_mined"),
-                Source::Compute,
+            indexes_to_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
+                &suffix("dominance"),
                 version,
-                indexes,
-                sum_cum,
-            )?,
-            indexes_to_1w_blocks_mined: import_di!("1w_blocks_mined"),
-            indexes_to_1m_blocks_mined: import_di!("1m_blocks_mined"),
-            indexes_to_1y_blocks_mined: import_di!("1y_blocks_mined"),
+                indexes_to_blocks_mined.height.as_ref().unwrap().boxed_clone(),
+                chain.indexes_to_block_count.height.as_ref().unwrap().boxed_clone(),
+                &indexes_to_blocks_mined,
+                &chain.indexes_to_block_count,
+            ),
+            indexes_to_1d_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
+                &suffix("1d_dominance"),
+                version,
+                indexes_to_blocks_mined.height.as_ref().unwrap().boxed_clone(),
+                chain.indexes_to_block_count.height.as_ref().unwrap().boxed_clone(),
+                &indexes_to_blocks_mined,
+                &chain.indexes_to_block_count,
+            ),
+            indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+                &suffix("1w_dominance"),
+                version,
+                &indexes_to_1w_blocks_mined,
+                &chain.indexes_to_1w_block_count,
+            ),
+            indexes_to_1m_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+                &suffix("1m_dominance"),
+                version,
+                &indexes_to_1m_blocks_mined,
+                &chain.indexes_to_1m_block_count,
+            ),
+            indexes_to_1y_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+                &suffix("1y_dominance"),
+                version,
+                &indexes_to_1y_blocks_mined,
+                &chain.indexes_to_1y_block_count,
+            ),
+            slug,
+            indexes_to_blocks_mined,
+            indexes_to_1w_blocks_mined,
+            indexes_to_1m_blocks_mined,
+            indexes_to_1y_blocks_mined,
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
                 db,
                 &suffix("subsidy"),
@@ -101,11 +143,6 @@ impl Vecs {
                 compute_dollars,
                 indexes,
             )?,
-            indexes_to_dominance: import_di!("dominance"),
-            indexes_to_1d_dominance: import_di!("1d_dominance"),
-            indexes_to_1w_dominance: import_di!("1w_dominance"),
-            indexes_to_1m_dominance: import_di!("1m_dominance"),
-            indexes_to_1y_dominance: import_di!("1y_dominance"),
             indexes_to_days_since_block: import_di!("days_since_block"),
         })
     }
@@ -233,61 +270,6 @@ impl Vecs {
                             },
                         )
                     },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_dominance
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_cumulative(),
-                    chain.indexes_to_block_count.dateindex.unwrap_cumulative(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_1d_dominance
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
-                    chain.indexes_to_block_count.dateindex.unwrap_sum(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_1w_dominance
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1w_blocks_mined.dateindex.u(),
-                    chain.indexes_to_1w_block_count.dateindex.u(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_1m_dominance
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1m_blocks_mined.dateindex.u(),
-                    chain.indexes_to_1m_block_count.dateindex.u(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_1y_dominance
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1y_blocks_mined.dateindex.u(),
-                    chain.indexes_to_1y_block_count.dateindex.u(),
                     exit,
                 )?;
                 Ok(())

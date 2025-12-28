@@ -1,11 +1,11 @@
 use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
-use brk_types::{Index, TreeNode};
+use brk_types::{pools, Index, TreeNode};
 use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, extract_inner_type, get_fields_with_child_info, get_node_fields,
+    TypeSchemas, VERSION, extract_inner_type, get_fields_with_child_info, get_node_fields,
     get_pattern_instance_base, to_pascal_case, to_snake_case,
 };
 
@@ -25,12 +25,13 @@ pub fn generate_python_client(
     writeln!(output, "from __future__ import annotations").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Final"
     )
     .unwrap();
     writeln!(output, "import httpx\n").unwrap();
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
+    generate_constants(&mut output);
     generate_type_definitions(&mut output, schemas);
     generate_base_client(&mut output);
     generate_metric_node(&mut output);
@@ -42,6 +43,32 @@ pub fn generate_python_client(
     fs::write(output_path, output)?;
 
     Ok(())
+}
+
+fn generate_constants(output: &mut String) {
+    writeln!(output, "# Constants\n").unwrap();
+
+    // VERSION
+    writeln!(output, "VERSION: Final[str] = \"v{VERSION}\"\n").unwrap();
+
+    // INDEXES
+    let indexes = Index::all();
+    writeln!(output, "INDEXES: Final[tuple[str, ...]] = (").unwrap();
+    for index in &indexes {
+        writeln!(output, "    \"{}\",", index.serialize_long()).unwrap();
+    }
+    writeln!(output, ")\n").unwrap();
+
+    // POOL_ID_TO_POOL_NAME
+    let pools = pools();
+    let mut sorted_pools: Vec<_> = pools.iter().collect();
+    sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+    writeln!(output, "POOL_ID_TO_POOL_NAME: Final[dict[str, str]] = {{").unwrap();
+    for pool in &sorted_pools {
+        writeln!(output, "    \"{}\": \"{}\",", pool.slug(), pool.name).unwrap();
+    }
+    writeln!(output, "}}\n").unwrap();
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {

@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    Format, Index, IndexInfo, Limit, Metric, MetricCount, MetricData, PaginatedMetrics, Pagination,
-    PaginationIndex,
+    DetailedMetricCount, Format, Index, IndexInfo, Limit, Metric, MetricData, PaginatedMetrics,
+    Pagination, PaginationIndex,
 };
 use vecdb::AnyExportableVec;
 
@@ -171,9 +171,18 @@ impl Query {
         Ok(vecs)
     }
 
-    /// Calculate total weight of the vecs for the given range
+    /// Calculate total weight of the vecs for the given range.
+    /// Applies index-specific cost multipliers for rate limiting.
     pub fn weight(vecs: &[&dyn AnyExportableVec], from: Option<i64>, to: Option<i64>) -> usize {
-        vecs.iter().map(|v| v.range_weight(from, to)).sum()
+        vecs.iter()
+            .map(|v| {
+                let base = v.range_weight(from, to);
+                let multiplier = Index::try_from(v.index_type_to_string())
+                    .map(|i| i.cost_multiplier())
+                    .unwrap_or(1);
+                base * multiplier
+            })
+            .sum()
     }
 
     /// Search and format single metric
@@ -235,27 +244,11 @@ impl Query {
         &self.vecs().index_to_metric_to_vec
     }
 
-    pub fn metric_count(&self) -> MetricCount {
-        let total = self.total_metric_count();
-        let lazy = self.lazy_metric_count();
-        MetricCount {
-            distinct_metrics: self.distinct_metric_count(),
-            total_endpoints: total,
-            lazy_endpoints: lazy,
-            stored_endpoints: total - lazy,
+    pub fn metric_count(&self) -> DetailedMetricCount {
+        DetailedMetricCount {
+            total: self.vecs().counts.clone(),
+            by_db: self.vecs().counts_by_db.clone(),
         }
-    }
-
-    pub fn distinct_metric_count(&self) -> usize {
-        self.vecs().distinct_metric_count
-    }
-
-    pub fn total_metric_count(&self) -> usize {
-        self.vecs().total_metric_count
-    }
-
-    pub fn lazy_metric_count(&self) -> usize {
-        self.vecs().lazy_metric_count
     }
 
     pub fn indexes(&self) -> &[IndexInfo] {

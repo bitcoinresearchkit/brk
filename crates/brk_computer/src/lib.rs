@@ -124,15 +124,14 @@ impl Computer {
                 )
             })?;
 
-            let pools_handle = big_thread().spawn_scoped(s, || {
-                pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())
-            })?;
-
             let cointime =
                 cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
 
             let chain = chain_handle.join().unwrap()?;
-            let pools = pools_handle.join().unwrap()?;
+
+            // pools depends on chain for lazy dominance vecs
+            let pools =
+                pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref(), &chain)?;
 
             Ok((chain, pools, cointime))
         })?;
@@ -225,9 +224,7 @@ impl Computer {
 
             info!("Computing prices...");
             let i = Instant::now();
-            self.price
-                .um()
-                .compute(&self.indexes, &starting_indexes, fetched, exit)?;
+            self.price.um().compute(&starting_indexes, fetched, exit)?;
             info!("Computed prices in {:?}", i.elapsed());
         }
 
@@ -329,6 +326,71 @@ impl Computer {
 
         info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
+    }
+
+    /// Iterate over all exportable vecs with their database name.
+    pub fn iter_named_exportable(
+        &self,
+    ) -> impl Iterator<Item = (&'static str, &dyn vecdb::AnyExportableVec)> {
+        use brk_traversable::Traversable;
+
+        std::iter::empty()
+            .chain(self.blks.iter_any_exportable().map(|v| (blks::DB_NAME, v)))
+            .chain(
+                self.chain
+                    .iter_any_exportable()
+                    .map(|v| (chain::DB_NAME, v)),
+            )
+            .chain(
+                self.cointime
+                    .iter_any_exportable()
+                    .map(|v| (cointime::DB_NAME, v)),
+            )
+            .chain(
+                self.constants
+                    .iter_any_exportable()
+                    .map(|v| (constants::DB_NAME, v)),
+            )
+            .chain(
+                self.fetched
+                    .iter_any_exportable()
+                    .map(|v| (fetched::DB_NAME, v)),
+            )
+            .chain(
+                self.indexes
+                    .iter_any_exportable()
+                    .map(|v| (indexes::DB_NAME, v)),
+            )
+            .chain(
+                self.market
+                    .iter_any_exportable()
+                    .map(|v| (market::DB_NAME, v)),
+            )
+            .chain(
+                self.pools
+                    .iter_any_exportable()
+                    .map(|v| (pools::DB_NAME, v)),
+            )
+            .chain(
+                self.price
+                    .iter_any_exportable()
+                    .map(|v| (price::DB_NAME, v)),
+            )
+            .chain(
+                self.stateful
+                    .iter_any_exportable()
+                    .map(|v| (stateful::DB_NAME, v)),
+            )
+            .chain(
+                self.txins
+                    .iter_any_exportable()
+                    .map(|v| (txins::DB_NAME, v)),
+            )
+            .chain(
+                self.txouts
+                    .iter_any_exportable()
+                    .map(|v| (txouts::DB_NAME, v)),
+            )
     }
 }
 

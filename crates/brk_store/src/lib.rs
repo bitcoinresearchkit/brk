@@ -81,7 +81,6 @@ where
         fs::create_dir_all(path)?;
 
         let (meta, keyspace) = StoreMeta::checked_open(
-            db,
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {

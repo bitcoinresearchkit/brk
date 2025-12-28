@@ -130,6 +130,15 @@ impl Index {
     pub fn serialize_long(&self) -> &'static str {
         self.possible_values().last().unwrap()
     }
+
+    /// Returns the query cost multiplier for this index type.
+    /// Used for rate limiting to account for expensive lazy computations.
+    pub const fn cost_multiplier(&self) -> usize {
+        match self {
+            Self::DifficultyEpoch => 60,
+            _ => 1,
+        }
+    }
 }
 
 impl TryFrom<&str> for Index {

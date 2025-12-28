@@ -37,8 +37,6 @@ impl ComputedValueVecsFromTxindex {
         price: Option<&price::Vecs>,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let compute_dollars = price.is_some();
-
         let name_btc = format!("{name}_btc");
         let name_usd = format!("{name}_usd");
 
@@ -63,7 +61,7 @@ impl ComputedValueVecsFromTxindex {
         let bitcoin = ComputedVecsFromTxindex::forced_import(
             db,
             &name_btc,
-            Source::None,
+            Source::Vec(bitcoin_txindex.boxed_clone()),
             version + VERSION,
             indexes,
             options,
@@ -96,18 +94,18 @@ impl ComputedValueVecsFromTxindex {
             sats,
             bitcoin_txindex,
             bitcoin,
-            dollars_txindex,
-            dollars: compute_dollars.then(|| {
+            dollars: dollars_txindex.as_ref().map(|dtx| {
                 ComputedVecsFromTxindex::forced_import(
                     db,
                     &name_usd,
-                    Source::None,
+                    Source::Vec(dtx.boxed_clone()),
                     version + VERSION,
                     indexes,
                     options,
                 )
                 .unwrap()
             }),
+            dollars_txindex,
         })
     }
 

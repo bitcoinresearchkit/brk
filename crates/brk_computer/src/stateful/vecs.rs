@@ -147,6 +147,12 @@ impl Vecs {
             indexes,
         )?;
 
+        // Extract address type height vecs before struct literal to use as sources
+        let addresstype_to_height_to_addr_count =
+            AddressTypeToHeightToAddressCount::forced_import(&db, "addr_count", v0)?;
+        let addresstype_to_height_to_empty_addr_count =
+            AddressTypeToHeightToAddressCount::forced_import(&db, "empty_addr_count", v0)?;
+
         let this = Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", v0)
@@ -204,22 +210,23 @@ impl Vecs {
                 .unwrap()
             }),
 
-            addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount::forced_import(
+            addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount::forced_import(
                 &db,
                 "addr_count",
                 v0,
+                indexes,
+                &addresstype_to_height_to_addr_count,
             )?,
-            addresstype_to_height_to_empty_addr_count:
-                AddressTypeToHeightToAddressCount::forced_import(&db, "empty_addr_count", v0)?,
-            addresstype_to_indexes_to_addr_count:
-                AddressTypeToIndexesToAddressCount::forced_import(&db, "addr_count", v0, indexes)?,
             addresstype_to_indexes_to_empty_addr_count:
                 AddressTypeToIndexesToAddressCount::forced_import(
                     &db,
                     "empty_addr_count",
                     v0,
                     indexes,
+                    &addresstype_to_height_to_empty_addr_count,
                 )?,
+            addresstype_to_height_to_addr_count,
+            addresstype_to_height_to_empty_addr_count,
 
             utxo_cohorts,
             address_cohorts,

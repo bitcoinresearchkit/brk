@@ -104,7 +104,7 @@ impl RealizedMetrics {
         let indexes_to_realized_loss = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_loss"),
-            Source::None,
+            Source::Vec(height_to_realized_loss.boxed_clone()),
             cfg.version + v0,
             cfg.indexes,
             sum_cum,
@@ -146,7 +146,7 @@ impl RealizedMetrics {
         let indexes_to_realized_cap = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_cap"),
-            Source::None,
+            Source::Vec(height_to_realized_cap.boxed_clone()),
             cfg.version + v0,
             cfg.indexes,
             last,
@@ -158,7 +158,7 @@ impl RealizedMetrics {
         let indexes_to_realized_profit = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_profit"),
-            Source::None,
+            Source::Vec(height_to_realized_profit.boxed_clone()),
             cfg.version + v0,
             cfg.indexes,
             sum_cum,
@@ -198,32 +198,68 @@ impl RealizedMetrics {
             LazyVecsFrom2FromHeight::from_computed::<PercentageDollarsF32>(
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
-                indexes_to_net_realized_pnl.height.as_ref().unwrap().boxed_clone(),
+                indexes_to_net_realized_pnl
+                    .height
+                    .as_ref()
+                    .unwrap()
+                    .boxed_clone(),
                 height_to_realized_cap.boxed_clone(),
                 &indexes_to_net_realized_pnl,
                 &indexes_to_realized_cap,
             );
 
+        let indexes_to_realized_price = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("realized_price"),
+            Source::Compute,
+            cfg.version + v0,
+            cfg.indexes,
+            last,
+        )?;
+
+        let height_to_value_created =
+            EagerVec::forced_import(cfg.db, &cfg.name("value_created"), cfg.version + v0)?;
+        let height_to_value_destroyed =
+            EagerVec::forced_import(cfg.db, &cfg.name("value_destroyed"), cfg.version + v0)?;
+
+        let height_to_adjusted_value_created = compute_adjusted
+            .then(|| {
+                EagerVec::forced_import(
+                    cfg.db,
+                    &cfg.name("adjusted_value_created"),
+                    cfg.version + v0,
+                )
+            })
+            .transpose()?;
+        let height_to_adjusted_value_destroyed = compute_adjusted
+            .then(|| {
+                EagerVec::forced_import(
+                    cfg.db,
+                    &cfg.name("adjusted_value_destroyed"),
+                    cfg.version + v0,
+                )
+            })
+            .transpose()?;
+
         Ok(Self {
             // === Realized Cap ===
             height_to_realized_cap,
             indexes_to_realized_cap,
-            indexes_to_realized_price: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_price"),
-                Source::Compute,
-                cfg.version + v0,
-                cfg.indexes,
-                last,
-            )?,
+
             indexes_to_realized_price_extra: ComputedRatioVecsFromDateIndex::forced_import(
                 cfg.db,
                 &cfg.name("realized_price"),
-                Source::None,
+                Source::Vec(
+                    indexes_to_realized_price
+                        .dateindex
+                        .unwrap_last()
+                        .boxed_clone(),
+                ),
                 cfg.version + v0,
                 cfg.indexes,
                 extended,
             )?,
+            indexes_to_realized_price,
             indexes_to_realized_cap_rel_to_own_market_cap: extended
                 .then(|| {
                     ComputedVecsFromHeight::forced_import(
@@ -272,61 +308,40 @@ impl RealizedMetrics {
                 .transpose()?,
 
             // === Value Created/Destroyed ===
-            height_to_value_created: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("value_created"),
-                cfg.version + v0,
-            )?,
             indexes_to_value_created: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("value_created"),
-                Source::None,
+                Source::Vec(height_to_value_created.boxed_clone()),
                 cfg.version + v0,
                 cfg.indexes,
                 sum,
-            )?,
-            height_to_value_destroyed: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("value_destroyed"),
-                cfg.version + v0,
             )?,
             indexes_to_value_destroyed: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("value_destroyed"),
-                Source::None,
+                Source::Vec(height_to_value_destroyed.boxed_clone()),
                 cfg.version + v0,
                 cfg.indexes,
                 sum,
             )?,
+            height_to_value_created,
+            height_to_value_destroyed,
 
             // === Adjusted Value (optional) ===
-            height_to_adjusted_value_created: compute_adjusted
-                .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("adjusted_value_created"),
-                        cfg.version + v0,
-                    )
-                })
-                .transpose()?,
             indexes_to_adjusted_value_created: compute_adjusted
                 .then(|| {
                     ComputedVecsFromHeight::forced_import(
                         cfg.db,
                         &cfg.name("adjusted_value_created"),
-                        Source::None,
+                        Source::Vec(
+                            height_to_adjusted_value_created
+                                .as_ref()
+                                .unwrap()
+                                .boxed_clone(),
+                        ),
                         cfg.version + v0,
                         cfg.indexes,
                         sum,
-                    )
-                })
-                .transpose()?,
-            height_to_adjusted_value_destroyed: compute_adjusted
-                .then(|| {
-                    EagerVec::forced_import(
-                        cfg.db,
-                        &cfg.name("adjusted_value_destroyed"),
-                        cfg.version + v0,
                     )
                 })
                 .transpose()?,
@@ -335,13 +350,20 @@ impl RealizedMetrics {
                     ComputedVecsFromHeight::forced_import(
                         cfg.db,
                         &cfg.name("adjusted_value_destroyed"),
-                        Source::None,
+                        Source::Vec(
+                            height_to_adjusted_value_destroyed
+                                .as_ref()
+                                .unwrap()
+                                .boxed_clone(),
+                        ),
                         cfg.version + v0,
                         cfg.indexes,
                         sum,
                     )
                 })
                 .transpose()?,
+            height_to_adjusted_value_created,
+            height_to_adjusted_value_destroyed,
 
             // === SOPR ===
             dateindex_to_sopr: EagerVec::forced_import(

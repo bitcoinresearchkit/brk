@@ -115,12 +115,12 @@ impl Vecs {
         }
         macro_rules! computed_h {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromHeightStrict::forced_import(&db, $name, v, $opts)?
+                ComputedVecsFromHeightStrict::forced_import(&db, $name, v, indexes, $opts)?
             };
         }
         macro_rules! computed_h_sats {
             ($name:expr, $opts:expr) => {
-                ComputedVecsFromHeightStrict::forced_import(&db, $name, v_sats, $opts)?
+                ComputedVecsFromHeightStrict::forced_import(&db, $name, v_sats, indexes, $opts)?
             };
         }
         let first = || VecBuilderOptions::default().add_first();
@@ -189,12 +189,11 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         fetched: &fetched::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexes, starting_indexes, fetched, exit)?;
+        self.compute_(starting_indexes, fetched, exit)?;
         let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
@@ -202,7 +201,6 @@ impl Vecs {
 
     fn compute_(
         &mut self,
-        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         fetched: &fetched::Vecs,
         exit: &Exit,
@@ -322,7 +320,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_close
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -333,7 +331,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_high
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -344,7 +342,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_low
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -355,7 +353,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_open
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_price_ohlc,
@@ -510,7 +508,7 @@ impl Vecs {
         )?;
 
         self.chainindexes_to_price_open_in_sats
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_open.height,
@@ -521,7 +519,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_high_in_sats
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_low.height,
@@ -532,7 +530,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_low_in_sats
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_high.height,
@@ -543,7 +541,7 @@ impl Vecs {
             })?;
 
         self.chainindexes_to_price_close_in_sats
-            .compute(indexes, starting_indexes, exit, |v| {
+            .compute(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
                     &self.chainindexes_to_price_close.height,

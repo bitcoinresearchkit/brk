@@ -49,7 +49,7 @@ where
             height_extra: LazyTransformBuilder::from_eager::<F>(name, v, &source.height_extra),
             dateindex: LazyTransformBuilder::from_eager::<F>(name, v, &source.dateindex),
             weekindex: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.weekindex),
-            difficultyepoch: LazyTransformBuilder::from_eager::<F>(
+            difficultyepoch: LazyTransformBuilder::from_lazy::<F, _, _>(
                 name,
                 v,
                 &source.difficultyepoch,

@@ -36,6 +36,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
+        chain: &chain::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -54,6 +55,7 @@ impl Vecs {
                         version + Version::ZERO,
                         indexes,
                         price,
+                        chain,
                     )
                     .map(|vecs| (pool.slug, vecs))
                 })

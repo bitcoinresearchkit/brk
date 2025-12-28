@@ -456,23 +456,22 @@ pub fn process_blocks(
     }
 
     // Final write - always save changes for rollback support
-    {
-        let _lock = exit.lock();
-        drop(vr);
 
-        let (empty_updates, loaded_updates) = cache.take();
+    let _lock = exit.lock();
+    drop(vr);
 
-        // Process address updates (mutations)
-        process_address_updates(
-            &mut vecs.addresses_data,
-            &mut vecs.any_address_indexes,
-            empty_updates,
-            loaded_updates,
-        )?;
+    let (empty_updates, loaded_updates) = cache.take();
 
-        // Write to disk (pure I/O) - save changes for rollback
-        write(vecs, last_height, chain_state, true)?;
-    }
+    // Process address updates (mutations)
+    process_address_updates(
+        &mut vecs.addresses_data,
+        &mut vecs.any_address_indexes,
+        empty_updates,
+        loaded_updates,
+    )?;
+
+    // Write to disk (pure I/O) - save changes for rollback
+    write(vecs, last_height, chain_state, true)?;
 
     Ok(())
 }

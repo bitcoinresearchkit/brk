@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, CheckedSub, Dollars, StoredF32, StoredF64, Version};
-use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
+use vecdb::{Database, Exit, IterableCloneableVec, PAGE_SIZE, TypedVecIterator};
 
 use crate::{grouped::ComputedVecsFromDateIndex, utils::OptionExt};
 
@@ -103,11 +103,11 @@ impl Vecs {
             };
         }
         macro_rules! ratio_di {
-            ($name:expr) => {
+            ($name:expr, $source:expr) => {
                 ComputedRatioVecsFromDateIndex::forced_import(
                     &db,
                     $name,
-                    Source::None,
+                    Source::Vec($source.dateindex.unwrap_last().boxed_clone()),
                     v0,
                     indexes,
                     true,
@@ -128,6 +128,12 @@ impl Vecs {
             };
         }
 
+        // Extract price vecs before struct literal so they can be used as sources for ratios
+        let indexes_to_vaulted_price = computed_h!("vaulted_price", last());
+        let indexes_to_active_price = computed_h!("active_price", last());
+        let indexes_to_true_market_mean = computed_h!("true_market_mean", last());
+        let indexes_to_cointime_price = computed_h!("cointime_price", last());
+
         let this = Self {
             indexes_to_coinblocks_created: computed_h!("coinblocks_created", sum_cum()),
             indexes_to_coinblocks_stored: computed_h!("coinblocks_stored", sum_cum()),
@@ -143,18 +149,24 @@ impl Vecs {
             indexes_to_investor_cap: computed_h!("investor_cap", v1, last()),
             indexes_to_vaulted_cap: computed_h!("vaulted_cap", v1, last()),
             indexes_to_active_cap: computed_h!("active_cap", v1, last()),
-            indexes_to_vaulted_price: computed_h!("vaulted_price", last()),
-            indexes_to_vaulted_price_ratio: ratio_di!("vaulted_price"),
-            indexes_to_active_price: computed_h!("active_price", last()),
-            indexes_to_active_price_ratio: ratio_di!("active_price"),
-            indexes_to_true_market_mean: computed_h!("true_market_mean", last()),
-            indexes_to_true_market_mean_ratio: ratio_di!("true_market_mean"),
+            indexes_to_vaulted_price_ratio: ratio_di!("vaulted_price", &indexes_to_vaulted_price),
+            indexes_to_vaulted_price,
+            indexes_to_active_price_ratio: ratio_di!("active_price", &indexes_to_active_price),
+            indexes_to_active_price,
+            indexes_to_true_market_mean_ratio: ratio_di!(
+                "true_market_mean",
+                &indexes_to_true_market_mean
+            ),
+            indexes_to_true_market_mean,
             indexes_to_cointime_value_destroyed: computed_h!("cointime_value_destroyed", sum_cum()),
             indexes_to_cointime_value_created: computed_h!("cointime_value_created", sum_cum()),
             indexes_to_cointime_value_stored: computed_h!("cointime_value_stored", sum_cum()),
-            indexes_to_cointime_price: computed_h!("cointime_price", last()),
             indexes_to_cointime_cap: computed_h!("cointime_cap", last()),
-            indexes_to_cointime_price_ratio: ratio_di!("cointime_price"),
+            indexes_to_cointime_price_ratio: ratio_di!(
+                "cointime_price",
+                &indexes_to_cointime_price
+            ),
+            indexes_to_cointime_price,
             indexes_to_cointime_adj_inflation_rate: computed_di!(
                 "cointime_adj_inflation_rate",
                 last()

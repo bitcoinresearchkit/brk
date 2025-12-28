@@ -3,17 +3,12 @@ use vecdb::IterableBoxedVec;
 #[derive(Clone)]
 pub enum Source<I, T> {
     Compute,
-    None,
     Vec(IterableBoxedVec<I, T>),
 }
 
 impl<I, T> Source<I, T> {
     pub fn is_compute(&self) -> bool {
         matches!(self, Self::Compute)
-    }
-
-    pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
     }
 
     pub fn is_vec(&self) -> bool {
@@ -28,27 +23,9 @@ impl<I, T> Source<I, T> {
     }
 }
 
-impl<I, T> From<bool> for Source<I, T> {
-    #[inline]
-    fn from(value: bool) -> Self {
-        if value { Self::Compute } else { Self::None }
-    }
-}
-
 impl<I, T> From<IterableBoxedVec<I, T>> for Source<I, T> {
     #[inline]
     fn from(value: IterableBoxedVec<I, T>) -> Self {
         Self::Vec(value)
-    }
-}
-
-impl<I, T> From<Option<IterableBoxedVec<I, T>>> for Source<I, T> {
-    #[inline]
-    fn from(value: Option<IterableBoxedVec<I, T>>) -> Self {
-        if let Some(v) = value {
-            Self::Vec(v)
-        } else {
-            Self::None
-        }
     }
 }

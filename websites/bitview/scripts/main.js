@@ -111,13 +111,13 @@ Promise.all([
   modules.brkClient(),
   modules.brkResources(),
   modules.options(),
-]).then(([signals, { createClient }, { createResources }, { initOptions }]) =>
+]).then(([signals, { BrkClient, VERSION }, { createResources }, { initOptions }]) =>
   signals.createRoot(() => {
-    const brk = createClient("/");
+    const brk = new BrkClient("/");
     const resources = createResources(brk, signals);
     const owner = signals.getOwner();
 
-    console.log(`VERSION = ${brk.VERSION}`);
+    console.log(`VERSION = ${VERSION}`);
 
     function initDark() {
       const preferredColorSchemeMatchMedia = window.matchMedia(

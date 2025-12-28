@@ -6,8 +6,8 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec,
-    PcoVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
+    IterableCloneableVec, IterableVec, PcoVec,
 };
 
 use crate::{
@@ -71,6 +71,12 @@ impl AddressCohortVecs {
             price,
         };
 
+        let height_to_addr_count = EagerVec::forced_import(
+            db,
+            &cfg.name("addr_count"),
+            version + VERSION + Version::ZERO,
+        )?;
+
         Ok(Self {
             starting_height: None,
 
@@ -79,20 +85,15 @@ impl AddressCohortVecs {
 
             metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
 
-            height_to_addr_count: EagerVec::forced_import(
-                db,
-                &cfg.name("addr_count"),
-                version + VERSION + Version::ZERO,
-            )?,
-
             indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
                 db,
                 &cfg.name("addr_count"),
-                Source::None,
+                Source::Vec(height_to_addr_count.boxed_clone()),
                 version + VERSION + Version::ZERO,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+            height_to_addr_count,
         })
     }
 

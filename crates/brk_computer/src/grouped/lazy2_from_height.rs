@@ -67,7 +67,7 @@ where
                 &source1.weekindex,
                 &source2.weekindex,
             ),
-            difficultyepoch: LazyTransform2Builder::from_eager::<F>(
+            difficultyepoch: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
                 name,
                 v,
                 &source1.difficultyepoch,

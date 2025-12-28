@@ -29,7 +29,7 @@ where
     pub height: EagerVecsBuilder<Height, T>,
     pub dateindex: EagerVecsBuilder<DateIndex, T>,
     pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
-    pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
+    pub difficultyepoch: LazyVecsBuilder<DifficultyEpoch, T, Height, DifficultyEpoch>,
     pub monthindex: LazyVecsBuilder<MonthIndex, T, DateIndex, MonthIndex>,
     pub quarterindex: LazyVecsBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
     pub semesterindex: LazyVecsBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
@@ -73,6 +73,14 @@ where
                 None,
                 &dateindex,
                 indexes.weekindex_to_weekindex.boxed_clone(),
+                options.into(),
+            ),
+            difficultyepoch: LazyVecsBuilder::forced_import(
+                name,
+                version + VERSION + Version::ZERO,
+                None,
+                &height,
+                indexes.difficultyepoch_to_difficultyepoch.boxed_clone(),
                 options.into(),
             ),
             monthindex: LazyVecsBuilder::forced_import(
@@ -119,12 +127,6 @@ where
             txindex,
             height,
             dateindex,
-            difficultyepoch: EagerVecsBuilder::forced_import(
-                db,
-                name,
-                version + VERSION + Version::ZERO,
-                options,
-            )?,
             // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
@@ -202,14 +204,6 @@ where
             &self.height,
             &indexes.dateindex_to_first_height,
             &indexes.dateindex_to_height_count,
-            exit,
-        )?;
-
-        self.difficultyepoch.from_aligned(
-            starting_indexes.difficultyepoch,
-            &self.height,
-            &indexes.difficultyepoch_to_first_height,
-            &indexes.difficultyepoch_to_height_count,
             exit,
         )?;
 

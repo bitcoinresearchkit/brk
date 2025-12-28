@@ -78,6 +78,22 @@ impl<T> ByAddressType<T> {
         })
     }
 
+    pub fn try_zip_with_name<S, R, F>(other: &ByAddressType<S>, f: F) -> Result<ByAddressType<R>>
+    where
+        F: Fn(&'static str, &S) -> Result<R>,
+    {
+        Ok(ByAddressType {
+            p2pk65: f(P2PK65, &other.p2pk65)?,
+            p2pk33: f(P2PK33, &other.p2pk33)?,
+            p2pkh: f(P2PKH, &other.p2pkh)?,
+            p2sh: f(P2SH, &other.p2sh)?,
+            p2wpkh: f(P2WPKH, &other.p2wpkh)?,
+            p2wsh: f(P2WSH, &other.p2wsh)?,
+            p2tr: f(P2TR, &other.p2tr)?,
+            p2a: f(P2A, &other.p2a)?,
+        })
+    }
+
     #[inline]
     pub fn get_unwrap(&self, addresstype: OutputType) -> &T {
         self.get(addresstype).unwrap()

@@ -34,7 +34,7 @@ where
         let v = version + VERSION;
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source),
-            difficultyepoch: LazyTransformBuilder::from_eager::<F>(name, v, &source.difficultyepoch),
+            difficultyepoch: LazyTransformBuilder::from_lazy::<F, _, _>(name, v, &source.difficultyepoch),
         }
     }
 }

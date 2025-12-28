@@ -6,6 +6,8 @@ use super::{
     indexes,
 };
 
+pub const DB_NAME: &str = "constants";
+
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     pub constant_0: ConstantVecs<StoredU16>,

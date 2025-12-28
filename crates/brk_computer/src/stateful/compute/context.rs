@@ -4,18 +4,12 @@ use vecdb::VecIndex;
 use crate::{indexes, price};
 
 /// Context shared across block processing.
-pub struct ComputeContext<'a> {
+pub struct ComputeContext {
     /// Starting height for this computation run
     pub starting_height: Height,
 
     /// Last height to process
     pub last_height: Height,
-
-    /// Whether price data is available
-    pub compute_dollars: bool,
-
-    /// Price data (optional)
-    pub price: Option<&'a price::Vecs>,
 
     /// Pre-computed height -> timestamp mapping
     pub height_to_timestamp: Vec<Timestamp>,
@@ -24,13 +18,13 @@ pub struct ComputeContext<'a> {
     pub height_to_price: Option<Vec<Dollars>>,
 }
 
-impl<'a> ComputeContext<'a> {
+impl ComputeContext {
     /// Create a new computation context.
     pub fn new(
         starting_height: Height,
         last_height: Height,
         indexes: &indexes::Vecs,
-        price: Option<&'a price::Vecs>,
+        price: Option<&price::Vecs>,
     ) -> Self {
         let height_to_timestamp: Vec<Timestamp> =
             indexes.height_to_timestamp_fixed.into_iter().collect();
@@ -42,8 +36,6 @@ impl<'a> ComputeContext<'a> {
         Self {
             starting_height,
             last_height,
-            compute_dollars: price.is_some(),
-            price,
             height_to_timestamp,
             height_to_price,
         }

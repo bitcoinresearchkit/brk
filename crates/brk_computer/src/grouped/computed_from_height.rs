@@ -29,7 +29,7 @@ where
     pub height_extra: EagerVecsBuilder<Height, T>,
     pub dateindex: EagerVecsBuilder<DateIndex, T>,
     pub weekindex: LazyVecsBuilder<WeekIndex, T, DateIndex, WeekIndex>,
-    pub difficultyepoch: EagerVecsBuilder<DifficultyEpoch, T>,
+    pub difficultyepoch: LazyVecsBuilder<DifficultyEpoch, T, Height, DifficultyEpoch>,
     pub monthindex: LazyVecsBuilder<MonthIndex, T, DateIndex, MonthIndex>,
     pub quarterindex: LazyVecsBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
     pub semesterindex: LazyVecsBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
@@ -69,6 +69,8 @@ where
             EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
 
         let options = options.remove_percentiles();
+
+        let height_source = source.vec().or(height.as_ref().map(|v| v.boxed_clone()));
 
         Ok(Self {
             weekindex: LazyVecsBuilder::forced_import(
@@ -120,15 +122,17 @@ where
                 options.into(),
             ),
             // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
+            difficultyepoch: LazyVecsBuilder::forced_import(
+                name,
+                version + VERSION + Version::ZERO,
+                height_source,
+                &height_extra,
+                indexes.difficultyepoch_to_difficultyepoch.boxed_clone(),
+                options.into(),
+            ),
             height,
             height_extra,
             dateindex,
-            difficultyepoch: EagerVecsBuilder::forced_import(
-                db,
-                name,
-                version + VERSION + Version::ZERO,
-                options,
-            )?,
         })
     }
 
@@ -166,14 +170,6 @@ where
                 &indexes.dateindex_to_height_count,
                 exit,
             )?;
-
-            self.difficultyepoch.compute(
-                starting_indexes.difficultyepoch,
-                height,
-                &indexes.difficultyepoch_to_first_height,
-                &indexes.difficultyepoch_to_height_count,
-                exit,
-            )?;
         } else {
             let height = self.height.u();
 
@@ -185,14 +181,6 @@ where
                 height,
                 &indexes.dateindex_to_first_height,
                 &indexes.dateindex_to_height_count,
-                exit,
-            )?;
-
-            self.difficultyepoch.compute(
-                starting_indexes.difficultyepoch,
-                height,
-                &indexes.difficultyepoch_to_first_height,
-                &indexes.difficultyepoch_to_height_count,
                 exit,
             )?;
         }

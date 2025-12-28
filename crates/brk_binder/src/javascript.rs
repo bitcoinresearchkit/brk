@@ -1,11 +1,11 @@
 use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
-use brk_types::{Index, TreeNode};
+use brk_types::{pools, Index, TreeNode};
 use serde_json::Value;
 
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
-    TypeSchemas, extract_inner_type, get_fields_with_child_info, get_first_leaf_name,
+    TypeSchemas, VERSION, extract_inner_type, get_fields_with_child_info, get_first_leaf_name,
     get_node_fields, get_pattern_instance_base, to_camel_case, to_pascal_case,
 };
 
@@ -23,6 +23,7 @@ pub fn generate_javascript_client(
     writeln!(output, "// Auto-generated BRK JavaScript client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
 
+    generate_constants(&mut output);
     generate_type_definitions(&mut output, schemas);
     generate_base_client(&mut output);
     generate_index_accessors(&mut output, &metadata.index_set_patterns);
@@ -33,6 +34,32 @@ pub fn generate_javascript_client(
     fs::write(output_path, output)?;
 
     Ok(())
+}
+
+fn generate_constants(output: &mut String) {
+    writeln!(output, "// Constants\n").unwrap();
+
+    // VERSION
+    writeln!(output, "export const VERSION = \"v{VERSION}\";\n").unwrap();
+
+    // INDEXES
+    let indexes = Index::all();
+    writeln!(output, "export const INDEXES = /** @type {{const}} */ ([").unwrap();
+    for index in &indexes {
+        writeln!(output, "  \"{}\",", index.serialize_long()).unwrap();
+    }
+    writeln!(output, "]);\n").unwrap();
+
+    // POOL_ID_TO_POOL_NAME
+    let pools = pools();
+    let mut sorted_pools: Vec<_> = pools.iter().collect();
+    sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+    writeln!(output, "export const POOL_ID_TO_POOL_NAME = /** @type {{const}} */ ({{").unwrap();
+    for pool in &sorted_pools {
+        writeln!(output, "  {}: \"{}\",", pool.slug(), pool.name).unwrap();
+    }
+    writeln!(output, "}});\n").unwrap();
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -246,7 +273,7 @@ class MetricNode {{
   /**
    * Fetch all data points for this metric.
    * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
-   * @returns {{Promise<T[] | null>}}
+   * @returns {{Promise<T[]>}}
    */
   get(onUpdate) {{
     return this._client.get(this._path, onUpdate);
@@ -257,7 +284,7 @@ class MetricNode {{
    * @param {{string | number}} from
    * @param {{string | number}} to
    * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
-   * @returns {{Promise<T[] | null>}}
+   * @returns {{Promise<T[]>}}
    */
   getRange(from, to, onUpdate) {{
     return this._client.get(`${{this._path}}?from=${{from}}&to=${{to}}`, onUpdate);
@@ -282,7 +309,7 @@ class BrkClientBase {{
    * @template T
    * @param {{string}} path
    * @param {{(value: T) => void}} [onUpdate] - Called when data is available
-   * @returns {{Promise<T | null>}}
+   * @returns {{Promise<T>}}
    */
   async get(path, onUpdate) {{
     const url = `${{this.baseUrl}}${{path}}`;
@@ -291,7 +318,10 @@ class BrkClientBase {{
     const cachedJson = cachedRes ? await cachedRes.json() : null;
 
     if (cachedJson) onUpdate?.(cachedJson);
-    if (!globalThis.navigator?.onLine) return cachedJson;
+    if (!globalThis.navigator?.onLine) {{
+      if (cachedJson) return cachedJson;
+      throw new BrkError('Offline and no cached data available');
+    }}
 
     try {{
       const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});

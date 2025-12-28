@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_types::Version;
-use fjall::{Database, Keyspace};
+use fjall::Keyspace;
 
 use super::Height;
 
@@ -18,7 +18,6 @@ pub struct StoreMeta {
 
 impl StoreMeta {
     pub fn checked_open<F>(
-        _database: &Database,
         path: &Path,
         version: Version,
         open_partition_handle: F,

@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32, StoredF64};
+use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32, StoredF64, StoredU32};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 /// (Dollars, Dollars) -> Dollars addition
@@ -210,5 +210,16 @@ impl BinaryTransform<Sats, Sats, StoredF64> for PercentageSatsF64 {
     #[inline(always)]
     fn apply(numerator: Sats, denominator: Sats) -> StoredF64 {
         StoredF64::from((*numerator as f64 / *denominator as f64) * 100.0)
+    }
+}
+
+/// (StoredU32, StoredU32) -> StoredF32 percentage (a/b × 100)
+/// Used for pool dominance calculations (pool_blocks / total_blocks × 100)
+pub struct PercentageU32F32;
+
+impl BinaryTransform<StoredU32, StoredU32, StoredF32> for PercentageU32F32 {
+    #[inline(always)]
+    fn apply(numerator: StoredU32, denominator: StoredU32) -> StoredF32 {
+        StoredF32::from((*numerator as f64 / *denominator as f64) * 100.0)
     }
 }

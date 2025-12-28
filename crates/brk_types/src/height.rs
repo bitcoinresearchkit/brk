@@ -7,7 +7,9 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Bytes, CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
+use vecdb::{Bytes, CheckedSub, Formattable, FromCoarserIndex, Pco, PrintableIndex, Stamp};
+
+use super::DifficultyEpoch;
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING};
 
@@ -287,5 +289,15 @@ impl Formattable for Height {
     #[inline(always)]
     fn may_need_escaping() -> bool {
         false
+    }
+}
+
+impl FromCoarserIndex<DifficultyEpoch> for Height {
+    fn min_from(coarser: DifficultyEpoch) -> usize {
+        usize::from(coarser) * BLOCKS_PER_DIFF_EPOCHS as usize
+    }
+
+    fn max_from_(coarser: DifficultyEpoch) -> usize {
+        (usize::from(coarser) + 1) * BLOCKS_PER_DIFF_EPOCHS as usize - 1
     }
 }

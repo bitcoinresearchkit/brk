@@ -5,8 +5,8 @@ use brk_types::{Height, StoredU64, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
+    IterableCloneableVec, PcoVec, TypedVecIterator,
 };
 
 use crate::{
@@ -170,17 +170,23 @@ impl AddressTypeToIndexesToAddressCount {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        sources: &AddressTypeToHeightToAddressCount,
     ) -> Result<Self> {
-        Ok(Self::from(ByAddressType::new_with_name(|type_name| {
-            ComputedVecsFromHeight::forced_import(
-                db,
-                &format!("{type_name}_{name}"),
-                Source::None,
-                version,
-                indexes,
-                VecBuilderOptions::default().add_last(),
-            )
-        })?))
+        Ok(Self::from(ByAddressType::<
+            ComputedVecsFromHeight<StoredU64>,
+        >::try_zip_with_name(
+            sources,
+            |type_name, source| {
+                ComputedVecsFromHeight::forced_import(
+                    db,
+                    &format!("{type_name}_{name}"),
+                    Source::Vec(source.boxed_clone()),
+                    version,
+                    indexes,
+                    VecBuilderOptions::default().add_last(),
+                )
+            },
+        )?))
     }
 
     pub fn compute(

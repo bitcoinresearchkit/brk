@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::BTreeMap};
 use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
-use brk_types::{Index, IndexInfo, Limit, Metric, PaginatedMetrics, Pagination, PaginationIndex};
+use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, PaginatedMetrics, Pagination, PaginationIndex};
 use derive_deref::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
 use vecdb::AnyExportableVec;
@@ -14,9 +14,8 @@ pub struct Vecs<'a> {
     pub index_to_metric_to_vec: BTreeMap<Index, MetricToVec<'a>>,
     pub metrics: Vec<&'a str>,
     pub indexes: Vec<IndexInfo>,
-    pub distinct_metric_count: usize,
-    pub total_metric_count: usize,
-    pub lazy_metric_count: usize,
+    pub counts: MetricCount,
+    pub counts_by_db: BTreeMap<String, MetricCount>,
     catalog: Option<TreeNode>,
     matcher: Option<QuickMatch<'a>>,
     metric_to_indexes: BTreeMap<&'a str, Vec<Index>>,
@@ -30,11 +29,11 @@ impl<'a> Vecs<'a> {
         indexer
             .vecs
             .iter_any_exportable()
-            .for_each(|vec| this.insert(vec));
+            .for_each(|vec| this.insert(vec, "indexed"));
 
         computer
-            .iter_any_exportable()
-            .for_each(|vec| this.insert(vec));
+            .iter_named_exportable()
+            .for_each(|(db, vec)| this.insert(vec, db));
 
         let mut ids = this
             .metric_to_index_to_vec
@@ -56,18 +55,20 @@ impl<'a> Vecs<'a> {
         sort_ids(&mut ids);
 
         this.metrics = ids;
-        this.distinct_metric_count = this.metric_to_index_to_vec.keys().count();
-        this.total_metric_count = this
+        this.counts.distinct_metrics = this.metric_to_index_to_vec.keys().count();
+        this.counts.total_endpoints = this
             .index_to_metric_to_vec
             .values()
             .map(|tree| tree.len())
             .sum::<usize>();
-        this.lazy_metric_count = this
+        this.counts.lazy_endpoints = this
             .index_to_metric_to_vec
             .values()
             .flat_map(|tree| tree.values())
             .filter(|vec| vec.region_names().is_empty())
             .count();
+        this.counts.stored_endpoints =
+            this.counts.total_endpoints - this.counts.lazy_endpoints;
         this.indexes = this
             .index_to_metric_to_vec
             .keys()
@@ -109,7 +110,7 @@ impl<'a> Vecs<'a> {
         this
     }
 
-    fn insert(&mut self, vec: &'a dyn AnyExportableVec) {
+    fn insert(&mut self, vec: &'a dyn AnyExportableVec, db: &str) {
         let name = vec.name();
         let serialized_index = vec.index_type_to_string();
         let index = Index::try_from(serialized_index)
@@ -134,6 +135,13 @@ impl<'a> Vecs<'a> {
             prev.is_none(),
             "Duplicate metric: {name} for index {index:?}"
         );
+
+        // Track per-db counts
+        let is_lazy = vec.region_names().is_empty();
+        self.counts_by_db
+            .entry(db.to_string())
+            .or_default()
+            .add_endpoint(is_lazy);
     }
 
     pub fn metrics(&'static self, pagination: Pagination) -> PaginatedMetrics {

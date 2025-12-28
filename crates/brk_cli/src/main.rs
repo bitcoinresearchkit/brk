@@ -8,6 +8,7 @@ use std::{
     time::Duration,
 };
 
+use brk_alloc::Mimalloc;
 use brk_binder::generate_js_files;
 use brk_bundler::bundle;
 use brk_computer::Computer;
@@ -17,7 +18,6 @@ use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
-use brk_alloc::Mimalloc;
 use brk_server::{Server, VERSION};
 use log::info;
 use vecdb::Exit;
@@ -60,7 +60,7 @@ pub fn run() -> color_eyre::Result<()> {
     // Pre-run indexer if too far behind, then drop and reimport to reduce memory
     let chain_height = client.get_last_height()?;
     let indexed_height = indexer.vecs.starting_height();
-    if u32::from(chain_height) - u32::from(indexed_height) > 1000 {
+    if chain_height.saturating_sub(*indexed_height) > 1000 {
         indexer.index(&blocks, &client, &exit)?;
         drop(indexer);
         Mimalloc::collect();

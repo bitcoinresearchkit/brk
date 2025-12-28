@@ -210,6 +210,9 @@ impl Vecs {
             |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
         );
 
+        let height_to_interval = eager!("interval");
+        let height_to_vbytes = eager!("vbytes");
+
         let this = Self {
             dateindex_to_block_count_target,
             weekindex_to_block_count_target,
@@ -218,34 +221,62 @@ impl Vecs {
             semesterindex_to_block_count_target,
             yearindex_to_block_count_target,
             decadeindex_to_block_count_target,
-            height_to_interval: eager!("interval"),
             timeindexes_to_timestamp: computed_di!(
                 "timestamp",
                 VecBuilderOptions::default().add_first()
             ),
-            indexes_to_block_interval: computed_h!("block_interval", Source::None, stats()),
+            indexes_to_block_interval: computed_h!(
+                "block_interval",
+                Source::Vec(height_to_interval.boxed_clone()),
+                stats()
+            ),
             indexes_to_block_count: computed_h!("block_count", Source::Compute, sum_cum()),
             indexes_to_1w_block_count: computed_di!("1w_block_count", last()),
             indexes_to_1m_block_count: computed_di!("1m_block_count", last()),
             indexes_to_1y_block_count: computed_di!("1y_block_count", last()),
-            indexes_to_block_weight: computed_h!("block_weight", Source::None, full_stats()),
-            indexes_to_block_size: computed_h!("block_size", Source::None, full_stats()),
-            height_to_vbytes: eager!("vbytes"),
+            indexes_to_block_weight: computed_h!(
+                "block_weight",
+                Source::Vec(indexer.vecs.block.height_to_weight.boxed_clone()),
+                full_stats()
+            ),
+            indexes_to_block_size: computed_h!(
+                "block_size",
+                Source::Vec(indexer.vecs.block.height_to_total_size.boxed_clone()),
+                full_stats()
+            ),
             height_to_24h_block_count: eager!("24h_block_count"),
             height_to_24h_coinbase_sum: eager!("24h_coinbase_sum"),
             height_to_24h_coinbase_usd_sum: eager!("24h_coinbase_usd_sum"),
-            indexes_to_block_vbytes: computed_h!("block_vbytes", Source::None, full_stats()),
+            indexes_to_block_vbytes: computed_h!(
+                "block_vbytes",
+                Source::Vec(height_to_vbytes.boxed_clone()),
+                full_stats()
+            ),
             difficultyepoch_to_timestamp: eager!("timestamp"),
             halvingepoch_to_timestamp: eager!("timestamp"),
 
             dateindex_to_fee_dominance: eager!("fee_dominance"),
             dateindex_to_subsidy_dominance: eager!("subsidy_dominance"),
-            indexes_to_difficulty: computed_h!("difficulty", Source::None, last()),
+            indexes_to_difficulty: computed_h!(
+                "difficulty",
+                Source::Vec(indexer.vecs.block.height_to_difficulty.boxed_clone()),
+                last()
+            ),
+            height_to_interval,
+            height_to_vbytes,
             indexes_to_difficultyepoch: computed_di!("difficultyepoch", last()),
             indexes_to_halvingepoch: computed_di!("halvingepoch", last()),
             indexes_to_tx_count: computed_h!("tx_count", Source::Compute, full_stats()),
-            indexes_to_input_count: computed_tx!("input_count", Source::None, full_stats()),
-            indexes_to_output_count: computed_tx!("output_count", Source::None, full_stats()),
+            indexes_to_input_count: computed_tx!(
+                "input_count",
+                Source::Vec(indexes.txindex_to_input_count.boxed_clone()),
+                full_stats()
+            ),
+            indexes_to_output_count: computed_tx!(
+                "output_count",
+                Source::Vec(indexes.txindex_to_output_count.boxed_clone()),
+                full_stats()
+            ),
             indexes_to_tx_v1: computed_h!("tx_v1", Source::Compute, sum_cum()),
             indexes_to_tx_v2: computed_h!("tx_v2", Source::Compute, sum_cum()),
             indexes_to_tx_v3: computed_h!("tx_v3", Source::Compute, sum_cum()),
@@ -273,9 +304,21 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
             )?,
-            indexes_to_fee_rate: computed_tx!("fee_rate", Source::None, stats()),
-            indexes_to_tx_vsize: computed_tx!("tx_vsize", Source::None, stats()),
-            indexes_to_tx_weight: computed_tx!("tx_weight", Source::None, stats()),
+            indexes_to_fee_rate: computed_tx!(
+                "fee_rate",
+                Source::Vec(txindex_to_fee_rate.boxed_clone()),
+                stats()
+            ),
+            indexes_to_tx_vsize: computed_tx!(
+                "tx_vsize",
+                Source::Vec(txindex_to_vsize.boxed_clone()),
+                stats()
+            ),
+            indexes_to_tx_weight: computed_tx!(
+                "tx_weight",
+                Source::Vec(txindex_to_weight.boxed_clone()),
+                stats()
+            ),
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
                 &db,
                 "subsidy",

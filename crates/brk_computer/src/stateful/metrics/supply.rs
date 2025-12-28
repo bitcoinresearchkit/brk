@@ -96,26 +96,22 @@ impl SupplyMetrics {
                 cfg.version + v0,
             );
 
+        let height_to_utxo_count =
+            EagerVec::forced_import(cfg.db, &cfg.name("utxo_count"), cfg.version + v0)?;
+
         Ok(Self {
-            height_to_supply,
-            height_to_supply_value,
-            indexes_to_supply,
-
-            height_to_utxo_count: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("utxo_count"),
-                cfg.version + v0,
-            )?,
-
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
-                Source::None,
+                Source::Vec(height_to_utxo_count.boxed_clone()),
                 cfg.version + v0,
                 cfg.indexes,
                 last,
             )?,
-
+            height_to_supply,
+            height_to_supply_value,
+            indexes_to_supply,
+            height_to_utxo_count,
             height_to_supply_half_value,
             indexes_to_supply_half,
         })

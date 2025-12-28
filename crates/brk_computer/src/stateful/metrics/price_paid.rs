@@ -2,7 +2,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, PcoVec};
+use vecdb::{
+    AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec, PcoVec,
+};
 
 use crate::{
     Indexes,
@@ -34,33 +36,31 @@ impl PricePaidMetrics {
         let extended = cfg.extended();
         let last = VecBuilderOptions::default().add_last();
 
+        let height_to_min_price_paid =
+            EagerVec::forced_import(cfg.db, &cfg.name("min_price_paid"), cfg.version + v0)?;
+
+        let height_to_max_price_paid =
+            EagerVec::forced_import(cfg.db, &cfg.name("max_price_paid"), cfg.version + v0)?;
+
         Ok(Self {
-            height_to_min_price_paid: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("min_price_paid"),
-                cfg.version + v0,
-            )?,
             indexes_to_min_price_paid: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("min_price_paid"),
-                Source::None,
+                Source::Vec(height_to_min_price_paid.boxed_clone()),
                 cfg.version + v0,
                 cfg.indexes,
                 last,
-            )?,
-            height_to_max_price_paid: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("max_price_paid"),
-                cfg.version + v0,
             )?,
             indexes_to_max_price_paid: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("max_price_paid"),
-                Source::None,
+                Source::Vec(height_to_max_price_paid.boxed_clone()),
                 cfg.version + v0,
                 cfg.indexes,
                 last,
             )?,
+            height_to_min_price_paid,
+            height_to_max_price_paid,
             price_percentiles: extended
                 .then(|| {
                     PricePercentiles::forced_import(
