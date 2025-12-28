@@ -53,6 +53,10 @@ impl CohortMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let compute_dollars = cfg.compute_dollars();
 
+        let unrealized = compute_dollars
+            .then(|| UnrealizedMetrics::forced_import(cfg))
+            .transpose()?;
+
         Ok(Self {
             filter: cfg.filter.clone(),
             supply: SupplyMetrics::forced_import(cfg)?,
@@ -60,15 +64,14 @@ impl CohortMetrics {
             realized: compute_dollars
                 .then(|| RealizedMetrics::forced_import(cfg))
                 .transpose()?,
-            unrealized: compute_dollars
-                .then(|| UnrealizedMetrics::forced_import(cfg))
-                .transpose()?,
             price_paid: compute_dollars
                 .then(|| PricePaidMetrics::forced_import(cfg))
                 .transpose()?,
-            relative: compute_dollars
-                .then(|| RelativeMetrics::forced_import(cfg))
+            relative: unrealized
+                .as_ref()
+                .map(|u| RelativeMetrics::forced_import(cfg, u))
                 .transpose()?,
+            unrealized,
         })
     }
 
@@ -261,7 +264,7 @@ impl CohortMetrics {
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;
 
         if let Some(realized) = self.realized.as_mut() {
-            realized.compute_rest_part1(indexes, price, starting_indexes, exit)?;
+            realized.compute_rest_part1(indexes, starting_indexes, exit)?;
         }
 
         if let Some(unrealized) = self.unrealized.as_mut() {
@@ -286,21 +289,8 @@ impl CohortMetrics {
         dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply.compute_rest_part2(
-            indexes,
-            price,
-            starting_indexes,
-            height_to_supply,
-            dateindex_to_supply,
-            height_to_market_cap,
-            dateindex_to_market_cap,
-            exit,
-        )?;
-
         if let Some(realized) = self.realized.as_mut() {
             realized.compute_rest_part2(
                 indexes,
@@ -321,11 +311,8 @@ impl CohortMetrics {
                 dateindex_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
-                height_to_realized_cap,
-                dateindex_to_realized_cap,
                 &self.supply,
                 self.unrealized.as_ref(),
-                self.realized.as_ref(),
                 exit,
             )?;
         }

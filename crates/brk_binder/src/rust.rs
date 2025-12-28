@@ -407,10 +407,14 @@ fn field_to_type_annotation_with_generic(
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
-        if metadata.is_pattern_generic(&field.rust_type)
-            && let Some(vt) = generic_value_type
-        {
-            return format!("{}<{}>", field.rust_type, vt);
+        if metadata.is_pattern_generic(&field.rust_type) {
+            // Use type_param from field, then generic_value_type, then T if parent is generic
+            let type_param = field
+                .type_param
+                .as_deref()
+                .or(generic_value_type)
+                .unwrap_or(if is_generic { "T" } else { "_" });
+            return format!("{}<{}>", field.rust_type, type_param);
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {

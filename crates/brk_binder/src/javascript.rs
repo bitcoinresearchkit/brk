@@ -570,13 +570,13 @@ fn field_to_js_type_with_generic_value(
 
     if metadata.is_pattern_type(&field.rust_type) {
         if metadata.is_pattern_generic(&field.rust_type) {
-            if let Some(vt) = generic_value_type {
-                return format!("{}<{}>", field.rust_type, vt);
-            } else if is_generic {
-                return format!("{}<T>", field.rust_type);
-            } else {
-                return format!("{}<unknown>", field.rust_type);
-            }
+            // Use type_param from field, then generic_value_type, then T if parent is generic
+            let type_param = field
+                .type_param
+                .as_deref()
+                .or(generic_value_type)
+                .unwrap_or(if is_generic { "T" } else { "unknown" });
+            return format!("{}<{}>", field.rust_type, type_param);
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
@@ -763,12 +763,10 @@ fn generate_tree_initializer(
 
                         let arg = if is_parameterizable {
                             get_pattern_instance_base(child_node, child_name)
+                        } else if accumulated_name.is_empty() {
+                            format!("/{}", child_name)
                         } else {
-                            if accumulated_name.is_empty() {
-                                format!("/{}", child_name)
-                            } else {
-                                format!("{}/{}", accumulated_name, child_name)
-                            }
+                            format!("{}/{}", accumulated_name, child_name)
                         };
 
                         writeln!(
@@ -798,16 +796,16 @@ fn generate_tree_initializer(
 }
 
 fn infer_child_accumulated_name(node: &TreeNode, parent_acc: &str, field_name: &str) -> String {
-    if let Some(leaf_name) = get_first_leaf_name(node) {
-        if let Some(pos) = leaf_name.find(field_name) {
-            if pos == 0 {
+    if let Some(leaf_name) = get_first_leaf_name(node)
+        && let Some(pos) = leaf_name.find(field_name)
+    {
+        if pos == 0 {
+            return field_name.to_string();
+        } else if leaf_name.chars().nth(pos - 1) == Some('_') {
+            if parent_acc.is_empty() {
                 return field_name.to_string();
-            } else if leaf_name.chars().nth(pos - 1) == Some('_') {
-                if parent_acc.is_empty() {
-                    return field_name.to_string();
-                }
-                return format!("{}_{}", parent_acc, field_name);
             }
+            return format!("{}_{}", parent_acc, field_name);
         }
     }
 

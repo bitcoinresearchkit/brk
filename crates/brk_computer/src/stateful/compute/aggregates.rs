@@ -49,7 +49,7 @@ pub fn compute_rest_part1(
 ///
 /// Computes supply ratios, market cap ratios, etc. using total references.
 #[allow(clippy::too_many_arguments)]
-pub fn compute_rest_part2<S, D, HM, DM, HR, DR>(
+pub fn compute_rest_part2<S, D, HM, DM>(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
     indexes: &indexes::Vecs,
@@ -59,8 +59,6 @@ pub fn compute_rest_part2<S, D, HM, DM, HR, DR>(
     dateindex_to_supply: &D,
     height_to_market_cap: Option<&HM>,
     dateindex_to_market_cap: Option<&DM>,
-    height_to_realized_cap: Option<&HR>,
-    dateindex_to_realized_cap: Option<&DR>,
     exit: &Exit,
 ) -> Result<()>
 where
@@ -68,8 +66,6 @@ where
     D: IterableVec<DateIndex, Bitcoin> + Sync,
     HM: IterableVec<Height, Dollars> + Sync,
     DM: IterableVec<DateIndex, Dollars> + Sync,
-    HR: IterableVec<Height, Dollars> + Sync,
-    DR: IterableVec<DateIndex, Dollars> + Sync,
 {
     info!("Computing rest part 2...");
 
@@ -81,8 +77,6 @@ where
         dateindex_to_supply,
         height_to_market_cap,
         dateindex_to_market_cap,
-        height_to_realized_cap,
-        dateindex_to_realized_cap,
         exit,
     )?;
 
@@ -94,8 +88,6 @@ where
         dateindex_to_supply,
         height_to_market_cap,
         dateindex_to_market_cap,
-        height_to_realized_cap,
-        dateindex_to_realized_cap,
         exit,
     )?;
 

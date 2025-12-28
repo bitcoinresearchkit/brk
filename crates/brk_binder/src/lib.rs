@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::PathBuf};
 
 use brk_query::Vecs;

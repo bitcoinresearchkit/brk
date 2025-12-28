@@ -3,7 +3,7 @@ use std::{
     cmp::Ordering,
     f32,
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, Sub},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub},
 };
 
 use derive_deref::Deref;
@@ -174,6 +174,13 @@ impl Sub<StoredF32> for StoredF32 {
     type Output = Self;
     fn sub(self, rhs: StoredF32) -> Self::Output {
         Self(self.0 - rhs.0)
+    }
+}
+
+impl Neg for StoredF32 {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
     }
 }
 

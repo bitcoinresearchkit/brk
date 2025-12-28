@@ -2,13 +2,16 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredF32, StoredF64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec};
+use vecdb::{
+    AnyStoredVec, EagerVec, Exit, GenericStoredVec, Ident, ImportableVec, IterableCloneableVec,
+    IterableVec, Negate, PcoVec,
+};
 
 use crate::{
     Indexes,
     grouped::{
-        ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
-        VecBuilderOptions,
+        ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
+        LazyVecsFromHeight, Source, VecBuilderOptions,
     },
     indexes, price,
     stateful::states::RealizedState,
@@ -33,7 +36,7 @@ pub struct RealizedMetrics {
     pub indexes_to_realized_profit: ComputedVecsFromHeight<Dollars>,
     pub height_to_realized_loss: EagerVec<PcoVec<Height, Dollars>>,
     pub indexes_to_realized_loss: ComputedVecsFromHeight<Dollars>,
-    pub indexes_to_neg_realized_loss: ComputedVecsFromHeight<Dollars>,
+    pub indexes_to_neg_realized_loss: LazyVecsFromHeight<Dollars>,
     pub indexes_to_net_realized_pnl: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_realized_value: ComputedVecsFromHeight<Dollars>,
 
@@ -43,8 +46,7 @@ pub struct RealizedMetrics {
     pub indexes_to_net_realized_pnl_rel_to_realized_cap: ComputedVecsFromHeight<StoredF32>,
 
     // === Total Realized PnL ===
-    pub height_to_total_realized_pnl: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_total_realized_pnl: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_total_realized_pnl: LazyVecsFromHeight<Dollars>,
     pub dateindex_to_realized_profit_to_loss_ratio: Option<EagerVec<PcoVec<DateIndex, StoredF64>>>,
 
     // === Value Created/Destroyed ===
@@ -91,6 +93,47 @@ impl RealizedMetrics {
         let last = VecBuilderOptions::default().add_last();
         let sum = VecBuilderOptions::default().add_sum();
         let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
+
+        let height_to_realized_loss: EagerVec<PcoVec<Height, Dollars>> =
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_loss"), cfg.version + v0)?;
+
+        let indexes_to_realized_loss = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("realized_loss"),
+            Source::None,
+            cfg.version + v0,
+            cfg.indexes,
+            sum_cum,
+        )?;
+
+        let indexes_to_neg_realized_loss = LazyVecsFromHeight::from_computed::<Negate>(
+            &cfg.name("neg_realized_loss"),
+            cfg.version + v1,
+            height_to_realized_loss.boxed_clone(),
+            &indexes_to_realized_loss,
+        );
+
+        // realized_value is the source for total_realized_pnl (they're identical)
+        let indexes_to_realized_value = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("realized_value"),
+            Source::Compute,
+            cfg.version + v0,
+            cfg.indexes,
+            sum,
+        )?;
+
+        // total_realized_pnl is a lazy alias to realized_value
+        let indexes_to_total_realized_pnl = LazyVecsFromHeight::from_computed::<Ident>(
+            &cfg.name("total_realized_pnl"),
+            cfg.version + v1,
+            indexes_to_realized_value
+                .height
+                .as_ref()
+                .unwrap()
+                .boxed_clone(),
+            &indexes_to_realized_value,
+        );
 
         Ok(Self {
             // === Realized Cap ===
@@ -158,27 +201,9 @@ impl RealizedMetrics {
                 cfg.indexes,
                 sum_cum,
             )?,
-            height_to_realized_loss: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("realized_loss"),
-                cfg.version + v0,
-            )?,
-            indexes_to_realized_loss: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_loss"),
-                Source::None,
-                cfg.version + v0,
-                cfg.indexes,
-                sum_cum,
-            )?,
-            indexes_to_neg_realized_loss: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("neg_realized_loss"),
-                Source::Compute,
-                cfg.version + v1,
-                cfg.indexes,
-                sum_cum,
-            )?,
+            height_to_realized_loss,
+            indexes_to_realized_loss,
+            indexes_to_neg_realized_loss,
             indexes_to_net_realized_pnl: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("net_realized_pnl"),
@@ -187,14 +212,7 @@ impl RealizedMetrics {
                 cfg.indexes,
                 sum_cum,
             )?,
-            indexes_to_realized_value: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_value"),
-                Source::Compute,
-                cfg.version + v0,
-                cfg.indexes,
-                sum,
-            )?,
+            indexes_to_realized_value,
 
             // === Realized vs Realized Cap Ratios ===
             indexes_to_realized_profit_rel_to_realized_cap: ComputedVecsFromHeight::forced_import(
@@ -223,19 +241,7 @@ impl RealizedMetrics {
             )?,
 
             // === Total Realized PnL ===
-            height_to_total_realized_pnl: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("total_realized_pnl"),
-                cfg.version + v0,
-            )?,
-            indexes_to_total_realized_pnl: ComputedVecsFromDateIndex::forced_import(
-                cfg.db,
-                &cfg.name("total_realized_pnl"),
-                Source::Compute,
-                cfg.version + v1,
-                cfg.indexes,
-                sum,
-            )?,
+            indexes_to_total_realized_pnl,
             dateindex_to_realized_profit_to_loss_ratio: extended
                 .then(|| {
                     EagerVec::forced_import(
@@ -555,7 +561,6 @@ impl RealizedMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &indexes::Vecs,
-        _price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -580,18 +585,6 @@ impl RealizedMetrics {
             Some(&self.height_to_realized_loss),
         )?;
 
-        // neg_realized_loss = realized_loss * -1
-        self.indexes_to_neg_realized_loss
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_realized_loss,
-                    |(i, v, ..)| (i, v * -1_i64),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
         // net_realized_pnl = profit - loss
         self.indexes_to_net_realized_pnl
             .compute_all(indexes, starting_indexes, exit, |vec| {
@@ -605,6 +598,8 @@ impl RealizedMetrics {
             })?;
 
         // realized_value = profit + loss
+        // Note: total_realized_pnl is a lazy alias to realized_value since both
+        // compute profit + loss with sum aggregation, making them identical.
         self.indexes_to_realized_value
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_add(
@@ -615,14 +610,6 @@ impl RealizedMetrics {
                 )?;
                 Ok(())
             })?;
-
-        // total_realized_pnl at height level = profit + loss
-        self.height_to_total_realized_pnl.compute_add(
-            starting_indexes.height,
-            &self.height_to_realized_profit,
-            &self.height_to_realized_loss,
-            exit,
-        )?;
 
         self.indexes_to_value_created.compute_rest(
             indexes,
@@ -700,18 +687,6 @@ impl RealizedMetrics {
                     starting_indexes.dateindex,
                     self.indexes_to_realized_cap.dateindex.unwrap_last(),
                     30,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        // total_realized_pnl at dateindex level
-        self.indexes_to_total_realized_pnl
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_add(
-                    starting_indexes.dateindex,
-                    self.indexes_to_realized_profit.dateindex.unwrap_sum(),
-                    self.indexes_to_realized_loss.dateindex.unwrap_sum(),
                     exit,
                 )?;
                 Ok(())

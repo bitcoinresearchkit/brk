@@ -50,6 +50,7 @@ pub fn get_node_fields(
                 rust_type,
                 json_type,
                 indexes,
+                type_param: None,
             }
         })
         .collect();
@@ -94,6 +95,7 @@ pub fn get_fields_with_child_info(
                     rust_type,
                     json_type,
                     indexes,
+                    type_param: None,
                 },
                 child_fields,
             )

@@ -4267,8 +4267,6 @@ dependencies = [
 [[package]]
 name = "rawdb"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48974be79d0854eb9ae7a0931882bc84052bc9c0be10b39a324aab0be975e2d9"
 dependencies = [
  "libc",
  "log",
@@ -5461,8 +5459,6 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 [[package]]
 name = "vecdb"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9bb3a189dc833e0e1eeb4816230f4478412fbddaaeffec56cbfd3d7f778a25d"
 dependencies = [
  "ctrlc",
  "log",
@@ -5470,6 +5466,7 @@ dependencies = [
  "parking_lot",
  "pco",
  "rawdb",
+ "schemars",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
@@ -5481,8 +5478,6 @@ dependencies = [
 [[package]]
 name = "vecdb_derive"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "daf3feda7d28c275661d640ad454830ad3ed6ccdaa297d3ec24faa06741142e3"
 dependencies = [
  "quote",
  "syn 2.0.111",

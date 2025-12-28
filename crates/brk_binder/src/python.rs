@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{
     ClientMetadata, Endpoint, FieldNamePosition, IndexSetPattern, PatternField, StructuralPattern,
     TypeSchemas, extract_inner_type, get_fields_with_child_info, get_node_fields,
-    get_pattern_instance_base, is_enum_schema, to_pascal_case, to_snake_case,
+    get_pattern_instance_base, to_pascal_case, to_snake_case,
 };
 
 /// Generate Python client from metadata and OpenAPI endpoints.
@@ -65,9 +65,9 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
                 writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
             }
             writeln!(output).unwrap();
-        } else if is_enum_schema(schema) {
-            let py_type = schema_to_python_type_ctx(schema, Some(&name));
-            writeln!(output, "{} = {}", name, py_type).unwrap();
+        // } else if is_enum_schema(schema) {
+        //     let py_type = schema_to_python_type_ctx(schema, Some(&name));
+        //     writeln!(output, "{} = {}", name, py_type).unwrap();
         } else {
             let py_type = schema_to_python_type_ctx(schema, Some(&name));
             writeln!(output, "{} = {}", name, py_type).unwrap();
@@ -615,11 +615,14 @@ fn field_to_python_type_with_generic_value(
     };
 
     if metadata.is_pattern_type(&field.rust_type) {
-        // Check if this pattern is generic and we have a value type
-        if metadata.is_pattern_generic(&field.rust_type)
-            && let Some(vt) = generic_value_type
-        {
-            return format!("{}[{}]", field.rust_type, vt);
+        if metadata.is_pattern_generic(&field.rust_type) {
+            // Use type_param from field, then generic_value_type, then T if parent is generic
+            let type_param = field
+                .type_param
+                .as_deref()
+                .or(generic_value_type)
+                .unwrap_or(if is_generic { "T" } else { "Any" });
+            return format!("{}[{}]", field.rust_type, type_param);
         }
         field.rust_type.clone()
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
@@ -630,7 +633,6 @@ fn field_to_python_type_with_generic_value(
         format!("MetricNode[{}]", value_type)
     }
 }
-
 
 /// Generate tree classes
 fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -668,7 +670,8 @@ fn generate_tree_class(
         .collect();
 
     // Skip if this matches a pattern (already generated)
-    if pattern_lookup.contains_key(&fields) && pattern_lookup.get(&fields) != Some(&name.to_string())
+    if pattern_lookup.contains_key(&fields)
+        && pattern_lookup.get(&fields) != Some(&name.to_string())
     {
         return;
     }
@@ -695,12 +698,8 @@ fn generate_tree_class(
             .as_ref()
             .and_then(|cf| metadata.get_type_param(cf))
             .map(String::as_str);
-        let py_type = field_to_python_type_with_generic_value(
-            field,
-            metadata,
-            false,
-            generic_value_type,
-        );
+        let py_type =
+            field_to_python_type_with_generic_value(field, metadata, false, generic_value_type);
         let field_name_py = to_snake_case(&field.name);
 
         if metadata.is_pattern_type(&field.rust_type) {

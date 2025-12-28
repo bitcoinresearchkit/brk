@@ -3,7 +3,7 @@ use std::{
     f64,
     hash::{Hash, Hasher},
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub},
 };
 
 use derive_deref::Deref;
@@ -124,6 +124,13 @@ impl Add for Dollars {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self::from(Cents::from(self) + Cents::from(rhs))
+    }
+}
+
+impl Sub for Dollars {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::from(Cents::from(self) - Cents::from(rhs))
     }
 }
 
@@ -356,6 +363,13 @@ impl CheckedSub<usize> for Dollars {
         Some(Dollars::from(
             Cents::from(self).checked_sub(Cents::from(rhs)).unwrap(),
         ))
+    }
+}
+
+impl Neg for Dollars {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
     }
 }
 

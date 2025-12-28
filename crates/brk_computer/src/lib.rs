@@ -90,7 +90,10 @@ impl Computer {
 
             Ok((indexes, fetched, blks, txins, txouts))
         })?;
-        info!("Imported indexes/fetched/blks/txins/txouts in {:?}", i.elapsed());
+        info!(
+            "Imported indexes/fetched/blks/txins/txouts in {:?}",
+            i.elapsed()
+        );
 
         let i = Instant::now();
         let (price, constants, market) = thread::scope(|s| -> Result<_> {
@@ -195,11 +198,11 @@ impl Computer {
                 continue;
             }
 
-            if let Some(name) = entry.file_name().to_str() {
-                if !EXPECTED_DBS.contains(&name) {
-                    info!("Removing obsolete database folder: {}", name);
-                    fs::remove_dir_all(entry.path())?;
-                }
+            if let Some(name) = entry.file_name().to_str()
+                && !EXPECTED_DBS.contains(&name)
+            {
+                info!("Removing obsolete database folder: {}", name);
+                fs::remove_dir_all(entry.path())?;
             }
         }
 
@@ -262,7 +265,8 @@ impl Computer {
             let txouts = scope.spawn(|| -> Result<()> {
                 info!("Computing txouts...");
                 let i = Instant::now();
-                self.txouts.compute(indexer, &self.txins, &starting_indexes, exit)?;
+                self.txouts
+                    .compute(indexer, &self.txins, &starting_indexes, exit)?;
                 info!("Computed txouts in {:?}", i.elapsed());
                 Ok(())
             });

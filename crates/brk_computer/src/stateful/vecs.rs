@@ -462,27 +462,9 @@ impl Vecs {
             .as_ref()
             .map(|v| v.dateindex.u().clone());
 
-        let height_to_realized_cap = self
-            .utxo_cohorts
-            .all
-            .metrics
-            .realized
-            .as_ref()
-            .map(|r| r.height_to_realized_cap.clone());
-
-        let dateindex_to_realized_cap = self
-            .utxo_cohorts
-            .all
-            .metrics
-            .realized
-            .as_ref()
-            .map(|r| r.indexes_to_realized_cap.dateindex.unwrap_last().clone());
-
         let dateindex_to_supply_ref = dateindex_to_supply.u();
         let height_to_market_cap_ref = height_to_market_cap.as_ref();
         let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
-        let height_to_realized_cap_ref = height_to_realized_cap.as_ref();
-        let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
 
         aggregates::compute_rest_part2(
             &mut self.utxo_cohorts,
@@ -494,8 +476,6 @@ impl Vecs {
             dateindex_to_supply_ref,
             height_to_market_cap_ref,
             dateindex_to_market_cap_ref,
-            height_to_realized_cap_ref,
-            dateindex_to_realized_cap_ref,
             exit,
         )?;
 

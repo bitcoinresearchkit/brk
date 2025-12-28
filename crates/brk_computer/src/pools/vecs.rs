@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, PoolSlug, Pools, Sats, StoredF32, StoredU16, StoredU32};
+use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
 use vecdb::{Database, Exit, GenericStoredVec, IterableVec, VecIndex, Version};
 
 use crate::{
@@ -37,7 +37,6 @@ impl Vecs {
     pub fn forced_import(
         db: &Database,
         slug: PoolSlug,
-        _pools: &Pools,
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,

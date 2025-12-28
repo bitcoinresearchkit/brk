@@ -183,7 +183,7 @@ impl AddressCohorts {
 
     /// Second phase of post-processing: compute relative metrics.
     #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<S, D, HM, DM, HR, DR>(
+    pub fn compute_rest_part2<S, D, HM, DM>(
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -192,8 +192,6 @@ impl AddressCohorts {
         dateindex_to_supply: &D,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,
-        height_to_realized_cap: Option<&HR>,
-        dateindex_to_realized_cap: Option<&DR>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -201,8 +199,6 @@ impl AddressCohorts {
         D: IterableVec<DateIndex, Bitcoin> + Sync,
         HM: IterableVec<Height, Dollars> + Sync,
         DM: IterableVec<DateIndex, Dollars> + Sync,
-        HR: IterableVec<Height, Dollars> + Sync,
-        DR: IterableVec<DateIndex, Dollars> + Sync,
     {
         self.0.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
@@ -213,8 +209,6 @@ impl AddressCohorts {
                 dateindex_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
-                height_to_realized_cap,
-                dateindex_to_realized_cap,
                 exit,
             )
         })

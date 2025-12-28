@@ -156,6 +156,8 @@ pub struct PatternField {
     pub json_type: String,
     /// For leaves: the set of supported indexes. Empty for branches.
     pub indexes: BTreeSet<Index>,
+    /// For branches referencing generic patterns: the concrete type parameter
+    pub type_param: Option<String>,
 }
 
 impl PatternField {
@@ -175,6 +177,7 @@ impl std::hash::Hash for PatternField {
         self.name.hash(state);
         self.rust_type.hash(state);
         self.json_type.hash(state);
+        // Note: child_fields not included in hash for pattern matching purposes
     }
 }
 
@@ -183,6 +186,7 @@ impl PartialEq for PatternField {
         self.name == other.name
             && self.rust_type == other.rust_type
             && self.json_type == other.json_type
+        // Note: child_fields not included in equality for pattern matching purposes
     }
 }
 

@@ -21,8 +21,9 @@ pub fn detect_structural_patterns(
     let mut signature_counts: HashMap<Vec<PatternField>, usize> = HashMap::new();
     let mut normalized_to_name: HashMap<Vec<PatternField>, String> = HashMap::new();
     let mut name_counts: HashMap<String, usize> = HashMap::new();
+    let mut signature_to_child_fields: HashMap<Vec<PatternField>, Vec<Vec<PatternField>>> =
+        HashMap::new();
 
-    // Process tree bottom-up to resolve all branch types
     resolve_branch_patterns(
         tree,
         "root",
@@ -30,30 +31,44 @@ pub fn detect_structural_patterns(
         &mut signature_counts,
         &mut normalized_to_name,
         &mut name_counts,
+        &mut signature_to_child_fields,
     );
 
-    // Identify generic patterns (also extracts type params)
     let (generic_patterns, generic_mappings, type_mappings) =
         detect_generic_patterns(&signature_to_pattern);
 
-    // Build non-generic patterns: signatures appearing 2+ times that weren't merged into generics
     let mut patterns: Vec<StructuralPattern> = signature_to_pattern
         .iter()
         .filter(|(sig, _)| {
             signature_counts.get(*sig).copied().unwrap_or(0) >= 2
                 && !generic_mappings.contains_key(*sig)
         })
-        .map(|(fields, name)| StructuralPattern {
-            name: name.clone(),
-            fields: fields.clone(),
-            field_positions: HashMap::new(),
-            is_generic: false,
+        .map(|(fields, name)| {
+            let child_fields_list = signature_to_child_fields.get(fields);
+            let fields_with_type_params = fields
+                .iter()
+                .enumerate()
+                .map(|(i, f)| {
+                    let type_param = child_fields_list
+                        .and_then(|list| list.get(i))
+                        .and_then(|cf| type_mappings.get(cf).cloned());
+                    PatternField {
+                        type_param,
+                        ..f.clone()
+                    }
+                })
+                .collect();
+            StructuralPattern {
+                name: name.clone(),
+                fields: fields_with_type_params,
+                field_positions: HashMap::new(),
+                is_generic: false,
+            }
         })
         .collect();
 
     patterns.extend(generic_patterns);
 
-    // Build lookup for field position analysis
     let mut pattern_lookup: HashMap<Vec<PatternField>, String> = HashMap::new();
     for (sig, name) in &signature_to_pattern {
         if signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
@@ -64,7 +79,6 @@ pub fn detect_structural_patterns(
 
     let concrete_to_pattern = pattern_lookup.clone();
 
-    // Second pass: analyze field positions
     analyze_pattern_field_positions(tree, &mut patterns, &pattern_lookup);
 
     patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
@@ -147,6 +161,7 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
                     rust_type: "T".to_string(),
                     json_type: "T".to_string(),
                     indexes: f.indexes.clone(),
+                    type_param: None,
                 }
             }
         })
@@ -156,6 +171,7 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
 }
 
 /// Recursively resolve branch patterns bottom-up.
+/// Returns (pattern_name, fields) for parent's child_fields tracking.
 fn resolve_branch_patterns(
     node: &TreeNode,
     field_name: &str,
@@ -163,30 +179,40 @@ fn resolve_branch_patterns(
     signature_counts: &mut HashMap<Vec<PatternField>, usize>,
     normalized_to_name: &mut HashMap<Vec<PatternField>, String>,
     name_counts: &mut HashMap<String, usize>,
-) -> Option<String> {
+    signature_to_child_fields: &mut HashMap<Vec<PatternField>, Vec<Vec<PatternField>>>,
+) -> Option<(String, Vec<PatternField>)> {
     let TreeNode::Branch(children) = node else {
         return None;
     };
 
     let mut fields: Vec<PatternField> = Vec::new();
+    let mut child_fields_vec: Vec<Vec<PatternField>> = Vec::new();
+
     for (child_name, child_node) in children {
-        let (rust_type, json_type, indexes) = match child_node {
+        let (rust_type, json_type, indexes, child_fields) = match child_node {
             TreeNode::Leaf(leaf) => (
                 leaf.value_type().to_string(),
                 schema_to_json_type(&leaf.schema),
                 leaf.indexes().clone(),
+                Vec::new(),
             ),
             TreeNode::Branch(_) => {
-                let pattern_name = resolve_branch_patterns(
+                let (pattern_name, child_pattern_fields) = resolve_branch_patterns(
                     child_node,
                     child_name,
                     signature_to_pattern,
                     signature_counts,
                     normalized_to_name,
                     name_counts,
+                    signature_to_child_fields,
                 )
-                .unwrap_or_else(|| "Unknown".to_string());
-                (pattern_name.clone(), pattern_name, BTreeSet::new())
+                .unwrap_or_else(|| ("Unknown".to_string(), Vec::new()));
+                (
+                    pattern_name.clone(),
+                    pattern_name,
+                    BTreeSet::new(),
+                    child_pattern_fields,
+                )
             }
         };
         fields.push(PatternField {
@@ -194,11 +220,18 @@ fn resolve_branch_patterns(
             rust_type,
             json_type,
             indexes,
+            type_param: None,
         });
+        child_fields_vec.push(child_fields);
     }
 
     fields.sort_by(|a, b| a.name.cmp(&b.name));
     *signature_counts.entry(fields.clone()).or_insert(0) += 1;
+
+    // Store child fields for type param resolution later
+    signature_to_child_fields
+        .entry(fields.clone())
+        .or_insert(child_fields_vec);
 
     let pattern_name = if let Some(existing) = signature_to_pattern.get(&fields) {
         existing.clone()
@@ -208,11 +241,11 @@ fn resolve_branch_patterns(
             .entry(normalized)
             .or_insert_with(|| generate_pattern_name(field_name, name_counts))
             .clone();
-        signature_to_pattern.insert(fields, name.clone());
+        signature_to_pattern.insert(fields.clone(), name.clone());
         name
     };
 
-    Some(pattern_name)
+    Some((pattern_name, fields))
 }
 
 /// Normalize fields for naming (same structure = same name).
@@ -228,6 +261,7 @@ fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
                     rust_type: "_".to_string(),
                     json_type: "_".to_string(),
                     indexes: f.indexes.clone(),
+                    type_param: None,
                 }
             }
         })

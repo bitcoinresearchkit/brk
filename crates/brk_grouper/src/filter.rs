@@ -109,12 +109,15 @@ impl Filter {
     }
 
     /// Whether to compute extended metrics (realized cap ratios, profit/loss ratios, percentiles)
-    /// For UTXO context: false for Type and Amount filters
+    /// For UTXO context: false for Type, Amount, Year, and Epoch filters
     /// For Address context: always false
     pub fn is_extended(&self, context: CohortContext) -> bool {
         match context {
             CohortContext::Address => false,
-            CohortContext::Utxo => !matches!(self, Filter::Type(_) | Filter::Amount(_)),
+            CohortContext::Utxo => !matches!(
+                self,
+                Filter::Type(_) | Filter::Amount(_) | Filter::Year(_) | Filter::Epoch(_)
+            ),
         }
     }
 

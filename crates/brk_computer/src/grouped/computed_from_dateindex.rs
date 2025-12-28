@@ -1,5 +1,4 @@
 use brk_error::Result;
-
 use brk_traversable::Traversable;
 use brk_types::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,

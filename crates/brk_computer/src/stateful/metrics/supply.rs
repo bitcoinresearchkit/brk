@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, StoredU64, Version};
+use brk_types::{Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec, PcoVec,
-    TypedVecIterator,
+    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
+    PcoVec, TypedVecIterator,
 };
 
 use crate::{
@@ -52,20 +52,20 @@ impl SupplyMetrics {
         let compute_dollars = cfg.compute_dollars();
         let last = VecBuilderOptions::default().add_last();
 
-        Ok(Self {
-            height_to_supply: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("supply"),
-                cfg.version + v0,
-            )?,
+        let height_to_supply: EagerVec<PcoVec<Height, Sats>> =
+            EagerVec::forced_import(cfg.db, &cfg.name("supply"), cfg.version + v0)?;
 
-            height_to_supply_value: ComputedHeightValueVecs::forced_import(
-                cfg.db,
-                &cfg.name("supply"),
-                Source::None,
-                cfg.version + v0,
-                compute_dollars,
-            )?,
+        let height_to_supply_value = ComputedHeightValueVecs::forced_import(
+            cfg.db,
+            &cfg.name("supply"),
+            Source::Vec(height_to_supply.boxed_clone()),
+            cfg.version + v0,
+            compute_dollars,
+        )?;
+
+        Ok(Self {
+            height_to_supply,
+            height_to_supply_value,
 
             indexes_to_supply: ComputedValueVecsFromDateIndex::forced_import(
                 cfg.db,
@@ -183,12 +183,8 @@ impl SupplyMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_supply_value.compute_rest(
-            price,
-            starting_indexes,
-            exit,
-            Some(&self.height_to_supply),
-        )?;
+        self.height_to_supply_value
+            .compute_rest(price, starting_indexes, exit)?;
 
         self.indexes_to_supply
             .compute_all(price, starting_indexes, exit, |v| {
@@ -240,31 +236,6 @@ impl SupplyMetrics {
                 Ok(())
             })?;
 
-        Ok(())
-    }
-
-    /// Second phase of computed metrics (ratios, relative values).
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2(
-        &mut self,
-        indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
-        _starting_indexes: &Indexes,
-        height_to_supply: &impl IterableVec<Height, Bitcoin>,
-        _dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
-        height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        _exit: &Exit,
-    ) -> Result<()> {
-        let _ = (
-            indexes,
-            price,
-            height_to_supply,
-            height_to_market_cap,
-            dateindex_to_market_cap,
-        );
-
-        // Supply relative metrics computed here if needed
         Ok(())
     }
 }

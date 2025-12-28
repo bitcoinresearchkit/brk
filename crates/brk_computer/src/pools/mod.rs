@@ -51,7 +51,6 @@ impl Vecs {
                     vecs::Vecs::forced_import(
                         &db,
                         pool.slug,
-                        pools,
                         version + Version::ZERO,
                         indexes,
                         price,

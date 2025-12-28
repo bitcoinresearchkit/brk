@@ -17,7 +17,10 @@ use crate::{
     stateful::states::AddressCohortState,
 };
 
-use super::{super::metrics::{CohortMetrics, ImportConfig}, traits::{CohortVecs, DynCohortVecs}};
+use super::{
+    super::metrics::{CohortMetrics, ImportConfig},
+    traits::{CohortVecs, DynCohortVecs},
+};
 
 const VERSION: Version = Version::ZERO;
 
@@ -288,8 +291,6 @@ impl CohortVecs for AddressCohortVecs {
         dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics.compute_rest_part2(
@@ -300,8 +301,6 @@ impl CohortVecs for AddressCohortVecs {
             dateindex_to_supply,
             height_to_market_cap,
             dateindex_to_market_cap,
-            height_to_realized_cap,
-            dateindex_to_realized_cap,
             exit,
         )?;
         Ok(())

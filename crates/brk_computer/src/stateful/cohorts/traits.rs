@@ -64,8 +64,6 @@ pub trait CohortVecs: DynCohortVecs {
         dateindex_to_supply: &impl IterableVec<DateIndex, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
-        height_to_realized_cap: Option<&impl IterableVec<Height, Dollars>>,
-        dateindex_to_realized_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> Result<()>;
 }
