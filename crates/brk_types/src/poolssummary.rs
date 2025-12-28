@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::PoolStats;
 
 /// Mining pools response for a time period
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolsSummary {
     /// List of pools sorted by block count descending
     pub pools: Vec<PoolStats>,

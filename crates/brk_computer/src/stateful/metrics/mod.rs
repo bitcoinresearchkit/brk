@@ -53,13 +53,20 @@ impl CohortMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let compute_dollars = cfg.compute_dollars();
 
+        let supply = SupplyMetrics::forced_import(cfg)?;
+
         let unrealized = compute_dollars
             .then(|| UnrealizedMetrics::forced_import(cfg))
             .transpose()?;
 
+        let relative = unrealized
+            .as_ref()
+            .map(|u| RelativeMetrics::forced_import(cfg, u, &supply))
+            .transpose()?;
+
         Ok(Self {
             filter: cfg.filter.clone(),
-            supply: SupplyMetrics::forced_import(cfg)?,
+            supply,
             activity: ActivityMetrics::forced_import(cfg)?,
             realized: compute_dollars
                 .then(|| RealizedMetrics::forced_import(cfg))
@@ -67,10 +74,7 @@ impl CohortMetrics {
             price_paid: compute_dollars
                 .then(|| PricePaidMetrics::forced_import(cfg))
                 .transpose()?,
-            relative: unrealized
-                .as_ref()
-                .map(|u| RelativeMetrics::forced_import(cfg, u))
-                .transpose()?,
+            relative,
             unrealized,
         })
     }

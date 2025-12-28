@@ -11,7 +11,8 @@ use crate::{
     Indexes,
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-        LazyVecsFromHeight, Source, VecBuilderOptions,
+        LazyVecsFrom2FromHeight, LazyVecsFromHeight, PercentageDollarsF32, Source,
+        VecBuilderOptions,
     },
     indexes, price,
     stateful::states::RealizedState,
@@ -40,10 +41,13 @@ pub struct RealizedMetrics {
     pub indexes_to_net_realized_pnl: ComputedVecsFromHeight<Dollars>,
     pub indexes_to_realized_value: ComputedVecsFromHeight<Dollars>,
 
-    // === Realized vs Realized Cap Ratios ===
-    pub indexes_to_realized_profit_rel_to_realized_cap: ComputedVecsFromHeight<StoredF32>,
-    pub indexes_to_realized_loss_rel_to_realized_cap: ComputedVecsFromHeight<StoredF32>,
-    pub indexes_to_net_realized_pnl_rel_to_realized_cap: ComputedVecsFromHeight<StoredF32>,
+    // === Realized vs Realized Cap Ratios (lazy) ===
+    pub indexes_to_realized_profit_rel_to_realized_cap:
+        LazyVecsFrom2FromHeight<StoredF32, Dollars, Dollars>,
+    pub indexes_to_realized_loss_rel_to_realized_cap:
+        LazyVecsFrom2FromHeight<StoredF32, Dollars, Dollars>,
+    pub indexes_to_net_realized_pnl_rel_to_realized_cap:
+        LazyVecsFrom2FromHeight<StoredF32, Dollars, Dollars>,
 
     // === Total Realized PnL ===
     pub indexes_to_total_realized_pnl: LazyVecsFromHeight<Dollars>,
@@ -135,21 +139,75 @@ impl RealizedMetrics {
             &indexes_to_realized_value,
         );
 
+        // Extract vecs needed for lazy ratio construction
+        let height_to_realized_cap: EagerVec<PcoVec<Height, Dollars>> =
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_cap"), cfg.version + v0)?;
+
+        let indexes_to_realized_cap = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("realized_cap"),
+            Source::None,
+            cfg.version + v0,
+            cfg.indexes,
+            last,
+        )?;
+
+        let height_to_realized_profit: EagerVec<PcoVec<Height, Dollars>> =
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_profit"), cfg.version + v0)?;
+
+        let indexes_to_realized_profit = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("realized_profit"),
+            Source::None,
+            cfg.version + v0,
+            cfg.indexes,
+            sum_cum,
+        )?;
+
+        let indexes_to_net_realized_pnl = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("net_realized_pnl"),
+            Source::Compute,
+            cfg.version + v0,
+            cfg.indexes,
+            sum_cum,
+        )?;
+
+        // Construct lazy ratio vecs (before struct assignment to satisfy borrow checker)
+        let indexes_to_realized_profit_rel_to_realized_cap =
+            LazyVecsFrom2FromHeight::from_computed::<PercentageDollarsF32>(
+                &cfg.name("realized_profit_rel_to_realized_cap"),
+                cfg.version + v1,
+                height_to_realized_profit.boxed_clone(),
+                height_to_realized_cap.boxed_clone(),
+                &indexes_to_realized_profit,
+                &indexes_to_realized_cap,
+            );
+
+        let indexes_to_realized_loss_rel_to_realized_cap =
+            LazyVecsFrom2FromHeight::from_computed::<PercentageDollarsF32>(
+                &cfg.name("realized_loss_rel_to_realized_cap"),
+                cfg.version + v1,
+                height_to_realized_loss.boxed_clone(),
+                height_to_realized_cap.boxed_clone(),
+                &indexes_to_realized_loss,
+                &indexes_to_realized_cap,
+            );
+
+        let indexes_to_net_realized_pnl_rel_to_realized_cap =
+            LazyVecsFrom2FromHeight::from_computed::<PercentageDollarsF32>(
+                &cfg.name("net_realized_pnl_rel_to_realized_cap"),
+                cfg.version + v1,
+                indexes_to_net_realized_pnl.height.as_ref().unwrap().boxed_clone(),
+                height_to_realized_cap.boxed_clone(),
+                &indexes_to_net_realized_pnl,
+                &indexes_to_realized_cap,
+            );
+
         Ok(Self {
             // === Realized Cap ===
-            height_to_realized_cap: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("realized_cap"),
-                cfg.version + v0,
-            )?,
-            indexes_to_realized_cap: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_cap"),
-                Source::None,
-                cfg.version + v0,
-                cfg.indexes,
-                last,
-            )?,
+            height_to_realized_cap,
+            indexes_to_realized_cap,
             indexes_to_realized_price: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("realized_price"),
@@ -188,57 +246,18 @@ impl RealizedMetrics {
             )?,
 
             // === Realized Profit/Loss ===
-            height_to_realized_profit: EagerVec::forced_import(
-                cfg.db,
-                &cfg.name("realized_profit"),
-                cfg.version + v0,
-            )?,
-            indexes_to_realized_profit: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_profit"),
-                Source::None,
-                cfg.version + v0,
-                cfg.indexes,
-                sum_cum,
-            )?,
+            height_to_realized_profit,
+            indexes_to_realized_profit,
             height_to_realized_loss,
             indexes_to_realized_loss,
             indexes_to_neg_realized_loss,
-            indexes_to_net_realized_pnl: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("net_realized_pnl"),
-                Source::Compute,
-                cfg.version + v0,
-                cfg.indexes,
-                sum_cum,
-            )?,
+            indexes_to_net_realized_pnl,
             indexes_to_realized_value,
 
-            // === Realized vs Realized Cap Ratios ===
-            indexes_to_realized_profit_rel_to_realized_cap: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_profit_rel_to_realized_cap"),
-                Source::Compute,
-                cfg.version + v0,
-                cfg.indexes,
-                sum,
-            )?,
-            indexes_to_realized_loss_rel_to_realized_cap: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("realized_loss_rel_to_realized_cap"),
-                Source::Compute,
-                cfg.version + v0,
-                cfg.indexes,
-                sum,
-            )?,
-            indexes_to_net_realized_pnl_rel_to_realized_cap: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("net_realized_pnl_rel_to_realized_cap"),
-                Source::Compute,
-                cfg.version + v1,
-                cfg.indexes,
-                sum,
-            )?,
+            // === Realized vs Realized Cap Ratios (lazy) ===
+            indexes_to_realized_profit_rel_to_realized_cap,
+            indexes_to_realized_loss_rel_to_realized_cap,
+            indexes_to_net_realized_pnl_rel_to_realized_cap,
 
             // === Total Realized PnL ===
             indexes_to_total_realized_pnl,
@@ -767,40 +786,6 @@ impl RealizedMetrics {
             30,
             exit,
         )?;
-
-        // Ratios relative to realized cap
-        self.indexes_to_realized_profit_rel_to_realized_cap
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.height,
-                    &self.height_to_realized_profit,
-                    &self.height_to_realized_cap,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_realized_loss_rel_to_realized_cap
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.height,
-                    &self.height_to_realized_loss,
-                    &self.height_to_realized_cap,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_net_realized_pnl_rel_to_realized_cap
-            .compute_all(indexes, starting_indexes, exit, |vec| {
-                vec.compute_percentage(
-                    starting_indexes.height,
-                    self.indexes_to_net_realized_pnl.height.u(),
-                    &self.height_to_realized_cap,
-                    exit,
-                )?;
-                Ok(())
-            })?;
 
         // Net realized PnL cumulative 30d delta
         self.indexes_to_net_realized_pnl_cumulative_30d_delta

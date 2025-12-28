@@ -6,7 +6,7 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_types::{CentsCompact, Dollars, Height, Sats};
+use brk_types::{CentsCompact, Dollars, Height, Sats, SupplyState};
 use derive_deref::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use rustc_hash::FxHashMap;
@@ -17,8 +17,6 @@ use crate::{
     grouped::{PERCENTILES, PERCENTILES_LEN},
     utils::OptionExt,
 };
-
-use super::SupplyState;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {

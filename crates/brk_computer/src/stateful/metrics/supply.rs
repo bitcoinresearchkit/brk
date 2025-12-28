@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Sats, StoredU64, Version};
+use brk_types::{Height, Sats, StoredU64, SupplyState, Version};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
@@ -15,7 +15,6 @@ use crate::{
         LazyValueVecsFromDateIndex, Source, VecBuilderOptions,
     },
     indexes, price,
-    stateful::states::SupplyState,
 };
 
 use super::ImportConfig;
@@ -79,13 +78,16 @@ impl SupplyMetrics {
         )?;
 
         // Create lazy supply_half from supply sources
-        let height_to_supply_half_value =
-            LazyHeightValueVecs::from_sources::<HalveSats, HalveSatsToBitcoin, HalfClosePriceTimesSats>(
-                &cfg.name("supply_half"),
-                height_to_supply.boxed_clone(),
-                price_source,
-                cfg.version + v0,
-            );
+        let height_to_supply_half_value = LazyHeightValueVecs::from_sources::<
+            HalveSats,
+            HalveSatsToBitcoin,
+            HalfClosePriceTimesSats,
+        >(
+            &cfg.name("supply_half"),
+            height_to_supply.boxed_clone(),
+            price_source,
+            cfg.version + v0,
+        );
 
         let indexes_to_supply_half =
             LazyValueVecsFromDateIndex::from_source::<HalveSats, HalveSatsToBitcoin, HalveDollars>(

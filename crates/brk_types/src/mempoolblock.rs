@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{FeeRate, Sats, VSize};
 
 /// Block info in a mempool.space like format for fee estimation.
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MempoolBlock {
     /// Total block size in weight units

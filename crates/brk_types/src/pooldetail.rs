@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{Pool, PoolSlug};
 
 /// Detailed pool information with statistics across time periods
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolDetail {
     /// Pool information
     pub pool: PoolDetailInfo,
@@ -29,22 +29,22 @@ pub struct PoolDetail {
 }
 
 /// Pool information for detail view
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolDetailInfo {
     /// Unique pool identifier
     pub id: u8,
 
     /// Pool name
-    pub name: &'static str,
+    pub name: Cow<'static, str>,
 
     /// Pool website URL
-    pub link: &'static str,
+    pub link: Cow<'static, str>,
 
     /// Known payout addresses
-    pub addresses: Vec<&'static str>,
+    pub addresses: Vec<Cow<'static, str>>,
 
     /// Coinbase tag patterns (regexes)
-    pub regexes: Vec<&'static str>,
+    pub regexes: Vec<Cow<'static, str>>,
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
@@ -54,10 +54,10 @@ impl From<&'static Pool> for PoolDetailInfo {
     fn from(pool: &'static Pool) -> Self {
         Self {
             id: pool.unique_id(),
-            name: pool.name,
-            link: pool.link,
-            addresses: pool.addresses.to_vec(),
-            regexes: pool.tags.to_vec(),
+            name: Cow::Borrowed(pool.name),
+            link: Cow::Borrowed(pool.link),
+            addresses: pool.addresses.iter().map(|&s| Cow::Borrowed(s)).collect(),
+            regexes: pool.tags.iter().map(|&s| Cow::Borrowed(s)).collect(),
             slug: pool.slug(),
         }
     }

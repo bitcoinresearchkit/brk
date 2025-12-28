@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::FeeRate;
 
 /// Recommended fee rates in sat/vB
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RecommendedFees {
     /// Fee rate for fastest confirmation (next block)

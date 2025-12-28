@@ -1,20 +1,22 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Pool, PoolSlug};
 
 /// Mining pool with block statistics for a time period
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolStats {
     /// Unique pool identifier
     #[serde(rename = "poolId")]
     pub pool_id: u8,
 
     /// Pool name
-    pub name: &'static str,
+    pub name: Cow<'static, str>,
 
     /// Pool website URL
-    pub link: &'static str,
+    pub link: Cow<'static, str>,
 
     /// Number of blocks mined in the time period
     #[serde(rename = "blockCount")]
@@ -39,8 +41,8 @@ impl PoolStats {
     pub fn new(pool: &'static Pool, block_count: u32, rank: u32, share: f64) -> Self {
         Self {
             pool_id: pool.unique_id(),
-            name: pool.name,
-            link: pool.link,
+            name: Cow::Borrowed(pool.name),
+            link: Cow::Borrowed(pool.link),
             block_count,
             rank,
             empty_blocks: 0, // TODO: track empty blocks if needed

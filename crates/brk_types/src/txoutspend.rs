@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{TxStatus, Txid, Vin};
 
 /// Status of an output indicating whether it has been spent
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TxOutspend {
     /// Whether the output has been spent
     pub spent: bool,

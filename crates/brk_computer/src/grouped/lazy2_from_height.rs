@@ -1,24 +1,28 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
+    Version, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
-use vecdb::{AnyExportableVec, BinaryTransform, IterableCloneableVec, LazyVecFrom2};
+use vecdb::{AnyExportableVec, BinaryTransform, IterableBoxedVec, LazyVecFrom2};
 
-use super::{ComputedVecValue, ComputedVecsFromDateIndex, LazyTransform2Builder};
+use super::{ComputedVecValue, ComputedVecsFromHeight, LazyTransform2Builder};
 
 const VERSION: Version = Version::ZERO;
 
-/// Lazy binary transform from two `ComputedVecsFromDateIndex` sources.
+/// Lazy binary transform from two `ComputedVecsFromHeight` sources.
 #[derive(Clone)]
-pub struct LazyVecsFrom2FromDateIndex<T, S1T, S2T>
+pub struct LazyVecsFrom2FromHeight<T, S1T, S2T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    pub dateindex: Option<LazyVecFrom2<DateIndex, T, DateIndex, S1T, DateIndex, S2T>>,
+    pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
+    pub height_extra: LazyTransform2Builder<Height, T, S1T, S2T>,
+    pub dateindex: LazyTransform2Builder<DateIndex, T, S1T, S2T>,
     pub weekindex: LazyTransform2Builder<WeekIndex, T, S1T, S2T>,
+    pub difficultyepoch: LazyTransform2Builder<DifficultyEpoch, T, S1T, S2T>,
     pub monthindex: LazyTransform2Builder<MonthIndex, T, S1T, S2T>,
     pub quarterindex: LazyTransform2Builder<QuarterIndex, T, S1T, S2T>,
     pub semesterindex: LazyTransform2Builder<SemesterIndex, T, S1T, S2T>,
@@ -26,34 +30,48 @@ where
     pub decadeindex: LazyTransform2Builder<DecadeIndex, T, S1T, S2T>,
 }
 
-impl<T, S1T, S2T> LazyVecsFrom2FromDateIndex<T, S1T, S2T>
+impl<T, S1T, S2T> LazyVecsFrom2FromHeight<T, S1T, S2T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    /// Create from two `ComputedVecsFromDateIndex` sources.
+    /// Create from two `ComputedVecsFromHeight` sources with explicit height sources.
     pub fn from_computed<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: &ComputedVecsFromDateIndex<S1T>,
-        source2: &ComputedVecsFromDateIndex<S2T>,
+        height_source1: IterableBoxedVec<Height, S1T>,
+        height_source2: IterableBoxedVec<Height, S2T>,
+        source1: &ComputedVecsFromHeight<S1T>,
+        source2: &ComputedVecsFromHeight<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         Self {
-            dateindex: source1
-                .dateindex
-                .as_ref()
-                .zip(source2.dateindex.as_ref())
-                .map(|(s1, s2)| {
-                    LazyVecFrom2::transformed::<F>(name, v, s1.boxed_clone(), s2.boxed_clone())
-                }),
+            height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
+            height_extra: LazyTransform2Builder::from_eager::<F>(
+                name,
+                v,
+                &source1.height_extra,
+                &source2.height_extra,
+            ),
+            dateindex: LazyTransform2Builder::from_eager::<F>(
+                name,
+                v,
+                &source1.dateindex,
+                &source2.dateindex,
+            ),
             weekindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
                 name,
                 v,
                 &source1.weekindex,
                 &source2.weekindex,
+            ),
+            difficultyepoch: LazyTransform2Builder::from_eager::<F>(
+                name,
+                v,
+                &source1.difficultyepoch,
+                &source2.difficultyepoch,
             ),
             monthindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
                 name,
@@ -89,19 +107,28 @@ where
     }
 }
 
-impl<T, S1T, S2T> Traversable for LazyVecsFrom2FromDateIndex<T, S1T, S2T>
+impl<T, S1T, S2T> Traversable for LazyVecsFrom2FromHeight<T, S1T, S2T>
 where
     T: ComputedVecValue + JsonSchema,
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
     fn to_tree_node(&self) -> brk_traversable::TreeNode {
+        let height_extra_node = self.height_extra.to_tree_node();
         brk_traversable::TreeNode::Branch(
             [
-                self.dateindex
-                    .as_ref()
-                    .map(|v| ("dateindex".to_string(), v.to_tree_node())),
+                Some(("height".to_string(), self.height.to_tree_node())),
+                if height_extra_node.is_empty() {
+                    None
+                } else {
+                    Some(("height_extra".to_string(), height_extra_node))
+                },
+                Some(("dateindex".to_string(), self.dateindex.to_tree_node())),
                 Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
+                Some((
+                    "difficultyepoch".to_string(),
+                    self.difficultyepoch.to_tree_node(),
+                )),
                 Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
                 Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
                 Some((
@@ -121,11 +148,11 @@ where
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         let mut iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
-            Box::new(std::iter::empty());
-        if let Some(ref v) = self.dateindex {
-            iter = Box::new(iter.chain(v.iter_any_exportable()));
-        }
+            Box::new(self.height.iter_any_exportable());
+        iter = Box::new(iter.chain(self.height_extra.iter_any_exportable()));
+        iter = Box::new(iter.chain(self.dateindex.iter_any_exportable()));
         iter = Box::new(iter.chain(self.weekindex.iter_any_exportable()));
+        iter = Box::new(iter.chain(self.difficultyepoch.iter_any_exportable()));
         iter = Box::new(iter.chain(self.monthindex.iter_any_exportable()));
         iter = Box::new(iter.chain(self.quarterindex.iter_any_exportable()));
         iter = Box::new(iter.chain(self.semesterindex.iter_any_exportable()));

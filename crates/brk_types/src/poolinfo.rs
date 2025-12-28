@@ -1,13 +1,15 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Pool, PoolSlug};
 
 /// Basic pool information for listing all pools
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolInfo {
     /// Pool name
-    pub name: &'static str,
+    pub name: Cow<'static, str>,
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
@@ -19,7 +21,7 @@ pub struct PoolInfo {
 impl From<&'static Pool> for PoolInfo {
     fn from(pool: &'static Pool) -> Self {
         Self {
-            name: pool.name,
+            name: Cow::Borrowed(pool.name),
             slug: pool.slug(),
             unique_id: pool.unique_id(),
         }

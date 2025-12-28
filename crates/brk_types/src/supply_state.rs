@@ -1,9 +1,13 @@
-use std::ops::{Add, AddAssign, SubAssign};
+use std::{
+    fmt,
+    ops::{Add, AddAssign, SubAssign},
+};
 
-use brk_types::{CheckedSub, LoadedAddressData, Sats};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
+
+use crate::{CheckedSub, LoadedAddressData, Sats};
 
 /// Current supply state tracking UTXO count and total value
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -71,8 +75,8 @@ impl From<&LoadedAddressData> for SupplyState {
     }
 }
 
-impl std::fmt::Display for SupplyState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for SupplyState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "utxos: {}, value: {}", self.utxo_count, self.value)
     }
 }

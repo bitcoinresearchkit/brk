@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32};
+use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32, StoredF64};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 /// (Dollars, Dollars) -> Dollars addition
@@ -161,5 +161,54 @@ impl<const V: u16> UnaryTransform<Dollars, Dollars> for DollarsTimesTenths<V> {
     #[inline(always)]
     fn apply(d: Dollars) -> Dollars {
         d * (V as f64 / 10.0)
+    }
+}
+
+// === Percentage Transforms (a/b × 100) ===
+
+/// (Bitcoin, Bitcoin) -> StoredF64 percentage (a/b × 100)
+/// Used for supply ratio calculations like supply_in_profit / total_supply × 100
+pub struct PercentageBtcF64;
+
+impl BinaryTransform<Bitcoin, Bitcoin, StoredF64> for PercentageBtcF64 {
+    #[inline(always)]
+    fn apply(numerator: Bitcoin, denominator: Bitcoin) -> StoredF64 {
+        // Bitcoin / Bitcoin returns StoredF64, so dereference and multiply
+        StoredF64::from(*(numerator / denominator) * 100.0)
+    }
+}
+
+/// (Dollars, Dollars) -> StoredF32 percentage (a/b × 100)
+/// Used for unrealized/realized ratio calculations
+pub struct PercentageDollarsF32;
+
+impl BinaryTransform<Dollars, Dollars, StoredF32> for PercentageDollarsF32 {
+    #[inline(always)]
+    fn apply(numerator: Dollars, denominator: Dollars) -> StoredF32 {
+        // Dollars / Dollars returns StoredF64, so dereference and multiply
+        StoredF32::from(*(numerator / denominator) * 100.0)
+    }
+}
+
+/// (Dollars, Dollars) -> StoredF32 negated percentage (-(a/b × 100))
+/// Used for negated loss ratio calculations, avoiding lazy-from-lazy chains.
+pub struct NegPercentageDollarsF32;
+
+impl BinaryTransform<Dollars, Dollars, StoredF32> for NegPercentageDollarsF32 {
+    #[inline(always)]
+    fn apply(numerator: Dollars, denominator: Dollars) -> StoredF32 {
+        // Dollars / Dollars returns StoredF64, so dereference and multiply
+        StoredF32::from(-(*(numerator / denominator) * 100.0))
+    }
+}
+
+/// (Sats, Sats) -> StoredF64 percentage (a/b × 100)
+/// Used for supply ratio calculations (equivalent to Bitcoin/Bitcoin since 1e8 cancels)
+pub struct PercentageSatsF64;
+
+impl BinaryTransform<Sats, Sats, StoredF64> for PercentageSatsF64 {
+    #[inline(always)]
+    fn apply(numerator: Sats, denominator: Sats) -> StoredF64 {
+        StoredF64::from((*numerator as f64 / *denominator as f64) * 100.0)
     }
 }

@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
     Dollars, EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
-    Sats, StoredU64, Version,
+    Sats, StoredU64, SupplyState, Version,
 };
 use log::info;
 use vecdb::{
@@ -29,7 +29,7 @@ use crate::{
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, SupplyState, UTXOCohorts,
+    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
     address::{AddressTypeToHeightToAddressCount, AddressTypeToIndexesToAddressCount},
     compute::aggregates,
 };

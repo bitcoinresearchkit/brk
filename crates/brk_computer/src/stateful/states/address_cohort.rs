@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Dollars, Height, LoadedAddressData, Sats};
+use brk_types::{Dollars, Height, LoadedAddressData, Sats, SupplyState};
 use vecdb::unlikely;
 
-use crate::stateful::states::{RealizedState, SupplyState};
+use crate::stateful::states::RealizedState;
 
 use super::CohortState;
 

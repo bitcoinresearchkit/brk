@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use aide::{
     axum::{ApiRouter, routing::get_with},
@@ -71,8 +71,8 @@ impl ApiRoutes for ApiRouter<AppState> {
                 get_with(
                     async || -> Json<Health> {
                         Json(Health {
-                            status: "healthy",
-                            service: "brk",
+                            status: Cow::Borrowed("healthy"),
+                            service: Cow::Borrowed("brk"),
                             timestamp: jiff::Timestamp::now().to_string(),
                         })
                     },

@@ -1,11 +1,11 @@
 use std::ops::Add;
 
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};
 
 /// Position within a .blk file, encoding file index and byte offset
-#[derive(Debug, Clone, Copy, Serialize, Pco, JsonSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
 pub struct BlkPosition(u64);
 
 impl BlkPosition {

@@ -1,8 +1,6 @@
 use std::cmp::Ordering;
 
-use brk_types::{CheckedSub, Dollars};
-
-use super::SupplyState;
+use brk_types::{CheckedSub, Dollars, SupplyState};
 
 #[derive(Debug, Default, Clone)]
 pub struct RealizedState {

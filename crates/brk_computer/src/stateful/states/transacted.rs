@@ -1,9 +1,7 @@
 use std::ops::{Add, AddAssign};
 
 use brk_grouper::{ByAmountRange, GroupedByType};
-use brk_types::{OutputType, Sats};
-
-use super::SupplyState;
+use brk_types::{OutputType, Sats, SupplyState};
 
 #[derive(Default, Debug)]
 pub struct Transacted {

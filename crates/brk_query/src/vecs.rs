@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
@@ -73,7 +73,11 @@ impl<'a> Vecs<'a> {
             .keys()
             .map(|i| IndexInfo {
                 index: *i,
-                aliases: i.possible_values(),
+                aliases: i
+                    .possible_values()
+                    .iter()
+                    .map(|v| Cow::Borrowed(*v))
+                    .collect(),
             })
             .collect();
 
@@ -116,14 +120,20 @@ impl<'a> Vecs<'a> {
             .entry(name)
             .or_default()
             .insert(index, vec);
-        assert!(prev.is_none(), "Duplicate metric: {name} for index {index:?}");
+        assert!(
+            prev.is_none(),
+            "Duplicate metric: {name} for index {index:?}"
+        );
 
         let prev = self
             .index_to_metric_to_vec
             .entry(index)
             .or_default()
             .insert(name, vec);
-        assert!(prev.is_none(), "Duplicate metric: {name} for index {index:?}");
+        assert!(
+            prev.is_none(),
+            "Duplicate metric: {name} for index {index:?}"
+        );
     }
 
     pub fn metrics(&'static self, pagination: Pagination) -> PaginatedMetrics {
@@ -134,7 +144,10 @@ impl<'a> Vecs<'a> {
         PaginatedMetrics {
             current_page: pagination.page(),
             max_page: len.div_ceil(Pagination::PER_PAGE).saturating_sub(1),
-            metrics: &self.metrics[start..end],
+            metrics: self.metrics[start..end]
+                .iter()
+                .map(|&s| Cow::Borrowed(s))
+                .collect(),
         }
     }
 

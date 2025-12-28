@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Height;
 
 /// Difficulty adjustment information.
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DifficultyAdjustment {
     /// Progress through current difficulty epoch (0-100%)

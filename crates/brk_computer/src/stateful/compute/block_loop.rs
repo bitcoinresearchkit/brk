@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use vecdb::{Exit, GenericStoredVec, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
-    chain, indexes, price, txins,
+    chain, indexes, price,
     stateful::{
         address::AddressTypeToAddressCount,
         compute::write::{process_address_updates, write},
@@ -19,14 +19,15 @@ use crate::{
         },
         states::{BlockState, Transacted},
     },
+    txins,
     utils::OptionExt,
 };
 
 use super::{
     super::{
+        RangeMap,
         cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts},
         vecs::Vecs,
-        RangeMap,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, FLUSH_INTERVAL, TxInIterators, TxOutIterators,
@@ -62,8 +63,6 @@ pub fn process_blocks(
         ctx.price.is_some()
     );
 
-    info!("Setting up references...");
-
     // References to vectors using correct field paths
     // From indexer.vecs:
     let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
@@ -97,8 +96,6 @@ pub fn process_blocks(
     let height_to_price_vec = &ctx.height_to_price;
     let height_to_timestamp_vec = &ctx.height_to_timestamp;
 
-    info!("Creating iterators...");
-
     // Create iterators for sequential access
     let mut height_to_first_txindex_iter = height_to_first_txindex.into_iter();
     let mut height_to_first_txoutindex_iter = height_to_first_txoutindex.into_iter();
@@ -116,12 +113,9 @@ pub fn process_blocks(
     let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
     let mut dateindex_to_price_iter = dateindex_to_price.map(|v| v.into_iter());
 
-    info!("Creating readers...");
-
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
 
     // Build txindex -> height lookup map for efficient prev_height computation
-    info!("Building txindex_to_height map...");
     let mut txindex_to_height: RangeMap<TxIndex, Height> = {
         let mut map = RangeMap::with_capacity(last_height.to_usize() + 1);
         for first_txindex in indexer.vecs.tx.height_to_first_txindex.into_iter() {
@@ -133,8 +127,6 @@ pub fn process_blocks(
     // Create reusable iterators for sequential txout/txin reads (16KB buffered)
     let mut txout_iters = TxOutIterators::new(indexer);
     let mut txin_iters = TxInIterators::new(indexer, txins, &mut txindex_to_height);
-
-    info!("Creating address iterators...");
 
     // Create iterators for first address indexes per type
     let mut first_p2a_iter = indexer
@@ -178,8 +170,6 @@ pub fn process_blocks(
         .height_to_first_p2wshaddressindex
         .into_iter();
 
-    info!("Recovering running totals...");
-
     // Track running totals - recover from previous height if resuming
     let (
         mut unspendable_supply,
@@ -187,28 +177,23 @@ pub fn process_blocks(
         mut addresstype_to_addr_count,
         mut addresstype_to_empty_addr_count,
     ) = if starting_height > Height::ZERO {
-        info!("Reading unspendable_supply...");
         let prev_height = starting_height.decremented().unwrap();
         let unspendable = vecs
             .height_to_unspendable_supply
             .into_iter()
             .get_unwrap(prev_height);
-        info!("Reading opreturn_supply...");
         let opreturn = vecs
             .height_to_opreturn_supply
             .into_iter()
             .get_unwrap(prev_height);
-        info!("Reading addresstype_to_addr_count...");
         let addr_count = AddressTypeToAddressCount::from((
             &vecs.addresstype_to_height_to_addr_count,
             starting_height,
         ));
-        info!("Reading addresstype_to_empty_addr_count...");
         let empty_addr_count = AddressTypeToAddressCount::from((
             &vecs.addresstype_to_height_to_empty_addr_count,
             starting_height,
         ));
-        info!("Recovery complete.");
         (unspendable, opreturn, addr_count, empty_addr_count)
     } else {
         (
@@ -220,8 +205,6 @@ pub fn process_blocks(
     };
 
     let mut cache = AddressCache::new();
-
-    info!("Starting main block iteration...");
 
     // Main block iteration
     for height in starting_height.to_usize()..=last_height.to_usize() {
