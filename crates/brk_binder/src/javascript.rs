@@ -1,5 +1,7 @@
 use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
+use serde_json::json;
+
 use brk_grouper::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
@@ -36,6 +38,32 @@ pub fn generate_javascript_client(
     generate_main_client(&mut output, &metadata.catalog, metadata, endpoints);
 
     fs::write(output_path, output)?;
+
+    // Update package.json version if it exists in the same directory
+    if let Some(parent) = output_path.parent() {
+        let package_json_path = parent.join("package.json");
+        if package_json_path.exists() {
+            update_package_json_version(&package_json_path)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Update the version field in package.json to match the current VERSION.
+fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
+    let content = fs::read_to_string(package_json_path)?;
+    let mut package: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+    if let Some(obj) = package.as_object_mut() {
+        obj.insert("version".to_string(), json!(VERSION));
+    }
+
+    let updated = serde_json::to_string_pretty(&package)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+    fs::write(package_json_path, updated + "\n")?;
 
     Ok(())
 }
@@ -269,7 +297,7 @@ fn generate_base_client(output: &mut String) {
  */
 
 const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
-const _runIdle = (fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
+const _runIdle = (/** @type {{VoidFunction}} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
 
 /** @type {{Promise<Cache | null>}} */
 const _cachePromise = _isBrowser

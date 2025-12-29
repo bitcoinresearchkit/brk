@@ -30,7 +30,7 @@ pub fn generate_python_client(
     writeln!(output, "from __future__ import annotations").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Final"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Final, Union"
     )
     .unwrap();
     writeln!(output, "import httpx\n").unwrap();
@@ -296,7 +296,7 @@ fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> Stri
                     base_type.clone()
                 };
             } else if !types.is_empty() {
-                let union = types.join(" | ");
+                let union = format!("Union[{}]", types.join(", "));
                 return if has_null {
                     format!("Optional[{}]", union)
                 } else {
@@ -321,13 +321,16 @@ fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> Stri
             .collect();
         let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
         if !filtered.is_empty() {
-            return filtered
-                .iter()
-                .map(|s| s.as_str())
-                .collect::<Vec<_>>()
-                .join(" | ");
+            return format!(
+                "Union[{}]",
+                filtered
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         }
-        return types.join(" | ");
+        return format!("Union[{}]", types.join(", "));
     }
 
     // Check for format hint without type (common in OpenAPI)

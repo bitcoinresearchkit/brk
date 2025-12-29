@@ -1056,43 +1056,6 @@ impl Ratio1ySdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AXbtPattern {
-    pub _1d_dominance: BlockCountPattern<StoredF32>,
-    pub _1m_blocks_mined: Indexes<StoredU32>,
-    pub _1m_dominance: Indexes<StoredF32>,
-    pub _1w_blocks_mined: Indexes<StoredU32>,
-    pub _1w_dominance: Indexes<StoredF32>,
-    pub _1y_blocks_mined: Indexes<StoredU32>,
-    pub _1y_dominance: Indexes<StoredF32>,
-    pub blocks_mined: BlockCountPattern<StoredU32>,
-    pub coinbase: UnclaimedRewardsPattern,
-    pub days_since_block: Indexes<StoredU16>,
-    pub dominance: BlockCountPattern<StoredF32>,
-    pub fee: FeePattern2,
-    pub subsidy: FeePattern2,
-}
-
-impl AXbtPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/1d_dominance")),
-            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1m_blocks_mined")),
-            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}/1m_dominance")),
-            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1w_blocks_mined")),
-            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}/1w_dominance")),
-            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1y_blocks_mined")),
-            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}/1y_dominance")),
-            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}/blocks_mined")),
-            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/coinbase")),
-            days_since_block: Indexes::new(client.clone(), &format!("{base_path}/days_since_block")),
-            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/dominance")),
-            fee: FeePattern2::new(client.clone(), &format!("{base_path}/fee")),
-            subsidy: FeePattern2::new(client.clone(), &format!("{base_path}/subsidy")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct ActivePriceRatioPattern {
     pub ratio: Indexes<StoredF32>,
     pub ratio_1m_sma: Indexes<StoredF32>,
@@ -1125,6 +1088,43 @@ impl ActivePriceRatioPattern {
             ratio_pct98: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct98")),
             ratio_pct99: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct99")),
             ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_sd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct AXbtPattern {
+    pub _1d_dominance: BlockCountPattern<StoredF32>,
+    pub _1m_blocks_mined: Indexes<StoredU32>,
+    pub _1m_dominance: Indexes<StoredF32>,
+    pub _1w_blocks_mined: Indexes<StoredU32>,
+    pub _1w_dominance: Indexes<StoredF32>,
+    pub _1y_blocks_mined: Indexes<StoredU32>,
+    pub _1y_dominance: Indexes<StoredF32>,
+    pub blocks_mined: BlockCountPattern<StoredU32>,
+    pub coinbase: UnclaimedRewardsPattern,
+    pub days_since_block: Indexes<StoredU16>,
+    pub dominance: BlockCountPattern<StoredF32>,
+    pub fee: FeePattern2,
+    pub subsidy: FeePattern2,
+}
+
+impl AXbtPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/1d_dominance")),
+            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1m_blocks_mined")),
+            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}/1m_dominance")),
+            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1w_blocks_mined")),
+            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}/1w_dominance")),
+            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1y_blocks_mined")),
+            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}/1y_dominance")),
+            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}/blocks_mined")),
+            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/coinbase")),
+            days_since_block: Indexes::new(client.clone(), &format!("{base_path}/days_since_block")),
+            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/dominance")),
+            fee: FeePattern2::new(client.clone(), &format!("{base_path}/fee")),
+            subsidy: FeePattern2::new(client.clone(), &format!("{base_path}/subsidy")),
         }
     }
 }
@@ -1164,60 +1164,31 @@ impl<T: DeserializeOwned> BitcoinPattern<T> {
 
 /// Pattern struct for repeated tree structure.
 pub struct BlockSizePattern<T> {
-    pub average: Indexes4<T>,
+    pub average: Indexes3<T>,
     pub cumulative: Indexes3<T>,
-    pub max: Indexes4<T>,
-    pub median: Indexes5<T>,
-    pub min: Indexes4<T>,
-    pub pct10: Indexes5<T>,
-    pub pct25: Indexes5<T>,
-    pub pct75: Indexes5<T>,
-    pub pct90: Indexes5<T>,
-    pub sum: Indexes4<T>,
+    pub max: Indexes3<T>,
+    pub median: Indexes2<T>,
+    pub min: Indexes3<T>,
+    pub pct10: Indexes2<T>,
+    pub pct25: Indexes2<T>,
+    pub pct75: Indexes2<T>,
+    pub pct90: Indexes2<T>,
+    pub sum: Indexes3<T>,
 }
 
 impl<T: DeserializeOwned> BlockSizePattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes4::new(client.clone(), &format!("{base_path}/average")),
+            average: Indexes3::new(client.clone(), &format!("{base_path}/average")),
             cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            max: Indexes4::new(client.clone(), &format!("{base_path}/max")),
-            median: Indexes5::new(client.clone(), &format!("{base_path}/median")),
-            min: Indexes4::new(client.clone(), &format!("{base_path}/min")),
-            pct10: Indexes5::new(client.clone(), &format!("{base_path}/pct10")),
-            pct25: Indexes5::new(client.clone(), &format!("{base_path}/pct25")),
-            pct75: Indexes5::new(client.clone(), &format!("{base_path}/pct75")),
-            pct90: Indexes5::new(client.clone(), &format!("{base_path}/pct90")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct RelativePattern {
-    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
-    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
-}
-
-impl RelativePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
-            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
-            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
+            max: Indexes3::new(client.clone(), &format!("{base_path}/max")),
+            median: Indexes2::new(client.clone(), &format!("{base_path}/median")),
+            min: Indexes3::new(client.clone(), &format!("{base_path}/min")),
+            pct10: Indexes2::new(client.clone(), &format!("{base_path}/pct10")),
+            pct25: Indexes2::new(client.clone(), &format!("{base_path}/pct25")),
+            pct75: Indexes2::new(client.clone(), &format!("{base_path}/pct75")),
+            pct90: Indexes2::new(client.clone(), &format!("{base_path}/pct90")),
+            sum: Indexes3::new(client.clone(), &format!("{base_path}/sum")),
         }
     }
 }
@@ -1252,6 +1223,62 @@ impl UnrealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct RelativePattern {
+    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
+    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
+    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
+}
+
+impl RelativePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
+            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
+            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct AddresstypeToHeightToAddrCountPattern<T> {
+    pub p2a: Indexes2<T>,
+    pub p2pk33: Indexes2<T>,
+    pub p2pk65: Indexes2<T>,
+    pub p2pkh: Indexes2<T>,
+    pub p2sh: Indexes2<T>,
+    pub p2tr: Indexes2<T>,
+    pub p2wpkh: Indexes2<T>,
+    pub p2wsh: Indexes2<T>,
+}
+
+impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            p2a: Indexes2::new(client.clone(), &format!("{base_path}/p2a")),
+            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}/p2pk33")),
+            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}/p2pk65")),
+            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}/p2pkh")),
+            p2sh: Indexes2::new(client.clone(), &format!("{base_path}/p2sh")),
+            p2tr: Indexes2::new(client.clone(), &format!("{base_path}/p2tr")),
+            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}/p2wpkh")),
+            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}/p2wsh")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct Constant0Pattern<T> {
     pub dateindex: Indexes5<T>,
     pub decadeindex: Indexes7<T>,
@@ -1275,33 +1302,6 @@ impl<T: DeserializeOwned> Constant0Pattern<T> {
             semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
             weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
             yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct AddresstypeToHeightToAddrCountPattern<T> {
-    pub p2a: Indexes16<T>,
-    pub p2pk33: Indexes17<T>,
-    pub p2pk65: Indexes18<T>,
-    pub p2pkh: Indexes19<T>,
-    pub p2sh: Indexes20<T>,
-    pub p2tr: Indexes21<T>,
-    pub p2wpkh: Indexes22<T>,
-    pub p2wsh: Indexes23<T>,
-}
-
-impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            p2a: Indexes16::new(client.clone(), &format!("{base_path}/p2a")),
-            p2pk33: Indexes17::new(client.clone(), &format!("{base_path}/p2pk33")),
-            p2pk65: Indexes18::new(client.clone(), &format!("{base_path}/p2pk65")),
-            p2pkh: Indexes19::new(client.clone(), &format!("{base_path}/p2pkh")),
-            p2sh: Indexes20::new(client.clone(), &format!("{base_path}/p2sh")),
-            p2tr: Indexes21::new(client.clone(), &format!("{base_path}/p2tr")),
-            p2wpkh: Indexes22::new(client.clone(), &format!("{base_path}/p2wpkh")),
-            p2wsh: Indexes23::new(client.clone(), &format!("{base_path}/p2wsh")),
         }
     }
 }
@@ -1360,6 +1360,29 @@ impl _0satsPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _10yTo12yPattern {
+    pub activity: ActivityPattern,
+    pub price_paid: PricePaidPattern2,
+    pub realized: RealizedPattern2,
+    pub relative: RelativePattern2,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yTo12yPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
+            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
+            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}/realized")),
+            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct UpTo1dPattern {
     pub activity: ActivityPattern,
     pub price_paid: PricePaidPattern2,
@@ -1406,24 +1429,22 @@ impl _0satsPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _10yTo12yPattern {
-    pub activity: ActivityPattern,
-    pub price_paid: PricePaidPattern2,
-    pub realized: RealizedPattern2,
-    pub relative: RelativePattern2,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
+pub struct SupplyPattern2 {
+    pub supply: SupplyPattern,
+    pub supply_half: ActiveSupplyPattern,
+    pub supply_half_value: ActiveSupplyPattern,
+    pub supply_value: SupplyValuePattern,
+    pub utxo_count: Indexes3<StoredU64>,
 }
 
-impl _10yTo12yPattern {
+impl SupplyPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
+            supply: SupplyPattern::new(client.clone(), &format!("{base_path}/supply")),
+            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half")),
+            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half_value")),
+            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_value")),
+            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/utxo_count")),
         }
     }
 }
@@ -1445,27 +1466,6 @@ impl ActivityPattern {
             satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satblocks_destroyed")),
             satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satdays_destroyed")),
             sent: FeePattern2::new(client.clone(), &format!("{base_path}/sent")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
-    pub supply: SupplyPattern,
-    pub supply_half: ActiveSupplyPattern,
-    pub supply_half_value: ActiveSupplyPattern,
-    pub supply_value: SupplyValuePattern,
-    pub utxo_count: Indexes3<StoredU64>,
-}
-
-impl SupplyPattern2 {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            supply: SupplyPattern::new(client.clone(), &format!("{base_path}/supply")),
-            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half")),
-            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half_value")),
-            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_value")),
-            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/utxo_count")),
         }
     }
 }
@@ -1526,18 +1526,18 @@ impl UnclaimedRewardsPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct PricePaidPattern2 {
-    pub max_price_paid: Indexes3<Dollars>,
-    pub min_price_paid: Indexes3<Dollars>,
-    pub price_percentiles: PricePercentilesPattern,
+pub struct ActiveSupplyPattern {
+    pub bitcoin: Indexes3<Bitcoin>,
+    pub dollars: Indexes3<Dollars>,
+    pub sats: Indexes3<Sats>,
 }
 
-impl PricePaidPattern2 {
+impl ActiveSupplyPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/max_price_paid")),
-            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/min_price_paid")),
-            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}/price_percentiles")),
+            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
+            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
         }
     }
 }
@@ -1560,18 +1560,18 @@ impl CoinbasePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActiveSupplyPattern {
-    pub bitcoin: Indexes3<Bitcoin>,
-    pub dollars: Indexes3<Dollars>,
-    pub sats: Indexes3<Sats>,
+pub struct PricePaidPattern2 {
+    pub max_price_paid: Indexes3<Dollars>,
+    pub min_price_paid: Indexes3<Dollars>,
+    pub price_percentiles: PricePercentilesPattern,
 }
 
-impl ActiveSupplyPattern {
+impl PricePaidPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
+            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/max_price_paid")),
+            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/min_price_paid")),
+            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}/price_percentiles")),
         }
     }
 }
@@ -1589,6 +1589,21 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
             base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
             cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
             sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SupplyValuePattern {
+    pub bitcoin: Indexes2<Bitcoin>,
+    pub dollars: Indexes2<Dollars>,
+}
+
+impl SupplyValuePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
         }
     }
 }
@@ -1620,21 +1635,6 @@ impl _1dReturns1mSdPattern {
         Self {
             sd: Indexes::new(client.clone(), &format!("/{acc}_sd")),
             sma: Indexes::new(client.clone(), &format!("/{acc}_sma")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyValuePattern {
-    pub bitcoin: Indexes2<Bitcoin>,
-    pub dollars: Indexes2<Dollars>,
-}
-
-impl SupplyValuePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
         }
     }
 }
