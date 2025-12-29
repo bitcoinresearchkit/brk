@@ -85,10 +85,11 @@ fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
                     .map(|arr| arr.iter().any(|v| v.as_str() == Some(prop_name)))
                     .unwrap_or(false);
                 let optional = if required { "" } else { "=" };
+                let safe_name = to_camel_case(prop_name);
                 writeln!(
                     output,
                     " * @property {{{}{}}} {}",
-                    prop_type, optional, prop_name
+                    prop_type, optional, safe_name
                 )
                 .unwrap();
             }
@@ -281,13 +282,17 @@ class MetricNode {{
 
   /**
    * Fetch data points within a range.
-   * @param {{string | number}} from
-   * @param {{string | number}} to
+   * @param {{string | number}} [from]
+   * @param {{string | number}} [to]
    * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
    * @returns {{Promise<T[]>}}
    */
   getRange(from, to, onUpdate) {{
-    return this._client.get(`${{this._path}}?from=${{from}}&to=${{to}}`, onUpdate);
+    const params = new URLSearchParams();
+    if (from !== undefined) params.set('from', String(from));
+    if (to !== undefined) params.set('to', String(to));
+    const query = params.toString();
+    return this._client.get(query ? `${{this._path}}?${{query}}` : this._path, onUpdate);
   }}
 }}
 
@@ -352,14 +357,25 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
 
     writeln!(output, "// Index accessor factory functions\n").unwrap();
 
+    // Generate the ByIndexes type for each pattern
     for pattern in patterns {
+        let by_type_name = format!("{}By", pattern.name);
+
+        // Inner 'by' object type
+        writeln!(output, "/**").unwrap();
+        writeln!(output, " * @template T").unwrap();
+        writeln!(output, " * @typedef {{Object}} {}", by_type_name).unwrap();
+        for index in &pattern.indexes {
+            let index_name = index.serialize_long();
+            writeln!(output, " * @property {{MetricNode<T>}} {}", index_name).unwrap();
+        }
+        writeln!(output, " */\n").unwrap();
+
+        // Outer type with 'by' property
         writeln!(output, "/**").unwrap();
         writeln!(output, " * @template T").unwrap();
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
-        for index in &pattern.indexes {
-            let field_name = index_to_camel_case(index);
-            writeln!(output, " * @property {{MetricNode<T>}} {}", field_name).unwrap();
-        }
+        writeln!(output, " * @property {{{}<T>}} by", by_type_name).unwrap();
         writeln!(output, " */\n").unwrap();
 
         // Generate factory function
@@ -377,10 +393,10 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
         )
         .unwrap();
         writeln!(output, "  return {{").unwrap();
+        writeln!(output, "    by: {{").unwrap();
 
         for (i, index) in pattern.indexes.iter().enumerate() {
-            let field_name = index_to_camel_case(index);
-            let path_segment = index.serialize_long();
+            let index_name = index.serialize_long();
             let comma = if i < pattern.indexes.len() - 1 {
                 ","
             } else {
@@ -388,19 +404,16 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
             };
             writeln!(
                 output,
-                "    {}: new MetricNode(client, `${{basePath}}/{}`){}",
-                field_name, path_segment, comma
+                "      {}: new MetricNode(client, `${{basePath}}/{}`){}",
+                index_name, index_name, comma
             )
             .unwrap();
         }
 
+        writeln!(output, "    }}").unwrap();
         writeln!(output, "  }};").unwrap();
         writeln!(output, "}}\n").unwrap();
     }
-}
-
-fn index_to_camel_case(index: &Index) -> String {
-    format!("by{}", to_pascal_case(index.serialize_long()))
 }
 
 fn generate_structural_patterns(

@@ -1,18 +1,21 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, PoolSlug, Sats, StoredF32, StoredU16, StoredU32};
-use vecdb::{Database, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, VecIndex, Version};
+use vecdb::{
+    Database, Exit, GenericStoredVec, IterableCloneableVec, IterableVec, LazyVecFrom2, VecIndex,
+    Version,
+};
 
 use crate::{
     chain,
     grouped::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-        LazyVecsFrom2FromDateIndex, LazyVecsFrom2FromHeight, PercentageU32F32, Source,
+        DollarsPlus, LazyValueVecsFrom2FromHeight, LazyVecsFrom2FromDateIndex,
+        LazyVecsFrom2FromHeight, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin, Source,
         VecBuilderOptions,
     },
     indexes::{self, Indexes},
     price,
-    utils::OptionExt,
 };
 
 #[derive(Clone, Traversable)]
@@ -23,9 +26,11 @@ pub struct Vecs {
     pub indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
     pub indexes_to_1m_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
     pub indexes_to_1y_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
+    pub height_to_subsidy: LazyVecFrom2<Height, Sats, Height, StoredU32, Height, Sats>,
+    pub height_to_fee: LazyVecFrom2<Height, Sats, Height, StoredU32, Height, Sats>,
     pub indexes_to_subsidy: ComputedValueVecsFromHeight,
     pub indexes_to_fee: ComputedValueVecsFromHeight,
-    pub indexes_to_coinbase: ComputedValueVecsFromHeight,
+    pub indexes_to_coinbase: LazyValueVecsFrom2FromHeight,
     pub indexes_to_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
     pub indexes_to_1d_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
     pub indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
@@ -76,20 +81,86 @@ impl Vecs {
         let indexes_to_1m_blocks_mined = import_di!("1m_blocks_mined");
         let indexes_to_1y_blocks_mined = import_di!("1y_blocks_mined");
 
+        let height_to_subsidy = LazyVecFrom2::transformed::<MaskSats>(
+            &suffix("subsidy"),
+            version,
+            indexes_to_blocks_mined
+                .height
+                .as_ref()
+                .unwrap()
+                .boxed_clone(),
+            chain
+                .indexes_to_subsidy
+                .sats
+                .height
+                .as_ref()
+                .unwrap()
+                .boxed_clone(),
+        );
+
+        let indexes_to_subsidy = ComputedValueVecsFromHeight::forced_import(
+            db,
+            &suffix("subsidy"),
+            Source::Vec(height_to_subsidy.boxed_clone()),
+            version,
+            sum_cum,
+            compute_dollars,
+            indexes,
+        )?;
+
+        let height_to_fee = LazyVecFrom2::transformed::<MaskSats>(
+            &suffix("fee"),
+            version,
+            indexes_to_blocks_mined
+                .height
+                .as_ref()
+                .unwrap()
+                .boxed_clone(),
+            chain.indexes_to_fee.sats.height.unwrap_sum().boxed_clone(),
+        );
+
+        let indexes_to_fee = ComputedValueVecsFromHeight::forced_import(
+            db,
+            &suffix("fee"),
+            Source::Vec(height_to_fee.boxed_clone()),
+            version,
+            sum_cum,
+            compute_dollars,
+            indexes,
+        )?;
+
         Ok(Self {
             indexes_to_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
                 &suffix("dominance"),
                 version,
-                indexes_to_blocks_mined.height.as_ref().unwrap().boxed_clone(),
-                chain.indexes_to_block_count.height.as_ref().unwrap().boxed_clone(),
+                indexes_to_blocks_mined
+                    .height
+                    .as_ref()
+                    .unwrap()
+                    .boxed_clone(),
+                chain
+                    .indexes_to_block_count
+                    .height
+                    .as_ref()
+                    .unwrap()
+                    .boxed_clone(),
                 &indexes_to_blocks_mined,
                 &chain.indexes_to_block_count,
             ),
             indexes_to_1d_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
                 &suffix("1d_dominance"),
                 version,
-                indexes_to_blocks_mined.height.as_ref().unwrap().boxed_clone(),
-                chain.indexes_to_block_count.height.as_ref().unwrap().boxed_clone(),
+                indexes_to_blocks_mined
+                    .height
+                    .as_ref()
+                    .unwrap()
+                    .boxed_clone(),
+                chain
+                    .indexes_to_block_count
+                    .height
+                    .as_ref()
+                    .unwrap()
+                    .boxed_clone(),
                 &indexes_to_blocks_mined,
                 &chain.indexes_to_block_count,
             ),
@@ -116,33 +187,22 @@ impl Vecs {
             indexes_to_1w_blocks_mined,
             indexes_to_1m_blocks_mined,
             indexes_to_1y_blocks_mined,
-            indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
-                db,
-                &suffix("subsidy"),
-                Source::Compute,
-                version,
-                sum_cum,
-                compute_dollars,
-                indexes,
-            )?,
-            indexes_to_fee: ComputedValueVecsFromHeight::forced_import(
-                db,
-                &suffix("fee"),
-                Source::Compute,
-                version,
-                sum_cum,
-                compute_dollars,
-                indexes,
-            )?,
-            indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
-                db,
+            indexes_to_coinbase: LazyValueVecsFrom2FromHeight::from_computed::<
+                SatsPlus,
+                SatsPlusToBitcoin,
+                DollarsPlus,
+            >(
                 &suffix("coinbase"),
-                Source::Compute,
                 version,
-                sum_cum,
-                compute_dollars,
-                indexes,
-            )?,
+                height_to_subsidy.boxed_clone(),
+                height_to_fee.boxed_clone(),
+                &indexes_to_subsidy,
+                &indexes_to_fee,
+            ),
+            height_to_subsidy,
+            height_to_fee,
+            indexes_to_subsidy,
+            indexes_to_fee,
             indexes_to_days_since_block: import_di!("days_since_block"),
         })
     }
@@ -153,7 +213,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         height_to_pool: &impl IterableVec<Height, PoolSlug>,
-        chain: &chain::Vecs,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
@@ -210,70 +269,21 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let height_to_blocks_mined = self.indexes_to_blocks_mined.height.u();
+        self.indexes_to_subsidy.compute_rest(
+            indexes,
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_subsidy),
+        )?;
 
-        self.indexes_to_subsidy
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
-                vec.compute_transform2(
-                    starting_indexes.height,
-                    height_to_blocks_mined,
-                    chain.indexes_to_subsidy.sats.height.u(),
-                    |(h, mined, sats, ..)| {
-                        (
-                            h,
-                            if mined == StoredU32::ONE {
-                                sats
-                            } else {
-                                Sats::ZERO
-                            },
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_fee
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
-                vec.compute_transform2(
-                    starting_indexes.height,
-                    height_to_blocks_mined,
-                    chain.indexes_to_fee.sats.height.unwrap_sum(),
-                    |(h, mined, sats, ..)| {
-                        (
-                            h,
-                            if mined == StoredU32::ONE {
-                                sats
-                            } else {
-                                Sats::ZERO
-                            },
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_coinbase
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
-                vec.compute_transform2(
-                    starting_indexes.height,
-                    height_to_blocks_mined,
-                    chain.indexes_to_coinbase.sats.height.u(),
-                    |(h, mined, sats, ..)| {
-                        (
-                            h,
-                            if mined == StoredU32::ONE {
-                                sats
-                            } else {
-                                Sats::ZERO
-                            },
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_fee.compute_rest(
+            indexes,
+            price,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_fee),
+        )?;
 
         self.indexes_to_days_since_block
             .compute_all(starting_indexes, exit, |v| {

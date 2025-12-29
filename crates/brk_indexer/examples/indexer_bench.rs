@@ -58,7 +58,7 @@ fn main() -> Result<()> {
 
     sleep(Duration::from_secs(10));
 
-    Mimalloc::collect_if_wasted_above(500);
+    Mimalloc::collect();
 
     sleep(Duration::from_secs(10));
 

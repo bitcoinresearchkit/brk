@@ -158,8 +158,15 @@ impl<T: DeserializeOwned> MetricNode<T> {{
     }}
 
     /// Fetch data points within a range.
-    pub fn get_range(&self, from: &str, to: &str) -> Result<Vec<T>> {{
-        let path = format!("{{}}?from={{}}&to={{}}", self.path, from, to);
+    pub fn get_range(&self, from: Option<&str>, to: Option<&str>) -> Result<Vec<T>> {{
+        let mut params = Vec::new();
+        if let Some(f) = from {{ params.push(format!("from={{}}", f)); }}
+        if let Some(t) = to {{ params.push(format!("to={{}}", t)); }}
+        let path = if params.is_empty() {{
+            self.path.clone()
+        }} else {{
+            format!("{{}}?{{}}", self.path, params.join("&"))
+        }};
         self.client.get(&path)
     }}
 }}

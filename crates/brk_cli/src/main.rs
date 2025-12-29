@@ -162,7 +162,7 @@ pub fn run() -> color_eyre::Result<()> {
             indexer.index(&blocks, &client, &exit)?
         };
 
-        Mimalloc::collect_if_wasted_above(500);
+        Mimalloc::collect();
 
         computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 

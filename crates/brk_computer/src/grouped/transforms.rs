@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32, StoredF64, StoredU32};
+use brk_types::{Bitcoin, Close, Dollars, High, Sats, StoredF32, StoredF64, StoredU32};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 /// (Dollars, Dollars) -> Dollars addition
@@ -20,6 +20,43 @@ impl BinaryTransform<Dollars, Dollars, Dollars> for DollarsMinus {
     #[inline(always)]
     fn apply(lhs: Dollars, rhs: Dollars) -> Dollars {
         lhs - rhs
+    }
+}
+
+/// (Sats, Sats) -> Sats addition
+/// Used for computing coinbase = subsidy + fee
+pub struct SatsPlus;
+
+impl BinaryTransform<Sats, Sats, Sats> for SatsPlus {
+    #[inline(always)]
+    fn apply(lhs: Sats, rhs: Sats) -> Sats {
+        lhs + rhs
+    }
+}
+
+/// (Sats, Sats) -> Bitcoin addition with conversion
+/// Used for computing coinbase_btc = (subsidy + fee) / 1e8
+pub struct SatsPlusToBitcoin;
+
+impl BinaryTransform<Sats, Sats, Bitcoin> for SatsPlusToBitcoin {
+    #[inline(always)]
+    fn apply(lhs: Sats, rhs: Sats) -> Bitcoin {
+        Bitcoin::from(lhs + rhs)
+    }
+}
+
+/// (StoredU32, Sats) -> Sats mask
+/// Returns value if mask == 1, else 0. Used for pool fee/subsidy from chain data.
+pub struct MaskSats;
+
+impl BinaryTransform<StoredU32, Sats, Sats> for MaskSats {
+    #[inline(always)]
+    fn apply(mask: StoredU32, value: Sats) -> Sats {
+        if mask == StoredU32::ONE {
+            value
+        } else {
+            Sats::ZERO
+        }
     }
 }
 
@@ -221,5 +258,80 @@ impl BinaryTransform<StoredU32, StoredU32, StoredF32> for PercentageU32F32 {
     #[inline(always)]
     fn apply(numerator: StoredU32, denominator: StoredU32) -> StoredF32 {
         StoredF32::from((*numerator as f64 / *denominator as f64) * 100.0)
+    }
+}
+
+// === Volatility Transforms (SD × sqrt(N)) ===
+
+/// StoredF32 × sqrt(7) -> StoredF32 (1-week volatility from daily SD)
+pub struct StoredF32TimesSqrt7;
+
+impl UnaryTransform<StoredF32, StoredF32> for StoredF32TimesSqrt7 {
+    #[inline(always)]
+    fn apply(v: StoredF32) -> StoredF32 {
+        (*v * 7.0_f32.sqrt()).into()
+    }
+}
+
+/// StoredF32 × sqrt(30) -> StoredF32 (1-month volatility from daily SD)
+pub struct StoredF32TimesSqrt30;
+
+impl UnaryTransform<StoredF32, StoredF32> for StoredF32TimesSqrt30 {
+    #[inline(always)]
+    fn apply(v: StoredF32) -> StoredF32 {
+        (*v * 30.0_f32.sqrt()).into()
+    }
+}
+
+/// StoredF32 × sqrt(365) -> StoredF32 (1-year volatility from daily SD)
+pub struct StoredF32TimesSqrt365;
+
+impl UnaryTransform<StoredF32, StoredF32> for StoredF32TimesSqrt365 {
+    #[inline(always)]
+    fn apply(v: StoredF32) -> StoredF32 {
+        (*v * 365.0_f32.sqrt()).into()
+    }
+}
+
+/// StoredU16 / 365.0 -> StoredF32 (days to years conversion)
+pub struct StoredU16ToYears;
+
+impl UnaryTransform<StoredU16, StoredF32> for StoredU16ToYears {
+    #[inline(always)]
+    fn apply(v: StoredU16) -> StoredF32 {
+        StoredF32::from(*v as f64 / 365.0)
+    }
+}
+
+// === Percentage Difference Transforms ===
+
+/// (Close<Dollars>, Dollars) -> StoredF32 percentage difference ((a/b - 1) × 100)
+/// Used for DCA returns: (price / dca_avg_price - 1) × 100
+/// Also used for drawdown: (close / ath - 1) × 100 (note: drawdown is typically negative)
+pub struct PercentageDiffCloseDollars;
+
+impl BinaryTransform<Close<Dollars>, Dollars, StoredF32> for PercentageDiffCloseDollars {
+    #[inline(always)]
+    fn apply(close: Close<Dollars>, base: Dollars) -> StoredF32 {
+        if base == Dollars::ZERO {
+            StoredF32::default()
+        } else {
+            StoredF32::from((**close / *base - 1.0) * 100.0)
+        }
+    }
+}
+
+/// (High<Dollars>, Dollars) -> StoredF32 percentage difference ((a/b - 1) × 100)
+/// Used for drawdown calculation from high prices
+pub struct PercentageDiffHighDollars;
+
+impl BinaryTransform<High<Dollars>, Dollars, StoredF32> for PercentageDiffHighDollars {
+    #[inline(always)]
+    fn apply(high: High<Dollars>, base: Dollars) -> StoredF32 {
+        if base == Dollars::ZERO {
+            StoredF32::default()
+        } else {
+            StoredF32::from((**high / *base - 1.0) * 100.0)
+        }
     }
 }

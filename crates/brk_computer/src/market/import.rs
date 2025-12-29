@@ -8,10 +8,12 @@ use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, PAGE_SIZE};
 use crate::{
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedStandardDeviationVecsFromDateIndex,
-        ComputedVecsFromDateIndex, DollarsTimesTenths, LazyVecsFromDateIndex, Source,
-        StandardDeviationVecsOptions, VecBuilderOptions,
+        ComputedVecsFromDateIndex, DollarsTimesTenths, LazyVecsFrom2FromDateIndex,
+        LazyVecsFromDateIndex, PercentageDiffCloseDollars, Source, StandardDeviationVecsOptions,
+        StoredF32TimesSqrt30, StoredF32TimesSqrt365, StoredF32TimesSqrt7, StoredU16ToYears,
+        VecBuilderOptions,
     },
-    indexes,
+    indexes, price,
 };
 
 use super::Vecs;
@@ -21,6 +23,7 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -109,20 +112,199 @@ impl Vecs {
             price_200d_sma_source,
         );
 
+        // SD vecs need to be created before lazy volatility vecs that reference them
+        let indexes_to_1d_returns_1w_sd = sd_di!("1d_returns_1w_sd", 7, v1);
+        let indexes_to_1d_returns_1m_sd = sd_di!("1d_returns_1m_sd", 30, v1);
+        let indexes_to_1d_returns_1y_sd = sd_di!("1d_returns_1y_sd", 365, v1);
+        let indexes_to_price_1w_volatility =
+            LazyVecsFromDateIndex::from_computed::<StoredF32TimesSqrt7>(
+                "price_1w_volatility",
+                version + v2,
+                indexes_to_1d_returns_1w_sd
+                    .sd
+                    .dateindex
+                    .as_ref()
+                    .map(|v| v.boxed_clone()),
+                &indexes_to_1d_returns_1w_sd.sd,
+            );
+        let indexes_to_price_1m_volatility =
+            LazyVecsFromDateIndex::from_computed::<StoredF32TimesSqrt30>(
+                "price_1m_volatility",
+                version + v2,
+                indexes_to_1d_returns_1m_sd
+                    .sd
+                    .dateindex
+                    .as_ref()
+                    .map(|v| v.boxed_clone()),
+                &indexes_to_1d_returns_1m_sd.sd,
+            );
+        let indexes_to_price_1y_volatility =
+            LazyVecsFromDateIndex::from_computed::<StoredF32TimesSqrt365>(
+                "price_1y_volatility",
+                version + v2,
+                indexes_to_1d_returns_1y_sd
+                    .sd
+                    .dateindex
+                    .as_ref()
+                    .map(|v| v.boxed_clone()),
+                &indexes_to_1d_returns_1y_sd.sd,
+            );
+
+        // max_days needs to be created before lazy max_years that references it
+        let indexes_to_max_days_between_price_aths = computed_di!("max_days_between_price_aths");
+        let indexes_to_max_years_between_price_aths =
+            LazyVecsFromDateIndex::from_computed::<StoredU16ToYears>(
+                "max_years_between_price_aths",
+                version + v0,
+                indexes_to_max_days_between_price_aths
+                    .dateindex
+                    .as_ref()
+                    .map(|v| v.boxed_clone()),
+                &indexes_to_max_days_between_price_aths,
+            );
+
+        // price_ath needed for lazy drawdown
+        let indexes_to_price_ath = computed_di!("price_ath");
+
+        // Lazy drawdown from (price_close, price_ath)
+        let price = price.expect("price required for market");
+        let indexes_to_price_drawdown =
+            LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
+                "price_drawdown",
+                version + v0,
+                &price.timeindexes_to_price_close,
+                &indexes_to_price_ath,
+            );
+
+        // price_ago needed for lazy price_returns
+        let price_1d_ago = computed_di!("price_1d_ago");
+        let price_1w_ago = computed_di!("price_1w_ago");
+        let price_1m_ago = computed_di!("price_1m_ago");
+        let price_3m_ago = computed_di!("price_3m_ago");
+        let price_6m_ago = computed_di!("price_6m_ago");
+        let price_1y_ago = computed_di!("price_1y_ago");
+        let price_2y_ago = computed_di!("price_2y_ago");
+        let price_3y_ago = computed_di!("price_3y_ago");
+        let price_4y_ago = computed_di!("price_4y_ago");
+        let price_5y_ago = computed_di!("price_5y_ago");
+        let price_6y_ago = computed_di!("price_6y_ago");
+        let price_8y_ago = computed_di!("price_8y_ago");
+        let price_10y_ago = computed_di!("price_10y_ago");
+
+        // Lazy price_returns from (price_close, price_ago)
+        macro_rules! lazy_price_returns {
+            ($name:expr, $price_ago:expr) => {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
+                    $name,
+                    version + v0,
+                    &price.timeindexes_to_price_close,
+                    $price_ago,
+                )
+            };
+        }
+
+        let _1d_price_returns = lazy_price_returns!("1d_price_returns", &price_1d_ago);
+        let _1w_price_returns = lazy_price_returns!("1w_price_returns", &price_1w_ago);
+        let _1m_price_returns = lazy_price_returns!("1m_price_returns", &price_1m_ago);
+        let _3m_price_returns = lazy_price_returns!("3m_price_returns", &price_3m_ago);
+        let _6m_price_returns = lazy_price_returns!("6m_price_returns", &price_6m_ago);
+        let _1y_price_returns = lazy_price_returns!("1y_price_returns", &price_1y_ago);
+        let _2y_price_returns = lazy_price_returns!("2y_price_returns", &price_2y_ago);
+        let _3y_price_returns = lazy_price_returns!("3y_price_returns", &price_3y_ago);
+        let _4y_price_returns = lazy_price_returns!("4y_price_returns", &price_4y_ago);
+        let _5y_price_returns = lazy_price_returns!("5y_price_returns", &price_5y_ago);
+        let _6y_price_returns = lazy_price_returns!("6y_price_returns", &price_6y_ago);
+        let _8y_price_returns = lazy_price_returns!("8y_price_returns", &price_8y_ago);
+        let _10y_price_returns = lazy_price_returns!("10y_price_returns", &price_10y_ago);
+
+        // DCA avg prices needed for lazy DCA returns
+        let _1w_dca_avg_price = computed_di!("1w_dca_avg_price");
+        let _1m_dca_avg_price = computed_di!("1m_dca_avg_price");
+        let _3m_dca_avg_price = computed_di!("3m_dca_avg_price");
+        let _6m_dca_avg_price = computed_di!("6m_dca_avg_price");
+        let _1y_dca_avg_price = computed_di!("1y_dca_avg_price");
+        let _2y_dca_avg_price = computed_di!("2y_dca_avg_price");
+        let _3y_dca_avg_price = computed_di!("3y_dca_avg_price");
+        let _4y_dca_avg_price = computed_di!("4y_dca_avg_price");
+        let _5y_dca_avg_price = computed_di!("5y_dca_avg_price");
+        let _6y_dca_avg_price = computed_di!("6y_dca_avg_price");
+        let _8y_dca_avg_price = computed_di!("8y_dca_avg_price");
+        let _10y_dca_avg_price = computed_di!("10y_dca_avg_price");
+
+        let dca_class_2025_avg_price = computed_di!("dca_class_2025_avg_price");
+        let dca_class_2024_avg_price = computed_di!("dca_class_2024_avg_price");
+        let dca_class_2023_avg_price = computed_di!("dca_class_2023_avg_price");
+        let dca_class_2022_avg_price = computed_di!("dca_class_2022_avg_price");
+        let dca_class_2021_avg_price = computed_di!("dca_class_2021_avg_price");
+        let dca_class_2020_avg_price = computed_di!("dca_class_2020_avg_price");
+        let dca_class_2019_avg_price = computed_di!("dca_class_2019_avg_price");
+        let dca_class_2018_avg_price = computed_di!("dca_class_2018_avg_price");
+        let dca_class_2017_avg_price = computed_di!("dca_class_2017_avg_price");
+        let dca_class_2016_avg_price = computed_di!("dca_class_2016_avg_price");
+        let dca_class_2015_avg_price = computed_di!("dca_class_2015_avg_price");
+
+        // Macro for creating lazy DCA returns from (price_close, dca_avg_price)
+        macro_rules! lazy_dca_returns {
+            ($name:expr, $avg_price:expr) => {
+                LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
+                    $name,
+                    version + v0,
+                    &price.timeindexes_to_price_close,
+                    $avg_price,
+                )
+            };
+        }
+
+        let _1w_dca_returns = lazy_dca_returns!("1w_dca_returns", &_1w_dca_avg_price);
+        let _1m_dca_returns = lazy_dca_returns!("1m_dca_returns", &_1m_dca_avg_price);
+        let _3m_dca_returns = lazy_dca_returns!("3m_dca_returns", &_3m_dca_avg_price);
+        let _6m_dca_returns = lazy_dca_returns!("6m_dca_returns", &_6m_dca_avg_price);
+        let _1y_dca_returns = lazy_dca_returns!("1y_dca_returns", &_1y_dca_avg_price);
+        let _2y_dca_returns = lazy_dca_returns!("2y_dca_returns", &_2y_dca_avg_price);
+        let _3y_dca_returns = lazy_dca_returns!("3y_dca_returns", &_3y_dca_avg_price);
+        let _4y_dca_returns = lazy_dca_returns!("4y_dca_returns", &_4y_dca_avg_price);
+        let _5y_dca_returns = lazy_dca_returns!("5y_dca_returns", &_5y_dca_avg_price);
+        let _6y_dca_returns = lazy_dca_returns!("6y_dca_returns", &_6y_dca_avg_price);
+        let _8y_dca_returns = lazy_dca_returns!("8y_dca_returns", &_8y_dca_avg_price);
+        let _10y_dca_returns = lazy_dca_returns!("10y_dca_returns", &_10y_dca_avg_price);
+
+        let dca_class_2025_returns =
+            lazy_dca_returns!("dca_class_2025_returns", &dca_class_2025_avg_price);
+        let dca_class_2024_returns =
+            lazy_dca_returns!("dca_class_2024_returns", &dca_class_2024_avg_price);
+        let dca_class_2023_returns =
+            lazy_dca_returns!("dca_class_2023_returns", &dca_class_2023_avg_price);
+        let dca_class_2022_returns =
+            lazy_dca_returns!("dca_class_2022_returns", &dca_class_2022_avg_price);
+        let dca_class_2021_returns =
+            lazy_dca_returns!("dca_class_2021_returns", &dca_class_2021_avg_price);
+        let dca_class_2020_returns =
+            lazy_dca_returns!("dca_class_2020_returns", &dca_class_2020_avg_price);
+        let dca_class_2019_returns =
+            lazy_dca_returns!("dca_class_2019_returns", &dca_class_2019_avg_price);
+        let dca_class_2018_returns =
+            lazy_dca_returns!("dca_class_2018_returns", &dca_class_2018_avg_price);
+        let dca_class_2017_returns =
+            lazy_dca_returns!("dca_class_2017_returns", &dca_class_2017_avg_price);
+        let dca_class_2016_returns =
+            lazy_dca_returns!("dca_class_2016_returns", &dca_class_2016_avg_price);
+        let dca_class_2015_returns =
+            lazy_dca_returns!("dca_class_2015_returns", &dca_class_2015_avg_price);
+
         let this = Self {
             height_to_price_ath: eager_h!("price_ath", v0),
             height_to_price_drawdown: eager_h!("price_drawdown", v0),
-            indexes_to_price_ath: computed_di!("price_ath"),
-            indexes_to_price_drawdown: computed_di!("price_drawdown"),
-            indexes_to_1d_returns_1w_sd: sd_di!("1d_returns_1w_sd", 7, v1),
-            indexes_to_1d_returns_1m_sd: sd_di!("1d_returns_1m_sd", 30, v1),
-            indexes_to_1d_returns_1y_sd: sd_di!("1d_returns_1y_sd", 365, v1),
-            indexes_to_price_1w_volatility: computed_di!("price_1w_volatility", v2),
-            indexes_to_price_1m_volatility: computed_di!("price_1m_volatility", v2),
-            indexes_to_price_1y_volatility: computed_di!("price_1y_volatility", v2),
+            indexes_to_price_ath,
+            indexes_to_price_drawdown,
+            indexes_to_1d_returns_1w_sd,
+            indexes_to_1d_returns_1m_sd,
+            indexes_to_1d_returns_1y_sd,
+            indexes_to_price_1w_volatility,
+            indexes_to_price_1m_volatility,
+            indexes_to_price_1y_volatility,
             indexes_to_days_since_price_ath: computed_di!("days_since_price_ath"),
-            indexes_to_max_days_between_price_aths: computed_di!("max_days_between_price_aths"),
-            indexes_to_max_years_between_price_aths: computed_di!("max_years_between_price_aths"),
+            indexes_to_max_days_between_price_aths,
+            indexes_to_max_years_between_price_aths,
 
             indexes_to_price_1w_sma: ratio_di!("price_1w_sma"),
             indexes_to_price_8d_sma: ratio_di!("price_8d_sma"),
@@ -154,19 +336,19 @@ impl Vecs {
             indexes_to_price_200w_ema: ratio_di!("price_200w_ema"),
             indexes_to_price_4y_ema: ratio_di!("price_4y_ema"),
 
-            _1d_price_returns: computed_di!("1d_price_returns"),
-            _1w_price_returns: computed_di!("1w_price_returns"),
-            _1m_price_returns: computed_di!("1m_price_returns"),
-            _3m_price_returns: computed_di!("3m_price_returns"),
-            _6m_price_returns: computed_di!("6m_price_returns"),
-            _1y_price_returns: computed_di!("1y_price_returns"),
-            _2y_price_returns: computed_di!("2y_price_returns"),
-            _3y_price_returns: computed_di!("3y_price_returns"),
-            _4y_price_returns: computed_di!("4y_price_returns"),
-            _5y_price_returns: computed_di!("5y_price_returns"),
-            _6y_price_returns: computed_di!("6y_price_returns"),
-            _8y_price_returns: computed_di!("8y_price_returns"),
-            _10y_price_returns: computed_di!("10y_price_returns"),
+            _1d_price_returns,
+            _1w_price_returns,
+            _1m_price_returns,
+            _3m_price_returns,
+            _6m_price_returns,
+            _1y_price_returns,
+            _2y_price_returns,
+            _3y_price_returns,
+            _4y_price_returns,
+            _5y_price_returns,
+            _6y_price_returns,
+            _8y_price_returns,
+            _10y_price_returns,
             _2y_cagr: computed_di!("2y_cagr"),
             _3y_cagr: computed_di!("3y_cagr"),
             _4y_cagr: computed_di!("4y_cagr"),
@@ -175,18 +357,18 @@ impl Vecs {
             _8y_cagr: computed_di!("8y_cagr"),
             _10y_cagr: computed_di!("10y_cagr"),
 
-            _1w_dca_returns: computed_di!("1w_dca_returns"),
-            _1m_dca_returns: computed_di!("1m_dca_returns"),
-            _3m_dca_returns: computed_di!("3m_dca_returns"),
-            _6m_dca_returns: computed_di!("6m_dca_returns"),
-            _1y_dca_returns: computed_di!("1y_dca_returns"),
-            _2y_dca_returns: computed_di!("2y_dca_returns"),
-            _3y_dca_returns: computed_di!("3y_dca_returns"),
-            _4y_dca_returns: computed_di!("4y_dca_returns"),
-            _5y_dca_returns: computed_di!("5y_dca_returns"),
-            _6y_dca_returns: computed_di!("6y_dca_returns"),
-            _8y_dca_returns: computed_di!("8y_dca_returns"),
-            _10y_dca_returns: computed_di!("10y_dca_returns"),
+            _1w_dca_returns,
+            _1m_dca_returns,
+            _3m_dca_returns,
+            _6m_dca_returns,
+            _1y_dca_returns,
+            _2y_dca_returns,
+            _3y_dca_returns,
+            _4y_dca_returns,
+            _5y_dca_returns,
+            _6y_dca_returns,
+            _8y_dca_returns,
+            _10y_dca_returns,
             _2y_dca_cagr: computed_di!("2y_dca_cagr"),
             _3y_dca_cagr: computed_di!("3y_dca_cagr"),
             _4y_dca_cagr: computed_di!("4y_dca_cagr"),
@@ -194,31 +376,31 @@ impl Vecs {
             _6y_dca_cagr: computed_di!("6y_dca_cagr"),
             _8y_dca_cagr: computed_di!("8y_dca_cagr"),
             _10y_dca_cagr: computed_di!("10y_dca_cagr"),
-            _1w_dca_avg_price: computed_di!("1w_dca_avg_price"),
-            _1m_dca_avg_price: computed_di!("1m_dca_avg_price"),
-            _3m_dca_avg_price: computed_di!("3m_dca_avg_price"),
-            _6m_dca_avg_price: computed_di!("6m_dca_avg_price"),
-            _1y_dca_avg_price: computed_di!("1y_dca_avg_price"),
-            _2y_dca_avg_price: computed_di!("2y_dca_avg_price"),
-            _3y_dca_avg_price: computed_di!("3y_dca_avg_price"),
-            _4y_dca_avg_price: computed_di!("4y_dca_avg_price"),
-            _5y_dca_avg_price: computed_di!("5y_dca_avg_price"),
-            _6y_dca_avg_price: computed_di!("6y_dca_avg_price"),
-            _8y_dca_avg_price: computed_di!("8y_dca_avg_price"),
-            _10y_dca_avg_price: computed_di!("10y_dca_avg_price"),
-            price_1d_ago: computed_di!("price_1d_ago"),
-            price_1w_ago: computed_di!("price_1w_ago"),
-            price_1m_ago: computed_di!("price_1m_ago"),
-            price_3m_ago: computed_di!("price_3m_ago"),
-            price_6m_ago: computed_di!("price_6m_ago"),
-            price_1y_ago: computed_di!("price_1y_ago"),
-            price_2y_ago: computed_di!("price_2y_ago"),
-            price_3y_ago: computed_di!("price_3y_ago"),
-            price_4y_ago: computed_di!("price_4y_ago"),
-            price_5y_ago: computed_di!("price_5y_ago"),
-            price_6y_ago: computed_di!("price_6y_ago"),
-            price_8y_ago: computed_di!("price_8y_ago"),
-            price_10y_ago: computed_di!("price_10y_ago"),
+            _1w_dca_avg_price,
+            _1m_dca_avg_price,
+            _3m_dca_avg_price,
+            _6m_dca_avg_price,
+            _1y_dca_avg_price,
+            _2y_dca_avg_price,
+            _3y_dca_avg_price,
+            _4y_dca_avg_price,
+            _5y_dca_avg_price,
+            _6y_dca_avg_price,
+            _8y_dca_avg_price,
+            _10y_dca_avg_price,
+            price_1d_ago,
+            price_1w_ago,
+            price_1m_ago,
+            price_3m_ago,
+            price_6m_ago,
+            price_1y_ago,
+            price_2y_ago,
+            price_3y_ago,
+            price_4y_ago,
+            price_5y_ago,
+            price_6y_ago,
+            price_8y_ago,
+            price_10y_ago,
             _1w_dca_stack: computed_di!("1w_dca_stack"),
             _1m_dca_stack: computed_di!("1m_dca_stack"),
             _3m_dca_stack: computed_di!("3m_dca_stack"),
@@ -244,29 +426,29 @@ impl Vecs {
             dca_class_2016_stack: computed_di!("dca_class_2016_stack"),
             dca_class_2015_stack: computed_di!("dca_class_2015_stack"),
 
-            dca_class_2025_avg_price: computed_di!("dca_class_2025_avg_price"),
-            dca_class_2024_avg_price: computed_di!("dca_class_2024_avg_price"),
-            dca_class_2023_avg_price: computed_di!("dca_class_2023_avg_price"),
-            dca_class_2022_avg_price: computed_di!("dca_class_2022_avg_price"),
-            dca_class_2021_avg_price: computed_di!("dca_class_2021_avg_price"),
-            dca_class_2020_avg_price: computed_di!("dca_class_2020_avg_price"),
-            dca_class_2019_avg_price: computed_di!("dca_class_2019_avg_price"),
-            dca_class_2018_avg_price: computed_di!("dca_class_2018_avg_price"),
-            dca_class_2017_avg_price: computed_di!("dca_class_2017_avg_price"),
-            dca_class_2016_avg_price: computed_di!("dca_class_2016_avg_price"),
-            dca_class_2015_avg_price: computed_di!("dca_class_2015_avg_price"),
+            dca_class_2025_avg_price,
+            dca_class_2024_avg_price,
+            dca_class_2023_avg_price,
+            dca_class_2022_avg_price,
+            dca_class_2021_avg_price,
+            dca_class_2020_avg_price,
+            dca_class_2019_avg_price,
+            dca_class_2018_avg_price,
+            dca_class_2017_avg_price,
+            dca_class_2016_avg_price,
+            dca_class_2015_avg_price,
 
-            dca_class_2025_returns: computed_di!("dca_class_2025_returns"),
-            dca_class_2024_returns: computed_di!("dca_class_2024_returns"),
-            dca_class_2023_returns: computed_di!("dca_class_2023_returns"),
-            dca_class_2022_returns: computed_di!("dca_class_2022_returns"),
-            dca_class_2021_returns: computed_di!("dca_class_2021_returns"),
-            dca_class_2020_returns: computed_di!("dca_class_2020_returns"),
-            dca_class_2019_returns: computed_di!("dca_class_2019_returns"),
-            dca_class_2018_returns: computed_di!("dca_class_2018_returns"),
-            dca_class_2017_returns: computed_di!("dca_class_2017_returns"),
-            dca_class_2016_returns: computed_di!("dca_class_2016_returns"),
-            dca_class_2015_returns: computed_di!("dca_class_2015_returns"),
+            dca_class_2025_returns,
+            dca_class_2024_returns,
+            dca_class_2023_returns,
+            dca_class_2022_returns,
+            dca_class_2021_returns,
+            dca_class_2020_returns,
+            dca_class_2019_returns,
+            dca_class_2018_returns,
+            dca_class_2017_returns,
+            dca_class_2016_returns,
+            dca_class_2015_returns,
 
             indexes_to_price_200d_sma_x2_4,
             indexes_to_price_200d_sma_x0_8,

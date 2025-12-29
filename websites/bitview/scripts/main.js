@@ -114,7 +114,7 @@ Promise.all([
 ]).then(([signals, { BrkClient, VERSION }, { createResources }, { initOptions }]) =>
   signals.createRoot(() => {
     const brk = new BrkClient("/");
-    const resources = createResources(brk, signals);
+    const resources = createResources(signals);
     const owner = signals.getOwner();
 
     console.log(`VERSION = ${VERSION}`);

@@ -403,9 +403,15 @@ fn generate_metric_node(output: &mut String) {
         """Fetch all data points for this metric."""
         return self._client.get(self._path)
 
-    def get_range(self, from_date: str, to_date: str) -> List[T]:
-        """Fetch data points within a date range."""
-        return self._client.get(f"{{self._path}}?from={{from_date}}&to={{to_date}}")
+    def get_range(self, from_val: Optional[str] = None, to_val: Optional[str] = None) -> List[T]:
+        """Fetch data points within a range."""
+        params = []
+        if from_val is not None:
+            params.append(f"from={{from_val}}")
+        if to_val is not None:
+            params.append(f"to={{to_val}}")
+        query = "&".join(params)
+        return self._client.get(f"{{self._path}}?{{query}}" if query else self._path)
 
 "#
     )

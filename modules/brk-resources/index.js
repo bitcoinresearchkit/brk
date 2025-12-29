@@ -1,132 +1,128 @@
 /**
  * @import { Signal, Signals } from "../brk-signals/index";
- * @import { BRK } from '../brk-client/index'
- * @import { Metric } from '../brk-client/metrics'
- * @import { IndexName } from '../brk-client/generated/metrics'
+ * @import { MetricNode } from "../brk-client/index";
+ */
+
+/**
+ * @template T
+ * @typedef {Object} Resource
+ * @property {Signal<T | null>} data
+ * @property {Signal<boolean>} loading
+ * @property {Signal<Error | null>} error
+ * @property {(...args: any[]) => Promise<T | null>} fetch
+ */
+
+/**
+ * @template T
+ * @typedef {Object} RangeState
+ * @property {Signal<T[] | null>} data
+ * @property {Signal<boolean>} loading
+ */
+
+/**
+ * @template T
+ * @typedef {Object} MetricResource
+ * @property {string} path
+ * @property {(from?: number, to?: number) => RangeState<T>} range
+ * @property {(from?: number, to?: number) => Promise<T[] | null>} fetch
  */
 
 /**
  * @typedef {ReturnType<typeof createResources>} Resources
- * @typedef {ReturnType<Resources["metrics"]["getOrCreate"]>} MetricResource
  */
 
 /**
- * @param {BRK} brk
  * @param {Signals} signals
  */
-export function createResources(brk, signals) {
+export function createResources(signals) {
   const owner = signals.getOwner();
 
-  const defaultFrom = -10_000;
-  const defaultTo = undefined;
-
   /**
-   * @param {Object} [args]
-   * @param {number} [args.from]
-   * @param {number} [args.to]
-   */
-  function genKey(args) {
-    return `${args?.from ?? defaultFrom}-${args?.to ?? ""}`;
-  }
-
-  /**
+   * Create a generic reactive resource wrapper for any async fetcher
    * @template T
-   * @param {Metric} metric
-   * @param {IndexName} index
+   * @template {any[]} Args
+   * @param {(...args: Args) => Promise<T>} fetcher
+   * @returns {Resource<T>}
    */
-  function createMetricResource(metric, index) {
-    if (!brk.hasMetric(metric)) {
-      throw Error(`${metric} is invalid`);
-    }
-
+  function createResource(fetcher) {
     return signals.runWithOwner(owner, () => {
-      const fetchedRecord = signals.createSignal(
-        /** @type {Map<string, {loading: boolean, at: Date | null, data: Signal<T[] | null>}>} */ (
-          new Map()
-        ),
-      );
+      const data = signals.createSignal(/** @type {T | null} */ (null));
+      const loading = signals.createSignal(false);
+      const error = signals.createSignal(/** @type {Error | null} */ (null));
 
       return {
-        url: brk.genMetricURL(metric, index, defaultFrom),
-        fetched: fetchedRecord,
+        data,
+        loading,
+        error,
         /**
-         * Defaults
-         * - from: -10_000
-         * - to: undefined
-         *
-         * @param {Object} [args]
-         * @param {number} [args.from]
-         * @param {number} [args.to]
+         * @param {Args} args
          */
-        async fetch(args) {
-          const from = args?.from ?? defaultFrom;
-          const to = args?.to ?? defaultTo;
-          const fetchedKey = genKey({ from, to });
-          if (!fetchedRecord().has(fetchedKey)) {
-            fetchedRecord.set((map) => {
-              map.set(fetchedKey, {
-                loading: false,
-                at: null,
-                data: signals.createSignal(/** @type {T[] | null} */ (null), {
-                  equals: false,
-                }),
-              });
-              return map;
-            });
+        async fetch(...args) {
+          loading.set(true);
+          error.set(null);
+          try {
+            const result = await fetcher(...args);
+            data.set(result);
+            return result;
+          } catch (e) {
+            error.set(e instanceof Error ? e : new Error(String(e)));
+            return null;
+          } finally {
+            loading.set(false);
           }
-          const fetched = fetchedRecord().get(fetchedKey);
-          if (!fetched) throw Error("Unreachable");
-          if (fetched.loading) return fetched.data();
-          if (fetched.at) {
-            const diff = new Date().getTime() - fetched.at.getTime();
-            const ONE_MINUTE_IN_MS = 60_000;
-            if (diff < ONE_MINUTE_IN_MS) return fetched.data();
-          }
-          fetched.loading = true;
-          const res = /** @type {T[] | null} */ (
-            await brk.fetchMetric(
-              (data) => {
-                if (data.length || !fetched.data()) {
-                  fetched.data.set(data);
-                }
-              },
-              index,
-              metric,
-              from,
-              to,
-            )
-          );
-          fetched.at = new Date();
-          fetched.loading = false;
-          return res;
         },
       };
     });
   }
 
-  /** @type {Map<string, NonNullable<ReturnType<typeof createMetricResource>>>} */
-  const map = new Map();
+  /**
+   * Create a reactive resource wrapper for a MetricNode with multi-range support
+   * @template T
+   * @param {MetricNode<T>} node
+   * @returns {MetricResource<T>}
+   */
+  function useMetricNode(node) {
+    return signals.runWithOwner(owner, () => {
+      /** @type {Map<string, RangeState<T>>} */
+      const ranges = new Map();
 
-  const metrics = {
-    /**
-     * @template T
-     * @param {Metric} metric
-     * @param {IndexName} index
-     */
-    getOrCreate(metric, index) {
-      const key = `${metric}/${index}`;
-      const found = map.get(key);
-      if (found) {
-        return found;
+      /**
+       * Get or create range state
+       * @param {number} [from=-10000]
+       * @param {number} [to]
+       */
+      function range(from = -10000, to) {
+        const key = `${from}-${to ?? ""}`;
+        if (!ranges.has(key)) {
+          ranges.set(key, {
+            data: signals.createSignal(/** @type {T[] | null} */ (null)),
+            loading: signals.createSignal(false),
+          });
+        }
+        return /** @type {RangeState<T>} */ (ranges.get(key));
       }
 
-      const resource = createMetricResource(metric, index);
-      if (!resource) throw Error("metric is undefined");
-      map.set(key, /** @type {any} */ (resource));
-      return resource;
-    },
-    genKey,
-  };
+      return {
+        path: node._path,
+        range,
+        /**
+         * Fetch data for a range
+         * @param {number} [from=-10000]
+         * @param {number} [to]
+         */
+        async fetch(from = -10000, to) {
+          const r = range(from, to);
+          r.loading.set(true);
+          try {
+            const result = await node.getRange(from, to, r.data.set);
+            return result;
+          } finally {
+            r.loading.set(false);
+          }
+        },
+      };
+    });
+  }
 
-  return { metrics };
+  return { createResource, useMetricNode };
 }

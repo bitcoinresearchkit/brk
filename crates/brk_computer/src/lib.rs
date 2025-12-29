@@ -97,19 +97,12 @@ impl Computer {
 
         let i = Instant::now();
         let constants = constants::Vecs::new(VERSION, &indexes);
-        let (price, market) = thread::scope(|s| -> Result<_> {
-            let market_handle = big_thread().spawn_scoped(s, || {
-                market::Vecs::forced_import(&computed_path, VERSION, &indexes)
-            })?;
-
-            let price = fetched
-                .is_some()
-                .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
-
-            let market = market_handle.join().unwrap()?;
-
-            Ok((price, market))
-        })?;
+        // Price must be created before market since market's lazy vecs reference price
+        let price = fetched
+            .is_some()
+            .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
+        let market =
+            market::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
         info!("Imported price/constants/market in {:?}", i.elapsed());
 
         let i = Instant::now();
@@ -130,8 +123,13 @@ impl Computer {
             let chain = chain_handle.join().unwrap()?;
 
             // pools depends on chain for lazy dominance vecs
-            let pools =
-                pools::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref(), &chain)?;
+            let pools = pools::Vecs::forced_import(
+                &computed_path,
+                VERSION,
+                &indexes,
+                price.as_ref(),
+                &chain,
+            )?;
 
             Ok((chain, pools, cointime))
         })?;
@@ -287,7 +285,6 @@ impl Computer {
                     indexer,
                     &self.indexes,
                     &starting_indexes_clone,
-                    &self.chain,
                     self.price.as_ref(),
                     exit,
                 )?;

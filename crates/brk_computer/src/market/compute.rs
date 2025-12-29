@@ -53,17 +53,6 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_price_drawdown
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_drawdown(
-                    starting_indexes.dateindex,
-                    price.timeindexes_to_price_close.dateindex.u(),
-                    self.indexes_to_price_ath.dateindex.u(),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
         self.indexes_to_days_since_price_ath
             .compute_all(starting_indexes, exit, |v| {
                 let mut high_iter = price.timeindexes_to_price_high.dateindex.u().into_iter();
@@ -117,84 +106,63 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_max_years_between_price_aths
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_max_days_between_price_aths.dateindex.u(),
-                    |(i, max, ..)| (i, StoredF32::from(*max as f64 / 365.0)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
         [
-            (1, &mut self.price_1d_ago, &mut self._1d_price_returns, None),
-            (7, &mut self.price_1w_ago, &mut self._1w_price_returns, None),
-            (
-                30,
-                &mut self.price_1m_ago,
-                &mut self._1m_price_returns,
-                None,
-            ),
+            (1, &mut self.price_1d_ago, &self._1d_price_returns, None),
+            (7, &mut self.price_1w_ago, &self._1w_price_returns, None),
+            (30, &mut self.price_1m_ago, &self._1m_price_returns, None),
             (
                 3 * 30,
                 &mut self.price_3m_ago,
-                &mut self._3m_price_returns,
+                &self._3m_price_returns,
                 None,
             ),
             (
                 6 * 30,
                 &mut self.price_6m_ago,
-                &mut self._6m_price_returns,
+                &self._6m_price_returns,
                 None,
             ),
-            (
-                365,
-                &mut self.price_1y_ago,
-                &mut self._1y_price_returns,
-                None,
-            ),
+            (365, &mut self.price_1y_ago, &self._1y_price_returns, None),
             (
                 2 * 365,
                 &mut self.price_2y_ago,
-                &mut self._2y_price_returns,
+                &self._2y_price_returns,
                 Some(&mut self._2y_cagr),
             ),
             (
                 3 * 365,
                 &mut self.price_3y_ago,
-                &mut self._3y_price_returns,
+                &self._3y_price_returns,
                 Some(&mut self._3y_cagr),
             ),
             (
                 4 * 365,
                 &mut self.price_4y_ago,
-                &mut self._4y_price_returns,
+                &self._4y_price_returns,
                 Some(&mut self._4y_cagr),
             ),
             (
                 5 * 365,
                 &mut self.price_5y_ago,
-                &mut self._5y_price_returns,
+                &self._5y_price_returns,
                 Some(&mut self._5y_cagr),
             ),
             (
                 6 * 365,
                 &mut self.price_6y_ago,
-                &mut self._6y_price_returns,
+                &self._6y_price_returns,
                 Some(&mut self._6y_cagr),
             ),
             (
                 8 * 365,
                 &mut self.price_8y_ago,
-                &mut self._8y_price_returns,
+                &self._8y_price_returns,
                 Some(&mut self._8y_cagr),
             ),
             (
                 10 * 365,
                 &mut self.price_10y_ago,
-                &mut self._10y_price_returns,
+                &self._10y_price_returns,
                 Some(&mut self._10y_cagr),
             ),
         ]
@@ -202,16 +170,6 @@ impl Vecs {
         .try_for_each(|(days, ago, returns, cagr)| -> Result<()> {
             ago.compute_all(starting_indexes, exit, |v| {
                 v.compute_previous_value(
-                    starting_indexes.dateindex,
-                    price.timeindexes_to_price_close.dateindex.u(),
-                    days,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-            returns.compute_all(starting_indexes, exit, |v| {
-                v.compute_percentage_change(
                     starting_indexes.dateindex,
                     price.timeindexes_to_price_close.dateindex.u(),
                     days,
@@ -240,84 +198,84 @@ impl Vecs {
                 7,
                 &mut self._1w_dca_stack,
                 &mut self._1w_dca_avg_price,
-                &mut self._1w_dca_returns,
+                &self._1w_dca_returns,
                 None,
             ),
             (
                 30,
                 &mut self._1m_dca_stack,
                 &mut self._1m_dca_avg_price,
-                &mut self._1m_dca_returns,
+                &self._1m_dca_returns,
                 None,
             ),
             (
                 3 * 30,
                 &mut self._3m_dca_stack,
                 &mut self._3m_dca_avg_price,
-                &mut self._3m_dca_returns,
+                &self._3m_dca_returns,
                 None,
             ),
             (
                 6 * 30,
                 &mut self._6m_dca_stack,
                 &mut self._6m_dca_avg_price,
-                &mut self._6m_dca_returns,
+                &self._6m_dca_returns,
                 None,
             ),
             (
                 365,
                 &mut self._1y_dca_stack,
                 &mut self._1y_dca_avg_price,
-                &mut self._1y_dca_returns,
+                &self._1y_dca_returns,
                 None,
             ),
             (
                 2 * 365,
                 &mut self._2y_dca_stack,
                 &mut self._2y_dca_avg_price,
-                &mut self._2y_dca_returns,
+                &self._2y_dca_returns,
                 Some(&mut self._2y_dca_cagr),
             ),
             (
                 3 * 365,
                 &mut self._3y_dca_stack,
                 &mut self._3y_dca_avg_price,
-                &mut self._3y_dca_returns,
+                &self._3y_dca_returns,
                 Some(&mut self._3y_dca_cagr),
             ),
             (
                 4 * 365,
                 &mut self._4y_dca_stack,
                 &mut self._4y_dca_avg_price,
-                &mut self._4y_dca_returns,
+                &self._4y_dca_returns,
                 Some(&mut self._4y_dca_cagr),
             ),
             (
                 5 * 365,
                 &mut self._5y_dca_stack,
                 &mut self._5y_dca_avg_price,
-                &mut self._5y_dca_returns,
+                &self._5y_dca_returns,
                 Some(&mut self._5y_dca_cagr),
             ),
             (
                 6 * 365,
                 &mut self._6y_dca_stack,
                 &mut self._6y_dca_avg_price,
-                &mut self._6y_dca_returns,
+                &self._6y_dca_returns,
                 Some(&mut self._6y_dca_cagr),
             ),
             (
                 8 * 365,
                 &mut self._8y_dca_stack,
                 &mut self._8y_dca_avg_price,
-                &mut self._8y_dca_returns,
+                &self._8y_dca_returns,
                 Some(&mut self._8y_dca_cagr),
             ),
             (
                 10 * 365,
                 &mut self._10y_dca_stack,
                 &mut self._10y_dca_avg_price,
-                &mut self._10y_dca_returns,
+                &self._10y_dca_returns,
                 Some(&mut self._10y_dca_cagr),
             ),
         ]
@@ -344,16 +302,6 @@ impl Vecs {
                     Ok(())
                 })?;
 
-                dca_returns.compute_all(starting_indexes, exit, |v| {
-                    v.compute_percentage_difference(
-                        starting_indexes.dateindex,
-                        price.timeindexes_to_price_close.dateindex.u(),
-                        dca_avg_price.dateindex.u(),
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
-
                 if let Some(dca_cagr) = dca_cagr {
                     dca_cagr.compute_all(starting_indexes, exit, |v| {
                         v.compute_cagr(
@@ -374,72 +322,61 @@ impl Vecs {
             (
                 2015,
                 &mut self.dca_class_2015_avg_price,
-                &mut self.dca_class_2015_returns,
                 &mut self.dca_class_2015_stack,
             ),
             (
                 2016,
                 &mut self.dca_class_2016_avg_price,
-                &mut self.dca_class_2016_returns,
                 &mut self.dca_class_2016_stack,
             ),
             (
                 2017,
                 &mut self.dca_class_2017_avg_price,
-                &mut self.dca_class_2017_returns,
                 &mut self.dca_class_2017_stack,
             ),
             (
                 2018,
                 &mut self.dca_class_2018_avg_price,
-                &mut self.dca_class_2018_returns,
                 &mut self.dca_class_2018_stack,
             ),
             (
                 2019,
                 &mut self.dca_class_2019_avg_price,
-                &mut self.dca_class_2019_returns,
                 &mut self.dca_class_2019_stack,
             ),
             (
                 2020,
                 &mut self.dca_class_2020_avg_price,
-                &mut self.dca_class_2020_returns,
                 &mut self.dca_class_2020_stack,
             ),
             (
                 2021,
                 &mut self.dca_class_2021_avg_price,
-                &mut self.dca_class_2021_returns,
                 &mut self.dca_class_2021_stack,
             ),
             (
                 2022,
                 &mut self.dca_class_2022_avg_price,
-                &mut self.dca_class_2022_returns,
                 &mut self.dca_class_2022_stack,
             ),
             (
                 2023,
                 &mut self.dca_class_2023_avg_price,
-                &mut self.dca_class_2023_returns,
                 &mut self.dca_class_2023_stack,
             ),
             (
                 2024,
                 &mut self.dca_class_2024_avg_price,
-                &mut self.dca_class_2024_returns,
                 &mut self.dca_class_2024_stack,
             ),
             (
                 2025,
                 &mut self.dca_class_2025_avg_price,
-                &mut self.dca_class_2025_returns,
                 &mut self.dca_class_2025_stack,
             ),
         ]
         .into_iter()
-        .try_for_each(|(year, avg_price, returns, stack)| -> Result<()> {
+        .try_for_each(|(year, avg_price, stack)| -> Result<()> {
             let dateindex = DateIndex::try_from(Date::new(year, 1, 1)).unwrap();
 
             stack.compute_all(starting_indexes, exit, |v| {
@@ -457,16 +394,6 @@ impl Vecs {
                     starting_indexes.dateindex,
                     stack.dateindex.u(),
                     dateindex,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-            returns.compute_all(starting_indexes, exit, |v| {
-                v.compute_percentage_difference(
-                    starting_indexes.dateindex,
-                    price.timeindexes_to_price_close.dateindex.u(),
-                    avg_price.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -590,49 +517,6 @@ impl Vecs {
             exit,
             self._1d_price_returns.dateindex.u(),
         )?;
-
-        self.indexes_to_price_1w_volatility
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1d_returns_1w_sd
-                        .sd
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    |(i, v, ..)| (i, (*v * 7.0_f32.sqrt()).into()),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.indexes_to_price_1m_volatility
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1d_returns_1m_sd
-                        .sd
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    |(i, v, ..)| (i, (*v * 30.0_f32.sqrt()).into()),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-        self.indexes_to_price_1y_volatility
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    self.indexes_to_1d_returns_1y_sd
-                        .sd
-                        .dateindex
-                        .as_ref()
-                        .unwrap(),
-                    |(i, v, ..)| (i, (*v * 365.0_f32.sqrt()).into()),
-                    exit,
-                )?;
-                Ok(())
-            })?;
 
         self.dateindex_to_price_true_range.compute_transform3(
             starting_indexes.dateindex,

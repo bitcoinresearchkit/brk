@@ -62,7 +62,7 @@ fn run() -> Result<()> {
     let starting_indexes = indexer.index(&blocks, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
-    Mimalloc::collect_if_wasted_above(500);
+    Mimalloc::collect();
 
     let i = Instant::now();
     computer.compute(&indexer, starting_indexes, &reader, &exit)?;

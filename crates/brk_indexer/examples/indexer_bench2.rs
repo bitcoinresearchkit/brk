@@ -56,7 +56,7 @@ fn main() -> Result<()> {
         indexer.index(&blocks, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
 
-        Mimalloc::collect_if_wasted_above(500);
+        Mimalloc::collect();
 
         sleep(Duration::from_secs(60));
     }
