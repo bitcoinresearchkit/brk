@@ -1,0 +1,18 @@
+export declare const REACTIVE_NONE = 0;
+export declare const REACTIVE_CHECK: number;
+export declare const REACTIVE_DIRTY: number;
+export declare const REACTIVE_RECOMPUTING_DEPS: number;
+export declare const REACTIVE_IN_HEAP: number;
+export declare const REACTIVE_IN_HEAP_HEIGHT: number;
+export declare const REACTIVE_ZOMBIE: number;
+export declare const REACTIVE_DISPOSED: number;
+export declare const STATUS_NONE = 0;
+export declare const STATUS_PENDING: number;
+export declare const STATUS_ERROR: number;
+export declare const STATUS_UNINITIALIZED: number;
+export declare const EFFECT_PURE = 0;
+export declare const EFFECT_RENDER = 1;
+export declare const EFFECT_USER = 2;
+export declare const NOT_PENDING: {};
+export declare const SUPPORTS_PROXY: boolean;
+export declare const defaultContext: {};
