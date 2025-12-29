@@ -2,11 +2,10 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_grouper::{
-    AddressGroups, AmountFilter, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, Filter,
-    Filtered,
+    AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, Filter, Filtered,
 };
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
+use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
@@ -37,90 +36,19 @@ impl AddressCohorts {
         let v = version + VERSION + Version::ZERO;
 
         // Helper to create a cohort - only amount_range cohorts have state
-        let create = |filter: Filter, has_state: bool| -> Result<AddressCohortVecs> {
-            let states_path = if has_state { Some(states_path) } else { None };
-            AddressCohortVecs::forced_import(db, filter, v, indexes, price, states_path, all_supply)
-        };
+        let create =
+            |filter: Filter, name: &'static str, has_state: bool| -> Result<AddressCohortVecs> {
+                let sp = if has_state { Some(states_path) } else { None };
+                AddressCohortVecs::forced_import(db, filter, name, v, indexes, price, sp, all_supply)
+            };
 
-        let full = |f: Filter| create(f, true);
-        let none = |f: Filter| create(f, false);
+        let full = |f: Filter, name: &'static str| create(f, name, true);
+        let none = |f: Filter, name: &'static str| create(f, name, false);
 
         Ok(Self(AddressGroups {
-            amount_range: ByAmountRange {
-                _0sats: full(Filter::Amount(AmountFilter::LowerThan(Sats::_1)))?,
-                _1sat_to_10sats: full(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10)))?,
-                _10sats_to_100sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_10..Sats::_100,
-                )))?,
-                _100sats_to_1k_sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_100..Sats::_1K,
-                )))?,
-                _1k_sats_to_10k_sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_1K..Sats::_10K,
-                )))?,
-                _10k_sats_to_100k_sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_10K..Sats::_100K,
-                )))?,
-                _100k_sats_to_1m_sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_100K..Sats::_1M,
-                )))?,
-                _1m_sats_to_10m_sats: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_1M..Sats::_10M,
-                )))?,
-                _10m_sats_to_1btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_10M..Sats::_1BTC,
-                )))?,
-                _1btc_to_10btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_1BTC..Sats::_10BTC,
-                )))?,
-                _10btc_to_100btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_10BTC..Sats::_100BTC,
-                )))?,
-                _100btc_to_1k_btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_100BTC..Sats::_1K_BTC,
-                )))?,
-                _1k_btc_to_10k_btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_1K_BTC..Sats::_10K_BTC,
-                )))?,
-                _10k_btc_to_100k_btc: full(Filter::Amount(AmountFilter::Range(
-                    Sats::_10K_BTC..Sats::_100K_BTC,
-                )))?,
-                _100k_btc_or_more: full(Filter::Amount(AmountFilter::GreaterOrEqual(
-                    Sats::_100K_BTC,
-                )))?,
-            },
-
-            lt_amount: ByLowerThanAmount {
-                _10sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_10)))?,
-                _100sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_100)))?,
-                _1k_sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_1K)))?,
-                _10k_sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_10K)))?,
-                _100k_sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_100K)))?,
-                _1m_sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_1M)))?,
-                _10m_sats: none(Filter::Amount(AmountFilter::LowerThan(Sats::_10M)))?,
-                _1btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_1BTC)))?,
-                _10btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_10BTC)))?,
-                _100btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_100BTC)))?,
-                _1k_btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_1K_BTC)))?,
-                _10k_btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_10K_BTC)))?,
-                _100k_btc: none(Filter::Amount(AmountFilter::LowerThan(Sats::_100K_BTC)))?,
-            },
-
-            ge_amount: ByGreatEqualAmount {
-                _1sat: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1)))?,
-                _10sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10)))?,
-                _100sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100)))?,
-                _1k_sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1K)))?,
-                _10k_sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10K)))?,
-                _100k_sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100K)))?,
-                _1m_sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1M)))?,
-                _10m_sats: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10M)))?,
-                _1btc: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1BTC)))?,
-                _10btc: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10BTC)))?,
-                _100btc: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100BTC)))?,
-                _1k_btc: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1K_BTC)))?,
-                _10k_btc: none(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10K_BTC)))?,
-            },
+            amount_range: ByAmountRange::try_new(&full)?,
+            lt_amount: ByLowerThanAmount::try_new(&none)?,
+            ge_amount: ByGreatEqualAmount::try_new(&none)?,
         }))
     }
 

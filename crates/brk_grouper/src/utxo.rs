@@ -24,10 +24,10 @@ pub struct UTXOGroups<T> {
 impl<T> UTXOGroups<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
         Self {
-            all: create(Filter::All),
+            all: create(Filter::All, ""),
             age_range: ByAgeRange::new(&mut create),
             epoch: ByEpoch::new(&mut create),
             year: ByYear::new(&mut create),

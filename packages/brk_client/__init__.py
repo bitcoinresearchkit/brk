@@ -202,6 +202,703 @@ POOL_ID_TO_POOL_NAME: Final[dict[str, str]] = {
     "zulupool": "Zulupool",
 }
 
+# Cohort names
+
+TERM_NAMES: Final = {
+  "short": {
+    "id": "sth",
+    "short": "STH",
+    "long": "Short Term Holders"
+  },
+  "long": {
+    "id": "lth",
+    "short": "LTH",
+    "long": "Long Term Holders"
+  }
+}
+
+EPOCH_NAMES: Final = {
+  "_0": {
+    "id": "epoch_0",
+    "short": "Epoch 0",
+    "long": "Epoch 0"
+  },
+  "_1": {
+    "id": "epoch_1",
+    "short": "Epoch 1",
+    "long": "Epoch 1"
+  },
+  "_2": {
+    "id": "epoch_2",
+    "short": "Epoch 2",
+    "long": "Epoch 2"
+  },
+  "_3": {
+    "id": "epoch_3",
+    "short": "Epoch 3",
+    "long": "Epoch 3"
+  },
+  "_4": {
+    "id": "epoch_4",
+    "short": "Epoch 4",
+    "long": "Epoch 4"
+  }
+}
+
+YEAR_NAMES: Final = {
+  "_2009": {
+    "id": "year_2009",
+    "short": "2009",
+    "long": "Year 2009"
+  },
+  "_2010": {
+    "id": "year_2010",
+    "short": "2010",
+    "long": "Year 2010"
+  },
+  "_2011": {
+    "id": "year_2011",
+    "short": "2011",
+    "long": "Year 2011"
+  },
+  "_2012": {
+    "id": "year_2012",
+    "short": "2012",
+    "long": "Year 2012"
+  },
+  "_2013": {
+    "id": "year_2013",
+    "short": "2013",
+    "long": "Year 2013"
+  },
+  "_2014": {
+    "id": "year_2014",
+    "short": "2014",
+    "long": "Year 2014"
+  },
+  "_2015": {
+    "id": "year_2015",
+    "short": "2015",
+    "long": "Year 2015"
+  },
+  "_2016": {
+    "id": "year_2016",
+    "short": "2016",
+    "long": "Year 2016"
+  },
+  "_2017": {
+    "id": "year_2017",
+    "short": "2017",
+    "long": "Year 2017"
+  },
+  "_2018": {
+    "id": "year_2018",
+    "short": "2018",
+    "long": "Year 2018"
+  },
+  "_2019": {
+    "id": "year_2019",
+    "short": "2019",
+    "long": "Year 2019"
+  },
+  "_2020": {
+    "id": "year_2020",
+    "short": "2020",
+    "long": "Year 2020"
+  },
+  "_2021": {
+    "id": "year_2021",
+    "short": "2021",
+    "long": "Year 2021"
+  },
+  "_2022": {
+    "id": "year_2022",
+    "short": "2022",
+    "long": "Year 2022"
+  },
+  "_2023": {
+    "id": "year_2023",
+    "short": "2023",
+    "long": "Year 2023"
+  },
+  "_2024": {
+    "id": "year_2024",
+    "short": "2024",
+    "long": "Year 2024"
+  },
+  "_2025": {
+    "id": "year_2025",
+    "short": "2025",
+    "long": "Year 2025"
+  },
+  "_2026": {
+    "id": "year_2026",
+    "short": "2026",
+    "long": "Year 2026"
+  }
+}
+
+SPENDABLE_TYPE_NAMES: Final = {
+  "p2pk65": {
+    "id": "p2pk65",
+    "short": "P2PK65",
+    "long": "Pay to Public Key (65 bytes)"
+  },
+  "p2pk33": {
+    "id": "p2pk33",
+    "short": "P2PK33",
+    "long": "Pay to Public Key (33 bytes)"
+  },
+  "p2pkh": {
+    "id": "p2pkh",
+    "short": "P2PKH",
+    "long": "Pay to Public Key Hash"
+  },
+  "p2ms": {
+    "id": "p2ms",
+    "short": "P2MS",
+    "long": "Pay to Multisig"
+  },
+  "p2sh": {
+    "id": "p2sh",
+    "short": "P2SH",
+    "long": "Pay to Script Hash"
+  },
+  "p2wpkh": {
+    "id": "p2wpkh",
+    "short": "P2WPKH",
+    "long": "Pay to Witness Public Key Hash"
+  },
+  "p2wsh": {
+    "id": "p2wsh",
+    "short": "P2WSH",
+    "long": "Pay to Witness Script Hash"
+  },
+  "p2tr": {
+    "id": "p2tr",
+    "short": "P2TR",
+    "long": "Pay to Taproot"
+  },
+  "p2a": {
+    "id": "p2a",
+    "short": "P2A",
+    "long": "Pay to Anchor"
+  },
+  "unknown": {
+    "id": "unknown_outputs",
+    "short": "Unknown",
+    "long": "Unknown Output Type"
+  },
+  "empty": {
+    "id": "empty_outputs",
+    "short": "Empty",
+    "long": "Empty Output"
+  }
+}
+
+AGE_RANGE_NAMES: Final = {
+  "up_to_1d": {
+    "id": "up_to_1d_old",
+    "short": "<1d",
+    "long": "Up to 1 Day Old"
+  },
+  "_1d_to_1w": {
+    "id": "at_least_1d_up_to_1w_old",
+    "short": "1d-1w",
+    "long": "1 Day to 1 Week Old"
+  },
+  "_1w_to_1m": {
+    "id": "at_least_1w_up_to_1m_old",
+    "short": "1w-1m",
+    "long": "1 Week to 1 Month Old"
+  },
+  "_1m_to_2m": {
+    "id": "at_least_1m_up_to_2m_old",
+    "short": "1m-2m",
+    "long": "1 to 2 Months Old"
+  },
+  "_2m_to_3m": {
+    "id": "at_least_2m_up_to_3m_old",
+    "short": "2m-3m",
+    "long": "2 to 3 Months Old"
+  },
+  "_3m_to_4m": {
+    "id": "at_least_3m_up_to_4m_old",
+    "short": "3m-4m",
+    "long": "3 to 4 Months Old"
+  },
+  "_4m_to_5m": {
+    "id": "at_least_4m_up_to_5m_old",
+    "short": "4m-5m",
+    "long": "4 to 5 Months Old"
+  },
+  "_5m_to_6m": {
+    "id": "at_least_5m_up_to_6m_old",
+    "short": "5m-6m",
+    "long": "5 to 6 Months Old"
+  },
+  "_6m_to_1y": {
+    "id": "at_least_6m_up_to_1y_old",
+    "short": "6m-1y",
+    "long": "6 Months to 1 Year Old"
+  },
+  "_1y_to_2y": {
+    "id": "at_least_1y_up_to_2y_old",
+    "short": "1y-2y",
+    "long": "1 to 2 Years Old"
+  },
+  "_2y_to_3y": {
+    "id": "at_least_2y_up_to_3y_old",
+    "short": "2y-3y",
+    "long": "2 to 3 Years Old"
+  },
+  "_3y_to_4y": {
+    "id": "at_least_3y_up_to_4y_old",
+    "short": "3y-4y",
+    "long": "3 to 4 Years Old"
+  },
+  "_4y_to_5y": {
+    "id": "at_least_4y_up_to_5y_old",
+    "short": "4y-5y",
+    "long": "4 to 5 Years Old"
+  },
+  "_5y_to_6y": {
+    "id": "at_least_5y_up_to_6y_old",
+    "short": "5y-6y",
+    "long": "5 to 6 Years Old"
+  },
+  "_6y_to_7y": {
+    "id": "at_least_6y_up_to_7y_old",
+    "short": "6y-7y",
+    "long": "6 to 7 Years Old"
+  },
+  "_7y_to_8y": {
+    "id": "at_least_7y_up_to_8y_old",
+    "short": "7y-8y",
+    "long": "7 to 8 Years Old"
+  },
+  "_8y_to_10y": {
+    "id": "at_least_8y_up_to_10y_old",
+    "short": "8y-10y",
+    "long": "8 to 10 Years Old"
+  },
+  "_10y_to_12y": {
+    "id": "at_least_10y_up_to_12y_old",
+    "short": "10y-12y",
+    "long": "10 to 12 Years Old"
+  },
+  "_12y_to_15y": {
+    "id": "at_least_12y_up_to_15y_old",
+    "short": "12y-15y",
+    "long": "12 to 15 Years Old"
+  },
+  "from_15y": {
+    "id": "at_least_15y_old",
+    "short": "15y+",
+    "long": "15+ Years Old"
+  }
+}
+
+MAX_AGE_NAMES: Final = {
+  "_1w": {
+    "id": "up_to_1w_old",
+    "short": "<1w",
+    "long": "Up to 1 Week Old"
+  },
+  "_1m": {
+    "id": "up_to_1m_old",
+    "short": "<1m",
+    "long": "Up to 1 Month Old"
+  },
+  "_2m": {
+    "id": "up_to_2m_old",
+    "short": "<2m",
+    "long": "Up to 2 Months Old"
+  },
+  "_3m": {
+    "id": "up_to_3m_old",
+    "short": "<3m",
+    "long": "Up to 3 Months Old"
+  },
+  "_4m": {
+    "id": "up_to_4m_old",
+    "short": "<4m",
+    "long": "Up to 4 Months Old"
+  },
+  "_5m": {
+    "id": "up_to_5m_old",
+    "short": "<5m",
+    "long": "Up to 5 Months Old"
+  },
+  "_6m": {
+    "id": "up_to_6m_old",
+    "short": "<6m",
+    "long": "Up to 6 Months Old"
+  },
+  "_1y": {
+    "id": "up_to_1y_old",
+    "short": "<1y",
+    "long": "Up to 1 Year Old"
+  },
+  "_2y": {
+    "id": "up_to_2y_old",
+    "short": "<2y",
+    "long": "Up to 2 Years Old"
+  },
+  "_3y": {
+    "id": "up_to_3y_old",
+    "short": "<3y",
+    "long": "Up to 3 Years Old"
+  },
+  "_4y": {
+    "id": "up_to_4y_old",
+    "short": "<4y",
+    "long": "Up to 4 Years Old"
+  },
+  "_5y": {
+    "id": "up_to_5y_old",
+    "short": "<5y",
+    "long": "Up to 5 Years Old"
+  },
+  "_6y": {
+    "id": "up_to_6y_old",
+    "short": "<6y",
+    "long": "Up to 6 Years Old"
+  },
+  "_7y": {
+    "id": "up_to_7y_old",
+    "short": "<7y",
+    "long": "Up to 7 Years Old"
+  },
+  "_8y": {
+    "id": "up_to_8y_old",
+    "short": "<8y",
+    "long": "Up to 8 Years Old"
+  },
+  "_10y": {
+    "id": "up_to_10y_old",
+    "short": "<10y",
+    "long": "Up to 10 Years Old"
+  },
+  "_12y": {
+    "id": "up_to_12y_old",
+    "short": "<12y",
+    "long": "Up to 12 Years Old"
+  },
+  "_15y": {
+    "id": "up_to_15y_old",
+    "short": "<15y",
+    "long": "Up to 15 Years Old"
+  }
+}
+
+MIN_AGE_NAMES: Final = {
+  "_1d": {
+    "id": "at_least_1d_old",
+    "short": "1d+",
+    "long": "At Least 1 Day Old"
+  },
+  "_1w": {
+    "id": "at_least_1w_old",
+    "short": "1w+",
+    "long": "At Least 1 Week Old"
+  },
+  "_1m": {
+    "id": "at_least_1m_old",
+    "short": "1m+",
+    "long": "At Least 1 Month Old"
+  },
+  "_2m": {
+    "id": "at_least_2m_old",
+    "short": "2m+",
+    "long": "At Least 2 Months Old"
+  },
+  "_3m": {
+    "id": "at_least_3m_old",
+    "short": "3m+",
+    "long": "At Least 3 Months Old"
+  },
+  "_4m": {
+    "id": "at_least_4m_old",
+    "short": "4m+",
+    "long": "At Least 4 Months Old"
+  },
+  "_5m": {
+    "id": "at_least_5m_old",
+    "short": "5m+",
+    "long": "At Least 5 Months Old"
+  },
+  "_6m": {
+    "id": "at_least_6m_old",
+    "short": "6m+",
+    "long": "At Least 6 Months Old"
+  },
+  "_1y": {
+    "id": "at_least_1y_old",
+    "short": "1y+",
+    "long": "At Least 1 Year Old"
+  },
+  "_2y": {
+    "id": "at_least_2y_old",
+    "short": "2y+",
+    "long": "At Least 2 Years Old"
+  },
+  "_3y": {
+    "id": "at_least_3y_old",
+    "short": "3y+",
+    "long": "At Least 3 Years Old"
+  },
+  "_4y": {
+    "id": "at_least_4y_old",
+    "short": "4y+",
+    "long": "At Least 4 Years Old"
+  },
+  "_5y": {
+    "id": "at_least_5y_old",
+    "short": "5y+",
+    "long": "At Least 5 Years Old"
+  },
+  "_6y": {
+    "id": "at_least_6y_old",
+    "short": "6y+",
+    "long": "At Least 6 Years Old"
+  },
+  "_7y": {
+    "id": "at_least_7y_old",
+    "short": "7y+",
+    "long": "At Least 7 Years Old"
+  },
+  "_8y": {
+    "id": "at_least_8y_old",
+    "short": "8y+",
+    "long": "At Least 8 Years Old"
+  },
+  "_10y": {
+    "id": "at_least_10y_old",
+    "short": "10y+",
+    "long": "At Least 10 Years Old"
+  },
+  "_12y": {
+    "id": "at_least_12y_old",
+    "short": "12y+",
+    "long": "At Least 12 Years Old"
+  }
+}
+
+AMOUNT_RANGE_NAMES: Final = {
+  "_0sats": {
+    "id": "with_0sats",
+    "short": "0 sats",
+    "long": "0 Sats"
+  },
+  "_1sat_to_10sats": {
+    "id": "above_1sat_under_10sats",
+    "short": "1-10 sats",
+    "long": "1 to 10 Sats"
+  },
+  "_10sats_to_100sats": {
+    "id": "above_10sats_under_100sats",
+    "short": "10-100 sats",
+    "long": "10 to 100 Sats"
+  },
+  "_100sats_to_1k_sats": {
+    "id": "above_100sats_under_1k_sats",
+    "short": "100-1k sats",
+    "long": "100 to 1K Sats"
+  },
+  "_1k_sats_to_10k_sats": {
+    "id": "above_1k_sats_under_10k_sats",
+    "short": "1k-10k sats",
+    "long": "1K to 10K Sats"
+  },
+  "_10k_sats_to_100k_sats": {
+    "id": "above_10k_sats_under_100k_sats",
+    "short": "10k-100k sats",
+    "long": "10K to 100K Sats"
+  },
+  "_100k_sats_to_1m_sats": {
+    "id": "above_100k_sats_under_1m_sats",
+    "short": "100k-1M sats",
+    "long": "100K to 1M Sats"
+  },
+  "_1m_sats_to_10m_sats": {
+    "id": "above_1m_sats_under_10m_sats",
+    "short": "1M-10M sats",
+    "long": "1M to 10M Sats"
+  },
+  "_10m_sats_to_1btc": {
+    "id": "above_10m_sats_under_1btc",
+    "short": "0.1-1 BTC",
+    "long": "0.1 to 1 BTC"
+  },
+  "_1btc_to_10btc": {
+    "id": "above_1btc_under_10btc",
+    "short": "1-10 BTC",
+    "long": "1 to 10 BTC"
+  },
+  "_10btc_to_100btc": {
+    "id": "above_10btc_under_100btc",
+    "short": "10-100 BTC",
+    "long": "10 to 100 BTC"
+  },
+  "_100btc_to_1k_btc": {
+    "id": "above_100btc_under_1k_btc",
+    "short": "100-1k BTC",
+    "long": "100 to 1K BTC"
+  },
+  "_1k_btc_to_10k_btc": {
+    "id": "above_1k_btc_under_10k_btc",
+    "short": "1k-10k BTC",
+    "long": "1K to 10K BTC"
+  },
+  "_10k_btc_to_100k_btc": {
+    "id": "above_10k_btc_under_100k_btc",
+    "short": "10k-100k BTC",
+    "long": "10K to 100K BTC"
+  },
+  "_100k_btc_or_more": {
+    "id": "above_100k_btc",
+    "short": "100k+ BTC",
+    "long": "100K+ BTC"
+  }
+}
+
+GE_AMOUNT_NAMES: Final = {
+  "_1sat": {
+    "id": "above_1sat",
+    "short": "1+ sats",
+    "long": "Above 1 Sat"
+  },
+  "_10sats": {
+    "id": "above_10sats",
+    "short": "10+ sats",
+    "long": "Above 10 Sats"
+  },
+  "_100sats": {
+    "id": "above_100sats",
+    "short": "100+ sats",
+    "long": "Above 100 Sats"
+  },
+  "_1k_sats": {
+    "id": "above_1k_sats",
+    "short": "1k+ sats",
+    "long": "Above 1K Sats"
+  },
+  "_10k_sats": {
+    "id": "above_10k_sats",
+    "short": "10k+ sats",
+    "long": "Above 10K Sats"
+  },
+  "_100k_sats": {
+    "id": "above_100k_sats",
+    "short": "100k+ sats",
+    "long": "Above 100K Sats"
+  },
+  "_1m_sats": {
+    "id": "above_1m_sats",
+    "short": "1M+ sats",
+    "long": "Above 1M Sats"
+  },
+  "_10m_sats": {
+    "id": "above_10m_sats",
+    "short": "0.1+ BTC",
+    "long": "Above 0.1 BTC"
+  },
+  "_1btc": {
+    "id": "above_1btc",
+    "short": "1+ BTC",
+    "long": "Above 1 BTC"
+  },
+  "_10btc": {
+    "id": "above_10btc",
+    "short": "10+ BTC",
+    "long": "Above 10 BTC"
+  },
+  "_100btc": {
+    "id": "above_100btc",
+    "short": "100+ BTC",
+    "long": "Above 100 BTC"
+  },
+  "_1k_btc": {
+    "id": "above_1k_btc",
+    "short": "1k+ BTC",
+    "long": "Above 1K BTC"
+  },
+  "_10k_btc": {
+    "id": "above_10k_btc",
+    "short": "10k+ BTC",
+    "long": "Above 10K BTC"
+  }
+}
+
+LT_AMOUNT_NAMES: Final = {
+  "_10sats": {
+    "id": "under_10sats",
+    "short": "<10 sats",
+    "long": "Under 10 Sats"
+  },
+  "_100sats": {
+    "id": "under_100sats",
+    "short": "<100 sats",
+    "long": "Under 100 Sats"
+  },
+  "_1k_sats": {
+    "id": "under_1k_sats",
+    "short": "<1k sats",
+    "long": "Under 1K Sats"
+  },
+  "_10k_sats": {
+    "id": "under_10k_sats",
+    "short": "<10k sats",
+    "long": "Under 10K Sats"
+  },
+  "_100k_sats": {
+    "id": "under_100k_sats",
+    "short": "<100k sats",
+    "long": "Under 100K Sats"
+  },
+  "_1m_sats": {
+    "id": "under_1m_sats",
+    "short": "<1M sats",
+    "long": "Under 1M Sats"
+  },
+  "_10m_sats": {
+    "id": "under_10m_sats",
+    "short": "<0.1 BTC",
+    "long": "Under 0.1 BTC"
+  },
+  "_1btc": {
+    "id": "under_1btc",
+    "short": "<1 BTC",
+    "long": "Under 1 BTC"
+  },
+  "_10btc": {
+    "id": "under_10btc",
+    "short": "<10 BTC",
+    "long": "Under 10 BTC"
+  },
+  "_100btc": {
+    "id": "under_100btc",
+    "short": "<100 BTC",
+    "long": "Under 100 BTC"
+  },
+  "_1k_btc": {
+    "id": "under_1k_btc",
+    "short": "<1k BTC",
+    "long": "Under 1K BTC"
+  },
+  "_10k_btc": {
+    "id": "under_10k_btc",
+    "short": "<10k BTC",
+    "long": "Under 10K BTC"
+  },
+  "_100k_btc": {
+    "id": "under_100k_btc",
+    "short": "<100k BTC",
+    "long": "Under 100K BTC"
+  }
+}
+
 # Type definitions
 
 Address = str
@@ -701,9 +1398,15 @@ class MetricNode(Generic[T]):
         """Fetch all data points for this metric."""
         return self._client.get(self._path)
 
-    def get_range(self, from_date: str, to_date: str) -> List[T]:
-        """Fetch data points within a date range."""
-        return self._client.get(f"{self._path}?from={from_date}&to={to_date}")
+    def get_range(self, from_val: Optional[str] = None, to_val: Optional[str] = None) -> List[T]:
+        """Fetch data points within a range."""
+        params = []
+        if from_val is not None:
+            params.append(f"from={from_val}")
+        if to_val is not None:
+            params.append(f"to={to_val}")
+        query = "&".join(params)
+        return self._client.get(f"{self._path}?{query}" if query else self._path)
 
 
 # Index accessor classes
@@ -1154,6 +1857,24 @@ class Ratio1ySdPattern:
         self.sma: Indexes[StoredF32] = Indexes(client, f'{base_path}/sma')
         self.zscore: Indexes[StoredF32] = Indexes(client, f'{base_path}/zscore')
 
+class AXbtPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self._1d_dominance: BlockCountPattern[StoredF32] = BlockCountPattern(client, f'{base_path}/1d_dominance')
+        self._1m_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1m_blocks_mined')
+        self._1m_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1m_dominance')
+        self._1w_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1w_blocks_mined')
+        self._1w_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1w_dominance')
+        self._1y_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1y_blocks_mined')
+        self._1y_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1y_dominance')
+        self.blocks_mined: BlockCountPattern[StoredU32] = BlockCountPattern(client, f'{base_path}/blocks_mined')
+        self.coinbase: UnclaimedRewardsPattern = UnclaimedRewardsPattern(client, f'{base_path}/coinbase')
+        self.days_since_block: Indexes[StoredU16] = Indexes(client, f'{base_path}/days_since_block')
+        self.dominance: BlockCountPattern[StoredF32] = BlockCountPattern(client, f'{base_path}/dominance')
+        self.fee: FeePattern2 = FeePattern2(client, f'{base_path}/fee')
+        self.subsidy: FeePattern2 = FeePattern2(client, f'{base_path}/subsidy')
+
 class ActivePriceRatioPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -1171,24 +1892,6 @@ class ActivePriceRatioPattern:
         self.ratio_pct98: Indexes[StoredF32] = Indexes(client, f'{base_path}/ratio_pct98')
         self.ratio_pct99: Indexes[StoredF32] = Indexes(client, f'{base_path}/ratio_pct99')
         self.ratio_sd: Ratio1ySdPattern = Ratio1ySdPattern(client, f'{base_path}/ratio_sd')
-
-class AXbtPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self._1d_dominance: BlockCountPattern[StoredF32] = BlockCountPattern(client, f'{base_path}/1d_dominance')
-        self._1m_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1m_blocks_mined')
-        self._1m_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1m_dominance')
-        self._1w_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1w_blocks_mined')
-        self._1w_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1w_dominance')
-        self._1y_blocks_mined: Indexes[StoredU32] = Indexes(client, f'{base_path}/1y_blocks_mined')
-        self._1y_dominance: Indexes[StoredF32] = Indexes(client, f'{base_path}/1y_dominance')
-        self.blocks_mined: BlockCountPattern[StoredU32] = BlockCountPattern(client, f'{base_path}/blocks_mined')
-        self.coinbase: UnclaimedRewardsPattern = UnclaimedRewardsPattern(client, f'{base_path}/coinbase')
-        self.days_since_block: Indexes[StoredU16] = Indexes(client, f'{base_path}/days_since_block')
-        self.dominance: BlockCountPattern[StoredF32] = BlockCountPattern(client, f'{base_path}/dominance')
-        self.fee: UnclaimedRewardsPattern = UnclaimedRewardsPattern(client, f'{base_path}/fee')
-        self.subsidy: UnclaimedRewardsPattern = UnclaimedRewardsPattern(client, f'{base_path}/subsidy')
 
 class BitcoinPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -1221,6 +1924,20 @@ class BlockSizePattern(Generic[T]):
         self.pct90: Indexes5[T] = Indexes5(client, f'{base_path}/pct90')
         self.sum: Indexes4[T] = Indexes4(client, f'{base_path}/sum')
 
+class RelativePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.neg_unrealized_loss_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/neg_unrealized_loss_rel_to_market_cap')
+        self.net_unrealized_pnl_rel_to_market_cap: Indexes26[StoredF32] = Indexes26(client, f'{base_path}/net_unrealized_pnl_rel_to_market_cap')
+        self.supply_in_loss_rel_to_circulating_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_loss_rel_to_circulating_supply')
+        self.supply_in_loss_rel_to_own_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_loss_rel_to_own_supply')
+        self.supply_in_profit_rel_to_circulating_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_profit_rel_to_circulating_supply')
+        self.supply_in_profit_rel_to_own_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_profit_rel_to_own_supply')
+        self.supply_rel_to_circulating_supply: Indexes[StoredF64] = Indexes(client, f'{base_path}/supply_rel_to_circulating_supply')
+        self.unrealized_loss_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/unrealized_loss_rel_to_market_cap')
+        self.unrealized_profit_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/unrealized_profit_rel_to_market_cap')
+
 class UnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -1235,19 +1952,19 @@ class UnrealizedPattern:
         self.unrealized_loss: Indexes26[Dollars] = Indexes26(client, f'{base_path}/unrealized_loss')
         self.unrealized_profit: Indexes26[Dollars] = Indexes26(client, f'{base_path}/unrealized_profit')
 
-class RelativePattern:
+class Constant0Pattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.neg_unrealized_loss_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/neg_unrealized_loss_rel_to_market_cap')
-        self.net_unrealized_pnl_rel_to_market_cap: Indexes26[StoredF32] = Indexes26(client, f'{base_path}/net_unrealized_pnl_rel_to_market_cap')
-        self.supply_in_loss_rel_to_circulating_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_loss_rel_to_circulating_supply')
-        self.supply_in_loss_rel_to_own_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_loss_rel_to_own_supply')
-        self.supply_in_profit_rel_to_circulating_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_profit_rel_to_circulating_supply')
-        self.supply_in_profit_rel_to_own_supply: Indexes27[StoredF64] = Indexes27(client, f'{base_path}/supply_in_profit_rel_to_own_supply')
-        self.supply_rel_to_circulating_supply: Indexes[StoredF64] = Indexes(client, f'{base_path}/supply_rel_to_circulating_supply')
-        self.unrealized_loss_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/unrealized_loss_rel_to_market_cap')
-        self.unrealized_profit_rel_to_market_cap: Indexes27[StoredF32] = Indexes27(client, f'{base_path}/unrealized_profit_rel_to_market_cap')
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.dateindex: Indexes5[T] = Indexes5(client, f'/{acc}')
+        self.decadeindex: Indexes7[T] = Indexes7(client, f'/{acc}')
+        self.height: Indexes2[T] = Indexes2(client, f'/{acc}')
+        self.monthindex: Indexes8[T] = Indexes8(client, f'/{acc}')
+        self.quarterindex: Indexes9[T] = Indexes9(client, f'/{acc}')
+        self.semesterindex: Indexes10[T] = Indexes10(client, f'/{acc}')
+        self.weekindex: Indexes11[T] = Indexes11(client, f'/{acc}')
+        self.yearindex: Indexes12[T] = Indexes12(client, f'/{acc}')
 
 class AddresstypeToHeightToAddrCountPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -1275,20 +1992,6 @@ class BlockIntervalPattern(Generic[T]):
         self.pct25: Indexes2[T] = Indexes2(client, f'/{acc}_pct25')
         self.pct75: Indexes2[T] = Indexes2(client, f'/{acc}_pct75')
         self.pct90: Indexes2[T] = Indexes2(client, f'/{acc}_pct90')
-
-class Constant0Pattern(Generic[T]):
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.dateindex: Indexes5[T] = Indexes5(client, f'/{acc}')
-        self.decadeindex: Indexes7[T] = Indexes7(client, f'/{acc}')
-        self.height: Indexes2[T] = Indexes2(client, f'/{acc}')
-        self.monthindex: Indexes8[T] = Indexes8(client, f'/{acc}')
-        self.quarterindex: Indexes9[T] = Indexes9(client, f'/{acc}')
-        self.semesterindex: Indexes10[T] = Indexes10(client, f'/{acc}')
-        self.weekindex: Indexes11[T] = Indexes11(client, f'/{acc}')
-        self.yearindex: Indexes12[T] = Indexes12(client, f'/{acc}')
 
 class _0satsPattern:
     """Pattern struct for repeated tree structure."""
@@ -1335,6 +2038,16 @@ class _10yTo12yPattern:
         self.supply: SupplyPattern2 = SupplyPattern2(client, f'{base_path}/supply')
         self.unrealized: UnrealizedPattern = UnrealizedPattern(client, f'{base_path}/unrealized')
 
+class ActivityPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.coinblocks_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, f'{base_path}/coinblocks_destroyed')
+        self.coindays_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, f'{base_path}/coindays_destroyed')
+        self.satblocks_destroyed: Indexes2[Sats] = Indexes2(client, f'{base_path}/satblocks_destroyed')
+        self.satdays_destroyed: Indexes2[Sats] = Indexes2(client, f'{base_path}/satdays_destroyed')
+        self.sent: FeePattern2 = FeePattern2(client, f'{base_path}/sent')
+
 class SupplyPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -1345,17 +2058,7 @@ class SupplyPattern2:
         self.supply_value: SupplyValuePattern = SupplyValuePattern(client, f'{base_path}/supply_value')
         self.utxo_count: Indexes3[StoredU64] = Indexes3(client, f'{base_path}/utxo_count')
 
-class ActivityPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.coinblocks_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, f'{base_path}/coinblocks_destroyed')
-        self.coindays_destroyed: BlockCountPattern[StoredF64] = BlockCountPattern(client, f'{base_path}/coindays_destroyed')
-        self.satblocks_destroyed: Indexes2[Sats] = Indexes2(client, f'{base_path}/satblocks_destroyed')
-        self.satdays_destroyed: Indexes2[Sats] = Indexes2(client, f'{base_path}/satdays_destroyed')
-        self.sent: SentPattern = SentPattern(client, f'{base_path}/sent')
-
-class SentPattern:
+class FeePattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, base_path: str):
@@ -1373,22 +2076,6 @@ class SupplyPattern:
         self.dollars: Indexes[Dollars] = Indexes(client, f'{base_path}/dollars')
         self.sats: Indexes[Sats] = Indexes(client, f'{base_path}/sats')
 
-class CoinbasePattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.bitcoin: BitcoinPattern[Bitcoin] = BitcoinPattern(client, f'{base_path}/bitcoin')
-        self.dollars: BitcoinPattern[Dollars] = BitcoinPattern(client, f'{base_path}/dollars')
-        self.sats: BitcoinPattern[Sats] = BitcoinPattern(client, f'{base_path}/sats')
-
-class ActiveSupplyPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.bitcoin: Indexes3[Bitcoin] = Indexes3(client, f'{base_path}/bitcoin')
-        self.dollars: Indexes3[Dollars] = Indexes3(client, f'{base_path}/dollars')
-        self.sats: Indexes3[Sats] = Indexes3(client, f'{base_path}/sats')
-
 class UnclaimedRewardsPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -1405,6 +2092,22 @@ class PricePaidPattern2:
         self.min_price_paid: Indexes3[Dollars] = Indexes3(client, f'{base_path}/min_price_paid')
         self.price_percentiles: PricePercentilesPattern = PricePercentilesPattern(client, f'{base_path}/price_percentiles')
 
+class CoinbasePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.bitcoin: BitcoinPattern[Bitcoin] = BitcoinPattern(client, f'{base_path}/bitcoin')
+        self.dollars: BitcoinPattern[Dollars] = BitcoinPattern(client, f'{base_path}/dollars')
+        self.sats: BitcoinPattern[Sats] = BitcoinPattern(client, f'{base_path}/sats')
+
+class ActiveSupplyPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.bitcoin: Indexes3[Bitcoin] = Indexes3(client, f'{base_path}/bitcoin')
+        self.dollars: Indexes3[Dollars] = Indexes3(client, f'{base_path}/dollars')
+        self.sats: Indexes3[Sats] = Indexes3(client, f'{base_path}/sats')
+
 class BlockCountPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -1413,26 +2116,12 @@ class BlockCountPattern(Generic[T]):
         self.cumulative: Indexes3[T] = Indexes3(client, f'{base_path}/cumulative')
         self.sum: Indexes4[T] = Indexes4(client, f'{base_path}/sum')
 
-class SupplyValuePattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.bitcoin: Indexes2[Bitcoin] = Indexes2(client, f'{base_path}/bitcoin')
-        self.dollars: Indexes2[Dollars] = Indexes2(client, f'{base_path}/dollars')
-
 class PricePaidPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, base_path: str):
         self.max_price_paid: Indexes3[Dollars] = Indexes3(client, f'{base_path}/max_price_paid')
         self.min_price_paid: Indexes3[Dollars] = Indexes3(client, f'{base_path}/min_price_paid')
-
-class SatsPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str):
-        self.cumulative: Indexes3[Sats] = Indexes3(client, f'{base_path}/cumulative')
-        self.sum: Indexes4[Sats] = Indexes4(client, f'{base_path}/sum')
 
 class _1dReturns1mSdPattern:
     """Pattern struct for repeated tree structure."""
@@ -1441,6 +2130,20 @@ class _1dReturns1mSdPattern:
         """Create pattern node with accumulated metric name."""
         self.sd: Indexes[StoredF32] = Indexes(client, f'/{acc}_sd')
         self.sma: Indexes[StoredF32] = Indexes(client, f'/{acc}_sma')
+
+class SupplyValuePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.bitcoin: Indexes2[Bitcoin] = Indexes2(client, f'{base_path}/bitcoin')
+        self.dollars: Indexes2[Dollars] = Indexes2(client, f'{base_path}/dollars')
+
+class SatsPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str):
+        self.cumulative: Indexes3[Sats] = Indexes3(client, f'{base_path}/cumulative')
+        self.sum: Indexes4[Sats] = Indexes4(client, f'{base_path}/sum')
 
 class BitcoinPattern2(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -1886,164 +2589,164 @@ class CatalogTree_Computed_Pools_Vecs:
     """Catalog tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.AXbt: AXbtPattern = AXbtPattern(client, f'{base_path}/AXbt')
-        self.AaoPool: AXbtPattern = AXbtPattern(client, f'{base_path}/AaoPool')
-        self.AntPool: AXbtPattern = AXbtPattern(client, f'{base_path}/AntPool')
-        self.ArkPool: AXbtPattern = AXbtPattern(client, f'{base_path}/ArkPool')
-        self.AsicMiner: AXbtPattern = AXbtPattern(client, f'{base_path}/AsicMiner')
-        self.BatPool: AXbtPattern = AXbtPattern(client, f'{base_path}/BatPool')
-        self.BcMonster: AXbtPattern = AXbtPattern(client, f'{base_path}/BcMonster')
-        self.BcpoolIo: AXbtPattern = AXbtPattern(client, f'{base_path}/BcpoolIo')
-        self.BinancePool: AXbtPattern = AXbtPattern(client, f'{base_path}/BinancePool')
-        self.BitClub: AXbtPattern = AXbtPattern(client, f'{base_path}/BitClub')
-        self.BitFuFuPool: AXbtPattern = AXbtPattern(client, f'{base_path}/BitFuFuPool')
-        self.BitFury: AXbtPattern = AXbtPattern(client, f'{base_path}/BitFury')
-        self.BitMinter: AXbtPattern = AXbtPattern(client, f'{base_path}/BitMinter')
-        self.Bitalo: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitalo')
-        self.BitcoinAffiliateNetwork: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinAffiliateNetwork')
-        self.BitcoinCom: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinCom')
-        self.BitcoinIndia: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinIndia')
-        self.BitcoinRussia: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinRussia')
-        self.BitcoinUkraine: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinUkraine')
-        self.Bitfarms: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitfarms')
-        self.Bitparking: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitparking')
-        self.Bitsolo: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitsolo')
-        self.Bixin: AXbtPattern = AXbtPattern(client, f'{base_path}/Bixin')
-        self.BlockFills: AXbtPattern = AXbtPattern(client, f'{base_path}/BlockFills')
-        self.BraiinsPool: AXbtPattern = AXbtPattern(client, f'{base_path}/BraiinsPool')
-        self.BravoMining: AXbtPattern = AXbtPattern(client, f'{base_path}/BravoMining')
-        self.BtPool: AXbtPattern = AXbtPattern(client, f'{base_path}/BtPool')
-        self.BtcCom: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcCom')
-        self.BtcDig: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcDig')
-        self.BtcGuild: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcGuild')
-        self.BtcLab: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcLab')
-        self.BtcMp: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcMp')
-        self.BtcNuggets: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcNuggets')
-        self.BtcPoolParty: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcPoolParty')
-        self.BtcServ: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcServ')
-        self.BtcTop: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcTop')
-        self.Btcc: AXbtPattern = AXbtPattern(client, f'{base_path}/Btcc')
-        self.BwPool: AXbtPattern = AXbtPattern(client, f'{base_path}/BwPool')
-        self.BytePool: AXbtPattern = AXbtPattern(client, f'{base_path}/BytePool')
-        self.Canoe: AXbtPattern = AXbtPattern(client, f'{base_path}/Canoe')
-        self.CanoePool: AXbtPattern = AXbtPattern(client, f'{base_path}/CanoePool')
-        self.CarbonNegative: AXbtPattern = AXbtPattern(client, f'{base_path}/CarbonNegative')
-        self.CkPool: AXbtPattern = AXbtPattern(client, f'{base_path}/CkPool')
-        self.CloudHashing: AXbtPattern = AXbtPattern(client, f'{base_path}/CloudHashing')
-        self.CoinLab: AXbtPattern = AXbtPattern(client, f'{base_path}/CoinLab')
-        self.Cointerra: AXbtPattern = AXbtPattern(client, f'{base_path}/Cointerra')
-        self.ConnectBtc: AXbtPattern = AXbtPattern(client, f'{base_path}/ConnectBtc')
-        self.DPool: AXbtPattern = AXbtPattern(client, f'{base_path}/DPool')
-        self.DcExploration: AXbtPattern = AXbtPattern(client, f'{base_path}/DcExploration')
-        self.Dcex: AXbtPattern = AXbtPattern(client, f'{base_path}/Dcex')
-        self.DigitalBtc: AXbtPattern = AXbtPattern(client, f'{base_path}/DigitalBtc')
-        self.DigitalXMintsy: AXbtPattern = AXbtPattern(client, f'{base_path}/DigitalXMintsy')
-        self.EclipseMc: AXbtPattern = AXbtPattern(client, f'{base_path}/EclipseMc')
-        self.EightBaochi: AXbtPattern = AXbtPattern(client, f'{base_path}/EightBaochi')
-        self.EkanemBtc: AXbtPattern = AXbtPattern(client, f'{base_path}/EkanemBtc')
-        self.Eligius: AXbtPattern = AXbtPattern(client, f'{base_path}/Eligius')
-        self.EmcdPool: AXbtPattern = AXbtPattern(client, f'{base_path}/EmcdPool')
-        self.EntrustCharityPool: AXbtPattern = AXbtPattern(client, f'{base_path}/EntrustCharityPool')
-        self.Eobot: AXbtPattern = AXbtPattern(client, f'{base_path}/Eobot')
-        self.ExxBw: AXbtPattern = AXbtPattern(client, f'{base_path}/ExxBw')
-        self.F2Pool: AXbtPattern = AXbtPattern(client, f'{base_path}/F2Pool')
-        self.FiftyEightCoin: AXbtPattern = AXbtPattern(client, f'{base_path}/FiftyEightCoin')
-        self.FoundryUsa: AXbtPattern = AXbtPattern(client, f'{base_path}/FoundryUsa')
-        self.FutureBitApolloSolo: AXbtPattern = AXbtPattern(client, f'{base_path}/FutureBitApolloSolo')
-        self.GbMiners: AXbtPattern = AXbtPattern(client, f'{base_path}/GbMiners')
-        self.GhashIo: AXbtPattern = AXbtPattern(client, f'{base_path}/GhashIo')
-        self.GiveMeCoins: AXbtPattern = AXbtPattern(client, f'{base_path}/GiveMeCoins')
-        self.GoGreenLight: AXbtPattern = AXbtPattern(client, f'{base_path}/GoGreenLight')
-        self.HaoZhuZhu: AXbtPattern = AXbtPattern(client, f'{base_path}/HaoZhuZhu')
-        self.Haominer: AXbtPattern = AXbtPattern(client, f'{base_path}/Haominer')
-        self.HashBx: AXbtPattern = AXbtPattern(client, f'{base_path}/HashBx')
-        self.HashPool: AXbtPattern = AXbtPattern(client, f'{base_path}/HashPool')
-        self.Helix: AXbtPattern = AXbtPattern(client, f'{base_path}/Helix')
-        self.Hhtt: AXbtPattern = AXbtPattern(client, f'{base_path}/Hhtt')
-        self.HotPool: AXbtPattern = AXbtPattern(client, f'{base_path}/HotPool')
-        self.Hummerpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Hummerpool')
-        self.HuobiPool: AXbtPattern = AXbtPattern(client, f'{base_path}/HuobiPool')
-        self.InnopolisTech: AXbtPattern = AXbtPattern(client, f'{base_path}/InnopolisTech')
-        self.KanoPool: AXbtPattern = AXbtPattern(client, f'{base_path}/KanoPool')
-        self.KncMiner: AXbtPattern = AXbtPattern(client, f'{base_path}/KncMiner')
-        self.KuCoinPool: AXbtPattern = AXbtPattern(client, f'{base_path}/KuCoinPool')
-        self.LubianCom: AXbtPattern = AXbtPattern(client, f'{base_path}/LubianCom')
-        self.LuckyPool: AXbtPattern = AXbtPattern(client, f'{base_path}/LuckyPool')
-        self.Luxor: AXbtPattern = AXbtPattern(client, f'{base_path}/Luxor')
-        self.MaraPool: AXbtPattern = AXbtPattern(client, f'{base_path}/MaraPool')
-        self.MaxBtc: AXbtPattern = AXbtPattern(client, f'{base_path}/MaxBtc')
-        self.MaxiPool: AXbtPattern = AXbtPattern(client, f'{base_path}/MaxiPool')
-        self.MegaBigPower: AXbtPattern = AXbtPattern(client, f'{base_path}/MegaBigPower')
-        self.Minerium: AXbtPattern = AXbtPattern(client, f'{base_path}/Minerium')
-        self.MiningCity: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningCity')
-        self.MiningDutch: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningDutch')
-        self.MiningKings: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningKings')
-        self.MiningSquared: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningSquared')
-        self.Mmpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Mmpool')
-        self.MtRed: AXbtPattern = AXbtPattern(client, f'{base_path}/MtRed')
-        self.MultiCoinCo: AXbtPattern = AXbtPattern(client, f'{base_path}/MultiCoinCo')
-        self.Multipool: AXbtPattern = AXbtPattern(client, f'{base_path}/Multipool')
-        self.MyBtcCoinPool: AXbtPattern = AXbtPattern(client, f'{base_path}/MyBtcCoinPool')
-        self.Neopool: AXbtPattern = AXbtPattern(client, f'{base_path}/Neopool')
-        self.Nexious: AXbtPattern = AXbtPattern(client, f'{base_path}/Nexious')
-        self.NiceHash: AXbtPattern = AXbtPattern(client, f'{base_path}/NiceHash')
-        self.NmcBit: AXbtPattern = AXbtPattern(client, f'{base_path}/NmcBit')
-        self.NovaBlock: AXbtPattern = AXbtPattern(client, f'{base_path}/NovaBlock')
-        self.Ocean: AXbtPattern = AXbtPattern(client, f'{base_path}/Ocean')
-        self.OkExPool: AXbtPattern = AXbtPattern(client, f'{base_path}/OkExPool')
-        self.OkMiner: AXbtPattern = AXbtPattern(client, f'{base_path}/OkMiner')
-        self.Okkong: AXbtPattern = AXbtPattern(client, f'{base_path}/Okkong')
-        self.OkpoolTop: AXbtPattern = AXbtPattern(client, f'{base_path}/OkpoolTop')
-        self.OneHash: AXbtPattern = AXbtPattern(client, f'{base_path}/OneHash')
-        self.OneM1x: AXbtPattern = AXbtPattern(client, f'{base_path}/OneM1x')
-        self.OneThash: AXbtPattern = AXbtPattern(client, f'{base_path}/OneThash')
-        self.OzCoin: AXbtPattern = AXbtPattern(client, f'{base_path}/OzCoin')
-        self.PHashIo: AXbtPattern = AXbtPattern(client, f'{base_path}/PHashIo')
-        self.Parasite: AXbtPattern = AXbtPattern(client, f'{base_path}/Parasite')
-        self.Patels: AXbtPattern = AXbtPattern(client, f'{base_path}/Patels')
-        self.PegaPool: AXbtPattern = AXbtPattern(client, f'{base_path}/PegaPool')
-        self.Phoenix: AXbtPattern = AXbtPattern(client, f'{base_path}/Phoenix')
-        self.Polmine: AXbtPattern = AXbtPattern(client, f'{base_path}/Polmine')
-        self.Pool175btc: AXbtPattern = AXbtPattern(client, f'{base_path}/Pool175btc')
-        self.Pool50btc: AXbtPattern = AXbtPattern(client, f'{base_path}/Pool50btc')
-        self.Poolin: AXbtPattern = AXbtPattern(client, f'{base_path}/Poolin')
-        self.PortlandHodl: AXbtPattern = AXbtPattern(client, f'{base_path}/PortlandHodl')
-        self.PublicPool: AXbtPattern = AXbtPattern(client, f'{base_path}/PublicPool')
-        self.PureBtcCom: AXbtPattern = AXbtPattern(client, f'{base_path}/PureBtcCom')
-        self.Rawpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Rawpool')
-        self.RigPool: AXbtPattern = AXbtPattern(client, f'{base_path}/RigPool')
-        self.SbiCrypto: AXbtPattern = AXbtPattern(client, f'{base_path}/SbiCrypto')
-        self.SecPool: AXbtPattern = AXbtPattern(client, f'{base_path}/SecPool')
-        self.SecretSuperstar: AXbtPattern = AXbtPattern(client, f'{base_path}/SecretSuperstar')
-        self.SevenPool: AXbtPattern = AXbtPattern(client, f'{base_path}/SevenPool')
-        self.ShawnP0wers: AXbtPattern = AXbtPattern(client, f'{base_path}/ShawnP0wers')
-        self.SigmapoolCom: AXbtPattern = AXbtPattern(client, f'{base_path}/SigmapoolCom')
-        self.SimplecoinUs: AXbtPattern = AXbtPattern(client, f'{base_path}/SimplecoinUs')
-        self.SoloCk: AXbtPattern = AXbtPattern(client, f'{base_path}/SoloCk')
-        self.SpiderPool: AXbtPattern = AXbtPattern(client, f'{base_path}/SpiderPool')
-        self.StMiningCorp: AXbtPattern = AXbtPattern(client, f'{base_path}/StMiningCorp')
-        self.Tangpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Tangpool')
-        self.TatmasPool: AXbtPattern = AXbtPattern(client, f'{base_path}/TatmasPool')
-        self.TbDice: AXbtPattern = AXbtPattern(client, f'{base_path}/TbDice')
-        self.Telco214: AXbtPattern = AXbtPattern(client, f'{base_path}/Telco214')
-        self.TerraPool: AXbtPattern = AXbtPattern(client, f'{base_path}/TerraPool')
-        self.Tiger: AXbtPattern = AXbtPattern(client, f'{base_path}/Tiger')
-        self.TigerpoolNet: AXbtPattern = AXbtPattern(client, f'{base_path}/TigerpoolNet')
-        self.Titan: AXbtPattern = AXbtPattern(client, f'{base_path}/Titan')
-        self.TransactionCoinMining: AXbtPattern = AXbtPattern(client, f'{base_path}/TransactionCoinMining')
-        self.TrickysBtcPool: AXbtPattern = AXbtPattern(client, f'{base_path}/TrickysBtcPool')
-        self.TripleMining: AXbtPattern = AXbtPattern(client, f'{base_path}/TripleMining')
-        self.TwentyOneInc: AXbtPattern = AXbtPattern(client, f'{base_path}/TwentyOneInc')
-        self.UltimusPool: AXbtPattern = AXbtPattern(client, f'{base_path}/UltimusPool')
-        self.Unknown: AXbtPattern = AXbtPattern(client, f'{base_path}/Unknown')
-        self.Unomp: AXbtPattern = AXbtPattern(client, f'{base_path}/Unomp')
-        self.ViaBtc: AXbtPattern = AXbtPattern(client, f'{base_path}/ViaBtc')
-        self.Waterhole: AXbtPattern = AXbtPattern(client, f'{base_path}/Waterhole')
-        self.WayiCn: AXbtPattern = AXbtPattern(client, f'{base_path}/WayiCn')
-        self.WhitePool: AXbtPattern = AXbtPattern(client, f'{base_path}/WhitePool')
-        self.Wk057: AXbtPattern = AXbtPattern(client, f'{base_path}/Wk057')
-        self.YourbtcNet: AXbtPattern = AXbtPattern(client, f'{base_path}/YourbtcNet')
-        self.Zulupool: AXbtPattern = AXbtPattern(client, f'{base_path}/Zulupool')
+        self.axbt: AXbtPattern = AXbtPattern(client, f'{base_path}/AXbt')
+        self.aaopool: AXbtPattern = AXbtPattern(client, f'{base_path}/AaoPool')
+        self.antpool: AXbtPattern = AXbtPattern(client, f'{base_path}/AntPool')
+        self.arkpool: AXbtPattern = AXbtPattern(client, f'{base_path}/ArkPool')
+        self.asicminer: AXbtPattern = AXbtPattern(client, f'{base_path}/AsicMiner')
+        self.batpool: AXbtPattern = AXbtPattern(client, f'{base_path}/BatPool')
+        self.bcmonster: AXbtPattern = AXbtPattern(client, f'{base_path}/BcMonster')
+        self.bcpoolio: AXbtPattern = AXbtPattern(client, f'{base_path}/BcpoolIo')
+        self.binancepool: AXbtPattern = AXbtPattern(client, f'{base_path}/BinancePool')
+        self.bitclub: AXbtPattern = AXbtPattern(client, f'{base_path}/BitClub')
+        self.bitfufupool: AXbtPattern = AXbtPattern(client, f'{base_path}/BitFuFuPool')
+        self.bitfury: AXbtPattern = AXbtPattern(client, f'{base_path}/BitFury')
+        self.bitminter: AXbtPattern = AXbtPattern(client, f'{base_path}/BitMinter')
+        self.bitalo: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitalo')
+        self.bitcoinaffiliatenetwork: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinAffiliateNetwork')
+        self.bitcoincom: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinCom')
+        self.bitcoinindia: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinIndia')
+        self.bitcoinrussia: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinRussia')
+        self.bitcoinukraine: AXbtPattern = AXbtPattern(client, f'{base_path}/BitcoinUkraine')
+        self.bitfarms: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitfarms')
+        self.bitparking: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitparking')
+        self.bitsolo: AXbtPattern = AXbtPattern(client, f'{base_path}/Bitsolo')
+        self.bixin: AXbtPattern = AXbtPattern(client, f'{base_path}/Bixin')
+        self.blockfills: AXbtPattern = AXbtPattern(client, f'{base_path}/BlockFills')
+        self.braiinspool: AXbtPattern = AXbtPattern(client, f'{base_path}/BraiinsPool')
+        self.bravomining: AXbtPattern = AXbtPattern(client, f'{base_path}/BravoMining')
+        self.btpool: AXbtPattern = AXbtPattern(client, f'{base_path}/BtPool')
+        self.btccom: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcCom')
+        self.btcdig: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcDig')
+        self.btcguild: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcGuild')
+        self.btclab: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcLab')
+        self.btcmp: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcMp')
+        self.btcnuggets: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcNuggets')
+        self.btcpoolparty: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcPoolParty')
+        self.btcserv: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcServ')
+        self.btctop: AXbtPattern = AXbtPattern(client, f'{base_path}/BtcTop')
+        self.btcc: AXbtPattern = AXbtPattern(client, f'{base_path}/Btcc')
+        self.bwpool: AXbtPattern = AXbtPattern(client, f'{base_path}/BwPool')
+        self.bytepool: AXbtPattern = AXbtPattern(client, f'{base_path}/BytePool')
+        self.canoe: AXbtPattern = AXbtPattern(client, f'{base_path}/Canoe')
+        self.canoepool: AXbtPattern = AXbtPattern(client, f'{base_path}/CanoePool')
+        self.carbonnegative: AXbtPattern = AXbtPattern(client, f'{base_path}/CarbonNegative')
+        self.ckpool: AXbtPattern = AXbtPattern(client, f'{base_path}/CkPool')
+        self.cloudhashing: AXbtPattern = AXbtPattern(client, f'{base_path}/CloudHashing')
+        self.coinlab: AXbtPattern = AXbtPattern(client, f'{base_path}/CoinLab')
+        self.cointerra: AXbtPattern = AXbtPattern(client, f'{base_path}/Cointerra')
+        self.connectbtc: AXbtPattern = AXbtPattern(client, f'{base_path}/ConnectBtc')
+        self.dpool: AXbtPattern = AXbtPattern(client, f'{base_path}/DPool')
+        self.dcexploration: AXbtPattern = AXbtPattern(client, f'{base_path}/DcExploration')
+        self.dcex: AXbtPattern = AXbtPattern(client, f'{base_path}/Dcex')
+        self.digitalbtc: AXbtPattern = AXbtPattern(client, f'{base_path}/DigitalBtc')
+        self.digitalxmintsy: AXbtPattern = AXbtPattern(client, f'{base_path}/DigitalXMintsy')
+        self.eclipsemc: AXbtPattern = AXbtPattern(client, f'{base_path}/EclipseMc')
+        self.eightbaochi: AXbtPattern = AXbtPattern(client, f'{base_path}/EightBaochi')
+        self.ekanembtc: AXbtPattern = AXbtPattern(client, f'{base_path}/EkanemBtc')
+        self.eligius: AXbtPattern = AXbtPattern(client, f'{base_path}/Eligius')
+        self.emcdpool: AXbtPattern = AXbtPattern(client, f'{base_path}/EmcdPool')
+        self.entrustcharitypool: AXbtPattern = AXbtPattern(client, f'{base_path}/EntrustCharityPool')
+        self.eobot: AXbtPattern = AXbtPattern(client, f'{base_path}/Eobot')
+        self.exxbw: AXbtPattern = AXbtPattern(client, f'{base_path}/ExxBw')
+        self.f2pool: AXbtPattern = AXbtPattern(client, f'{base_path}/F2Pool')
+        self.fiftyeightcoin: AXbtPattern = AXbtPattern(client, f'{base_path}/FiftyEightCoin')
+        self.foundryusa: AXbtPattern = AXbtPattern(client, f'{base_path}/FoundryUsa')
+        self.futurebitapollosolo: AXbtPattern = AXbtPattern(client, f'{base_path}/FutureBitApolloSolo')
+        self.gbminers: AXbtPattern = AXbtPattern(client, f'{base_path}/GbMiners')
+        self.ghashio: AXbtPattern = AXbtPattern(client, f'{base_path}/GhashIo')
+        self.givemecoins: AXbtPattern = AXbtPattern(client, f'{base_path}/GiveMeCoins')
+        self.gogreenlight: AXbtPattern = AXbtPattern(client, f'{base_path}/GoGreenLight')
+        self.haozhuzhu: AXbtPattern = AXbtPattern(client, f'{base_path}/HaoZhuZhu')
+        self.haominer: AXbtPattern = AXbtPattern(client, f'{base_path}/Haominer')
+        self.hashbx: AXbtPattern = AXbtPattern(client, f'{base_path}/HashBx')
+        self.hashpool: AXbtPattern = AXbtPattern(client, f'{base_path}/HashPool')
+        self.helix: AXbtPattern = AXbtPattern(client, f'{base_path}/Helix')
+        self.hhtt: AXbtPattern = AXbtPattern(client, f'{base_path}/Hhtt')
+        self.hotpool: AXbtPattern = AXbtPattern(client, f'{base_path}/HotPool')
+        self.hummerpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Hummerpool')
+        self.huobipool: AXbtPattern = AXbtPattern(client, f'{base_path}/HuobiPool')
+        self.innopolistech: AXbtPattern = AXbtPattern(client, f'{base_path}/InnopolisTech')
+        self.kanopool: AXbtPattern = AXbtPattern(client, f'{base_path}/KanoPool')
+        self.kncminer: AXbtPattern = AXbtPattern(client, f'{base_path}/KncMiner')
+        self.kucoinpool: AXbtPattern = AXbtPattern(client, f'{base_path}/KuCoinPool')
+        self.lubiancom: AXbtPattern = AXbtPattern(client, f'{base_path}/LubianCom')
+        self.luckypool: AXbtPattern = AXbtPattern(client, f'{base_path}/LuckyPool')
+        self.luxor: AXbtPattern = AXbtPattern(client, f'{base_path}/Luxor')
+        self.marapool: AXbtPattern = AXbtPattern(client, f'{base_path}/MaraPool')
+        self.maxbtc: AXbtPattern = AXbtPattern(client, f'{base_path}/MaxBtc')
+        self.maxipool: AXbtPattern = AXbtPattern(client, f'{base_path}/MaxiPool')
+        self.megabigpower: AXbtPattern = AXbtPattern(client, f'{base_path}/MegaBigPower')
+        self.minerium: AXbtPattern = AXbtPattern(client, f'{base_path}/Minerium')
+        self.miningcity: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningCity')
+        self.miningdutch: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningDutch')
+        self.miningkings: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningKings')
+        self.miningsquared: AXbtPattern = AXbtPattern(client, f'{base_path}/MiningSquared')
+        self.mmpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Mmpool')
+        self.mtred: AXbtPattern = AXbtPattern(client, f'{base_path}/MtRed')
+        self.multicoinco: AXbtPattern = AXbtPattern(client, f'{base_path}/MultiCoinCo')
+        self.multipool: AXbtPattern = AXbtPattern(client, f'{base_path}/Multipool')
+        self.mybtccoinpool: AXbtPattern = AXbtPattern(client, f'{base_path}/MyBtcCoinPool')
+        self.neopool: AXbtPattern = AXbtPattern(client, f'{base_path}/Neopool')
+        self.nexious: AXbtPattern = AXbtPattern(client, f'{base_path}/Nexious')
+        self.nicehash: AXbtPattern = AXbtPattern(client, f'{base_path}/NiceHash')
+        self.nmcbit: AXbtPattern = AXbtPattern(client, f'{base_path}/NmcBit')
+        self.novablock: AXbtPattern = AXbtPattern(client, f'{base_path}/NovaBlock')
+        self.ocean: AXbtPattern = AXbtPattern(client, f'{base_path}/Ocean')
+        self.okexpool: AXbtPattern = AXbtPattern(client, f'{base_path}/OkExPool')
+        self.okminer: AXbtPattern = AXbtPattern(client, f'{base_path}/OkMiner')
+        self.okkong: AXbtPattern = AXbtPattern(client, f'{base_path}/Okkong')
+        self.okpooltop: AXbtPattern = AXbtPattern(client, f'{base_path}/OkpoolTop')
+        self.onehash: AXbtPattern = AXbtPattern(client, f'{base_path}/OneHash')
+        self.onem1x: AXbtPattern = AXbtPattern(client, f'{base_path}/OneM1x')
+        self.onethash: AXbtPattern = AXbtPattern(client, f'{base_path}/OneThash')
+        self.ozcoin: AXbtPattern = AXbtPattern(client, f'{base_path}/OzCoin')
+        self.phashio: AXbtPattern = AXbtPattern(client, f'{base_path}/PHashIo')
+        self.parasite: AXbtPattern = AXbtPattern(client, f'{base_path}/Parasite')
+        self.patels: AXbtPattern = AXbtPattern(client, f'{base_path}/Patels')
+        self.pegapool: AXbtPattern = AXbtPattern(client, f'{base_path}/PegaPool')
+        self.phoenix: AXbtPattern = AXbtPattern(client, f'{base_path}/Phoenix')
+        self.polmine: AXbtPattern = AXbtPattern(client, f'{base_path}/Polmine')
+        self.pool175btc: AXbtPattern = AXbtPattern(client, f'{base_path}/Pool175btc')
+        self.pool50btc: AXbtPattern = AXbtPattern(client, f'{base_path}/Pool50btc')
+        self.poolin: AXbtPattern = AXbtPattern(client, f'{base_path}/Poolin')
+        self.portlandhodl: AXbtPattern = AXbtPattern(client, f'{base_path}/PortlandHodl')
+        self.publicpool: AXbtPattern = AXbtPattern(client, f'{base_path}/PublicPool')
+        self.purebtccom: AXbtPattern = AXbtPattern(client, f'{base_path}/PureBtcCom')
+        self.rawpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Rawpool')
+        self.rigpool: AXbtPattern = AXbtPattern(client, f'{base_path}/RigPool')
+        self.sbicrypto: AXbtPattern = AXbtPattern(client, f'{base_path}/SbiCrypto')
+        self.secpool: AXbtPattern = AXbtPattern(client, f'{base_path}/SecPool')
+        self.secretsuperstar: AXbtPattern = AXbtPattern(client, f'{base_path}/SecretSuperstar')
+        self.sevenpool: AXbtPattern = AXbtPattern(client, f'{base_path}/SevenPool')
+        self.shawnp0wers: AXbtPattern = AXbtPattern(client, f'{base_path}/ShawnP0wers')
+        self.sigmapoolcom: AXbtPattern = AXbtPattern(client, f'{base_path}/SigmapoolCom')
+        self.simplecoinus: AXbtPattern = AXbtPattern(client, f'{base_path}/SimplecoinUs')
+        self.solock: AXbtPattern = AXbtPattern(client, f'{base_path}/SoloCk')
+        self.spiderpool: AXbtPattern = AXbtPattern(client, f'{base_path}/SpiderPool')
+        self.stminingcorp: AXbtPattern = AXbtPattern(client, f'{base_path}/StMiningCorp')
+        self.tangpool: AXbtPattern = AXbtPattern(client, f'{base_path}/Tangpool')
+        self.tatmaspool: AXbtPattern = AXbtPattern(client, f'{base_path}/TatmasPool')
+        self.tbdice: AXbtPattern = AXbtPattern(client, f'{base_path}/TbDice')
+        self.telco214: AXbtPattern = AXbtPattern(client, f'{base_path}/Telco214')
+        self.terrapool: AXbtPattern = AXbtPattern(client, f'{base_path}/TerraPool')
+        self.tiger: AXbtPattern = AXbtPattern(client, f'{base_path}/Tiger')
+        self.tigerpoolnet: AXbtPattern = AXbtPattern(client, f'{base_path}/TigerpoolNet')
+        self.titan: AXbtPattern = AXbtPattern(client, f'{base_path}/Titan')
+        self.transactioncoinmining: AXbtPattern = AXbtPattern(client, f'{base_path}/TransactionCoinMining')
+        self.trickysbtcpool: AXbtPattern = AXbtPattern(client, f'{base_path}/TrickysBtcPool')
+        self.triplemining: AXbtPattern = AXbtPattern(client, f'{base_path}/TripleMining')
+        self.twentyoneinc: AXbtPattern = AXbtPattern(client, f'{base_path}/TwentyOneInc')
+        self.ultimuspool: AXbtPattern = AXbtPattern(client, f'{base_path}/UltimusPool')
+        self.unknown: AXbtPattern = AXbtPattern(client, f'{base_path}/Unknown')
+        self.unomp: AXbtPattern = AXbtPattern(client, f'{base_path}/Unomp')
+        self.viabtc: AXbtPattern = AXbtPattern(client, f'{base_path}/ViaBtc')
+        self.waterhole: AXbtPattern = AXbtPattern(client, f'{base_path}/Waterhole')
+        self.wayicn: AXbtPattern = AXbtPattern(client, f'{base_path}/WayiCn')
+        self.whitepool: AXbtPattern = AXbtPattern(client, f'{base_path}/WhitePool')
+        self.wk057: AXbtPattern = AXbtPattern(client, f'{base_path}/Wk057')
+        self.yourbtcnet: AXbtPattern = AXbtPattern(client, f'{base_path}/YourbtcNet')
+        self.zulupool: AXbtPattern = AXbtPattern(client, f'{base_path}/Zulupool')
 
 class CatalogTree_Computed_Price:
     """Catalog tree node."""

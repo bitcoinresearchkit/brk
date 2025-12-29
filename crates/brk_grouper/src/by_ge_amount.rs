@@ -1,10 +1,64 @@
 use brk_traversable::Traversable;
 use brk_types::Sats;
 use rayon::prelude::*;
+use serde::Serialize;
 
-use super::{AmountFilter, Filter};
+use super::{AmountFilter, CohortName, Filter};
 
-#[derive(Default, Clone, Traversable)]
+/// Greater-or-equal amount thresholds
+pub const GE_AMOUNT_THRESHOLDS: ByGreatEqualAmount<Sats> = ByGreatEqualAmount {
+    _1sat: Sats::_1,
+    _10sats: Sats::_10,
+    _100sats: Sats::_100,
+    _1k_sats: Sats::_1K,
+    _10k_sats: Sats::_10K,
+    _100k_sats: Sats::_100K,
+    _1m_sats: Sats::_1M,
+    _10m_sats: Sats::_10M,
+    _1btc: Sats::_1BTC,
+    _10btc: Sats::_10BTC,
+    _100btc: Sats::_100BTC,
+    _1k_btc: Sats::_1K_BTC,
+    _10k_btc: Sats::_10K_BTC,
+};
+
+/// Greater-or-equal amount names
+pub const GE_AMOUNT_NAMES: ByGreatEqualAmount<CohortName> = ByGreatEqualAmount {
+    _1sat: CohortName::new("above_1sat", "1+ sats", "Above 1 Sat"),
+    _10sats: CohortName::new("above_10sats", "10+ sats", "Above 10 Sats"),
+    _100sats: CohortName::new("above_100sats", "100+ sats", "Above 100 Sats"),
+    _1k_sats: CohortName::new("above_1k_sats", "1k+ sats", "Above 1K Sats"),
+    _10k_sats: CohortName::new("above_10k_sats", "10k+ sats", "Above 10K Sats"),
+    _100k_sats: CohortName::new("above_100k_sats", "100k+ sats", "Above 100K Sats"),
+    _1m_sats: CohortName::new("above_1m_sats", "1M+ sats", "Above 1M Sats"),
+    _10m_sats: CohortName::new("above_10m_sats", "0.1+ BTC", "Above 0.1 BTC"),
+    _1btc: CohortName::new("above_1btc", "1+ BTC", "Above 1 BTC"),
+    _10btc: CohortName::new("above_10btc", "10+ BTC", "Above 10 BTC"),
+    _100btc: CohortName::new("above_100btc", "100+ BTC", "Above 100 BTC"),
+    _1k_btc: CohortName::new("above_1k_btc", "1k+ BTC", "Above 1K BTC"),
+    _10k_btc: CohortName::new("above_10k_btc", "10k+ BTC", "Above 10K BTC"),
+};
+
+/// Greater-or-equal amount filters
+pub const GE_AMOUNT_FILTERS: ByGreatEqualAmount<Filter> = ByGreatEqualAmount {
+    _1sat: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1sat)),
+    _10sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10sats)),
+    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._100sats)),
+    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1k_sats)),
+    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10k_sats)),
+    _100k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        GE_AMOUNT_THRESHOLDS._100k_sats,
+    )),
+    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1m_sats)),
+    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10m_sats)),
+    _1btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1btc)),
+    _10btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10btc)),
+    _100btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._100btc)),
+    _1k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1k_btc)),
+    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10k_btc)),
+};
+
+#[derive(Default, Clone, Traversable, Serialize)]
 pub struct ByGreatEqualAmount<T> {
     pub _1sat: T,
     pub _10sats: T,
@@ -21,26 +75,57 @@ pub struct ByGreatEqualAmount<T> {
     pub _10k_btc: T,
 }
 
+impl ByGreatEqualAmount<CohortName> {
+    pub const fn names() -> &'static Self {
+        &GE_AMOUNT_NAMES
+    }
+}
+
 impl<T> ByGreatEqualAmount<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
+        let f = GE_AMOUNT_FILTERS;
+        let n = GE_AMOUNT_NAMES;
         Self {
-            _1sat: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1))),
-            _10sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10))),
-            _100sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100))),
-            _1k_sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1K))),
-            _10k_sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10K))),
-            _100k_sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100K))),
-            _1m_sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1M))),
-            _10m_sats: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10M))),
-            _1btc: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1BTC))),
-            _10btc: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10BTC))),
-            _100btc: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_100BTC))),
-            _1k_btc: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_1K_BTC))),
-            _10k_btc: create(Filter::Amount(AmountFilter::GreaterOrEqual(Sats::_10K_BTC))),
+            _1sat: create(f._1sat.clone(), n._1sat.id),
+            _10sats: create(f._10sats.clone(), n._10sats.id),
+            _100sats: create(f._100sats.clone(), n._100sats.id),
+            _1k_sats: create(f._1k_sats.clone(), n._1k_sats.id),
+            _10k_sats: create(f._10k_sats.clone(), n._10k_sats.id),
+            _100k_sats: create(f._100k_sats.clone(), n._100k_sats.id),
+            _1m_sats: create(f._1m_sats.clone(), n._1m_sats.id),
+            _10m_sats: create(f._10m_sats.clone(), n._10m_sats.id),
+            _1btc: create(f._1btc.clone(), n._1btc.id),
+            _10btc: create(f._10btc.clone(), n._10btc.id),
+            _100btc: create(f._100btc.clone(), n._100btc.id),
+            _1k_btc: create(f._1k_btc.clone(), n._1k_btc.id),
+            _10k_btc: create(f._10k_btc.clone(), n._10k_btc.id),
         }
+    }
+
+    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
+    where
+        F: FnMut(Filter, &'static str) -> Result<T, E>,
+    {
+        let f = GE_AMOUNT_FILTERS;
+        let n = GE_AMOUNT_NAMES;
+        Ok(Self {
+            _1sat: create(f._1sat.clone(), n._1sat.id)?,
+            _10sats: create(f._10sats.clone(), n._10sats.id)?,
+            _100sats: create(f._100sats.clone(), n._100sats.id)?,
+            _1k_sats: create(f._1k_sats.clone(), n._1k_sats.id)?,
+            _10k_sats: create(f._10k_sats.clone(), n._10k_sats.id)?,
+            _100k_sats: create(f._100k_sats.clone(), n._100k_sats.id)?,
+            _1m_sats: create(f._1m_sats.clone(), n._1m_sats.id)?,
+            _10m_sats: create(f._10m_sats.clone(), n._10m_sats.id)?,
+            _1btc: create(f._1btc.clone(), n._1btc.id)?,
+            _10btc: create(f._10btc.clone(), n._10btc.id)?,
+            _100btc: create(f._100btc.clone(), n._100btc.id)?,
+            _1k_btc: create(f._1k_btc.clone(), n._1k_btc.id)?,
+            _10k_btc: create(f._10k_btc.clone(), n._10k_btc.id)?,
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

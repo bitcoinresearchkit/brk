@@ -1,10 +1,77 @@
 use brk_traversable::Traversable;
 use brk_types::{Timestamp, Year};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use serde::Serialize;
 
-use super::Filter;
+use super::{CohortName, Filter};
 
-#[derive(Default, Clone, Traversable)]
+/// Year values
+pub const YEAR_VALUES: ByYear<Year> = ByYear {
+    _2009: Year::new(2009),
+    _2010: Year::new(2010),
+    _2011: Year::new(2011),
+    _2012: Year::new(2012),
+    _2013: Year::new(2013),
+    _2014: Year::new(2014),
+    _2015: Year::new(2015),
+    _2016: Year::new(2016),
+    _2017: Year::new(2017),
+    _2018: Year::new(2018),
+    _2019: Year::new(2019),
+    _2020: Year::new(2020),
+    _2021: Year::new(2021),
+    _2022: Year::new(2022),
+    _2023: Year::new(2023),
+    _2024: Year::new(2024),
+    _2025: Year::new(2025),
+    _2026: Year::new(2026),
+};
+
+/// Year filters
+pub const YEAR_FILTERS: ByYear<Filter> = ByYear {
+    _2009: Filter::Year(YEAR_VALUES._2009),
+    _2010: Filter::Year(YEAR_VALUES._2010),
+    _2011: Filter::Year(YEAR_VALUES._2011),
+    _2012: Filter::Year(YEAR_VALUES._2012),
+    _2013: Filter::Year(YEAR_VALUES._2013),
+    _2014: Filter::Year(YEAR_VALUES._2014),
+    _2015: Filter::Year(YEAR_VALUES._2015),
+    _2016: Filter::Year(YEAR_VALUES._2016),
+    _2017: Filter::Year(YEAR_VALUES._2017),
+    _2018: Filter::Year(YEAR_VALUES._2018),
+    _2019: Filter::Year(YEAR_VALUES._2019),
+    _2020: Filter::Year(YEAR_VALUES._2020),
+    _2021: Filter::Year(YEAR_VALUES._2021),
+    _2022: Filter::Year(YEAR_VALUES._2022),
+    _2023: Filter::Year(YEAR_VALUES._2023),
+    _2024: Filter::Year(YEAR_VALUES._2024),
+    _2025: Filter::Year(YEAR_VALUES._2025),
+    _2026: Filter::Year(YEAR_VALUES._2026),
+};
+
+/// Year names
+pub const YEAR_NAMES: ByYear<CohortName> = ByYear {
+    _2009: CohortName::new("year_2009", "2009", "Year 2009"),
+    _2010: CohortName::new("year_2010", "2010", "Year 2010"),
+    _2011: CohortName::new("year_2011", "2011", "Year 2011"),
+    _2012: CohortName::new("year_2012", "2012", "Year 2012"),
+    _2013: CohortName::new("year_2013", "2013", "Year 2013"),
+    _2014: CohortName::new("year_2014", "2014", "Year 2014"),
+    _2015: CohortName::new("year_2015", "2015", "Year 2015"),
+    _2016: CohortName::new("year_2016", "2016", "Year 2016"),
+    _2017: CohortName::new("year_2017", "2017", "Year 2017"),
+    _2018: CohortName::new("year_2018", "2018", "Year 2018"),
+    _2019: CohortName::new("year_2019", "2019", "Year 2019"),
+    _2020: CohortName::new("year_2020", "2020", "Year 2020"),
+    _2021: CohortName::new("year_2021", "2021", "Year 2021"),
+    _2022: CohortName::new("year_2022", "2022", "Year 2022"),
+    _2023: CohortName::new("year_2023", "2023", "Year 2023"),
+    _2024: CohortName::new("year_2024", "2024", "Year 2024"),
+    _2025: CohortName::new("year_2025", "2025", "Year 2025"),
+    _2026: CohortName::new("year_2026", "2026", "Year 2026"),
+};
+
+#[derive(Default, Clone, Traversable, Serialize)]
 pub struct ByYear<T> {
     pub _2009: T,
     pub _2010: T,
@@ -26,31 +93,67 @@ pub struct ByYear<T> {
     pub _2026: T,
 }
 
+impl ByYear<CohortName> {
+    pub const fn names() -> &'static Self {
+        &YEAR_NAMES
+    }
+}
+
 impl<T> ByYear<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
+        let f = YEAR_FILTERS;
+        let n = YEAR_NAMES;
         Self {
-            _2009: create(Filter::Year(Year::new(2009))),
-            _2010: create(Filter::Year(Year::new(2010))),
-            _2011: create(Filter::Year(Year::new(2011))),
-            _2012: create(Filter::Year(Year::new(2012))),
-            _2013: create(Filter::Year(Year::new(2013))),
-            _2014: create(Filter::Year(Year::new(2014))),
-            _2015: create(Filter::Year(Year::new(2015))),
-            _2016: create(Filter::Year(Year::new(2016))),
-            _2017: create(Filter::Year(Year::new(2017))),
-            _2018: create(Filter::Year(Year::new(2018))),
-            _2019: create(Filter::Year(Year::new(2019))),
-            _2020: create(Filter::Year(Year::new(2020))),
-            _2021: create(Filter::Year(Year::new(2021))),
-            _2022: create(Filter::Year(Year::new(2022))),
-            _2023: create(Filter::Year(Year::new(2023))),
-            _2024: create(Filter::Year(Year::new(2024))),
-            _2025: create(Filter::Year(Year::new(2025))),
-            _2026: create(Filter::Year(Year::new(2026))),
+            _2009: create(f._2009, n._2009.id),
+            _2010: create(f._2010, n._2010.id),
+            _2011: create(f._2011, n._2011.id),
+            _2012: create(f._2012, n._2012.id),
+            _2013: create(f._2013, n._2013.id),
+            _2014: create(f._2014, n._2014.id),
+            _2015: create(f._2015, n._2015.id),
+            _2016: create(f._2016, n._2016.id),
+            _2017: create(f._2017, n._2017.id),
+            _2018: create(f._2018, n._2018.id),
+            _2019: create(f._2019, n._2019.id),
+            _2020: create(f._2020, n._2020.id),
+            _2021: create(f._2021, n._2021.id),
+            _2022: create(f._2022, n._2022.id),
+            _2023: create(f._2023, n._2023.id),
+            _2024: create(f._2024, n._2024.id),
+            _2025: create(f._2025, n._2025.id),
+            _2026: create(f._2026, n._2026.id),
         }
+    }
+
+    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
+    where
+        F: FnMut(Filter, &'static str) -> Result<T, E>,
+    {
+        let f = YEAR_FILTERS;
+        let n = YEAR_NAMES;
+        Ok(Self {
+            _2009: create(f._2009, n._2009.id)?,
+            _2010: create(f._2010, n._2010.id)?,
+            _2011: create(f._2011, n._2011.id)?,
+            _2012: create(f._2012, n._2012.id)?,
+            _2013: create(f._2013, n._2013.id)?,
+            _2014: create(f._2014, n._2014.id)?,
+            _2015: create(f._2015, n._2015.id)?,
+            _2016: create(f._2016, n._2016.id)?,
+            _2017: create(f._2017, n._2017.id)?,
+            _2018: create(f._2018, n._2018.id)?,
+            _2019: create(f._2019, n._2019.id)?,
+            _2020: create(f._2020, n._2020.id)?,
+            _2021: create(f._2021, n._2021.id)?,
+            _2022: create(f._2022, n._2022.id)?,
+            _2023: create(f._2023, n._2023.id)?,
+            _2024: create(f._2024, n._2024.id)?,
+            _2025: create(f._2025, n._2025.id)?,
+            _2026: create(f._2026, n._2026.id)?,
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

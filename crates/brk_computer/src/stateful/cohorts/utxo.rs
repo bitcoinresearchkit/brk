@@ -38,6 +38,7 @@ impl UTXOCohortVecs {
     pub fn forced_import(
         db: &Database,
         filter: Filter,
+        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -46,11 +47,12 @@ impl UTXOCohortVecs {
         all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
-        let full_name = filter.to_full_name(CohortContext::Utxo);
+        let full_name = CohortContext::Utxo.full_name(&filter, name);
 
         let cfg = ImportConfig {
             db,
             filter,
+            full_name: &full_name,
             context: CohortContext::Utxo,
             version,
             indexes,

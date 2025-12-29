@@ -28,7 +28,7 @@ pub const BLOCKS_PER_HALVING: u32 = 210_000;
 pub struct HalvingEpoch(u16);
 
 impl HalvingEpoch {
-    pub fn new(value: u16) -> Self {
+    pub const fn new(value: u16) -> Self {
         Self(value)
     }
 }

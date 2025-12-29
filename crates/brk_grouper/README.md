@@ -38,8 +38,9 @@ let filter = Filter::Time(TimeFilter::GreaterOrEqual(155));
 filter.contains_time(200);  // true
 filter.contains_amount(sats);
 
-// Generate metric names
-filter.to_full_name(CohortContext::Utxo);  // "utxos_min_age_155d"
+// Generate metric names (via CohortContext)
+let ctx = CohortContext::Utxo;
+ctx.full_name(&filter, "min_age_155d");  // "utxos_min_age_155d"
 ```
 
 ## Built On

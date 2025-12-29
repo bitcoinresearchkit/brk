@@ -14,7 +14,8 @@ pub fn to_pascal_case(s: &str) -> String {
 
 /// Convert a string to snake_case, handling Rust keywords.
 pub fn to_snake_case(s: &str) -> String {
-    let sanitized = s.replace('-', "_");
+    // Convert to lowercase and replace dashes with underscores
+    let sanitized = s.to_lowercase().replace('-', "_");
 
     // Prefix with _ if starts with digit
     let sanitized = if sanitized.chars().next().is_some_and(|c| c.is_ascii_digit()) {

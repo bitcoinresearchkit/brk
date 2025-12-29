@@ -12,11 +12,4 @@ pub enum Term {
 
 impl Term {
     pub const THRESHOLD_DAYS: usize = DAYS_5M;
-
-    pub fn to_name(&self) -> &'static str {
-        match self {
-            Term::Sth => "sth",
-            Term::Lth => "lth",
-        }
-    }
 }

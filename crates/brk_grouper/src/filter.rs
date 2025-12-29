@@ -29,47 +29,6 @@ impl Filter {
         }
     }
 
-    pub fn to_name_suffix(&self) -> String {
-        match self {
-            Filter::All => String::new(),
-            Filter::Term(t) => t.to_name().to_string(),
-            Filter::Time(t) => t.to_name_suffix(),
-            Filter::Amount(a) => a.to_name_suffix(),
-            Filter::Epoch(e) => format!("epoch_{}", usize::from(*e)),
-            Filter::Year(y) => format!("year_{}", u16::from(*y)),
-            Filter::Type(t) => match t {
-                OutputType::P2MS => "p2ms_outputs".to_string(),
-                OutputType::Empty => "empty_outputs".to_string(),
-                OutputType::Unknown => "unknown_outputs".to_string(),
-                _ => format!("{:?}", t).to_lowercase(),
-            },
-        }
-    }
-
-    /// Returns the full name for this filter, including context-based prefix.
-    ///
-    /// Prefix rules:
-    /// - No prefix: `All`, `Term`, `Epoch`, `Type`
-    /// - `utxos_` prefix: `Time` or `Amount` with `CohortContext::Utxo`
-    /// - `addrs_` prefix: `Amount` with `CohortContext::Address`
-    pub fn to_full_name(&self, context: CohortContext) -> String {
-        let suffix = self.to_name_suffix();
-        if suffix.is_empty() {
-            return suffix;
-        }
-
-        let needs_prefix = match self {
-            Filter::All | Filter::Term(_) | Filter::Epoch(_) | Filter::Year(_) | Filter::Type(_) => false,
-            Filter::Time(_) | Filter::Amount(_) => true,
-        };
-
-        if needs_prefix {
-            format!("{}_{}", context.prefix(), suffix)
-        } else {
-            suffix
-        }
-    }
-
     /// Check if a time value (days) is contained by this filter
     pub fn contains_time(&self, days: usize) -> bool {
         match self {

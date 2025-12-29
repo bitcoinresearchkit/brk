@@ -1,6 +1,11 @@
 use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
+use brk_grouper::{
+    AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
+    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
+};
 use brk_types::{pools, Index, TreeNode};
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
@@ -69,6 +74,29 @@ fn generate_constants(output: &mut String) {
         writeln!(output, "    \"{}\": \"{}\",", pool.slug(), pool.name).unwrap();
     }
     writeln!(output, "}}\n").unwrap();
+
+    // Cohort names
+    generate_cohort_names(output);
+}
+
+fn generate_cohort_names(output: &mut String) {
+    fn export_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
+        let json = serde_json::to_string_pretty(value).unwrap();
+        writeln!(output, "{}: Final = {}\n", name, json).unwrap();
+    }
+
+    writeln!(output, "# Cohort names\n").unwrap();
+
+    export_const(output, "TERM_NAMES", &TERM_NAMES);
+    export_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
+    export_const(output, "YEAR_NAMES", &YEAR_NAMES);
+    export_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
+    export_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
+    export_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
+    export_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
+    export_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
+    export_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
+    export_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {

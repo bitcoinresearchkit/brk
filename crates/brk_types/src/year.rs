@@ -17,7 +17,7 @@ pub struct Year(u16);
 impl Year {
     pub const GENESIS: Self = Self(2009);
 
-    pub fn new(value: u16) -> Self {
+    pub const fn new(value: u16) -> Self {
         Self(value)
     }
 

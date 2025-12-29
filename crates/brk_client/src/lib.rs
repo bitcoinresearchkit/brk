@@ -3,10 +3,13 @@
 
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(clippy::useless_format)]
 
 use std::sync::Arc;
 use serde::de::DeserializeOwned;
-use brk_types::*;
+pub use brk_grouper::*;
+pub use brk_types::*;
 
 
 /// Error type for BRK client operations.
@@ -109,8 +112,15 @@ impl<T: DeserializeOwned> MetricNode<T> {
     }
 
     /// Fetch data points within a range.
-    pub fn get_range(&self, from: &str, to: &str) -> Result<Vec<T>> {
-        let path = format!("{}?from={}&to={}", self.path, from, to);
+    pub fn get_range(&self, from: Option<&str>, to: Option<&str>) -> Result<Vec<T>> {
+        let mut params = Vec::new();
+        if let Some(f) = from { params.push(format!("from={}", f)); }
+        if let Some(t) = to { params.push(format!("to={}", t)); }
+        let path = if params.is_empty() {
+            self.path.clone()
+        } else {
+            format!("{}?{}", self.path, params.join("&"))
+        };
         self.client.get(&path)
     }
 }
@@ -1046,6 +1056,43 @@ impl Ratio1ySdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct AXbtPattern {
+    pub _1d_dominance: BlockCountPattern<StoredF32>,
+    pub _1m_blocks_mined: Indexes<StoredU32>,
+    pub _1m_dominance: Indexes<StoredF32>,
+    pub _1w_blocks_mined: Indexes<StoredU32>,
+    pub _1w_dominance: Indexes<StoredF32>,
+    pub _1y_blocks_mined: Indexes<StoredU32>,
+    pub _1y_dominance: Indexes<StoredF32>,
+    pub blocks_mined: BlockCountPattern<StoredU32>,
+    pub coinbase: UnclaimedRewardsPattern,
+    pub days_since_block: Indexes<StoredU16>,
+    pub dominance: BlockCountPattern<StoredF32>,
+    pub fee: FeePattern2,
+    pub subsidy: FeePattern2,
+}
+
+impl AXbtPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/1d_dominance")),
+            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1m_blocks_mined")),
+            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}/1m_dominance")),
+            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1w_blocks_mined")),
+            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}/1w_dominance")),
+            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1y_blocks_mined")),
+            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}/1y_dominance")),
+            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}/blocks_mined")),
+            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/coinbase")),
+            days_since_block: Indexes::new(client.clone(), &format!("{base_path}/days_since_block")),
+            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/dominance")),
+            fee: FeePattern2::new(client.clone(), &format!("{base_path}/fee")),
+            subsidy: FeePattern2::new(client.clone(), &format!("{base_path}/subsidy")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct ActivePriceRatioPattern {
     pub ratio: Indexes<StoredF32>,
     pub ratio_1m_sma: Indexes<StoredF32>,
@@ -1078,43 +1125,6 @@ impl ActivePriceRatioPattern {
             ratio_pct98: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct98")),
             ratio_pct99: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct99")),
             ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_sd")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct AXbtPattern {
-    pub _1d_dominance: BlockCountPattern<StoredF32>,
-    pub _1m_blocks_mined: Indexes<StoredU32>,
-    pub _1m_dominance: Indexes<StoredF32>,
-    pub _1w_blocks_mined: Indexes<StoredU32>,
-    pub _1w_dominance: Indexes<StoredF32>,
-    pub _1y_blocks_mined: Indexes<StoredU32>,
-    pub _1y_dominance: Indexes<StoredF32>,
-    pub blocks_mined: BlockCountPattern<StoredU32>,
-    pub coinbase: UnclaimedRewardsPattern,
-    pub days_since_block: Indexes<StoredU16>,
-    pub dominance: BlockCountPattern<StoredF32>,
-    pub fee: UnclaimedRewardsPattern,
-    pub subsidy: UnclaimedRewardsPattern,
-}
-
-impl AXbtPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/1d_dominance")),
-            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1m_blocks_mined")),
-            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}/1m_dominance")),
-            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1w_blocks_mined")),
-            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}/1w_dominance")),
-            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1y_blocks_mined")),
-            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}/1y_dominance")),
-            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}/blocks_mined")),
-            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/coinbase")),
-            days_since_block: Indexes::new(client.clone(), &format!("{base_path}/days_since_block")),
-            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/dominance")),
-            fee: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/fee")),
-            subsidy: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/subsidy")),
         }
     }
 }
@@ -1184,6 +1194,35 @@ impl<T: DeserializeOwned> BlockSizePattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct RelativePattern {
+    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
+    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
+    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
+}
+
+impl RelativePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
+            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
+            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct UnrealizedPattern {
     pub neg_unrealized_loss: Indexes26<Dollars>,
     pub net_unrealized_pnl: Indexes26<Dollars>,
@@ -1213,30 +1252,29 @@ impl UnrealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct RelativePattern {
-    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
-    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
+pub struct Constant0Pattern<T> {
+    pub dateindex: Indexes5<T>,
+    pub decadeindex: Indexes7<T>,
+    pub height: Indexes2<T>,
+    pub monthindex: Indexes8<T>,
+    pub quarterindex: Indexes9<T>,
+    pub semesterindex: Indexes10<T>,
+    pub weekindex: Indexes11<T>,
+    pub yearindex: Indexes12<T>,
 }
 
-impl RelativePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+impl<T: DeserializeOwned> Constant0Pattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
-            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
-            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
+            dateindex: Indexes5::new(client.clone(), &format!("/{acc}")),
+            decadeindex: Indexes7::new(client.clone(), &format!("/{acc}")),
+            height: Indexes2::new(client.clone(), &format!("/{acc}")),
+            monthindex: Indexes8::new(client.clone(), &format!("/{acc}")),
+            quarterindex: Indexes9::new(client.clone(), &format!("/{acc}")),
+            semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
+            weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
+            yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
         }
     }
 }
@@ -1292,34 +1330,6 @@ impl<T: DeserializeOwned> BlockIntervalPattern<T> {
             pct25: Indexes2::new(client.clone(), &format!("/{acc}_pct25")),
             pct75: Indexes2::new(client.clone(), &format!("/{acc}_pct75")),
             pct90: Indexes2::new(client.clone(), &format!("/{acc}_pct90")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct Constant0Pattern<T> {
-    pub dateindex: Indexes5<T>,
-    pub decadeindex: Indexes7<T>,
-    pub height: Indexes2<T>,
-    pub monthindex: Indexes8<T>,
-    pub quarterindex: Indexes9<T>,
-    pub semesterindex: Indexes10<T>,
-    pub weekindex: Indexes11<T>,
-    pub yearindex: Indexes12<T>,
-}
-
-impl<T: DeserializeOwned> Constant0Pattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
-        Self {
-            dateindex: Indexes5::new(client.clone(), &format!("/{acc}")),
-            decadeindex: Indexes7::new(client.clone(), &format!("/{acc}")),
-            height: Indexes2::new(client.clone(), &format!("/{acc}")),
-            monthindex: Indexes8::new(client.clone(), &format!("/{acc}")),
-            quarterindex: Indexes9::new(client.clone(), &format!("/{acc}")),
-            semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
-            weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
-            yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
         }
     }
 }
@@ -1419,6 +1429,27 @@ impl _10yTo12yPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct ActivityPattern {
+    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
+    pub coindays_destroyed: BlockCountPattern<StoredF64>,
+    pub satblocks_destroyed: Indexes2<Sats>,
+    pub satdays_destroyed: Indexes2<Sats>,
+    pub sent: FeePattern2,
+}
+
+impl ActivityPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coinblocks_destroyed")),
+            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coindays_destroyed")),
+            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satblocks_destroyed")),
+            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satdays_destroyed")),
+            sent: FeePattern2::new(client.clone(), &format!("{base_path}/sent")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct SupplyPattern2 {
     pub supply: SupplyPattern,
     pub supply_half: ActiveSupplyPattern,
@@ -1440,35 +1471,14 @@ impl SupplyPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActivityPattern {
-    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
-    pub coindays_destroyed: BlockCountPattern<StoredF64>,
-    pub satblocks_destroyed: Indexes2<Sats>,
-    pub satdays_destroyed: Indexes2<Sats>,
-    pub sent: SentPattern,
-}
-
-impl ActivityPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coinblocks_destroyed")),
-            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coindays_destroyed")),
-            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satblocks_destroyed")),
-            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satdays_destroyed")),
-            sent: SentPattern::new(client.clone(), &format!("{base_path}/sent")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SentPattern {
+pub struct FeePattern2 {
     pub base: Indexes2<Sats>,
     pub bitcoin: BlockCountPattern<Bitcoin>,
     pub dollars: BlockCountPattern<Dollars>,
     pub sats: SatsPattern,
 }
 
-impl SentPattern {
+impl FeePattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
@@ -1494,40 +1504,6 @@ impl SupplyPattern {
             bitcoin: Indexes::new(client.clone(), &format!("{base_path}/bitcoin")),
             dollars: Indexes::new(client.clone(), &format!("{base_path}/dollars")),
             sats: Indexes::new(client.clone(), &format!("{base_path}/sats")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinbasePattern {
-    pub bitcoin: BitcoinPattern<Bitcoin>,
-    pub dollars: BitcoinPattern<Dollars>,
-    pub sats: BitcoinPattern<Sats>,
-}
-
-impl CoinbasePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            bitcoin: BitcoinPattern::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: BitcoinPattern::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: BitcoinPattern::new(client.clone(), &format!("{base_path}/sats")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct ActiveSupplyPattern {
-    pub bitcoin: Indexes3<Bitcoin>,
-    pub dollars: Indexes3<Dollars>,
-    pub sats: Indexes3<Sats>,
-}
-
-impl ActiveSupplyPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
         }
     }
 }
@@ -1567,6 +1543,40 @@ impl PricePaidPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct CoinbasePattern {
+    pub bitcoin: BitcoinPattern<Bitcoin>,
+    pub dollars: BitcoinPattern<Dollars>,
+    pub sats: BitcoinPattern<Sats>,
+}
+
+impl CoinbasePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: BitcoinPattern::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: BitcoinPattern::new(client.clone(), &format!("{base_path}/dollars")),
+            sats: BitcoinPattern::new(client.clone(), &format!("{base_path}/sats")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActiveSupplyPattern {
+    pub bitcoin: Indexes3<Bitcoin>,
+    pub dollars: Indexes3<Dollars>,
+    pub sats: Indexes3<Sats>,
+}
+
+impl ActiveSupplyPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
+            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct BlockCountPattern<T> {
     pub base: Indexes2<T>,
     pub cumulative: Indexes3<T>,
@@ -1579,21 +1589,6 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
             base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
             cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
             sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyValuePattern {
-    pub bitcoin: Indexes2<Bitcoin>,
-    pub dollars: Indexes2<Dollars>,
-}
-
-impl SupplyValuePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
         }
     }
 }
@@ -1614,21 +1609,6 @@ impl PricePaidPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SatsPattern {
-    pub cumulative: Indexes3<Sats>,
-    pub sum: Indexes4<Sats>,
-}
-
-impl SatsPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct _1dReturns1mSdPattern {
     pub sd: Indexes<StoredF32>,
     pub sma: Indexes<StoredF32>,
@@ -1640,6 +1620,36 @@ impl _1dReturns1mSdPattern {
         Self {
             sd: Indexes::new(client.clone(), &format!("/{acc}_sd")),
             sma: Indexes::new(client.clone(), &format!("/{acc}_sma")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SupplyValuePattern {
+    pub bitcoin: Indexes2<Bitcoin>,
+    pub dollars: Indexes2<Dollars>,
+}
+
+impl SupplyValuePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SatsPattern {
+    pub cumulative: Indexes3<Sats>,
+    pub sum: Indexes4<Sats>,
+}
+
+impl SatsPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
         }
     }
 }
@@ -2539,327 +2549,327 @@ impl CatalogTree_Computed_Pools {
 
 /// Catalog tree node.
 pub struct CatalogTree_Computed_Pools_Vecs {
-    pub AXbt: AXbtPattern,
-    pub AaoPool: AXbtPattern,
-    pub AntPool: AXbtPattern,
-    pub ArkPool: AXbtPattern,
-    pub AsicMiner: AXbtPattern,
-    pub BatPool: AXbtPattern,
-    pub BcMonster: AXbtPattern,
-    pub BcpoolIo: AXbtPattern,
-    pub BinancePool: AXbtPattern,
-    pub BitClub: AXbtPattern,
-    pub BitFuFuPool: AXbtPattern,
-    pub BitFury: AXbtPattern,
-    pub BitMinter: AXbtPattern,
-    pub Bitalo: AXbtPattern,
-    pub BitcoinAffiliateNetwork: AXbtPattern,
-    pub BitcoinCom: AXbtPattern,
-    pub BitcoinIndia: AXbtPattern,
-    pub BitcoinRussia: AXbtPattern,
-    pub BitcoinUkraine: AXbtPattern,
-    pub Bitfarms: AXbtPattern,
-    pub Bitparking: AXbtPattern,
-    pub Bitsolo: AXbtPattern,
-    pub Bixin: AXbtPattern,
-    pub BlockFills: AXbtPattern,
-    pub BraiinsPool: AXbtPattern,
-    pub BravoMining: AXbtPattern,
-    pub BtPool: AXbtPattern,
-    pub BtcCom: AXbtPattern,
-    pub BtcDig: AXbtPattern,
-    pub BtcGuild: AXbtPattern,
-    pub BtcLab: AXbtPattern,
-    pub BtcMp: AXbtPattern,
-    pub BtcNuggets: AXbtPattern,
-    pub BtcPoolParty: AXbtPattern,
-    pub BtcServ: AXbtPattern,
-    pub BtcTop: AXbtPattern,
-    pub Btcc: AXbtPattern,
-    pub BwPool: AXbtPattern,
-    pub BytePool: AXbtPattern,
-    pub Canoe: AXbtPattern,
-    pub CanoePool: AXbtPattern,
-    pub CarbonNegative: AXbtPattern,
-    pub CkPool: AXbtPattern,
-    pub CloudHashing: AXbtPattern,
-    pub CoinLab: AXbtPattern,
-    pub Cointerra: AXbtPattern,
-    pub ConnectBtc: AXbtPattern,
-    pub DPool: AXbtPattern,
-    pub DcExploration: AXbtPattern,
-    pub Dcex: AXbtPattern,
-    pub DigitalBtc: AXbtPattern,
-    pub DigitalXMintsy: AXbtPattern,
-    pub EclipseMc: AXbtPattern,
-    pub EightBaochi: AXbtPattern,
-    pub EkanemBtc: AXbtPattern,
-    pub Eligius: AXbtPattern,
-    pub EmcdPool: AXbtPattern,
-    pub EntrustCharityPool: AXbtPattern,
-    pub Eobot: AXbtPattern,
-    pub ExxBw: AXbtPattern,
-    pub F2Pool: AXbtPattern,
-    pub FiftyEightCoin: AXbtPattern,
-    pub FoundryUsa: AXbtPattern,
-    pub FutureBitApolloSolo: AXbtPattern,
-    pub GbMiners: AXbtPattern,
-    pub GhashIo: AXbtPattern,
-    pub GiveMeCoins: AXbtPattern,
-    pub GoGreenLight: AXbtPattern,
-    pub HaoZhuZhu: AXbtPattern,
-    pub Haominer: AXbtPattern,
-    pub HashBx: AXbtPattern,
-    pub HashPool: AXbtPattern,
-    pub Helix: AXbtPattern,
-    pub Hhtt: AXbtPattern,
-    pub HotPool: AXbtPattern,
-    pub Hummerpool: AXbtPattern,
-    pub HuobiPool: AXbtPattern,
-    pub InnopolisTech: AXbtPattern,
-    pub KanoPool: AXbtPattern,
-    pub KncMiner: AXbtPattern,
-    pub KuCoinPool: AXbtPattern,
-    pub LubianCom: AXbtPattern,
-    pub LuckyPool: AXbtPattern,
-    pub Luxor: AXbtPattern,
-    pub MaraPool: AXbtPattern,
-    pub MaxBtc: AXbtPattern,
-    pub MaxiPool: AXbtPattern,
-    pub MegaBigPower: AXbtPattern,
-    pub Minerium: AXbtPattern,
-    pub MiningCity: AXbtPattern,
-    pub MiningDutch: AXbtPattern,
-    pub MiningKings: AXbtPattern,
-    pub MiningSquared: AXbtPattern,
-    pub Mmpool: AXbtPattern,
-    pub MtRed: AXbtPattern,
-    pub MultiCoinCo: AXbtPattern,
-    pub Multipool: AXbtPattern,
-    pub MyBtcCoinPool: AXbtPattern,
-    pub Neopool: AXbtPattern,
-    pub Nexious: AXbtPattern,
-    pub NiceHash: AXbtPattern,
-    pub NmcBit: AXbtPattern,
-    pub NovaBlock: AXbtPattern,
-    pub Ocean: AXbtPattern,
-    pub OkExPool: AXbtPattern,
-    pub OkMiner: AXbtPattern,
-    pub Okkong: AXbtPattern,
-    pub OkpoolTop: AXbtPattern,
-    pub OneHash: AXbtPattern,
-    pub OneM1x: AXbtPattern,
-    pub OneThash: AXbtPattern,
-    pub OzCoin: AXbtPattern,
-    pub PHashIo: AXbtPattern,
-    pub Parasite: AXbtPattern,
-    pub Patels: AXbtPattern,
-    pub PegaPool: AXbtPattern,
-    pub Phoenix: AXbtPattern,
-    pub Polmine: AXbtPattern,
-    pub Pool175btc: AXbtPattern,
-    pub Pool50btc: AXbtPattern,
-    pub Poolin: AXbtPattern,
-    pub PortlandHodl: AXbtPattern,
-    pub PublicPool: AXbtPattern,
-    pub PureBtcCom: AXbtPattern,
-    pub Rawpool: AXbtPattern,
-    pub RigPool: AXbtPattern,
-    pub SbiCrypto: AXbtPattern,
-    pub SecPool: AXbtPattern,
-    pub SecretSuperstar: AXbtPattern,
-    pub SevenPool: AXbtPattern,
-    pub ShawnP0wers: AXbtPattern,
-    pub SigmapoolCom: AXbtPattern,
-    pub SimplecoinUs: AXbtPattern,
-    pub SoloCk: AXbtPattern,
-    pub SpiderPool: AXbtPattern,
-    pub StMiningCorp: AXbtPattern,
-    pub Tangpool: AXbtPattern,
-    pub TatmasPool: AXbtPattern,
-    pub TbDice: AXbtPattern,
-    pub Telco214: AXbtPattern,
-    pub TerraPool: AXbtPattern,
-    pub Tiger: AXbtPattern,
-    pub TigerpoolNet: AXbtPattern,
-    pub Titan: AXbtPattern,
-    pub TransactionCoinMining: AXbtPattern,
-    pub TrickysBtcPool: AXbtPattern,
-    pub TripleMining: AXbtPattern,
-    pub TwentyOneInc: AXbtPattern,
-    pub UltimusPool: AXbtPattern,
-    pub Unknown: AXbtPattern,
-    pub Unomp: AXbtPattern,
-    pub ViaBtc: AXbtPattern,
-    pub Waterhole: AXbtPattern,
-    pub WayiCn: AXbtPattern,
-    pub WhitePool: AXbtPattern,
-    pub Wk057: AXbtPattern,
-    pub YourbtcNet: AXbtPattern,
-    pub Zulupool: AXbtPattern,
+    pub axbt: AXbtPattern,
+    pub aaopool: AXbtPattern,
+    pub antpool: AXbtPattern,
+    pub arkpool: AXbtPattern,
+    pub asicminer: AXbtPattern,
+    pub batpool: AXbtPattern,
+    pub bcmonster: AXbtPattern,
+    pub bcpoolio: AXbtPattern,
+    pub binancepool: AXbtPattern,
+    pub bitclub: AXbtPattern,
+    pub bitfufupool: AXbtPattern,
+    pub bitfury: AXbtPattern,
+    pub bitminter: AXbtPattern,
+    pub bitalo: AXbtPattern,
+    pub bitcoinaffiliatenetwork: AXbtPattern,
+    pub bitcoincom: AXbtPattern,
+    pub bitcoinindia: AXbtPattern,
+    pub bitcoinrussia: AXbtPattern,
+    pub bitcoinukraine: AXbtPattern,
+    pub bitfarms: AXbtPattern,
+    pub bitparking: AXbtPattern,
+    pub bitsolo: AXbtPattern,
+    pub bixin: AXbtPattern,
+    pub blockfills: AXbtPattern,
+    pub braiinspool: AXbtPattern,
+    pub bravomining: AXbtPattern,
+    pub btpool: AXbtPattern,
+    pub btccom: AXbtPattern,
+    pub btcdig: AXbtPattern,
+    pub btcguild: AXbtPattern,
+    pub btclab: AXbtPattern,
+    pub btcmp: AXbtPattern,
+    pub btcnuggets: AXbtPattern,
+    pub btcpoolparty: AXbtPattern,
+    pub btcserv: AXbtPattern,
+    pub btctop: AXbtPattern,
+    pub btcc: AXbtPattern,
+    pub bwpool: AXbtPattern,
+    pub bytepool: AXbtPattern,
+    pub canoe: AXbtPattern,
+    pub canoepool: AXbtPattern,
+    pub carbonnegative: AXbtPattern,
+    pub ckpool: AXbtPattern,
+    pub cloudhashing: AXbtPattern,
+    pub coinlab: AXbtPattern,
+    pub cointerra: AXbtPattern,
+    pub connectbtc: AXbtPattern,
+    pub dpool: AXbtPattern,
+    pub dcexploration: AXbtPattern,
+    pub dcex: AXbtPattern,
+    pub digitalbtc: AXbtPattern,
+    pub digitalxmintsy: AXbtPattern,
+    pub eclipsemc: AXbtPattern,
+    pub eightbaochi: AXbtPattern,
+    pub ekanembtc: AXbtPattern,
+    pub eligius: AXbtPattern,
+    pub emcdpool: AXbtPattern,
+    pub entrustcharitypool: AXbtPattern,
+    pub eobot: AXbtPattern,
+    pub exxbw: AXbtPattern,
+    pub f2pool: AXbtPattern,
+    pub fiftyeightcoin: AXbtPattern,
+    pub foundryusa: AXbtPattern,
+    pub futurebitapollosolo: AXbtPattern,
+    pub gbminers: AXbtPattern,
+    pub ghashio: AXbtPattern,
+    pub givemecoins: AXbtPattern,
+    pub gogreenlight: AXbtPattern,
+    pub haozhuzhu: AXbtPattern,
+    pub haominer: AXbtPattern,
+    pub hashbx: AXbtPattern,
+    pub hashpool: AXbtPattern,
+    pub helix: AXbtPattern,
+    pub hhtt: AXbtPattern,
+    pub hotpool: AXbtPattern,
+    pub hummerpool: AXbtPattern,
+    pub huobipool: AXbtPattern,
+    pub innopolistech: AXbtPattern,
+    pub kanopool: AXbtPattern,
+    pub kncminer: AXbtPattern,
+    pub kucoinpool: AXbtPattern,
+    pub lubiancom: AXbtPattern,
+    pub luckypool: AXbtPattern,
+    pub luxor: AXbtPattern,
+    pub marapool: AXbtPattern,
+    pub maxbtc: AXbtPattern,
+    pub maxipool: AXbtPattern,
+    pub megabigpower: AXbtPattern,
+    pub minerium: AXbtPattern,
+    pub miningcity: AXbtPattern,
+    pub miningdutch: AXbtPattern,
+    pub miningkings: AXbtPattern,
+    pub miningsquared: AXbtPattern,
+    pub mmpool: AXbtPattern,
+    pub mtred: AXbtPattern,
+    pub multicoinco: AXbtPattern,
+    pub multipool: AXbtPattern,
+    pub mybtccoinpool: AXbtPattern,
+    pub neopool: AXbtPattern,
+    pub nexious: AXbtPattern,
+    pub nicehash: AXbtPattern,
+    pub nmcbit: AXbtPattern,
+    pub novablock: AXbtPattern,
+    pub ocean: AXbtPattern,
+    pub okexpool: AXbtPattern,
+    pub okminer: AXbtPattern,
+    pub okkong: AXbtPattern,
+    pub okpooltop: AXbtPattern,
+    pub onehash: AXbtPattern,
+    pub onem1x: AXbtPattern,
+    pub onethash: AXbtPattern,
+    pub ozcoin: AXbtPattern,
+    pub phashio: AXbtPattern,
+    pub parasite: AXbtPattern,
+    pub patels: AXbtPattern,
+    pub pegapool: AXbtPattern,
+    pub phoenix: AXbtPattern,
+    pub polmine: AXbtPattern,
+    pub pool175btc: AXbtPattern,
+    pub pool50btc: AXbtPattern,
+    pub poolin: AXbtPattern,
+    pub portlandhodl: AXbtPattern,
+    pub publicpool: AXbtPattern,
+    pub purebtccom: AXbtPattern,
+    pub rawpool: AXbtPattern,
+    pub rigpool: AXbtPattern,
+    pub sbicrypto: AXbtPattern,
+    pub secpool: AXbtPattern,
+    pub secretsuperstar: AXbtPattern,
+    pub sevenpool: AXbtPattern,
+    pub shawnp0wers: AXbtPattern,
+    pub sigmapoolcom: AXbtPattern,
+    pub simplecoinus: AXbtPattern,
+    pub solock: AXbtPattern,
+    pub spiderpool: AXbtPattern,
+    pub stminingcorp: AXbtPattern,
+    pub tangpool: AXbtPattern,
+    pub tatmaspool: AXbtPattern,
+    pub tbdice: AXbtPattern,
+    pub telco214: AXbtPattern,
+    pub terrapool: AXbtPattern,
+    pub tiger: AXbtPattern,
+    pub tigerpoolnet: AXbtPattern,
+    pub titan: AXbtPattern,
+    pub transactioncoinmining: AXbtPattern,
+    pub trickysbtcpool: AXbtPattern,
+    pub triplemining: AXbtPattern,
+    pub twentyoneinc: AXbtPattern,
+    pub ultimuspool: AXbtPattern,
+    pub unknown: AXbtPattern,
+    pub unomp: AXbtPattern,
+    pub viabtc: AXbtPattern,
+    pub waterhole: AXbtPattern,
+    pub wayicn: AXbtPattern,
+    pub whitepool: AXbtPattern,
+    pub wk057: AXbtPattern,
+    pub yourbtcnet: AXbtPattern,
+    pub zulupool: AXbtPattern,
 }
 
 impl CatalogTree_Computed_Pools_Vecs {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            AXbt: AXbtPattern::new(client.clone(), &format!("{base_path}/AXbt")),
-            AaoPool: AXbtPattern::new(client.clone(), &format!("{base_path}/AaoPool")),
-            AntPool: AXbtPattern::new(client.clone(), &format!("{base_path}/AntPool")),
-            ArkPool: AXbtPattern::new(client.clone(), &format!("{base_path}/ArkPool")),
-            AsicMiner: AXbtPattern::new(client.clone(), &format!("{base_path}/AsicMiner")),
-            BatPool: AXbtPattern::new(client.clone(), &format!("{base_path}/BatPool")),
-            BcMonster: AXbtPattern::new(client.clone(), &format!("{base_path}/BcMonster")),
-            BcpoolIo: AXbtPattern::new(client.clone(), &format!("{base_path}/BcpoolIo")),
-            BinancePool: AXbtPattern::new(client.clone(), &format!("{base_path}/BinancePool")),
-            BitClub: AXbtPattern::new(client.clone(), &format!("{base_path}/BitClub")),
-            BitFuFuPool: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFuFuPool")),
-            BitFury: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFury")),
-            BitMinter: AXbtPattern::new(client.clone(), &format!("{base_path}/BitMinter")),
-            Bitalo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitalo")),
-            BitcoinAffiliateNetwork: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinAffiliateNetwork")),
-            BitcoinCom: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinCom")),
-            BitcoinIndia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinIndia")),
-            BitcoinRussia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinRussia")),
-            BitcoinUkraine: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinUkraine")),
-            Bitfarms: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitfarms")),
-            Bitparking: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitparking")),
-            Bitsolo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitsolo")),
-            Bixin: AXbtPattern::new(client.clone(), &format!("{base_path}/Bixin")),
-            BlockFills: AXbtPattern::new(client.clone(), &format!("{base_path}/BlockFills")),
-            BraiinsPool: AXbtPattern::new(client.clone(), &format!("{base_path}/BraiinsPool")),
-            BravoMining: AXbtPattern::new(client.clone(), &format!("{base_path}/BravoMining")),
-            BtPool: AXbtPattern::new(client.clone(), &format!("{base_path}/BtPool")),
-            BtcCom: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcCom")),
-            BtcDig: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcDig")),
-            BtcGuild: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcGuild")),
-            BtcLab: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcLab")),
-            BtcMp: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcMp")),
-            BtcNuggets: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcNuggets")),
-            BtcPoolParty: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcPoolParty")),
-            BtcServ: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcServ")),
-            BtcTop: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcTop")),
-            Btcc: AXbtPattern::new(client.clone(), &format!("{base_path}/Btcc")),
-            BwPool: AXbtPattern::new(client.clone(), &format!("{base_path}/BwPool")),
-            BytePool: AXbtPattern::new(client.clone(), &format!("{base_path}/BytePool")),
-            Canoe: AXbtPattern::new(client.clone(), &format!("{base_path}/Canoe")),
-            CanoePool: AXbtPattern::new(client.clone(), &format!("{base_path}/CanoePool")),
-            CarbonNegative: AXbtPattern::new(client.clone(), &format!("{base_path}/CarbonNegative")),
-            CkPool: AXbtPattern::new(client.clone(), &format!("{base_path}/CkPool")),
-            CloudHashing: AXbtPattern::new(client.clone(), &format!("{base_path}/CloudHashing")),
-            CoinLab: AXbtPattern::new(client.clone(), &format!("{base_path}/CoinLab")),
-            Cointerra: AXbtPattern::new(client.clone(), &format!("{base_path}/Cointerra")),
-            ConnectBtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ConnectBtc")),
-            DPool: AXbtPattern::new(client.clone(), &format!("{base_path}/DPool")),
-            DcExploration: AXbtPattern::new(client.clone(), &format!("{base_path}/DcExploration")),
-            Dcex: AXbtPattern::new(client.clone(), &format!("{base_path}/Dcex")),
-            DigitalBtc: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalBtc")),
-            DigitalXMintsy: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalXMintsy")),
-            EclipseMc: AXbtPattern::new(client.clone(), &format!("{base_path}/EclipseMc")),
-            EightBaochi: AXbtPattern::new(client.clone(), &format!("{base_path}/EightBaochi")),
-            EkanemBtc: AXbtPattern::new(client.clone(), &format!("{base_path}/EkanemBtc")),
-            Eligius: AXbtPattern::new(client.clone(), &format!("{base_path}/Eligius")),
-            EmcdPool: AXbtPattern::new(client.clone(), &format!("{base_path}/EmcdPool")),
-            EntrustCharityPool: AXbtPattern::new(client.clone(), &format!("{base_path}/EntrustCharityPool")),
-            Eobot: AXbtPattern::new(client.clone(), &format!("{base_path}/Eobot")),
-            ExxBw: AXbtPattern::new(client.clone(), &format!("{base_path}/ExxBw")),
-            F2Pool: AXbtPattern::new(client.clone(), &format!("{base_path}/F2Pool")),
-            FiftyEightCoin: AXbtPattern::new(client.clone(), &format!("{base_path}/FiftyEightCoin")),
-            FoundryUsa: AXbtPattern::new(client.clone(), &format!("{base_path}/FoundryUsa")),
-            FutureBitApolloSolo: AXbtPattern::new(client.clone(), &format!("{base_path}/FutureBitApolloSolo")),
-            GbMiners: AXbtPattern::new(client.clone(), &format!("{base_path}/GbMiners")),
-            GhashIo: AXbtPattern::new(client.clone(), &format!("{base_path}/GhashIo")),
-            GiveMeCoins: AXbtPattern::new(client.clone(), &format!("{base_path}/GiveMeCoins")),
-            GoGreenLight: AXbtPattern::new(client.clone(), &format!("{base_path}/GoGreenLight")),
-            HaoZhuZhu: AXbtPattern::new(client.clone(), &format!("{base_path}/HaoZhuZhu")),
-            Haominer: AXbtPattern::new(client.clone(), &format!("{base_path}/Haominer")),
-            HashBx: AXbtPattern::new(client.clone(), &format!("{base_path}/HashBx")),
-            HashPool: AXbtPattern::new(client.clone(), &format!("{base_path}/HashPool")),
-            Helix: AXbtPattern::new(client.clone(), &format!("{base_path}/Helix")),
-            Hhtt: AXbtPattern::new(client.clone(), &format!("{base_path}/Hhtt")),
-            HotPool: AXbtPattern::new(client.clone(), &format!("{base_path}/HotPool")),
-            Hummerpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Hummerpool")),
-            HuobiPool: AXbtPattern::new(client.clone(), &format!("{base_path}/HuobiPool")),
-            InnopolisTech: AXbtPattern::new(client.clone(), &format!("{base_path}/InnopolisTech")),
-            KanoPool: AXbtPattern::new(client.clone(), &format!("{base_path}/KanoPool")),
-            KncMiner: AXbtPattern::new(client.clone(), &format!("{base_path}/KncMiner")),
-            KuCoinPool: AXbtPattern::new(client.clone(), &format!("{base_path}/KuCoinPool")),
-            LubianCom: AXbtPattern::new(client.clone(), &format!("{base_path}/LubianCom")),
-            LuckyPool: AXbtPattern::new(client.clone(), &format!("{base_path}/LuckyPool")),
-            Luxor: AXbtPattern::new(client.clone(), &format!("{base_path}/Luxor")),
-            MaraPool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaraPool")),
-            MaxBtc: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxBtc")),
-            MaxiPool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxiPool")),
-            MegaBigPower: AXbtPattern::new(client.clone(), &format!("{base_path}/MegaBigPower")),
-            Minerium: AXbtPattern::new(client.clone(), &format!("{base_path}/Minerium")),
-            MiningCity: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningCity")),
-            MiningDutch: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningDutch")),
-            MiningKings: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningKings")),
-            MiningSquared: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningSquared")),
-            Mmpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Mmpool")),
-            MtRed: AXbtPattern::new(client.clone(), &format!("{base_path}/MtRed")),
-            MultiCoinCo: AXbtPattern::new(client.clone(), &format!("{base_path}/MultiCoinCo")),
-            Multipool: AXbtPattern::new(client.clone(), &format!("{base_path}/Multipool")),
-            MyBtcCoinPool: AXbtPattern::new(client.clone(), &format!("{base_path}/MyBtcCoinPool")),
-            Neopool: AXbtPattern::new(client.clone(), &format!("{base_path}/Neopool")),
-            Nexious: AXbtPattern::new(client.clone(), &format!("{base_path}/Nexious")),
-            NiceHash: AXbtPattern::new(client.clone(), &format!("{base_path}/NiceHash")),
-            NmcBit: AXbtPattern::new(client.clone(), &format!("{base_path}/NmcBit")),
-            NovaBlock: AXbtPattern::new(client.clone(), &format!("{base_path}/NovaBlock")),
-            Ocean: AXbtPattern::new(client.clone(), &format!("{base_path}/Ocean")),
-            OkExPool: AXbtPattern::new(client.clone(), &format!("{base_path}/OkExPool")),
-            OkMiner: AXbtPattern::new(client.clone(), &format!("{base_path}/OkMiner")),
-            Okkong: AXbtPattern::new(client.clone(), &format!("{base_path}/Okkong")),
-            OkpoolTop: AXbtPattern::new(client.clone(), &format!("{base_path}/OkpoolTop")),
-            OneHash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneHash")),
-            OneM1x: AXbtPattern::new(client.clone(), &format!("{base_path}/OneM1x")),
-            OneThash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneThash")),
-            OzCoin: AXbtPattern::new(client.clone(), &format!("{base_path}/OzCoin")),
-            PHashIo: AXbtPattern::new(client.clone(), &format!("{base_path}/PHashIo")),
-            Parasite: AXbtPattern::new(client.clone(), &format!("{base_path}/Parasite")),
-            Patels: AXbtPattern::new(client.clone(), &format!("{base_path}/Patels")),
-            PegaPool: AXbtPattern::new(client.clone(), &format!("{base_path}/PegaPool")),
-            Phoenix: AXbtPattern::new(client.clone(), &format!("{base_path}/Phoenix")),
-            Polmine: AXbtPattern::new(client.clone(), &format!("{base_path}/Polmine")),
-            Pool175btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool175btc")),
-            Pool50btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool50btc")),
-            Poolin: AXbtPattern::new(client.clone(), &format!("{base_path}/Poolin")),
-            PortlandHodl: AXbtPattern::new(client.clone(), &format!("{base_path}/PortlandHodl")),
-            PublicPool: AXbtPattern::new(client.clone(), &format!("{base_path}/PublicPool")),
-            PureBtcCom: AXbtPattern::new(client.clone(), &format!("{base_path}/PureBtcCom")),
-            Rawpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Rawpool")),
-            RigPool: AXbtPattern::new(client.clone(), &format!("{base_path}/RigPool")),
-            SbiCrypto: AXbtPattern::new(client.clone(), &format!("{base_path}/SbiCrypto")),
-            SecPool: AXbtPattern::new(client.clone(), &format!("{base_path}/SecPool")),
-            SecretSuperstar: AXbtPattern::new(client.clone(), &format!("{base_path}/SecretSuperstar")),
-            SevenPool: AXbtPattern::new(client.clone(), &format!("{base_path}/SevenPool")),
-            ShawnP0wers: AXbtPattern::new(client.clone(), &format!("{base_path}/ShawnP0wers")),
-            SigmapoolCom: AXbtPattern::new(client.clone(), &format!("{base_path}/SigmapoolCom")),
-            SimplecoinUs: AXbtPattern::new(client.clone(), &format!("{base_path}/SimplecoinUs")),
-            SoloCk: AXbtPattern::new(client.clone(), &format!("{base_path}/SoloCk")),
-            SpiderPool: AXbtPattern::new(client.clone(), &format!("{base_path}/SpiderPool")),
-            StMiningCorp: AXbtPattern::new(client.clone(), &format!("{base_path}/StMiningCorp")),
-            Tangpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Tangpool")),
-            TatmasPool: AXbtPattern::new(client.clone(), &format!("{base_path}/TatmasPool")),
-            TbDice: AXbtPattern::new(client.clone(), &format!("{base_path}/TbDice")),
-            Telco214: AXbtPattern::new(client.clone(), &format!("{base_path}/Telco214")),
-            TerraPool: AXbtPattern::new(client.clone(), &format!("{base_path}/TerraPool")),
-            Tiger: AXbtPattern::new(client.clone(), &format!("{base_path}/Tiger")),
-            TigerpoolNet: AXbtPattern::new(client.clone(), &format!("{base_path}/TigerpoolNet")),
-            Titan: AXbtPattern::new(client.clone(), &format!("{base_path}/Titan")),
-            TransactionCoinMining: AXbtPattern::new(client.clone(), &format!("{base_path}/TransactionCoinMining")),
-            TrickysBtcPool: AXbtPattern::new(client.clone(), &format!("{base_path}/TrickysBtcPool")),
-            TripleMining: AXbtPattern::new(client.clone(), &format!("{base_path}/TripleMining")),
-            TwentyOneInc: AXbtPattern::new(client.clone(), &format!("{base_path}/TwentyOneInc")),
-            UltimusPool: AXbtPattern::new(client.clone(), &format!("{base_path}/UltimusPool")),
-            Unknown: AXbtPattern::new(client.clone(), &format!("{base_path}/Unknown")),
-            Unomp: AXbtPattern::new(client.clone(), &format!("{base_path}/Unomp")),
-            ViaBtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ViaBtc")),
-            Waterhole: AXbtPattern::new(client.clone(), &format!("{base_path}/Waterhole")),
-            WayiCn: AXbtPattern::new(client.clone(), &format!("{base_path}/WayiCn")),
-            WhitePool: AXbtPattern::new(client.clone(), &format!("{base_path}/WhitePool")),
-            Wk057: AXbtPattern::new(client.clone(), &format!("{base_path}/Wk057")),
-            YourbtcNet: AXbtPattern::new(client.clone(), &format!("{base_path}/YourbtcNet")),
-            Zulupool: AXbtPattern::new(client.clone(), &format!("{base_path}/Zulupool")),
+            axbt: AXbtPattern::new(client.clone(), &format!("{base_path}/AXbt")),
+            aaopool: AXbtPattern::new(client.clone(), &format!("{base_path}/AaoPool")),
+            antpool: AXbtPattern::new(client.clone(), &format!("{base_path}/AntPool")),
+            arkpool: AXbtPattern::new(client.clone(), &format!("{base_path}/ArkPool")),
+            asicminer: AXbtPattern::new(client.clone(), &format!("{base_path}/AsicMiner")),
+            batpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BatPool")),
+            bcmonster: AXbtPattern::new(client.clone(), &format!("{base_path}/BcMonster")),
+            bcpoolio: AXbtPattern::new(client.clone(), &format!("{base_path}/BcpoolIo")),
+            binancepool: AXbtPattern::new(client.clone(), &format!("{base_path}/BinancePool")),
+            bitclub: AXbtPattern::new(client.clone(), &format!("{base_path}/BitClub")),
+            bitfufupool: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFuFuPool")),
+            bitfury: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFury")),
+            bitminter: AXbtPattern::new(client.clone(), &format!("{base_path}/BitMinter")),
+            bitalo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitalo")),
+            bitcoinaffiliatenetwork: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinAffiliateNetwork")),
+            bitcoincom: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinCom")),
+            bitcoinindia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinIndia")),
+            bitcoinrussia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinRussia")),
+            bitcoinukraine: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinUkraine")),
+            bitfarms: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitfarms")),
+            bitparking: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitparking")),
+            bitsolo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitsolo")),
+            bixin: AXbtPattern::new(client.clone(), &format!("{base_path}/Bixin")),
+            blockfills: AXbtPattern::new(client.clone(), &format!("{base_path}/BlockFills")),
+            braiinspool: AXbtPattern::new(client.clone(), &format!("{base_path}/BraiinsPool")),
+            bravomining: AXbtPattern::new(client.clone(), &format!("{base_path}/BravoMining")),
+            btpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BtPool")),
+            btccom: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcCom")),
+            btcdig: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcDig")),
+            btcguild: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcGuild")),
+            btclab: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcLab")),
+            btcmp: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcMp")),
+            btcnuggets: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcNuggets")),
+            btcpoolparty: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcPoolParty")),
+            btcserv: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcServ")),
+            btctop: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcTop")),
+            btcc: AXbtPattern::new(client.clone(), &format!("{base_path}/Btcc")),
+            bwpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BwPool")),
+            bytepool: AXbtPattern::new(client.clone(), &format!("{base_path}/BytePool")),
+            canoe: AXbtPattern::new(client.clone(), &format!("{base_path}/Canoe")),
+            canoepool: AXbtPattern::new(client.clone(), &format!("{base_path}/CanoePool")),
+            carbonnegative: AXbtPattern::new(client.clone(), &format!("{base_path}/CarbonNegative")),
+            ckpool: AXbtPattern::new(client.clone(), &format!("{base_path}/CkPool")),
+            cloudhashing: AXbtPattern::new(client.clone(), &format!("{base_path}/CloudHashing")),
+            coinlab: AXbtPattern::new(client.clone(), &format!("{base_path}/CoinLab")),
+            cointerra: AXbtPattern::new(client.clone(), &format!("{base_path}/Cointerra")),
+            connectbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ConnectBtc")),
+            dpool: AXbtPattern::new(client.clone(), &format!("{base_path}/DPool")),
+            dcexploration: AXbtPattern::new(client.clone(), &format!("{base_path}/DcExploration")),
+            dcex: AXbtPattern::new(client.clone(), &format!("{base_path}/Dcex")),
+            digitalbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalBtc")),
+            digitalxmintsy: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalXMintsy")),
+            eclipsemc: AXbtPattern::new(client.clone(), &format!("{base_path}/EclipseMc")),
+            eightbaochi: AXbtPattern::new(client.clone(), &format!("{base_path}/EightBaochi")),
+            ekanembtc: AXbtPattern::new(client.clone(), &format!("{base_path}/EkanemBtc")),
+            eligius: AXbtPattern::new(client.clone(), &format!("{base_path}/Eligius")),
+            emcdpool: AXbtPattern::new(client.clone(), &format!("{base_path}/EmcdPool")),
+            entrustcharitypool: AXbtPattern::new(client.clone(), &format!("{base_path}/EntrustCharityPool")),
+            eobot: AXbtPattern::new(client.clone(), &format!("{base_path}/Eobot")),
+            exxbw: AXbtPattern::new(client.clone(), &format!("{base_path}/ExxBw")),
+            f2pool: AXbtPattern::new(client.clone(), &format!("{base_path}/F2Pool")),
+            fiftyeightcoin: AXbtPattern::new(client.clone(), &format!("{base_path}/FiftyEightCoin")),
+            foundryusa: AXbtPattern::new(client.clone(), &format!("{base_path}/FoundryUsa")),
+            futurebitapollosolo: AXbtPattern::new(client.clone(), &format!("{base_path}/FutureBitApolloSolo")),
+            gbminers: AXbtPattern::new(client.clone(), &format!("{base_path}/GbMiners")),
+            ghashio: AXbtPattern::new(client.clone(), &format!("{base_path}/GhashIo")),
+            givemecoins: AXbtPattern::new(client.clone(), &format!("{base_path}/GiveMeCoins")),
+            gogreenlight: AXbtPattern::new(client.clone(), &format!("{base_path}/GoGreenLight")),
+            haozhuzhu: AXbtPattern::new(client.clone(), &format!("{base_path}/HaoZhuZhu")),
+            haominer: AXbtPattern::new(client.clone(), &format!("{base_path}/Haominer")),
+            hashbx: AXbtPattern::new(client.clone(), &format!("{base_path}/HashBx")),
+            hashpool: AXbtPattern::new(client.clone(), &format!("{base_path}/HashPool")),
+            helix: AXbtPattern::new(client.clone(), &format!("{base_path}/Helix")),
+            hhtt: AXbtPattern::new(client.clone(), &format!("{base_path}/Hhtt")),
+            hotpool: AXbtPattern::new(client.clone(), &format!("{base_path}/HotPool")),
+            hummerpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Hummerpool")),
+            huobipool: AXbtPattern::new(client.clone(), &format!("{base_path}/HuobiPool")),
+            innopolistech: AXbtPattern::new(client.clone(), &format!("{base_path}/InnopolisTech")),
+            kanopool: AXbtPattern::new(client.clone(), &format!("{base_path}/KanoPool")),
+            kncminer: AXbtPattern::new(client.clone(), &format!("{base_path}/KncMiner")),
+            kucoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}/KuCoinPool")),
+            lubiancom: AXbtPattern::new(client.clone(), &format!("{base_path}/LubianCom")),
+            luckypool: AXbtPattern::new(client.clone(), &format!("{base_path}/LuckyPool")),
+            luxor: AXbtPattern::new(client.clone(), &format!("{base_path}/Luxor")),
+            marapool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaraPool")),
+            maxbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxBtc")),
+            maxipool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxiPool")),
+            megabigpower: AXbtPattern::new(client.clone(), &format!("{base_path}/MegaBigPower")),
+            minerium: AXbtPattern::new(client.clone(), &format!("{base_path}/Minerium")),
+            miningcity: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningCity")),
+            miningdutch: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningDutch")),
+            miningkings: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningKings")),
+            miningsquared: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningSquared")),
+            mmpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Mmpool")),
+            mtred: AXbtPattern::new(client.clone(), &format!("{base_path}/MtRed")),
+            multicoinco: AXbtPattern::new(client.clone(), &format!("{base_path}/MultiCoinCo")),
+            multipool: AXbtPattern::new(client.clone(), &format!("{base_path}/Multipool")),
+            mybtccoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}/MyBtcCoinPool")),
+            neopool: AXbtPattern::new(client.clone(), &format!("{base_path}/Neopool")),
+            nexious: AXbtPattern::new(client.clone(), &format!("{base_path}/Nexious")),
+            nicehash: AXbtPattern::new(client.clone(), &format!("{base_path}/NiceHash")),
+            nmcbit: AXbtPattern::new(client.clone(), &format!("{base_path}/NmcBit")),
+            novablock: AXbtPattern::new(client.clone(), &format!("{base_path}/NovaBlock")),
+            ocean: AXbtPattern::new(client.clone(), &format!("{base_path}/Ocean")),
+            okexpool: AXbtPattern::new(client.clone(), &format!("{base_path}/OkExPool")),
+            okminer: AXbtPattern::new(client.clone(), &format!("{base_path}/OkMiner")),
+            okkong: AXbtPattern::new(client.clone(), &format!("{base_path}/Okkong")),
+            okpooltop: AXbtPattern::new(client.clone(), &format!("{base_path}/OkpoolTop")),
+            onehash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneHash")),
+            onem1x: AXbtPattern::new(client.clone(), &format!("{base_path}/OneM1x")),
+            onethash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneThash")),
+            ozcoin: AXbtPattern::new(client.clone(), &format!("{base_path}/OzCoin")),
+            phashio: AXbtPattern::new(client.clone(), &format!("{base_path}/PHashIo")),
+            parasite: AXbtPattern::new(client.clone(), &format!("{base_path}/Parasite")),
+            patels: AXbtPattern::new(client.clone(), &format!("{base_path}/Patels")),
+            pegapool: AXbtPattern::new(client.clone(), &format!("{base_path}/PegaPool")),
+            phoenix: AXbtPattern::new(client.clone(), &format!("{base_path}/Phoenix")),
+            polmine: AXbtPattern::new(client.clone(), &format!("{base_path}/Polmine")),
+            pool175btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool175btc")),
+            pool50btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool50btc")),
+            poolin: AXbtPattern::new(client.clone(), &format!("{base_path}/Poolin")),
+            portlandhodl: AXbtPattern::new(client.clone(), &format!("{base_path}/PortlandHodl")),
+            publicpool: AXbtPattern::new(client.clone(), &format!("{base_path}/PublicPool")),
+            purebtccom: AXbtPattern::new(client.clone(), &format!("{base_path}/PureBtcCom")),
+            rawpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Rawpool")),
+            rigpool: AXbtPattern::new(client.clone(), &format!("{base_path}/RigPool")),
+            sbicrypto: AXbtPattern::new(client.clone(), &format!("{base_path}/SbiCrypto")),
+            secpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SecPool")),
+            secretsuperstar: AXbtPattern::new(client.clone(), &format!("{base_path}/SecretSuperstar")),
+            sevenpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SevenPool")),
+            shawnp0wers: AXbtPattern::new(client.clone(), &format!("{base_path}/ShawnP0wers")),
+            sigmapoolcom: AXbtPattern::new(client.clone(), &format!("{base_path}/SigmapoolCom")),
+            simplecoinus: AXbtPattern::new(client.clone(), &format!("{base_path}/SimplecoinUs")),
+            solock: AXbtPattern::new(client.clone(), &format!("{base_path}/SoloCk")),
+            spiderpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SpiderPool")),
+            stminingcorp: AXbtPattern::new(client.clone(), &format!("{base_path}/StMiningCorp")),
+            tangpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Tangpool")),
+            tatmaspool: AXbtPattern::new(client.clone(), &format!("{base_path}/TatmasPool")),
+            tbdice: AXbtPattern::new(client.clone(), &format!("{base_path}/TbDice")),
+            telco214: AXbtPattern::new(client.clone(), &format!("{base_path}/Telco214")),
+            terrapool: AXbtPattern::new(client.clone(), &format!("{base_path}/TerraPool")),
+            tiger: AXbtPattern::new(client.clone(), &format!("{base_path}/Tiger")),
+            tigerpoolnet: AXbtPattern::new(client.clone(), &format!("{base_path}/TigerpoolNet")),
+            titan: AXbtPattern::new(client.clone(), &format!("{base_path}/Titan")),
+            transactioncoinmining: AXbtPattern::new(client.clone(), &format!("{base_path}/TransactionCoinMining")),
+            trickysbtcpool: AXbtPattern::new(client.clone(), &format!("{base_path}/TrickysBtcPool")),
+            triplemining: AXbtPattern::new(client.clone(), &format!("{base_path}/TripleMining")),
+            twentyoneinc: AXbtPattern::new(client.clone(), &format!("{base_path}/TwentyOneInc")),
+            ultimuspool: AXbtPattern::new(client.clone(), &format!("{base_path}/UltimusPool")),
+            unknown: AXbtPattern::new(client.clone(), &format!("{base_path}/Unknown")),
+            unomp: AXbtPattern::new(client.clone(), &format!("{base_path}/Unomp")),
+            viabtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ViaBtc")),
+            waterhole: AXbtPattern::new(client.clone(), &format!("{base_path}/Waterhole")),
+            wayicn: AXbtPattern::new(client.clone(), &format!("{base_path}/WayiCn")),
+            whitepool: AXbtPattern::new(client.clone(), &format!("{base_path}/WhitePool")),
+            wk057: AXbtPattern::new(client.clone(), &format!("{base_path}/Wk057")),
+            yourbtcnet: AXbtPattern::new(client.clone(), &format!("{base_path}/YourbtcNet")),
+            zulupool: AXbtPattern::new(client.clone(), &format!("{base_path}/Zulupool")),
         }
     }
 }

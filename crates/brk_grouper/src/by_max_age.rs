@@ -1,12 +1,80 @@
 use brk_traversable::Traversable;
 use rayon::prelude::*;
+use serde::Serialize;
 
 use super::{
-    Filter, TimeFilter, DAYS_10Y, DAYS_12Y, DAYS_15Y, DAYS_1M, DAYS_1W, DAYS_1Y, DAYS_2M, DAYS_2Y,
-    DAYS_3M, DAYS_3Y, DAYS_4M, DAYS_4Y, DAYS_5M, DAYS_5Y, DAYS_6M, DAYS_6Y, DAYS_7Y, DAYS_8Y,
+    CohortName, Filter, TimeFilter, DAYS_10Y, DAYS_12Y, DAYS_15Y, DAYS_1M, DAYS_1W, DAYS_1Y,
+    DAYS_2M, DAYS_2Y, DAYS_3M, DAYS_3Y, DAYS_4M, DAYS_4Y, DAYS_5M, DAYS_5Y, DAYS_6M, DAYS_6Y,
+    DAYS_7Y, DAYS_8Y,
 };
 
-#[derive(Default, Clone, Traversable)]
+/// Max age thresholds in days
+pub const MAX_AGE_DAYS: ByMaxAge<usize> = ByMaxAge {
+    _1w: DAYS_1W,
+    _1m: DAYS_1M,
+    _2m: DAYS_2M,
+    _3m: DAYS_3M,
+    _4m: DAYS_4M,
+    _5m: DAYS_5M,
+    _6m: DAYS_6M,
+    _1y: DAYS_1Y,
+    _2y: DAYS_2Y,
+    _3y: DAYS_3Y,
+    _4y: DAYS_4Y,
+    _5y: DAYS_5Y,
+    _6y: DAYS_6Y,
+    _7y: DAYS_7Y,
+    _8y: DAYS_8Y,
+    _10y: DAYS_10Y,
+    _12y: DAYS_12Y,
+    _15y: DAYS_15Y,
+};
+
+/// Max age filters (LowerThan threshold)
+pub const MAX_AGE_FILTERS: ByMaxAge<Filter> = ByMaxAge {
+    _1w: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._1w)),
+    _1m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._1m)),
+    _2m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._2m)),
+    _3m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._3m)),
+    _4m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._4m)),
+    _5m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._5m)),
+    _6m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._6m)),
+    _1y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._1y)),
+    _2y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._2y)),
+    _3y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._3y)),
+    _4y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._4y)),
+    _5y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._5y)),
+    _6y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._6y)),
+    _7y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._7y)),
+    _8y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._8y)),
+    _10y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._10y)),
+    _12y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._12y)),
+    _15y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_DAYS._15y)),
+};
+
+/// Max age names
+pub const MAX_AGE_NAMES: ByMaxAge<CohortName> = ByMaxAge {
+    _1w: CohortName::new("up_to_1w_old", "<1w", "Up to 1 Week Old"),
+    _1m: CohortName::new("up_to_1m_old", "<1m", "Up to 1 Month Old"),
+    _2m: CohortName::new("up_to_2m_old", "<2m", "Up to 2 Months Old"),
+    _3m: CohortName::new("up_to_3m_old", "<3m", "Up to 3 Months Old"),
+    _4m: CohortName::new("up_to_4m_old", "<4m", "Up to 4 Months Old"),
+    _5m: CohortName::new("up_to_5m_old", "<5m", "Up to 5 Months Old"),
+    _6m: CohortName::new("up_to_6m_old", "<6m", "Up to 6 Months Old"),
+    _1y: CohortName::new("up_to_1y_old", "<1y", "Up to 1 Year Old"),
+    _2y: CohortName::new("up_to_2y_old", "<2y", "Up to 2 Years Old"),
+    _3y: CohortName::new("up_to_3y_old", "<3y", "Up to 3 Years Old"),
+    _4y: CohortName::new("up_to_4y_old", "<4y", "Up to 4 Years Old"),
+    _5y: CohortName::new("up_to_5y_old", "<5y", "Up to 5 Years Old"),
+    _6y: CohortName::new("up_to_6y_old", "<6y", "Up to 6 Years Old"),
+    _7y: CohortName::new("up_to_7y_old", "<7y", "Up to 7 Years Old"),
+    _8y: CohortName::new("up_to_8y_old", "<8y", "Up to 8 Years Old"),
+    _10y: CohortName::new("up_to_10y_old", "<10y", "Up to 10 Years Old"),
+    _12y: CohortName::new("up_to_12y_old", "<12y", "Up to 12 Years Old"),
+    _15y: CohortName::new("up_to_15y_old", "<15y", "Up to 15 Years Old"),
+};
+
+#[derive(Default, Clone, Traversable, Serialize)]
 pub struct ByMaxAge<T> {
     pub _1w: T,
     pub _1m: T,
@@ -28,31 +96,67 @@ pub struct ByMaxAge<T> {
     pub _15y: T,
 }
 
+impl ByMaxAge<CohortName> {
+    pub const fn names() -> &'static Self {
+        &MAX_AGE_NAMES
+    }
+}
+
 impl<T> ByMaxAge<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
+        let f = MAX_AGE_FILTERS;
+        let n = MAX_AGE_NAMES;
         Self {
-            _1w: create(Filter::Time(TimeFilter::LowerThan(DAYS_1W))),
-            _1m: create(Filter::Time(TimeFilter::LowerThan(DAYS_1M))),
-            _2m: create(Filter::Time(TimeFilter::LowerThan(DAYS_2M))),
-            _3m: create(Filter::Time(TimeFilter::LowerThan(DAYS_3M))),
-            _4m: create(Filter::Time(TimeFilter::LowerThan(DAYS_4M))),
-            _5m: create(Filter::Time(TimeFilter::LowerThan(DAYS_5M))),
-            _6m: create(Filter::Time(TimeFilter::LowerThan(DAYS_6M))),
-            _1y: create(Filter::Time(TimeFilter::LowerThan(DAYS_1Y))),
-            _2y: create(Filter::Time(TimeFilter::LowerThan(DAYS_2Y))),
-            _3y: create(Filter::Time(TimeFilter::LowerThan(DAYS_3Y))),
-            _4y: create(Filter::Time(TimeFilter::LowerThan(DAYS_4Y))),
-            _5y: create(Filter::Time(TimeFilter::LowerThan(DAYS_5Y))),
-            _6y: create(Filter::Time(TimeFilter::LowerThan(DAYS_6Y))),
-            _7y: create(Filter::Time(TimeFilter::LowerThan(DAYS_7Y))),
-            _8y: create(Filter::Time(TimeFilter::LowerThan(DAYS_8Y))),
-            _10y: create(Filter::Time(TimeFilter::LowerThan(DAYS_10Y))),
-            _12y: create(Filter::Time(TimeFilter::LowerThan(DAYS_12Y))),
-            _15y: create(Filter::Time(TimeFilter::LowerThan(DAYS_15Y))),
+            _1w: create(f._1w.clone(), n._1w.id),
+            _1m: create(f._1m.clone(), n._1m.id),
+            _2m: create(f._2m.clone(), n._2m.id),
+            _3m: create(f._3m.clone(), n._3m.id),
+            _4m: create(f._4m.clone(), n._4m.id),
+            _5m: create(f._5m.clone(), n._5m.id),
+            _6m: create(f._6m.clone(), n._6m.id),
+            _1y: create(f._1y.clone(), n._1y.id),
+            _2y: create(f._2y.clone(), n._2y.id),
+            _3y: create(f._3y.clone(), n._3y.id),
+            _4y: create(f._4y.clone(), n._4y.id),
+            _5y: create(f._5y.clone(), n._5y.id),
+            _6y: create(f._6y.clone(), n._6y.id),
+            _7y: create(f._7y.clone(), n._7y.id),
+            _8y: create(f._8y.clone(), n._8y.id),
+            _10y: create(f._10y.clone(), n._10y.id),
+            _12y: create(f._12y.clone(), n._12y.id),
+            _15y: create(f._15y.clone(), n._15y.id),
         }
+    }
+
+    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
+    where
+        F: FnMut(Filter, &'static str) -> Result<T, E>,
+    {
+        let f = MAX_AGE_FILTERS;
+        let n = MAX_AGE_NAMES;
+        Ok(Self {
+            _1w: create(f._1w.clone(), n._1w.id)?,
+            _1m: create(f._1m.clone(), n._1m.id)?,
+            _2m: create(f._2m.clone(), n._2m.id)?,
+            _3m: create(f._3m.clone(), n._3m.id)?,
+            _4m: create(f._4m.clone(), n._4m.id)?,
+            _5m: create(f._5m.clone(), n._5m.id)?,
+            _6m: create(f._6m.clone(), n._6m.id)?,
+            _1y: create(f._1y.clone(), n._1y.id)?,
+            _2y: create(f._2y.clone(), n._2y.id)?,
+            _3y: create(f._3y.clone(), n._3y.id)?,
+            _4y: create(f._4y.clone(), n._4y.id)?,
+            _5y: create(f._5y.clone(), n._5y.id)?,
+            _6y: create(f._6y.clone(), n._6y.id)?,
+            _7y: create(f._7y.clone(), n._7y.id)?,
+            _8y: create(f._8y.clone(), n._8y.id)?,
+            _10y: create(f._10y.clone(), n._10y.id)?,
+            _12y: create(f._12y.clone(), n._12y.id)?,
+            _15y: create(f._15y.clone(), n._15y.id)?,
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

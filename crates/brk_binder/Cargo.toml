@@ -9,9 +9,11 @@ repository.workspace = true
 build = "build.rs"
 
 [dependencies]
+brk_grouper = { workspace = true }
 brk_query = { workspace = true }
 brk_types = { workspace = true }
 oas3 = "0.20"
 schemars = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 vecdb = { workspace = true }

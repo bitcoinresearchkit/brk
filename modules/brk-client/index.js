@@ -196,25 +196,722 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
   zulupool: "Zulupool",
 });
 
+// Cohort names
+
+export const TERM_NAMES = /** @type {const} */ ({
+  "short": {
+    "id": "sth",
+    "short": "STH",
+    "long": "Short Term Holders"
+  },
+  "long": {
+    "id": "lth",
+    "short": "LTH",
+    "long": "Long Term Holders"
+  }
+});
+
+export const EPOCH_NAMES = /** @type {const} */ ({
+  "_0": {
+    "id": "epoch_0",
+    "short": "Epoch 0",
+    "long": "Epoch 0"
+  },
+  "_1": {
+    "id": "epoch_1",
+    "short": "Epoch 1",
+    "long": "Epoch 1"
+  },
+  "_2": {
+    "id": "epoch_2",
+    "short": "Epoch 2",
+    "long": "Epoch 2"
+  },
+  "_3": {
+    "id": "epoch_3",
+    "short": "Epoch 3",
+    "long": "Epoch 3"
+  },
+  "_4": {
+    "id": "epoch_4",
+    "short": "Epoch 4",
+    "long": "Epoch 4"
+  }
+});
+
+export const YEAR_NAMES = /** @type {const} */ ({
+  "_2009": {
+    "id": "year_2009",
+    "short": "2009",
+    "long": "Year 2009"
+  },
+  "_2010": {
+    "id": "year_2010",
+    "short": "2010",
+    "long": "Year 2010"
+  },
+  "_2011": {
+    "id": "year_2011",
+    "short": "2011",
+    "long": "Year 2011"
+  },
+  "_2012": {
+    "id": "year_2012",
+    "short": "2012",
+    "long": "Year 2012"
+  },
+  "_2013": {
+    "id": "year_2013",
+    "short": "2013",
+    "long": "Year 2013"
+  },
+  "_2014": {
+    "id": "year_2014",
+    "short": "2014",
+    "long": "Year 2014"
+  },
+  "_2015": {
+    "id": "year_2015",
+    "short": "2015",
+    "long": "Year 2015"
+  },
+  "_2016": {
+    "id": "year_2016",
+    "short": "2016",
+    "long": "Year 2016"
+  },
+  "_2017": {
+    "id": "year_2017",
+    "short": "2017",
+    "long": "Year 2017"
+  },
+  "_2018": {
+    "id": "year_2018",
+    "short": "2018",
+    "long": "Year 2018"
+  },
+  "_2019": {
+    "id": "year_2019",
+    "short": "2019",
+    "long": "Year 2019"
+  },
+  "_2020": {
+    "id": "year_2020",
+    "short": "2020",
+    "long": "Year 2020"
+  },
+  "_2021": {
+    "id": "year_2021",
+    "short": "2021",
+    "long": "Year 2021"
+  },
+  "_2022": {
+    "id": "year_2022",
+    "short": "2022",
+    "long": "Year 2022"
+  },
+  "_2023": {
+    "id": "year_2023",
+    "short": "2023",
+    "long": "Year 2023"
+  },
+  "_2024": {
+    "id": "year_2024",
+    "short": "2024",
+    "long": "Year 2024"
+  },
+  "_2025": {
+    "id": "year_2025",
+    "short": "2025",
+    "long": "Year 2025"
+  },
+  "_2026": {
+    "id": "year_2026",
+    "short": "2026",
+    "long": "Year 2026"
+  }
+});
+
+export const SPENDABLE_TYPE_NAMES = /** @type {const} */ ({
+  "p2pk65": {
+    "id": "p2pk65",
+    "short": "P2PK65",
+    "long": "Pay to Public Key (65 bytes)"
+  },
+  "p2pk33": {
+    "id": "p2pk33",
+    "short": "P2PK33",
+    "long": "Pay to Public Key (33 bytes)"
+  },
+  "p2pkh": {
+    "id": "p2pkh",
+    "short": "P2PKH",
+    "long": "Pay to Public Key Hash"
+  },
+  "p2ms": {
+    "id": "p2ms",
+    "short": "P2MS",
+    "long": "Pay to Multisig"
+  },
+  "p2sh": {
+    "id": "p2sh",
+    "short": "P2SH",
+    "long": "Pay to Script Hash"
+  },
+  "p2wpkh": {
+    "id": "p2wpkh",
+    "short": "P2WPKH",
+    "long": "Pay to Witness Public Key Hash"
+  },
+  "p2wsh": {
+    "id": "p2wsh",
+    "short": "P2WSH",
+    "long": "Pay to Witness Script Hash"
+  },
+  "p2tr": {
+    "id": "p2tr",
+    "short": "P2TR",
+    "long": "Pay to Taproot"
+  },
+  "p2a": {
+    "id": "p2a",
+    "short": "P2A",
+    "long": "Pay to Anchor"
+  },
+  "unknown": {
+    "id": "unknown_outputs",
+    "short": "Unknown",
+    "long": "Unknown Output Type"
+  },
+  "empty": {
+    "id": "empty_outputs",
+    "short": "Empty",
+    "long": "Empty Output"
+  }
+});
+
+export const AGE_RANGE_NAMES = /** @type {const} */ ({
+  "up_to_1d": {
+    "id": "up_to_1d_old",
+    "short": "<1d",
+    "long": "Up to 1 Day Old"
+  },
+  "_1d_to_1w": {
+    "id": "at_least_1d_up_to_1w_old",
+    "short": "1d-1w",
+    "long": "1 Day to 1 Week Old"
+  },
+  "_1w_to_1m": {
+    "id": "at_least_1w_up_to_1m_old",
+    "short": "1w-1m",
+    "long": "1 Week to 1 Month Old"
+  },
+  "_1m_to_2m": {
+    "id": "at_least_1m_up_to_2m_old",
+    "short": "1m-2m",
+    "long": "1 to 2 Months Old"
+  },
+  "_2m_to_3m": {
+    "id": "at_least_2m_up_to_3m_old",
+    "short": "2m-3m",
+    "long": "2 to 3 Months Old"
+  },
+  "_3m_to_4m": {
+    "id": "at_least_3m_up_to_4m_old",
+    "short": "3m-4m",
+    "long": "3 to 4 Months Old"
+  },
+  "_4m_to_5m": {
+    "id": "at_least_4m_up_to_5m_old",
+    "short": "4m-5m",
+    "long": "4 to 5 Months Old"
+  },
+  "_5m_to_6m": {
+    "id": "at_least_5m_up_to_6m_old",
+    "short": "5m-6m",
+    "long": "5 to 6 Months Old"
+  },
+  "_6m_to_1y": {
+    "id": "at_least_6m_up_to_1y_old",
+    "short": "6m-1y",
+    "long": "6 Months to 1 Year Old"
+  },
+  "_1y_to_2y": {
+    "id": "at_least_1y_up_to_2y_old",
+    "short": "1y-2y",
+    "long": "1 to 2 Years Old"
+  },
+  "_2y_to_3y": {
+    "id": "at_least_2y_up_to_3y_old",
+    "short": "2y-3y",
+    "long": "2 to 3 Years Old"
+  },
+  "_3y_to_4y": {
+    "id": "at_least_3y_up_to_4y_old",
+    "short": "3y-4y",
+    "long": "3 to 4 Years Old"
+  },
+  "_4y_to_5y": {
+    "id": "at_least_4y_up_to_5y_old",
+    "short": "4y-5y",
+    "long": "4 to 5 Years Old"
+  },
+  "_5y_to_6y": {
+    "id": "at_least_5y_up_to_6y_old",
+    "short": "5y-6y",
+    "long": "5 to 6 Years Old"
+  },
+  "_6y_to_7y": {
+    "id": "at_least_6y_up_to_7y_old",
+    "short": "6y-7y",
+    "long": "6 to 7 Years Old"
+  },
+  "_7y_to_8y": {
+    "id": "at_least_7y_up_to_8y_old",
+    "short": "7y-8y",
+    "long": "7 to 8 Years Old"
+  },
+  "_8y_to_10y": {
+    "id": "at_least_8y_up_to_10y_old",
+    "short": "8y-10y",
+    "long": "8 to 10 Years Old"
+  },
+  "_10y_to_12y": {
+    "id": "at_least_10y_up_to_12y_old",
+    "short": "10y-12y",
+    "long": "10 to 12 Years Old"
+  },
+  "_12y_to_15y": {
+    "id": "at_least_12y_up_to_15y_old",
+    "short": "12y-15y",
+    "long": "12 to 15 Years Old"
+  },
+  "from_15y": {
+    "id": "at_least_15y_old",
+    "short": "15y+",
+    "long": "15+ Years Old"
+  }
+});
+
+export const MAX_AGE_NAMES = /** @type {const} */ ({
+  "_1w": {
+    "id": "up_to_1w_old",
+    "short": "<1w",
+    "long": "Up to 1 Week Old"
+  },
+  "_1m": {
+    "id": "up_to_1m_old",
+    "short": "<1m",
+    "long": "Up to 1 Month Old"
+  },
+  "_2m": {
+    "id": "up_to_2m_old",
+    "short": "<2m",
+    "long": "Up to 2 Months Old"
+  },
+  "_3m": {
+    "id": "up_to_3m_old",
+    "short": "<3m",
+    "long": "Up to 3 Months Old"
+  },
+  "_4m": {
+    "id": "up_to_4m_old",
+    "short": "<4m",
+    "long": "Up to 4 Months Old"
+  },
+  "_5m": {
+    "id": "up_to_5m_old",
+    "short": "<5m",
+    "long": "Up to 5 Months Old"
+  },
+  "_6m": {
+    "id": "up_to_6m_old",
+    "short": "<6m",
+    "long": "Up to 6 Months Old"
+  },
+  "_1y": {
+    "id": "up_to_1y_old",
+    "short": "<1y",
+    "long": "Up to 1 Year Old"
+  },
+  "_2y": {
+    "id": "up_to_2y_old",
+    "short": "<2y",
+    "long": "Up to 2 Years Old"
+  },
+  "_3y": {
+    "id": "up_to_3y_old",
+    "short": "<3y",
+    "long": "Up to 3 Years Old"
+  },
+  "_4y": {
+    "id": "up_to_4y_old",
+    "short": "<4y",
+    "long": "Up to 4 Years Old"
+  },
+  "_5y": {
+    "id": "up_to_5y_old",
+    "short": "<5y",
+    "long": "Up to 5 Years Old"
+  },
+  "_6y": {
+    "id": "up_to_6y_old",
+    "short": "<6y",
+    "long": "Up to 6 Years Old"
+  },
+  "_7y": {
+    "id": "up_to_7y_old",
+    "short": "<7y",
+    "long": "Up to 7 Years Old"
+  },
+  "_8y": {
+    "id": "up_to_8y_old",
+    "short": "<8y",
+    "long": "Up to 8 Years Old"
+  },
+  "_10y": {
+    "id": "up_to_10y_old",
+    "short": "<10y",
+    "long": "Up to 10 Years Old"
+  },
+  "_12y": {
+    "id": "up_to_12y_old",
+    "short": "<12y",
+    "long": "Up to 12 Years Old"
+  },
+  "_15y": {
+    "id": "up_to_15y_old",
+    "short": "<15y",
+    "long": "Up to 15 Years Old"
+  }
+});
+
+export const MIN_AGE_NAMES = /** @type {const} */ ({
+  "_1d": {
+    "id": "at_least_1d_old",
+    "short": "1d+",
+    "long": "At Least 1 Day Old"
+  },
+  "_1w": {
+    "id": "at_least_1w_old",
+    "short": "1w+",
+    "long": "At Least 1 Week Old"
+  },
+  "_1m": {
+    "id": "at_least_1m_old",
+    "short": "1m+",
+    "long": "At Least 1 Month Old"
+  },
+  "_2m": {
+    "id": "at_least_2m_old",
+    "short": "2m+",
+    "long": "At Least 2 Months Old"
+  },
+  "_3m": {
+    "id": "at_least_3m_old",
+    "short": "3m+",
+    "long": "At Least 3 Months Old"
+  },
+  "_4m": {
+    "id": "at_least_4m_old",
+    "short": "4m+",
+    "long": "At Least 4 Months Old"
+  },
+  "_5m": {
+    "id": "at_least_5m_old",
+    "short": "5m+",
+    "long": "At Least 5 Months Old"
+  },
+  "_6m": {
+    "id": "at_least_6m_old",
+    "short": "6m+",
+    "long": "At Least 6 Months Old"
+  },
+  "_1y": {
+    "id": "at_least_1y_old",
+    "short": "1y+",
+    "long": "At Least 1 Year Old"
+  },
+  "_2y": {
+    "id": "at_least_2y_old",
+    "short": "2y+",
+    "long": "At Least 2 Years Old"
+  },
+  "_3y": {
+    "id": "at_least_3y_old",
+    "short": "3y+",
+    "long": "At Least 3 Years Old"
+  },
+  "_4y": {
+    "id": "at_least_4y_old",
+    "short": "4y+",
+    "long": "At Least 4 Years Old"
+  },
+  "_5y": {
+    "id": "at_least_5y_old",
+    "short": "5y+",
+    "long": "At Least 5 Years Old"
+  },
+  "_6y": {
+    "id": "at_least_6y_old",
+    "short": "6y+",
+    "long": "At Least 6 Years Old"
+  },
+  "_7y": {
+    "id": "at_least_7y_old",
+    "short": "7y+",
+    "long": "At Least 7 Years Old"
+  },
+  "_8y": {
+    "id": "at_least_8y_old",
+    "short": "8y+",
+    "long": "At Least 8 Years Old"
+  },
+  "_10y": {
+    "id": "at_least_10y_old",
+    "short": "10y+",
+    "long": "At Least 10 Years Old"
+  },
+  "_12y": {
+    "id": "at_least_12y_old",
+    "short": "12y+",
+    "long": "At Least 12 Years Old"
+  }
+});
+
+export const AMOUNT_RANGE_NAMES = /** @type {const} */ ({
+  "_0sats": {
+    "id": "with_0sats",
+    "short": "0 sats",
+    "long": "0 Sats"
+  },
+  "_1sat_to_10sats": {
+    "id": "above_1sat_under_10sats",
+    "short": "1-10 sats",
+    "long": "1 to 10 Sats"
+  },
+  "_10sats_to_100sats": {
+    "id": "above_10sats_under_100sats",
+    "short": "10-100 sats",
+    "long": "10 to 100 Sats"
+  },
+  "_100sats_to_1k_sats": {
+    "id": "above_100sats_under_1k_sats",
+    "short": "100-1k sats",
+    "long": "100 to 1K Sats"
+  },
+  "_1k_sats_to_10k_sats": {
+    "id": "above_1k_sats_under_10k_sats",
+    "short": "1k-10k sats",
+    "long": "1K to 10K Sats"
+  },
+  "_10k_sats_to_100k_sats": {
+    "id": "above_10k_sats_under_100k_sats",
+    "short": "10k-100k sats",
+    "long": "10K to 100K Sats"
+  },
+  "_100k_sats_to_1m_sats": {
+    "id": "above_100k_sats_under_1m_sats",
+    "short": "100k-1M sats",
+    "long": "100K to 1M Sats"
+  },
+  "_1m_sats_to_10m_sats": {
+    "id": "above_1m_sats_under_10m_sats",
+    "short": "1M-10M sats",
+    "long": "1M to 10M Sats"
+  },
+  "_10m_sats_to_1btc": {
+    "id": "above_10m_sats_under_1btc",
+    "short": "0.1-1 BTC",
+    "long": "0.1 to 1 BTC"
+  },
+  "_1btc_to_10btc": {
+    "id": "above_1btc_under_10btc",
+    "short": "1-10 BTC",
+    "long": "1 to 10 BTC"
+  },
+  "_10btc_to_100btc": {
+    "id": "above_10btc_under_100btc",
+    "short": "10-100 BTC",
+    "long": "10 to 100 BTC"
+  },
+  "_100btc_to_1k_btc": {
+    "id": "above_100btc_under_1k_btc",
+    "short": "100-1k BTC",
+    "long": "100 to 1K BTC"
+  },
+  "_1k_btc_to_10k_btc": {
+    "id": "above_1k_btc_under_10k_btc",
+    "short": "1k-10k BTC",
+    "long": "1K to 10K BTC"
+  },
+  "_10k_btc_to_100k_btc": {
+    "id": "above_10k_btc_under_100k_btc",
+    "short": "10k-100k BTC",
+    "long": "10K to 100K BTC"
+  },
+  "_100k_btc_or_more": {
+    "id": "above_100k_btc",
+    "short": "100k+ BTC",
+    "long": "100K+ BTC"
+  }
+});
+
+export const GE_AMOUNT_NAMES = /** @type {const} */ ({
+  "_1sat": {
+    "id": "above_1sat",
+    "short": "1+ sats",
+    "long": "Above 1 Sat"
+  },
+  "_10sats": {
+    "id": "above_10sats",
+    "short": "10+ sats",
+    "long": "Above 10 Sats"
+  },
+  "_100sats": {
+    "id": "above_100sats",
+    "short": "100+ sats",
+    "long": "Above 100 Sats"
+  },
+  "_1k_sats": {
+    "id": "above_1k_sats",
+    "short": "1k+ sats",
+    "long": "Above 1K Sats"
+  },
+  "_10k_sats": {
+    "id": "above_10k_sats",
+    "short": "10k+ sats",
+    "long": "Above 10K Sats"
+  },
+  "_100k_sats": {
+    "id": "above_100k_sats",
+    "short": "100k+ sats",
+    "long": "Above 100K Sats"
+  },
+  "_1m_sats": {
+    "id": "above_1m_sats",
+    "short": "1M+ sats",
+    "long": "Above 1M Sats"
+  },
+  "_10m_sats": {
+    "id": "above_10m_sats",
+    "short": "0.1+ BTC",
+    "long": "Above 0.1 BTC"
+  },
+  "_1btc": {
+    "id": "above_1btc",
+    "short": "1+ BTC",
+    "long": "Above 1 BTC"
+  },
+  "_10btc": {
+    "id": "above_10btc",
+    "short": "10+ BTC",
+    "long": "Above 10 BTC"
+  },
+  "_100btc": {
+    "id": "above_100btc",
+    "short": "100+ BTC",
+    "long": "Above 100 BTC"
+  },
+  "_1k_btc": {
+    "id": "above_1k_btc",
+    "short": "1k+ BTC",
+    "long": "Above 1K BTC"
+  },
+  "_10k_btc": {
+    "id": "above_10k_btc",
+    "short": "10k+ BTC",
+    "long": "Above 10K BTC"
+  }
+});
+
+export const LT_AMOUNT_NAMES = /** @type {const} */ ({
+  "_10sats": {
+    "id": "under_10sats",
+    "short": "<10 sats",
+    "long": "Under 10 Sats"
+  },
+  "_100sats": {
+    "id": "under_100sats",
+    "short": "<100 sats",
+    "long": "Under 100 Sats"
+  },
+  "_1k_sats": {
+    "id": "under_1k_sats",
+    "short": "<1k sats",
+    "long": "Under 1K Sats"
+  },
+  "_10k_sats": {
+    "id": "under_10k_sats",
+    "short": "<10k sats",
+    "long": "Under 10K Sats"
+  },
+  "_100k_sats": {
+    "id": "under_100k_sats",
+    "short": "<100k sats",
+    "long": "Under 100K Sats"
+  },
+  "_1m_sats": {
+    "id": "under_1m_sats",
+    "short": "<1M sats",
+    "long": "Under 1M Sats"
+  },
+  "_10m_sats": {
+    "id": "under_10m_sats",
+    "short": "<0.1 BTC",
+    "long": "Under 0.1 BTC"
+  },
+  "_1btc": {
+    "id": "under_1btc",
+    "short": "<1 BTC",
+    "long": "Under 1 BTC"
+  },
+  "_10btc": {
+    "id": "under_10btc",
+    "short": "<10 BTC",
+    "long": "Under 10 BTC"
+  },
+  "_100btc": {
+    "id": "under_100btc",
+    "short": "<100 BTC",
+    "long": "Under 100 BTC"
+  },
+  "_1k_btc": {
+    "id": "under_1k_btc",
+    "short": "<1k BTC",
+    "long": "Under 1K BTC"
+  },
+  "_10k_btc": {
+    "id": "under_10k_btc",
+    "short": "<10k BTC",
+    "long": "Under 10K BTC"
+  },
+  "_100k_btc": {
+    "id": "under_100k_btc",
+    "short": "<100k BTC",
+    "long": "Under 100K BTC"
+  }
+});
+
 // Type definitions
 
 /** @typedef {string} Address */
 /**
  * @typedef {Object} AddressChainStats
- * @property {number} funded_txo_count
- * @property {Sats} funded_txo_sum
- * @property {number} spent_txo_count
- * @property {Sats} spent_txo_sum
- * @property {number} tx_count
- * @property {TypeIndex} type_index
+ * @property {number} fundedTxoCount
+ * @property {Sats} fundedTxoSum
+ * @property {number} spentTxoCount
+ * @property {Sats} spentTxoSum
+ * @property {number} txCount
+ * @property {TypeIndex} typeIndex
  */
 /**
  * @typedef {Object} AddressMempoolStats
- * @property {number} funded_txo_count
- * @property {Sats} funded_txo_sum
- * @property {number} spent_txo_count
- * @property {Sats} spent_txo_sum
- * @property {number} tx_count
+ * @property {number} fundedTxoCount
+ * @property {Sats} fundedTxoSum
+ * @property {number} spentTxoCount
+ * @property {Sats} spentTxoSum
+ * @property {number} txCount
  */
 /**
  * @typedef {Object} AddressParam
@@ -223,12 +920,12 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /**
  * @typedef {Object} AddressStats
  * @property {Address} address
- * @property {AddressChainStats} chain_stats
- * @property {(AddressMempoolStats|null)=} mempool_stats
+ * @property {AddressChainStats} chainStats
+ * @property {(AddressMempoolStats|null)=} mempoolStats
  */
 /**
  * @typedef {Object} AddressTxidsParam
- * @property {(Txid|null)=} after_txid
+ * @property {(Txid|null)=} afterTxid
  * @property {number=} limit
  */
 /**
@@ -238,15 +935,15 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @property {?string=} scriptPubKey
  * @property {?boolean=} isscript
  * @property {?boolean=} iswitness
- * @property {?number=} witness_version
- * @property {?string=} witness_program
+ * @property {?number=} witnessVersion
+ * @property {?string=} witnessProgram
  */
 /** @typedef {TypeIndex} AnyAddressIndex */
 /** @typedef {number} Bitcoin */
 /** @typedef {number} BlkPosition */
 /**
  * @typedef {Object} BlockCountParam
- * @property {number} block_count
+ * @property {number} blockCount
  */
 /**
  * @typedef {Object} BlockFeesEntry
@@ -262,7 +959,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /**
  * @typedef {Object} BlockHashStartIndex
  * @property {BlockHash} hash
- * @property {TxIndex} start_index
+ * @property {TxIndex} startIndex
  */
 /**
  * @typedef {Object} BlockHashTxIndex
@@ -273,7 +970,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @typedef {Object} BlockInfo
  * @property {BlockHash} id
  * @property {Height} height
- * @property {number} tx_count
+ * @property {number} txCount
  * @property {number} size
  * @property {Weight} weight
  * @property {Timestamp} timestamp
@@ -298,9 +995,9 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  */
 /**
  * @typedef {Object} BlockStatus
- * @property {boolean} in_best_chain
+ * @property {boolean} inBestChain
  * @property {(Height|null)=} height
- * @property {(BlockHash|null)=} next_best
+ * @property {(BlockHash|null)=} nextBest
  */
 /**
  * @typedef {Object} BlockTimestamp
@@ -344,7 +1041,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @property {Timestamp} timestamp
  * @property {Height} height
  * @property {number} difficulty
- * @property {number} change_percent
+ * @property {number} changePercent
  */
 /**
  * @typedef {Object} DifficultyEntry
@@ -356,8 +1053,8 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /** @typedef {number} Dollars */
 /**
  * @typedef {Object} EmptyAddressData
- * @property {number} tx_count
- * @property {number} funded_txo_count
+ * @property {number} txCount
+ * @property {number} fundedTxoCount
  * @property {Sats} transfered
  */
 /** @typedef {TypeIndex} EmptyAddressIndex */
@@ -403,12 +1100,12 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  */
 /**
  * @typedef {Object} LoadedAddressData
- * @property {number} tx_count
- * @property {number} funded_txo_count
- * @property {number} spent_txo_count
+ * @property {number} txCount
+ * @property {number} fundedTxoCount
+ * @property {number} spentTxoCount
  * @property {Sats} received
  * @property {Sats} sent
- * @property {Dollars} realized_cap
+ * @property {Dollars} realizedCap
  */
 /** @typedef {TypeIndex} LoadedAddressIndex */
 /** @typedef {Cents} Low */
@@ -425,15 +1122,15 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @typedef {Object} MempoolInfo
  * @property {number} count
  * @property {VSize} vsize
- * @property {Sats} total_fee
+ * @property {Sats} totalFee
  */
 /** @typedef {string} Metric */
 /**
  * @typedef {Object} MetricCount
- * @property {number} distinct_metrics
- * @property {number} total_endpoints
- * @property {number} lazy_endpoints
- * @property {number} stored_endpoints
+ * @property {number} distinctMetrics
+ * @property {number} totalEndpoints
+ * @property {number} lazyEndpoints
+ * @property {number} storedEndpoints
  */
 /**
  * @typedef {Object} MetricData
@@ -445,7 +1142,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /**
  * @typedef {Object} MetricLeafWithSchema
  * @property {string} name
- * @property {string} value_type
+ * @property {string} valueType
  * @property {Index[]} indexes
  */
 /**
@@ -521,8 +1218,8 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /** @typedef {U8x32} P2WSHBytes */
 /**
  * @typedef {Object} PaginatedMetrics
- * @property {number} current_page
- * @property {number} max_page
+ * @property {number} currentPage
+ * @property {number} maxPage
  * @property {string[]} metrics
  */
 /**
@@ -532,14 +1229,14 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /**
  * @typedef {Object} PoolBlockCounts
  * @property {number} all
- * @property {number} 24h
- * @property {number} 1w
+ * @property {number} _24h
+ * @property {number} _1w
  */
 /**
  * @typedef {Object} PoolBlockShares
  * @property {number} all
- * @property {number} 24h
- * @property {number} 1w
+ * @property {number} _24h
+ * @property {number} _1w
  */
 /**
  * @typedef {Object} PoolDetail
@@ -562,7 +1259,7 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @typedef {Object} PoolInfo
  * @property {string} name
  * @property {PoolSlug} slug
- * @property {number} unique_id
+ * @property {number} uniqueId
  */
 /** @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"luckypool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite")} PoolSlug */
 /**
@@ -615,13 +1312,13 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /** @typedef {number} StoredU64 */
 /**
  * @typedef {Object} SupplyState
- * @property {number} utxo_count
+ * @property {number} utxoCount
  * @property {Sats} value
  */
 /** @typedef {("24h"|"3d"|"1w"|"1m"|"3m"|"6m"|"1y"|"2y"|"3y")} TimePeriod */
 /**
  * @typedef {Object} TimePeriodParam
- * @property {TimePeriod} time_period
+ * @property {TimePeriod} timePeriod
  */
 /** @typedef {number} Timestamp */
 /**
@@ -649,10 +1346,10 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
  * @property {Vout} vout
  * @property {(TxOut|null)=} prevout
  * @property {string} scriptsig
- * @property {string} scriptsig_asm
- * @property {boolean} is_coinbase
+ * @property {string} scriptsigAsm
+ * @property {boolean} isCoinbase
  * @property {number} sequence
- * @property {?string=} inner_redeemscript_asm
+ * @property {?string=} innerRedeemscriptAsm
  */
 /** @typedef {number} TxInIndex */
 /** @typedef {number} TxIndex */
@@ -672,9 +1369,9 @@ export const POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
 /**
  * @typedef {Object} TxStatus
  * @property {boolean} confirmed
- * @property {(Height|null)=} block_height
- * @property {(BlockHash|null)=} block_hash
- * @property {(Timestamp|null)=} block_time
+ * @property {(Height|null)=} blockHeight
+ * @property {(BlockHash|null)=} blockHash
+ * @property {(Timestamp|null)=} blockTime
  */
 /** @typedef {number} TxVersion */
 /** @typedef {string} Txid */
@@ -766,13 +1463,17 @@ class MetricNode {
 
   /**
    * Fetch data points within a range.
-   * @param {string | number} from
-   * @param {string | number} to
+   * @param {string | number} [from]
+   * @param {string | number} [to]
    * @param {(value: T[]) => void} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
    * @returns {Promise<T[]>}
    */
   getRange(from, to, onUpdate) {
-    return this._client.get(`${this._path}?from=${from}&to=${to}`, onUpdate);
+    const params = new URLSearchParams();
+    if (from !== undefined) params.set('from', String(from));
+    if (to !== undefined) params.set('to', String(to));
+    const query = params.toString();
+    return this._client.get(query ? `${this._path}?${query}` : this._path, onUpdate);
   }
 }
 
@@ -830,16 +1531,22 @@ class BrkClientBase {
 
 /**
  * @template T
+ * @typedef {Object} Indexes3By
+ * @property {MetricNode<T>} dateindex
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} difficultyepoch
+ * @property {MetricNode<T>} height
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes3
- * @property {MetricNode<T>} byDateindex
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byDifficultyepoch
- * @property {MetricNode<T>} byHeight
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes3By<T>} by
  */
 
 /**
@@ -851,29 +1558,37 @@ class BrkClientBase {
  */
 function createIndexes3(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`),
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byDifficultyepoch: new MetricNode(client, `${basePath}/difficultyepoch`),
-    byHeight: new MetricNode(client, `${basePath}/height`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`),
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      difficultyepoch: new MetricNode(client, `${basePath}/difficultyepoch`),
+      height: new MetricNode(client, `${basePath}/height`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes4By
+ * @property {MetricNode<T>} dateindex
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} difficultyepoch
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes4
- * @property {MetricNode<T>} byDateindex
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byDifficultyepoch
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes4By<T>} by
  */
 
 /**
@@ -885,28 +1600,36 @@ function createIndexes3(client, basePath) {
  */
 function createIndexes4(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`),
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byDifficultyepoch: new MetricNode(client, `${basePath}/difficultyepoch`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`),
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      difficultyepoch: new MetricNode(client, `${basePath}/difficultyepoch`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes26By
+ * @property {MetricNode<T>} dateindex
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} height
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes26
- * @property {MetricNode<T>} byDateindex
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byHeight
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes26By<T>} by
  */
 
 /**
@@ -918,27 +1641,35 @@ function createIndexes4(client, basePath) {
  */
 function createIndexes26(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`),
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byHeight: new MetricNode(client, `${basePath}/height`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`),
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      height: new MetricNode(client, `${basePath}/height`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} IndexesBy
+ * @property {MetricNode<T>} dateindex
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes
- * @property {MetricNode<T>} byDateindex
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {IndexesBy<T>} by
  */
 
 /**
@@ -950,26 +1681,34 @@ function createIndexes26(client, basePath) {
  */
 function createIndexes(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`),
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`),
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes27By
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} height
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes27
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byHeight
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes27By<T>} by
  */
 
 /**
@@ -981,25 +1720,33 @@ function createIndexes(client, basePath) {
  */
 function createIndexes27(client, basePath) {
   return {
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byHeight: new MetricNode(client, `${basePath}/height`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      height: new MetricNode(client, `${basePath}/height`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes28By
+ * @property {MetricNode<T>} decadeindex
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} weekindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes28
- * @property {MetricNode<T>} byDecadeindex
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byWeekindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes28By<T>} by
  */
 
 /**
@@ -1011,21 +1758,29 @@ function createIndexes27(client, basePath) {
  */
 function createIndexes28(client, basePath) {
   return {
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`),
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`),
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes15By
+ * @property {MetricNode<T>} quarterindex
+ * @property {MetricNode<T>} semesterindex
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes15
- * @property {MetricNode<T>} byQuarterindex
- * @property {MetricNode<T>} bySemesterindex
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes15By<T>} by
  */
 
 /**
@@ -1037,17 +1792,25 @@ function createIndexes28(client, basePath) {
  */
 function createIndexes15(client, basePath) {
   return {
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`),
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`),
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`),
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`),
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes13By
+ * @property {MetricNode<T>} dateindex
+ * @property {MetricNode<T>} height
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes13
- * @property {MetricNode<T>} byDateindex
- * @property {MetricNode<T>} byHeight
+ * @property {Indexes13By<T>} by
  */
 
 /**
@@ -1059,16 +1822,24 @@ function createIndexes15(client, basePath) {
  */
 function createIndexes13(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`),
-    byHeight: new MetricNode(client, `${basePath}/height`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`),
+      height: new MetricNode(client, `${basePath}/height`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes14By
+ * @property {MetricNode<T>} monthindex
+ * @property {MetricNode<T>} weekindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes14
- * @property {MetricNode<T>} byMonthindex
- * @property {MetricNode<T>} byWeekindex
+ * @property {Indexes14By<T>} by
  */
 
 /**
@@ -1080,15 +1851,23 @@ function createIndexes13(client, basePath) {
  */
 function createIndexes14(client, basePath) {
   return {
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`),
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`)
+    by: {
+      monthindex: new MetricNode(client, `${basePath}/monthindex`),
+      weekindex: new MetricNode(client, `${basePath}/weekindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes2By
+ * @property {MetricNode<T>} height
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes2
- * @property {MetricNode<T>} byHeight
+ * @property {Indexes2By<T>} by
  */
 
 /**
@@ -1100,14 +1879,22 @@ function createIndexes14(client, basePath) {
  */
 function createIndexes2(client, basePath) {
   return {
-    byHeight: new MetricNode(client, `${basePath}/height`)
+    by: {
+      height: new MetricNode(client, `${basePath}/height`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes5By
+ * @property {MetricNode<T>} dateindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes5
- * @property {MetricNode<T>} byDateindex
+ * @property {Indexes5By<T>} by
  */
 
 /**
@@ -1119,14 +1906,22 @@ function createIndexes2(client, basePath) {
  */
 function createIndexes5(client, basePath) {
   return {
-    byDateindex: new MetricNode(client, `${basePath}/dateindex`)
+    by: {
+      dateindex: new MetricNode(client, `${basePath}/dateindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes6By
+ * @property {MetricNode<T>} txindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes6
- * @property {MetricNode<T>} byTxindex
+ * @property {Indexes6By<T>} by
  */
 
 /**
@@ -1138,14 +1933,22 @@ function createIndexes5(client, basePath) {
  */
 function createIndexes6(client, basePath) {
   return {
-    byTxindex: new MetricNode(client, `${basePath}/txindex`)
+    by: {
+      txindex: new MetricNode(client, `${basePath}/txindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes7By
+ * @property {MetricNode<T>} decadeindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes7
- * @property {MetricNode<T>} byDecadeindex
+ * @property {Indexes7By<T>} by
  */
 
 /**
@@ -1157,14 +1960,22 @@ function createIndexes6(client, basePath) {
  */
 function createIndexes7(client, basePath) {
   return {
-    byDecadeindex: new MetricNode(client, `${basePath}/decadeindex`)
+    by: {
+      decadeindex: new MetricNode(client, `${basePath}/decadeindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes8By
+ * @property {MetricNode<T>} monthindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes8
- * @property {MetricNode<T>} byMonthindex
+ * @property {Indexes8By<T>} by
  */
 
 /**
@@ -1176,14 +1987,22 @@ function createIndexes7(client, basePath) {
  */
 function createIndexes8(client, basePath) {
   return {
-    byMonthindex: new MetricNode(client, `${basePath}/monthindex`)
+    by: {
+      monthindex: new MetricNode(client, `${basePath}/monthindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes9By
+ * @property {MetricNode<T>} quarterindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes9
- * @property {MetricNode<T>} byQuarterindex
+ * @property {Indexes9By<T>} by
  */
 
 /**
@@ -1195,14 +2014,22 @@ function createIndexes8(client, basePath) {
  */
 function createIndexes9(client, basePath) {
   return {
-    byQuarterindex: new MetricNode(client, `${basePath}/quarterindex`)
+    by: {
+      quarterindex: new MetricNode(client, `${basePath}/quarterindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes10By
+ * @property {MetricNode<T>} semesterindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes10
- * @property {MetricNode<T>} bySemesterindex
+ * @property {Indexes10By<T>} by
  */
 
 /**
@@ -1214,14 +2041,22 @@ function createIndexes9(client, basePath) {
  */
 function createIndexes10(client, basePath) {
   return {
-    bySemesterindex: new MetricNode(client, `${basePath}/semesterindex`)
+    by: {
+      semesterindex: new MetricNode(client, `${basePath}/semesterindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes11By
+ * @property {MetricNode<T>} weekindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes11
- * @property {MetricNode<T>} byWeekindex
+ * @property {Indexes11By<T>} by
  */
 
 /**
@@ -1233,14 +2068,22 @@ function createIndexes10(client, basePath) {
  */
 function createIndexes11(client, basePath) {
   return {
-    byWeekindex: new MetricNode(client, `${basePath}/weekindex`)
+    by: {
+      weekindex: new MetricNode(client, `${basePath}/weekindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes12By
+ * @property {MetricNode<T>} yearindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes12
- * @property {MetricNode<T>} byYearindex
+ * @property {Indexes12By<T>} by
  */
 
 /**
@@ -1252,14 +2095,22 @@ function createIndexes11(client, basePath) {
  */
 function createIndexes12(client, basePath) {
   return {
-    byYearindex: new MetricNode(client, `${basePath}/yearindex`)
+    by: {
+      yearindex: new MetricNode(client, `${basePath}/yearindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes16By
+ * @property {MetricNode<T>} p2aaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes16
- * @property {MetricNode<T>} byP2aaddressindex
+ * @property {Indexes16By<T>} by
  */
 
 /**
@@ -1271,14 +2122,22 @@ function createIndexes12(client, basePath) {
  */
 function createIndexes16(client, basePath) {
   return {
-    byP2aaddressindex: new MetricNode(client, `${basePath}/p2aaddressindex`)
+    by: {
+      p2aaddressindex: new MetricNode(client, `${basePath}/p2aaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes17By
+ * @property {MetricNode<T>} p2pk33addressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes17
- * @property {MetricNode<T>} byP2pk33addressindex
+ * @property {Indexes17By<T>} by
  */
 
 /**
@@ -1290,14 +2149,22 @@ function createIndexes16(client, basePath) {
  */
 function createIndexes17(client, basePath) {
   return {
-    byP2pk33addressindex: new MetricNode(client, `${basePath}/p2pk33addressindex`)
+    by: {
+      p2pk33addressindex: new MetricNode(client, `${basePath}/p2pk33addressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes18By
+ * @property {MetricNode<T>} p2pk65addressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes18
- * @property {MetricNode<T>} byP2pk65addressindex
+ * @property {Indexes18By<T>} by
  */
 
 /**
@@ -1309,14 +2176,22 @@ function createIndexes17(client, basePath) {
  */
 function createIndexes18(client, basePath) {
   return {
-    byP2pk65addressindex: new MetricNode(client, `${basePath}/p2pk65addressindex`)
+    by: {
+      p2pk65addressindex: new MetricNode(client, `${basePath}/p2pk65addressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes19By
+ * @property {MetricNode<T>} p2pkhaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes19
- * @property {MetricNode<T>} byP2pkhaddressindex
+ * @property {Indexes19By<T>} by
  */
 
 /**
@@ -1328,14 +2203,22 @@ function createIndexes18(client, basePath) {
  */
 function createIndexes19(client, basePath) {
   return {
-    byP2pkhaddressindex: new MetricNode(client, `${basePath}/p2pkhaddressindex`)
+    by: {
+      p2pkhaddressindex: new MetricNode(client, `${basePath}/p2pkhaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes20By
+ * @property {MetricNode<T>} p2shaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes20
- * @property {MetricNode<T>} byP2shaddressindex
+ * @property {Indexes20By<T>} by
  */
 
 /**
@@ -1347,14 +2230,22 @@ function createIndexes19(client, basePath) {
  */
 function createIndexes20(client, basePath) {
   return {
-    byP2shaddressindex: new MetricNode(client, `${basePath}/p2shaddressindex`)
+    by: {
+      p2shaddressindex: new MetricNode(client, `${basePath}/p2shaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes21By
+ * @property {MetricNode<T>} p2traddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes21
- * @property {MetricNode<T>} byP2traddressindex
+ * @property {Indexes21By<T>} by
  */
 
 /**
@@ -1366,14 +2257,22 @@ function createIndexes20(client, basePath) {
  */
 function createIndexes21(client, basePath) {
   return {
-    byP2traddressindex: new MetricNode(client, `${basePath}/p2traddressindex`)
+    by: {
+      p2traddressindex: new MetricNode(client, `${basePath}/p2traddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes22By
+ * @property {MetricNode<T>} p2wpkhaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes22
- * @property {MetricNode<T>} byP2wpkhaddressindex
+ * @property {Indexes22By<T>} by
  */
 
 /**
@@ -1385,14 +2284,22 @@ function createIndexes21(client, basePath) {
  */
 function createIndexes22(client, basePath) {
   return {
-    byP2wpkhaddressindex: new MetricNode(client, `${basePath}/p2wpkhaddressindex`)
+    by: {
+      p2wpkhaddressindex: new MetricNode(client, `${basePath}/p2wpkhaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes23By
+ * @property {MetricNode<T>} p2wshaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes23
- * @property {MetricNode<T>} byP2wshaddressindex
+ * @property {Indexes23By<T>} by
  */
 
 /**
@@ -1404,14 +2311,22 @@ function createIndexes22(client, basePath) {
  */
 function createIndexes23(client, basePath) {
   return {
-    byP2wshaddressindex: new MetricNode(client, `${basePath}/p2wshaddressindex`)
+    by: {
+      p2wshaddressindex: new MetricNode(client, `${basePath}/p2wshaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes24By
+ * @property {MetricNode<T>} txinindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes24
- * @property {MetricNode<T>} byTxinindex
+ * @property {Indexes24By<T>} by
  */
 
 /**
@@ -1423,14 +2338,22 @@ function createIndexes23(client, basePath) {
  */
 function createIndexes24(client, basePath) {
   return {
-    byTxinindex: new MetricNode(client, `${basePath}/txinindex`)
+    by: {
+      txinindex: new MetricNode(client, `${basePath}/txinindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes25By
+ * @property {MetricNode<T>} txoutindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes25
- * @property {MetricNode<T>} byTxoutindex
+ * @property {Indexes25By<T>} by
  */
 
 /**
@@ -1442,14 +2365,22 @@ function createIndexes24(client, basePath) {
  */
 function createIndexes25(client, basePath) {
   return {
-    byTxoutindex: new MetricNode(client, `${basePath}/txoutindex`)
+    by: {
+      txoutindex: new MetricNode(client, `${basePath}/txoutindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes29By
+ * @property {MetricNode<T>} emptyaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes29
- * @property {MetricNode<T>} byEmptyaddressindex
+ * @property {Indexes29By<T>} by
  */
 
 /**
@@ -1461,14 +2392,22 @@ function createIndexes25(client, basePath) {
  */
 function createIndexes29(client, basePath) {
   return {
-    byEmptyaddressindex: new MetricNode(client, `${basePath}/emptyaddressindex`)
+    by: {
+      emptyaddressindex: new MetricNode(client, `${basePath}/emptyaddressindex`)
+    }
   };
 }
 
 /**
  * @template T
+ * @typedef {Object} Indexes30By
+ * @property {MetricNode<T>} loadedaddressindex
+ */
+
+/**
+ * @template T
  * @typedef {Object} Indexes30
- * @property {MetricNode<T>} byLoadedaddressindex
+ * @property {Indexes30By<T>} by
  */
 
 /**
@@ -1480,7 +2419,9 @@ function createIndexes29(client, basePath) {
  */
 function createIndexes30(client, basePath) {
   return {
-    byLoadedaddressindex: new MetricNode(client, `${basePath}/loadedaddressindex`)
+    by: {
+      loadedaddressindex: new MetricNode(client, `${basePath}/loadedaddressindex`)
+    }
   };
 }
 
@@ -1967,6 +2908,47 @@ function createRatio1ySdPattern(client, basePath) {
 }
 
 /**
+ * @typedef {Object} AXbtPattern
+ * @property {BlockCountPattern<StoredF32>} _1dDominance
+ * @property {Indexes<StoredU32>} _1mBlocksMined
+ * @property {Indexes<StoredF32>} _1mDominance
+ * @property {Indexes<StoredU32>} _1wBlocksMined
+ * @property {Indexes<StoredF32>} _1wDominance
+ * @property {Indexes<StoredU32>} _1yBlocksMined
+ * @property {Indexes<StoredF32>} _1yDominance
+ * @property {BlockCountPattern<StoredU32>} blocksMined
+ * @property {UnclaimedRewardsPattern} coinbase
+ * @property {Indexes<StoredU16>} daysSinceBlock
+ * @property {BlockCountPattern<StoredF32>} dominance
+ * @property {FeePattern2} fee
+ * @property {FeePattern2} subsidy
+ */
+
+/**
+ * Create a AXbtPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {AXbtPattern}
+ */
+function createAXbtPattern(client, basePath) {
+  return {
+    _1dDominance: createBlockCountPattern(client, `${basePath}/1d_dominance`),
+    _1mBlocksMined: createIndexes(client, `${basePath}/1m_blocks_mined`),
+    _1mDominance: createIndexes(client, `${basePath}/1m_dominance`),
+    _1wBlocksMined: createIndexes(client, `${basePath}/1w_blocks_mined`),
+    _1wDominance: createIndexes(client, `${basePath}/1w_dominance`),
+    _1yBlocksMined: createIndexes(client, `${basePath}/1y_blocks_mined`),
+    _1yDominance: createIndexes(client, `${basePath}/1y_dominance`),
+    blocksMined: createBlockCountPattern(client, `${basePath}/blocks_mined`),
+    coinbase: createUnclaimedRewardsPattern(client, `${basePath}/coinbase`),
+    daysSinceBlock: createIndexes(client, `${basePath}/days_since_block`),
+    dominance: createBlockCountPattern(client, `${basePath}/dominance`),
+    fee: createFeePattern2(client, `${basePath}/fee`),
+    subsidy: createFeePattern2(client, `${basePath}/subsidy`)
+  };
+}
+
+/**
  * @typedef {Object} ActivePriceRatioPattern
  * @property {Indexes<StoredF32>} ratio
  * @property {Indexes<StoredF32>} ratio1mSma
@@ -2004,47 +2986,6 @@ function createActivePriceRatioPattern(client, basePath) {
     ratioPct98: createIndexes(client, `${basePath}/ratio_pct98`),
     ratioPct99: createIndexes(client, `${basePath}/ratio_pct99`),
     ratioSd: createRatio1ySdPattern(client, `${basePath}/ratio_sd`)
-  };
-}
-
-/**
- * @typedef {Object} AXbtPattern
- * @property {BlockCountPattern<StoredF32>} _1dDominance
- * @property {Indexes<StoredU32>} _1mBlocksMined
- * @property {Indexes<StoredF32>} _1mDominance
- * @property {Indexes<StoredU32>} _1wBlocksMined
- * @property {Indexes<StoredF32>} _1wDominance
- * @property {Indexes<StoredU32>} _1yBlocksMined
- * @property {Indexes<StoredF32>} _1yDominance
- * @property {BlockCountPattern<StoredU32>} blocksMined
- * @property {UnclaimedRewardsPattern} coinbase
- * @property {Indexes<StoredU16>} daysSinceBlock
- * @property {BlockCountPattern<StoredF32>} dominance
- * @property {UnclaimedRewardsPattern} fee
- * @property {UnclaimedRewardsPattern} subsidy
- */
-
-/**
- * Create a AXbtPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {AXbtPattern}
- */
-function createAXbtPattern(client, basePath) {
-  return {
-    _1dDominance: createBlockCountPattern(client, `${basePath}/1d_dominance`),
-    _1mBlocksMined: createIndexes(client, `${basePath}/1m_blocks_mined`),
-    _1mDominance: createIndexes(client, `${basePath}/1m_dominance`),
-    _1wBlocksMined: createIndexes(client, `${basePath}/1w_blocks_mined`),
-    _1wDominance: createIndexes(client, `${basePath}/1w_dominance`),
-    _1yBlocksMined: createIndexes(client, `${basePath}/1y_blocks_mined`),
-    _1yDominance: createIndexes(client, `${basePath}/1y_dominance`),
-    blocksMined: createBlockCountPattern(client, `${basePath}/blocks_mined`),
-    coinbase: createUnclaimedRewardsPattern(client, `${basePath}/coinbase`),
-    daysSinceBlock: createIndexes(client, `${basePath}/days_since_block`),
-    dominance: createBlockCountPattern(client, `${basePath}/dominance`),
-    fee: createUnclaimedRewardsPattern(client, `${basePath}/fee`),
-    subsidy: createUnclaimedRewardsPattern(client, `${basePath}/subsidy`)
   };
 }
 
@@ -2125,6 +3066,39 @@ function createBlockSizePattern(client, basePath) {
 }
 
 /**
+ * @typedef {Object} RelativePattern
+ * @property {Indexes27<StoredF32>} negUnrealizedLossRelToMarketCap
+ * @property {Indexes26<StoredF32>} netUnrealizedPnlRelToMarketCap
+ * @property {Indexes27<StoredF64>} supplyInLossRelToCirculatingSupply
+ * @property {Indexes27<StoredF64>} supplyInLossRelToOwnSupply
+ * @property {Indexes27<StoredF64>} supplyInProfitRelToCirculatingSupply
+ * @property {Indexes27<StoredF64>} supplyInProfitRelToOwnSupply
+ * @property {Indexes<StoredF64>} supplyRelToCirculatingSupply
+ * @property {Indexes27<StoredF32>} unrealizedLossRelToMarketCap
+ * @property {Indexes27<StoredF32>} unrealizedProfitRelToMarketCap
+ */
+
+/**
+ * Create a RelativePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {RelativePattern}
+ */
+function createRelativePattern(client, basePath) {
+  return {
+    negUnrealizedLossRelToMarketCap: createIndexes27(client, `${basePath}/neg_unrealized_loss_rel_to_market_cap`),
+    netUnrealizedPnlRelToMarketCap: createIndexes26(client, `${basePath}/net_unrealized_pnl_rel_to_market_cap`),
+    supplyInLossRelToCirculatingSupply: createIndexes27(client, `${basePath}/supply_in_loss_rel_to_circulating_supply`),
+    supplyInLossRelToOwnSupply: createIndexes27(client, `${basePath}/supply_in_loss_rel_to_own_supply`),
+    supplyInProfitRelToCirculatingSupply: createIndexes27(client, `${basePath}/supply_in_profit_rel_to_circulating_supply`),
+    supplyInProfitRelToOwnSupply: createIndexes27(client, `${basePath}/supply_in_profit_rel_to_own_supply`),
+    supplyRelToCirculatingSupply: createIndexes(client, `${basePath}/supply_rel_to_circulating_supply`),
+    unrealizedLossRelToMarketCap: createIndexes27(client, `${basePath}/unrealized_loss_rel_to_market_cap`),
+    unrealizedProfitRelToMarketCap: createIndexes27(client, `${basePath}/unrealized_profit_rel_to_market_cap`)
+  };
+}
+
+/**
  * @typedef {Object} UnrealizedPattern
  * @property {Indexes26<Dollars>} negUnrealizedLoss
  * @property {Indexes26<Dollars>} netUnrealizedPnl
@@ -2158,35 +3132,35 @@ function createUnrealizedPattern(client, basePath) {
 }
 
 /**
- * @typedef {Object} RelativePattern
- * @property {Indexes27<StoredF32>} negUnrealizedLossRelToMarketCap
- * @property {Indexes26<StoredF32>} netUnrealizedPnlRelToMarketCap
- * @property {Indexes27<StoredF64>} supplyInLossRelToCirculatingSupply
- * @property {Indexes27<StoredF64>} supplyInLossRelToOwnSupply
- * @property {Indexes27<StoredF64>} supplyInProfitRelToCirculatingSupply
- * @property {Indexes27<StoredF64>} supplyInProfitRelToOwnSupply
- * @property {Indexes<StoredF64>} supplyRelToCirculatingSupply
- * @property {Indexes27<StoredF32>} unrealizedLossRelToMarketCap
- * @property {Indexes27<StoredF32>} unrealizedProfitRelToMarketCap
+ * @template T
+ * @typedef {Object} Constant0Pattern
+ * @property {Indexes5<T>} dateindex
+ * @property {Indexes7<T>} decadeindex
+ * @property {Indexes2<T>} height
+ * @property {Indexes8<T>} monthindex
+ * @property {Indexes9<T>} quarterindex
+ * @property {Indexes10<T>} semesterindex
+ * @property {Indexes11<T>} weekindex
+ * @property {Indexes12<T>} yearindex
  */
 
 /**
- * Create a RelativePattern pattern node
+ * Create a Constant0Pattern pattern node
+ * @template T
  * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {RelativePattern}
+ * @param {string} acc - Accumulated metric name
+ * @returns {Constant0Pattern<T>}
  */
-function createRelativePattern(client, basePath) {
+function createConstant0Pattern(client, acc) {
   return {
-    negUnrealizedLossRelToMarketCap: createIndexes27(client, `${basePath}/neg_unrealized_loss_rel_to_market_cap`),
-    netUnrealizedPnlRelToMarketCap: createIndexes26(client, `${basePath}/net_unrealized_pnl_rel_to_market_cap`),
-    supplyInLossRelToCirculatingSupply: createIndexes27(client, `${basePath}/supply_in_loss_rel_to_circulating_supply`),
-    supplyInLossRelToOwnSupply: createIndexes27(client, `${basePath}/supply_in_loss_rel_to_own_supply`),
-    supplyInProfitRelToCirculatingSupply: createIndexes27(client, `${basePath}/supply_in_profit_rel_to_circulating_supply`),
-    supplyInProfitRelToOwnSupply: createIndexes27(client, `${basePath}/supply_in_profit_rel_to_own_supply`),
-    supplyRelToCirculatingSupply: createIndexes(client, `${basePath}/supply_rel_to_circulating_supply`),
-    unrealizedLossRelToMarketCap: createIndexes27(client, `${basePath}/unrealized_loss_rel_to_market_cap`),
-    unrealizedProfitRelToMarketCap: createIndexes27(client, `${basePath}/unrealized_profit_rel_to_market_cap`)
+    dateindex: createIndexes5(client, `/${acc}`),
+    decadeindex: createIndexes7(client, `/${acc}`),
+    height: createIndexes2(client, `/${acc}`),
+    monthindex: createIndexes8(client, `/${acc}`),
+    quarterindex: createIndexes9(client, `/${acc}`),
+    semesterindex: createIndexes10(client, `/${acc}`),
+    weekindex: createIndexes11(client, `/${acc}`),
+    yearindex: createIndexes12(client, `/${acc}`)
   };
 }
 
@@ -2253,39 +3227,6 @@ function createBlockIntervalPattern(client, acc) {
     pct25: createIndexes2(client, `/${acc}_pct25`),
     pct75: createIndexes2(client, `/${acc}_pct75`),
     pct90: createIndexes2(client, `/${acc}_pct90`)
-  };
-}
-
-/**
- * @template T
- * @typedef {Object} Constant0Pattern
- * @property {Indexes5<T>} dateindex
- * @property {Indexes7<T>} decadeindex
- * @property {Indexes2<T>} height
- * @property {Indexes8<T>} monthindex
- * @property {Indexes9<T>} quarterindex
- * @property {Indexes10<T>} semesterindex
- * @property {Indexes11<T>} weekindex
- * @property {Indexes12<T>} yearindex
- */
-
-/**
- * Create a Constant0Pattern pattern node
- * @template T
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {Constant0Pattern<T>}
- */
-function createConstant0Pattern(client, acc) {
-  return {
-    dateindex: createIndexes5(client, `/${acc}`),
-    decadeindex: createIndexes7(client, `/${acc}`),
-    height: createIndexes2(client, `/${acc}`),
-    monthindex: createIndexes8(client, `/${acc}`),
-    quarterindex: createIndexes9(client, `/${acc}`),
-    semesterindex: createIndexes10(client, `/${acc}`),
-    weekindex: createIndexes11(client, `/${acc}`),
-    yearindex: createIndexes12(client, `/${acc}`)
   };
 }
 
@@ -2400,6 +3341,31 @@ function create_10yTo12yPattern(client, basePath) {
 }
 
 /**
+ * @typedef {Object} ActivityPattern
+ * @property {BlockCountPattern<StoredF64>} coinblocksDestroyed
+ * @property {BlockCountPattern<StoredF64>} coindaysDestroyed
+ * @property {Indexes2<Sats>} satblocksDestroyed
+ * @property {Indexes2<Sats>} satdaysDestroyed
+ * @property {FeePattern2} sent
+ */
+
+/**
+ * Create a ActivityPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {ActivityPattern}
+ */
+function createActivityPattern(client, basePath) {
+  return {
+    coinblocksDestroyed: createBlockCountPattern(client, `${basePath}/coinblocks_destroyed`),
+    coindaysDestroyed: createBlockCountPattern(client, `${basePath}/coindays_destroyed`),
+    satblocksDestroyed: createIndexes2(client, `${basePath}/satblocks_destroyed`),
+    satdaysDestroyed: createIndexes2(client, `${basePath}/satdays_destroyed`),
+    sent: createFeePattern2(client, `${basePath}/sent`)
+  };
+}
+
+/**
  * @typedef {Object} SupplyPattern2
  * @property {SupplyPattern} supply
  * @property {ActiveSupplyPattern} supplyHalf
@@ -2425,32 +3391,7 @@ function createSupplyPattern2(client, basePath) {
 }
 
 /**
- * @typedef {Object} ActivityPattern
- * @property {BlockCountPattern<StoredF64>} coinblocksDestroyed
- * @property {BlockCountPattern<StoredF64>} coindaysDestroyed
- * @property {Indexes2<Sats>} satblocksDestroyed
- * @property {Indexes2<Sats>} satdaysDestroyed
- * @property {SentPattern} sent
- */
-
-/**
- * Create a ActivityPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {ActivityPattern}
- */
-function createActivityPattern(client, basePath) {
-  return {
-    coinblocksDestroyed: createBlockCountPattern(client, `${basePath}/coinblocks_destroyed`),
-    coindaysDestroyed: createBlockCountPattern(client, `${basePath}/coindays_destroyed`),
-    satblocksDestroyed: createIndexes2(client, `${basePath}/satblocks_destroyed`),
-    satdaysDestroyed: createIndexes2(client, `${basePath}/satdays_destroyed`),
-    sent: createSentPattern(client, `${basePath}/sent`)
-  };
-}
-
-/**
- * @typedef {Object} SentPattern
+ * @typedef {Object} FeePattern2
  * @property {Indexes2<Sats>} base
  * @property {BlockCountPattern<Bitcoin>} bitcoin
  * @property {BlockCountPattern<Dollars>} dollars
@@ -2458,12 +3399,12 @@ function createActivityPattern(client, basePath) {
  */
 
 /**
- * Create a SentPattern pattern node
+ * Create a FeePattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} basePath
- * @returns {SentPattern}
+ * @returns {FeePattern2}
  */
-function createSentPattern(client, basePath) {
+function createFeePattern2(client, basePath) {
   return {
     base: createIndexes2(client, `${basePath}/base`),
     bitcoin: createBlockCountPattern(client, `${basePath}/bitcoin`),
@@ -2492,48 +3433,6 @@ function createSupplyPattern(client, basePath) {
     bitcoin: createIndexes(client, `${basePath}/bitcoin`),
     dollars: createIndexes(client, `${basePath}/dollars`),
     sats: createIndexes(client, `${basePath}/sats`)
-  };
-}
-
-/**
- * @typedef {Object} CoinbasePattern
- * @property {BitcoinPattern<Bitcoin>} bitcoin
- * @property {BitcoinPattern<Dollars>} dollars
- * @property {BitcoinPattern<Sats>} sats
- */
-
-/**
- * Create a CoinbasePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {CoinbasePattern}
- */
-function createCoinbasePattern(client, basePath) {
-  return {
-    bitcoin: createBitcoinPattern(client, `${basePath}/bitcoin`),
-    dollars: createBitcoinPattern(client, `${basePath}/dollars`),
-    sats: createBitcoinPattern(client, `${basePath}/sats`)
-  };
-}
-
-/**
- * @typedef {Object} ActiveSupplyPattern
- * @property {Indexes3<Bitcoin>} bitcoin
- * @property {Indexes3<Dollars>} dollars
- * @property {Indexes3<Sats>} sats
- */
-
-/**
- * Create a ActiveSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {ActiveSupplyPattern}
- */
-function createActiveSupplyPattern(client, basePath) {
-  return {
-    bitcoin: createIndexes3(client, `${basePath}/bitcoin`),
-    dollars: createIndexes3(client, `${basePath}/dollars`),
-    sats: createIndexes3(client, `${basePath}/sats`)
   };
 }
 
@@ -2580,6 +3479,48 @@ function createPricePaidPattern2(client, basePath) {
 }
 
 /**
+ * @typedef {Object} CoinbasePattern
+ * @property {BitcoinPattern<Bitcoin>} bitcoin
+ * @property {BitcoinPattern<Dollars>} dollars
+ * @property {BitcoinPattern<Sats>} sats
+ */
+
+/**
+ * Create a CoinbasePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {CoinbasePattern}
+ */
+function createCoinbasePattern(client, basePath) {
+  return {
+    bitcoin: createBitcoinPattern(client, `${basePath}/bitcoin`),
+    dollars: createBitcoinPattern(client, `${basePath}/dollars`),
+    sats: createBitcoinPattern(client, `${basePath}/sats`)
+  };
+}
+
+/**
+ * @typedef {Object} ActiveSupplyPattern
+ * @property {Indexes3<Bitcoin>} bitcoin
+ * @property {Indexes3<Dollars>} dollars
+ * @property {Indexes3<Sats>} sats
+ */
+
+/**
+ * Create a ActiveSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {ActiveSupplyPattern}
+ */
+function createActiveSupplyPattern(client, basePath) {
+  return {
+    bitcoin: createIndexes3(client, `${basePath}/bitcoin`),
+    dollars: createIndexes3(client, `${basePath}/dollars`),
+    sats: createIndexes3(client, `${basePath}/sats`)
+  };
+}
+
+/**
  * @template T
  * @typedef {Object} BlockCountPattern
  * @property {Indexes2<T>} base
@@ -2603,25 +3544,6 @@ function createBlockCountPattern(client, basePath) {
 }
 
 /**
- * @typedef {Object} SupplyValuePattern
- * @property {Indexes2<Bitcoin>} bitcoin
- * @property {Indexes2<Dollars>} dollars
- */
-
-/**
- * Create a SupplyValuePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {SupplyValuePattern}
- */
-function createSupplyValuePattern(client, basePath) {
-  return {
-    bitcoin: createIndexes2(client, `${basePath}/bitcoin`),
-    dollars: createIndexes2(client, `${basePath}/dollars`)
-  };
-}
-
-/**
  * @typedef {Object} PricePaidPattern
  * @property {Indexes3<Dollars>} maxPricePaid
  * @property {Indexes3<Dollars>} minPricePaid
@@ -2641,25 +3563,6 @@ function createPricePaidPattern(client, basePath) {
 }
 
 /**
- * @typedef {Object} SatsPattern
- * @property {Indexes3<Sats>} cumulative
- * @property {Indexes4<Sats>} sum
- */
-
-/**
- * Create a SatsPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} basePath
- * @returns {SatsPattern}
- */
-function createSatsPattern(client, basePath) {
-  return {
-    cumulative: createIndexes3(client, `${basePath}/cumulative`),
-    sum: createIndexes4(client, `${basePath}/sum`)
-  };
-}
-
-/**
  * @typedef {Object} _1dReturns1mSdPattern
  * @property {Indexes<StoredF32>} sd
  * @property {Indexes<StoredF32>} sma
@@ -2675,6 +3578,44 @@ function create_1dReturns1mSdPattern(client, acc) {
   return {
     sd: createIndexes(client, `/${acc}_sd`),
     sma: createIndexes(client, `/${acc}_sma`)
+  };
+}
+
+/**
+ * @typedef {Object} SupplyValuePattern
+ * @property {Indexes2<Bitcoin>} bitcoin
+ * @property {Indexes2<Dollars>} dollars
+ */
+
+/**
+ * Create a SupplyValuePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {SupplyValuePattern}
+ */
+function createSupplyValuePattern(client, basePath) {
+  return {
+    bitcoin: createIndexes2(client, `${basePath}/bitcoin`),
+    dollars: createIndexes2(client, `${basePath}/dollars`)
+  };
+}
+
+/**
+ * @typedef {Object} SatsPattern
+ * @property {Indexes3<Sats>} cumulative
+ * @property {Indexes4<Sats>} sum
+ */
+
+/**
+ * Create a SatsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} basePath
+ * @returns {SatsPattern}
+ */
+function createSatsPattern(client, basePath) {
+  return {
+    cumulative: createIndexes3(client, `${basePath}/cumulative`),
+    sum: createIndexes4(client, `${basePath}/sum`)
   };
 }
 

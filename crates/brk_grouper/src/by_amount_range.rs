@@ -1,10 +1,11 @@
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Range};
 
 use brk_traversable::Traversable;
 use brk_types::Sats;
 use rayon::prelude::*;
+use serde::Serialize;
 
-use super::{AmountFilter, Filter};
+use super::{AmountFilter, CohortName, Filter};
 
 /// Bucket index for amount ranges. Use for cheap comparisons and direct lookups.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -57,7 +58,108 @@ pub fn amounts_in_different_buckets(a: Sats, b: Sats) -> bool {
     AmountBucket::from(a) != AmountBucket::from(b)
 }
 
-#[derive(Debug, Default, Clone, Traversable)]
+/// Amount range bounds
+pub const AMOUNT_RANGE_BOUNDS: ByAmountRange<Range<Sats>> = ByAmountRange {
+    _0sats: Sats::ZERO..Sats::_1,
+    _1sat_to_10sats: Sats::_1..Sats::_10,
+    _10sats_to_100sats: Sats::_10..Sats::_100,
+    _100sats_to_1k_sats: Sats::_100..Sats::_1K,
+    _1k_sats_to_10k_sats: Sats::_1K..Sats::_10K,
+    _10k_sats_to_100k_sats: Sats::_10K..Sats::_100K,
+    _100k_sats_to_1m_sats: Sats::_100K..Sats::_1M,
+    _1m_sats_to_10m_sats: Sats::_1M..Sats::_10M,
+    _10m_sats_to_1btc: Sats::_10M..Sats::_1BTC,
+    _1btc_to_10btc: Sats::_1BTC..Sats::_10BTC,
+    _10btc_to_100btc: Sats::_10BTC..Sats::_100BTC,
+    _100btc_to_1k_btc: Sats::_100BTC..Sats::_1K_BTC,
+    _1k_btc_to_10k_btc: Sats::_1K_BTC..Sats::_10K_BTC,
+    _10k_btc_to_100k_btc: Sats::_10K_BTC..Sats::_100K_BTC,
+    _100k_btc_or_more: Sats::_100K_BTC..Sats::MAX,
+};
+
+/// Amount range names
+pub const AMOUNT_RANGE_NAMES: ByAmountRange<CohortName> = ByAmountRange {
+    _0sats: CohortName::new("with_0sats", "0 sats", "0 Sats"),
+    _1sat_to_10sats: CohortName::new("above_1sat_under_10sats", "1-10 sats", "1 to 10 Sats"),
+    _10sats_to_100sats: CohortName::new(
+        "above_10sats_under_100sats",
+        "10-100 sats",
+        "10 to 100 Sats",
+    ),
+    _100sats_to_1k_sats: CohortName::new(
+        "above_100sats_under_1k_sats",
+        "100-1k sats",
+        "100 to 1K Sats",
+    ),
+    _1k_sats_to_10k_sats: CohortName::new(
+        "above_1k_sats_under_10k_sats",
+        "1k-10k sats",
+        "1K to 10K Sats",
+    ),
+    _10k_sats_to_100k_sats: CohortName::new(
+        "above_10k_sats_under_100k_sats",
+        "10k-100k sats",
+        "10K to 100K Sats",
+    ),
+    _100k_sats_to_1m_sats: CohortName::new(
+        "above_100k_sats_under_1m_sats",
+        "100k-1M sats",
+        "100K to 1M Sats",
+    ),
+    _1m_sats_to_10m_sats: CohortName::new(
+        "above_1m_sats_under_10m_sats",
+        "1M-10M sats",
+        "1M to 10M Sats",
+    ),
+    _10m_sats_to_1btc: CohortName::new("above_10m_sats_under_1btc", "0.1-1 BTC", "0.1 to 1 BTC"),
+    _1btc_to_10btc: CohortName::new("above_1btc_under_10btc", "1-10 BTC", "1 to 10 BTC"),
+    _10btc_to_100btc: CohortName::new("above_10btc_under_100btc", "10-100 BTC", "10 to 100 BTC"),
+    _100btc_to_1k_btc: CohortName::new("above_100btc_under_1k_btc", "100-1k BTC", "100 to 1K BTC"),
+    _1k_btc_to_10k_btc: CohortName::new(
+        "above_1k_btc_under_10k_btc",
+        "1k-10k BTC",
+        "1K to 10K BTC",
+    ),
+    _10k_btc_to_100k_btc: CohortName::new(
+        "above_10k_btc_under_100k_btc",
+        "10k-100k BTC",
+        "10K to 100K BTC",
+    ),
+    _100k_btc_or_more: CohortName::new("above_100k_btc", "100k+ BTC", "100K+ BTC"),
+};
+
+/// Amount range filters
+pub const AMOUNT_RANGE_FILTERS: ByAmountRange<Filter> = ByAmountRange {
+    _0sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._0sats)),
+    _1sat_to_10sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1sat_to_10sats)),
+    _10sats_to_100sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10sats_to_100sats)),
+    _100sats_to_1k_sats: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._100sats_to_1k_sats,
+    )),
+    _1k_sats_to_10k_sats: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._1k_sats_to_10k_sats,
+    )),
+    _10k_sats_to_100k_sats: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._10k_sats_to_100k_sats,
+    )),
+    _100k_sats_to_1m_sats: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._100k_sats_to_1m_sats,
+    )),
+    _1m_sats_to_10m_sats: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._1m_sats_to_10m_sats,
+    )),
+    _10m_sats_to_1btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10m_sats_to_1btc)),
+    _1btc_to_10btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1btc_to_10btc)),
+    _10btc_to_100btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10btc_to_100btc)),
+    _100btc_to_1k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._100btc_to_1k_btc)),
+    _1k_btc_to_10k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1k_btc_to_10k_btc)),
+    _10k_btc_to_100k_btc: Filter::Amount(AmountFilter::Range(
+        AMOUNT_RANGE_BOUNDS._10k_btc_to_100k_btc,
+    )),
+    _100k_btc_or_more: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._100k_btc_or_more)),
+};
+
+#[derive(Debug, Default, Clone, Traversable, Serialize)]
 pub struct ByAmountRange<T> {
     pub _0sats: T,
     pub _1sat_to_10sats: T,
@@ -76,48 +178,82 @@ pub struct ByAmountRange<T> {
     pub _100k_btc_or_more: T,
 }
 
+impl ByAmountRange<CohortName> {
+    pub const fn names() -> &'static Self {
+        &AMOUNT_RANGE_NAMES
+    }
+}
+
 impl<T> ByAmountRange<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
+        let f = AMOUNT_RANGE_FILTERS;
+        let n = AMOUNT_RANGE_NAMES;
         Self {
-            _0sats: create(Filter::Amount(AmountFilter::Range(Sats::ZERO..Sats::_1))),
-            _1sat_to_10sats: create(Filter::Amount(AmountFilter::Range(Sats::_1..Sats::_10))),
-            _10sats_to_100sats: create(Filter::Amount(AmountFilter::Range(Sats::_10..Sats::_100))),
-            _100sats_to_1k_sats: create(Filter::Amount(AmountFilter::Range(Sats::_100..Sats::_1K))),
-            _1k_sats_to_10k_sats: create(Filter::Amount(AmountFilter::Range(
-                Sats::_1K..Sats::_10K,
-            ))),
-            _10k_sats_to_100k_sats: create(Filter::Amount(AmountFilter::Range(
-                Sats::_10K..Sats::_100K,
-            ))),
-            _100k_sats_to_1m_sats: create(Filter::Amount(AmountFilter::Range(
-                Sats::_100K..Sats::_1M,
-            ))),
-            _1m_sats_to_10m_sats: create(Filter::Amount(AmountFilter::Range(
-                Sats::_1M..Sats::_10M,
-            ))),
-            _10m_sats_to_1btc: create(Filter::Amount(AmountFilter::Range(Sats::_10M..Sats::_1BTC))),
-            _1btc_to_10btc: create(Filter::Amount(AmountFilter::Range(
-                Sats::_1BTC..Sats::_10BTC,
-            ))),
-            _10btc_to_100btc: create(Filter::Amount(AmountFilter::Range(
-                Sats::_10BTC..Sats::_100BTC,
-            ))),
-            _100btc_to_1k_btc: create(Filter::Amount(AmountFilter::Range(
-                Sats::_100BTC..Sats::_1K_BTC,
-            ))),
-            _1k_btc_to_10k_btc: create(Filter::Amount(AmountFilter::Range(
-                Sats::_1K_BTC..Sats::_10K_BTC,
-            ))),
-            _10k_btc_to_100k_btc: create(Filter::Amount(AmountFilter::Range(
-                Sats::_10K_BTC..Sats::_100K_BTC,
-            ))),
-            _100k_btc_or_more: create(Filter::Amount(AmountFilter::Range(
-                Sats::_100K_BTC..Sats::MAX,
-            ))),
+            _0sats: create(f._0sats.clone(), n._0sats.id),
+            _1sat_to_10sats: create(f._1sat_to_10sats.clone(), n._1sat_to_10sats.id),
+            _10sats_to_100sats: create(f._10sats_to_100sats.clone(), n._10sats_to_100sats.id),
+            _100sats_to_1k_sats: create(f._100sats_to_1k_sats.clone(), n._100sats_to_1k_sats.id),
+            _1k_sats_to_10k_sats: create(f._1k_sats_to_10k_sats.clone(), n._1k_sats_to_10k_sats.id),
+            _10k_sats_to_100k_sats: create(
+                f._10k_sats_to_100k_sats.clone(),
+                n._10k_sats_to_100k_sats.id,
+            ),
+            _100k_sats_to_1m_sats: create(
+                f._100k_sats_to_1m_sats.clone(),
+                n._100k_sats_to_1m_sats.id,
+            ),
+            _1m_sats_to_10m_sats: create(f._1m_sats_to_10m_sats.clone(), n._1m_sats_to_10m_sats.id),
+            _10m_sats_to_1btc: create(f._10m_sats_to_1btc.clone(), n._10m_sats_to_1btc.id),
+            _1btc_to_10btc: create(f._1btc_to_10btc.clone(), n._1btc_to_10btc.id),
+            _10btc_to_100btc: create(f._10btc_to_100btc.clone(), n._10btc_to_100btc.id),
+            _100btc_to_1k_btc: create(f._100btc_to_1k_btc.clone(), n._100btc_to_1k_btc.id),
+            _1k_btc_to_10k_btc: create(f._1k_btc_to_10k_btc.clone(), n._1k_btc_to_10k_btc.id),
+            _10k_btc_to_100k_btc: create(f._10k_btc_to_100k_btc.clone(), n._10k_btc_to_100k_btc.id),
+            _100k_btc_or_more: create(f._100k_btc_or_more.clone(), n._100k_btc_or_more.id),
         }
+    }
+
+    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
+    where
+        F: FnMut(Filter, &'static str) -> Result<T, E>,
+    {
+        let f = AMOUNT_RANGE_FILTERS;
+        let n = AMOUNT_RANGE_NAMES;
+        Ok(Self {
+            _0sats: create(f._0sats.clone(), n._0sats.id)?,
+            _1sat_to_10sats: create(f._1sat_to_10sats.clone(), n._1sat_to_10sats.id)?,
+            _10sats_to_100sats: create(f._10sats_to_100sats.clone(), n._10sats_to_100sats.id)?,
+            _100sats_to_1k_sats: create(f._100sats_to_1k_sats.clone(), n._100sats_to_1k_sats.id)?,
+            _1k_sats_to_10k_sats: create(
+                f._1k_sats_to_10k_sats.clone(),
+                n._1k_sats_to_10k_sats.id,
+            )?,
+            _10k_sats_to_100k_sats: create(
+                f._10k_sats_to_100k_sats.clone(),
+                n._10k_sats_to_100k_sats.id,
+            )?,
+            _100k_sats_to_1m_sats: create(
+                f._100k_sats_to_1m_sats.clone(),
+                n._100k_sats_to_1m_sats.id,
+            )?,
+            _1m_sats_to_10m_sats: create(
+                f._1m_sats_to_10m_sats.clone(),
+                n._1m_sats_to_10m_sats.id,
+            )?,
+            _10m_sats_to_1btc: create(f._10m_sats_to_1btc.clone(), n._10m_sats_to_1btc.id)?,
+            _1btc_to_10btc: create(f._1btc_to_10btc.clone(), n._1btc_to_10btc.id)?,
+            _10btc_to_100btc: create(f._10btc_to_100btc.clone(), n._10btc_to_100btc.id)?,
+            _100btc_to_1k_btc: create(f._100btc_to_1k_btc.clone(), n._100btc_to_1k_btc.id)?,
+            _1k_btc_to_10k_btc: create(f._1k_btc_to_10k_btc.clone(), n._1k_btc_to_10k_btc.id)?,
+            _10k_btc_to_100k_btc: create(
+                f._10k_btc_to_100k_btc.clone(),
+                n._10k_btc_to_100k_btc.id,
+            )?,
+            _100k_btc_or_more: create(f._100k_btc_or_more.clone(), n._100k_btc_or_more.id)?,
+        })
     }
 
     #[inline(always)]

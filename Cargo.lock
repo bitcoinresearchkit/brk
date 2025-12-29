@@ -576,10 +576,12 @@ dependencies = [
 name = "brk_binder"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "brk_grouper",
  "brk_query",
  "brk_types",
  "oas3",
  "schemars",
+ "serde",
  "serde_json",
  "vecdb",
 ]
@@ -628,6 +630,7 @@ dependencies = [
 name = "brk_client"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "brk_grouper",
  "brk_types",
  "minreq",
  "serde",
@@ -698,6 +701,7 @@ dependencies = [
  "brk_traversable",
  "brk_types",
  "rayon",
+ "serde",
  "vecdb",
 ]
 

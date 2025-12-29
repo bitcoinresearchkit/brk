@@ -21,7 +21,9 @@ pub fn generate_rust_client(
     writeln!(output, "// Auto-generated BRK Rust client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
     writeln!(output, "#![allow(non_camel_case_types)]").unwrap();
-    writeln!(output, "#![allow(dead_code)]\n").unwrap();
+    writeln!(output, "#![allow(dead_code)]").unwrap();
+    writeln!(output, "#![allow(unused_variables)]").unwrap();
+    writeln!(output, "#![allow(clippy::useless_format)]\n").unwrap();
 
     generate_imports(&mut output);
     generate_base_client(&mut output);
@@ -41,7 +43,8 @@ fn generate_imports(output: &mut String) {
         output,
         r#"use std::sync::Arc;
 use serde::de::DeserializeOwned;
-use brk_types::*;
+pub use brk_grouper::*;
+pub use brk_types::*;
 
 "#
     )

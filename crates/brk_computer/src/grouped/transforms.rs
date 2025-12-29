@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Close, Dollars, High, Sats, StoredF32, StoredF64, StoredU32};
+use brk_types::{Bitcoin, Close, Dollars, Sats, StoredF32, StoredF64, StoredU32};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 /// (Dollars, Dollars) -> Dollars addition
@@ -317,21 +317,6 @@ impl BinaryTransform<Close<Dollars>, Dollars, StoredF32> for PercentageDiffClose
             StoredF32::default()
         } else {
             StoredF32::from((**close / *base - 1.0) * 100.0)
-        }
-    }
-}
-
-/// (High<Dollars>, Dollars) -> StoredF32 percentage difference ((a/b - 1) × 100)
-/// Used for drawdown calculation from high prices
-pub struct PercentageDiffHighDollars;
-
-impl BinaryTransform<High<Dollars>, Dollars, StoredF32> for PercentageDiffHighDollars {
-    #[inline(always)]
-    fn apply(high: High<Dollars>, base: Dollars) -> StoredF32 {
-        if base == Dollars::ZERO {
-            StoredF32::default()
-        } else {
-            StoredF32::from((**high / *base - 1.0) * 100.0)
         }
     }
 }

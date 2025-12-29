@@ -8,6 +8,7 @@ use crate::{indexes, price};
 pub struct ImportConfig<'a> {
     pub db: &'a Database,
     pub filter: Filter,
+    pub full_name: &'a str,
     pub context: CohortContext,
     pub version: Version,
     pub indexes: &'a indexes::Vecs,
@@ -37,11 +38,10 @@ impl<'a> ImportConfig<'a> {
 
     /// Get full metric name with filter prefix.
     pub fn name(&self, suffix: &str) -> String {
-        let prefix = self.filter.to_full_name(self.context);
-        if prefix.is_empty() {
+        if self.full_name.is_empty() {
             suffix.to_string()
         } else {
-            format!("{prefix}_{suffix}")
+            format!("{}_{suffix}", self.full_name)
         }
     }
 }

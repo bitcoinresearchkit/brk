@@ -16,13 +16,24 @@ pub struct AddressGroups<T> {
 impl<T> AddressGroups<T> {
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(Filter, &'static str) -> T,
     {
         Self {
             ge_amount: ByGreatEqualAmount::new(&mut create),
             amount_range: ByAmountRange::new(&mut create),
             lt_amount: ByLowerThanAmount::new(&mut create),
         }
+    }
+
+    pub fn try_new<F, E>(create: &F) -> Result<Self, E>
+    where
+        F: Fn(Filter, &'static str) -> Result<T, E>,
+    {
+        Ok(Self {
+            ge_amount: ByGreatEqualAmount::try_new(create)?,
+            amount_range: ByAmountRange::try_new(create)?,
+            lt_amount: ByLowerThanAmount::try_new(create)?,
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

@@ -50,9 +50,11 @@ impl AddressCohortVecs {
     ///
     /// `all_supply` is the supply metrics from the "all" cohort, used as global
     /// sources for `*_rel_to_market_cap` ratios. Pass `None` if not available.
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
         filter: Filter,
+        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
@@ -60,11 +62,12 @@ impl AddressCohortVecs {
         all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
-        let full_name = filter.to_full_name(CohortContext::Address);
+        let full_name = CohortContext::Address.full_name(&filter, name);
 
         let cfg = ImportConfig {
             db,
             filter,
+            full_name: &full_name,
             context: CohortContext::Address,
             version,
             indexes,
