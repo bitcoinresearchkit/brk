@@ -48,14 +48,12 @@ impl ClientOutputPaths {
 }
 
 mod javascript;
-mod js;
 mod openapi;
 mod python;
 mod rust;
 mod types;
 
 pub use javascript::*;
-pub use js::*;
 pub use openapi::*;
 pub use python::*;
 pub use rust::*;

@@ -111,6 +111,7 @@ impl Vecs {
                     v0,
                     indexes,
                     true,
+                    price,
                 )?
             };
         }

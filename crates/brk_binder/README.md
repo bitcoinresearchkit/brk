@@ -22,7 +22,7 @@ use brk_binder::{generate_clients, ClientOutputPaths};
 let paths = ClientOutputPaths::new()
     .rust("crates/brk_client/src/lib.rs")
     .javascript("modules/brk-client/index.js")
-    .python("packages/brk_client/__init__.py");
+    .python("packages/brk_client/brk_client/__init__.py");
 
 generate_clients(&vecs, &openapi_json, &paths)?;
 ```

@@ -143,7 +143,7 @@ impl Server {
         let output_paths = brk_binder::ClientOutputPaths::new()
             .rust(workspace_root.join("crates/brk_client/src/lib.rs"))
             .javascript(workspace_root.join("modules/brk-client/index.js"))
-            .python(workspace_root.join("packages/brk_client/__init__.py"));
+            .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
 
         let openapi_json = Arc::new(serde_json::to_string(&openapi).unwrap());
         let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {

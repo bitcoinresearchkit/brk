@@ -258,6 +258,7 @@ impl RealizedMetrics {
                 cfg.version + v0,
                 cfg.indexes,
                 extended,
+                cfg.price,
             )?,
             indexes_to_realized_price,
             indexes_to_realized_cap_rel_to_own_market_cap: extended

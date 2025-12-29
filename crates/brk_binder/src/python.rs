@@ -586,13 +586,13 @@ fn generate_parameterized_python_field(
     // For leaf fields, construct the metric path based on position
     let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
         match pos {
-            FieldNamePosition::Append(suffix) => format!("f'/{{acc}}{}'", suffix),
-            FieldNamePosition::Prepend(prefix) => format!("f'/{}{{acc}}'", prefix),
-            FieldNamePosition::Identity => "f'/{acc}'".to_string(),
-            FieldNamePosition::SetBase(base) => format!("'/{}'", base),
+            FieldNamePosition::Append(suffix) => format!("f'{{acc}}{}'", suffix),
+            FieldNamePosition::Prepend(prefix) => format!("f'{}{{acc}}'", prefix),
+            FieldNamePosition::Identity => "acc".to_string(),
+            FieldNamePosition::SetBase(base) => format!("'{}'", base),
         }
     } else {
-        format!("f'/{{acc}}_{}'", field.name)
+        format!("f'{{acc}}_{}'", field.name)
     };
 
     if metadata.field_uses_accessor(field) {
@@ -604,6 +604,7 @@ fn generate_parameterized_python_field(
         )
         .unwrap();
     } else {
+        // Direct MetricNode without indexes - pass metric name
         writeln!(
             output,
             "        self.{}: {} = MetricNode(client, {})",
@@ -625,7 +626,7 @@ fn generate_tree_path_python_field(
     if metadata.is_pattern_type(&field.rust_type) {
         writeln!(
             output,
-            "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+            "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
             field_name, py_type, field.rust_type, field.name
         )
         .unwrap();
@@ -633,14 +634,14 @@ fn generate_tree_path_python_field(
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
-            "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+            "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
             field_name, py_type, accessor.name, field.name
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "        self.{}: {} = MetricNode(client, f'{{base_path}}/{}')",
+            "        self.{}: {} = MetricNode(client, f'{{base_path}}_{}')",
             field_name, py_type, field.name
         )
         .unwrap();
@@ -784,7 +785,7 @@ fn generate_tree_class(
             } else {
                 writeln!(
                     output,
-                    "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                    "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
                     field_name_py, py_type, field.rust_type, field.name
                 )
                 .unwrap();
@@ -793,7 +794,7 @@ fn generate_tree_class(
             let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
             writeln!(
                 output,
-                "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
                 field_name_py, py_type, accessor.name, field.name
             )
             .unwrap();
@@ -801,15 +802,15 @@ fn generate_tree_class(
             // Non-pattern branch - instantiate the nested class
             writeln!(
                 output,
-                "        self.{}: {} = {}(client, f'{{base_path}}/{}')",
+                "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
                 field_name_py, py_type, field.rust_type, field.name
             )
             .unwrap();
         } else {
-            // Leaf - use MetricNode with base_path
+            // Leaf metric - direct MetricNode with full API path
             writeln!(
                 output,
-                "        self.{}: {} = MetricNode(client, f'{{base_path}}/{}')",
+                "        self.{}: {} = MetricNode(client, f'{{base_path}}_{}')",
                 field_name_py, py_type, field.name
             )
             .unwrap();
@@ -966,14 +967,16 @@ fn build_method_params(endpoint: &Endpoint) -> String {
     let mut params = Vec::new();
     for param in &endpoint.path_params {
         let safe_name = escape_python_keyword(&param.name);
-        params.push(format!(", {}: str", safe_name));
+        let py_type = js_type_to_python(&param.param_type);
+        params.push(format!(", {}: {}", safe_name, py_type));
     }
     for param in &endpoint.query_params {
         let safe_name = escape_python_keyword(&param.name);
+        let py_type = js_type_to_python(&param.param_type);
         if param.required {
-            params.push(format!(", {}: str", safe_name));
+            params.push(format!(", {}: {}", safe_name, py_type));
         } else {
-            params.push(format!(", {}: Optional[str] = None", safe_name));
+            params.push(format!(", {}: Optional[{}] = None", safe_name, py_type));
         }
     }
     params.join("")

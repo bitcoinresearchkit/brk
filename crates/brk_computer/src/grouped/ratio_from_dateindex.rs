@@ -55,6 +55,7 @@ impl ComputedRatioVecsFromDateIndex {
         version: Version,
         indexes: &indexes::Vecs,
         extended: bool,
+        price_vecs: Option<&price::Vecs>,
     ) -> Result<Self> {
         let opts = VecBuilderOptions::default().add_last();
         let v = version + VERSION;
@@ -88,7 +89,7 @@ impl ComputedRatioVecsFromDateIndex {
                     v,
                     indexes,
                     StandardDeviationVecsOptions::default().add_all(),
-                    price.as_ref(),
+                    price_vecs,
                 )
                 .unwrap()
             };

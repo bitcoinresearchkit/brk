@@ -65,6 +65,7 @@ impl Vecs {
                     version + v0,
                     indexes,
                     true,
+                    price,
                 )?
             };
         }

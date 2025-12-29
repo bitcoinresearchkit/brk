@@ -45,19 +45,27 @@ impl Endpoint {
         if let Some(op_id) = &self.operation_id {
             return op_id.clone();
         }
-        // Generate from path: /api/blocks/{hash} -> "get_api_blocks_by_hash"
-        let parts: Vec<String> = self
-            .path
-            .split('/')
-            .filter(|s| !s.is_empty())
-            .map(|segment| {
-                if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                    format!("by_{}", param)
-                } else {
-                    segment.to_string()
+        // Generate from path: /api/block/{hash} -> "get_block"
+        // Skip "api" prefix, convert hyphens to underscores, avoid redundant param names
+        let mut parts: Vec<String> = Vec::new();
+        let mut prev_segment = "";
+
+        for segment in self.path.split('/').filter(|s| !s.is_empty()) {
+            if segment == "api" {
+                continue;
+            }
+            if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                // Only add "by_{param}" if the previous segment doesn't already contain the param name
+                let prev_normalized = prev_segment.replace('-', "_");
+                if !prev_normalized.ends_with(param) {
+                    parts.push(format!("by_{}", param));
                 }
-            })
-            .collect();
+            } else {
+                let normalized = segment.replace('-', "_");
+                parts.push(normalized);
+                prev_segment = segment;
+            }
+        }
         format!("get_{}", parts.join("_"))
     }
 }
@@ -201,12 +209,24 @@ fn extract_parameters(operation: &Operation, location: ParameterIn) -> Vec<Param
         .parameters
         .iter()
         .filter_map(|p| match p {
-            ObjectOrReference::Object(param) if param.location == location => Some(Parameter {
-                name: param.name.clone(),
-                required: param.required.unwrap_or(false),
-                param_type: "string".to_string(), // Simplified
-                description: param.description.clone(),
-            }),
+            ObjectOrReference::Object(param) if param.location == location => {
+                let param_type = param
+                    .schema
+                    .as_ref()
+                    .and_then(|s| match s {
+                        ObjectOrReference::Ref { ref_path, .. } => {
+                            ref_path.rsplit('/').next().map(|s| s.to_string())
+                        }
+                        ObjectOrReference::Object(obj_schema) => schema_to_type_name(obj_schema),
+                    })
+                    .unwrap_or_else(|| "string".to_string());
+                Some(Parameter {
+                    name: param.name.clone(),
+                    required: param.required.unwrap_or(false),
+                    param_type,
+                    description: param.description.clone(),
+                })
+            }
             _ => None,
         })
         .collect()
@@ -242,6 +262,8 @@ fn schema_type_from_schema(schema: &Schema) -> Option<String> {
         Schema::Object(obj_or_ref) => match obj_or_ref.as_ref() {
             ObjectOrReference::Object(obj_schema) => schema_to_type_name(obj_schema),
             ObjectOrReference::Ref { ref_path, .. } => {
+                // Return the type name as-is (e.g., "Height", "Address")
+                // These should have definitions generated from schemas
                 ref_path.rsplit('/').next().map(|s| s.to_string())
             }
         },

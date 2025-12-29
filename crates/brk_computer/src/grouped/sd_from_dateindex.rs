@@ -2,16 +2,16 @@ use std::mem;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Date, DateIndex, Dollars, StoredF32, Version};
+use brk_types::{Close, Date, DateIndex, Dollars, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, CollectableVec, Database, EagerVec, Exit, GenericStoredVec, IterableVec,
     PcoVec, VecIndex,
 };
 
-use crate::{Indexes, grouped::source::Source, indexes, utils::OptionExt};
+use crate::{Indexes, grouped::source::Source, indexes, price, utils::OptionExt};
 
 use super::{
-    ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, PriceTimesRatio, VecBuilderOptions,
+    ClosePriceTimesRatio, ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, VecBuilderOptions,
 };
 
 #[derive(Clone, Traversable)]
@@ -37,19 +37,19 @@ pub struct ComputedStandardDeviationVecsFromDateIndex {
     pub m2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
     pub m3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
 
-    pub _0sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub p3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
-    pub m3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Dollars, StoredF32>>,
+    pub _0sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub p3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub m3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -106,7 +106,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
-        price: Option<&ComputedVecsFromDateIndex<Dollars>>,
+        price_vecs: Option<&price::Vecs>,
     ) -> Result<Self> {
         let opts = VecBuilderOptions::default().add_last();
         let version = parent_version + Version::ONE;
@@ -143,11 +143,12 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         // Create lazy USD vecs from price and band sources
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
-                price
+                price_vecs
+                    .map(|p| &p.timeindexes_to_price_close)
                     .zip($band.as_ref())
                     .filter(|_| options.price_bands())
                     .map(|(p, b)| {
-                        LazyVecsFrom2FromDateIndex::from_computed::<PriceTimesRatio>(
+                        LazyVecsFrom2FromDateIndex::from_computed::<ClosePriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             version,
                             p,

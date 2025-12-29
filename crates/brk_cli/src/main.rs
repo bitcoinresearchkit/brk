@@ -9,7 +9,6 @@ use std::{
 };
 
 use brk_alloc::Mimalloc;
-use brk_binder::generate_js_files;
 use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_error::Result;
@@ -118,8 +117,6 @@ pub fn run() -> color_eyre::Result<()> {
                 websites_path = downloaded_websites_path;
                 modules_path = downloaded_modules_path;
             }
-
-            generate_js_files(query.inner(), &modules_path)?;
 
             Some(
                 bundle(

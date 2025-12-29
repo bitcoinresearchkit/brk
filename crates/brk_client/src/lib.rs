@@ -680,7 +680,7 @@ impl RealizedPattern3 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct Ratio1ySdPattern2 {
+pub struct Ratio1ySdPattern {
     pub _0sd_usd: Indexes<Dollars>,
     pub m0_5sd: Indexes<StoredF32>,
     pub m0_5sd_usd: Indexes<Dollars>,
@@ -711,7 +711,7 @@ pub struct Ratio1ySdPattern2 {
     pub zscore: Indexes<StoredF32>,
 }
 
-impl Ratio1ySdPattern2 {
+impl Ratio1ySdPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             _0sd_usd: Indexes::new(client.clone(), &format!("{base_path}/_0sd_usd")),
@@ -874,9 +874,9 @@ pub struct Price13dEmaPattern {
     pub ratio: Indexes<StoredF32>,
     pub ratio_1m_sma: Indexes<StoredF32>,
     pub ratio_1w_sma: Indexes<StoredF32>,
-    pub ratio_1y_sd: Ratio1ySdPattern2,
-    pub ratio_2y_sd: Ratio1ySdPattern2,
-    pub ratio_4y_sd: Ratio1ySdPattern2,
+    pub ratio_1y_sd: Ratio1ySdPattern,
+    pub ratio_2y_sd: Ratio1ySdPattern,
+    pub ratio_4y_sd: Ratio1ySdPattern,
     pub ratio_pct1: Indexes<StoredF32>,
     pub ratio_pct1_usd: Indexes<Dollars>,
     pub ratio_pct2: Indexes<StoredF32>,
@@ -889,7 +889,7 @@ pub struct Price13dEmaPattern {
     pub ratio_pct98_usd: Indexes<Dollars>,
     pub ratio_pct99: Indexes<StoredF32>,
     pub ratio_pct99_usd: Indexes<Dollars>,
-    pub ratio_sd: Ratio1ySdPattern2,
+    pub ratio_sd: Ratio1ySdPattern,
 }
 
 impl Price13dEmaPattern {
@@ -900,9 +900,9 @@ impl Price13dEmaPattern {
             ratio: Indexes::new(client.clone(), &format!("/{acc}_ratio")),
             ratio_1m_sma: Indexes::new(client.clone(), &format!("/{acc}_ratio_1m_sma")),
             ratio_1w_sma: Indexes::new(client.clone(), &format!("/{acc}_ratio_1w_sma")),
-            ratio_1y_sd: Ratio1ySdPattern2::new(client.clone(), &format!("{acc}_ratio_1y_sd")),
-            ratio_2y_sd: Ratio1ySdPattern2::new(client.clone(), &format!("{acc}_ratio_2y_sd")),
-            ratio_4y_sd: Ratio1ySdPattern2::new(client.clone(), &format!("{acc}_ratio_4y_sd")),
+            ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_1y_sd")),
+            ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_2y_sd")),
+            ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_4y_sd")),
             ratio_pct1: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct1")),
             ratio_pct1_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct1_usd")),
             ratio_pct2: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct2")),
@@ -915,7 +915,7 @@ impl Price13dEmaPattern {
             ratio_pct98_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct98_usd")),
             ratio_pct99: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct99")),
             ratio_pct99_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct99_usd")),
-            ratio_sd: Ratio1ySdPattern2::new(client.clone(), &format!("{acc}_ratio_sd")),
+            ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_sd")),
         }
     }
 }
@@ -1010,47 +1010,6 @@ impl RelativePattern2 {
             unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
             unrealized_profit_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_own_market_cap")),
             unrealized_profit_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_own_total_unrealized_pnl")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct Ratio1ySdPattern {
-    pub m0_5sd: Indexes<StoredF32>,
-    pub m1_5sd: Indexes<StoredF32>,
-    pub m1sd: Indexes<StoredF32>,
-    pub m2_5sd: Indexes<StoredF32>,
-    pub m2sd: Indexes<StoredF32>,
-    pub m3sd: Indexes<StoredF32>,
-    pub p0_5sd: Indexes<StoredF32>,
-    pub p1_5sd: Indexes<StoredF32>,
-    pub p1sd: Indexes<StoredF32>,
-    pub p2_5sd: Indexes<StoredF32>,
-    pub p2sd: Indexes<StoredF32>,
-    pub p3sd: Indexes<StoredF32>,
-    pub sd: Indexes<StoredF32>,
-    pub sma: Indexes<StoredF32>,
-    pub zscore: Indexes<StoredF32>,
-}
-
-impl Ratio1ySdPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            m0_5sd: Indexes::new(client.clone(), &format!("{base_path}/m0_5sd")),
-            m1_5sd: Indexes::new(client.clone(), &format!("{base_path}/m1_5sd")),
-            m1sd: Indexes::new(client.clone(), &format!("{base_path}/m1sd")),
-            m2_5sd: Indexes::new(client.clone(), &format!("{base_path}/m2_5sd")),
-            m2sd: Indexes::new(client.clone(), &format!("{base_path}/m2sd")),
-            m3sd: Indexes::new(client.clone(), &format!("{base_path}/m3sd")),
-            p0_5sd: Indexes::new(client.clone(), &format!("{base_path}/p0_5sd")),
-            p1_5sd: Indexes::new(client.clone(), &format!("{base_path}/p1_5sd")),
-            p1sd: Indexes::new(client.clone(), &format!("{base_path}/p1sd")),
-            p2_5sd: Indexes::new(client.clone(), &format!("{base_path}/p2_5sd")),
-            p2sd: Indexes::new(client.clone(), &format!("{base_path}/p2sd")),
-            p3sd: Indexes::new(client.clone(), &format!("{base_path}/p3sd")),
-            sd: Indexes::new(client.clone(), &format!("{base_path}/sd")),
-            sma: Indexes::new(client.clone(), &format!("{base_path}/sma")),
-            zscore: Indexes::new(client.clone(), &format!("{base_path}/zscore")),
         }
     }
 }
@@ -1164,60 +1123,31 @@ impl<T: DeserializeOwned> BitcoinPattern<T> {
 
 /// Pattern struct for repeated tree structure.
 pub struct BlockSizePattern<T> {
-    pub average: Indexes3<T>,
+    pub average: Indexes4<T>,
     pub cumulative: Indexes3<T>,
-    pub max: Indexes3<T>,
-    pub median: Indexes2<T>,
-    pub min: Indexes3<T>,
-    pub pct10: Indexes2<T>,
-    pub pct25: Indexes2<T>,
-    pub pct75: Indexes2<T>,
-    pub pct90: Indexes2<T>,
-    pub sum: Indexes3<T>,
+    pub max: Indexes4<T>,
+    pub median: Indexes5<T>,
+    pub min: Indexes4<T>,
+    pub pct10: Indexes5<T>,
+    pub pct25: Indexes5<T>,
+    pub pct75: Indexes5<T>,
+    pub pct90: Indexes5<T>,
+    pub sum: Indexes4<T>,
 }
 
 impl<T: DeserializeOwned> BlockSizePattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes3::new(client.clone(), &format!("{base_path}/average")),
+            average: Indexes4::new(client.clone(), &format!("{base_path}/average")),
             cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            max: Indexes3::new(client.clone(), &format!("{base_path}/max")),
-            median: Indexes2::new(client.clone(), &format!("{base_path}/median")),
-            min: Indexes3::new(client.clone(), &format!("{base_path}/min")),
-            pct10: Indexes2::new(client.clone(), &format!("{base_path}/pct10")),
-            pct25: Indexes2::new(client.clone(), &format!("{base_path}/pct25")),
-            pct75: Indexes2::new(client.clone(), &format!("{base_path}/pct75")),
-            pct90: Indexes2::new(client.clone(), &format!("{base_path}/pct90")),
-            sum: Indexes3::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct UnrealizedPattern {
-    pub neg_unrealized_loss: Indexes26<Dollars>,
-    pub net_unrealized_pnl: Indexes26<Dollars>,
-    pub supply_in_loss: SupplyPattern,
-    pub supply_in_loss_value: SupplyValuePattern,
-    pub supply_in_profit: SupplyPattern,
-    pub supply_in_profit_value: SupplyValuePattern,
-    pub total_unrealized_pnl: Indexes26<Dollars>,
-    pub unrealized_loss: Indexes26<Dollars>,
-    pub unrealized_profit: Indexes26<Dollars>,
-}
-
-impl UnrealizedPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            neg_unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/neg_unrealized_loss")),
-            net_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl")),
-            supply_in_loss: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_loss")),
-            supply_in_loss_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_loss_value")),
-            supply_in_profit: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_profit")),
-            supply_in_profit_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_profit_value")),
-            total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/total_unrealized_pnl")),
-            unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_loss")),
-            unrealized_profit: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_profit")),
+            max: Indexes4::new(client.clone(), &format!("{base_path}/max")),
+            median: Indexes5::new(client.clone(), &format!("{base_path}/median")),
+            min: Indexes4::new(client.clone(), &format!("{base_path}/min")),
+            pct10: Indexes5::new(client.clone(), &format!("{base_path}/pct10")),
+            pct25: Indexes5::new(client.clone(), &format!("{base_path}/pct25")),
+            pct75: Indexes5::new(client.clone(), &format!("{base_path}/pct75")),
+            pct90: Indexes5::new(client.clone(), &format!("{base_path}/pct90")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
         }
     }
 }
@@ -1252,56 +1182,30 @@ impl RelativePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AddresstypeToHeightToAddrCountPattern<T> {
-    pub p2a: Indexes2<T>,
-    pub p2pk33: Indexes2<T>,
-    pub p2pk65: Indexes2<T>,
-    pub p2pkh: Indexes2<T>,
-    pub p2sh: Indexes2<T>,
-    pub p2tr: Indexes2<T>,
-    pub p2wpkh: Indexes2<T>,
-    pub p2wsh: Indexes2<T>,
+pub struct UnrealizedPattern {
+    pub neg_unrealized_loss: Indexes26<Dollars>,
+    pub net_unrealized_pnl: Indexes26<Dollars>,
+    pub supply_in_loss: SupplyPattern,
+    pub supply_in_loss_value: SupplyValuePattern,
+    pub supply_in_profit: SupplyPattern,
+    pub supply_in_profit_value: SupplyValuePattern,
+    pub total_unrealized_pnl: Indexes26<Dollars>,
+    pub unrealized_loss: Indexes26<Dollars>,
+    pub unrealized_profit: Indexes26<Dollars>,
 }
 
-impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
+impl UnrealizedPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            p2a: Indexes2::new(client.clone(), &format!("{base_path}/p2a")),
-            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}/p2pk33")),
-            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}/p2pk65")),
-            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}/p2pkh")),
-            p2sh: Indexes2::new(client.clone(), &format!("{base_path}/p2sh")),
-            p2tr: Indexes2::new(client.clone(), &format!("{base_path}/p2tr")),
-            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}/p2wpkh")),
-            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}/p2wsh")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct Constant0Pattern<T> {
-    pub dateindex: Indexes5<T>,
-    pub decadeindex: Indexes7<T>,
-    pub height: Indexes2<T>,
-    pub monthindex: Indexes8<T>,
-    pub quarterindex: Indexes9<T>,
-    pub semesterindex: Indexes10<T>,
-    pub weekindex: Indexes11<T>,
-    pub yearindex: Indexes12<T>,
-}
-
-impl<T: DeserializeOwned> Constant0Pattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
-        Self {
-            dateindex: Indexes5::new(client.clone(), &format!("/{acc}")),
-            decadeindex: Indexes7::new(client.clone(), &format!("/{acc}")),
-            height: Indexes2::new(client.clone(), &format!("/{acc}")),
-            monthindex: Indexes8::new(client.clone(), &format!("/{acc}")),
-            quarterindex: Indexes9::new(client.clone(), &format!("/{acc}")),
-            semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
-            weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
-            yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
+            neg_unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/neg_unrealized_loss")),
+            net_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl")),
+            supply_in_loss: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_loss")),
+            supply_in_loss_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_loss_value")),
+            supply_in_profit: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_profit")),
+            supply_in_profit_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_profit_value")),
+            total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/total_unrealized_pnl")),
+            unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_loss")),
+            unrealized_profit: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_profit")),
         }
     }
 }
@@ -1335,6 +1239,61 @@ impl<T: DeserializeOwned> BlockIntervalPattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct Constant0Pattern<T> {
+    pub dateindex: Indexes5<T>,
+    pub decadeindex: Indexes7<T>,
+    pub height: Indexes2<T>,
+    pub monthindex: Indexes8<T>,
+    pub quarterindex: Indexes9<T>,
+    pub semesterindex: Indexes10<T>,
+    pub weekindex: Indexes11<T>,
+    pub yearindex: Indexes12<T>,
+}
+
+impl<T: DeserializeOwned> Constant0Pattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
+        Self {
+            dateindex: Indexes5::new(client.clone(), &format!("/{acc}")),
+            decadeindex: Indexes7::new(client.clone(), &format!("/{acc}")),
+            height: Indexes2::new(client.clone(), &format!("/{acc}")),
+            monthindex: Indexes8::new(client.clone(), &format!("/{acc}")),
+            quarterindex: Indexes9::new(client.clone(), &format!("/{acc}")),
+            semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
+            weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
+            yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct AddresstypeToHeightToAddrCountPattern<T> {
+    pub p2a: Indexes2<T>,
+    pub p2pk33: Indexes2<T>,
+    pub p2pk65: Indexes2<T>,
+    pub p2pkh: Indexes2<T>,
+    pub p2sh: Indexes2<T>,
+    pub p2tr: Indexes2<T>,
+    pub p2wpkh: Indexes2<T>,
+    pub p2wsh: Indexes2<T>,
+}
+
+impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            p2a: Indexes2::new(client.clone(), &format!("{base_path}/p2a")),
+            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}/p2pk33")),
+            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}/p2pk65")),
+            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}/p2pkh")),
+            p2sh: Indexes2::new(client.clone(), &format!("{base_path}/p2sh")),
+            p2tr: Indexes2::new(client.clone(), &format!("{base_path}/p2tr")),
+            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}/p2wpkh")),
+            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}/p2wsh")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct _0satsPattern {
     pub activity: ActivityPattern,
     pub addr_count: Indexes3<StoredU64>,
@@ -1353,29 +1312,6 @@ impl _0satsPattern {
             price_paid: PricePaidPattern::new(client.clone(), &format!("{base_path}/price_paid")),
             realized: RealizedPattern::new(client.clone(), &format!("{base_path}/realized")),
             relative: RelativePattern::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _10yTo12yPattern {
-    pub activity: ActivityPattern,
-    pub price_paid: PricePaidPattern2,
-    pub realized: RealizedPattern2,
-    pub relative: RelativePattern2,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yTo12yPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
             supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
             unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
         }
@@ -1429,22 +1365,24 @@ impl _0satsPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
-    pub supply: SupplyPattern,
-    pub supply_half: ActiveSupplyPattern,
-    pub supply_half_value: ActiveSupplyPattern,
-    pub supply_value: SupplyValuePattern,
-    pub utxo_count: Indexes3<StoredU64>,
+pub struct _10yTo12yPattern {
+    pub activity: ActivityPattern,
+    pub price_paid: PricePaidPattern2,
+    pub realized: RealizedPattern2,
+    pub relative: RelativePattern2,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
 }
 
-impl SupplyPattern2 {
+impl _10yTo12yPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            supply: SupplyPattern::new(client.clone(), &format!("{base_path}/supply")),
-            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half")),
-            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half_value")),
-            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_value")),
-            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/utxo_count")),
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
+            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
+            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}/realized")),
+            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
         }
     }
 }
@@ -1466,6 +1404,27 @@ impl ActivityPattern {
             satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satblocks_destroyed")),
             satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satdays_destroyed")),
             sent: FeePattern2::new(client.clone(), &format!("{base_path}/sent")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SupplyPattern2 {
+    pub supply: SupplyPattern,
+    pub supply_half: ActiveSupplyPattern,
+    pub supply_half_value: ActiveSupplyPattern,
+    pub supply_value: SupplyValuePattern,
+    pub utxo_count: Indexes3<StoredU64>,
+}
+
+impl SupplyPattern2 {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            supply: SupplyPattern::new(client.clone(), &format!("{base_path}/supply")),
+            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half")),
+            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half_value")),
+            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_value")),
+            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/utxo_count")),
         }
     }
 }
@@ -1594,16 +1553,17 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyValuePattern {
-    pub bitcoin: Indexes2<Bitcoin>,
-    pub dollars: Indexes2<Dollars>,
+pub struct _1dReturns1mSdPattern {
+    pub sd: Indexes<StoredF32>,
+    pub sma: Indexes<StoredF32>,
 }
 
-impl SupplyValuePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+impl _1dReturns1mSdPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
+            sd: Indexes::new(client.clone(), &format!("/{acc}_sd")),
+            sma: Indexes::new(client.clone(), &format!("/{acc}_sma")),
         }
     }
 }
@@ -1624,17 +1584,16 @@ impl PricePaidPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _1dReturns1mSdPattern {
-    pub sd: Indexes<StoredF32>,
-    pub sma: Indexes<StoredF32>,
+pub struct SupplyValuePattern {
+    pub bitcoin: Indexes2<Bitcoin>,
+    pub dollars: Indexes2<Dollars>,
 }
 
-impl _1dReturns1mSdPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
+impl SupplyValuePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            sd: Indexes::new(client.clone(), &format!("/{acc}_sd")),
-            sma: Indexes::new(client.clone(), &format!("/{acc}_sma")),
+            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
+            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
         }
     }
 }
@@ -3796,14 +3755,14 @@ impl BrkClient {
     /// Address information
     ///
     /// Retrieve comprehensive information about a Bitcoin address including balance, transaction history, UTXOs, and estimated investment metrics. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR, etc.).
-    pub fn get_api_address_by_address(&self, address: &str) -> Result<AddressStats> {
+    pub fn get_address(&self, address: &str) -> Result<AddressStats> {
         self.base.get(&format!("/api/address/{address}"))
     }
 
     /// Address transaction IDs
     ///
     /// Get transaction IDs for an address, newest first. Use after_txid for pagination.
-    pub fn get_api_address_by_address_txs(&self, address: &str, after_txid: Option<&str>, limit: Option<&str>) -> Result<Vec<Txid>> {
+    pub fn get_address_txs(&self, address: &str, after_txid: Option<&str>, limit: Option<&str>) -> Result<Vec<Txid>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
         if let Some(v) = limit { query.push(format!("limit={}", v)); }
@@ -3814,7 +3773,7 @@ impl BrkClient {
     /// Address confirmed transactions
     ///
     /// Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
-    pub fn get_api_address_by_address_txs_chain(&self, address: &str, after_txid: Option<&str>, limit: Option<&str>) -> Result<Vec<Txid>> {
+    pub fn get_address_txs_chain(&self, address: &str, after_txid: Option<&str>, limit: Option<&str>) -> Result<Vec<Txid>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
         if let Some(v) = limit { query.push(format!("limit={}", v)); }
@@ -3825,105 +3784,105 @@ impl BrkClient {
     /// Address mempool transactions
     ///
     /// Get unconfirmed transaction IDs for an address from the mempool (up to 50).
-    pub fn get_api_address_by_address_txs_mempool(&self, address: &str) -> Result<Vec<Txid>> {
+    pub fn get_address_txs_mempool(&self, address: &str) -> Result<Vec<Txid>> {
         self.base.get(&format!("/api/address/{address}/txs/mempool"))
     }
 
     /// Address UTXOs
     ///
     /// Get unspent transaction outputs for an address.
-    pub fn get_api_address_by_address_utxo(&self, address: &str) -> Result<Vec<Utxo>> {
+    pub fn get_address_utxo(&self, address: &str) -> Result<Vec<Utxo>> {
         self.base.get(&format!("/api/address/{address}/utxo"))
     }
 
     /// Block by height
     ///
     /// Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
-    pub fn get_api_block_height_by_height(&self, height: &str) -> Result<BlockInfo> {
+    pub fn get_block_height(&self, height: &str) -> Result<BlockInfo> {
         self.base.get(&format!("/api/block-height/{height}"))
     }
 
     /// Block information
     ///
     /// Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
-    pub fn get_api_block_by_hash(&self, hash: &str) -> Result<BlockInfo> {
+    pub fn get_block_by_hash(&self, hash: &str) -> Result<BlockInfo> {
         self.base.get(&format!("/api/block/{hash}"))
     }
 
     /// Raw block
     ///
     /// Returns the raw block data in binary format.
-    pub fn get_api_block_by_hash_raw(&self, hash: &str) -> Result<Vec<f64>> {
+    pub fn get_block_by_hash_raw(&self, hash: &str) -> Result<Vec<f64>> {
         self.base.get(&format!("/api/block/{hash}/raw"))
     }
 
     /// Block status
     ///
     /// Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
-    pub fn get_api_block_by_hash_status(&self, hash: &str) -> Result<BlockStatus> {
+    pub fn get_block_by_hash_status(&self, hash: &str) -> Result<BlockStatus> {
         self.base.get(&format!("/api/block/{hash}/status"))
     }
 
     /// Transaction ID at index
     ///
     /// Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
-    pub fn get_api_block_by_hash_txid_by_index(&self, hash: &str, index: &str) -> Result<Txid> {
+    pub fn get_block_by_hash_txid_by_index(&self, hash: &str, index: &str) -> Result<Txid> {
         self.base.get(&format!("/api/block/{hash}/txid/{index}"))
     }
 
     /// Block transaction IDs
     ///
     /// Retrieve all transaction IDs in a block by block hash.
-    pub fn get_api_block_by_hash_txids(&self, hash: &str) -> Result<Vec<Txid>> {
+    pub fn get_block_by_hash_txids(&self, hash: &str) -> Result<Vec<Txid>> {
         self.base.get(&format!("/api/block/{hash}/txids"))
     }
 
     /// Block transactions (paginated)
     ///
     /// Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
-    pub fn get_api_block_by_hash_txs_by_start_index(&self, hash: &str, start_index: &str) -> Result<Vec<Transaction>> {
+    pub fn get_block_by_hash_txs_by_start_index(&self, hash: &str, start_index: &str) -> Result<Vec<Transaction>> {
         self.base.get(&format!("/api/block/{hash}/txs/{start_index}"))
     }
 
     /// Recent blocks
     ///
     /// Retrieve the last 10 blocks. Returns block metadata for each block.
-    pub fn get_api_blocks(&self) -> Result<Vec<BlockInfo>> {
+    pub fn get_blocks(&self) -> Result<Vec<BlockInfo>> {
         self.base.get(&format!("/api/blocks"))
     }
 
     /// Blocks from height
     ///
     /// Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
-    pub fn get_api_blocks_by_height(&self, height: &str) -> Result<Vec<BlockInfo>> {
+    pub fn get_blocks_by_height(&self, height: &str) -> Result<Vec<BlockInfo>> {
         self.base.get(&format!("/api/blocks/{height}"))
     }
 
     /// Mempool statistics
     ///
     /// Get current mempool statistics including transaction count, total vsize, and total fees.
-    pub fn get_api_mempool_info(&self) -> Result<MempoolInfo> {
+    pub fn get_mempool_info(&self) -> Result<MempoolInfo> {
         self.base.get(&format!("/api/mempool/info"))
     }
 
     /// Mempool transaction IDs
     ///
     /// Get all transaction IDs currently in the mempool.
-    pub fn get_api_mempool_txids(&self) -> Result<Vec<Txid>> {
+    pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
         self.base.get(&format!("/api/mempool/txids"))
     }
 
     /// Get supported indexes for a metric
     ///
     /// Returns the list of indexes are supported by the specified metric. For example, `realized_price` might be available on dateindex, weekindex, and monthindex.
-    pub fn get_api_metric_by_metric(&self, metric: &str) -> Result<Vec<Index>> {
+    pub fn get_metric(&self, metric: &str) -> Result<Vec<Index>> {
         self.base.get(&format!("/api/metric/{metric}"))
     }
 
     /// Get metric data
     ///
     /// Fetch data for a specific metric at the given index. Use query parameters to filter by date range and format (json/csv).
-    pub fn get_api_metric_by_metric_by_index(&self, metric: &str, index: &str, from: Option<&str>, to: Option<&str>, count: Option<&str>, format: Option<&str>) -> Result<MetricData> {
+    pub fn get_metric_by_index(&self, metric: &str, index: &str, from: Option<&str>, to: Option<&str>, count: Option<&str>, format: Option<&str>) -> Result<MetricData> {
         let mut query = Vec::new();
         if let Some(v) = from { query.push(format!("from={}", v)); }
         if let Some(v) = to { query.push(format!("to={}", v)); }
@@ -3936,7 +3895,7 @@ impl BrkClient {
     /// Bulk metric data
     ///
     /// Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects.
-    pub fn get_api_metrics_bulk(&self, metrics: &str, index: &str, from: Option<&str>, to: Option<&str>, count: Option<&str>, format: Option<&str>) -> Result<Vec<MetricData>> {
+    pub fn get_metrics_bulk(&self, metrics: &str, index: &str, from: Option<&str>, to: Option<&str>, count: Option<&str>, format: Option<&str>) -> Result<Vec<MetricData>> {
         let mut query = Vec::new();
         query.push(format!("metrics={}", metrics));
         query.push(format!("index={}", index));
@@ -3951,28 +3910,28 @@ impl BrkClient {
     /// Metrics catalog
     ///
     /// Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure.
-    pub fn get_api_metrics_catalog(&self) -> Result<TreeNode> {
+    pub fn get_metrics_catalog(&self) -> Result<TreeNode> {
         self.base.get(&format!("/api/metrics/catalog"))
     }
 
     /// Metric count
     ///
     /// Current metric count
-    pub fn get_api_metrics_count(&self) -> Result<Vec<MetricCount>> {
+    pub fn get_metrics_count(&self) -> Result<Vec<MetricCount>> {
         self.base.get(&format!("/api/metrics/count"))
     }
 
     /// List available indexes
     ///
     /// Returns all available indexes with their accepted query aliases. Use any alias when querying metrics.
-    pub fn get_api_metrics_indexes(&self) -> Result<Vec<IndexInfo>> {
+    pub fn get_metrics_indexes(&self) -> Result<Vec<IndexInfo>> {
         self.base.get(&format!("/api/metrics/indexes"))
     }
 
     /// Metrics list
     ///
     /// Paginated list of available metrics
-    pub fn get_api_metrics_list(&self, page: Option<&str>) -> Result<PaginatedMetrics> {
+    pub fn get_metrics_list(&self, page: Option<&str>) -> Result<PaginatedMetrics> {
         let mut query = Vec::new();
         if let Some(v) = page { query.push(format!("page={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
@@ -3982,7 +3941,7 @@ impl BrkClient {
     /// Search metrics
     ///
     /// Fuzzy search for metrics by name. Supports partial matches and typos.
-    pub fn get_api_metrics_search_by_metric(&self, metric: &str, limit: Option<&str>) -> Result<Vec<Metric>> {
+    pub fn get_metrics_search_by_metric(&self, metric: &str, limit: Option<&str>) -> Result<Vec<Metric>> {
         let mut query = Vec::new();
         if let Some(v) = limit { query.push(format!("limit={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
@@ -3992,147 +3951,147 @@ impl BrkClient {
     /// Transaction information
     ///
     /// Retrieve complete transaction data by transaction ID (txid). Returns the full transaction details including inputs, outputs, and metadata. The transaction data is read directly from the blockchain data files.
-    pub fn get_api_tx_by_txid(&self, txid: &str) -> Result<Transaction> {
+    pub fn get_tx_by_txid(&self, txid: &str) -> Result<Transaction> {
         self.base.get(&format!("/api/tx/{txid}"))
     }
 
     /// Transaction hex
     ///
     /// Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.
-    pub fn get_api_tx_by_txid_hex(&self, txid: &str) -> Result<Hex> {
+    pub fn get_tx_by_txid_hex(&self, txid: &str) -> Result<Hex> {
         self.base.get(&format!("/api/tx/{txid}/hex"))
     }
 
     /// Output spend status
     ///
     /// Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.
-    pub fn get_api_tx_by_txid_outspend_by_vout(&self, txid: &str, vout: &str) -> Result<TxOutspend> {
+    pub fn get_tx_by_txid_outspend_by_vout(&self, txid: &str, vout: &str) -> Result<TxOutspend> {
         self.base.get(&format!("/api/tx/{txid}/outspend/{vout}"))
     }
 
     /// All output spend statuses
     ///
     /// Get the spending status of all outputs in a transaction. Returns an array with the spend status for each output.
-    pub fn get_api_tx_by_txid_outspends(&self, txid: &str) -> Result<Vec<TxOutspend>> {
+    pub fn get_tx_by_txid_outspends(&self, txid: &str) -> Result<Vec<TxOutspend>> {
         self.base.get(&format!("/api/tx/{txid}/outspends"))
     }
 
     /// Transaction status
     ///
     /// Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.
-    pub fn get_api_tx_by_txid_status(&self, txid: &str) -> Result<TxStatus> {
+    pub fn get_tx_by_txid_status(&self, txid: &str) -> Result<TxStatus> {
         self.base.get(&format!("/api/tx/{txid}/status"))
     }
 
     /// Difficulty adjustment
     ///
     /// Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
-    pub fn get_api_v1_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
+    pub fn get_v1_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
         self.base.get(&format!("/api/v1/difficulty-adjustment"))
     }
 
     /// Projected mempool blocks
     ///
     /// Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
-    pub fn get_api_v1_fees_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
+    pub fn get_v1_fees_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
         self.base.get(&format!("/api/v1/fees/mempool-blocks"))
     }
 
     /// Recommended fees
     ///
     /// Get recommended fee rates for different confirmation targets based on current mempool state.
-    pub fn get_api_v1_fees_recommended(&self) -> Result<RecommendedFees> {
+    pub fn get_v1_fees_recommended(&self) -> Result<RecommendedFees> {
         self.base.get(&format!("/api/v1/fees/recommended"))
     }
 
     /// Block fees
     ///
     /// Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_api_v1_mining_blocks_fees_by_time_period(&self, time_period: &str) -> Result<Vec<BlockFeesEntry>> {
+    pub fn get_v1_mining_blocks_fees_by_time_period(&self, time_period: &str) -> Result<Vec<BlockFeesEntry>> {
         self.base.get(&format!("/api/v1/mining/blocks/fees/{time_period}"))
     }
 
     /// Block rewards
     ///
     /// Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_api_v1_mining_blocks_rewards_by_time_period(&self, time_period: &str) -> Result<Vec<BlockRewardsEntry>> {
+    pub fn get_v1_mining_blocks_rewards_by_time_period(&self, time_period: &str) -> Result<Vec<BlockRewardsEntry>> {
         self.base.get(&format!("/api/v1/mining/blocks/rewards/{time_period}"))
     }
 
     /// Block sizes and weights
     ///
     /// Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_api_v1_mining_blocks_sizes_weights_by_time_period(&self, time_period: &str) -> Result<BlockSizesWeights> {
+    pub fn get_v1_mining_blocks_sizes_weights_by_time_period(&self, time_period: &str) -> Result<BlockSizesWeights> {
         self.base.get(&format!("/api/v1/mining/blocks/sizes-weights/{time_period}"))
     }
 
     /// Block by timestamp
     ///
     /// Find the block closest to a given UNIX timestamp.
-    pub fn get_api_v1_mining_blocks_timestamp_by_timestamp(&self, timestamp: &str) -> Result<BlockTimestamp> {
+    pub fn get_v1_mining_blocks_timestamp(&self, timestamp: &str) -> Result<BlockTimestamp> {
         self.base.get(&format!("/api/v1/mining/blocks/timestamp/{timestamp}"))
     }
 
     /// Difficulty adjustments (all time)
     ///
     /// Get historical difficulty adjustments. Returns array of [timestamp, height, difficulty, change_percent].
-    pub fn get_api_v1_mining_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
+    pub fn get_v1_mining_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
         self.base.get(&format!("/api/v1/mining/difficulty-adjustments"))
     }
 
     /// Difficulty adjustments
     ///
     /// Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y. Returns array of [timestamp, height, difficulty, change_percent].
-    pub fn get_api_v1_mining_difficulty_adjustments_by_time_period(&self, time_period: &str) -> Result<Vec<DifficultyAdjustmentEntry>> {
+    pub fn get_v1_mining_difficulty_adjustments_by_time_period(&self, time_period: &str) -> Result<Vec<DifficultyAdjustmentEntry>> {
         self.base.get(&format!("/api/v1/mining/difficulty-adjustments/{time_period}"))
     }
 
     /// Network hashrate (all time)
     ///
     /// Get network hashrate and difficulty data for all time.
-    pub fn get_api_v1_mining_hashrate(&self) -> Result<HashrateSummary> {
+    pub fn get_v1_mining_hashrate(&self) -> Result<HashrateSummary> {
         self.base.get(&format!("/api/v1/mining/hashrate"))
     }
 
     /// Network hashrate
     ///
     /// Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_api_v1_mining_hashrate_by_time_period(&self, time_period: &str) -> Result<HashrateSummary> {
+    pub fn get_v1_mining_hashrate_by_time_period(&self, time_period: &str) -> Result<HashrateSummary> {
         self.base.get(&format!("/api/v1/mining/hashrate/{time_period}"))
     }
 
     /// Mining pool details
     ///
     /// Get detailed information about a specific mining pool including block counts and shares for different time periods.
-    pub fn get_api_v1_mining_pool_by_slug(&self, slug: &str) -> Result<PoolDetail> {
+    pub fn get_v1_mining_pool_by_slug(&self, slug: &str) -> Result<PoolDetail> {
         self.base.get(&format!("/api/v1/mining/pool/{slug}"))
     }
 
     /// List all mining pools
     ///
     /// Get list of all known mining pools with their identifiers.
-    pub fn get_api_v1_mining_pools(&self) -> Result<Vec<PoolInfo>> {
+    pub fn get_v1_mining_pools(&self) -> Result<Vec<PoolInfo>> {
         self.base.get(&format!("/api/v1/mining/pools"))
     }
 
     /// Mining pool statistics
     ///
     /// Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_api_v1_mining_pools_by_time_period(&self, time_period: &str) -> Result<PoolsSummary> {
+    pub fn get_v1_mining_pools_by_time_period(&self, time_period: &str) -> Result<PoolsSummary> {
         self.base.get(&format!("/api/v1/mining/pools/{time_period}"))
     }
 
     /// Mining reward statistics
     ///
     /// Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
-    pub fn get_api_v1_mining_reward_stats_by_block_count(&self, block_count: &str) -> Result<RewardStats> {
+    pub fn get_v1_mining_reward_stats_by_block_count(&self, block_count: &str) -> Result<RewardStats> {
         self.base.get(&format!("/api/v1/mining/reward-stats/{block_count}"))
     }
 
     /// Validate address
     ///
     /// Validate a Bitcoin address and get information about its type and scriptPubKey.
-    pub fn get_api_v1_validate_address_by_address(&self, address: &str) -> Result<AddressValidation> {
+    pub fn get_v1_validate_address(&self, address: &str) -> Result<AddressValidation> {
         self.base.get(&format!("/api/v1/validate-address/{address}"))
     }
 

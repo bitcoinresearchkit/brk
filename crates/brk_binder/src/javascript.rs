@@ -593,13 +593,13 @@ fn generate_parameterized_field(
 
     let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
         match pos {
-            FieldNamePosition::Append(suffix) => format!("`/${{acc}}{suffix}`"),
-            FieldNamePosition::Prepend(prefix) => format!("`/{prefix}${{acc}}`"),
-            FieldNamePosition::Identity => "`/${acc}`".to_string(),
-            FieldNamePosition::SetBase(base) => format!("'/{base}'"),
+            FieldNamePosition::Append(suffix) => format!("`${{acc}}{suffix}`"),
+            FieldNamePosition::Prepend(prefix) => format!("`{prefix}${{acc}}`"),
+            FieldNamePosition::Identity => "acc".to_string(),
+            FieldNamePosition::SetBase(base) => format!("'{base}'"),
         }
     } else {
-        format!("`/${{acc}}_{}`", field.name)
+        format!("`${{acc}}_{}`", field.name)
     };
 
     if metadata.field_uses_accessor(field) {
@@ -631,7 +631,7 @@ fn generate_tree_path_field(
     if metadata.is_pattern_type(&field.rust_type) {
         writeln!(
             output,
-            "    {}: create{}(client, `${{basePath}}/{}`){}",
+            "    {}: create{}(client, `${{basePath}}_{}`){}",
             field_name_js, field.rust_type, field.name, comma
         )
         .unwrap();
@@ -639,14 +639,14 @@ fn generate_tree_path_field(
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
-            "    {}: create{}(client, `${{basePath}}/{}`){}",
+            "    {}: create{}(client, `${{basePath}}_{}`){}",
             field_name_js, accessor.name, field.name, comma
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "    {}: new MetricNode(client, `${{basePath}}/{}`){}",
+            "    {}: new MetricNode(client, `${{basePath}}_{}`){}",
             field_name_js, field.name, comma
         )
         .unwrap();
