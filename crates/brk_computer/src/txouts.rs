@@ -101,7 +101,7 @@ impl Vecs {
             starting_indexes.height
         );
 
-        const HEIGHT_BATCH: u32 = 10_000;
+        const HEIGHT_BATCH: u32 = 20_000;
         let mut pairs: Vec<(TxOutIndex, TxInIndex)> = Vec::new();
 
         let mut batch_start_height = min_height;

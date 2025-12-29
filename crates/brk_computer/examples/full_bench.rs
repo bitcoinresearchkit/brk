@@ -40,23 +40,6 @@ fn run() -> Result<()> {
 
     brk_logger::init(Some(&outputs_dir.join("log")))?;
 
-    let client = Client::new(
-        Client::default_url(),
-        Auth::CookieFile(bitcoin_dir.join(".cookie")),
-    )?;
-
-    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-
-    let blocks = Blocks::new(&client, &reader);
-
-    let mut indexer = Indexer::forced_import(&outputs_dir)?;
-
-    let fetcher = Fetcher::import(true, None)?;
-
-    info!("Ping: {:?}", fetcher.brk.ping()?);
-
-    let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
-
     let mut bencher = Bencher::from_cargo_env("brk", &outputs_dir)?;
     bencher.start()?;
 
@@ -67,6 +50,33 @@ fn run() -> Result<()> {
         let _ = bencher_clone.stop();
         debug!("Bench stopped.");
     });
+
+    let client = Client::new(
+        Client::default_url(),
+        Auth::CookieFile(bitcoin_dir.join(".cookie")),
+    )?;
+
+    let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
+
+    let blocks = Blocks::new(&client, &reader);
+
+    let fetcher = Fetcher::import(true, None)?;
+
+    info!("Ping: {:?}", fetcher.brk.ping()?);
+
+    let mut indexer = Indexer::forced_import(&outputs_dir)?;
+
+    // Pre-run indexer if too far behind, then drop and reimport to reduce memory
+    let chain_height = client.get_last_height()?;
+    let indexed_height = indexer.vecs.starting_height();
+    if chain_height.saturating_sub(*indexed_height) > 1000 {
+        indexer.index(&blocks, &client, &exit)?;
+        drop(indexer);
+        Mimalloc::collect();
+        indexer = Indexer::forced_import(&outputs_dir)?;
+    }
+
+    let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
     loop {
         let i = Instant::now();

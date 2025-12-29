@@ -12,7 +12,7 @@ use vecdb::{
 
 use super::Indexes;
 
-const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
+const BATCH_SIZE: usize = 3 * 1024 * 1024 * 1024 / size_of::<Entry>();
 pub const DB_NAME: &str = "txins";
 
 #[derive(Clone, Traversable)]

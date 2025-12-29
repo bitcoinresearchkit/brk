@@ -12,6 +12,7 @@ bridge/
 
 # Ignored
 _*
+!__*.py
 /*.md
 
 # Logs
