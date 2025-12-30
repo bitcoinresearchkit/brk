@@ -17,12 +17,14 @@ impl Query {
 
         let mut sizes_vec = computer
             .chain
+            .block
             .indexes_to_block_size
             .dateindex
             .unwrap_average()
             .iter();
         let mut weights_vec = computer
             .chain
+            .block
             .indexes_to_block_weight
             .dateindex
             .unwrap_average()

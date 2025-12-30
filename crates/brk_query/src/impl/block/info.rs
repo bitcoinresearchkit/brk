@@ -94,7 +94,7 @@ impl Query {
                 .height_to_first_txindex
                 .read_once(height.incremented())?
         } else {
-            TxIndex::from(computer.indexes.txindex_to_txindex.len())
+            TxIndex::from(computer.indexes.transaction.txindex_to_txindex.len())
         };
 
         Ok((next_first_txindex.to_usize() - first_txindex.to_usize()) as u32)

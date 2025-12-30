@@ -62,23 +62,23 @@ pub fn process_blocks(
     let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
 
     // From chain (via .height.u() or .height.unwrap_sum() patterns):
-    let height_to_tx_count = chain.indexes_to_tx_count.height.u();
-    let height_to_output_count = chain.indexes_to_output_count.height.unwrap_sum();
-    let height_to_input_count = chain.indexes_to_input_count.height.unwrap_sum();
+    let height_to_tx_count = chain.transaction.indexes_to_tx_count.height.u();
+    let height_to_output_count = chain.transaction.indexes_to_output_count.height.unwrap_sum();
+    let height_to_input_count = chain.transaction.indexes_to_input_count.height.unwrap_sum();
     let height_to_unclaimed_rewards = chain
-        .indexes_to_unclaimed_rewards
+        .coinbase.indexes_to_unclaimed_rewards
         .sats
         .height
         .as_ref()
         .unwrap();
 
     // From indexes:
-    let height_to_timestamp = &indexes.height_to_timestamp_fixed;
-    let height_to_date = &indexes.height_to_date_fixed;
-    let dateindex_to_first_height = &indexes.dateindex_to_first_height;
-    let dateindex_to_height_count = &indexes.dateindex_to_height_count;
-    let txindex_to_output_count = &indexes.txindex_to_output_count;
-    let txindex_to_input_count = &indexes.txindex_to_input_count;
+    let height_to_timestamp = &indexes.block.height_to_timestamp_fixed;
+    let height_to_date = &indexes.block.height_to_date_fixed;
+    let dateindex_to_first_height = &indexes.time.dateindex_to_first_height;
+    let dateindex_to_height_count = &indexes.time.dateindex_to_height_count;
+    let txindex_to_output_count = &indexes.transaction.txindex_to_output_count;
+    let txindex_to_input_count = &indexes.transaction.txindex_to_input_count;
 
     // From price (optional):
     let height_to_price = price.map(|p| &p.chainindexes_to_price_close.height);

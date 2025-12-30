@@ -21,11 +21,13 @@ impl Query {
         // Get current hashrate
         let current_dateindex = computer
             .indexes
+            .block
             .height_to_dateindex
             .read_once(current_height)?;
 
         let current_hashrate = *computer
             .chain
+            .mining
             .indexes_to_hash_rate
             .dateindex
             .unwrap_last()
@@ -41,6 +43,7 @@ impl Query {
         // Get hashrate entries using iterators for efficiency
         let start_dateindex = computer
             .indexes
+            .block
             .height_to_dateindex
             .read_once(Height::from(start))?;
         let end_dateindex = current_dateindex;
@@ -55,6 +58,7 @@ impl Query {
         // Create iterators for the loop
         let mut hashrate_iter = computer
             .chain
+            .mining
             .indexes_to_hash_rate
             .dateindex
             .unwrap_last()
@@ -62,6 +66,7 @@ impl Query {
 
         let mut timestamp_iter = computer
             .chain
+            .epoch
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()

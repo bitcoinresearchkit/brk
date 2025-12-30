@@ -24,6 +24,7 @@ impl Query {
         // Get first height of the target date
         let first_height_of_day = computer
             .indexes
+            .time
             .dateindex_to_first_height
             .read_once(dateindex)
             .unwrap_or(Height::from(0usize));

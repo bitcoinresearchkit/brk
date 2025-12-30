@@ -341,7 +341,7 @@ impl Vecs {
                     self.indexes_to_activity_to_vaultedness_ratio
                         .dateindex
                         .unwrap_last(),
-                    chain.indexes_to_inflation_rate.dateindex.u(),
+                    chain.coinbase.indexes_to_inflation_rate.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -354,7 +354,7 @@ impl Vecs {
                     self.indexes_to_activity_to_vaultedness_ratio
                         .dateindex
                         .unwrap_last(),
-                    chain.indexes_to_tx_btc_velocity.dateindex.u(),
+                    chain.volume.indexes_to_tx_btc_velocity.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -383,7 +383,7 @@ impl Vecs {
                     vec.compute_transform(
                         starting_indexes.height,
                         chain
-                            .indexes_to_subsidy
+                            .coinbase.indexes_to_subsidy
                             .dollars
                             .as_ref()
                             .unwrap()
@@ -575,7 +575,7 @@ impl Vecs {
                         self.indexes_to_activity_to_vaultedness_ratio
                             .dateindex
                             .unwrap_last(),
-                        chain.indexes_to_tx_usd_velocity.dateindex.u(),
+                        chain.volume.indexes_to_tx_usd_velocity.dateindex.u(),
                         exit,
                     )?;
                     Ok(())

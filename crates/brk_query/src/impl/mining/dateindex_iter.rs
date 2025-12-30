@@ -14,11 +14,13 @@ impl<'a> DateIndexIter<'a> {
     pub fn new(computer: &'a Computer, start_height: usize, end_height: usize) -> Self {
         let start_di = computer
             .indexes
+            .block
             .height_to_dateindex
             .read_once(Height::from(start_height))
             .unwrap_or_default();
         let end_di = computer
             .indexes
+            .block
             .height_to_dateindex
             .read_once(Height::from(end_height))
             .unwrap_or_default();
@@ -47,12 +49,13 @@ impl<'a> DateIndexIter<'a> {
         let mut timestamps = self
             .computer
             .chain
+            .epoch
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()
             .expect("timeindexes_to_timestamp.dateindex should exist")
             .iter();
-        let mut heights = self.computer.indexes.dateindex_to_first_height.iter();
+        let mut heights = self.computer.indexes.time.dateindex_to_first_height.iter();
 
         let mut entries = Vec::with_capacity(total / self.step + 1);
         let mut i = self.start_di.to_usize();

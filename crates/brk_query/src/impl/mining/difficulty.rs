@@ -22,6 +22,7 @@ impl Query {
         // Get current epoch
         let current_epoch = computer
             .indexes
+            .block
             .height_to_difficultyepoch
             .read_once(current_height)?;
         let current_epoch_usize: usize = current_epoch.into();
@@ -29,6 +30,7 @@ impl Query {
         // Get epoch start height
         let epoch_start_height = computer
             .indexes
+            .block
             .difficultyepoch_to_first_height
             .read_once(current_epoch)?;
         let epoch_start_u32: u32 = epoch_start_height.into();
@@ -42,6 +44,7 @@ impl Query {
         // Get timestamps using difficultyepoch_to_timestamp for epoch start
         let epoch_start_timestamp = computer
             .chain
+            .epoch
             .difficultyepoch_to_timestamp
             .read_once(current_epoch)?;
         let current_timestamp = indexer
@@ -82,6 +85,7 @@ impl Query {
             let prev_epoch = DifficultyEpoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
                 .indexes
+                .block
                 .difficultyepoch_to_first_height
                 .read_once(prev_epoch)?;
 

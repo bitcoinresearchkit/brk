@@ -23,7 +23,8 @@ pub fn generate_rust_client(
     writeln!(output, "#![allow(non_camel_case_types)]").unwrap();
     writeln!(output, "#![allow(dead_code)]").unwrap();
     writeln!(output, "#![allow(unused_variables)]").unwrap();
-    writeln!(output, "#![allow(clippy::useless_format)]\n").unwrap();
+    writeln!(output, "#![allow(clippy::useless_format)]").unwrap();
+    writeln!(output, "#![allow(clippy::unnecessary_to_owned)]\n").unwrap();
 
     generate_imports(&mut output);
     generate_base_client(&mut output);

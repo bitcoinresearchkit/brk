@@ -13,4 +13,4 @@ pub use vecs::Vecs;
 pub const DB_NAME: &str = "stateful";
 
 pub use address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
-pub use cohorts::{AddressCohorts, CohortVecs, DynCohortVecs, UTXOCohorts};
+pub use cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};

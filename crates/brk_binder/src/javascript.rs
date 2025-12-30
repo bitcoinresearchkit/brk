@@ -67,12 +67,26 @@ fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// Convert only top-level object keys to camelCase (for consistency with tree field names)
+/// Nested values (including id fields) are left unchanged for URL paths
+fn camel_case_top_level_keys(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let new_map: serde_json::Map<String, Value> = map
+                .into_iter()
+                .map(|(k, v)| (to_camel_case(&k), v))
+                .collect();
+            Value::Object(new_map)
+        }
+        other => other,
+    }
+}
+
 fn generate_static_constants(output: &mut String) {
     use serde::Serialize;
 
-    fn static_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
+    fn instance_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
         let json = serde_json::to_string_pretty(value).unwrap();
-        // Indent the JSON for proper formatting inside the class
         let indented = json
             .lines()
             .enumerate()
@@ -87,23 +101,23 @@ fn generate_static_constants(output: &mut String) {
             .join("\n");
         writeln!(
             output,
-            "  static {} = /** @type {{const}} */ ({});\n",
+            "  {} = /** @type {{const}} */ ({});\n",
             name, indented
         )
         .unwrap();
     }
 
-    fn static_const_raw(output: &mut String, name: &str, value: &str) {
-        writeln!(output, "  static {} = {};\n", name, value).unwrap();
+    fn instance_const_raw(output: &mut String, name: &str, value: &str) {
+        writeln!(output, "  {} = {};\n", name, value).unwrap();
     }
 
     // VERSION
-    static_const_raw(output, "VERSION", &format!("\"v{}\"", VERSION));
+    instance_const_raw(output, "VERSION", &format!("\"v{}\"", VERSION));
 
     // INDEXES
     let indexes = Index::all();
     let indexes_json: Vec<&'static str> = indexes.iter().map(|i| i.serialize_long()).collect();
-    static_const(output, "INDEXES", &indexes_json);
+    instance_const(output, "INDEXES", &indexes_json);
 
     // POOL_ID_TO_POOL_NAME
     let pools = pools();
@@ -111,19 +125,43 @@ fn generate_static_constants(output: &mut String) {
     sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     let pool_map: std::collections::BTreeMap<PoolSlug, &'static str> =
         sorted_pools.iter().map(|p| (p.slug(), p.name)).collect();
-    static_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
+    instance_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
 
-    // Cohort names
-    static_const(output, "TERM_NAMES", &TERM_NAMES);
-    static_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
-    static_const(output, "YEAR_NAMES", &YEAR_NAMES);
-    static_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
-    static_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
-    static_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
-    static_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
-    static_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
-    static_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
-    static_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
+    // Cohort names - top-level keys converted to camelCase to match tree field names
+    fn instance_const_camel<T: Serialize>(output: &mut String, name: &str, value: &T) {
+        let json_value: Value = serde_json::to_value(value).unwrap();
+        let camel_value = camel_case_top_level_keys(json_value);
+        let json = serde_json::to_string_pretty(&camel_value).unwrap();
+        let indented = json
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                if i == 0 {
+                    line.to_string()
+                } else {
+                    format!("  {}", line)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        writeln!(
+            output,
+            "  {} = /** @type {{const}} */ ({});\n",
+            name, indented
+        )
+        .unwrap();
+    }
+
+    instance_const_camel(output, "TERM_NAMES", &TERM_NAMES);
+    instance_const_camel(output, "EPOCH_NAMES", &EPOCH_NAMES);
+    instance_const_camel(output, "YEAR_NAMES", &YEAR_NAMES);
+    instance_const_camel(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
+    instance_const_camel(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
+    instance_const_camel(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
+    instance_const_camel(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
+    instance_const_camel(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
+    instance_const_camel(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
+    instance_const_camel(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {

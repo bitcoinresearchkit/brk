@@ -191,11 +191,11 @@ impl SupplyMetrics {
         self.indexes_to_supply
             .compute_all(price, starting_indexes, exit, |v| {
                 let mut dateindex_to_height_count_iter =
-                    indexes.dateindex_to_height_count.into_iter();
+                    indexes.time.dateindex_to_height_count.into_iter();
                 let mut height_to_supply_iter = self.height_to_supply.into_iter();
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &indexes.dateindex_to_first_height,
+                    &indexes.time.dateindex_to_first_height,
                     |(i, height, ..)| {
                         let count = dateindex_to_height_count_iter.get_unwrap(i);
                         if count == StoredU64::default() {

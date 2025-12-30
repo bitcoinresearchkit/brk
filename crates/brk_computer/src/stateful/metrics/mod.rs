@@ -1,16 +1,14 @@
 mod activity;
 mod config;
-mod price_paid;
+mod price;
 mod realized;
-mod relative;
 mod supply;
 mod unrealized;
 
 pub use activity::ActivityMetrics;
 pub use config::ImportConfig;
-pub use price_paid::PricePaidMetrics;
+pub use price::{PricePaidMetrics, RelativeMetrics};
 pub use realized::RealizedMetrics;
-pub use relative::RelativeMetrics;
 pub use supply::SupplyMetrics;
 pub use unrealized::UnrealizedMetrics;
 
@@ -21,7 +19,7 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::state::CohortState};
+use crate::{Indexes, indexes, price as price_vecs, stateful::state::CohortState};
 
 /// All metrics for a cohort, organized by category.
 #[derive(Clone, Traversable)]
@@ -262,7 +260,7 @@ impl CohortMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        price: Option<&price_vecs::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -291,7 +289,7 @@ impl CohortMetrics {
     pub fn compute_rest_part2(
         &mut self,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
+        price: Option<&price_vecs::Vecs>,
         starting_indexes: &Indexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,

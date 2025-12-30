@@ -119,7 +119,7 @@ impl Vecs {
         let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
         let mut txindex_to_first_txoutindex_iter =
             indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
+        let mut txindex_to_output_count_iter = indexes.transaction.txindex_to_output_count.iter();
         let mut txoutindex_to_outputtype_iter =
             indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
         let mut txoutindex_to_typeindex_iter = indexer.vecs.txout.txoutindex_to_typeindex.iter()?;

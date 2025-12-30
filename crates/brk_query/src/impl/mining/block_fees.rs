@@ -17,6 +17,7 @@ impl Query {
 
         let mut fees = computer
             .chain
+            .transaction
             .indexes_to_fee
             .sats
             .dateindex

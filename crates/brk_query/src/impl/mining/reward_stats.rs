@@ -14,6 +14,7 @@ impl Query {
 
         let mut coinbase_iter = computer
             .chain
+            .coinbase
             .indexes_to_coinbase
             .sats
             .height
@@ -22,6 +23,7 @@ impl Query {
             .iter();
         let mut fee_iter = computer
             .chain
+            .transaction
             .indexes_to_fee
             .sats
             .height
@@ -29,6 +31,7 @@ impl Query {
             .iter();
         let mut tx_count_iter = computer
             .chain
+            .transaction
             .indexes_to_tx_count
             .height
             .as_ref()

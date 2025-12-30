@@ -27,7 +27,7 @@ impl ComputeContext {
         price: Option<&price::Vecs>,
     ) -> Self {
         let height_to_timestamp: Vec<Timestamp> =
-            indexes.height_to_timestamp_fixed.into_iter().collect();
+            indexes.block.height_to_timestamp_fixed.into_iter().collect();
 
         let height_to_price: Option<Vec<Dollars>> = price
             .map(|p| &p.chainindexes_to_price_close.height)

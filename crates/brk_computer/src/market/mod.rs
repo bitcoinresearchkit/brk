@@ -1,194 +1,33 @@
+pub mod ath;
 mod compute;
+pub mod dca;
+pub mod history;
 mod import;
+pub mod moving_average;
+pub mod range;
+pub mod volatility;
 
 use brk_traversable::Traversable;
-use brk_types::{Close, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16};
-use vecdb::{Database, EagerVec, PcoVec};
+use vecdb::Database;
 
-use crate::grouped::{
-    ComputedRatioVecsFromDateIndex, ComputedStandardDeviationVecsFromDateIndex,
-    ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, LazyVecsFromDateIndex,
-};
+pub use ath::Vecs as AthVecs;
+pub use dca::Vecs as DcaVecs;
+pub use history::Vecs as HistoryVecs;
+pub use moving_average::Vecs as MovingAverageVecs;
+pub use range::Vecs as RangeVecs;
+pub use volatility::Vecs as VolatilityVecs;
 
 pub const DB_NAME: &str = "market";
 
+/// Main market metrics struct composed of sub-modules
 #[derive(Clone, Traversable)]
 pub struct Vecs {
+    #[traversable(skip)]
     pub(crate) db: Database,
-
-    pub height_to_price_ath: EagerVec<PcoVec<Height, Dollars>>,
-    pub height_to_price_drawdown: EagerVec<PcoVec<Height, StoredF32>>,
-    pub indexes_to_price_ath: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_drawdown: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub indexes_to_days_since_price_ath: ComputedVecsFromDateIndex<StoredU16>,
-    pub indexes_to_max_days_between_price_aths: ComputedVecsFromDateIndex<StoredU16>,
-    pub indexes_to_max_years_between_price_aths: LazyVecsFromDateIndex<StoredF32, StoredU16>,
-
-    pub indexes_to_1d_returns_1w_sd: ComputedStandardDeviationVecsFromDateIndex,
-    pub indexes_to_1d_returns_1m_sd: ComputedStandardDeviationVecsFromDateIndex,
-    pub indexes_to_1d_returns_1y_sd: ComputedStandardDeviationVecsFromDateIndex,
-    pub indexes_to_price_1w_volatility: LazyVecsFromDateIndex<StoredF32>,
-    pub indexes_to_price_1m_volatility: LazyVecsFromDateIndex<StoredF32>,
-    pub indexes_to_price_1y_volatility: LazyVecsFromDateIndex<StoredF32>,
-
-    pub indexes_to_price_1w_min: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_1w_max: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_2w_min: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_2w_max: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_1m_min: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_1m_max: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_1y_min: ComputedVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_1y_max: ComputedVecsFromDateIndex<Dollars>,
-
-    pub dateindex_to_price_true_range: EagerVec<PcoVec<DateIndex, StoredF32>>,
-    pub dateindex_to_price_true_range_2w_sum: EagerVec<PcoVec<DateIndex, StoredF32>>,
-    pub indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex<StoredF32>,
-
-    pub indexes_to_price_1w_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_8d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_13d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_21d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_1m_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_34d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_55d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_89d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_144d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_200d_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_1y_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_2y_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_200w_sma: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_4y_sma: ComputedRatioVecsFromDateIndex,
-
-    pub indexes_to_price_1w_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_8d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_13d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_21d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_1m_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_34d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_55d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_89d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_144d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_200d_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_1y_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_2y_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_200w_ema: ComputedRatioVecsFromDateIndex,
-    pub indexes_to_price_4y_ema: ComputedRatioVecsFromDateIndex,
-
-    pub indexes_to_price_200d_sma_x2_4: LazyVecsFromDateIndex<Dollars>,
-    pub indexes_to_price_200d_sma_x0_8: LazyVecsFromDateIndex<Dollars>,
-
-    pub price_1d_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_1w_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_1m_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_3m_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_6m_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_1y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_2y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_3y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_4y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_5y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_6y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_8y_ago: ComputedVecsFromDateIndex<Dollars>,
-    pub price_10y_ago: ComputedVecsFromDateIndex<Dollars>,
-
-    pub _1d_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _1w_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _1m_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _3m_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _6m_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _1y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _2y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _3y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _4y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _5y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _6y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _8y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _10y_price_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _2y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _3y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _4y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _5y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _6y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _8y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _10y_cagr: ComputedVecsFromDateIndex<StoredF32>,
-
-    pub _1w_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _1m_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _3m_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _6m_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _1y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _2y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _3y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _4y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _5y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _6y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _8y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _10y_dca_stack: ComputedVecsFromDateIndex<Sats>,
-    pub _1w_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _1m_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _3m_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _6m_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _1y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _2y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _3y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _4y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _5y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _6y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _8y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _10y_dca_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub _1w_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _1m_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _3m_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _6m_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _1y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _2y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _3y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _4y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _5y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _6y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _8y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _10y_dca_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub _2y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _3y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _4y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _5y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _6y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _8y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-    pub _10y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
-
-    pub dca_class_2025_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2024_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2023_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2022_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2021_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2020_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2019_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2018_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2017_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2016_stack: ComputedVecsFromDateIndex<Sats>,
-    pub dca_class_2015_stack: ComputedVecsFromDateIndex<Sats>,
-
-    pub dca_class_2025_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2024_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2023_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2022_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2021_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2020_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2019_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2018_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2017_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2016_avg_price: ComputedVecsFromDateIndex<Dollars>,
-    pub dca_class_2015_avg_price: ComputedVecsFromDateIndex<Dollars>,
-
-    pub dca_class_2025_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2024_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2023_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2022_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2021_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2020_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2019_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2018_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2017_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2016_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
-    pub dca_class_2015_returns: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
+    pub ath: AthVecs,
+    pub volatility: VolatilityVecs,
+    pub range: RangeVecs,
+    pub moving_average: MovingAverageVecs,
+    pub history: HistoryVecs,
+    pub dca: DcaVecs,
 }

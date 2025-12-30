@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(clippy::useless_format)]
+#![allow(clippy::unnecessary_to_owned)]
 
 use std::sync::Arc;
 use serde::de::DeserializeOwned;
@@ -285,13 +286,13 @@ impl<T: DeserializeOwned> Indexes28<T> {
 }
 
 /// Index accessor for metrics with 3 indexes.
-pub struct Indexes15<T> {
+pub struct Indexes23<T> {
     pub by_quarterindex: MetricNode<T>,
     pub by_semesterindex: MetricNode<T>,
     pub by_yearindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes15<T> {
+impl<T: DeserializeOwned> Indexes23<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_quarterindex: MetricNode::new(client.clone(), format!("{base_path}/quarterindex")),
@@ -317,12 +318,12 @@ impl<T: DeserializeOwned> Indexes13<T> {
 }
 
 /// Index accessor for metrics with 2 indexes.
-pub struct Indexes14<T> {
+pub struct Indexes22<T> {
     pub by_monthindex: MetricNode<T>,
     pub by_weekindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes14<T> {
+impl<T: DeserializeOwned> Indexes22<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_monthindex: MetricNode::new(client.clone(), format!("{base_path}/monthindex")),
@@ -449,11 +450,11 @@ impl<T: DeserializeOwned> Indexes12<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes16<T> {
+pub struct Indexes14<T> {
     pub by_p2aaddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes16<T> {
+impl<T: DeserializeOwned> Indexes14<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2aaddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2aaddressindex")),
@@ -462,11 +463,11 @@ impl<T: DeserializeOwned> Indexes16<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes17<T> {
+pub struct Indexes15<T> {
     pub by_p2pk33addressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes17<T> {
+impl<T: DeserializeOwned> Indexes15<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2pk33addressindex: MetricNode::new(client.clone(), format!("{base_path}/p2pk33addressindex")),
@@ -475,11 +476,11 @@ impl<T: DeserializeOwned> Indexes17<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes18<T> {
+pub struct Indexes16<T> {
     pub by_p2pk65addressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes18<T> {
+impl<T: DeserializeOwned> Indexes16<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2pk65addressindex: MetricNode::new(client.clone(), format!("{base_path}/p2pk65addressindex")),
@@ -488,11 +489,11 @@ impl<T: DeserializeOwned> Indexes18<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes19<T> {
+pub struct Indexes17<T> {
     pub by_p2pkhaddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes19<T> {
+impl<T: DeserializeOwned> Indexes17<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2pkhaddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2pkhaddressindex")),
@@ -501,11 +502,11 @@ impl<T: DeserializeOwned> Indexes19<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes20<T> {
+pub struct Indexes18<T> {
     pub by_p2shaddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes20<T> {
+impl<T: DeserializeOwned> Indexes18<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2shaddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2shaddressindex")),
@@ -514,11 +515,11 @@ impl<T: DeserializeOwned> Indexes20<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes21<T> {
+pub struct Indexes19<T> {
     pub by_p2traddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes21<T> {
+impl<T: DeserializeOwned> Indexes19<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2traddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2traddressindex")),
@@ -527,11 +528,11 @@ impl<T: DeserializeOwned> Indexes21<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes22<T> {
+pub struct Indexes20<T> {
     pub by_p2wpkhaddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes22<T> {
+impl<T: DeserializeOwned> Indexes20<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2wpkhaddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2wpkhaddressindex")),
@@ -540,11 +541,11 @@ impl<T: DeserializeOwned> Indexes22<T> {
 }
 
 /// Index accessor for metrics with 1 indexes.
-pub struct Indexes23<T> {
+pub struct Indexes21<T> {
     pub by_p2wshaddressindex: MetricNode<T>,
 }
 
-impl<T: DeserializeOwned> Indexes23<T> {
+impl<T: DeserializeOwned> Indexes21<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             by_p2wshaddressindex: MetricNode::new(client.clone(), format!("{base_path}/p2wshaddressindex")),
@@ -1224,27 +1225,27 @@ impl RelativePattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct AddresstypeToHeightToAddrCountPattern<T> {
-    pub p2a: Indexes2<T>,
-    pub p2pk33: Indexes2<T>,
-    pub p2pk65: Indexes2<T>,
-    pub p2pkh: Indexes2<T>,
-    pub p2sh: Indexes2<T>,
-    pub p2tr: Indexes2<T>,
-    pub p2wpkh: Indexes2<T>,
-    pub p2wsh: Indexes2<T>,
+    pub p2a: Indexes14<T>,
+    pub p2pk33: Indexes15<T>,
+    pub p2pk65: Indexes16<T>,
+    pub p2pkh: Indexes17<T>,
+    pub p2sh: Indexes18<T>,
+    pub p2tr: Indexes19<T>,
+    pub p2wpkh: Indexes20<T>,
+    pub p2wsh: Indexes21<T>,
 }
 
 impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            p2a: Indexes2::new(client.clone(), &format!("{base_path}_p2a")),
-            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}_p2pk33")),
-            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}_p2pk65")),
-            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}_p2pkh")),
-            p2sh: Indexes2::new(client.clone(), &format!("{base_path}_p2sh")),
-            p2tr: Indexes2::new(client.clone(), &format!("{base_path}_p2tr")),
-            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}_p2wpkh")),
-            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}_p2wsh")),
+            p2a: Indexes14::new(client.clone(), &format!("{base_path}_p2a")),
+            p2pk33: Indexes15::new(client.clone(), &format!("{base_path}_p2pk33")),
+            p2pk65: Indexes16::new(client.clone(), &format!("{base_path}_p2pk65")),
+            p2pkh: Indexes17::new(client.clone(), &format!("{base_path}_p2pkh")),
+            p2sh: Indexes18::new(client.clone(), &format!("{base_path}_p2sh")),
+            p2tr: Indexes19::new(client.clone(), &format!("{base_path}_p2tr")),
+            p2wpkh: Indexes20::new(client.clone(), &format!("{base_path}_p2wpkh")),
+            p2wsh: Indexes21::new(client.clone(), &format!("{base_path}_p2wsh")),
         }
     }
 }
@@ -1400,6 +1401,27 @@ impl _10yTo12yPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct ActivityPattern {
+    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
+    pub coindays_destroyed: BlockCountPattern<StoredF64>,
+    pub satblocks_destroyed: Indexes2<Sats>,
+    pub satdays_destroyed: Indexes2<Sats>,
+    pub sent: FeePattern2,
+}
+
+impl ActivityPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coinblocks_destroyed")),
+            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coindays_destroyed")),
+            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satblocks_destroyed")),
+            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satdays_destroyed")),
+            sent: FeePattern2::new(client.clone(), &format!("{base_path}_sent")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct SupplyPattern2 {
     pub supply: SupplyPattern,
     pub supply_half: ActiveSupplyPattern,
@@ -1421,22 +1443,20 @@ impl SupplyPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActivityPattern {
-    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
-    pub coindays_destroyed: BlockCountPattern<StoredF64>,
-    pub satblocks_destroyed: Indexes2<Sats>,
-    pub satdays_destroyed: Indexes2<Sats>,
-    pub sent: FeePattern2,
+pub struct SupplyPattern {
+    pub base: Indexes2<Sats>,
+    pub bitcoin: Indexes<Bitcoin>,
+    pub dollars: Indexes<Dollars>,
+    pub sats: Indexes<Sats>,
 }
 
-impl ActivityPattern {
+impl SupplyPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coinblocks_destroyed")),
-            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coindays_destroyed")),
-            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satblocks_destroyed")),
-            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satdays_destroyed")),
-            sent: FeePattern2::new(client.clone(), &format!("{base_path}_sent")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            bitcoin: Indexes::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: Indexes::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: Indexes::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
@@ -1461,20 +1481,18 @@ impl FeePattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern {
-    pub base: Indexes2<Sats>,
-    pub bitcoin: Indexes<Bitcoin>,
-    pub dollars: Indexes<Dollars>,
-    pub sats: Indexes<Sats>,
+pub struct PricePaidPattern2 {
+    pub max_price_paid: Indexes3<Dollars>,
+    pub min_price_paid: Indexes3<Dollars>,
+    pub price_percentiles: PricePercentilesPattern,
 }
 
-impl SupplyPattern {
+impl PricePaidPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
-            bitcoin: Indexes::new(client.clone(), &format!("{base_path}_bitcoin")),
-            dollars: Indexes::new(client.clone(), &format!("{base_path}_dollars")),
-            sats: Indexes::new(client.clone(), &format!("{base_path}_sats")),
+            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_max_price_paid")),
+            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_min_price_paid")),
+            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}_price_percentiles")),
         }
     }
 }
@@ -1531,23 +1549,6 @@ impl ActiveSupplyPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct PricePaidPattern2 {
-    pub max_price_paid: Indexes3<Dollars>,
-    pub min_price_paid: Indexes3<Dollars>,
-    pub price_percentiles: PricePercentilesPattern,
-}
-
-impl PricePaidPattern2 {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_max_price_paid")),
-            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_min_price_paid")),
-            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}_price_percentiles")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct BlockCountPattern<T> {
     pub base: Indexes2<T>,
     pub cumulative: Indexes3<T>,
@@ -1558,6 +1559,21 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SatsPattern {
+    pub cumulative: Indexes3<Sats>,
+    pub sum: Indexes4<Sats>,
+}
+
+impl SatsPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
             cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
             sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
@@ -1606,21 +1622,6 @@ impl _1dReturns1mSdPattern {
         Self {
             sd: Indexes::new(client.clone(), &format!("{acc}_sd")),
             sma: Indexes::new(client.clone(), &format!("{acc}_sma")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SatsPattern {
-    pub cumulative: Indexes3<Sats>,
-    pub sum: Indexes4<Sats>,
-}
-
-impl SatsPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1720,36 +1721,121 @@ impl CatalogTree_Computed_Blks {
 
 /// Catalog tree node.
 pub struct CatalogTree_Computed_Chain {
+    pub block: CatalogTree_Computed_Chain_Block,
+    pub coinbase: CatalogTree_Computed_Chain_Coinbase,
+    pub epoch: CatalogTree_Computed_Chain_Epoch,
+    pub mining: CatalogTree_Computed_Chain_Mining,
+    pub output_type: CatalogTree_Computed_Chain_OutputType,
+    pub transaction: CatalogTree_Computed_Chain_Transaction,
+    pub volume: CatalogTree_Computed_Chain_Volume,
+}
+
+impl CatalogTree_Computed_Chain {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            block: CatalogTree_Computed_Chain_Block::new(client.clone(), &format!("{base_path}_block")),
+            coinbase: CatalogTree_Computed_Chain_Coinbase::new(client.clone(), &format!("{base_path}_coinbase")),
+            epoch: CatalogTree_Computed_Chain_Epoch::new(client.clone(), &format!("{base_path}_epoch")),
+            mining: CatalogTree_Computed_Chain_Mining::new(client.clone(), &format!("{base_path}_mining")),
+            output_type: CatalogTree_Computed_Chain_OutputType::new(client.clone(), &format!("{base_path}_output_type")),
+            transaction: CatalogTree_Computed_Chain_Transaction::new(client.clone(), &format!("{base_path}_transaction")),
+            volume: CatalogTree_Computed_Chain_Volume::new(client.clone(), &format!("{base_path}_volume")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Block {
     pub _1m_block_count: Indexes<StoredU32>,
     pub _1w_block_count: Indexes<StoredU32>,
     pub _1y_block_count: Indexes<StoredU32>,
     pub _24h_block_count: Indexes2<StoredU32>,
-    pub _24h_coinbase_sum: Indexes2<Sats>,
-    pub _24h_coinbase_usd_sum: Indexes2<Dollars>,
-    pub annualized_volume: Indexes<Sats>,
-    pub annualized_volume_btc: Indexes<Bitcoin>,
-    pub annualized_volume_usd: Indexes<Dollars>,
     pub block_count: BlockCountPattern<StoredU32>,
     pub block_count_target: Indexes<StoredU64>,
     pub block_interval: BlockIntervalPattern<Timestamp>,
     pub block_size: BlockSizePattern<StoredU64>,
     pub block_vbytes: BlockSizePattern<StoredU64>,
     pub block_weight: BlockSizePattern<Weight>,
+    pub interval: Indexes2<Timestamp>,
+    pub vbytes: Indexes2<StoredU64>,
+}
+
+impl CatalogTree_Computed_Chain_Block {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _1m_block_count: Indexes::new(client.clone(), &format!("{base_path}_1m_block_count")),
+            _1w_block_count: Indexes::new(client.clone(), &format!("{base_path}_1w_block_count")),
+            _1y_block_count: Indexes::new(client.clone(), &format!("{base_path}_1y_block_count")),
+            _24h_block_count: Indexes2::new(client.clone(), &format!("{base_path}_24h_block_count")),
+            block_count: BlockCountPattern::new(client.clone(), &format!("{base_path}_block_count")),
+            block_count_target: Indexes::new(client.clone(), &format!("{base_path}_block_count_target")),
+            block_interval: BlockIntervalPattern::new(client.clone(), "block_interval"),
+            block_size: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_size")),
+            block_vbytes: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_vbytes")),
+            block_weight: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_weight")),
+            interval: Indexes2::new(client.clone(), &format!("{base_path}_interval")),
+            vbytes: Indexes2::new(client.clone(), &format!("{base_path}_vbytes")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Coinbase {
+    pub _24h_coinbase_sum: Indexes2<Sats>,
+    pub _24h_coinbase_usd_sum: Indexes2<Dollars>,
+    pub coinbase: CoinbasePattern,
+    pub fee_dominance: Indexes5<StoredF32>,
+    pub inflation_rate: Indexes<StoredF32>,
+    pub puell_multiple: Indexes<StoredF32>,
+    pub subsidy: CoinbasePattern,
+    pub subsidy_dominance: Indexes5<StoredF32>,
+    pub subsidy_usd_1y_sma: Indexes<Dollars>,
+    pub unclaimed_rewards: UnclaimedRewardsPattern,
+}
+
+impl CatalogTree_Computed_Chain_Coinbase {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _24h_coinbase_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_sum")),
+            _24h_coinbase_usd_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_usd_sum")),
+            coinbase: CoinbasePattern::new(client.clone(), &format!("{base_path}_coinbase")),
+            fee_dominance: Indexes5::new(client.clone(), &format!("{base_path}_fee_dominance")),
+            inflation_rate: Indexes::new(client.clone(), &format!("{base_path}_inflation_rate")),
+            puell_multiple: Indexes::new(client.clone(), &format!("{base_path}_puell_multiple")),
+            subsidy: CoinbasePattern::new(client.clone(), &format!("{base_path}_subsidy")),
+            subsidy_dominance: Indexes5::new(client.clone(), &format!("{base_path}_subsidy_dominance")),
+            subsidy_usd_1y_sma: Indexes::new(client.clone(), &format!("{base_path}_subsidy_usd_1y_sma")),
+            unclaimed_rewards: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}_unclaimed_rewards")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Epoch {
+    pub difficultyepoch: Indexes<DifficultyEpoch>,
+    pub halvingepoch: Indexes<HalvingEpoch>,
+    pub timestamp: MetricNode<Timestamp>,
+}
+
+impl CatalogTree_Computed_Chain_Epoch {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            difficultyepoch: Indexes::new(client.clone(), &format!("{base_path}_difficultyepoch")),
+            halvingepoch: Indexes::new(client.clone(), &format!("{base_path}_halvingepoch")),
+            timestamp: MetricNode::new(client.clone(), format!("{base_path}_timestamp")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Mining {
     pub blocks_before_next_difficulty_adjustment: Indexes3<StoredU32>,
     pub blocks_before_next_halving: Indexes3<StoredU32>,
-    pub coinbase: CoinbasePattern,
     pub days_before_next_difficulty_adjustment: Indexes3<StoredF32>,
     pub days_before_next_halving: Indexes3<StoredF32>,
     pub difficulty: Indexes4<StoredF64>,
     pub difficulty_adjustment: Indexes3<StoredF32>,
     pub difficulty_as_hash: Indexes3<StoredF32>,
-    pub difficultyepoch: Indexes<DifficultyEpoch>,
-    pub emptyoutput_count: BitcoinPattern<StoredU64>,
-    pub exact_utxo_count: Indexes3<StoredU64>,
-    pub fee: CatalogTree_Computed_Chain_Fee,
-    pub fee_dominance: Indexes5<StoredF32>,
-    pub fee_rate: CatalogTree_Computed_Chain_FeeRate,
-    pub halvingepoch: Indexes<HalvingEpoch>,
     pub hash_price_phs: Indexes3<StoredF32>,
     pub hash_price_phs_min: Indexes3<StoredF32>,
     pub hash_price_rebound: Indexes3<StoredF32>,
@@ -1765,80 +1851,18 @@ pub struct CatalogTree_Computed_Chain {
     pub hash_value_rebound: Indexes3<StoredF32>,
     pub hash_value_ths: Indexes3<StoredF32>,
     pub hash_value_ths_min: Indexes3<StoredF32>,
-    pub inflation_rate: Indexes<StoredF32>,
-    pub input_count: BlockSizePattern<StoredU64>,
-    pub input_value: Indexes6<Sats>,
-    pub inputs_per_sec: Indexes<StoredF32>,
-    pub interval: Indexes2<Timestamp>,
-    pub is_coinbase: Indexes6<StoredBool>,
-    pub opreturn_count: BitcoinPattern<StoredU64>,
-    pub output_count: BlockSizePattern<StoredU64>,
-    pub output_value: Indexes6<Sats>,
-    pub outputs_per_sec: Indexes<StoredF32>,
-    pub p2a_count: BitcoinPattern<StoredU64>,
-    pub p2ms_count: BitcoinPattern<StoredU64>,
-    pub p2pk33_count: BitcoinPattern<StoredU64>,
-    pub p2pk65_count: BitcoinPattern<StoredU64>,
-    pub p2pkh_count: BitcoinPattern<StoredU64>,
-    pub p2sh_count: BitcoinPattern<StoredU64>,
-    pub p2tr_count: BitcoinPattern<StoredU64>,
-    pub p2wpkh_count: BitcoinPattern<StoredU64>,
-    pub p2wsh_count: BitcoinPattern<StoredU64>,
-    pub puell_multiple: Indexes<StoredF32>,
-    pub sent_sum: CatalogTree_Computed_Chain_SentSum,
-    pub subsidy: CoinbasePattern,
-    pub subsidy_dominance: Indexes5<StoredF32>,
-    pub subsidy_usd_1y_sma: Indexes<Dollars>,
-    pub timestamp: MetricNode<Timestamp>,
-    pub tx_btc_velocity: Indexes<StoredF64>,
-    pub tx_count: BitcoinPattern<StoredU64>,
-    pub tx_per_sec: Indexes<StoredF32>,
-    pub tx_usd_velocity: Indexes<StoredF64>,
-    pub tx_v1: BlockCountPattern<StoredU64>,
-    pub tx_v2: BlockCountPattern<StoredU64>,
-    pub tx_v3: BlockCountPattern<StoredU64>,
-    pub tx_vsize: BlockIntervalPattern<VSize>,
-    pub tx_weight: BlockIntervalPattern<Weight>,
-    pub unclaimed_rewards: UnclaimedRewardsPattern,
-    pub unknownoutput_count: BitcoinPattern<StoredU64>,
-    pub vbytes: Indexes2<StoredU64>,
-    pub vsize: Indexes6<VSize>,
-    pub weight: Indexes6<Weight>,
 }
 
-impl CatalogTree_Computed_Chain {
+impl CatalogTree_Computed_Chain_Mining {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _1m_block_count: Indexes::new(client.clone(), &format!("{base_path}_1m_block_count")),
-            _1w_block_count: Indexes::new(client.clone(), &format!("{base_path}_1w_block_count")),
-            _1y_block_count: Indexes::new(client.clone(), &format!("{base_path}_1y_block_count")),
-            _24h_block_count: Indexes2::new(client.clone(), &format!("{base_path}_24h_block_count")),
-            _24h_coinbase_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_sum")),
-            _24h_coinbase_usd_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_usd_sum")),
-            annualized_volume: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume")),
-            annualized_volume_btc: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_btc")),
-            annualized_volume_usd: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_usd")),
-            block_count: BlockCountPattern::new(client.clone(), &format!("{base_path}_block_count")),
-            block_count_target: Indexes::new(client.clone(), &format!("{base_path}_block_count_target")),
-            block_interval: BlockIntervalPattern::new(client.clone(), "block_interval"),
-            block_size: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_size")),
-            block_vbytes: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_vbytes")),
-            block_weight: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_weight")),
             blocks_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_blocks_before_next_difficulty_adjustment")),
             blocks_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}_blocks_before_next_halving")),
-            coinbase: CoinbasePattern::new(client.clone(), &format!("{base_path}_coinbase")),
             days_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_days_before_next_difficulty_adjustment")),
             days_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}_days_before_next_halving")),
             difficulty: Indexes4::new(client.clone(), &format!("{base_path}_difficulty")),
             difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_difficulty_adjustment")),
             difficulty_as_hash: Indexes3::new(client.clone(), &format!("{base_path}_difficulty_as_hash")),
-            difficultyepoch: Indexes::new(client.clone(), &format!("{base_path}_difficultyepoch")),
-            emptyoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_emptyoutput_count")),
-            exact_utxo_count: Indexes3::new(client.clone(), &format!("{base_path}_exact_utxo_count")),
-            fee: CatalogTree_Computed_Chain_Fee::new(client.clone(), &format!("{base_path}_fee")),
-            fee_dominance: Indexes5::new(client.clone(), &format!("{base_path}_fee_dominance")),
-            fee_rate: CatalogTree_Computed_Chain_FeeRate::new(client.clone(), &format!("{base_path}_fee_rate")),
-            halvingepoch: Indexes::new(client.clone(), &format!("{base_path}_halvingepoch")),
             hash_price_phs: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_phs")),
             hash_price_phs_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_phs_min")),
             hash_price_rebound: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_rebound")),
@@ -1854,16 +1878,33 @@ impl CatalogTree_Computed_Chain {
             hash_value_rebound: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_rebound")),
             hash_value_ths: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_ths")),
             hash_value_ths_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_ths_min")),
-            inflation_rate: Indexes::new(client.clone(), &format!("{base_path}_inflation_rate")),
-            input_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_input_count")),
-            input_value: Indexes6::new(client.clone(), &format!("{base_path}_input_value")),
-            inputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_inputs_per_sec")),
-            interval: Indexes2::new(client.clone(), &format!("{base_path}_interval")),
-            is_coinbase: Indexes6::new(client.clone(), &format!("{base_path}_is_coinbase")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_OutputType {
+    pub emptyoutput_count: BitcoinPattern<StoredU64>,
+    pub exact_utxo_count: Indexes3<StoredU64>,
+    pub opreturn_count: BitcoinPattern<StoredU64>,
+    pub p2a_count: BitcoinPattern<StoredU64>,
+    pub p2ms_count: BitcoinPattern<StoredU64>,
+    pub p2pk33_count: BitcoinPattern<StoredU64>,
+    pub p2pk65_count: BitcoinPattern<StoredU64>,
+    pub p2pkh_count: BitcoinPattern<StoredU64>,
+    pub p2sh_count: BitcoinPattern<StoredU64>,
+    pub p2tr_count: BitcoinPattern<StoredU64>,
+    pub p2wpkh_count: BitcoinPattern<StoredU64>,
+    pub p2wsh_count: BitcoinPattern<StoredU64>,
+    pub unknownoutput_count: BitcoinPattern<StoredU64>,
+}
+
+impl CatalogTree_Computed_Chain_OutputType {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            emptyoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_emptyoutput_count")),
+            exact_utxo_count: Indexes3::new(client.clone(), &format!("{base_path}_exact_utxo_count")),
             opreturn_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_opreturn_count")),
-            output_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_output_count")),
-            output_value: Indexes6::new(client.clone(), &format!("{base_path}_output_value")),
-            outputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_outputs_per_sec")),
             p2a_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2a_count")),
             p2ms_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2ms_count")),
             p2pk33_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2pk33_count")),
@@ -1873,24 +1914,46 @@ impl CatalogTree_Computed_Chain {
             p2tr_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2tr_count")),
             p2wpkh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2wpkh_count")),
             p2wsh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2wsh_count")),
-            puell_multiple: Indexes::new(client.clone(), &format!("{base_path}_puell_multiple")),
-            sent_sum: CatalogTree_Computed_Chain_SentSum::new(client.clone(), &format!("{base_path}_sent_sum")),
-            subsidy: CoinbasePattern::new(client.clone(), &format!("{base_path}_subsidy")),
-            subsidy_dominance: Indexes5::new(client.clone(), &format!("{base_path}_subsidy_dominance")),
-            subsidy_usd_1y_sma: Indexes::new(client.clone(), &format!("{base_path}_subsidy_usd_1y_sma")),
-            timestamp: MetricNode::new(client.clone(), format!("{base_path}_timestamp")),
-            tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_btc_velocity")),
+            unknownoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_unknownoutput_count")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Transaction {
+    pub fee: CatalogTree_Computed_Chain_Transaction_Fee,
+    pub fee_rate: CatalogTree_Computed_Chain_Transaction_FeeRate,
+    pub input_count: BlockSizePattern<StoredU64>,
+    pub input_value: Indexes6<Sats>,
+    pub is_coinbase: Indexes6<StoredBool>,
+    pub output_count: BlockSizePattern<StoredU64>,
+    pub output_value: Indexes6<Sats>,
+    pub tx_count: BitcoinPattern<StoredU64>,
+    pub tx_v1: BlockCountPattern<StoredU64>,
+    pub tx_v2: BlockCountPattern<StoredU64>,
+    pub tx_v3: BlockCountPattern<StoredU64>,
+    pub tx_vsize: BlockIntervalPattern<VSize>,
+    pub tx_weight: BlockIntervalPattern<Weight>,
+    pub vsize: Indexes6<VSize>,
+    pub weight: Indexes6<Weight>,
+}
+
+impl CatalogTree_Computed_Chain_Transaction {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            fee: CatalogTree_Computed_Chain_Transaction_Fee::new(client.clone(), &format!("{base_path}_fee")),
+            fee_rate: CatalogTree_Computed_Chain_Transaction_FeeRate::new(client.clone(), &format!("{base_path}_fee_rate")),
+            input_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_input_count")),
+            input_value: Indexes6::new(client.clone(), &format!("{base_path}_input_value")),
+            is_coinbase: Indexes6::new(client.clone(), &format!("{base_path}_is_coinbase")),
+            output_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_output_count")),
+            output_value: Indexes6::new(client.clone(), &format!("{base_path}_output_value")),
             tx_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_tx_count")),
-            tx_per_sec: Indexes::new(client.clone(), &format!("{base_path}_tx_per_sec")),
-            tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_usd_velocity")),
             tx_v1: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v1")),
             tx_v2: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v2")),
             tx_v3: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v3")),
             tx_vsize: BlockIntervalPattern::new(client.clone(), "tx_vsize"),
             tx_weight: BlockIntervalPattern::new(client.clone(), "tx_weight"),
-            unclaimed_rewards: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}_unclaimed_rewards")),
-            unknownoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_unknownoutput_count")),
-            vbytes: Indexes2::new(client.clone(), &format!("{base_path}_vbytes")),
             vsize: Indexes6::new(client.clone(), &format!("{base_path}_vsize")),
             weight: Indexes6::new(client.clone(), &format!("{base_path}_weight")),
         }
@@ -1898,7 +1961,7 @@ impl CatalogTree_Computed_Chain {
 }
 
 /// Catalog tree node.
-pub struct CatalogTree_Computed_Chain_Fee {
+pub struct CatalogTree_Computed_Chain_Transaction_Fee {
     pub base: Indexes6<Sats>,
     pub bitcoin: BlockSizePattern<Bitcoin>,
     pub bitcoin_txindex: Indexes6<Bitcoin>,
@@ -1907,7 +1970,7 @@ pub struct CatalogTree_Computed_Chain_Fee {
     pub sats: BlockSizePattern<Sats>,
 }
 
-impl CatalogTree_Computed_Chain_Fee {
+impl CatalogTree_Computed_Chain_Transaction_Fee {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             base: Indexes6::new(client.clone(), &format!("{base_path}_base")),
@@ -1921,7 +1984,7 @@ impl CatalogTree_Computed_Chain_Fee {
 }
 
 /// Catalog tree node.
-pub struct CatalogTree_Computed_Chain_FeeRate {
+pub struct CatalogTree_Computed_Chain_Transaction_FeeRate {
     pub average: Indexes3<FeeRate>,
     pub base: Indexes6<FeeRate>,
     pub max: Indexes3<FeeRate>,
@@ -1933,7 +1996,7 @@ pub struct CatalogTree_Computed_Chain_FeeRate {
     pub pct90: Indexes2<FeeRate>,
 }
 
-impl CatalogTree_Computed_Chain_FeeRate {
+impl CatalogTree_Computed_Chain_Transaction_FeeRate {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             average: Indexes3::new(client.clone(), &format!("{base_path}_average")),
@@ -1950,13 +2013,42 @@ impl CatalogTree_Computed_Chain_FeeRate {
 }
 
 /// Catalog tree node.
-pub struct CatalogTree_Computed_Chain_SentSum {
+pub struct CatalogTree_Computed_Chain_Volume {
+    pub annualized_volume: Indexes<Sats>,
+    pub annualized_volume_btc: Indexes<Bitcoin>,
+    pub annualized_volume_usd: Indexes<Dollars>,
+    pub inputs_per_sec: Indexes<StoredF32>,
+    pub outputs_per_sec: Indexes<StoredF32>,
+    pub sent_sum: CatalogTree_Computed_Chain_Volume_SentSum,
+    pub tx_btc_velocity: Indexes<StoredF64>,
+    pub tx_per_sec: Indexes<StoredF32>,
+    pub tx_usd_velocity: Indexes<StoredF64>,
+}
+
+impl CatalogTree_Computed_Chain_Volume {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            annualized_volume: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume")),
+            annualized_volume_btc: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_btc")),
+            annualized_volume_usd: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_usd")),
+            inputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_inputs_per_sec")),
+            outputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_outputs_per_sec")),
+            sent_sum: CatalogTree_Computed_Chain_Volume_SentSum::new(client.clone(), &format!("{base_path}_sent_sum")),
+            tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_btc_velocity")),
+            tx_per_sec: Indexes::new(client.clone(), &format!("{base_path}_tx_per_sec")),
+            tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_usd_velocity")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Chain_Volume_SentSum {
     pub bitcoin: BitcoinPattern2<Bitcoin>,
     pub dollars: Indexes3<Dollars>,
     pub sats: Indexes3<Sats>,
 }
 
-impl CatalogTree_Computed_Chain_SentSum {
+impl CatalogTree_Computed_Chain_Volume_SentSum {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
             bitcoin: BitcoinPattern2::new(client.clone(), &format!("{base_path}_bitcoin")),
@@ -2083,86 +2175,125 @@ impl CatalogTree_Computed_Fetched {
 
 /// Catalog tree node.
 pub struct CatalogTree_Computed_Indexes {
-    pub date: Indexes13<Date>,
-    pub date_fixed: Indexes2<Date>,
-    pub dateindex: Indexes13<DateIndex>,
-    pub dateindex_count: Indexes14<StoredU64>,
-    pub decadeindex: MetricNode<DecadeIndex>,
-    pub difficultyepoch: MetricNode<DifficultyEpoch>,
-    pub emptyoutputindex: MetricNode<EmptyOutputIndex>,
-    pub first_dateindex: Indexes14<DateIndex>,
-    pub first_height: MetricNode<Height>,
-    pub first_monthindex: Indexes15<MonthIndex>,
-    pub first_yearindex: Indexes7<YearIndex>,
-    pub halvingepoch: MetricNode<HalvingEpoch>,
-    pub height: Indexes2<Height>,
-    pub height_count: MetricNode<StoredU64>,
-    pub input_count: Indexes6<StoredU64>,
-    pub monthindex: MetricNode<MonthIndex>,
-    pub monthindex_count: Indexes15<StoredU64>,
-    pub opreturnindex: MetricNode<OpReturnIndex>,
-    pub output_count: Indexes6<StoredU64>,
-    pub p2aaddressindex: Indexes16<P2AAddressIndex>,
-    pub p2msoutputindex: MetricNode<P2MSOutputIndex>,
-    pub p2pk33addressindex: Indexes17<P2PK33AddressIndex>,
-    pub p2pk65addressindex: Indexes18<P2PK65AddressIndex>,
-    pub p2pkhaddressindex: Indexes19<P2PKHAddressIndex>,
-    pub p2shaddressindex: Indexes20<P2SHAddressIndex>,
-    pub p2traddressindex: Indexes21<P2TRAddressIndex>,
-    pub p2wpkhaddressindex: Indexes22<P2WPKHAddressIndex>,
-    pub p2wshaddressindex: Indexes23<P2WSHAddressIndex>,
-    pub quarterindex: MetricNode<QuarterIndex>,
-    pub semesterindex: MetricNode<SemesterIndex>,
-    pub timestamp_fixed: Indexes2<Timestamp>,
-    pub txindex: Indexes6<TxIndex>,
-    pub txindex_count: Indexes2<StoredU64>,
-    pub txinindex: Indexes24<TxInIndex>,
-    pub txoutindex: Indexes25<TxOutIndex>,
-    pub unknownoutputindex: MetricNode<UnknownOutputIndex>,
-    pub weekindex: MetricNode<WeekIndex>,
-    pub yearindex: MetricNode<YearIndex>,
-    pub yearindex_count: Indexes7<StoredU64>,
+    pub address: CatalogTree_Computed_Indexes_Address,
+    pub block: CatalogTree_Computed_Indexes_Block,
+    pub time: CatalogTree_Computed_Indexes_Time,
+    pub transaction: CatalogTree_Computed_Indexes_Transaction,
 }
 
 impl CatalogTree_Computed_Indexes {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            date: Indexes13::new(client.clone(), &format!("{base_path}_date")),
-            date_fixed: Indexes2::new(client.clone(), &format!("{base_path}_date_fixed")),
-            dateindex: Indexes13::new(client.clone(), &format!("{base_path}_dateindex")),
-            dateindex_count: Indexes14::new(client.clone(), &format!("{base_path}_dateindex_count")),
-            decadeindex: MetricNode::new(client.clone(), format!("{base_path}_decadeindex")),
-            difficultyepoch: MetricNode::new(client.clone(), format!("{base_path}_difficultyepoch")),
+            address: CatalogTree_Computed_Indexes_Address::new(client.clone(), &format!("{base_path}_address")),
+            block: CatalogTree_Computed_Indexes_Block::new(client.clone(), &format!("{base_path}_block")),
+            time: CatalogTree_Computed_Indexes_Time::new(client.clone(), &format!("{base_path}_time")),
+            transaction: CatalogTree_Computed_Indexes_Transaction::new(client.clone(), &format!("{base_path}_transaction")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Indexes_Address {
+    pub emptyoutputindex: MetricNode<EmptyOutputIndex>,
+    pub opreturnindex: MetricNode<OpReturnIndex>,
+    pub p2aaddressindex: Indexes14<P2AAddressIndex>,
+    pub p2msoutputindex: MetricNode<P2MSOutputIndex>,
+    pub p2pk33addressindex: Indexes15<P2PK33AddressIndex>,
+    pub p2pk65addressindex: Indexes16<P2PK65AddressIndex>,
+    pub p2pkhaddressindex: Indexes17<P2PKHAddressIndex>,
+    pub p2shaddressindex: Indexes18<P2SHAddressIndex>,
+    pub p2traddressindex: Indexes19<P2TRAddressIndex>,
+    pub p2wpkhaddressindex: Indexes20<P2WPKHAddressIndex>,
+    pub p2wshaddressindex: Indexes21<P2WSHAddressIndex>,
+    pub unknownoutputindex: MetricNode<UnknownOutputIndex>,
+}
+
+impl CatalogTree_Computed_Indexes_Address {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
             emptyoutputindex: MetricNode::new(client.clone(), format!("{base_path}_emptyoutputindex")),
-            first_dateindex: Indexes14::new(client.clone(), &format!("{base_path}_first_dateindex")),
+            opreturnindex: MetricNode::new(client.clone(), format!("{base_path}_opreturnindex")),
+            p2aaddressindex: Indexes14::new(client.clone(), &format!("{base_path}_p2aaddressindex")),
+            p2msoutputindex: MetricNode::new(client.clone(), format!("{base_path}_p2msoutputindex")),
+            p2pk33addressindex: Indexes15::new(client.clone(), &format!("{base_path}_p2pk33addressindex")),
+            p2pk65addressindex: Indexes16::new(client.clone(), &format!("{base_path}_p2pk65addressindex")),
+            p2pkhaddressindex: Indexes17::new(client.clone(), &format!("{base_path}_p2pkhaddressindex")),
+            p2shaddressindex: Indexes18::new(client.clone(), &format!("{base_path}_p2shaddressindex")),
+            p2traddressindex: Indexes19::new(client.clone(), &format!("{base_path}_p2traddressindex")),
+            p2wpkhaddressindex: Indexes20::new(client.clone(), &format!("{base_path}_p2wpkhaddressindex")),
+            p2wshaddressindex: Indexes21::new(client.clone(), &format!("{base_path}_p2wshaddressindex")),
+            unknownoutputindex: MetricNode::new(client.clone(), format!("{base_path}_unknownoutputindex")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Indexes_Block {
+    pub date: Indexes2<Date>,
+    pub date_fixed: Indexes2<Date>,
+    pub dateindex: Indexes2<DateIndex>,
+    pub difficultyepoch: MetricNode<DifficultyEpoch>,
+    pub first_height: MetricNode<Height>,
+    pub halvingepoch: MetricNode<HalvingEpoch>,
+    pub height: Indexes2<Height>,
+    pub height_count: MetricNode<StoredU64>,
+    pub timestamp_fixed: Indexes2<Timestamp>,
+    pub txindex_count: Indexes2<StoredU64>,
+}
+
+impl CatalogTree_Computed_Indexes_Block {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            date: Indexes2::new(client.clone(), &format!("{base_path}_date")),
+            date_fixed: Indexes2::new(client.clone(), &format!("{base_path}_date_fixed")),
+            dateindex: Indexes2::new(client.clone(), &format!("{base_path}_dateindex")),
+            difficultyepoch: MetricNode::new(client.clone(), format!("{base_path}_difficultyepoch")),
             first_height: MetricNode::new(client.clone(), format!("{base_path}_first_height")),
-            first_monthindex: Indexes15::new(client.clone(), &format!("{base_path}_first_monthindex")),
-            first_yearindex: Indexes7::new(client.clone(), &format!("{base_path}_first_yearindex")),
             halvingepoch: MetricNode::new(client.clone(), format!("{base_path}_halvingepoch")),
             height: Indexes2::new(client.clone(), &format!("{base_path}_height")),
             height_count: MetricNode::new(client.clone(), format!("{base_path}_height_count")),
-            input_count: Indexes6::new(client.clone(), &format!("{base_path}_input_count")),
+            timestamp_fixed: Indexes2::new(client.clone(), &format!("{base_path}_timestamp_fixed")),
+            txindex_count: Indexes2::new(client.clone(), &format!("{base_path}_txindex_count")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Indexes_Time {
+    pub date: Indexes5<Date>,
+    pub dateindex: Indexes5<DateIndex>,
+    pub dateindex_count: Indexes22<StoredU64>,
+    pub decadeindex: MetricNode<DecadeIndex>,
+    pub first_dateindex: Indexes22<DateIndex>,
+    pub first_height: Indexes5<Height>,
+    pub first_monthindex: Indexes23<MonthIndex>,
+    pub first_yearindex: Indexes7<YearIndex>,
+    pub height_count: Indexes5<StoredU64>,
+    pub monthindex: MetricNode<MonthIndex>,
+    pub monthindex_count: Indexes23<StoredU64>,
+    pub quarterindex: MetricNode<QuarterIndex>,
+    pub semesterindex: MetricNode<SemesterIndex>,
+    pub weekindex: MetricNode<WeekIndex>,
+    pub yearindex: MetricNode<YearIndex>,
+    pub yearindex_count: Indexes7<StoredU64>,
+}
+
+impl CatalogTree_Computed_Indexes_Time {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            date: Indexes5::new(client.clone(), &format!("{base_path}_date")),
+            dateindex: Indexes5::new(client.clone(), &format!("{base_path}_dateindex")),
+            dateindex_count: Indexes22::new(client.clone(), &format!("{base_path}_dateindex_count")),
+            decadeindex: MetricNode::new(client.clone(), format!("{base_path}_decadeindex")),
+            first_dateindex: Indexes22::new(client.clone(), &format!("{base_path}_first_dateindex")),
+            first_height: Indexes5::new(client.clone(), &format!("{base_path}_first_height")),
+            first_monthindex: Indexes23::new(client.clone(), &format!("{base_path}_first_monthindex")),
+            first_yearindex: Indexes7::new(client.clone(), &format!("{base_path}_first_yearindex")),
+            height_count: Indexes5::new(client.clone(), &format!("{base_path}_height_count")),
             monthindex: MetricNode::new(client.clone(), format!("{base_path}_monthindex")),
-            monthindex_count: Indexes15::new(client.clone(), &format!("{base_path}_monthindex_count")),
-            opreturnindex: MetricNode::new(client.clone(), format!("{base_path}_opreturnindex")),
-            output_count: Indexes6::new(client.clone(), &format!("{base_path}_output_count")),
-            p2aaddressindex: Indexes16::new(client.clone(), &format!("{base_path}_p2aaddressindex")),
-            p2msoutputindex: MetricNode::new(client.clone(), format!("{base_path}_p2msoutputindex")),
-            p2pk33addressindex: Indexes17::new(client.clone(), &format!("{base_path}_p2pk33addressindex")),
-            p2pk65addressindex: Indexes18::new(client.clone(), &format!("{base_path}_p2pk65addressindex")),
-            p2pkhaddressindex: Indexes19::new(client.clone(), &format!("{base_path}_p2pkhaddressindex")),
-            p2shaddressindex: Indexes20::new(client.clone(), &format!("{base_path}_p2shaddressindex")),
-            p2traddressindex: Indexes21::new(client.clone(), &format!("{base_path}_p2traddressindex")),
-            p2wpkhaddressindex: Indexes22::new(client.clone(), &format!("{base_path}_p2wpkhaddressindex")),
-            p2wshaddressindex: Indexes23::new(client.clone(), &format!("{base_path}_p2wshaddressindex")),
+            monthindex_count: Indexes23::new(client.clone(), &format!("{base_path}_monthindex_count")),
             quarterindex: MetricNode::new(client.clone(), format!("{base_path}_quarterindex")),
             semesterindex: MetricNode::new(client.clone(), format!("{base_path}_semesterindex")),
-            timestamp_fixed: Indexes2::new(client.clone(), &format!("{base_path}_timestamp_fixed")),
-            txindex: Indexes6::new(client.clone(), &format!("{base_path}_txindex")),
-            txindex_count: Indexes2::new(client.clone(), &format!("{base_path}_txindex_count")),
-            txinindex: Indexes24::new(client.clone(), &format!("{base_path}_txinindex")),
-            txoutindex: Indexes25::new(client.clone(), &format!("{base_path}_txoutindex")),
-            unknownoutputindex: MetricNode::new(client.clone(), format!("{base_path}_unknownoutputindex")),
             weekindex: MetricNode::new(client.clone(), format!("{base_path}_weekindex")),
             yearindex: MetricNode::new(client.clone(), format!("{base_path}_yearindex")),
             yearindex_count: Indexes7::new(client.clone(), &format!("{base_path}_yearindex_count")),
@@ -2171,74 +2302,115 @@ impl CatalogTree_Computed_Indexes {
 }
 
 /// Catalog tree node.
+pub struct CatalogTree_Computed_Indexes_Transaction {
+    pub input_count: Indexes6<StoredU64>,
+    pub output_count: Indexes6<StoredU64>,
+    pub txindex: Indexes6<TxIndex>,
+    pub txinindex: Indexes24<TxInIndex>,
+    pub txoutindex: Indexes25<TxOutIndex>,
+}
+
+impl CatalogTree_Computed_Indexes_Transaction {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            input_count: Indexes6::new(client.clone(), &format!("{base_path}_input_count")),
+            output_count: Indexes6::new(client.clone(), &format!("{base_path}_output_count")),
+            txindex: Indexes6::new(client.clone(), &format!("{base_path}_txindex")),
+            txinindex: Indexes24::new(client.clone(), &format!("{base_path}_txinindex")),
+            txoutindex: Indexes25::new(client.clone(), &format!("{base_path}_txoutindex")),
+        }
+    }
+}
+
+/// Catalog tree node.
 pub struct CatalogTree_Computed_Market {
-    pub _1d_returns_1m_sd: _1dReturns1mSdPattern,
-    pub _1d_returns_1w_sd: _1dReturns1mSdPattern,
-    pub _1d_returns_1y_sd: _1dReturns1mSdPattern,
-    pub _10y_cagr: Indexes<StoredF32>,
+    pub ath: CatalogTree_Computed_Market_Ath,
+    pub dca: CatalogTree_Computed_Market_Dca,
+    pub history: CatalogTree_Computed_Market_History,
+    pub moving_average: CatalogTree_Computed_Market_MovingAverage,
+    pub range: CatalogTree_Computed_Market_Range,
+    pub volatility: CatalogTree_Computed_Market_Volatility,
+}
+
+impl CatalogTree_Computed_Market {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            ath: CatalogTree_Computed_Market_Ath::new(client.clone(), &format!("{base_path}_ath")),
+            dca: CatalogTree_Computed_Market_Dca::new(client.clone(), &format!("{base_path}_dca")),
+            history: CatalogTree_Computed_Market_History::new(client.clone(), &format!("{base_path}_history")),
+            moving_average: CatalogTree_Computed_Market_MovingAverage::new(client.clone(), &format!("{base_path}_moving_average")),
+            range: CatalogTree_Computed_Market_Range::new(client.clone(), &format!("{base_path}_range")),
+            volatility: CatalogTree_Computed_Market_Volatility::new(client.clone(), &format!("{base_path}_volatility")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_Ath {
+    pub days_since_price_ath: Indexes<StoredU16>,
+    pub max_days_between_price_aths: Indexes<StoredU16>,
+    pub max_years_between_price_aths: Indexes<StoredF32>,
+    pub price_ath: Indexes26<Dollars>,
+    pub price_drawdown: Indexes26<StoredF32>,
+}
+
+impl CatalogTree_Computed_Market_Ath {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            days_since_price_ath: Indexes::new(client.clone(), &format!("{base_path}_days_since_price_ath")),
+            max_days_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_days_between_price_aths")),
+            max_years_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_years_between_price_aths")),
+            price_ath: Indexes26::new(client.clone(), &format!("{base_path}_price_ath")),
+            price_drawdown: Indexes26::new(client.clone(), &format!("{base_path}_price_drawdown")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_Dca {
     pub _10y_dca_avg_price: Indexes<Dollars>,
     pub _10y_dca_cagr: Indexes<StoredF32>,
     pub _10y_dca_returns: Indexes<StoredF32>,
     pub _10y_dca_stack: Indexes<Sats>,
-    pub _10y_price_returns: Indexes<StoredF32>,
-    pub _1d_price_returns: Indexes<StoredF32>,
     pub _1m_dca_avg_price: Indexes<Dollars>,
     pub _1m_dca_returns: Indexes<StoredF32>,
     pub _1m_dca_stack: Indexes<Sats>,
-    pub _1m_price_returns: Indexes<StoredF32>,
     pub _1w_dca_avg_price: Indexes<Dollars>,
     pub _1w_dca_returns: Indexes<StoredF32>,
     pub _1w_dca_stack: Indexes<Sats>,
-    pub _1w_price_returns: Indexes<StoredF32>,
     pub _1y_dca_avg_price: Indexes<Dollars>,
     pub _1y_dca_returns: Indexes<StoredF32>,
     pub _1y_dca_stack: Indexes<Sats>,
-    pub _1y_price_returns: Indexes<StoredF32>,
-    pub _2y_cagr: Indexes<StoredF32>,
     pub _2y_dca_avg_price: Indexes<Dollars>,
     pub _2y_dca_cagr: Indexes<StoredF32>,
     pub _2y_dca_returns: Indexes<StoredF32>,
     pub _2y_dca_stack: Indexes<Sats>,
-    pub _2y_price_returns: Indexes<StoredF32>,
     pub _3m_dca_avg_price: Indexes<Dollars>,
     pub _3m_dca_returns: Indexes<StoredF32>,
     pub _3m_dca_stack: Indexes<Sats>,
-    pub _3m_price_returns: Indexes<StoredF32>,
-    pub _3y_cagr: Indexes<StoredF32>,
     pub _3y_dca_avg_price: Indexes<Dollars>,
     pub _3y_dca_cagr: Indexes<StoredF32>,
     pub _3y_dca_returns: Indexes<StoredF32>,
     pub _3y_dca_stack: Indexes<Sats>,
-    pub _3y_price_returns: Indexes<StoredF32>,
-    pub _4y_cagr: Indexes<StoredF32>,
     pub _4y_dca_avg_price: Indexes<Dollars>,
     pub _4y_dca_cagr: Indexes<StoredF32>,
     pub _4y_dca_returns: Indexes<StoredF32>,
     pub _4y_dca_stack: Indexes<Sats>,
-    pub _4y_price_returns: Indexes<StoredF32>,
-    pub _5y_cagr: Indexes<StoredF32>,
     pub _5y_dca_avg_price: Indexes<Dollars>,
     pub _5y_dca_cagr: Indexes<StoredF32>,
     pub _5y_dca_returns: Indexes<StoredF32>,
     pub _5y_dca_stack: Indexes<Sats>,
-    pub _5y_price_returns: Indexes<StoredF32>,
     pub _6m_dca_avg_price: Indexes<Dollars>,
     pub _6m_dca_returns: Indexes<StoredF32>,
     pub _6m_dca_stack: Indexes<Sats>,
-    pub _6m_price_returns: Indexes<StoredF32>,
-    pub _6y_cagr: Indexes<StoredF32>,
     pub _6y_dca_avg_price: Indexes<Dollars>,
     pub _6y_dca_cagr: Indexes<StoredF32>,
     pub _6y_dca_returns: Indexes<StoredF32>,
     pub _6y_dca_stack: Indexes<Sats>,
-    pub _6y_price_returns: Indexes<StoredF32>,
-    pub _8y_cagr: Indexes<StoredF32>,
     pub _8y_dca_avg_price: Indexes<Dollars>,
     pub _8y_dca_cagr: Indexes<StoredF32>,
     pub _8y_dca_returns: Indexes<StoredF32>,
     pub _8y_dca_stack: Indexes<Sats>,
-    pub _8y_price_returns: Indexes<StoredF32>,
-    pub days_since_price_ath: Indexes<StoredU16>,
     pub dca_class_2015_avg_price: Indexes<Dollars>,
     pub dca_class_2015_returns: Indexes<StoredF32>,
     pub dca_class_2015_stack: Indexes<Sats>,
@@ -2272,139 +2444,54 @@ pub struct CatalogTree_Computed_Market {
     pub dca_class_2025_avg_price: Indexes<Dollars>,
     pub dca_class_2025_returns: Indexes<StoredF32>,
     pub dca_class_2025_stack: Indexes<Sats>,
-    pub max_days_between_price_aths: Indexes<StoredU16>,
-    pub max_years_between_price_aths: Indexes<StoredF32>,
-    pub price_10y_ago: Indexes<Dollars>,
-    pub price_13d_ema: Price13dEmaPattern,
-    pub price_13d_sma: Price13dEmaPattern,
-    pub price_144d_ema: Price13dEmaPattern,
-    pub price_144d_sma: Price13dEmaPattern,
-    pub price_1d_ago: Indexes<Dollars>,
-    pub price_1m_ago: Indexes<Dollars>,
-    pub price_1m_ema: Price13dEmaPattern,
-    pub price_1m_max: Indexes<Dollars>,
-    pub price_1m_min: Indexes<Dollars>,
-    pub price_1m_sma: Price13dEmaPattern,
-    pub price_1m_volatility: Indexes<StoredF32>,
-    pub price_1w_ago: Indexes<Dollars>,
-    pub price_1w_ema: Price13dEmaPattern,
-    pub price_1w_max: Indexes<Dollars>,
-    pub price_1w_min: Indexes<Dollars>,
-    pub price_1w_sma: Price13dEmaPattern,
-    pub price_1w_volatility: Indexes<StoredF32>,
-    pub price_1y_ago: Indexes<Dollars>,
-    pub price_1y_ema: Price13dEmaPattern,
-    pub price_1y_max: Indexes<Dollars>,
-    pub price_1y_min: Indexes<Dollars>,
-    pub price_1y_sma: Price13dEmaPattern,
-    pub price_1y_volatility: Indexes<StoredF32>,
-    pub price_200d_ema: Price13dEmaPattern,
-    pub price_200d_sma: Price13dEmaPattern,
-    pub price_200d_sma_x0_8: Indexes<Dollars>,
-    pub price_200d_sma_x2_4: Indexes<Dollars>,
-    pub price_200w_ema: Price13dEmaPattern,
-    pub price_200w_sma: Price13dEmaPattern,
-    pub price_21d_ema: Price13dEmaPattern,
-    pub price_21d_sma: Price13dEmaPattern,
-    pub price_2w_choppiness_index: Indexes<StoredF32>,
-    pub price_2w_max: Indexes<Dollars>,
-    pub price_2w_min: Indexes<Dollars>,
-    pub price_2y_ago: Indexes<Dollars>,
-    pub price_2y_ema: Price13dEmaPattern,
-    pub price_2y_sma: Price13dEmaPattern,
-    pub price_34d_ema: Price13dEmaPattern,
-    pub price_34d_sma: Price13dEmaPattern,
-    pub price_3m_ago: Indexes<Dollars>,
-    pub price_3y_ago: Indexes<Dollars>,
-    pub price_4y_ago: Indexes<Dollars>,
-    pub price_4y_ema: Price13dEmaPattern,
-    pub price_4y_sma: Price13dEmaPattern,
-    pub price_55d_ema: Price13dEmaPattern,
-    pub price_55d_sma: Price13dEmaPattern,
-    pub price_5y_ago: Indexes<Dollars>,
-    pub price_6m_ago: Indexes<Dollars>,
-    pub price_6y_ago: Indexes<Dollars>,
-    pub price_89d_ema: Price13dEmaPattern,
-    pub price_89d_sma: Price13dEmaPattern,
-    pub price_8d_ema: Price13dEmaPattern,
-    pub price_8d_sma: Price13dEmaPattern,
-    pub price_8y_ago: Indexes<Dollars>,
-    pub price_ath: Indexes26<Dollars>,
-    pub price_drawdown: Indexes26<StoredF32>,
-    pub price_true_range: Indexes5<StoredF32>,
-    pub price_true_range_2w_sum: Indexes5<StoredF32>,
 }
 
-impl CatalogTree_Computed_Market {
+impl CatalogTree_Computed_Market_Dca {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _1d_returns_1m_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1m_sd"),
-            _1d_returns_1w_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1w_sd"),
-            _1d_returns_1y_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1y_sd"),
-            _10y_cagr: Indexes::new(client.clone(), &format!("{base_path}__10y_cagr")),
             _10y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_avg_price")),
             _10y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_cagr")),
             _10y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_returns")),
             _10y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_stack")),
-            _10y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__10y_price_returns")),
-            _1d_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1d_price_returns")),
             _1m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_avg_price")),
             _1m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_returns")),
             _1m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_stack")),
-            _1m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1m_price_returns")),
             _1w_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_avg_price")),
             _1w_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_returns")),
             _1w_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_stack")),
-            _1w_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1w_price_returns")),
             _1y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_avg_price")),
             _1y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_returns")),
             _1y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_stack")),
-            _1y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1y_price_returns")),
-            _2y_cagr: Indexes::new(client.clone(), &format!("{base_path}__2y_cagr")),
             _2y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_avg_price")),
             _2y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_cagr")),
             _2y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_returns")),
             _2y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_stack")),
-            _2y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__2y_price_returns")),
             _3m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_avg_price")),
             _3m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_returns")),
             _3m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_stack")),
-            _3m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3m_price_returns")),
-            _3y_cagr: Indexes::new(client.clone(), &format!("{base_path}__3y_cagr")),
             _3y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_avg_price")),
             _3y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_cagr")),
             _3y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_returns")),
             _3y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_stack")),
-            _3y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3y_price_returns")),
-            _4y_cagr: Indexes::new(client.clone(), &format!("{base_path}__4y_cagr")),
             _4y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_avg_price")),
             _4y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_cagr")),
             _4y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_returns")),
             _4y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_stack")),
-            _4y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__4y_price_returns")),
-            _5y_cagr: Indexes::new(client.clone(), &format!("{base_path}__5y_cagr")),
             _5y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_avg_price")),
             _5y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_cagr")),
             _5y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_returns")),
             _5y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_stack")),
-            _5y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__5y_price_returns")),
             _6m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_avg_price")),
             _6m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_returns")),
             _6m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_stack")),
-            _6m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6m_price_returns")),
-            _6y_cagr: Indexes::new(client.clone(), &format!("{base_path}__6y_cagr")),
             _6y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_avg_price")),
             _6y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_cagr")),
             _6y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_returns")),
             _6y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_stack")),
-            _6y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6y_price_returns")),
-            _8y_cagr: Indexes::new(client.clone(), &format!("{base_path}__8y_cagr")),
             _8y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_avg_price")),
             _8y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_cagr")),
             _8y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_returns")),
             _8y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_stack")),
-            _8y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__8y_price_returns")),
-            days_since_price_ath: Indexes::new(client.clone(), &format!("{base_path}_days_since_price_ath")),
             dca_class_2015_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_avg_price")),
             dca_class_2015_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_returns")),
             dca_class_2015_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_stack")),
@@ -2438,32 +2525,134 @@ impl CatalogTree_Computed_Market {
             dca_class_2025_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_avg_price")),
             dca_class_2025_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_returns")),
             dca_class_2025_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_stack")),
-            max_days_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_days_between_price_aths")),
-            max_years_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_years_between_price_aths")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_History {
+    pub _10y_cagr: Indexes<StoredF32>,
+    pub _10y_price_returns: Indexes<StoredF32>,
+    pub _1d_price_returns: Indexes<StoredF32>,
+    pub _1m_price_returns: Indexes<StoredF32>,
+    pub _1w_price_returns: Indexes<StoredF32>,
+    pub _1y_price_returns: Indexes<StoredF32>,
+    pub _2y_cagr: Indexes<StoredF32>,
+    pub _2y_price_returns: Indexes<StoredF32>,
+    pub _3m_price_returns: Indexes<StoredF32>,
+    pub _3y_cagr: Indexes<StoredF32>,
+    pub _3y_price_returns: Indexes<StoredF32>,
+    pub _4y_cagr: Indexes<StoredF32>,
+    pub _4y_price_returns: Indexes<StoredF32>,
+    pub _5y_cagr: Indexes<StoredF32>,
+    pub _5y_price_returns: Indexes<StoredF32>,
+    pub _6m_price_returns: Indexes<StoredF32>,
+    pub _6y_cagr: Indexes<StoredF32>,
+    pub _6y_price_returns: Indexes<StoredF32>,
+    pub _8y_cagr: Indexes<StoredF32>,
+    pub _8y_price_returns: Indexes<StoredF32>,
+    pub price_10y_ago: Indexes<Dollars>,
+    pub price_1d_ago: Indexes<Dollars>,
+    pub price_1m_ago: Indexes<Dollars>,
+    pub price_1w_ago: Indexes<Dollars>,
+    pub price_1y_ago: Indexes<Dollars>,
+    pub price_2y_ago: Indexes<Dollars>,
+    pub price_3m_ago: Indexes<Dollars>,
+    pub price_3y_ago: Indexes<Dollars>,
+    pub price_4y_ago: Indexes<Dollars>,
+    pub price_5y_ago: Indexes<Dollars>,
+    pub price_6m_ago: Indexes<Dollars>,
+    pub price_6y_ago: Indexes<Dollars>,
+    pub price_8y_ago: Indexes<Dollars>,
+}
+
+impl CatalogTree_Computed_Market_History {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _10y_cagr: Indexes::new(client.clone(), &format!("{base_path}__10y_cagr")),
+            _10y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__10y_price_returns")),
+            _1d_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1d_price_returns")),
+            _1m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1m_price_returns")),
+            _1w_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1w_price_returns")),
+            _1y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1y_price_returns")),
+            _2y_cagr: Indexes::new(client.clone(), &format!("{base_path}__2y_cagr")),
+            _2y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__2y_price_returns")),
+            _3m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3m_price_returns")),
+            _3y_cagr: Indexes::new(client.clone(), &format!("{base_path}__3y_cagr")),
+            _3y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3y_price_returns")),
+            _4y_cagr: Indexes::new(client.clone(), &format!("{base_path}__4y_cagr")),
+            _4y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__4y_price_returns")),
+            _5y_cagr: Indexes::new(client.clone(), &format!("{base_path}__5y_cagr")),
+            _5y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__5y_price_returns")),
+            _6m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6m_price_returns")),
+            _6y_cagr: Indexes::new(client.clone(), &format!("{base_path}__6y_cagr")),
+            _6y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6y_price_returns")),
+            _8y_cagr: Indexes::new(client.clone(), &format!("{base_path}__8y_cagr")),
+            _8y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__8y_price_returns")),
             price_10y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_10y_ago")),
+            price_1d_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1d_ago")),
+            price_1m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1m_ago")),
+            price_1w_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1w_ago")),
+            price_1y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1y_ago")),
+            price_2y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_2y_ago")),
+            price_3m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3m_ago")),
+            price_3y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3y_ago")),
+            price_4y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_4y_ago")),
+            price_5y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_5y_ago")),
+            price_6m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6m_ago")),
+            price_6y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6y_ago")),
+            price_8y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_8y_ago")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_MovingAverage {
+    pub price_13d_ema: Price13dEmaPattern,
+    pub price_13d_sma: Price13dEmaPattern,
+    pub price_144d_ema: Price13dEmaPattern,
+    pub price_144d_sma: Price13dEmaPattern,
+    pub price_1m_ema: Price13dEmaPattern,
+    pub price_1m_sma: Price13dEmaPattern,
+    pub price_1w_ema: Price13dEmaPattern,
+    pub price_1w_sma: Price13dEmaPattern,
+    pub price_1y_ema: Price13dEmaPattern,
+    pub price_1y_sma: Price13dEmaPattern,
+    pub price_200d_ema: Price13dEmaPattern,
+    pub price_200d_sma: Price13dEmaPattern,
+    pub price_200d_sma_x0_8: Indexes<Dollars>,
+    pub price_200d_sma_x2_4: Indexes<Dollars>,
+    pub price_200w_ema: Price13dEmaPattern,
+    pub price_200w_sma: Price13dEmaPattern,
+    pub price_21d_ema: Price13dEmaPattern,
+    pub price_21d_sma: Price13dEmaPattern,
+    pub price_2y_ema: Price13dEmaPattern,
+    pub price_2y_sma: Price13dEmaPattern,
+    pub price_34d_ema: Price13dEmaPattern,
+    pub price_34d_sma: Price13dEmaPattern,
+    pub price_4y_ema: Price13dEmaPattern,
+    pub price_4y_sma: Price13dEmaPattern,
+    pub price_55d_ema: Price13dEmaPattern,
+    pub price_55d_sma: Price13dEmaPattern,
+    pub price_89d_ema: Price13dEmaPattern,
+    pub price_89d_sma: Price13dEmaPattern,
+    pub price_8d_ema: Price13dEmaPattern,
+    pub price_8d_sma: Price13dEmaPattern,
+}
+
+impl CatalogTree_Computed_Market_MovingAverage {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
             price_13d_ema: Price13dEmaPattern::new(client.clone(), "price_13d_ema"),
             price_13d_sma: Price13dEmaPattern::new(client.clone(), "price_13d_sma"),
             price_144d_ema: Price13dEmaPattern::new(client.clone(), "price_144d_ema"),
             price_144d_sma: Price13dEmaPattern::new(client.clone(), "price_144d_sma"),
-            price_1d_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1d_ago")),
-            price_1m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1m_ago")),
             price_1m_ema: Price13dEmaPattern::new(client.clone(), "price_1m_ema"),
-            price_1m_max: Indexes::new(client.clone(), &format!("{base_path}_price_1m_max")),
-            price_1m_min: Indexes::new(client.clone(), &format!("{base_path}_price_1m_min")),
             price_1m_sma: Price13dEmaPattern::new(client.clone(), "price_1m_sma"),
-            price_1m_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1m_volatility")),
-            price_1w_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1w_ago")),
             price_1w_ema: Price13dEmaPattern::new(client.clone(), "price_1w_ema"),
-            price_1w_max: Indexes::new(client.clone(), &format!("{base_path}_price_1w_max")),
-            price_1w_min: Indexes::new(client.clone(), &format!("{base_path}_price_1w_min")),
             price_1w_sma: Price13dEmaPattern::new(client.clone(), "price_1w_sma"),
-            price_1w_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1w_volatility")),
-            price_1y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1y_ago")),
             price_1y_ema: Price13dEmaPattern::new(client.clone(), "price_1y_ema"),
-            price_1y_max: Indexes::new(client.clone(), &format!("{base_path}_price_1y_max")),
-            price_1y_min: Indexes::new(client.clone(), &format!("{base_path}_price_1y_min")),
             price_1y_sma: Price13dEmaPattern::new(client.clone(), "price_1y_sma"),
-            price_1y_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1y_volatility")),
             price_200d_ema: Price13dEmaPattern::new(client.clone(), "price_200d_ema"),
             price_200d_sma: Price13dEmaPattern::new(client.clone(), "price_200d_sma"),
             price_200d_sma_x0_8: Indexes::new(client.clone(), &format!("{base_path}_price_200d_sma_x0_8")),
@@ -2472,33 +2661,74 @@ impl CatalogTree_Computed_Market {
             price_200w_sma: Price13dEmaPattern::new(client.clone(), "price_200w_sma"),
             price_21d_ema: Price13dEmaPattern::new(client.clone(), "price_21d_ema"),
             price_21d_sma: Price13dEmaPattern::new(client.clone(), "price_21d_sma"),
-            price_2w_choppiness_index: Indexes::new(client.clone(), &format!("{base_path}_price_2w_choppiness_index")),
-            price_2w_max: Indexes::new(client.clone(), &format!("{base_path}_price_2w_max")),
-            price_2w_min: Indexes::new(client.clone(), &format!("{base_path}_price_2w_min")),
-            price_2y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_2y_ago")),
             price_2y_ema: Price13dEmaPattern::new(client.clone(), "price_2y_ema"),
             price_2y_sma: Price13dEmaPattern::new(client.clone(), "price_2y_sma"),
             price_34d_ema: Price13dEmaPattern::new(client.clone(), "price_34d_ema"),
             price_34d_sma: Price13dEmaPattern::new(client.clone(), "price_34d_sma"),
-            price_3m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3m_ago")),
-            price_3y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3y_ago")),
-            price_4y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_4y_ago")),
             price_4y_ema: Price13dEmaPattern::new(client.clone(), "price_4y_ema"),
             price_4y_sma: Price13dEmaPattern::new(client.clone(), "price_4y_sma"),
             price_55d_ema: Price13dEmaPattern::new(client.clone(), "price_55d_ema"),
             price_55d_sma: Price13dEmaPattern::new(client.clone(), "price_55d_sma"),
-            price_5y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_5y_ago")),
-            price_6m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6m_ago")),
-            price_6y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6y_ago")),
             price_89d_ema: Price13dEmaPattern::new(client.clone(), "price_89d_ema"),
             price_89d_sma: Price13dEmaPattern::new(client.clone(), "price_89d_sma"),
             price_8d_ema: Price13dEmaPattern::new(client.clone(), "price_8d_ema"),
             price_8d_sma: Price13dEmaPattern::new(client.clone(), "price_8d_sma"),
-            price_8y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_8y_ago")),
-            price_ath: Indexes26::new(client.clone(), &format!("{base_path}_price_ath")),
-            price_drawdown: Indexes26::new(client.clone(), &format!("{base_path}_price_drawdown")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_Range {
+    pub price_1m_max: Indexes<Dollars>,
+    pub price_1m_min: Indexes<Dollars>,
+    pub price_1w_max: Indexes<Dollars>,
+    pub price_1w_min: Indexes<Dollars>,
+    pub price_1y_max: Indexes<Dollars>,
+    pub price_1y_min: Indexes<Dollars>,
+    pub price_2w_choppiness_index: Indexes<StoredF32>,
+    pub price_2w_max: Indexes<Dollars>,
+    pub price_2w_min: Indexes<Dollars>,
+    pub price_true_range: Indexes5<StoredF32>,
+    pub price_true_range_2w_sum: Indexes5<StoredF32>,
+}
+
+impl CatalogTree_Computed_Market_Range {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            price_1m_max: Indexes::new(client.clone(), &format!("{base_path}_price_1m_max")),
+            price_1m_min: Indexes::new(client.clone(), &format!("{base_path}_price_1m_min")),
+            price_1w_max: Indexes::new(client.clone(), &format!("{base_path}_price_1w_max")),
+            price_1w_min: Indexes::new(client.clone(), &format!("{base_path}_price_1w_min")),
+            price_1y_max: Indexes::new(client.clone(), &format!("{base_path}_price_1y_max")),
+            price_1y_min: Indexes::new(client.clone(), &format!("{base_path}_price_1y_min")),
+            price_2w_choppiness_index: Indexes::new(client.clone(), &format!("{base_path}_price_2w_choppiness_index")),
+            price_2w_max: Indexes::new(client.clone(), &format!("{base_path}_price_2w_max")),
+            price_2w_min: Indexes::new(client.clone(), &format!("{base_path}_price_2w_min")),
             price_true_range: Indexes5::new(client.clone(), &format!("{base_path}_price_true_range")),
             price_true_range_2w_sum: Indexes5::new(client.clone(), &format!("{base_path}_price_true_range_2w_sum")),
+        }
+    }
+}
+
+/// Catalog tree node.
+pub struct CatalogTree_Computed_Market_Volatility {
+    pub _1d_returns_1m_sd: _1dReturns1mSdPattern,
+    pub _1d_returns_1w_sd: _1dReturns1mSdPattern,
+    pub _1d_returns_1y_sd: _1dReturns1mSdPattern,
+    pub price_1m_volatility: Indexes<StoredF32>,
+    pub price_1w_volatility: Indexes<StoredF32>,
+    pub price_1y_volatility: Indexes<StoredF32>,
+}
+
+impl CatalogTree_Computed_Market_Volatility {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            _1d_returns_1m_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1m_sd"),
+            _1d_returns_1w_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1w_sd"),
+            _1d_returns_1y_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1y_sd"),
+            price_1m_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1m_volatility")),
+            price_1w_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1w_volatility")),
+            price_1y_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1y_volatility")),
         }
     }
 }
@@ -3590,14 +3820,14 @@ pub struct CatalogTree_Indexed_Address {
     pub first_p2traddressindex: Indexes2<P2TRAddressIndex>,
     pub first_p2wpkhaddressindex: Indexes2<P2WPKHAddressIndex>,
     pub first_p2wshaddressindex: Indexes2<P2WSHAddressIndex>,
-    pub p2abytes: Indexes16<P2ABytes>,
-    pub p2pk33bytes: Indexes17<P2PK33Bytes>,
-    pub p2pk65bytes: Indexes18<P2PK65Bytes>,
-    pub p2pkhbytes: Indexes19<P2PKHBytes>,
-    pub p2shbytes: Indexes20<P2SHBytes>,
-    pub p2trbytes: Indexes21<P2TRBytes>,
-    pub p2wpkhbytes: Indexes22<P2WPKHBytes>,
-    pub p2wshbytes: Indexes23<P2WSHBytes>,
+    pub p2abytes: Indexes14<P2ABytes>,
+    pub p2pk33bytes: Indexes15<P2PK33Bytes>,
+    pub p2pk65bytes: Indexes16<P2PK65Bytes>,
+    pub p2pkhbytes: Indexes17<P2PKHBytes>,
+    pub p2shbytes: Indexes18<P2SHBytes>,
+    pub p2trbytes: Indexes19<P2TRBytes>,
+    pub p2wpkhbytes: Indexes20<P2WPKHBytes>,
+    pub p2wshbytes: Indexes21<P2WSHBytes>,
 }
 
 impl CatalogTree_Indexed_Address {
@@ -3611,14 +3841,14 @@ impl CatalogTree_Indexed_Address {
             first_p2traddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2traddressindex")),
             first_p2wpkhaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2wpkhaddressindex")),
             first_p2wshaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2wshaddressindex")),
-            p2abytes: Indexes16::new(client.clone(), &format!("{base_path}_p2abytes")),
-            p2pk33bytes: Indexes17::new(client.clone(), &format!("{base_path}_p2pk33bytes")),
-            p2pk65bytes: Indexes18::new(client.clone(), &format!("{base_path}_p2pk65bytes")),
-            p2pkhbytes: Indexes19::new(client.clone(), &format!("{base_path}_p2pkhbytes")),
-            p2shbytes: Indexes20::new(client.clone(), &format!("{base_path}_p2shbytes")),
-            p2trbytes: Indexes21::new(client.clone(), &format!("{base_path}_p2trbytes")),
-            p2wpkhbytes: Indexes22::new(client.clone(), &format!("{base_path}_p2wpkhbytes")),
-            p2wshbytes: Indexes23::new(client.clone(), &format!("{base_path}_p2wshbytes")),
+            p2abytes: Indexes14::new(client.clone(), &format!("{base_path}_p2abytes")),
+            p2pk33bytes: Indexes15::new(client.clone(), &format!("{base_path}_p2pk33bytes")),
+            p2pk65bytes: Indexes16::new(client.clone(), &format!("{base_path}_p2pk65bytes")),
+            p2pkhbytes: Indexes17::new(client.clone(), &format!("{base_path}_p2pkhbytes")),
+            p2shbytes: Indexes18::new(client.clone(), &format!("{base_path}_p2shbytes")),
+            p2trbytes: Indexes19::new(client.clone(), &format!("{base_path}_p2trbytes")),
+            p2wpkhbytes: Indexes20::new(client.clone(), &format!("{base_path}_p2wpkhbytes")),
+            p2wshbytes: Indexes21::new(client.clone(), &format!("{base_path}_p2wshbytes")),
         }
     }
 }

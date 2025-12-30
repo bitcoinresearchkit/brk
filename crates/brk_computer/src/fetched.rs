@@ -108,6 +108,7 @@ impl Vecs {
                 .get_unwrap(prev_i)
         }));
         indexes
+            .time
             .dateindex_to_date
             .iter()
             .enumerate()

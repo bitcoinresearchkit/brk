@@ -30,7 +30,7 @@ fn run() -> Result<()> {
 
     let computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
-    let _a = dbg!(computer.chain.txindex_to_fee.region().meta());
+    let _a = dbg!(computer.chain.transaction.txindex_to_fee.region().meta());
 
     Ok(())
 }
