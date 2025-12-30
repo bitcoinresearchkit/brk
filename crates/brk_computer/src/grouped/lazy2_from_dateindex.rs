@@ -5,7 +5,7 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{AnyExportableVec, BinaryTransform, IterableCloneableVec, LazyVecFrom2};
 
-use super::{ComputedVecValue, ComputedVecsFromDateIndex, LazyTransform2Builder};
+use super::{ComputedVecValue, ComputedVecsFromDateIndex, ComputedVecsFromHeight, LazyTransform2Builder};
 
 const VERSION: Version = Version::ZERO;
 
@@ -49,6 +49,64 @@ where
                 .map(|(s1, s2)| {
                     LazyVecFrom2::transformed::<F>(name, v, s1.boxed_clone(), s2.boxed_clone())
                 }),
+            weekindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.weekindex,
+                &source2.weekindex,
+            ),
+            monthindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.monthindex,
+                &source2.monthindex,
+            ),
+            quarterindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.quarterindex,
+                &source2.quarterindex,
+            ),
+            semesterindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.semesterindex,
+                &source2.semesterindex,
+            ),
+            yearindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.yearindex,
+                &source2.yearindex,
+            ),
+            decadeindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
+                name,
+                v,
+                &source1.decadeindex,
+                &source2.decadeindex,
+            ),
+        }
+    }
+
+    /// Create from a `ComputedVecsFromHeight` (first source) and `ComputedVecsFromDateIndex` (second source).
+    /// Used for computing USD values from price (Height-based) and ratio (DateIndex-based).
+    pub fn from_height_and_dateindex<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &ComputedVecsFromHeight<S1T>,
+        source2: &ComputedVecsFromDateIndex<S2T>,
+    ) -> Self {
+        let v = version + VERSION;
+
+        Self {
+            dateindex: source2.dateindex.as_ref().map(|s2| {
+                LazyVecFrom2::transformed::<F>(
+                    name,
+                    v,
+                    source1.dateindex.unwrap_last().boxed_clone(),
+                    s2.boxed_clone(),
+                )
+            }),
             weekindex: LazyTransform2Builder::from_lazy::<F, _, _, _, _>(
                 name,
                 v,

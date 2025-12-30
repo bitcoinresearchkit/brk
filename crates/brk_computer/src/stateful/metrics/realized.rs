@@ -249,12 +249,7 @@ impl RealizedMetrics {
             indexes_to_realized_price_extra: ComputedRatioVecsFromDateIndex::forced_import(
                 cfg.db,
                 &cfg.name("realized_price"),
-                Source::Vec(
-                    indexes_to_realized_price
-                        .dateindex
-                        .unwrap_last()
-                        .boxed_clone(),
-                ),
+                Some(&indexes_to_realized_price),
                 cfg.version + v0,
                 cfg.indexes,
                 extended,

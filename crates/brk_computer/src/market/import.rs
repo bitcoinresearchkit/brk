@@ -61,7 +61,7 @@ impl Vecs {
                 ComputedRatioVecsFromDateIndex::forced_import(
                     &db,
                     $name,
-                    Source::Compute,
+                    None,
                     version + v0,
                     indexes,
                     true,

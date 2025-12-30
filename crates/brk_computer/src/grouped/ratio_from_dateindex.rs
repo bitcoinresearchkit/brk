@@ -16,7 +16,7 @@ use crate::{
     utils::{OptionExt, get_percentile},
 };
 
-use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
+use super::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, VecBuilderOptions};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedRatioVecsFromDateIndex {
@@ -51,7 +51,7 @@ impl ComputedRatioVecsFromDateIndex {
     pub fn forced_import(
         db: &Database,
         name: &str,
-        source: Source<DateIndex, Dollars>,
+        metric_price: Option<&ComputedVecsFromHeight<Dollars>>,
         version: Version,
         indexes: &indexes::Vecs,
         extended: bool,
@@ -73,8 +73,9 @@ impl ComputedRatioVecsFromDateIndex {
                 .unwrap()
             };
         }
-        // Create sources first so lazy vecs can reference them
-        let price = source.is_compute().then(|| {
+        // Create price sources first so lazy vecs can reference them
+        // Only compute internally when metric_price is None
+        let price = metric_price.is_none().then(|| {
             ComputedVecsFromDateIndex::forced_import(db, name, Source::Compute, v, indexes, opts)
                 .unwrap()
         });
@@ -103,16 +104,29 @@ impl ComputedRatioVecsFromDateIndex {
         let ratio_pct1 = extended.then(|| import!("ratio_pct1"));
 
         // Create lazy usd vecs from price and ratio sources
+        // Use from_height_and_dateindex when metric_price is provided (external price source)
+        // Use from_computed when price is computed internally
         macro_rules! lazy_usd {
             ($ratio:expr, $suffix:expr) => {
-                price.as_ref().zip($ratio.as_ref()).map(|(p, r)| {
-                    LazyVecsFrom2FromDateIndex::from_computed::<PriceTimesRatio>(
-                        &format!("{name}_{}", $suffix),
-                        v,
-                        p,
-                        r,
-                    )
-                })
+                if let Some(mp) = metric_price {
+                    $ratio.as_ref().map(|r| {
+                        LazyVecsFrom2FromDateIndex::from_height_and_dateindex::<PriceTimesRatio>(
+                            &format!("{name}_{}", $suffix),
+                            v,
+                            mp,
+                            r,
+                        )
+                    })
+                } else {
+                    price.as_ref().zip($ratio.as_ref()).map(|(p, r)| {
+                        LazyVecsFrom2FromDateIndex::from_computed::<PriceTimesRatio>(
+                            &format!("{name}_{}", $suffix),
+                            v,
+                            p,
+                            r,
+                        )
+                    })
+                }
             };
         }
 

@@ -13,6 +13,7 @@ use vecdb::{
 use super::{Indexes, txins};
 
 pub const DB_NAME: &str = "txouts";
+const HEIGHT_BATCH: u32 = 10_000;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -101,7 +102,6 @@ impl Vecs {
             starting_indexes.height
         );
 
-        const HEIGHT_BATCH: u32 = 20_000;
         let mut pairs: Vec<(TxOutIndex, TxInIndex)> = Vec::new();
 
         let mut batch_start_height = min_height;
