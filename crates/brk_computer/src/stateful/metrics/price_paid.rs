@@ -9,7 +9,7 @@ use vecdb::{
 use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, PricePercentiles, Source, VecBuilderOptions},
-    stateful::states::CohortState,
+    stateful::state::CohortState,
 };
 
 use super::ImportConfig;

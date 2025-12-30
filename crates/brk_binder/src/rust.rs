@@ -337,13 +337,13 @@ fn generate_parameterized_rust_field(
 
     let metric_expr = if let Some(pos) = pattern.get_field_position(&field.name) {
         match pos {
-            FieldNamePosition::Append(suffix) => format!("format!(\"/{{acc}}{}\")", suffix),
-            FieldNamePosition::Prepend(prefix) => format!("format!(\"/{}{{acc}}\")", prefix),
-            FieldNamePosition::Identity => "format!(\"/{acc}\")".to_string(),
-            FieldNamePosition::SetBase(base) => format!("\"/{}\".to_string()", base),
+            FieldNamePosition::Append(suffix) => format!("format!(\"{{acc}}{}\")", suffix),
+            FieldNamePosition::Prepend(prefix) => format!("format!(\"{}{{acc}}\")", prefix),
+            FieldNamePosition::Identity => "acc.to_string()".to_string(),
+            FieldNamePosition::SetBase(base) => format!("\"{}\".to_string()", base),
         }
     } else {
-        format!("format!(\"/{{acc}}_{}\")", field.name)
+        format!("format!(\"{{acc}}_{}\")", field.name)
     };
 
     if metadata.field_uses_accessor(field) {
@@ -374,7 +374,7 @@ fn generate_tree_path_rust_field(
     if metadata.is_pattern_type(&field.rust_type) {
         writeln!(
             output,
-            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}_{}\")),",
             field_name, field.rust_type, field.name
         )
         .unwrap();
@@ -382,14 +382,14 @@ fn generate_tree_path_rust_field(
         let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
         writeln!(
             output,
-            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+            "            {}: {}::new(client.clone(), &format!(\"{{base_path}}_{}\")),",
             field_name, accessor.name, field.name
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}/{}\")),",
+            "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}_{}\")),",
             field_name, field.name
         )
         .unwrap();
@@ -523,7 +523,7 @@ fn generate_tree_node(
             } else {
                 writeln!(
                     output,
-                    "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+                    "            {}: {}::new(client.clone(), &format!(\"{{base_path}}_{}\")),",
                     field_name, field.rust_type, field.name
                 )
                 .unwrap();
@@ -532,7 +532,7 @@ fn generate_tree_node(
             let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
             writeln!(
                 output,
-                "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+                "            {}: {}::new(client.clone(), &format!(\"{{base_path}}_{}\")),",
                 field_name, accessor.name, field.name
             )
             .unwrap();
@@ -540,7 +540,7 @@ fn generate_tree_node(
             // Non-pattern branch - instantiate the nested struct
             writeln!(
                 output,
-                "            {}: {}::new(client.clone(), &format!(\"{{base_path}}/{}\")),",
+                "            {}: {}::new(client.clone(), &format!(\"{{base_path}}_{}\")),",
                 field_name, field.rust_type, field.name
             )
             .unwrap();
@@ -548,7 +548,7 @@ fn generate_tree_node(
             // Leaf - use MetricNode with base_path
             writeln!(
                 output,
-                "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}/{}\")),",
+                "            {}: MetricNode::new(client.clone(), format!(\"{{base_path}}_{}\")),",
                 field_name, field.name
             )
             .unwrap();
@@ -587,6 +587,9 @@ pub struct BrkClient {{
 }}
 
 impl BrkClient {{
+    /// Client version.
+    pub const VERSION: &'static str = "v{VERSION}";
+
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {{
         let base = Arc::new(BrkClientBase::new(base_url));
@@ -605,7 +608,8 @@ impl BrkClient {{
     pub fn tree(&self) -> &CatalogTree {{
         &self.tree
     }}
-"#
+"#,
+        VERSION = crate::VERSION
     )
     .unwrap();
 

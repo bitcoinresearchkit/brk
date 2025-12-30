@@ -13,11 +13,11 @@ use crate::{
     stateful::{
         address::AddressTypeToAddressCount,
         compute::write::{process_address_updates, write},
-        process::{
+        block::{
             AddressCache, InputsResult, process_inputs, process_outputs, process_received,
             process_sent,
         },
-        states::{BlockState, Transacted},
+        state::{BlockState, Transacted},
     },
     txins,
     utils::OptionExt,

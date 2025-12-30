@@ -8,11 +8,11 @@ use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
 
 use crate::stateful::{
     Vecs,
-    process::{
+    block::{
         EmptyAddressDataWithSource, LoadedAddressDataWithSource, process_empty_addresses,
         process_loaded_addresses,
     },
-    states::BlockState,
+    state::BlockState,
 };
 
 use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};

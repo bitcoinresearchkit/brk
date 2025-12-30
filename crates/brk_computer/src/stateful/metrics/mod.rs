@@ -21,7 +21,7 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::states::CohortState};
+use crate::{Indexes, indexes, price, stateful::state::CohortState};
 
 /// All metrics for a cohort, organized by category.
 #[derive(Clone, Traversable)]

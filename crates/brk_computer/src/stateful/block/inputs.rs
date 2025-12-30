@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::stateful::{
     address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
     compute::VecsReaders,
-    states::Transacted,
+    state::Transacted,
 };
 
 use super::{

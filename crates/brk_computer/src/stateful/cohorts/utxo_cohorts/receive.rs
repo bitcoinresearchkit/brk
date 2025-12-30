@@ -1,6 +1,6 @@
 use brk_types::{Dollars, Height, Timestamp};
 
-use crate::stateful::states::Transacted;
+use crate::stateful::state::Transacted;
 
 use super::UTXOCohorts;
 

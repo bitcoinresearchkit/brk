@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{Dollars, Height, LoadedAddressData, Sats, SupplyState};
 use vecdb::unlikely;
 
-use crate::stateful::states::RealizedState;
+use crate::stateful::state::RealizedState;
 
 use super::CohortState;
 

@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
 use crate::{
-    stateful::states::{BlockState, Transacted},
+    stateful::state::{BlockState, Transacted},
     utils::OptionExt,
 };
 

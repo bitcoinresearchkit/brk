@@ -644,37 +644,37 @@ pub struct RealizedPattern3 {
 impl RealizedPattern3 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            adjusted_sopr: Indexes5::new(client.clone(), &format!("{base_path}/adjusted_sopr")),
-            adjusted_sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/adjusted_sopr_30d_ema")),
-            adjusted_sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/adjusted_sopr_7d_ema")),
-            adjusted_value_created: Indexes3::new(client.clone(), &format!("{base_path}/adjusted_value_created")),
-            adjusted_value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}/adjusted_value_destroyed")),
-            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/neg_realized_loss")),
-            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}/net_realized_pnl")),
-            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
-            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/net_realized_pnl_rel_to_realized_cap")),
-            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}/realized_cap")),
-            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/realized_cap_30d_delta")),
-            realized_cap_rel_to_own_market_cap: Indexes3::new(client.clone(), &format!("{base_path}/realized_cap_rel_to_own_market_cap")),
-            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_loss")),
-            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_loss_rel_to_realized_cap")),
-            realized_price: Indexes3::new(client.clone(), &format!("{base_path}/realized_price")),
-            realized_price_extra: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/realized_price_extra")),
-            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_profit")),
-            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_profit_rel_to_realized_cap")),
-            realized_profit_to_loss_ratio: Indexes5::new(client.clone(), &format!("{base_path}/realized_profit_to_loss_ratio")),
-            realized_value: Indexes3::new(client.clone(), &format!("{base_path}/realized_value")),
-            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio")),
-            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_30d_ema")),
-            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_7d_ema")),
-            sopr: Indexes5::new(client.clone(), &format!("{base_path}/sopr")),
-            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_30d_ema")),
-            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_7d_ema")),
-            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}/total_realized_pnl")),
-            value_created: Indexes3::new(client.clone(), &format!("{base_path}/value_created")),
-            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}/value_destroyed")),
+            adjusted_sopr: Indexes5::new(client.clone(), &format!("{base_path}_adjusted_sopr")),
+            adjusted_sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_adjusted_sopr_30d_ema")),
+            adjusted_sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_adjusted_sopr_7d_ema")),
+            adjusted_value_created: Indexes3::new(client.clone(), &format!("{base_path}_adjusted_value_created")),
+            adjusted_value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}_adjusted_value_destroyed")),
+            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_neg_realized_loss")),
+            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}_net_realized_pnl")),
+            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
+            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_net_realized_pnl_rel_to_realized_cap")),
+            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}_realized_cap")),
+            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_realized_cap_30d_delta")),
+            realized_cap_rel_to_own_market_cap: Indexes3::new(client.clone(), &format!("{base_path}_realized_cap_rel_to_own_market_cap")),
+            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_loss")),
+            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_loss_rel_to_realized_cap")),
+            realized_price: Indexes3::new(client.clone(), &format!("{base_path}_realized_price")),
+            realized_price_extra: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_realized_price_extra")),
+            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_profit")),
+            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_profit_rel_to_realized_cap")),
+            realized_profit_to_loss_ratio: Indexes5::new(client.clone(), &format!("{base_path}_realized_profit_to_loss_ratio")),
+            realized_value: Indexes3::new(client.clone(), &format!("{base_path}_realized_value")),
+            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio")),
+            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_30d_ema")),
+            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_7d_ema")),
+            sopr: Indexes5::new(client.clone(), &format!("{base_path}_sopr")),
+            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_30d_ema")),
+            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_7d_ema")),
+            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}_total_realized_pnl")),
+            value_created: Indexes3::new(client.clone(), &format!("{base_path}_value_created")),
+            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}_value_destroyed")),
         }
     }
 }
@@ -714,34 +714,34 @@ pub struct Ratio1ySdPattern {
 impl Ratio1ySdPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _0sd_usd: Indexes::new(client.clone(), &format!("{base_path}/_0sd_usd")),
-            m0_5sd: Indexes::new(client.clone(), &format!("{base_path}/m0_5sd")),
-            m0_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m0_5sd_usd")),
-            m1_5sd: Indexes::new(client.clone(), &format!("{base_path}/m1_5sd")),
-            m1_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m1_5sd_usd")),
-            m1sd: Indexes::new(client.clone(), &format!("{base_path}/m1sd")),
-            m1sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m1sd_usd")),
-            m2_5sd: Indexes::new(client.clone(), &format!("{base_path}/m2_5sd")),
-            m2_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m2_5sd_usd")),
-            m2sd: Indexes::new(client.clone(), &format!("{base_path}/m2sd")),
-            m2sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m2sd_usd")),
-            m3sd: Indexes::new(client.clone(), &format!("{base_path}/m3sd")),
-            m3sd_usd: Indexes::new(client.clone(), &format!("{base_path}/m3sd_usd")),
-            p0_5sd: Indexes::new(client.clone(), &format!("{base_path}/p0_5sd")),
-            p0_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p0_5sd_usd")),
-            p1_5sd: Indexes::new(client.clone(), &format!("{base_path}/p1_5sd")),
-            p1_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p1_5sd_usd")),
-            p1sd: Indexes::new(client.clone(), &format!("{base_path}/p1sd")),
-            p1sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p1sd_usd")),
-            p2_5sd: Indexes::new(client.clone(), &format!("{base_path}/p2_5sd")),
-            p2_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p2_5sd_usd")),
-            p2sd: Indexes::new(client.clone(), &format!("{base_path}/p2sd")),
-            p2sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p2sd_usd")),
-            p3sd: Indexes::new(client.clone(), &format!("{base_path}/p3sd")),
-            p3sd_usd: Indexes::new(client.clone(), &format!("{base_path}/p3sd_usd")),
-            sd: Indexes::new(client.clone(), &format!("{base_path}/sd")),
-            sma: Indexes::new(client.clone(), &format!("{base_path}/sma")),
-            zscore: Indexes::new(client.clone(), &format!("{base_path}/zscore")),
+            _0sd_usd: Indexes::new(client.clone(), &format!("{base_path}__0sd_usd")),
+            m0_5sd: Indexes::new(client.clone(), &format!("{base_path}_m0_5sd")),
+            m0_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m0_5sd_usd")),
+            m1_5sd: Indexes::new(client.clone(), &format!("{base_path}_m1_5sd")),
+            m1_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m1_5sd_usd")),
+            m1sd: Indexes::new(client.clone(), &format!("{base_path}_m1sd")),
+            m1sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m1sd_usd")),
+            m2_5sd: Indexes::new(client.clone(), &format!("{base_path}_m2_5sd")),
+            m2_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m2_5sd_usd")),
+            m2sd: Indexes::new(client.clone(), &format!("{base_path}_m2sd")),
+            m2sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m2sd_usd")),
+            m3sd: Indexes::new(client.clone(), &format!("{base_path}_m3sd")),
+            m3sd_usd: Indexes::new(client.clone(), &format!("{base_path}_m3sd_usd")),
+            p0_5sd: Indexes::new(client.clone(), &format!("{base_path}_p0_5sd")),
+            p0_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p0_5sd_usd")),
+            p1_5sd: Indexes::new(client.clone(), &format!("{base_path}_p1_5sd")),
+            p1_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p1_5sd_usd")),
+            p1sd: Indexes::new(client.clone(), &format!("{base_path}_p1sd")),
+            p1sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p1sd_usd")),
+            p2_5sd: Indexes::new(client.clone(), &format!("{base_path}_p2_5sd")),
+            p2_5sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p2_5sd_usd")),
+            p2sd: Indexes::new(client.clone(), &format!("{base_path}_p2sd")),
+            p2sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p2sd_usd")),
+            p3sd: Indexes::new(client.clone(), &format!("{base_path}_p3sd")),
+            p3sd_usd: Indexes::new(client.clone(), &format!("{base_path}_p3sd_usd")),
+            sd: Indexes::new(client.clone(), &format!("{base_path}_sd")),
+            sma: Indexes::new(client.clone(), &format!("{base_path}_sma")),
+            zscore: Indexes::new(client.clone(), &format!("{base_path}_zscore")),
         }
     }
 }
@@ -779,32 +779,32 @@ pub struct RealizedPattern2 {
 impl RealizedPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/neg_realized_loss")),
-            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}/net_realized_pnl")),
-            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
-            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/net_realized_pnl_rel_to_realized_cap")),
-            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}/realized_cap")),
-            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/realized_cap_30d_delta")),
-            realized_cap_rel_to_own_market_cap: Indexes3::new(client.clone(), &format!("{base_path}/realized_cap_rel_to_own_market_cap")),
-            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_loss")),
-            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_loss_rel_to_realized_cap")),
-            realized_price: Indexes3::new(client.clone(), &format!("{base_path}/realized_price")),
-            realized_price_extra: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/realized_price_extra")),
-            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_profit")),
-            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_profit_rel_to_realized_cap")),
-            realized_profit_to_loss_ratio: Indexes5::new(client.clone(), &format!("{base_path}/realized_profit_to_loss_ratio")),
-            realized_value: Indexes3::new(client.clone(), &format!("{base_path}/realized_value")),
-            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio")),
-            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_30d_ema")),
-            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_7d_ema")),
-            sopr: Indexes5::new(client.clone(), &format!("{base_path}/sopr")),
-            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_30d_ema")),
-            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_7d_ema")),
-            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}/total_realized_pnl")),
-            value_created: Indexes3::new(client.clone(), &format!("{base_path}/value_created")),
-            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}/value_destroyed")),
+            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_neg_realized_loss")),
+            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}_net_realized_pnl")),
+            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
+            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_net_realized_pnl_rel_to_realized_cap")),
+            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}_realized_cap")),
+            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_realized_cap_30d_delta")),
+            realized_cap_rel_to_own_market_cap: Indexes3::new(client.clone(), &format!("{base_path}_realized_cap_rel_to_own_market_cap")),
+            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_loss")),
+            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_loss_rel_to_realized_cap")),
+            realized_price: Indexes3::new(client.clone(), &format!("{base_path}_realized_price")),
+            realized_price_extra: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_realized_price_extra")),
+            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_profit")),
+            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_profit_rel_to_realized_cap")),
+            realized_profit_to_loss_ratio: Indexes5::new(client.clone(), &format!("{base_path}_realized_profit_to_loss_ratio")),
+            realized_value: Indexes3::new(client.clone(), &format!("{base_path}_realized_value")),
+            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio")),
+            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_30d_ema")),
+            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_7d_ema")),
+            sopr: Indexes5::new(client.clone(), &format!("{base_path}_sopr")),
+            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_30d_ema")),
+            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_7d_ema")),
+            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}_total_realized_pnl")),
+            value_created: Indexes3::new(client.clone(), &format!("{base_path}_value_created")),
+            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}_value_destroyed")),
         }
     }
 }
@@ -840,30 +840,30 @@ pub struct RealizedPattern {
 impl RealizedPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/neg_realized_loss")),
-            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}/net_realized_pnl")),
-            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
-            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}/net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
-            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/net_realized_pnl_rel_to_realized_cap")),
-            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}/realized_cap")),
-            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}/realized_cap_30d_delta")),
-            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_loss")),
-            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_loss_rel_to_realized_cap")),
-            realized_price: Indexes3::new(client.clone(), &format!("{base_path}/realized_price")),
-            realized_price_extra: RealizedPriceExtraPattern::new(client.clone(), &format!("{base_path}/realized_price_extra")),
-            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}/realized_profit")),
-            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}/realized_profit_rel_to_realized_cap")),
-            realized_value: Indexes3::new(client.clone(), &format!("{base_path}/realized_value")),
-            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio")),
-            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_30d_ema")),
-            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sell_side_risk_ratio_7d_ema")),
-            sopr: Indexes5::new(client.clone(), &format!("{base_path}/sopr")),
-            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_30d_ema")),
-            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}/sopr_7d_ema")),
-            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}/total_realized_pnl")),
-            value_created: Indexes3::new(client.clone(), &format!("{base_path}/value_created")),
-            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}/value_destroyed")),
+            neg_realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_neg_realized_loss")),
+            net_realized_pnl: BlockCountPattern::new(client.clone(), &format!("{base_path}_net_realized_pnl")),
+            net_realized_pnl_cumulative_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_market_cap")),
+            net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: Indexes::new(client.clone(), &format!("{base_path}_net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap")),
+            net_realized_pnl_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_net_realized_pnl_rel_to_realized_cap")),
+            realized_cap: Indexes3::new(client.clone(), &format!("{base_path}_realized_cap")),
+            realized_cap_30d_delta: Indexes::new(client.clone(), &format!("{base_path}_realized_cap_30d_delta")),
+            realized_loss: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_loss")),
+            realized_loss_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_loss_rel_to_realized_cap")),
+            realized_price: Indexes3::new(client.clone(), &format!("{base_path}_realized_price")),
+            realized_price_extra: RealizedPriceExtraPattern::new(client.clone(), &format!("{base_path}_realized_price_extra")),
+            realized_profit: BlockCountPattern::new(client.clone(), &format!("{base_path}_realized_profit")),
+            realized_profit_rel_to_realized_cap: Indexes2::new(client.clone(), &format!("{base_path}_realized_profit_rel_to_realized_cap")),
+            realized_value: Indexes3::new(client.clone(), &format!("{base_path}_realized_value")),
+            sell_side_risk_ratio: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio")),
+            sell_side_risk_ratio_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_30d_ema")),
+            sell_side_risk_ratio_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sell_side_risk_ratio_7d_ema")),
+            sopr: Indexes5::new(client.clone(), &format!("{base_path}_sopr")),
+            sopr_30d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_30d_ema")),
+            sopr_7d_ema: Indexes5::new(client.clone(), &format!("{base_path}_sopr_7d_ema")),
+            total_realized_pnl: BitcoinPattern2::new(client.clone(), &format!("{base_path}_total_realized_pnl")),
+            value_created: Indexes3::new(client.clone(), &format!("{base_path}_value_created")),
+            value_destroyed: Indexes3::new(client.clone(), &format!("{base_path}_value_destroyed")),
         }
     }
 }
@@ -896,75 +896,26 @@ impl Price13dEmaPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            price: Indexes::new(client.clone(), &format!("/{acc}")),
-            ratio: Indexes::new(client.clone(), &format!("/{acc}_ratio")),
-            ratio_1m_sma: Indexes::new(client.clone(), &format!("/{acc}_ratio_1m_sma")),
-            ratio_1w_sma: Indexes::new(client.clone(), &format!("/{acc}_ratio_1w_sma")),
+            price: Indexes::new(client.clone(), &acc.to_string()),
+            ratio: Indexes::new(client.clone(), &format!("{acc}_ratio")),
+            ratio_1m_sma: Indexes::new(client.clone(), &format!("{acc}_ratio_1m_sma")),
+            ratio_1w_sma: Indexes::new(client.clone(), &format!("{acc}_ratio_1w_sma")),
             ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_1y_sd")),
             ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_2y_sd")),
             ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_4y_sd")),
-            ratio_pct1: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct1")),
-            ratio_pct1_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct1_usd")),
-            ratio_pct2: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct2")),
-            ratio_pct2_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct2_usd")),
-            ratio_pct5: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct5")),
-            ratio_pct5_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct5_usd")),
-            ratio_pct95: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct95")),
-            ratio_pct95_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct95_usd")),
-            ratio_pct98: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct98")),
-            ratio_pct98_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct98_usd")),
-            ratio_pct99: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct99")),
-            ratio_pct99_usd: Indexes::new(client.clone(), &format!("/{acc}_ratio_pct99_usd")),
+            ratio_pct1: Indexes::new(client.clone(), &format!("{acc}_ratio_pct1")),
+            ratio_pct1_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct1_usd")),
+            ratio_pct2: Indexes::new(client.clone(), &format!("{acc}_ratio_pct2")),
+            ratio_pct2_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct2_usd")),
+            ratio_pct5: Indexes::new(client.clone(), &format!("{acc}_ratio_pct5")),
+            ratio_pct5_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct5_usd")),
+            ratio_pct95: Indexes::new(client.clone(), &format!("{acc}_ratio_pct95")),
+            ratio_pct95_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct95_usd")),
+            ratio_pct98: Indexes::new(client.clone(), &format!("{acc}_ratio_pct98")),
+            ratio_pct98_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct98_usd")),
+            ratio_pct99: Indexes::new(client.clone(), &format!("{acc}_ratio_pct99")),
+            ratio_pct99_usd: Indexes::new(client.clone(), &format!("{acc}_ratio_pct99_usd")),
             ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{acc}_ratio_sd")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct PricePercentilesPattern {
-    pub pct05: Indexes<Dollars>,
-    pub pct10: Indexes<Dollars>,
-    pub pct15: Indexes<Dollars>,
-    pub pct20: Indexes<Dollars>,
-    pub pct25: Indexes<Dollars>,
-    pub pct30: Indexes<Dollars>,
-    pub pct35: Indexes<Dollars>,
-    pub pct40: Indexes<Dollars>,
-    pub pct45: Indexes<Dollars>,
-    pub pct50: Indexes<Dollars>,
-    pub pct55: Indexes<Dollars>,
-    pub pct60: Indexes<Dollars>,
-    pub pct65: Indexes<Dollars>,
-    pub pct70: Indexes<Dollars>,
-    pub pct75: Indexes<Dollars>,
-    pub pct80: Indexes<Dollars>,
-    pub pct85: Indexes<Dollars>,
-    pub pct90: Indexes<Dollars>,
-    pub pct95: Indexes<Dollars>,
-}
-
-impl PricePercentilesPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            pct05: Indexes::new(client.clone(), &format!("{base_path}/pct05")),
-            pct10: Indexes::new(client.clone(), &format!("{base_path}/pct10")),
-            pct15: Indexes::new(client.clone(), &format!("{base_path}/pct15")),
-            pct20: Indexes::new(client.clone(), &format!("{base_path}/pct20")),
-            pct25: Indexes::new(client.clone(), &format!("{base_path}/pct25")),
-            pct30: Indexes::new(client.clone(), &format!("{base_path}/pct30")),
-            pct35: Indexes::new(client.clone(), &format!("{base_path}/pct35")),
-            pct40: Indexes::new(client.clone(), &format!("{base_path}/pct40")),
-            pct45: Indexes::new(client.clone(), &format!("{base_path}/pct45")),
-            pct50: Indexes::new(client.clone(), &format!("{base_path}/pct50")),
-            pct55: Indexes::new(client.clone(), &format!("{base_path}/pct55")),
-            pct60: Indexes::new(client.clone(), &format!("{base_path}/pct60")),
-            pct65: Indexes::new(client.clone(), &format!("{base_path}/pct65")),
-            pct70: Indexes::new(client.clone(), &format!("{base_path}/pct70")),
-            pct75: Indexes::new(client.clone(), &format!("{base_path}/pct75")),
-            pct80: Indexes::new(client.clone(), &format!("{base_path}/pct80")),
-            pct85: Indexes::new(client.clone(), &format!("{base_path}/pct85")),
-            pct90: Indexes::new(client.clone(), &format!("{base_path}/pct90")),
-            pct95: Indexes::new(client.clone(), &format!("{base_path}/pct95")),
         }
     }
 }
@@ -995,25 +946,74 @@ pub struct ActivePriceRatioPattern {
 impl ActivePriceRatioPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            ratio: Indexes::new(client.clone(), &format!("{base_path}/ratio")),
-            ratio_1m_sma: Indexes::new(client.clone(), &format!("{base_path}/ratio_1m_sma")),
-            ratio_1w_sma: Indexes::new(client.clone(), &format!("{base_path}/ratio_1w_sma")),
-            ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_1y_sd")),
-            ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_2y_sd")),
-            ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_4y_sd")),
-            ratio_pct1: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct1")),
-            ratio_pct1_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct1_usd")),
-            ratio_pct2: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct2")),
-            ratio_pct2_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct2_usd")),
-            ratio_pct5: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct5")),
-            ratio_pct5_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct5_usd")),
-            ratio_pct95: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct95")),
-            ratio_pct95_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct95_usd")),
-            ratio_pct98: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct98")),
-            ratio_pct98_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct98_usd")),
-            ratio_pct99: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct99")),
-            ratio_pct99_usd: Indexes::new(client.clone(), &format!("{base_path}/ratio_pct99_usd")),
-            ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}/ratio_sd")),
+            ratio: Indexes::new(client.clone(), &format!("{base_path}_ratio")),
+            ratio_1m_sma: Indexes::new(client.clone(), &format!("{base_path}_ratio_1m_sma")),
+            ratio_1w_sma: Indexes::new(client.clone(), &format!("{base_path}_ratio_1w_sma")),
+            ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}_ratio_1y_sd")),
+            ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}_ratio_2y_sd")),
+            ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}_ratio_4y_sd")),
+            ratio_pct1: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct1")),
+            ratio_pct1_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct1_usd")),
+            ratio_pct2: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct2")),
+            ratio_pct2_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct2_usd")),
+            ratio_pct5: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct5")),
+            ratio_pct5_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct5_usd")),
+            ratio_pct95: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct95")),
+            ratio_pct95_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct95_usd")),
+            ratio_pct98: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct98")),
+            ratio_pct98_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct98_usd")),
+            ratio_pct99: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct99")),
+            ratio_pct99_usd: Indexes::new(client.clone(), &format!("{base_path}_ratio_pct99_usd")),
+            ratio_sd: Ratio1ySdPattern::new(client.clone(), &format!("{base_path}_ratio_sd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct PricePercentilesPattern {
+    pub pct05: Indexes<Dollars>,
+    pub pct10: Indexes<Dollars>,
+    pub pct15: Indexes<Dollars>,
+    pub pct20: Indexes<Dollars>,
+    pub pct25: Indexes<Dollars>,
+    pub pct30: Indexes<Dollars>,
+    pub pct35: Indexes<Dollars>,
+    pub pct40: Indexes<Dollars>,
+    pub pct45: Indexes<Dollars>,
+    pub pct50: Indexes<Dollars>,
+    pub pct55: Indexes<Dollars>,
+    pub pct60: Indexes<Dollars>,
+    pub pct65: Indexes<Dollars>,
+    pub pct70: Indexes<Dollars>,
+    pub pct75: Indexes<Dollars>,
+    pub pct80: Indexes<Dollars>,
+    pub pct85: Indexes<Dollars>,
+    pub pct90: Indexes<Dollars>,
+    pub pct95: Indexes<Dollars>,
+}
+
+impl PricePercentilesPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            pct05: Indexes::new(client.clone(), &format!("{base_path}_pct05")),
+            pct10: Indexes::new(client.clone(), &format!("{base_path}_pct10")),
+            pct15: Indexes::new(client.clone(), &format!("{base_path}_pct15")),
+            pct20: Indexes::new(client.clone(), &format!("{base_path}_pct20")),
+            pct25: Indexes::new(client.clone(), &format!("{base_path}_pct25")),
+            pct30: Indexes::new(client.clone(), &format!("{base_path}_pct30")),
+            pct35: Indexes::new(client.clone(), &format!("{base_path}_pct35")),
+            pct40: Indexes::new(client.clone(), &format!("{base_path}_pct40")),
+            pct45: Indexes::new(client.clone(), &format!("{base_path}_pct45")),
+            pct50: Indexes::new(client.clone(), &format!("{base_path}_pct50")),
+            pct55: Indexes::new(client.clone(), &format!("{base_path}_pct55")),
+            pct60: Indexes::new(client.clone(), &format!("{base_path}_pct60")),
+            pct65: Indexes::new(client.clone(), &format!("{base_path}_pct65")),
+            pct70: Indexes::new(client.clone(), &format!("{base_path}_pct70")),
+            pct75: Indexes::new(client.clone(), &format!("{base_path}_pct75")),
+            pct80: Indexes::new(client.clone(), &format!("{base_path}_pct80")),
+            pct85: Indexes::new(client.clone(), &format!("{base_path}_pct85")),
+            pct90: Indexes::new(client.clone(), &format!("{base_path}_pct90")),
+            pct95: Indexes::new(client.clone(), &format!("{base_path}_pct95")),
         }
     }
 }
@@ -1042,23 +1042,23 @@ pub struct RelativePattern2 {
 impl RelativePattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
-            neg_unrealized_loss_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_own_market_cap")),
-            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_own_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_own_market_cap")),
-            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
-            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
-            unrealized_loss_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_own_market_cap")),
-            unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
-            unrealized_profit_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_own_market_cap")),
-            unrealized_profit_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_own_total_unrealized_pnl")),
+            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_neg_unrealized_loss_rel_to_market_cap")),
+            neg_unrealized_loss_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_neg_unrealized_loss_rel_to_own_market_cap")),
+            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_own_market_cap: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl_rel_to_own_market_cap")),
+            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
+            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}_supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_loss_rel_to_market_cap")),
+            unrealized_loss_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_loss_rel_to_own_market_cap")),
+            unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_profit_rel_to_market_cap")),
+            unrealized_profit_rel_to_own_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_profit_rel_to_own_market_cap")),
+            unrealized_profit_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_profit_rel_to_own_total_unrealized_pnl")),
         }
     }
 }
@@ -1083,19 +1083,19 @@ pub struct AXbtPattern {
 impl AXbtPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/1d_dominance")),
-            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1m_blocks_mined")),
-            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}/1m_dominance")),
-            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1w_blocks_mined")),
-            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}/1w_dominance")),
-            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}/1y_blocks_mined")),
-            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}/1y_dominance")),
-            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}/blocks_mined")),
-            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/coinbase")),
-            days_since_block: Indexes::new(client.clone(), &format!("{base_path}/days_since_block")),
-            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}/dominance")),
-            fee: FeePattern2::new(client.clone(), &format!("{base_path}/fee")),
-            subsidy: FeePattern2::new(client.clone(), &format!("{base_path}/subsidy")),
+            _1d_dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}_1d_dominance")),
+            _1m_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}_1m_blocks_mined")),
+            _1m_dominance: Indexes::new(client.clone(), &format!("{base_path}_1m_dominance")),
+            _1w_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}_1w_blocks_mined")),
+            _1w_dominance: Indexes::new(client.clone(), &format!("{base_path}_1w_dominance")),
+            _1y_blocks_mined: Indexes::new(client.clone(), &format!("{base_path}_1y_blocks_mined")),
+            _1y_dominance: Indexes::new(client.clone(), &format!("{base_path}_1y_dominance")),
+            blocks_mined: BlockCountPattern::new(client.clone(), &format!("{base_path}_blocks_mined")),
+            coinbase: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}_coinbase")),
+            days_since_block: Indexes::new(client.clone(), &format!("{base_path}_days_since_block")),
+            dominance: BlockCountPattern::new(client.clone(), &format!("{base_path}_dominance")),
+            fee: FeePattern2::new(client.clone(), &format!("{base_path}_fee")),
+            subsidy: FeePattern2::new(client.clone(), &format!("{base_path}_subsidy")),
         }
     }
 }
@@ -1118,17 +1118,17 @@ pub struct BitcoinPattern<T> {
 impl<T: DeserializeOwned> BitcoinPattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes4::new(client.clone(), &format!("{base_path}/average")),
-            base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            max: Indexes4::new(client.clone(), &format!("{base_path}/max")),
-            median: Indexes5::new(client.clone(), &format!("{base_path}/median")),
-            min: Indexes4::new(client.clone(), &format!("{base_path}/min")),
-            pct10: Indexes5::new(client.clone(), &format!("{base_path}/pct10")),
-            pct25: Indexes5::new(client.clone(), &format!("{base_path}/pct25")),
-            pct75: Indexes5::new(client.clone(), &format!("{base_path}/pct75")),
-            pct90: Indexes5::new(client.clone(), &format!("{base_path}/pct90")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
+            average: Indexes4::new(client.clone(), &format!("{base_path}_average")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
+            max: Indexes4::new(client.clone(), &format!("{base_path}_max")),
+            median: Indexes5::new(client.clone(), &format!("{base_path}_median")),
+            min: Indexes4::new(client.clone(), &format!("{base_path}_min")),
+            pct10: Indexes5::new(client.clone(), &format!("{base_path}_pct10")),
+            pct25: Indexes5::new(client.clone(), &format!("{base_path}_pct25")),
+            pct75: Indexes5::new(client.clone(), &format!("{base_path}_pct75")),
+            pct90: Indexes5::new(client.clone(), &format!("{base_path}_pct90")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1150,45 +1150,16 @@ pub struct BlockSizePattern<T> {
 impl<T: DeserializeOwned> BlockSizePattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes3::new(client.clone(), &format!("{base_path}/average")),
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            max: Indexes3::new(client.clone(), &format!("{base_path}/max")),
-            median: Indexes2::new(client.clone(), &format!("{base_path}/median")),
-            min: Indexes3::new(client.clone(), &format!("{base_path}/min")),
-            pct10: Indexes2::new(client.clone(), &format!("{base_path}/pct10")),
-            pct25: Indexes2::new(client.clone(), &format!("{base_path}/pct25")),
-            pct75: Indexes2::new(client.clone(), &format!("{base_path}/pct75")),
-            pct90: Indexes2::new(client.clone(), &format!("{base_path}/pct90")),
-            sum: Indexes3::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct RelativePattern {
-    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
-    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
-    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
-    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
-    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
-}
-
-impl RelativePattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_market_cap")),
-            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}/supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_market_cap")),
-            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_market_cap")),
+            average: Indexes3::new(client.clone(), &format!("{base_path}_average")),
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
+            max: Indexes3::new(client.clone(), &format!("{base_path}_max")),
+            median: Indexes2::new(client.clone(), &format!("{base_path}_median")),
+            min: Indexes3::new(client.clone(), &format!("{base_path}_min")),
+            pct10: Indexes2::new(client.clone(), &format!("{base_path}_pct10")),
+            pct25: Indexes2::new(client.clone(), &format!("{base_path}_pct25")),
+            pct75: Indexes2::new(client.clone(), &format!("{base_path}_pct75")),
+            pct90: Indexes2::new(client.clone(), &format!("{base_path}_pct90")),
+            sum: Indexes3::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1209,43 +1180,71 @@ pub struct UnrealizedPattern {
 impl UnrealizedPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            neg_unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/neg_unrealized_loss")),
-            net_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl")),
-            supply_in_loss: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_loss")),
-            supply_in_loss_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_loss_value")),
-            supply_in_profit: SupplyPattern::new(client.clone(), &format!("{base_path}/supply_in_profit")),
-            supply_in_profit_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_in_profit_value")),
-            total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/total_unrealized_pnl")),
-            unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_loss")),
-            unrealized_profit: Indexes26::new(client.clone(), &format!("{base_path}/unrealized_profit")),
+            neg_unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}_neg_unrealized_loss")),
+            net_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl")),
+            supply_in_loss: SupplyPattern::new(client.clone(), &format!("{base_path}_supply_in_loss")),
+            supply_in_loss_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}_supply_in_loss_value")),
+            supply_in_profit: SupplyPattern::new(client.clone(), &format!("{base_path}_supply_in_profit")),
+            supply_in_profit_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}_supply_in_profit_value")),
+            total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}_total_unrealized_pnl")),
+            unrealized_loss: Indexes26::new(client.clone(), &format!("{base_path}_unrealized_loss")),
+            unrealized_profit: Indexes26::new(client.clone(), &format!("{base_path}_unrealized_profit")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BlockIntervalPattern<T> {
-    pub average: Indexes3<T>,
-    pub max: Indexes3<T>,
-    pub median: Indexes2<T>,
-    pub min: Indexes3<T>,
-    pub pct10: Indexes2<T>,
-    pub pct25: Indexes2<T>,
-    pub pct75: Indexes2<T>,
-    pub pct90: Indexes2<T>,
+pub struct RelativePattern {
+    pub neg_unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub net_unrealized_pnl_rel_to_market_cap: Indexes26<StoredF32>,
+    pub supply_in_loss_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_loss_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_circulating_supply: Indexes27<StoredF64>,
+    pub supply_in_profit_rel_to_own_supply: Indexes27<StoredF64>,
+    pub supply_rel_to_circulating_supply: Indexes<StoredF64>,
+    pub unrealized_loss_rel_to_market_cap: Indexes27<StoredF32>,
+    pub unrealized_profit_rel_to_market_cap: Indexes27<StoredF32>,
 }
 
-impl<T: DeserializeOwned> BlockIntervalPattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
+impl RelativePattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes3::new(client.clone(), &format!("/{acc}_avg")),
-            max: Indexes3::new(client.clone(), &format!("/{acc}_max")),
-            median: Indexes2::new(client.clone(), &format!("/{acc}_median")),
-            min: Indexes3::new(client.clone(), &format!("/{acc}_min")),
-            pct10: Indexes2::new(client.clone(), &format!("/{acc}_pct10")),
-            pct25: Indexes2::new(client.clone(), &format!("/{acc}_pct25")),
-            pct75: Indexes2::new(client.clone(), &format!("/{acc}_pct75")),
-            pct90: Indexes2::new(client.clone(), &format!("/{acc}_pct90")),
+            neg_unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_neg_unrealized_loss_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_market_cap: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl_rel_to_market_cap")),
+            supply_in_loss_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: Indexes::new(client.clone(), &format!("{base_path}_supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_loss_rel_to_market_cap")),
+            unrealized_profit_rel_to_market_cap: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_profit_rel_to_market_cap")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct AddresstypeToHeightToAddrCountPattern<T> {
+    pub p2a: Indexes2<T>,
+    pub p2pk33: Indexes2<T>,
+    pub p2pk65: Indexes2<T>,
+    pub p2pkh: Indexes2<T>,
+    pub p2sh: Indexes2<T>,
+    pub p2tr: Indexes2<T>,
+    pub p2wpkh: Indexes2<T>,
+    pub p2wsh: Indexes2<T>,
+}
+
+impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            p2a: Indexes2::new(client.clone(), &format!("{base_path}_p2a")),
+            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}_p2pk33")),
+            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}_p2pk65")),
+            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}_p2pkh")),
+            p2sh: Indexes2::new(client.clone(), &format!("{base_path}_p2sh")),
+            p2tr: Indexes2::new(client.clone(), &format!("{base_path}_p2tr")),
+            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}_p2wpkh")),
+            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}_p2wsh")),
         }
     }
 }
@@ -1266,41 +1265,42 @@ impl<T: DeserializeOwned> Constant0Pattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            dateindex: Indexes5::new(client.clone(), &format!("/{acc}")),
-            decadeindex: Indexes7::new(client.clone(), &format!("/{acc}")),
-            height: Indexes2::new(client.clone(), &format!("/{acc}")),
-            monthindex: Indexes8::new(client.clone(), &format!("/{acc}")),
-            quarterindex: Indexes9::new(client.clone(), &format!("/{acc}")),
-            semesterindex: Indexes10::new(client.clone(), &format!("/{acc}")),
-            weekindex: Indexes11::new(client.clone(), &format!("/{acc}")),
-            yearindex: Indexes12::new(client.clone(), &format!("/{acc}")),
+            dateindex: Indexes5::new(client.clone(), &acc.to_string()),
+            decadeindex: Indexes7::new(client.clone(), &acc.to_string()),
+            height: Indexes2::new(client.clone(), &acc.to_string()),
+            monthindex: Indexes8::new(client.clone(), &acc.to_string()),
+            quarterindex: Indexes9::new(client.clone(), &acc.to_string()),
+            semesterindex: Indexes10::new(client.clone(), &acc.to_string()),
+            weekindex: Indexes11::new(client.clone(), &acc.to_string()),
+            yearindex: Indexes12::new(client.clone(), &acc.to_string()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AddresstypeToHeightToAddrCountPattern<T> {
-    pub p2a: Indexes2<T>,
-    pub p2pk33: Indexes2<T>,
-    pub p2pk65: Indexes2<T>,
-    pub p2pkh: Indexes2<T>,
-    pub p2sh: Indexes2<T>,
-    pub p2tr: Indexes2<T>,
-    pub p2wpkh: Indexes2<T>,
-    pub p2wsh: Indexes2<T>,
+pub struct BlockIntervalPattern<T> {
+    pub average: Indexes3<T>,
+    pub max: Indexes3<T>,
+    pub median: Indexes2<T>,
+    pub min: Indexes3<T>,
+    pub pct10: Indexes2<T>,
+    pub pct25: Indexes2<T>,
+    pub pct75: Indexes2<T>,
+    pub pct90: Indexes2<T>,
 }
 
-impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+impl<T: DeserializeOwned> BlockIntervalPattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            p2a: Indexes2::new(client.clone(), &format!("{base_path}/p2a")),
-            p2pk33: Indexes2::new(client.clone(), &format!("{base_path}/p2pk33")),
-            p2pk65: Indexes2::new(client.clone(), &format!("{base_path}/p2pk65")),
-            p2pkh: Indexes2::new(client.clone(), &format!("{base_path}/p2pkh")),
-            p2sh: Indexes2::new(client.clone(), &format!("{base_path}/p2sh")),
-            p2tr: Indexes2::new(client.clone(), &format!("{base_path}/p2tr")),
-            p2wpkh: Indexes2::new(client.clone(), &format!("{base_path}/p2wpkh")),
-            p2wsh: Indexes2::new(client.clone(), &format!("{base_path}/p2wsh")),
+            average: Indexes3::new(client.clone(), &format!("{acc}_avg")),
+            max: Indexes3::new(client.clone(), &format!("{acc}_max")),
+            median: Indexes2::new(client.clone(), &format!("{acc}_median")),
+            min: Indexes3::new(client.clone(), &format!("{acc}_min")),
+            pct10: Indexes2::new(client.clone(), &format!("{acc}_pct10")),
+            pct25: Indexes2::new(client.clone(), &format!("{acc}_pct25")),
+            pct75: Indexes2::new(client.clone(), &format!("{acc}_pct75")),
+            pct90: Indexes2::new(client.clone(), &format!("{acc}_pct90")),
         }
     }
 }
@@ -1319,59 +1319,13 @@ pub struct _0satsPattern {
 impl _0satsPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            addr_count: Indexes3::new(client.clone(), &format!("{base_path}/addr_count")),
-            price_paid: PricePaidPattern::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _10yTo12yPattern {
-    pub activity: ActivityPattern,
-    pub price_paid: PricePaidPattern2,
-    pub realized: RealizedPattern2,
-    pub relative: RelativePattern2,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yTo12yPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _0satsPattern2 {
-    pub activity: ActivityPattern,
-    pub price_paid: PricePaidPattern,
-    pub realized: RealizedPattern,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _0satsPattern2 {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}_activity")),
+            addr_count: Indexes3::new(client.clone(), &format!("{base_path}_addr_count")),
+            price_paid: PricePaidPattern::new(client.clone(), &format!("{base_path}_price_paid")),
+            realized: RealizedPattern::new(client.clone(), &format!("{base_path}_realized")),
+            relative: RelativePattern::new(client.clone(), &format!("{base_path}_relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}_supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}_unrealized")),
         }
     }
 }
@@ -1389,12 +1343,58 @@ pub struct UpTo1dPattern {
 impl UpTo1dPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern3::new(client.clone(), &format!("{base_path}/realized")),
-            relative: RelativePattern2::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}_activity")),
+            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}_price_paid")),
+            realized: RealizedPattern3::new(client.clone(), &format!("{base_path}_realized")),
+            relative: RelativePattern2::new(client.clone(), &format!("{base_path}_relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}_supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}_unrealized")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _0satsPattern2 {
+    pub activity: ActivityPattern,
+    pub price_paid: PricePaidPattern,
+    pub realized: RealizedPattern,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _0satsPattern2 {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}_activity")),
+            price_paid: PricePaidPattern::new(client.clone(), &format!("{base_path}_price_paid")),
+            realized: RealizedPattern::new(client.clone(), &format!("{base_path}_realized")),
+            relative: RelativePattern::new(client.clone(), &format!("{base_path}_relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}_supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}_unrealized")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _10yTo12yPattern {
+    pub activity: ActivityPattern,
+    pub price_paid: PricePaidPattern2,
+    pub realized: RealizedPattern2,
+    pub relative: RelativePattern2,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yTo12yPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}_activity")),
+            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}_price_paid")),
+            realized: RealizedPattern2::new(client.clone(), &format!("{base_path}_realized")),
+            relative: RelativePattern2::new(client.clone(), &format!("{base_path}_relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}_supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}_unrealized")),
         }
     }
 }
@@ -1411,11 +1411,11 @@ pub struct SupplyPattern2 {
 impl SupplyPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            supply: SupplyPattern::new(client.clone(), &format!("{base_path}/supply")),
-            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half")),
-            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/supply_half_value")),
-            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}/supply_value")),
-            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/utxo_count")),
+            supply: SupplyPattern::new(client.clone(), &format!("{base_path}_supply")),
+            supply_half: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}_supply_half")),
+            supply_half_value: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}_supply_half_value")),
+            supply_value: SupplyValuePattern::new(client.clone(), &format!("{base_path}_supply_value")),
+            utxo_count: Indexes3::new(client.clone(), &format!("{base_path}_utxo_count")),
         }
     }
 }
@@ -1432,30 +1432,11 @@ pub struct ActivityPattern {
 impl ActivityPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coinblocks_destroyed")),
-            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/coindays_destroyed")),
-            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satblocks_destroyed")),
-            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}/satdays_destroyed")),
-            sent: FeePattern2::new(client.clone(), &format!("{base_path}/sent")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyPattern {
-    pub base: Indexes2<Sats>,
-    pub bitcoin: Indexes<Bitcoin>,
-    pub dollars: Indexes<Dollars>,
-    pub sats: Indexes<Sats>,
-}
-
-impl SupplyPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
-            bitcoin: Indexes::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: Indexes::new(client.clone(), &format!("{base_path}/sats")),
+            coinblocks_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coinblocks_destroyed")),
+            coindays_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_coindays_destroyed")),
+            satblocks_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satblocks_destroyed")),
+            satdays_destroyed: Indexes2::new(client.clone(), &format!("{base_path}_satdays_destroyed")),
+            sent: FeePattern2::new(client.clone(), &format!("{base_path}_sent")),
         }
     }
 }
@@ -1471,44 +1452,29 @@ pub struct FeePattern2 {
 impl FeePattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
-            bitcoin: BlockCountPattern::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: BlockCountPattern::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: SatsPattern::new(client.clone(), &format!("{base_path}/sats")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            bitcoin: BlockCountPattern::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: BlockCountPattern::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: SatsPattern::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActiveSupplyPattern {
-    pub bitcoin: Indexes3<Bitcoin>,
-    pub dollars: Indexes3<Dollars>,
-    pub sats: Indexes3<Sats>,
+pub struct SupplyPattern {
+    pub base: Indexes2<Sats>,
+    pub bitcoin: Indexes<Bitcoin>,
+    pub dollars: Indexes<Dollars>,
+    pub sats: Indexes<Sats>,
 }
 
-impl ActiveSupplyPattern {
+impl SupplyPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct UnclaimedRewardsPattern {
-    pub bitcoin: BlockCountPattern<Bitcoin>,
-    pub dollars: BlockCountPattern<Dollars>,
-    pub sats: BlockCountPattern<Sats>,
-}
-
-impl UnclaimedRewardsPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            bitcoin: BlockCountPattern::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: BlockCountPattern::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: BlockCountPattern::new(client.clone(), &format!("{base_path}/sats")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            bitcoin: Indexes::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: Indexes::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: Indexes::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
@@ -1523,9 +1489,43 @@ pub struct CoinbasePattern {
 impl CoinbasePattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            bitcoin: BitcoinPattern::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: BitcoinPattern::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: BitcoinPattern::new(client.clone(), &format!("{base_path}/sats")),
+            bitcoin: BitcoinPattern::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: BitcoinPattern::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: BitcoinPattern::new(client.clone(), &format!("{base_path}_sats")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct UnclaimedRewardsPattern {
+    pub bitcoin: BlockCountPattern<Bitcoin>,
+    pub dollars: BlockCountPattern<Dollars>,
+    pub sats: BlockCountPattern<Sats>,
+}
+
+impl UnclaimedRewardsPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: BlockCountPattern::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: BlockCountPattern::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: BlockCountPattern::new(client.clone(), &format!("{base_path}_sats")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActiveSupplyPattern {
+    pub bitcoin: Indexes3<Bitcoin>,
+    pub dollars: Indexes3<Dollars>,
+    pub sats: Indexes3<Sats>,
+}
+
+impl ActiveSupplyPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            bitcoin: Indexes3::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: Indexes3::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: Indexes3::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
@@ -1540,9 +1540,9 @@ pub struct PricePaidPattern2 {
 impl PricePaidPattern2 {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/max_price_paid")),
-            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/min_price_paid")),
-            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}/price_percentiles")),
+            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_max_price_paid")),
+            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_min_price_paid")),
+            price_percentiles: PricePercentilesPattern::new(client.clone(), &format!("{base_path}_price_percentiles")),
         }
     }
 }
@@ -1557,24 +1557,9 @@ pub struct BlockCountPattern<T> {
 impl<T: DeserializeOwned> BlockCountPattern<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SatsPattern {
-    pub cumulative: Indexes3<Sats>,
-    pub sum: Indexes4<Sats>,
-}
-
-impl SatsPattern {
-    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
-        Self {
-            cumulative: Indexes3::new(client.clone(), &format!("{base_path}/cumulative")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1588,8 +1573,23 @@ pub struct SupplyValuePattern {
 impl SupplyValuePattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes2::new(client.clone(), &format!("{base_path}/dollars")),
+            bitcoin: Indexes2::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: Indexes2::new(client.clone(), &format!("{base_path}_dollars")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct PricePaidPattern {
+    pub max_price_paid: Indexes3<Dollars>,
+    pub min_price_paid: Indexes3<Dollars>,
+}
+
+impl PricePaidPattern {
+    pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
+        Self {
+            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_max_price_paid")),
+            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}_min_price_paid")),
         }
     }
 }
@@ -1604,23 +1604,23 @@ impl _1dReturns1mSdPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: &str) -> Self {
         Self {
-            sd: Indexes::new(client.clone(), &format!("/{acc}_sd")),
-            sma: Indexes::new(client.clone(), &format!("/{acc}_sma")),
+            sd: Indexes::new(client.clone(), &format!("{acc}_sd")),
+            sma: Indexes::new(client.clone(), &format!("{acc}_sma")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct PricePaidPattern {
-    pub max_price_paid: Indexes3<Dollars>,
-    pub min_price_paid: Indexes3<Dollars>,
+pub struct SatsPattern {
+    pub cumulative: Indexes3<Sats>,
+    pub sum: Indexes4<Sats>,
 }
 
-impl PricePaidPattern {
+impl SatsPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            max_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/max_price_paid")),
-            min_price_paid: Indexes3::new(client.clone(), &format!("{base_path}/min_price_paid")),
+            cumulative: Indexes3::new(client.clone(), &format!("{base_path}_cumulative")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1634,8 +1634,8 @@ pub struct BitcoinPattern2<T> {
 impl<T: DeserializeOwned> BitcoinPattern2<T> {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base: Indexes2::new(client.clone(), &format!("{base_path}/base")),
-            sum: Indexes4::new(client.clone(), &format!("{base_path}/sum")),
+            base: Indexes2::new(client.clone(), &format!("{base_path}_base")),
+            sum: Indexes4::new(client.clone(), &format!("{base_path}_sum")),
         }
     }
 }
@@ -1648,7 +1648,7 @@ pub struct RealizedPriceExtraPattern {
 impl RealizedPriceExtraPattern {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            ratio: Indexes::new(client.clone(), &format!("{base_path}/ratio")),
+            ratio: Indexes::new(client.clone(), &format!("{base_path}_ratio")),
         }
     }
 }
@@ -1664,8 +1664,8 @@ pub struct CatalogTree {
 impl CatalogTree {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            computed: CatalogTree_Computed::new(client.clone(), &format!("{base_path}/computed")),
-            indexed: CatalogTree_Indexed::new(client.clone(), &format!("{base_path}/indexed")),
+            computed: CatalogTree_Computed::new(client.clone(), &format!("{base_path}_computed")),
+            indexed: CatalogTree_Indexed::new(client.clone(), &format!("{base_path}_indexed")),
         }
     }
 }
@@ -1689,18 +1689,18 @@ pub struct CatalogTree_Computed {
 impl CatalogTree_Computed {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            blks: CatalogTree_Computed_Blks::new(client.clone(), &format!("{base_path}/blks")),
-            chain: CatalogTree_Computed_Chain::new(client.clone(), &format!("{base_path}/chain")),
-            cointime: CatalogTree_Computed_Cointime::new(client.clone(), &format!("{base_path}/cointime")),
-            constants: CatalogTree_Computed_Constants::new(client.clone(), &format!("{base_path}/constants")),
-            fetched: CatalogTree_Computed_Fetched::new(client.clone(), &format!("{base_path}/fetched")),
-            indexes: CatalogTree_Computed_Indexes::new(client.clone(), &format!("{base_path}/indexes")),
-            market: CatalogTree_Computed_Market::new(client.clone(), &format!("{base_path}/market")),
-            pools: CatalogTree_Computed_Pools::new(client.clone(), &format!("{base_path}/pools")),
-            price: CatalogTree_Computed_Price::new(client.clone(), &format!("{base_path}/price")),
-            stateful: CatalogTree_Computed_Stateful::new(client.clone(), &format!("{base_path}/stateful")),
-            txins: CatalogTree_Computed_Txins::new(client.clone(), &format!("{base_path}/txins")),
-            txouts: CatalogTree_Computed_Txouts::new(client.clone(), &format!("{base_path}/txouts")),
+            blks: CatalogTree_Computed_Blks::new(client.clone(), &format!("{base_path}_blks")),
+            chain: CatalogTree_Computed_Chain::new(client.clone(), &format!("{base_path}_chain")),
+            cointime: CatalogTree_Computed_Cointime::new(client.clone(), &format!("{base_path}_cointime")),
+            constants: CatalogTree_Computed_Constants::new(client.clone(), &format!("{base_path}_constants")),
+            fetched: CatalogTree_Computed_Fetched::new(client.clone(), &format!("{base_path}_fetched")),
+            indexes: CatalogTree_Computed_Indexes::new(client.clone(), &format!("{base_path}_indexes")),
+            market: CatalogTree_Computed_Market::new(client.clone(), &format!("{base_path}_market")),
+            pools: CatalogTree_Computed_Pools::new(client.clone(), &format!("{base_path}_pools")),
+            price: CatalogTree_Computed_Price::new(client.clone(), &format!("{base_path}_price")),
+            stateful: CatalogTree_Computed_Stateful::new(client.clone(), &format!("{base_path}_stateful")),
+            txins: CatalogTree_Computed_Txins::new(client.clone(), &format!("{base_path}_txins")),
+            txouts: CatalogTree_Computed_Txouts::new(client.clone(), &format!("{base_path}_txouts")),
         }
     }
 }
@@ -1713,7 +1713,7 @@ pub struct CatalogTree_Computed_Blks {
 impl CatalogTree_Computed_Blks {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            position: MetricNode::new(client.clone(), format!("{base_path}/position")),
+            position: MetricNode::new(client.clone(), format!("{base_path}_position")),
         }
     }
 }
@@ -1809,90 +1809,90 @@ pub struct CatalogTree_Computed_Chain {
 impl CatalogTree_Computed_Chain {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _1m_block_count: Indexes::new(client.clone(), &format!("{base_path}/1m_block_count")),
-            _1w_block_count: Indexes::new(client.clone(), &format!("{base_path}/1w_block_count")),
-            _1y_block_count: Indexes::new(client.clone(), &format!("{base_path}/1y_block_count")),
-            _24h_block_count: Indexes2::new(client.clone(), &format!("{base_path}/24h_block_count")),
-            _24h_coinbase_sum: Indexes2::new(client.clone(), &format!("{base_path}/24h_coinbase_sum")),
-            _24h_coinbase_usd_sum: Indexes2::new(client.clone(), &format!("{base_path}/24h_coinbase_usd_sum")),
-            annualized_volume: Indexes::new(client.clone(), &format!("{base_path}/annualized_volume")),
-            annualized_volume_btc: Indexes::new(client.clone(), &format!("{base_path}/annualized_volume_btc")),
-            annualized_volume_usd: Indexes::new(client.clone(), &format!("{base_path}/annualized_volume_usd")),
-            block_count: BlockCountPattern::new(client.clone(), &format!("{base_path}/block_count")),
-            block_count_target: Indexes::new(client.clone(), &format!("{base_path}/block_count_target")),
+            _1m_block_count: Indexes::new(client.clone(), &format!("{base_path}_1m_block_count")),
+            _1w_block_count: Indexes::new(client.clone(), &format!("{base_path}_1w_block_count")),
+            _1y_block_count: Indexes::new(client.clone(), &format!("{base_path}_1y_block_count")),
+            _24h_block_count: Indexes2::new(client.clone(), &format!("{base_path}_24h_block_count")),
+            _24h_coinbase_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_sum")),
+            _24h_coinbase_usd_sum: Indexes2::new(client.clone(), &format!("{base_path}_24h_coinbase_usd_sum")),
+            annualized_volume: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume")),
+            annualized_volume_btc: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_btc")),
+            annualized_volume_usd: Indexes::new(client.clone(), &format!("{base_path}_annualized_volume_usd")),
+            block_count: BlockCountPattern::new(client.clone(), &format!("{base_path}_block_count")),
+            block_count_target: Indexes::new(client.clone(), &format!("{base_path}_block_count_target")),
             block_interval: BlockIntervalPattern::new(client.clone(), "block_interval"),
-            block_size: BlockSizePattern::new(client.clone(), &format!("{base_path}/block_size")),
-            block_vbytes: BlockSizePattern::new(client.clone(), &format!("{base_path}/block_vbytes")),
-            block_weight: BlockSizePattern::new(client.clone(), &format!("{base_path}/block_weight")),
-            blocks_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}/blocks_before_next_difficulty_adjustment")),
-            blocks_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}/blocks_before_next_halving")),
-            coinbase: CoinbasePattern::new(client.clone(), &format!("{base_path}/coinbase")),
-            days_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}/days_before_next_difficulty_adjustment")),
-            days_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}/days_before_next_halving")),
-            difficulty: Indexes4::new(client.clone(), &format!("{base_path}/difficulty")),
-            difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}/difficulty_adjustment")),
-            difficulty_as_hash: Indexes3::new(client.clone(), &format!("{base_path}/difficulty_as_hash")),
-            difficultyepoch: Indexes::new(client.clone(), &format!("{base_path}/difficultyepoch")),
-            emptyoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/emptyoutput_count")),
-            exact_utxo_count: Indexes3::new(client.clone(), &format!("{base_path}/exact_utxo_count")),
-            fee: CatalogTree_Computed_Chain_Fee::new(client.clone(), &format!("{base_path}/fee")),
-            fee_dominance: Indexes5::new(client.clone(), &format!("{base_path}/fee_dominance")),
-            fee_rate: CatalogTree_Computed_Chain_FeeRate::new(client.clone(), &format!("{base_path}/fee_rate")),
-            halvingepoch: Indexes::new(client.clone(), &format!("{base_path}/halvingepoch")),
-            hash_price_phs: Indexes3::new(client.clone(), &format!("{base_path}/hash_price_phs")),
-            hash_price_phs_min: Indexes3::new(client.clone(), &format!("{base_path}/hash_price_phs_min")),
-            hash_price_rebound: Indexes3::new(client.clone(), &format!("{base_path}/hash_price_rebound")),
-            hash_price_ths: Indexes3::new(client.clone(), &format!("{base_path}/hash_price_ths")),
-            hash_price_ths_min: Indexes3::new(client.clone(), &format!("{base_path}/hash_price_ths_min")),
-            hash_rate: Indexes3::new(client.clone(), &format!("{base_path}/hash_rate")),
-            hash_rate_1m_sma: Indexes::new(client.clone(), &format!("{base_path}/hash_rate_1m_sma")),
-            hash_rate_1w_sma: Indexes::new(client.clone(), &format!("{base_path}/hash_rate_1w_sma")),
-            hash_rate_1y_sma: Indexes::new(client.clone(), &format!("{base_path}/hash_rate_1y_sma")),
-            hash_rate_2m_sma: Indexes::new(client.clone(), &format!("{base_path}/hash_rate_2m_sma")),
-            hash_value_phs: Indexes3::new(client.clone(), &format!("{base_path}/hash_value_phs")),
-            hash_value_phs_min: Indexes3::new(client.clone(), &format!("{base_path}/hash_value_phs_min")),
-            hash_value_rebound: Indexes3::new(client.clone(), &format!("{base_path}/hash_value_rebound")),
-            hash_value_ths: Indexes3::new(client.clone(), &format!("{base_path}/hash_value_ths")),
-            hash_value_ths_min: Indexes3::new(client.clone(), &format!("{base_path}/hash_value_ths_min")),
-            inflation_rate: Indexes::new(client.clone(), &format!("{base_path}/inflation_rate")),
-            input_count: BlockSizePattern::new(client.clone(), &format!("{base_path}/input_count")),
-            input_value: Indexes6::new(client.clone(), &format!("{base_path}/input_value")),
-            inputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}/inputs_per_sec")),
-            interval: Indexes2::new(client.clone(), &format!("{base_path}/interval")),
-            is_coinbase: Indexes6::new(client.clone(), &format!("{base_path}/is_coinbase")),
-            opreturn_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/opreturn_count")),
-            output_count: BlockSizePattern::new(client.clone(), &format!("{base_path}/output_count")),
-            output_value: Indexes6::new(client.clone(), &format!("{base_path}/output_value")),
-            outputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}/outputs_per_sec")),
-            p2a_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2a_count")),
-            p2ms_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2ms_count")),
-            p2pk33_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2pk33_count")),
-            p2pk65_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2pk65_count")),
-            p2pkh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2pkh_count")),
-            p2sh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2sh_count")),
-            p2tr_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2tr_count")),
-            p2wpkh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2wpkh_count")),
-            p2wsh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/p2wsh_count")),
-            puell_multiple: Indexes::new(client.clone(), &format!("{base_path}/puell_multiple")),
-            sent_sum: CatalogTree_Computed_Chain_SentSum::new(client.clone(), &format!("{base_path}/sent_sum")),
-            subsidy: CoinbasePattern::new(client.clone(), &format!("{base_path}/subsidy")),
-            subsidy_dominance: Indexes5::new(client.clone(), &format!("{base_path}/subsidy_dominance")),
-            subsidy_usd_1y_sma: Indexes::new(client.clone(), &format!("{base_path}/subsidy_usd_1y_sma")),
-            timestamp: MetricNode::new(client.clone(), format!("{base_path}/timestamp")),
-            tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}/tx_btc_velocity")),
-            tx_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/tx_count")),
-            tx_per_sec: Indexes::new(client.clone(), &format!("{base_path}/tx_per_sec")),
-            tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}/tx_usd_velocity")),
-            tx_v1: BlockCountPattern::new(client.clone(), &format!("{base_path}/tx_v1")),
-            tx_v2: BlockCountPattern::new(client.clone(), &format!("{base_path}/tx_v2")),
-            tx_v3: BlockCountPattern::new(client.clone(), &format!("{base_path}/tx_v3")),
+            block_size: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_size")),
+            block_vbytes: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_vbytes")),
+            block_weight: BlockSizePattern::new(client.clone(), &format!("{base_path}_block_weight")),
+            blocks_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_blocks_before_next_difficulty_adjustment")),
+            blocks_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}_blocks_before_next_halving")),
+            coinbase: CoinbasePattern::new(client.clone(), &format!("{base_path}_coinbase")),
+            days_before_next_difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_days_before_next_difficulty_adjustment")),
+            days_before_next_halving: Indexes3::new(client.clone(), &format!("{base_path}_days_before_next_halving")),
+            difficulty: Indexes4::new(client.clone(), &format!("{base_path}_difficulty")),
+            difficulty_adjustment: Indexes3::new(client.clone(), &format!("{base_path}_difficulty_adjustment")),
+            difficulty_as_hash: Indexes3::new(client.clone(), &format!("{base_path}_difficulty_as_hash")),
+            difficultyepoch: Indexes::new(client.clone(), &format!("{base_path}_difficultyepoch")),
+            emptyoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_emptyoutput_count")),
+            exact_utxo_count: Indexes3::new(client.clone(), &format!("{base_path}_exact_utxo_count")),
+            fee: CatalogTree_Computed_Chain_Fee::new(client.clone(), &format!("{base_path}_fee")),
+            fee_dominance: Indexes5::new(client.clone(), &format!("{base_path}_fee_dominance")),
+            fee_rate: CatalogTree_Computed_Chain_FeeRate::new(client.clone(), &format!("{base_path}_fee_rate")),
+            halvingepoch: Indexes::new(client.clone(), &format!("{base_path}_halvingepoch")),
+            hash_price_phs: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_phs")),
+            hash_price_phs_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_phs_min")),
+            hash_price_rebound: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_rebound")),
+            hash_price_ths: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_ths")),
+            hash_price_ths_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_price_ths_min")),
+            hash_rate: Indexes3::new(client.clone(), &format!("{base_path}_hash_rate")),
+            hash_rate_1m_sma: Indexes::new(client.clone(), &format!("{base_path}_hash_rate_1m_sma")),
+            hash_rate_1w_sma: Indexes::new(client.clone(), &format!("{base_path}_hash_rate_1w_sma")),
+            hash_rate_1y_sma: Indexes::new(client.clone(), &format!("{base_path}_hash_rate_1y_sma")),
+            hash_rate_2m_sma: Indexes::new(client.clone(), &format!("{base_path}_hash_rate_2m_sma")),
+            hash_value_phs: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_phs")),
+            hash_value_phs_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_phs_min")),
+            hash_value_rebound: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_rebound")),
+            hash_value_ths: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_ths")),
+            hash_value_ths_min: Indexes3::new(client.clone(), &format!("{base_path}_hash_value_ths_min")),
+            inflation_rate: Indexes::new(client.clone(), &format!("{base_path}_inflation_rate")),
+            input_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_input_count")),
+            input_value: Indexes6::new(client.clone(), &format!("{base_path}_input_value")),
+            inputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_inputs_per_sec")),
+            interval: Indexes2::new(client.clone(), &format!("{base_path}_interval")),
+            is_coinbase: Indexes6::new(client.clone(), &format!("{base_path}_is_coinbase")),
+            opreturn_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_opreturn_count")),
+            output_count: BlockSizePattern::new(client.clone(), &format!("{base_path}_output_count")),
+            output_value: Indexes6::new(client.clone(), &format!("{base_path}_output_value")),
+            outputs_per_sec: Indexes::new(client.clone(), &format!("{base_path}_outputs_per_sec")),
+            p2a_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2a_count")),
+            p2ms_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2ms_count")),
+            p2pk33_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2pk33_count")),
+            p2pk65_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2pk65_count")),
+            p2pkh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2pkh_count")),
+            p2sh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2sh_count")),
+            p2tr_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2tr_count")),
+            p2wpkh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2wpkh_count")),
+            p2wsh_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_p2wsh_count")),
+            puell_multiple: Indexes::new(client.clone(), &format!("{base_path}_puell_multiple")),
+            sent_sum: CatalogTree_Computed_Chain_SentSum::new(client.clone(), &format!("{base_path}_sent_sum")),
+            subsidy: CoinbasePattern::new(client.clone(), &format!("{base_path}_subsidy")),
+            subsidy_dominance: Indexes5::new(client.clone(), &format!("{base_path}_subsidy_dominance")),
+            subsidy_usd_1y_sma: Indexes::new(client.clone(), &format!("{base_path}_subsidy_usd_1y_sma")),
+            timestamp: MetricNode::new(client.clone(), format!("{base_path}_timestamp")),
+            tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_btc_velocity")),
+            tx_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_tx_count")),
+            tx_per_sec: Indexes::new(client.clone(), &format!("{base_path}_tx_per_sec")),
+            tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}_tx_usd_velocity")),
+            tx_v1: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v1")),
+            tx_v2: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v2")),
+            tx_v3: BlockCountPattern::new(client.clone(), &format!("{base_path}_tx_v3")),
             tx_vsize: BlockIntervalPattern::new(client.clone(), "tx_vsize"),
             tx_weight: BlockIntervalPattern::new(client.clone(), "tx_weight"),
-            unclaimed_rewards: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}/unclaimed_rewards")),
-            unknownoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}/unknownoutput_count")),
-            vbytes: Indexes2::new(client.clone(), &format!("{base_path}/vbytes")),
-            vsize: Indexes6::new(client.clone(), &format!("{base_path}/vsize")),
-            weight: Indexes6::new(client.clone(), &format!("{base_path}/weight")),
+            unclaimed_rewards: UnclaimedRewardsPattern::new(client.clone(), &format!("{base_path}_unclaimed_rewards")),
+            unknownoutput_count: BitcoinPattern::new(client.clone(), &format!("{base_path}_unknownoutput_count")),
+            vbytes: Indexes2::new(client.clone(), &format!("{base_path}_vbytes")),
+            vsize: Indexes6::new(client.clone(), &format!("{base_path}_vsize")),
+            weight: Indexes6::new(client.clone(), &format!("{base_path}_weight")),
         }
     }
 }
@@ -1910,12 +1910,12 @@ pub struct CatalogTree_Computed_Chain_Fee {
 impl CatalogTree_Computed_Chain_Fee {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base: Indexes6::new(client.clone(), &format!("{base_path}/base")),
-            bitcoin: BlockSizePattern::new(client.clone(), &format!("{base_path}/bitcoin")),
-            bitcoin_txindex: Indexes6::new(client.clone(), &format!("{base_path}/bitcoin_txindex")),
-            dollars: BlockSizePattern::new(client.clone(), &format!("{base_path}/dollars")),
-            dollars_txindex: Indexes6::new(client.clone(), &format!("{base_path}/dollars_txindex")),
-            sats: BlockSizePattern::new(client.clone(), &format!("{base_path}/sats")),
+            base: Indexes6::new(client.clone(), &format!("{base_path}_base")),
+            bitcoin: BlockSizePattern::new(client.clone(), &format!("{base_path}_bitcoin")),
+            bitcoin_txindex: Indexes6::new(client.clone(), &format!("{base_path}_bitcoin_txindex")),
+            dollars: BlockSizePattern::new(client.clone(), &format!("{base_path}_dollars")),
+            dollars_txindex: Indexes6::new(client.clone(), &format!("{base_path}_dollars_txindex")),
+            sats: BlockSizePattern::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
@@ -1936,15 +1936,15 @@ pub struct CatalogTree_Computed_Chain_FeeRate {
 impl CatalogTree_Computed_Chain_FeeRate {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            average: Indexes3::new(client.clone(), &format!("{base_path}/average")),
-            base: Indexes6::new(client.clone(), &format!("{base_path}/base")),
-            max: Indexes3::new(client.clone(), &format!("{base_path}/max")),
-            median: Indexes2::new(client.clone(), &format!("{base_path}/median")),
-            min: Indexes3::new(client.clone(), &format!("{base_path}/min")),
-            pct10: Indexes2::new(client.clone(), &format!("{base_path}/pct10")),
-            pct25: Indexes2::new(client.clone(), &format!("{base_path}/pct25")),
-            pct75: Indexes2::new(client.clone(), &format!("{base_path}/pct75")),
-            pct90: Indexes2::new(client.clone(), &format!("{base_path}/pct90")),
+            average: Indexes3::new(client.clone(), &format!("{base_path}_average")),
+            base: Indexes6::new(client.clone(), &format!("{base_path}_base")),
+            max: Indexes3::new(client.clone(), &format!("{base_path}_max")),
+            median: Indexes2::new(client.clone(), &format!("{base_path}_median")),
+            min: Indexes3::new(client.clone(), &format!("{base_path}_min")),
+            pct10: Indexes2::new(client.clone(), &format!("{base_path}_pct10")),
+            pct25: Indexes2::new(client.clone(), &format!("{base_path}_pct25")),
+            pct75: Indexes2::new(client.clone(), &format!("{base_path}_pct75")),
+            pct90: Indexes2::new(client.clone(), &format!("{base_path}_pct90")),
         }
     }
 }
@@ -1959,9 +1959,9 @@ pub struct CatalogTree_Computed_Chain_SentSum {
 impl CatalogTree_Computed_Chain_SentSum {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            bitcoin: BitcoinPattern2::new(client.clone(), &format!("{base_path}/bitcoin")),
-            dollars: Indexes3::new(client.clone(), &format!("{base_path}/dollars")),
-            sats: Indexes3::new(client.clone(), &format!("{base_path}/sats")),
+            bitcoin: BitcoinPattern2::new(client.clone(), &format!("{base_path}_bitcoin")),
+            dollars: Indexes3::new(client.clone(), &format!("{base_path}_dollars")),
+            sats: Indexes3::new(client.clone(), &format!("{base_path}_sats")),
         }
     }
 }
@@ -1999,32 +1999,32 @@ pub struct CatalogTree_Computed_Cointime {
 impl CatalogTree_Computed_Cointime {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            active_cap: Indexes3::new(client.clone(), &format!("{base_path}/active_cap")),
-            active_price: Indexes3::new(client.clone(), &format!("{base_path}/active_price")),
-            active_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/active_price_ratio")),
-            active_supply: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/active_supply")),
-            activity_to_vaultedness_ratio: Indexes3::new(client.clone(), &format!("{base_path}/activity_to_vaultedness_ratio")),
-            coinblocks_created: BlockCountPattern::new(client.clone(), &format!("{base_path}/coinblocks_created")),
-            coinblocks_stored: BlockCountPattern::new(client.clone(), &format!("{base_path}/coinblocks_stored")),
-            cointime_adj_inflation_rate: Indexes::new(client.clone(), &format!("{base_path}/cointime_adj_inflation_rate")),
-            cointime_adj_tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}/cointime_adj_tx_btc_velocity")),
-            cointime_adj_tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}/cointime_adj_tx_usd_velocity")),
-            cointime_cap: Indexes3::new(client.clone(), &format!("{base_path}/cointime_cap")),
-            cointime_price: Indexes3::new(client.clone(), &format!("{base_path}/cointime_price")),
-            cointime_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/cointime_price_ratio")),
-            cointime_value_created: BlockCountPattern::new(client.clone(), &format!("{base_path}/cointime_value_created")),
-            cointime_value_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}/cointime_value_destroyed")),
-            cointime_value_stored: BlockCountPattern::new(client.clone(), &format!("{base_path}/cointime_value_stored")),
-            investor_cap: Indexes3::new(client.clone(), &format!("{base_path}/investor_cap")),
-            liveliness: Indexes3::new(client.clone(), &format!("{base_path}/liveliness")),
-            thermo_cap: Indexes3::new(client.clone(), &format!("{base_path}/thermo_cap")),
-            true_market_mean: Indexes3::new(client.clone(), &format!("{base_path}/true_market_mean")),
-            true_market_mean_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/true_market_mean_ratio")),
-            vaulted_cap: Indexes3::new(client.clone(), &format!("{base_path}/vaulted_cap")),
-            vaulted_price: Indexes3::new(client.clone(), &format!("{base_path}/vaulted_price")),
-            vaulted_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}/vaulted_price_ratio")),
-            vaulted_supply: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}/vaulted_supply")),
-            vaultedness: Indexes3::new(client.clone(), &format!("{base_path}/vaultedness")),
+            active_cap: Indexes3::new(client.clone(), &format!("{base_path}_active_cap")),
+            active_price: Indexes3::new(client.clone(), &format!("{base_path}_active_price")),
+            active_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_active_price_ratio")),
+            active_supply: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}_active_supply")),
+            activity_to_vaultedness_ratio: Indexes3::new(client.clone(), &format!("{base_path}_activity_to_vaultedness_ratio")),
+            coinblocks_created: BlockCountPattern::new(client.clone(), &format!("{base_path}_coinblocks_created")),
+            coinblocks_stored: BlockCountPattern::new(client.clone(), &format!("{base_path}_coinblocks_stored")),
+            cointime_adj_inflation_rate: Indexes::new(client.clone(), &format!("{base_path}_cointime_adj_inflation_rate")),
+            cointime_adj_tx_btc_velocity: Indexes::new(client.clone(), &format!("{base_path}_cointime_adj_tx_btc_velocity")),
+            cointime_adj_tx_usd_velocity: Indexes::new(client.clone(), &format!("{base_path}_cointime_adj_tx_usd_velocity")),
+            cointime_cap: Indexes3::new(client.clone(), &format!("{base_path}_cointime_cap")),
+            cointime_price: Indexes3::new(client.clone(), &format!("{base_path}_cointime_price")),
+            cointime_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_cointime_price_ratio")),
+            cointime_value_created: BlockCountPattern::new(client.clone(), &format!("{base_path}_cointime_value_created")),
+            cointime_value_destroyed: BlockCountPattern::new(client.clone(), &format!("{base_path}_cointime_value_destroyed")),
+            cointime_value_stored: BlockCountPattern::new(client.clone(), &format!("{base_path}_cointime_value_stored")),
+            investor_cap: Indexes3::new(client.clone(), &format!("{base_path}_investor_cap")),
+            liveliness: Indexes3::new(client.clone(), &format!("{base_path}_liveliness")),
+            thermo_cap: Indexes3::new(client.clone(), &format!("{base_path}_thermo_cap")),
+            true_market_mean: Indexes3::new(client.clone(), &format!("{base_path}_true_market_mean")),
+            true_market_mean_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_true_market_mean_ratio")),
+            vaulted_cap: Indexes3::new(client.clone(), &format!("{base_path}_vaulted_cap")),
+            vaulted_price: Indexes3::new(client.clone(), &format!("{base_path}_vaulted_price")),
+            vaulted_price_ratio: ActivePriceRatioPattern::new(client.clone(), &format!("{base_path}_vaulted_price_ratio")),
+            vaulted_supply: ActiveSupplyPattern::new(client.clone(), &format!("{base_path}_vaulted_supply")),
+            vaultedness: Indexes3::new(client.clone(), &format!("{base_path}_vaultedness")),
         }
     }
 }
@@ -2076,7 +2076,7 @@ pub struct CatalogTree_Computed_Fetched {
 impl CatalogTree_Computed_Fetched {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            price_ohlc_in_cents: Indexes13::new(client.clone(), &format!("{base_path}/price_ohlc_in_cents")),
+            price_ohlc_in_cents: Indexes13::new(client.clone(), &format!("{base_path}_price_ohlc_in_cents")),
         }
     }
 }
@@ -2127,45 +2127,45 @@ pub struct CatalogTree_Computed_Indexes {
 impl CatalogTree_Computed_Indexes {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            date: Indexes13::new(client.clone(), &format!("{base_path}/date")),
-            date_fixed: Indexes2::new(client.clone(), &format!("{base_path}/date_fixed")),
-            dateindex: Indexes13::new(client.clone(), &format!("{base_path}/dateindex")),
-            dateindex_count: Indexes14::new(client.clone(), &format!("{base_path}/dateindex_count")),
-            decadeindex: MetricNode::new(client.clone(), format!("{base_path}/decadeindex")),
-            difficultyepoch: MetricNode::new(client.clone(), format!("{base_path}/difficultyepoch")),
-            emptyoutputindex: MetricNode::new(client.clone(), format!("{base_path}/emptyoutputindex")),
-            first_dateindex: Indexes14::new(client.clone(), &format!("{base_path}/first_dateindex")),
-            first_height: MetricNode::new(client.clone(), format!("{base_path}/first_height")),
-            first_monthindex: Indexes15::new(client.clone(), &format!("{base_path}/first_monthindex")),
-            first_yearindex: Indexes7::new(client.clone(), &format!("{base_path}/first_yearindex")),
-            halvingepoch: MetricNode::new(client.clone(), format!("{base_path}/halvingepoch")),
-            height: Indexes2::new(client.clone(), &format!("{base_path}/height")),
-            height_count: MetricNode::new(client.clone(), format!("{base_path}/height_count")),
-            input_count: Indexes6::new(client.clone(), &format!("{base_path}/input_count")),
-            monthindex: MetricNode::new(client.clone(), format!("{base_path}/monthindex")),
-            monthindex_count: Indexes15::new(client.clone(), &format!("{base_path}/monthindex_count")),
-            opreturnindex: MetricNode::new(client.clone(), format!("{base_path}/opreturnindex")),
-            output_count: Indexes6::new(client.clone(), &format!("{base_path}/output_count")),
-            p2aaddressindex: Indexes16::new(client.clone(), &format!("{base_path}/p2aaddressindex")),
-            p2msoutputindex: MetricNode::new(client.clone(), format!("{base_path}/p2msoutputindex")),
-            p2pk33addressindex: Indexes17::new(client.clone(), &format!("{base_path}/p2pk33addressindex")),
-            p2pk65addressindex: Indexes18::new(client.clone(), &format!("{base_path}/p2pk65addressindex")),
-            p2pkhaddressindex: Indexes19::new(client.clone(), &format!("{base_path}/p2pkhaddressindex")),
-            p2shaddressindex: Indexes20::new(client.clone(), &format!("{base_path}/p2shaddressindex")),
-            p2traddressindex: Indexes21::new(client.clone(), &format!("{base_path}/p2traddressindex")),
-            p2wpkhaddressindex: Indexes22::new(client.clone(), &format!("{base_path}/p2wpkhaddressindex")),
-            p2wshaddressindex: Indexes23::new(client.clone(), &format!("{base_path}/p2wshaddressindex")),
-            quarterindex: MetricNode::new(client.clone(), format!("{base_path}/quarterindex")),
-            semesterindex: MetricNode::new(client.clone(), format!("{base_path}/semesterindex")),
-            timestamp_fixed: Indexes2::new(client.clone(), &format!("{base_path}/timestamp_fixed")),
-            txindex: Indexes6::new(client.clone(), &format!("{base_path}/txindex")),
-            txindex_count: Indexes2::new(client.clone(), &format!("{base_path}/txindex_count")),
-            txinindex: Indexes24::new(client.clone(), &format!("{base_path}/txinindex")),
-            txoutindex: Indexes25::new(client.clone(), &format!("{base_path}/txoutindex")),
-            unknownoutputindex: MetricNode::new(client.clone(), format!("{base_path}/unknownoutputindex")),
-            weekindex: MetricNode::new(client.clone(), format!("{base_path}/weekindex")),
-            yearindex: MetricNode::new(client.clone(), format!("{base_path}/yearindex")),
-            yearindex_count: Indexes7::new(client.clone(), &format!("{base_path}/yearindex_count")),
+            date: Indexes13::new(client.clone(), &format!("{base_path}_date")),
+            date_fixed: Indexes2::new(client.clone(), &format!("{base_path}_date_fixed")),
+            dateindex: Indexes13::new(client.clone(), &format!("{base_path}_dateindex")),
+            dateindex_count: Indexes14::new(client.clone(), &format!("{base_path}_dateindex_count")),
+            decadeindex: MetricNode::new(client.clone(), format!("{base_path}_decadeindex")),
+            difficultyepoch: MetricNode::new(client.clone(), format!("{base_path}_difficultyepoch")),
+            emptyoutputindex: MetricNode::new(client.clone(), format!("{base_path}_emptyoutputindex")),
+            first_dateindex: Indexes14::new(client.clone(), &format!("{base_path}_first_dateindex")),
+            first_height: MetricNode::new(client.clone(), format!("{base_path}_first_height")),
+            first_monthindex: Indexes15::new(client.clone(), &format!("{base_path}_first_monthindex")),
+            first_yearindex: Indexes7::new(client.clone(), &format!("{base_path}_first_yearindex")),
+            halvingepoch: MetricNode::new(client.clone(), format!("{base_path}_halvingepoch")),
+            height: Indexes2::new(client.clone(), &format!("{base_path}_height")),
+            height_count: MetricNode::new(client.clone(), format!("{base_path}_height_count")),
+            input_count: Indexes6::new(client.clone(), &format!("{base_path}_input_count")),
+            monthindex: MetricNode::new(client.clone(), format!("{base_path}_monthindex")),
+            monthindex_count: Indexes15::new(client.clone(), &format!("{base_path}_monthindex_count")),
+            opreturnindex: MetricNode::new(client.clone(), format!("{base_path}_opreturnindex")),
+            output_count: Indexes6::new(client.clone(), &format!("{base_path}_output_count")),
+            p2aaddressindex: Indexes16::new(client.clone(), &format!("{base_path}_p2aaddressindex")),
+            p2msoutputindex: MetricNode::new(client.clone(), format!("{base_path}_p2msoutputindex")),
+            p2pk33addressindex: Indexes17::new(client.clone(), &format!("{base_path}_p2pk33addressindex")),
+            p2pk65addressindex: Indexes18::new(client.clone(), &format!("{base_path}_p2pk65addressindex")),
+            p2pkhaddressindex: Indexes19::new(client.clone(), &format!("{base_path}_p2pkhaddressindex")),
+            p2shaddressindex: Indexes20::new(client.clone(), &format!("{base_path}_p2shaddressindex")),
+            p2traddressindex: Indexes21::new(client.clone(), &format!("{base_path}_p2traddressindex")),
+            p2wpkhaddressindex: Indexes22::new(client.clone(), &format!("{base_path}_p2wpkhaddressindex")),
+            p2wshaddressindex: Indexes23::new(client.clone(), &format!("{base_path}_p2wshaddressindex")),
+            quarterindex: MetricNode::new(client.clone(), format!("{base_path}_quarterindex")),
+            semesterindex: MetricNode::new(client.clone(), format!("{base_path}_semesterindex")),
+            timestamp_fixed: Indexes2::new(client.clone(), &format!("{base_path}_timestamp_fixed")),
+            txindex: Indexes6::new(client.clone(), &format!("{base_path}_txindex")),
+            txindex_count: Indexes2::new(client.clone(), &format!("{base_path}_txindex_count")),
+            txinindex: Indexes24::new(client.clone(), &format!("{base_path}_txinindex")),
+            txoutindex: Indexes25::new(client.clone(), &format!("{base_path}_txoutindex")),
+            unknownoutputindex: MetricNode::new(client.clone(), format!("{base_path}_unknownoutputindex")),
+            weekindex: MetricNode::new(client.clone(), format!("{base_path}_weekindex")),
+            yearindex: MetricNode::new(client.clone(), format!("{base_path}_yearindex")),
+            yearindex_count: Indexes7::new(client.clone(), &format!("{base_path}_yearindex_count")),
         }
     }
 }
@@ -2341,164 +2341,164 @@ impl CatalogTree_Computed_Market {
             _1d_returns_1m_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1m_sd"),
             _1d_returns_1w_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1w_sd"),
             _1d_returns_1y_sd: _1dReturns1mSdPattern::new(client.clone(), "1d_returns_1y_sd"),
-            _10y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_10y_cagr")),
-            _10y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_10y_dca_avg_price")),
-            _10y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_10y_dca_cagr")),
-            _10y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_10y_dca_returns")),
-            _10y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_10y_dca_stack")),
-            _10y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_10y_price_returns")),
-            _1d_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_1d_price_returns")),
-            _1m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_1m_dca_avg_price")),
-            _1m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_1m_dca_returns")),
-            _1m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_1m_dca_stack")),
-            _1m_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_1m_price_returns")),
-            _1w_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_1w_dca_avg_price")),
-            _1w_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_1w_dca_returns")),
-            _1w_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_1w_dca_stack")),
-            _1w_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_1w_price_returns")),
-            _1y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_1y_dca_avg_price")),
-            _1y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_1y_dca_returns")),
-            _1y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_1y_dca_stack")),
-            _1y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_1y_price_returns")),
-            _2y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_2y_cagr")),
-            _2y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_2y_dca_avg_price")),
-            _2y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_2y_dca_cagr")),
-            _2y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_2y_dca_returns")),
-            _2y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_2y_dca_stack")),
-            _2y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_2y_price_returns")),
-            _3m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_3m_dca_avg_price")),
-            _3m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_3m_dca_returns")),
-            _3m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_3m_dca_stack")),
-            _3m_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_3m_price_returns")),
-            _3y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_3y_cagr")),
-            _3y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_3y_dca_avg_price")),
-            _3y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_3y_dca_cagr")),
-            _3y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_3y_dca_returns")),
-            _3y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_3y_dca_stack")),
-            _3y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_3y_price_returns")),
-            _4y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_4y_cagr")),
-            _4y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_4y_dca_avg_price")),
-            _4y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_4y_dca_cagr")),
-            _4y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_4y_dca_returns")),
-            _4y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_4y_dca_stack")),
-            _4y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_4y_price_returns")),
-            _5y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_5y_cagr")),
-            _5y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_5y_dca_avg_price")),
-            _5y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_5y_dca_cagr")),
-            _5y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_5y_dca_returns")),
-            _5y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_5y_dca_stack")),
-            _5y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_5y_price_returns")),
-            _6m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_6m_dca_avg_price")),
-            _6m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_6m_dca_returns")),
-            _6m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_6m_dca_stack")),
-            _6m_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_6m_price_returns")),
-            _6y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_6y_cagr")),
-            _6y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_6y_dca_avg_price")),
-            _6y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_6y_dca_cagr")),
-            _6y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_6y_dca_returns")),
-            _6y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_6y_dca_stack")),
-            _6y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_6y_price_returns")),
-            _8y_cagr: Indexes::new(client.clone(), &format!("{base_path}/_8y_cagr")),
-            _8y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}/_8y_dca_avg_price")),
-            _8y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}/_8y_dca_cagr")),
-            _8y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}/_8y_dca_returns")),
-            _8y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}/_8y_dca_stack")),
-            _8y_price_returns: Indexes::new(client.clone(), &format!("{base_path}/_8y_price_returns")),
-            days_since_price_ath: Indexes::new(client.clone(), &format!("{base_path}/days_since_price_ath")),
-            dca_class_2015_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2015_avg_price")),
-            dca_class_2015_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2015_returns")),
-            dca_class_2015_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2015_stack")),
-            dca_class_2016_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2016_avg_price")),
-            dca_class_2016_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2016_returns")),
-            dca_class_2016_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2016_stack")),
-            dca_class_2017_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2017_avg_price")),
-            dca_class_2017_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2017_returns")),
-            dca_class_2017_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2017_stack")),
-            dca_class_2018_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2018_avg_price")),
-            dca_class_2018_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2018_returns")),
-            dca_class_2018_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2018_stack")),
-            dca_class_2019_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2019_avg_price")),
-            dca_class_2019_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2019_returns")),
-            dca_class_2019_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2019_stack")),
-            dca_class_2020_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2020_avg_price")),
-            dca_class_2020_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2020_returns")),
-            dca_class_2020_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2020_stack")),
-            dca_class_2021_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2021_avg_price")),
-            dca_class_2021_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2021_returns")),
-            dca_class_2021_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2021_stack")),
-            dca_class_2022_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2022_avg_price")),
-            dca_class_2022_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2022_returns")),
-            dca_class_2022_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2022_stack")),
-            dca_class_2023_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2023_avg_price")),
-            dca_class_2023_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2023_returns")),
-            dca_class_2023_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2023_stack")),
-            dca_class_2024_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2024_avg_price")),
-            dca_class_2024_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2024_returns")),
-            dca_class_2024_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2024_stack")),
-            dca_class_2025_avg_price: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2025_avg_price")),
-            dca_class_2025_returns: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2025_returns")),
-            dca_class_2025_stack: Indexes::new(client.clone(), &format!("{base_path}/dca_class_2025_stack")),
-            max_days_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}/max_days_between_price_aths")),
-            max_years_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}/max_years_between_price_aths")),
-            price_10y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_10y_ago")),
+            _10y_cagr: Indexes::new(client.clone(), &format!("{base_path}__10y_cagr")),
+            _10y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_avg_price")),
+            _10y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_cagr")),
+            _10y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_returns")),
+            _10y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__10y_dca_stack")),
+            _10y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__10y_price_returns")),
+            _1d_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1d_price_returns")),
+            _1m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_avg_price")),
+            _1m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_returns")),
+            _1m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1m_dca_stack")),
+            _1m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1m_price_returns")),
+            _1w_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_avg_price")),
+            _1w_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_returns")),
+            _1w_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1w_dca_stack")),
+            _1w_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1w_price_returns")),
+            _1y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_avg_price")),
+            _1y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_returns")),
+            _1y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__1y_dca_stack")),
+            _1y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__1y_price_returns")),
+            _2y_cagr: Indexes::new(client.clone(), &format!("{base_path}__2y_cagr")),
+            _2y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_avg_price")),
+            _2y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_cagr")),
+            _2y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_returns")),
+            _2y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__2y_dca_stack")),
+            _2y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__2y_price_returns")),
+            _3m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_avg_price")),
+            _3m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_returns")),
+            _3m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__3m_dca_stack")),
+            _3m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3m_price_returns")),
+            _3y_cagr: Indexes::new(client.clone(), &format!("{base_path}__3y_cagr")),
+            _3y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_avg_price")),
+            _3y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_cagr")),
+            _3y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_returns")),
+            _3y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__3y_dca_stack")),
+            _3y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__3y_price_returns")),
+            _4y_cagr: Indexes::new(client.clone(), &format!("{base_path}__4y_cagr")),
+            _4y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_avg_price")),
+            _4y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_cagr")),
+            _4y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_returns")),
+            _4y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__4y_dca_stack")),
+            _4y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__4y_price_returns")),
+            _5y_cagr: Indexes::new(client.clone(), &format!("{base_path}__5y_cagr")),
+            _5y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_avg_price")),
+            _5y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_cagr")),
+            _5y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_returns")),
+            _5y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__5y_dca_stack")),
+            _5y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__5y_price_returns")),
+            _6m_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_avg_price")),
+            _6m_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_returns")),
+            _6m_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__6m_dca_stack")),
+            _6m_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6m_price_returns")),
+            _6y_cagr: Indexes::new(client.clone(), &format!("{base_path}__6y_cagr")),
+            _6y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_avg_price")),
+            _6y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_cagr")),
+            _6y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_returns")),
+            _6y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__6y_dca_stack")),
+            _6y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__6y_price_returns")),
+            _8y_cagr: Indexes::new(client.clone(), &format!("{base_path}__8y_cagr")),
+            _8y_dca_avg_price: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_avg_price")),
+            _8y_dca_cagr: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_cagr")),
+            _8y_dca_returns: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_returns")),
+            _8y_dca_stack: Indexes::new(client.clone(), &format!("{base_path}__8y_dca_stack")),
+            _8y_price_returns: Indexes::new(client.clone(), &format!("{base_path}__8y_price_returns")),
+            days_since_price_ath: Indexes::new(client.clone(), &format!("{base_path}_days_since_price_ath")),
+            dca_class_2015_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_avg_price")),
+            dca_class_2015_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_returns")),
+            dca_class_2015_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2015_stack")),
+            dca_class_2016_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2016_avg_price")),
+            dca_class_2016_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2016_returns")),
+            dca_class_2016_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2016_stack")),
+            dca_class_2017_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2017_avg_price")),
+            dca_class_2017_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2017_returns")),
+            dca_class_2017_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2017_stack")),
+            dca_class_2018_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2018_avg_price")),
+            dca_class_2018_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2018_returns")),
+            dca_class_2018_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2018_stack")),
+            dca_class_2019_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2019_avg_price")),
+            dca_class_2019_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2019_returns")),
+            dca_class_2019_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2019_stack")),
+            dca_class_2020_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2020_avg_price")),
+            dca_class_2020_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2020_returns")),
+            dca_class_2020_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2020_stack")),
+            dca_class_2021_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2021_avg_price")),
+            dca_class_2021_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2021_returns")),
+            dca_class_2021_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2021_stack")),
+            dca_class_2022_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2022_avg_price")),
+            dca_class_2022_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2022_returns")),
+            dca_class_2022_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2022_stack")),
+            dca_class_2023_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2023_avg_price")),
+            dca_class_2023_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2023_returns")),
+            dca_class_2023_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2023_stack")),
+            dca_class_2024_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2024_avg_price")),
+            dca_class_2024_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2024_returns")),
+            dca_class_2024_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2024_stack")),
+            dca_class_2025_avg_price: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_avg_price")),
+            dca_class_2025_returns: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_returns")),
+            dca_class_2025_stack: Indexes::new(client.clone(), &format!("{base_path}_dca_class_2025_stack")),
+            max_days_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_days_between_price_aths")),
+            max_years_between_price_aths: Indexes::new(client.clone(), &format!("{base_path}_max_years_between_price_aths")),
+            price_10y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_10y_ago")),
             price_13d_ema: Price13dEmaPattern::new(client.clone(), "price_13d_ema"),
             price_13d_sma: Price13dEmaPattern::new(client.clone(), "price_13d_sma"),
             price_144d_ema: Price13dEmaPattern::new(client.clone(), "price_144d_ema"),
             price_144d_sma: Price13dEmaPattern::new(client.clone(), "price_144d_sma"),
-            price_1d_ago: Indexes::new(client.clone(), &format!("{base_path}/price_1d_ago")),
-            price_1m_ago: Indexes::new(client.clone(), &format!("{base_path}/price_1m_ago")),
+            price_1d_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1d_ago")),
+            price_1m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1m_ago")),
             price_1m_ema: Price13dEmaPattern::new(client.clone(), "price_1m_ema"),
-            price_1m_max: Indexes::new(client.clone(), &format!("{base_path}/price_1m_max")),
-            price_1m_min: Indexes::new(client.clone(), &format!("{base_path}/price_1m_min")),
+            price_1m_max: Indexes::new(client.clone(), &format!("{base_path}_price_1m_max")),
+            price_1m_min: Indexes::new(client.clone(), &format!("{base_path}_price_1m_min")),
             price_1m_sma: Price13dEmaPattern::new(client.clone(), "price_1m_sma"),
-            price_1m_volatility: Indexes::new(client.clone(), &format!("{base_path}/price_1m_volatility")),
-            price_1w_ago: Indexes::new(client.clone(), &format!("{base_path}/price_1w_ago")),
+            price_1m_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1m_volatility")),
+            price_1w_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1w_ago")),
             price_1w_ema: Price13dEmaPattern::new(client.clone(), "price_1w_ema"),
-            price_1w_max: Indexes::new(client.clone(), &format!("{base_path}/price_1w_max")),
-            price_1w_min: Indexes::new(client.clone(), &format!("{base_path}/price_1w_min")),
+            price_1w_max: Indexes::new(client.clone(), &format!("{base_path}_price_1w_max")),
+            price_1w_min: Indexes::new(client.clone(), &format!("{base_path}_price_1w_min")),
             price_1w_sma: Price13dEmaPattern::new(client.clone(), "price_1w_sma"),
-            price_1w_volatility: Indexes::new(client.clone(), &format!("{base_path}/price_1w_volatility")),
-            price_1y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_1y_ago")),
+            price_1w_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1w_volatility")),
+            price_1y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_1y_ago")),
             price_1y_ema: Price13dEmaPattern::new(client.clone(), "price_1y_ema"),
-            price_1y_max: Indexes::new(client.clone(), &format!("{base_path}/price_1y_max")),
-            price_1y_min: Indexes::new(client.clone(), &format!("{base_path}/price_1y_min")),
+            price_1y_max: Indexes::new(client.clone(), &format!("{base_path}_price_1y_max")),
+            price_1y_min: Indexes::new(client.clone(), &format!("{base_path}_price_1y_min")),
             price_1y_sma: Price13dEmaPattern::new(client.clone(), "price_1y_sma"),
-            price_1y_volatility: Indexes::new(client.clone(), &format!("{base_path}/price_1y_volatility")),
+            price_1y_volatility: Indexes::new(client.clone(), &format!("{base_path}_price_1y_volatility")),
             price_200d_ema: Price13dEmaPattern::new(client.clone(), "price_200d_ema"),
             price_200d_sma: Price13dEmaPattern::new(client.clone(), "price_200d_sma"),
-            price_200d_sma_x0_8: Indexes::new(client.clone(), &format!("{base_path}/price_200d_sma_x0_8")),
-            price_200d_sma_x2_4: Indexes::new(client.clone(), &format!("{base_path}/price_200d_sma_x2_4")),
+            price_200d_sma_x0_8: Indexes::new(client.clone(), &format!("{base_path}_price_200d_sma_x0_8")),
+            price_200d_sma_x2_4: Indexes::new(client.clone(), &format!("{base_path}_price_200d_sma_x2_4")),
             price_200w_ema: Price13dEmaPattern::new(client.clone(), "price_200w_ema"),
             price_200w_sma: Price13dEmaPattern::new(client.clone(), "price_200w_sma"),
             price_21d_ema: Price13dEmaPattern::new(client.clone(), "price_21d_ema"),
             price_21d_sma: Price13dEmaPattern::new(client.clone(), "price_21d_sma"),
-            price_2w_choppiness_index: Indexes::new(client.clone(), &format!("{base_path}/price_2w_choppiness_index")),
-            price_2w_max: Indexes::new(client.clone(), &format!("{base_path}/price_2w_max")),
-            price_2w_min: Indexes::new(client.clone(), &format!("{base_path}/price_2w_min")),
-            price_2y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_2y_ago")),
+            price_2w_choppiness_index: Indexes::new(client.clone(), &format!("{base_path}_price_2w_choppiness_index")),
+            price_2w_max: Indexes::new(client.clone(), &format!("{base_path}_price_2w_max")),
+            price_2w_min: Indexes::new(client.clone(), &format!("{base_path}_price_2w_min")),
+            price_2y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_2y_ago")),
             price_2y_ema: Price13dEmaPattern::new(client.clone(), "price_2y_ema"),
             price_2y_sma: Price13dEmaPattern::new(client.clone(), "price_2y_sma"),
             price_34d_ema: Price13dEmaPattern::new(client.clone(), "price_34d_ema"),
             price_34d_sma: Price13dEmaPattern::new(client.clone(), "price_34d_sma"),
-            price_3m_ago: Indexes::new(client.clone(), &format!("{base_path}/price_3m_ago")),
-            price_3y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_3y_ago")),
-            price_4y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_4y_ago")),
+            price_3m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3m_ago")),
+            price_3y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_3y_ago")),
+            price_4y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_4y_ago")),
             price_4y_ema: Price13dEmaPattern::new(client.clone(), "price_4y_ema"),
             price_4y_sma: Price13dEmaPattern::new(client.clone(), "price_4y_sma"),
             price_55d_ema: Price13dEmaPattern::new(client.clone(), "price_55d_ema"),
             price_55d_sma: Price13dEmaPattern::new(client.clone(), "price_55d_sma"),
-            price_5y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_5y_ago")),
-            price_6m_ago: Indexes::new(client.clone(), &format!("{base_path}/price_6m_ago")),
-            price_6y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_6y_ago")),
+            price_5y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_5y_ago")),
+            price_6m_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6m_ago")),
+            price_6y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_6y_ago")),
             price_89d_ema: Price13dEmaPattern::new(client.clone(), "price_89d_ema"),
             price_89d_sma: Price13dEmaPattern::new(client.clone(), "price_89d_sma"),
             price_8d_ema: Price13dEmaPattern::new(client.clone(), "price_8d_ema"),
             price_8d_sma: Price13dEmaPattern::new(client.clone(), "price_8d_sma"),
-            price_8y_ago: Indexes::new(client.clone(), &format!("{base_path}/price_8y_ago")),
-            price_ath: Indexes26::new(client.clone(), &format!("{base_path}/price_ath")),
-            price_drawdown: Indexes26::new(client.clone(), &format!("{base_path}/price_drawdown")),
-            price_true_range: Indexes5::new(client.clone(), &format!("{base_path}/price_true_range")),
-            price_true_range_2w_sum: Indexes5::new(client.clone(), &format!("{base_path}/price_true_range_2w_sum")),
+            price_8y_ago: Indexes::new(client.clone(), &format!("{base_path}_price_8y_ago")),
+            price_ath: Indexes26::new(client.clone(), &format!("{base_path}_price_ath")),
+            price_drawdown: Indexes26::new(client.clone(), &format!("{base_path}_price_drawdown")),
+            price_true_range: Indexes5::new(client.clone(), &format!("{base_path}_price_true_range")),
+            price_true_range_2w_sum: Indexes5::new(client.clone(), &format!("{base_path}_price_true_range_2w_sum")),
         }
     }
 }
@@ -2512,8 +2512,8 @@ pub struct CatalogTree_Computed_Pools {
 impl CatalogTree_Computed_Pools {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            pool: Indexes2::new(client.clone(), &format!("{base_path}/pool")),
-            vecs: CatalogTree_Computed_Pools_Vecs::new(client.clone(), &format!("{base_path}/vecs")),
+            pool: Indexes2::new(client.clone(), &format!("{base_path}_pool")),
+            vecs: CatalogTree_Computed_Pools_Vecs::new(client.clone(), &format!("{base_path}_vecs")),
         }
     }
 }
@@ -2683,164 +2683,164 @@ pub struct CatalogTree_Computed_Pools_Vecs {
 impl CatalogTree_Computed_Pools_Vecs {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            axbt: AXbtPattern::new(client.clone(), &format!("{base_path}/AXbt")),
-            aaopool: AXbtPattern::new(client.clone(), &format!("{base_path}/AaoPool")),
-            antpool: AXbtPattern::new(client.clone(), &format!("{base_path}/AntPool")),
-            arkpool: AXbtPattern::new(client.clone(), &format!("{base_path}/ArkPool")),
-            asicminer: AXbtPattern::new(client.clone(), &format!("{base_path}/AsicMiner")),
-            batpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BatPool")),
-            bcmonster: AXbtPattern::new(client.clone(), &format!("{base_path}/BcMonster")),
-            bcpoolio: AXbtPattern::new(client.clone(), &format!("{base_path}/BcpoolIo")),
-            binancepool: AXbtPattern::new(client.clone(), &format!("{base_path}/BinancePool")),
-            bitclub: AXbtPattern::new(client.clone(), &format!("{base_path}/BitClub")),
-            bitfufupool: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFuFuPool")),
-            bitfury: AXbtPattern::new(client.clone(), &format!("{base_path}/BitFury")),
-            bitminter: AXbtPattern::new(client.clone(), &format!("{base_path}/BitMinter")),
-            bitalo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitalo")),
-            bitcoinaffiliatenetwork: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinAffiliateNetwork")),
-            bitcoincom: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinCom")),
-            bitcoinindia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinIndia")),
-            bitcoinrussia: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinRussia")),
-            bitcoinukraine: AXbtPattern::new(client.clone(), &format!("{base_path}/BitcoinUkraine")),
-            bitfarms: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitfarms")),
-            bitparking: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitparking")),
-            bitsolo: AXbtPattern::new(client.clone(), &format!("{base_path}/Bitsolo")),
-            bixin: AXbtPattern::new(client.clone(), &format!("{base_path}/Bixin")),
-            blockfills: AXbtPattern::new(client.clone(), &format!("{base_path}/BlockFills")),
-            braiinspool: AXbtPattern::new(client.clone(), &format!("{base_path}/BraiinsPool")),
-            bravomining: AXbtPattern::new(client.clone(), &format!("{base_path}/BravoMining")),
-            btpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BtPool")),
-            btccom: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcCom")),
-            btcdig: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcDig")),
-            btcguild: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcGuild")),
-            btclab: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcLab")),
-            btcmp: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcMp")),
-            btcnuggets: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcNuggets")),
-            btcpoolparty: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcPoolParty")),
-            btcserv: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcServ")),
-            btctop: AXbtPattern::new(client.clone(), &format!("{base_path}/BtcTop")),
-            btcc: AXbtPattern::new(client.clone(), &format!("{base_path}/Btcc")),
-            bwpool: AXbtPattern::new(client.clone(), &format!("{base_path}/BwPool")),
-            bytepool: AXbtPattern::new(client.clone(), &format!("{base_path}/BytePool")),
-            canoe: AXbtPattern::new(client.clone(), &format!("{base_path}/Canoe")),
-            canoepool: AXbtPattern::new(client.clone(), &format!("{base_path}/CanoePool")),
-            carbonnegative: AXbtPattern::new(client.clone(), &format!("{base_path}/CarbonNegative")),
-            ckpool: AXbtPattern::new(client.clone(), &format!("{base_path}/CkPool")),
-            cloudhashing: AXbtPattern::new(client.clone(), &format!("{base_path}/CloudHashing")),
-            coinlab: AXbtPattern::new(client.clone(), &format!("{base_path}/CoinLab")),
-            cointerra: AXbtPattern::new(client.clone(), &format!("{base_path}/Cointerra")),
-            connectbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ConnectBtc")),
-            dpool: AXbtPattern::new(client.clone(), &format!("{base_path}/DPool")),
-            dcexploration: AXbtPattern::new(client.clone(), &format!("{base_path}/DcExploration")),
-            dcex: AXbtPattern::new(client.clone(), &format!("{base_path}/Dcex")),
-            digitalbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalBtc")),
-            digitalxmintsy: AXbtPattern::new(client.clone(), &format!("{base_path}/DigitalXMintsy")),
-            eclipsemc: AXbtPattern::new(client.clone(), &format!("{base_path}/EclipseMc")),
-            eightbaochi: AXbtPattern::new(client.clone(), &format!("{base_path}/EightBaochi")),
-            ekanembtc: AXbtPattern::new(client.clone(), &format!("{base_path}/EkanemBtc")),
-            eligius: AXbtPattern::new(client.clone(), &format!("{base_path}/Eligius")),
-            emcdpool: AXbtPattern::new(client.clone(), &format!("{base_path}/EmcdPool")),
-            entrustcharitypool: AXbtPattern::new(client.clone(), &format!("{base_path}/EntrustCharityPool")),
-            eobot: AXbtPattern::new(client.clone(), &format!("{base_path}/Eobot")),
-            exxbw: AXbtPattern::new(client.clone(), &format!("{base_path}/ExxBw")),
-            f2pool: AXbtPattern::new(client.clone(), &format!("{base_path}/F2Pool")),
-            fiftyeightcoin: AXbtPattern::new(client.clone(), &format!("{base_path}/FiftyEightCoin")),
-            foundryusa: AXbtPattern::new(client.clone(), &format!("{base_path}/FoundryUsa")),
-            futurebitapollosolo: AXbtPattern::new(client.clone(), &format!("{base_path}/FutureBitApolloSolo")),
-            gbminers: AXbtPattern::new(client.clone(), &format!("{base_path}/GbMiners")),
-            ghashio: AXbtPattern::new(client.clone(), &format!("{base_path}/GhashIo")),
-            givemecoins: AXbtPattern::new(client.clone(), &format!("{base_path}/GiveMeCoins")),
-            gogreenlight: AXbtPattern::new(client.clone(), &format!("{base_path}/GoGreenLight")),
-            haozhuzhu: AXbtPattern::new(client.clone(), &format!("{base_path}/HaoZhuZhu")),
-            haominer: AXbtPattern::new(client.clone(), &format!("{base_path}/Haominer")),
-            hashbx: AXbtPattern::new(client.clone(), &format!("{base_path}/HashBx")),
-            hashpool: AXbtPattern::new(client.clone(), &format!("{base_path}/HashPool")),
-            helix: AXbtPattern::new(client.clone(), &format!("{base_path}/Helix")),
-            hhtt: AXbtPattern::new(client.clone(), &format!("{base_path}/Hhtt")),
-            hotpool: AXbtPattern::new(client.clone(), &format!("{base_path}/HotPool")),
-            hummerpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Hummerpool")),
-            huobipool: AXbtPattern::new(client.clone(), &format!("{base_path}/HuobiPool")),
-            innopolistech: AXbtPattern::new(client.clone(), &format!("{base_path}/InnopolisTech")),
-            kanopool: AXbtPattern::new(client.clone(), &format!("{base_path}/KanoPool")),
-            kncminer: AXbtPattern::new(client.clone(), &format!("{base_path}/KncMiner")),
-            kucoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}/KuCoinPool")),
-            lubiancom: AXbtPattern::new(client.clone(), &format!("{base_path}/LubianCom")),
-            luckypool: AXbtPattern::new(client.clone(), &format!("{base_path}/LuckyPool")),
-            luxor: AXbtPattern::new(client.clone(), &format!("{base_path}/Luxor")),
-            marapool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaraPool")),
-            maxbtc: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxBtc")),
-            maxipool: AXbtPattern::new(client.clone(), &format!("{base_path}/MaxiPool")),
-            megabigpower: AXbtPattern::new(client.clone(), &format!("{base_path}/MegaBigPower")),
-            minerium: AXbtPattern::new(client.clone(), &format!("{base_path}/Minerium")),
-            miningcity: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningCity")),
-            miningdutch: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningDutch")),
-            miningkings: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningKings")),
-            miningsquared: AXbtPattern::new(client.clone(), &format!("{base_path}/MiningSquared")),
-            mmpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Mmpool")),
-            mtred: AXbtPattern::new(client.clone(), &format!("{base_path}/MtRed")),
-            multicoinco: AXbtPattern::new(client.clone(), &format!("{base_path}/MultiCoinCo")),
-            multipool: AXbtPattern::new(client.clone(), &format!("{base_path}/Multipool")),
-            mybtccoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}/MyBtcCoinPool")),
-            neopool: AXbtPattern::new(client.clone(), &format!("{base_path}/Neopool")),
-            nexious: AXbtPattern::new(client.clone(), &format!("{base_path}/Nexious")),
-            nicehash: AXbtPattern::new(client.clone(), &format!("{base_path}/NiceHash")),
-            nmcbit: AXbtPattern::new(client.clone(), &format!("{base_path}/NmcBit")),
-            novablock: AXbtPattern::new(client.clone(), &format!("{base_path}/NovaBlock")),
-            ocean: AXbtPattern::new(client.clone(), &format!("{base_path}/Ocean")),
-            okexpool: AXbtPattern::new(client.clone(), &format!("{base_path}/OkExPool")),
-            okminer: AXbtPattern::new(client.clone(), &format!("{base_path}/OkMiner")),
-            okkong: AXbtPattern::new(client.clone(), &format!("{base_path}/Okkong")),
-            okpooltop: AXbtPattern::new(client.clone(), &format!("{base_path}/OkpoolTop")),
-            onehash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneHash")),
-            onem1x: AXbtPattern::new(client.clone(), &format!("{base_path}/OneM1x")),
-            onethash: AXbtPattern::new(client.clone(), &format!("{base_path}/OneThash")),
-            ozcoin: AXbtPattern::new(client.clone(), &format!("{base_path}/OzCoin")),
-            phashio: AXbtPattern::new(client.clone(), &format!("{base_path}/PHashIo")),
-            parasite: AXbtPattern::new(client.clone(), &format!("{base_path}/Parasite")),
-            patels: AXbtPattern::new(client.clone(), &format!("{base_path}/Patels")),
-            pegapool: AXbtPattern::new(client.clone(), &format!("{base_path}/PegaPool")),
-            phoenix: AXbtPattern::new(client.clone(), &format!("{base_path}/Phoenix")),
-            polmine: AXbtPattern::new(client.clone(), &format!("{base_path}/Polmine")),
-            pool175btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool175btc")),
-            pool50btc: AXbtPattern::new(client.clone(), &format!("{base_path}/Pool50btc")),
-            poolin: AXbtPattern::new(client.clone(), &format!("{base_path}/Poolin")),
-            portlandhodl: AXbtPattern::new(client.clone(), &format!("{base_path}/PortlandHodl")),
-            publicpool: AXbtPattern::new(client.clone(), &format!("{base_path}/PublicPool")),
-            purebtccom: AXbtPattern::new(client.clone(), &format!("{base_path}/PureBtcCom")),
-            rawpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Rawpool")),
-            rigpool: AXbtPattern::new(client.clone(), &format!("{base_path}/RigPool")),
-            sbicrypto: AXbtPattern::new(client.clone(), &format!("{base_path}/SbiCrypto")),
-            secpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SecPool")),
-            secretsuperstar: AXbtPattern::new(client.clone(), &format!("{base_path}/SecretSuperstar")),
-            sevenpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SevenPool")),
-            shawnp0wers: AXbtPattern::new(client.clone(), &format!("{base_path}/ShawnP0wers")),
-            sigmapoolcom: AXbtPattern::new(client.clone(), &format!("{base_path}/SigmapoolCom")),
-            simplecoinus: AXbtPattern::new(client.clone(), &format!("{base_path}/SimplecoinUs")),
-            solock: AXbtPattern::new(client.clone(), &format!("{base_path}/SoloCk")),
-            spiderpool: AXbtPattern::new(client.clone(), &format!("{base_path}/SpiderPool")),
-            stminingcorp: AXbtPattern::new(client.clone(), &format!("{base_path}/StMiningCorp")),
-            tangpool: AXbtPattern::new(client.clone(), &format!("{base_path}/Tangpool")),
-            tatmaspool: AXbtPattern::new(client.clone(), &format!("{base_path}/TatmasPool")),
-            tbdice: AXbtPattern::new(client.clone(), &format!("{base_path}/TbDice")),
-            telco214: AXbtPattern::new(client.clone(), &format!("{base_path}/Telco214")),
-            terrapool: AXbtPattern::new(client.clone(), &format!("{base_path}/TerraPool")),
-            tiger: AXbtPattern::new(client.clone(), &format!("{base_path}/Tiger")),
-            tigerpoolnet: AXbtPattern::new(client.clone(), &format!("{base_path}/TigerpoolNet")),
-            titan: AXbtPattern::new(client.clone(), &format!("{base_path}/Titan")),
-            transactioncoinmining: AXbtPattern::new(client.clone(), &format!("{base_path}/TransactionCoinMining")),
-            trickysbtcpool: AXbtPattern::new(client.clone(), &format!("{base_path}/TrickysBtcPool")),
-            triplemining: AXbtPattern::new(client.clone(), &format!("{base_path}/TripleMining")),
-            twentyoneinc: AXbtPattern::new(client.clone(), &format!("{base_path}/TwentyOneInc")),
-            ultimuspool: AXbtPattern::new(client.clone(), &format!("{base_path}/UltimusPool")),
-            unknown: AXbtPattern::new(client.clone(), &format!("{base_path}/Unknown")),
-            unomp: AXbtPattern::new(client.clone(), &format!("{base_path}/Unomp")),
-            viabtc: AXbtPattern::new(client.clone(), &format!("{base_path}/ViaBtc")),
-            waterhole: AXbtPattern::new(client.clone(), &format!("{base_path}/Waterhole")),
-            wayicn: AXbtPattern::new(client.clone(), &format!("{base_path}/WayiCn")),
-            whitepool: AXbtPattern::new(client.clone(), &format!("{base_path}/WhitePool")),
-            wk057: AXbtPattern::new(client.clone(), &format!("{base_path}/Wk057")),
-            yourbtcnet: AXbtPattern::new(client.clone(), &format!("{base_path}/YourbtcNet")),
-            zulupool: AXbtPattern::new(client.clone(), &format!("{base_path}/Zulupool")),
+            axbt: AXbtPattern::new(client.clone(), &format!("{base_path}_AXbt")),
+            aaopool: AXbtPattern::new(client.clone(), &format!("{base_path}_AaoPool")),
+            antpool: AXbtPattern::new(client.clone(), &format!("{base_path}_AntPool")),
+            arkpool: AXbtPattern::new(client.clone(), &format!("{base_path}_ArkPool")),
+            asicminer: AXbtPattern::new(client.clone(), &format!("{base_path}_AsicMiner")),
+            batpool: AXbtPattern::new(client.clone(), &format!("{base_path}_BatPool")),
+            bcmonster: AXbtPattern::new(client.clone(), &format!("{base_path}_BcMonster")),
+            bcpoolio: AXbtPattern::new(client.clone(), &format!("{base_path}_BcpoolIo")),
+            binancepool: AXbtPattern::new(client.clone(), &format!("{base_path}_BinancePool")),
+            bitclub: AXbtPattern::new(client.clone(), &format!("{base_path}_BitClub")),
+            bitfufupool: AXbtPattern::new(client.clone(), &format!("{base_path}_BitFuFuPool")),
+            bitfury: AXbtPattern::new(client.clone(), &format!("{base_path}_BitFury")),
+            bitminter: AXbtPattern::new(client.clone(), &format!("{base_path}_BitMinter")),
+            bitalo: AXbtPattern::new(client.clone(), &format!("{base_path}_Bitalo")),
+            bitcoinaffiliatenetwork: AXbtPattern::new(client.clone(), &format!("{base_path}_BitcoinAffiliateNetwork")),
+            bitcoincom: AXbtPattern::new(client.clone(), &format!("{base_path}_BitcoinCom")),
+            bitcoinindia: AXbtPattern::new(client.clone(), &format!("{base_path}_BitcoinIndia")),
+            bitcoinrussia: AXbtPattern::new(client.clone(), &format!("{base_path}_BitcoinRussia")),
+            bitcoinukraine: AXbtPattern::new(client.clone(), &format!("{base_path}_BitcoinUkraine")),
+            bitfarms: AXbtPattern::new(client.clone(), &format!("{base_path}_Bitfarms")),
+            bitparking: AXbtPattern::new(client.clone(), &format!("{base_path}_Bitparking")),
+            bitsolo: AXbtPattern::new(client.clone(), &format!("{base_path}_Bitsolo")),
+            bixin: AXbtPattern::new(client.clone(), &format!("{base_path}_Bixin")),
+            blockfills: AXbtPattern::new(client.clone(), &format!("{base_path}_BlockFills")),
+            braiinspool: AXbtPattern::new(client.clone(), &format!("{base_path}_BraiinsPool")),
+            bravomining: AXbtPattern::new(client.clone(), &format!("{base_path}_BravoMining")),
+            btpool: AXbtPattern::new(client.clone(), &format!("{base_path}_BtPool")),
+            btccom: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcCom")),
+            btcdig: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcDig")),
+            btcguild: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcGuild")),
+            btclab: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcLab")),
+            btcmp: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcMp")),
+            btcnuggets: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcNuggets")),
+            btcpoolparty: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcPoolParty")),
+            btcserv: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcServ")),
+            btctop: AXbtPattern::new(client.clone(), &format!("{base_path}_BtcTop")),
+            btcc: AXbtPattern::new(client.clone(), &format!("{base_path}_Btcc")),
+            bwpool: AXbtPattern::new(client.clone(), &format!("{base_path}_BwPool")),
+            bytepool: AXbtPattern::new(client.clone(), &format!("{base_path}_BytePool")),
+            canoe: AXbtPattern::new(client.clone(), &format!("{base_path}_Canoe")),
+            canoepool: AXbtPattern::new(client.clone(), &format!("{base_path}_CanoePool")),
+            carbonnegative: AXbtPattern::new(client.clone(), &format!("{base_path}_CarbonNegative")),
+            ckpool: AXbtPattern::new(client.clone(), &format!("{base_path}_CkPool")),
+            cloudhashing: AXbtPattern::new(client.clone(), &format!("{base_path}_CloudHashing")),
+            coinlab: AXbtPattern::new(client.clone(), &format!("{base_path}_CoinLab")),
+            cointerra: AXbtPattern::new(client.clone(), &format!("{base_path}_Cointerra")),
+            connectbtc: AXbtPattern::new(client.clone(), &format!("{base_path}_ConnectBtc")),
+            dpool: AXbtPattern::new(client.clone(), &format!("{base_path}_DPool")),
+            dcexploration: AXbtPattern::new(client.clone(), &format!("{base_path}_DcExploration")),
+            dcex: AXbtPattern::new(client.clone(), &format!("{base_path}_Dcex")),
+            digitalbtc: AXbtPattern::new(client.clone(), &format!("{base_path}_DigitalBtc")),
+            digitalxmintsy: AXbtPattern::new(client.clone(), &format!("{base_path}_DigitalXMintsy")),
+            eclipsemc: AXbtPattern::new(client.clone(), &format!("{base_path}_EclipseMc")),
+            eightbaochi: AXbtPattern::new(client.clone(), &format!("{base_path}_EightBaochi")),
+            ekanembtc: AXbtPattern::new(client.clone(), &format!("{base_path}_EkanemBtc")),
+            eligius: AXbtPattern::new(client.clone(), &format!("{base_path}_Eligius")),
+            emcdpool: AXbtPattern::new(client.clone(), &format!("{base_path}_EmcdPool")),
+            entrustcharitypool: AXbtPattern::new(client.clone(), &format!("{base_path}_EntrustCharityPool")),
+            eobot: AXbtPattern::new(client.clone(), &format!("{base_path}_Eobot")),
+            exxbw: AXbtPattern::new(client.clone(), &format!("{base_path}_ExxBw")),
+            f2pool: AXbtPattern::new(client.clone(), &format!("{base_path}_F2Pool")),
+            fiftyeightcoin: AXbtPattern::new(client.clone(), &format!("{base_path}_FiftyEightCoin")),
+            foundryusa: AXbtPattern::new(client.clone(), &format!("{base_path}_FoundryUsa")),
+            futurebitapollosolo: AXbtPattern::new(client.clone(), &format!("{base_path}_FutureBitApolloSolo")),
+            gbminers: AXbtPattern::new(client.clone(), &format!("{base_path}_GbMiners")),
+            ghashio: AXbtPattern::new(client.clone(), &format!("{base_path}_GhashIo")),
+            givemecoins: AXbtPattern::new(client.clone(), &format!("{base_path}_GiveMeCoins")),
+            gogreenlight: AXbtPattern::new(client.clone(), &format!("{base_path}_GoGreenLight")),
+            haozhuzhu: AXbtPattern::new(client.clone(), &format!("{base_path}_HaoZhuZhu")),
+            haominer: AXbtPattern::new(client.clone(), &format!("{base_path}_Haominer")),
+            hashbx: AXbtPattern::new(client.clone(), &format!("{base_path}_HashBx")),
+            hashpool: AXbtPattern::new(client.clone(), &format!("{base_path}_HashPool")),
+            helix: AXbtPattern::new(client.clone(), &format!("{base_path}_Helix")),
+            hhtt: AXbtPattern::new(client.clone(), &format!("{base_path}_Hhtt")),
+            hotpool: AXbtPattern::new(client.clone(), &format!("{base_path}_HotPool")),
+            hummerpool: AXbtPattern::new(client.clone(), &format!("{base_path}_Hummerpool")),
+            huobipool: AXbtPattern::new(client.clone(), &format!("{base_path}_HuobiPool")),
+            innopolistech: AXbtPattern::new(client.clone(), &format!("{base_path}_InnopolisTech")),
+            kanopool: AXbtPattern::new(client.clone(), &format!("{base_path}_KanoPool")),
+            kncminer: AXbtPattern::new(client.clone(), &format!("{base_path}_KncMiner")),
+            kucoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}_KuCoinPool")),
+            lubiancom: AXbtPattern::new(client.clone(), &format!("{base_path}_LubianCom")),
+            luckypool: AXbtPattern::new(client.clone(), &format!("{base_path}_LuckyPool")),
+            luxor: AXbtPattern::new(client.clone(), &format!("{base_path}_Luxor")),
+            marapool: AXbtPattern::new(client.clone(), &format!("{base_path}_MaraPool")),
+            maxbtc: AXbtPattern::new(client.clone(), &format!("{base_path}_MaxBtc")),
+            maxipool: AXbtPattern::new(client.clone(), &format!("{base_path}_MaxiPool")),
+            megabigpower: AXbtPattern::new(client.clone(), &format!("{base_path}_MegaBigPower")),
+            minerium: AXbtPattern::new(client.clone(), &format!("{base_path}_Minerium")),
+            miningcity: AXbtPattern::new(client.clone(), &format!("{base_path}_MiningCity")),
+            miningdutch: AXbtPattern::new(client.clone(), &format!("{base_path}_MiningDutch")),
+            miningkings: AXbtPattern::new(client.clone(), &format!("{base_path}_MiningKings")),
+            miningsquared: AXbtPattern::new(client.clone(), &format!("{base_path}_MiningSquared")),
+            mmpool: AXbtPattern::new(client.clone(), &format!("{base_path}_Mmpool")),
+            mtred: AXbtPattern::new(client.clone(), &format!("{base_path}_MtRed")),
+            multicoinco: AXbtPattern::new(client.clone(), &format!("{base_path}_MultiCoinCo")),
+            multipool: AXbtPattern::new(client.clone(), &format!("{base_path}_Multipool")),
+            mybtccoinpool: AXbtPattern::new(client.clone(), &format!("{base_path}_MyBtcCoinPool")),
+            neopool: AXbtPattern::new(client.clone(), &format!("{base_path}_Neopool")),
+            nexious: AXbtPattern::new(client.clone(), &format!("{base_path}_Nexious")),
+            nicehash: AXbtPattern::new(client.clone(), &format!("{base_path}_NiceHash")),
+            nmcbit: AXbtPattern::new(client.clone(), &format!("{base_path}_NmcBit")),
+            novablock: AXbtPattern::new(client.clone(), &format!("{base_path}_NovaBlock")),
+            ocean: AXbtPattern::new(client.clone(), &format!("{base_path}_Ocean")),
+            okexpool: AXbtPattern::new(client.clone(), &format!("{base_path}_OkExPool")),
+            okminer: AXbtPattern::new(client.clone(), &format!("{base_path}_OkMiner")),
+            okkong: AXbtPattern::new(client.clone(), &format!("{base_path}_Okkong")),
+            okpooltop: AXbtPattern::new(client.clone(), &format!("{base_path}_OkpoolTop")),
+            onehash: AXbtPattern::new(client.clone(), &format!("{base_path}_OneHash")),
+            onem1x: AXbtPattern::new(client.clone(), &format!("{base_path}_OneM1x")),
+            onethash: AXbtPattern::new(client.clone(), &format!("{base_path}_OneThash")),
+            ozcoin: AXbtPattern::new(client.clone(), &format!("{base_path}_OzCoin")),
+            phashio: AXbtPattern::new(client.clone(), &format!("{base_path}_PHashIo")),
+            parasite: AXbtPattern::new(client.clone(), &format!("{base_path}_Parasite")),
+            patels: AXbtPattern::new(client.clone(), &format!("{base_path}_Patels")),
+            pegapool: AXbtPattern::new(client.clone(), &format!("{base_path}_PegaPool")),
+            phoenix: AXbtPattern::new(client.clone(), &format!("{base_path}_Phoenix")),
+            polmine: AXbtPattern::new(client.clone(), &format!("{base_path}_Polmine")),
+            pool175btc: AXbtPattern::new(client.clone(), &format!("{base_path}_Pool175btc")),
+            pool50btc: AXbtPattern::new(client.clone(), &format!("{base_path}_Pool50btc")),
+            poolin: AXbtPattern::new(client.clone(), &format!("{base_path}_Poolin")),
+            portlandhodl: AXbtPattern::new(client.clone(), &format!("{base_path}_PortlandHodl")),
+            publicpool: AXbtPattern::new(client.clone(), &format!("{base_path}_PublicPool")),
+            purebtccom: AXbtPattern::new(client.clone(), &format!("{base_path}_PureBtcCom")),
+            rawpool: AXbtPattern::new(client.clone(), &format!("{base_path}_Rawpool")),
+            rigpool: AXbtPattern::new(client.clone(), &format!("{base_path}_RigPool")),
+            sbicrypto: AXbtPattern::new(client.clone(), &format!("{base_path}_SbiCrypto")),
+            secpool: AXbtPattern::new(client.clone(), &format!("{base_path}_SecPool")),
+            secretsuperstar: AXbtPattern::new(client.clone(), &format!("{base_path}_SecretSuperstar")),
+            sevenpool: AXbtPattern::new(client.clone(), &format!("{base_path}_SevenPool")),
+            shawnp0wers: AXbtPattern::new(client.clone(), &format!("{base_path}_ShawnP0wers")),
+            sigmapoolcom: AXbtPattern::new(client.clone(), &format!("{base_path}_SigmapoolCom")),
+            simplecoinus: AXbtPattern::new(client.clone(), &format!("{base_path}_SimplecoinUs")),
+            solock: AXbtPattern::new(client.clone(), &format!("{base_path}_SoloCk")),
+            spiderpool: AXbtPattern::new(client.clone(), &format!("{base_path}_SpiderPool")),
+            stminingcorp: AXbtPattern::new(client.clone(), &format!("{base_path}_StMiningCorp")),
+            tangpool: AXbtPattern::new(client.clone(), &format!("{base_path}_Tangpool")),
+            tatmaspool: AXbtPattern::new(client.clone(), &format!("{base_path}_TatmasPool")),
+            tbdice: AXbtPattern::new(client.clone(), &format!("{base_path}_TbDice")),
+            telco214: AXbtPattern::new(client.clone(), &format!("{base_path}_Telco214")),
+            terrapool: AXbtPattern::new(client.clone(), &format!("{base_path}_TerraPool")),
+            tiger: AXbtPattern::new(client.clone(), &format!("{base_path}_Tiger")),
+            tigerpoolnet: AXbtPattern::new(client.clone(), &format!("{base_path}_TigerpoolNet")),
+            titan: AXbtPattern::new(client.clone(), &format!("{base_path}_Titan")),
+            transactioncoinmining: AXbtPattern::new(client.clone(), &format!("{base_path}_TransactionCoinMining")),
+            trickysbtcpool: AXbtPattern::new(client.clone(), &format!("{base_path}_TrickysBtcPool")),
+            triplemining: AXbtPattern::new(client.clone(), &format!("{base_path}_TripleMining")),
+            twentyoneinc: AXbtPattern::new(client.clone(), &format!("{base_path}_TwentyOneInc")),
+            ultimuspool: AXbtPattern::new(client.clone(), &format!("{base_path}_UltimusPool")),
+            unknown: AXbtPattern::new(client.clone(), &format!("{base_path}_Unknown")),
+            unomp: AXbtPattern::new(client.clone(), &format!("{base_path}_Unomp")),
+            viabtc: AXbtPattern::new(client.clone(), &format!("{base_path}_ViaBtc")),
+            waterhole: AXbtPattern::new(client.clone(), &format!("{base_path}_Waterhole")),
+            wayicn: AXbtPattern::new(client.clone(), &format!("{base_path}_WayiCn")),
+            whitepool: AXbtPattern::new(client.clone(), &format!("{base_path}_WhitePool")),
+            wk057: AXbtPattern::new(client.clone(), &format!("{base_path}_Wk057")),
+            yourbtcnet: AXbtPattern::new(client.clone(), &format!("{base_path}_YourbtcNet")),
+            zulupool: AXbtPattern::new(client.clone(), &format!("{base_path}_Zulupool")),
         }
     }
 }
@@ -2866,20 +2866,20 @@ pub struct CatalogTree_Computed_Price {
 impl CatalogTree_Computed_Price {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            price_close: Indexes3::new(client.clone(), &format!("{base_path}/price_close")),
-            price_close_in_cents: Indexes13::new(client.clone(), &format!("{base_path}/price_close_in_cents")),
-            price_close_in_sats: Indexes3::new(client.clone(), &format!("{base_path}/price_close_in_sats")),
-            price_high: Indexes3::new(client.clone(), &format!("{base_path}/price_high")),
-            price_high_in_cents: Indexes13::new(client.clone(), &format!("{base_path}/price_high_in_cents")),
-            price_high_in_sats: Indexes3::new(client.clone(), &format!("{base_path}/price_high_in_sats")),
-            price_low: Indexes3::new(client.clone(), &format!("{base_path}/price_low")),
-            price_low_in_cents: Indexes13::new(client.clone(), &format!("{base_path}/price_low_in_cents")),
-            price_low_in_sats: Indexes3::new(client.clone(), &format!("{base_path}/price_low_in_sats")),
-            price_ohlc: Indexes3::new(client.clone(), &format!("{base_path}/price_ohlc")),
-            price_ohlc_in_sats: Indexes3::new(client.clone(), &format!("{base_path}/price_ohlc_in_sats")),
-            price_open: Indexes3::new(client.clone(), &format!("{base_path}/price_open")),
-            price_open_in_cents: Indexes13::new(client.clone(), &format!("{base_path}/price_open_in_cents")),
-            price_open_in_sats: Indexes3::new(client.clone(), &format!("{base_path}/price_open_in_sats")),
+            price_close: Indexes3::new(client.clone(), &format!("{base_path}_price_close")),
+            price_close_in_cents: Indexes13::new(client.clone(), &format!("{base_path}_price_close_in_cents")),
+            price_close_in_sats: Indexes3::new(client.clone(), &format!("{base_path}_price_close_in_sats")),
+            price_high: Indexes3::new(client.clone(), &format!("{base_path}_price_high")),
+            price_high_in_cents: Indexes13::new(client.clone(), &format!("{base_path}_price_high_in_cents")),
+            price_high_in_sats: Indexes3::new(client.clone(), &format!("{base_path}_price_high_in_sats")),
+            price_low: Indexes3::new(client.clone(), &format!("{base_path}_price_low")),
+            price_low_in_cents: Indexes13::new(client.clone(), &format!("{base_path}_price_low_in_cents")),
+            price_low_in_sats: Indexes3::new(client.clone(), &format!("{base_path}_price_low_in_sats")),
+            price_ohlc: Indexes3::new(client.clone(), &format!("{base_path}_price_ohlc")),
+            price_ohlc_in_sats: Indexes3::new(client.clone(), &format!("{base_path}_price_ohlc_in_sats")),
+            price_open: Indexes3::new(client.clone(), &format!("{base_path}_price_open")),
+            price_open_in_cents: Indexes13::new(client.clone(), &format!("{base_path}_price_open_in_cents")),
+            price_open_in_sats: Indexes3::new(client.clone(), &format!("{base_path}_price_open_in_sats")),
         }
     }
 }
@@ -2907,22 +2907,22 @@ pub struct CatalogTree_Computed_Stateful {
 impl CatalogTree_Computed_Stateful {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            addr_count: Indexes3::new(client.clone(), &format!("{base_path}/addr_count")),
-            address_cohorts: CatalogTree_Computed_Stateful_AddressCohorts::new(client.clone(), &format!("{base_path}/address_cohorts")),
-            addresses_data: CatalogTree_Computed_Stateful_AddressesData::new(client.clone(), &format!("{base_path}/addresses_data")),
-            addresstype_to_height_to_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}/addresstype_to_height_to_addr_count")),
-            addresstype_to_height_to_empty_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}/addresstype_to_height_to_empty_addr_count")),
-            addresstype_to_indexes_to_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}/addresstype_to_indexes_to_addr_count")),
-            addresstype_to_indexes_to_empty_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}/addresstype_to_indexes_to_empty_addr_count")),
-            any_address_indexes: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}/any_address_indexes")),
-            chain_state: Indexes2::new(client.clone(), &format!("{base_path}/chain_state")),
-            empty_addr_count: Indexes3::new(client.clone(), &format!("{base_path}/empty_addr_count")),
-            emptyaddressindex: Indexes29::new(client.clone(), &format!("{base_path}/emptyaddressindex")),
-            loadedaddressindex: Indexes30::new(client.clone(), &format!("{base_path}/loadedaddressindex")),
-            market_cap: Indexes26::new(client.clone(), &format!("{base_path}/market_cap")),
-            opreturn_supply: SupplyPattern::new(client.clone(), &format!("{base_path}/opreturn_supply")),
-            unspendable_supply: SupplyPattern::new(client.clone(), &format!("{base_path}/unspendable_supply")),
-            utxo_cohorts: CatalogTree_Computed_Stateful_UtxoCohorts::new(client.clone(), &format!("{base_path}/utxo_cohorts")),
+            addr_count: Indexes3::new(client.clone(), &format!("{base_path}_addr_count")),
+            address_cohorts: CatalogTree_Computed_Stateful_AddressCohorts::new(client.clone(), &format!("{base_path}_address_cohorts")),
+            addresses_data: CatalogTree_Computed_Stateful_AddressesData::new(client.clone(), &format!("{base_path}_addresses_data")),
+            addresstype_to_height_to_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}_addresstype_to_height_to_addr_count")),
+            addresstype_to_height_to_empty_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}_addresstype_to_height_to_empty_addr_count")),
+            addresstype_to_indexes_to_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}_addresstype_to_indexes_to_addr_count")),
+            addresstype_to_indexes_to_empty_addr_count: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}_addresstype_to_indexes_to_empty_addr_count")),
+            any_address_indexes: AddresstypeToHeightToAddrCountPattern::new(client.clone(), &format!("{base_path}_any_address_indexes")),
+            chain_state: Indexes2::new(client.clone(), &format!("{base_path}_chain_state")),
+            empty_addr_count: Indexes3::new(client.clone(), &format!("{base_path}_empty_addr_count")),
+            emptyaddressindex: Indexes29::new(client.clone(), &format!("{base_path}_emptyaddressindex")),
+            loadedaddressindex: Indexes30::new(client.clone(), &format!("{base_path}_loadedaddressindex")),
+            market_cap: Indexes26::new(client.clone(), &format!("{base_path}_market_cap")),
+            opreturn_supply: SupplyPattern::new(client.clone(), &format!("{base_path}_opreturn_supply")),
+            unspendable_supply: SupplyPattern::new(client.clone(), &format!("{base_path}_unspendable_supply")),
+            utxo_cohorts: CatalogTree_Computed_Stateful_UtxoCohorts::new(client.clone(), &format!("{base_path}_utxo_cohorts")),
         }
     }
 }
@@ -2937,9 +2937,9 @@ pub struct CatalogTree_Computed_Stateful_AddressCohorts {
 impl CatalogTree_Computed_Stateful_AddressCohorts {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            amount_range: CatalogTree_Computed_Stateful_AddressCohorts_AmountRange::new(client.clone(), &format!("{base_path}/amount_range")),
-            ge_amount: CatalogTree_Computed_Stateful_AddressCohorts_GeAmount::new(client.clone(), &format!("{base_path}/ge_amount")),
-            lt_amount: CatalogTree_Computed_Stateful_AddressCohorts_LtAmount::new(client.clone(), &format!("{base_path}/lt_amount")),
+            amount_range: CatalogTree_Computed_Stateful_AddressCohorts_AmountRange::new(client.clone(), &format!("{base_path}_amount_range")),
+            ge_amount: CatalogTree_Computed_Stateful_AddressCohorts_GeAmount::new(client.clone(), &format!("{base_path}_ge_amount")),
+            lt_amount: CatalogTree_Computed_Stateful_AddressCohorts_LtAmount::new(client.clone(), &format!("{base_path}_lt_amount")),
         }
     }
 }
@@ -2966,21 +2966,21 @@ pub struct CatalogTree_Computed_Stateful_AddressCohorts_AmountRange {
 impl CatalogTree_Computed_Stateful_AddressCohorts_AmountRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _0sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_0sats")),
-            _100btc_to_1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_100btc_to_1k_btc")),
-            _100k_btc_or_more: _0satsPattern::new(client.clone(), &format!("{base_path}/_100k_btc_or_more")),
-            _100k_sats_to_1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100k_sats_to_1m_sats")),
-            _100sats_to_1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100sats_to_1k_sats")),
-            _10btc_to_100btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10btc_to_100btc")),
-            _10k_btc_to_100k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_btc_to_100k_btc")),
-            _10k_sats_to_100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_sats_to_100k_sats")),
-            _10m_sats_to_1btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10m_sats_to_1btc")),
-            _10sats_to_100sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10sats_to_100sats")),
-            _1btc_to_10btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1btc_to_10btc")),
-            _1k_btc_to_10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_btc_to_10k_btc")),
-            _1k_sats_to_10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_sats_to_10k_sats")),
-            _1m_sats_to_10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1m_sats_to_10m_sats")),
-            _1sat_to_10sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1sat_to_10sats")),
+            _0sats: _0satsPattern::new(client.clone(), &format!("{base_path}__0sats")),
+            _100btc_to_1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__100btc_to_1k_btc")),
+            _100k_btc_or_more: _0satsPattern::new(client.clone(), &format!("{base_path}__100k_btc_or_more")),
+            _100k_sats_to_1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100k_sats_to_1m_sats")),
+            _100sats_to_1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100sats_to_1k_sats")),
+            _10btc_to_100btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10btc_to_100btc")),
+            _10k_btc_to_100k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_btc_to_100k_btc")),
+            _10k_sats_to_100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_sats_to_100k_sats")),
+            _10m_sats_to_1btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10m_sats_to_1btc")),
+            _10sats_to_100sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10sats_to_100sats")),
+            _1btc_to_10btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1btc_to_10btc")),
+            _1k_btc_to_10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_btc_to_10k_btc")),
+            _1k_sats_to_10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_sats_to_10k_sats")),
+            _1m_sats_to_10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1m_sats_to_10m_sats")),
+            _1sat_to_10sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1sat_to_10sats")),
         }
     }
 }
@@ -3005,19 +3005,19 @@ pub struct CatalogTree_Computed_Stateful_AddressCohorts_GeAmount {
 impl CatalogTree_Computed_Stateful_AddressCohorts_GeAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _100btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_100btc")),
-            _100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100k_sats")),
-            _100sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100sats")),
-            _10btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10btc")),
-            _10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_btc")),
-            _10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_sats")),
-            _10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10m_sats")),
-            _10sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10sats")),
-            _1btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1btc")),
-            _1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_btc")),
-            _1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_sats")),
-            _1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1m_sats")),
-            _1sat: _0satsPattern::new(client.clone(), &format!("{base_path}/_1sat")),
+            _100btc: _0satsPattern::new(client.clone(), &format!("{base_path}__100btc")),
+            _100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100k_sats")),
+            _100sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100sats")),
+            _10btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10btc")),
+            _10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_btc")),
+            _10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_sats")),
+            _10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10m_sats")),
+            _10sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10sats")),
+            _1btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1btc")),
+            _1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_btc")),
+            _1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_sats")),
+            _1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1m_sats")),
+            _1sat: _0satsPattern::new(client.clone(), &format!("{base_path}__1sat")),
         }
     }
 }
@@ -3042,19 +3042,19 @@ pub struct CatalogTree_Computed_Stateful_AddressCohorts_LtAmount {
 impl CatalogTree_Computed_Stateful_AddressCohorts_LtAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _100btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_100btc")),
-            _100k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_100k_btc")),
-            _100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100k_sats")),
-            _100sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_100sats")),
-            _10btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10btc")),
-            _10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_btc")),
-            _10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10k_sats")),
-            _10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10m_sats")),
-            _10sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_10sats")),
-            _1btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1btc")),
-            _1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_btc")),
-            _1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1k_sats")),
-            _1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}/_1m_sats")),
+            _100btc: _0satsPattern::new(client.clone(), &format!("{base_path}__100btc")),
+            _100k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__100k_btc")),
+            _100k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100k_sats")),
+            _100sats: _0satsPattern::new(client.clone(), &format!("{base_path}__100sats")),
+            _10btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10btc")),
+            _10k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_btc")),
+            _10k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10k_sats")),
+            _10m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10m_sats")),
+            _10sats: _0satsPattern::new(client.clone(), &format!("{base_path}__10sats")),
+            _1btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1btc")),
+            _1k_btc: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_btc")),
+            _1k_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1k_sats")),
+            _1m_sats: _0satsPattern::new(client.clone(), &format!("{base_path}__1m_sats")),
         }
     }
 }
@@ -3068,8 +3068,8 @@ pub struct CatalogTree_Computed_Stateful_AddressesData {
 impl CatalogTree_Computed_Stateful_AddressesData {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            empty: Indexes29::new(client.clone(), &format!("{base_path}/empty")),
-            loaded: Indexes30::new(client.clone(), &format!("{base_path}/loaded")),
+            empty: Indexes29::new(client.clone(), &format!("{base_path}_empty")),
+            loaded: Indexes30::new(client.clone(), &format!("{base_path}_loaded")),
         }
     }
 }
@@ -3092,17 +3092,17 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts {
 impl CatalogTree_Computed_Stateful_UtxoCohorts {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            age_range: CatalogTree_Computed_Stateful_UtxoCohorts_AgeRange::new(client.clone(), &format!("{base_path}/age_range")),
-            all: CatalogTree_Computed_Stateful_UtxoCohorts_All::new(client.clone(), &format!("{base_path}/all")),
-            amount_range: CatalogTree_Computed_Stateful_UtxoCohorts_AmountRange::new(client.clone(), &format!("{base_path}/amount_range")),
-            epoch: CatalogTree_Computed_Stateful_UtxoCohorts_Epoch::new(client.clone(), &format!("{base_path}/epoch")),
-            ge_amount: CatalogTree_Computed_Stateful_UtxoCohorts_GeAmount::new(client.clone(), &format!("{base_path}/ge_amount")),
-            lt_amount: CatalogTree_Computed_Stateful_UtxoCohorts_LtAmount::new(client.clone(), &format!("{base_path}/lt_amount")),
-            max_age: CatalogTree_Computed_Stateful_UtxoCohorts_MaxAge::new(client.clone(), &format!("{base_path}/max_age")),
-            min_age: CatalogTree_Computed_Stateful_UtxoCohorts_MinAge::new(client.clone(), &format!("{base_path}/min_age")),
-            term: CatalogTree_Computed_Stateful_UtxoCohorts_Term::new(client.clone(), &format!("{base_path}/term")),
-            type_: CatalogTree_Computed_Stateful_UtxoCohorts_Type::new(client.clone(), &format!("{base_path}/type_")),
-            year: CatalogTree_Computed_Stateful_UtxoCohorts_Year::new(client.clone(), &format!("{base_path}/year")),
+            age_range: CatalogTree_Computed_Stateful_UtxoCohorts_AgeRange::new(client.clone(), &format!("{base_path}_age_range")),
+            all: CatalogTree_Computed_Stateful_UtxoCohorts_All::new(client.clone(), &format!("{base_path}_all")),
+            amount_range: CatalogTree_Computed_Stateful_UtxoCohorts_AmountRange::new(client.clone(), &format!("{base_path}_amount_range")),
+            epoch: CatalogTree_Computed_Stateful_UtxoCohorts_Epoch::new(client.clone(), &format!("{base_path}_epoch")),
+            ge_amount: CatalogTree_Computed_Stateful_UtxoCohorts_GeAmount::new(client.clone(), &format!("{base_path}_ge_amount")),
+            lt_amount: CatalogTree_Computed_Stateful_UtxoCohorts_LtAmount::new(client.clone(), &format!("{base_path}_lt_amount")),
+            max_age: CatalogTree_Computed_Stateful_UtxoCohorts_MaxAge::new(client.clone(), &format!("{base_path}_max_age")),
+            min_age: CatalogTree_Computed_Stateful_UtxoCohorts_MinAge::new(client.clone(), &format!("{base_path}_min_age")),
+            term: CatalogTree_Computed_Stateful_UtxoCohorts_Term::new(client.clone(), &format!("{base_path}_term")),
+            type_: CatalogTree_Computed_Stateful_UtxoCohorts_Type::new(client.clone(), &format!("{base_path}_type_")),
+            year: CatalogTree_Computed_Stateful_UtxoCohorts_Year::new(client.clone(), &format!("{base_path}_year")),
         }
     }
 }
@@ -3134,26 +3134,26 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_AgeRange {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_AgeRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _10y_to_12y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_10y_to_12y")),
-            _12y_to_15y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_12y_to_15y")),
-            _1d_to_1w: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1d_to_1w")),
-            _1m_to_2m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1m_to_2m")),
-            _1w_to_1m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1w_to_1m")),
-            _1y_to_2y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1y_to_2y")),
-            _2m_to_3m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2m_to_3m")),
-            _2y_to_3y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2y_to_3y")),
-            _3m_to_4m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_3m_to_4m")),
-            _3y_to_4y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_3y_to_4y")),
-            _4m_to_5m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_4m_to_5m")),
-            _4y_to_5y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_4y_to_5y")),
-            _5m_to_6m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_5m_to_6m")),
-            _5y_to_6y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_5y_to_6y")),
-            _6m_to_1y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_6m_to_1y")),
-            _6y_to_7y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_6y_to_7y")),
-            _7y_to_8y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_7y_to_8y")),
-            _8y_to_10y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_8y_to_10y")),
-            from_15y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/from_15y")),
-            up_to_1d: UpTo1dPattern::new(client.clone(), &format!("{base_path}/up_to_1d")),
+            _10y_to_12y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__10y_to_12y")),
+            _12y_to_15y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__12y_to_15y")),
+            _1d_to_1w: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1d_to_1w")),
+            _1m_to_2m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1m_to_2m")),
+            _1w_to_1m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1w_to_1m")),
+            _1y_to_2y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1y_to_2y")),
+            _2m_to_3m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2m_to_3m")),
+            _2y_to_3y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2y_to_3y")),
+            _3m_to_4m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__3m_to_4m")),
+            _3y_to_4y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__3y_to_4y")),
+            _4m_to_5m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__4m_to_5m")),
+            _4y_to_5y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__4y_to_5y")),
+            _5m_to_6m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__5m_to_6m")),
+            _5y_to_6y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__5y_to_6y")),
+            _6m_to_1y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__6m_to_1y")),
+            _6y_to_7y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__6y_to_7y")),
+            _7y_to_8y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__7y_to_8y")),
+            _8y_to_10y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__8y_to_10y")),
+            from_15y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}_from_15y")),
+            up_to_1d: UpTo1dPattern::new(client.clone(), &format!("{base_path}_up_to_1d")),
         }
     }
 }
@@ -3171,12 +3171,12 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_All {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_All {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            activity: ActivityPattern::new(client.clone(), &format!("{base_path}/activity")),
-            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}/price_paid")),
-            realized: RealizedPattern3::new(client.clone(), &format!("{base_path}/realized")),
-            relative: CatalogTree_Computed_Stateful_UtxoCohorts_All_Relative::new(client.clone(), &format!("{base_path}/relative")),
-            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}/supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}/unrealized")),
+            activity: ActivityPattern::new(client.clone(), &format!("{base_path}_activity")),
+            price_paid: PricePaidPattern2::new(client.clone(), &format!("{base_path}_price_paid")),
+            realized: RealizedPattern3::new(client.clone(), &format!("{base_path}_realized")),
+            relative: CatalogTree_Computed_Stateful_UtxoCohorts_All_Relative::new(client.clone(), &format!("{base_path}_relative")),
+            supply: SupplyPattern2::new(client.clone(), &format!("{base_path}_supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), &format!("{base_path}_unrealized")),
         }
     }
 }
@@ -3194,12 +3194,12 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_All_Relative {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_All_Relative {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}/net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
-            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}/supply_in_profit_rel_to_own_supply")),
-            unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            unrealized_profit_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}/unrealized_profit_rel_to_own_total_unrealized_pnl")),
+            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: Indexes26::new(client.clone(), &format!("{base_path}_net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
+            supply_in_loss_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_own_supply: Indexes27::new(client.clone(), &format!("{base_path}_supply_in_profit_rel_to_own_supply")),
+            unrealized_loss_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            unrealized_profit_rel_to_own_total_unrealized_pnl: Indexes27::new(client.clone(), &format!("{base_path}_unrealized_profit_rel_to_own_total_unrealized_pnl")),
         }
     }
 }
@@ -3226,21 +3226,21 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_AmountRange {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_AmountRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _0sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_0sats")),
-            _100btc_to_1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100btc_to_1k_btc")),
-            _100k_btc_or_more: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100k_btc_or_more")),
-            _100k_sats_to_1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100k_sats_to_1m_sats")),
-            _100sats_to_1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100sats_to_1k_sats")),
-            _10btc_to_100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10btc_to_100btc")),
-            _10k_btc_to_100k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_btc_to_100k_btc")),
-            _10k_sats_to_100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_sats_to_100k_sats")),
-            _10m_sats_to_1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10m_sats_to_1btc")),
-            _10sats_to_100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10sats_to_100sats")),
-            _1btc_to_10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1btc_to_10btc")),
-            _1k_btc_to_10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_btc_to_10k_btc")),
-            _1k_sats_to_10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_sats_to_10k_sats")),
-            _1m_sats_to_10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1m_sats_to_10m_sats")),
-            _1sat_to_10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1sat_to_10sats")),
+            _0sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__0sats")),
+            _100btc_to_1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__100btc_to_1k_btc")),
+            _100k_btc_or_more: _0satsPattern2::new(client.clone(), &format!("{base_path}__100k_btc_or_more")),
+            _100k_sats_to_1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100k_sats_to_1m_sats")),
+            _100sats_to_1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100sats_to_1k_sats")),
+            _10btc_to_100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10btc_to_100btc")),
+            _10k_btc_to_100k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_btc_to_100k_btc")),
+            _10k_sats_to_100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_sats_to_100k_sats")),
+            _10m_sats_to_1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10m_sats_to_1btc")),
+            _10sats_to_100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10sats_to_100sats")),
+            _1btc_to_10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1btc_to_10btc")),
+            _1k_btc_to_10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_btc_to_10k_btc")),
+            _1k_sats_to_10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_sats_to_10k_sats")),
+            _1m_sats_to_10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1m_sats_to_10m_sats")),
+            _1sat_to_10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1sat_to_10sats")),
         }
     }
 }
@@ -3257,11 +3257,11 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_Epoch {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_Epoch {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _0: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_0")),
-            _1: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1")),
-            _2: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2")),
-            _3: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_3")),
-            _4: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_4")),
+            _0: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__0")),
+            _1: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1")),
+            _2: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2")),
+            _3: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__3")),
+            _4: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__4")),
         }
     }
 }
@@ -3286,19 +3286,19 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_GeAmount {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_GeAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100btc")),
-            _100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100k_sats")),
-            _100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100sats")),
-            _10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10btc")),
-            _10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_btc")),
-            _10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_sats")),
-            _10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10m_sats")),
-            _10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10sats")),
-            _1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1btc")),
-            _1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_btc")),
-            _1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_sats")),
-            _1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1m_sats")),
-            _1sat: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1sat")),
+            _100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__100btc")),
+            _100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100k_sats")),
+            _100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100sats")),
+            _10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10btc")),
+            _10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_btc")),
+            _10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_sats")),
+            _10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10m_sats")),
+            _10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10sats")),
+            _1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1btc")),
+            _1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_btc")),
+            _1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_sats")),
+            _1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1m_sats")),
+            _1sat: _0satsPattern2::new(client.clone(), &format!("{base_path}__1sat")),
         }
     }
 }
@@ -3323,19 +3323,19 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_LtAmount {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_LtAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100btc")),
-            _100k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100k_btc")),
-            _100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100k_sats")),
-            _100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_100sats")),
-            _10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10btc")),
-            _10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_btc")),
-            _10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10k_sats")),
-            _10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10m_sats")),
-            _10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_10sats")),
-            _1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1btc")),
-            _1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_btc")),
-            _1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1k_sats")),
-            _1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}/_1m_sats")),
+            _100btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__100btc")),
+            _100k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__100k_btc")),
+            _100k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100k_sats")),
+            _100sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__100sats")),
+            _10btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10btc")),
+            _10k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_btc")),
+            _10k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10k_sats")),
+            _10m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10m_sats")),
+            _10sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__10sats")),
+            _1btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1btc")),
+            _1k_btc: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_btc")),
+            _1k_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1k_sats")),
+            _1m_sats: _0satsPattern2::new(client.clone(), &format!("{base_path}__1m_sats")),
         }
     }
 }
@@ -3365,24 +3365,24 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_MaxAge {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_MaxAge {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _10y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_10y")),
-            _12y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_12y")),
-            _15y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_15y")),
-            _1m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_1m")),
-            _1w: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_1w")),
-            _1y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_1y")),
-            _2m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_2m")),
-            _2y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_2y")),
-            _3m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_3m")),
-            _3y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_3y")),
-            _4m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_4m")),
-            _4y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_4y")),
-            _5m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_5m")),
-            _5y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_5y")),
-            _6m: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_6m")),
-            _6y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_6y")),
-            _7y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_7y")),
-            _8y: UpTo1dPattern::new(client.clone(), &format!("{base_path}/_8y")),
+            _10y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__10y")),
+            _12y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__12y")),
+            _15y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__15y")),
+            _1m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__1m")),
+            _1w: UpTo1dPattern::new(client.clone(), &format!("{base_path}__1w")),
+            _1y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__1y")),
+            _2m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__2m")),
+            _2y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__2y")),
+            _3m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__3m")),
+            _3y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__3y")),
+            _4m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__4m")),
+            _4y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__4y")),
+            _5m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__5m")),
+            _5y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__5y")),
+            _6m: UpTo1dPattern::new(client.clone(), &format!("{base_path}__6m")),
+            _6y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__6y")),
+            _7y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__7y")),
+            _8y: UpTo1dPattern::new(client.clone(), &format!("{base_path}__8y")),
         }
     }
 }
@@ -3412,24 +3412,24 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_MinAge {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_MinAge {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _10y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_10y")),
-            _12y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_12y")),
-            _1d: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1d")),
-            _1m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1m")),
-            _1w: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1w")),
-            _1y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_1y")),
-            _2m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2m")),
-            _2y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2y")),
-            _3m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_3m")),
-            _3y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_3y")),
-            _4m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_4m")),
-            _4y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_4y")),
-            _5m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_5m")),
-            _5y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_5y")),
-            _6m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_6m")),
-            _6y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_6y")),
-            _7y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_7y")),
-            _8y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_8y")),
+            _10y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__10y")),
+            _12y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__12y")),
+            _1d: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1d")),
+            _1m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1m")),
+            _1w: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1w")),
+            _1y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__1y")),
+            _2m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2m")),
+            _2y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2y")),
+            _3m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__3m")),
+            _3y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__3y")),
+            _4m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__4m")),
+            _4y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__4y")),
+            _5m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__5m")),
+            _5y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__5y")),
+            _6m: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__6m")),
+            _6y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__6y")),
+            _7y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__7y")),
+            _8y: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__8y")),
         }
     }
 }
@@ -3443,8 +3443,8 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_Term {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_Term {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            long: UpTo1dPattern::new(client.clone(), &format!("{base_path}/long")),
-            short: UpTo1dPattern::new(client.clone(), &format!("{base_path}/short")),
+            long: UpTo1dPattern::new(client.clone(), &format!("{base_path}_long")),
+            short: UpTo1dPattern::new(client.clone(), &format!("{base_path}_short")),
         }
     }
 }
@@ -3467,17 +3467,17 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_Type {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_Type {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            empty: _0satsPattern2::new(client.clone(), &format!("{base_path}/empty")),
-            p2a: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2a")),
-            p2ms: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2ms")),
-            p2pk33: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2pk33")),
-            p2pk65: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2pk65")),
-            p2pkh: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2pkh")),
-            p2sh: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2sh")),
-            p2tr: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2tr")),
-            p2wpkh: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2wpkh")),
-            p2wsh: _0satsPattern2::new(client.clone(), &format!("{base_path}/p2wsh")),
-            unknown: _0satsPattern2::new(client.clone(), &format!("{base_path}/unknown")),
+            empty: _0satsPattern2::new(client.clone(), &format!("{base_path}_empty")),
+            p2a: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2a")),
+            p2ms: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2ms")),
+            p2pk33: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2pk33")),
+            p2pk65: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2pk65")),
+            p2pkh: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2pkh")),
+            p2sh: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2sh")),
+            p2tr: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2tr")),
+            p2wpkh: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2wpkh")),
+            p2wsh: _0satsPattern2::new(client.clone(), &format!("{base_path}_p2wsh")),
+            unknown: _0satsPattern2::new(client.clone(), &format!("{base_path}_unknown")),
         }
     }
 }
@@ -3507,24 +3507,24 @@ pub struct CatalogTree_Computed_Stateful_UtxoCohorts_Year {
 impl CatalogTree_Computed_Stateful_UtxoCohorts_Year {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            _2009: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2009")),
-            _2010: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2010")),
-            _2011: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2011")),
-            _2012: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2012")),
-            _2013: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2013")),
-            _2014: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2014")),
-            _2015: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2015")),
-            _2016: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2016")),
-            _2017: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2017")),
-            _2018: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2018")),
-            _2019: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2019")),
-            _2020: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2020")),
-            _2021: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2021")),
-            _2022: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2022")),
-            _2023: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2023")),
-            _2024: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2024")),
-            _2025: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2025")),
-            _2026: _10yTo12yPattern::new(client.clone(), &format!("{base_path}/_2026")),
+            _2009: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2009")),
+            _2010: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2010")),
+            _2011: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2011")),
+            _2012: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2012")),
+            _2013: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2013")),
+            _2014: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2014")),
+            _2015: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2015")),
+            _2016: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2016")),
+            _2017: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2017")),
+            _2018: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2018")),
+            _2019: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2019")),
+            _2020: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2020")),
+            _2021: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2021")),
+            _2022: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2022")),
+            _2023: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2023")),
+            _2024: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2024")),
+            _2025: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2025")),
+            _2026: _10yTo12yPattern::new(client.clone(), &format!("{base_path}__2026")),
         }
     }
 }
@@ -3538,8 +3538,8 @@ pub struct CatalogTree_Computed_Txins {
 impl CatalogTree_Computed_Txins {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            txoutindex: Indexes24::new(client.clone(), &format!("{base_path}/txoutindex")),
-            value: Indexes24::new(client.clone(), &format!("{base_path}/value")),
+            txoutindex: Indexes24::new(client.clone(), &format!("{base_path}_txoutindex")),
+            value: Indexes24::new(client.clone(), &format!("{base_path}_value")),
         }
     }
 }
@@ -3552,7 +3552,7 @@ pub struct CatalogTree_Computed_Txouts {
 impl CatalogTree_Computed_Txouts {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            txinindex: Indexes25::new(client.clone(), &format!("{base_path}/txinindex")),
+            txinindex: Indexes25::new(client.clone(), &format!("{base_path}_txinindex")),
         }
     }
 }
@@ -3570,12 +3570,12 @@ pub struct CatalogTree_Indexed {
 impl CatalogTree_Indexed {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            address: CatalogTree_Indexed_Address::new(client.clone(), &format!("{base_path}/address")),
-            block: CatalogTree_Indexed_Block::new(client.clone(), &format!("{base_path}/block")),
-            output: CatalogTree_Indexed_Output::new(client.clone(), &format!("{base_path}/output")),
-            tx: CatalogTree_Indexed_Tx::new(client.clone(), &format!("{base_path}/tx")),
-            txin: CatalogTree_Indexed_Txin::new(client.clone(), &format!("{base_path}/txin")),
-            txout: CatalogTree_Indexed_Txout::new(client.clone(), &format!("{base_path}/txout")),
+            address: CatalogTree_Indexed_Address::new(client.clone(), &format!("{base_path}_address")),
+            block: CatalogTree_Indexed_Block::new(client.clone(), &format!("{base_path}_block")),
+            output: CatalogTree_Indexed_Output::new(client.clone(), &format!("{base_path}_output")),
+            tx: CatalogTree_Indexed_Tx::new(client.clone(), &format!("{base_path}_tx")),
+            txin: CatalogTree_Indexed_Txin::new(client.clone(), &format!("{base_path}_txin")),
+            txout: CatalogTree_Indexed_Txout::new(client.clone(), &format!("{base_path}_txout")),
         }
     }
 }
@@ -3603,22 +3603,22 @@ pub struct CatalogTree_Indexed_Address {
 impl CatalogTree_Indexed_Address {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            first_p2aaddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2aaddressindex")),
-            first_p2pk33addressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2pk33addressindex")),
-            first_p2pk65addressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2pk65addressindex")),
-            first_p2pkhaddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2pkhaddressindex")),
-            first_p2shaddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2shaddressindex")),
-            first_p2traddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2traddressindex")),
-            first_p2wpkhaddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2wpkhaddressindex")),
-            first_p2wshaddressindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2wshaddressindex")),
-            p2abytes: Indexes16::new(client.clone(), &format!("{base_path}/p2abytes")),
-            p2pk33bytes: Indexes17::new(client.clone(), &format!("{base_path}/p2pk33bytes")),
-            p2pk65bytes: Indexes18::new(client.clone(), &format!("{base_path}/p2pk65bytes")),
-            p2pkhbytes: Indexes19::new(client.clone(), &format!("{base_path}/p2pkhbytes")),
-            p2shbytes: Indexes20::new(client.clone(), &format!("{base_path}/p2shbytes")),
-            p2trbytes: Indexes21::new(client.clone(), &format!("{base_path}/p2trbytes")),
-            p2wpkhbytes: Indexes22::new(client.clone(), &format!("{base_path}/p2wpkhbytes")),
-            p2wshbytes: Indexes23::new(client.clone(), &format!("{base_path}/p2wshbytes")),
+            first_p2aaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2aaddressindex")),
+            first_p2pk33addressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2pk33addressindex")),
+            first_p2pk65addressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2pk65addressindex")),
+            first_p2pkhaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2pkhaddressindex")),
+            first_p2shaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2shaddressindex")),
+            first_p2traddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2traddressindex")),
+            first_p2wpkhaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2wpkhaddressindex")),
+            first_p2wshaddressindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2wshaddressindex")),
+            p2abytes: Indexes16::new(client.clone(), &format!("{base_path}_p2abytes")),
+            p2pk33bytes: Indexes17::new(client.clone(), &format!("{base_path}_p2pk33bytes")),
+            p2pk65bytes: Indexes18::new(client.clone(), &format!("{base_path}_p2pk65bytes")),
+            p2pkhbytes: Indexes19::new(client.clone(), &format!("{base_path}_p2pkhbytes")),
+            p2shbytes: Indexes20::new(client.clone(), &format!("{base_path}_p2shbytes")),
+            p2trbytes: Indexes21::new(client.clone(), &format!("{base_path}_p2trbytes")),
+            p2wpkhbytes: Indexes22::new(client.clone(), &format!("{base_path}_p2wpkhbytes")),
+            p2wshbytes: Indexes23::new(client.clone(), &format!("{base_path}_p2wshbytes")),
         }
     }
 }
@@ -3635,11 +3635,11 @@ pub struct CatalogTree_Indexed_Block {
 impl CatalogTree_Indexed_Block {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            blockhash: Indexes2::new(client.clone(), &format!("{base_path}/blockhash")),
-            difficulty: Indexes2::new(client.clone(), &format!("{base_path}/difficulty")),
-            timestamp: Indexes2::new(client.clone(), &format!("{base_path}/timestamp")),
-            total_size: Indexes2::new(client.clone(), &format!("{base_path}/total_size")),
-            weight: Indexes2::new(client.clone(), &format!("{base_path}/weight")),
+            blockhash: Indexes2::new(client.clone(), &format!("{base_path}_blockhash")),
+            difficulty: Indexes2::new(client.clone(), &format!("{base_path}_difficulty")),
+            timestamp: Indexes2::new(client.clone(), &format!("{base_path}_timestamp")),
+            total_size: Indexes2::new(client.clone(), &format!("{base_path}_total_size")),
+            weight: Indexes2::new(client.clone(), &format!("{base_path}_weight")),
         }
     }
 }
@@ -3656,11 +3656,11 @@ pub struct CatalogTree_Indexed_Output {
 impl CatalogTree_Indexed_Output {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            first_emptyoutputindex: Indexes2::new(client.clone(), &format!("{base_path}/first_emptyoutputindex")),
-            first_opreturnindex: Indexes2::new(client.clone(), &format!("{base_path}/first_opreturnindex")),
-            first_p2msoutputindex: Indexes2::new(client.clone(), &format!("{base_path}/first_p2msoutputindex")),
-            first_unknownoutputindex: Indexes2::new(client.clone(), &format!("{base_path}/first_unknownoutputindex")),
-            txindex: MetricNode::new(client.clone(), format!("{base_path}/txindex")),
+            first_emptyoutputindex: Indexes2::new(client.clone(), &format!("{base_path}_first_emptyoutputindex")),
+            first_opreturnindex: Indexes2::new(client.clone(), &format!("{base_path}_first_opreturnindex")),
+            first_p2msoutputindex: Indexes2::new(client.clone(), &format!("{base_path}_first_p2msoutputindex")),
+            first_unknownoutputindex: Indexes2::new(client.clone(), &format!("{base_path}_first_unknownoutputindex")),
+            txindex: MetricNode::new(client.clone(), format!("{base_path}_txindex")),
         }
     }
 }
@@ -3682,16 +3682,16 @@ pub struct CatalogTree_Indexed_Tx {
 impl CatalogTree_Indexed_Tx {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            base_size: Indexes6::new(client.clone(), &format!("{base_path}/base_size")),
-            first_txindex: Indexes2::new(client.clone(), &format!("{base_path}/first_txindex")),
-            first_txinindex: Indexes6::new(client.clone(), &format!("{base_path}/first_txinindex")),
-            first_txoutindex: Indexes6::new(client.clone(), &format!("{base_path}/first_txoutindex")),
-            height: Indexes6::new(client.clone(), &format!("{base_path}/height")),
-            is_explicitly_rbf: Indexes6::new(client.clone(), &format!("{base_path}/is_explicitly_rbf")),
-            rawlocktime: Indexes6::new(client.clone(), &format!("{base_path}/rawlocktime")),
-            total_size: Indexes6::new(client.clone(), &format!("{base_path}/total_size")),
-            txid: Indexes6::new(client.clone(), &format!("{base_path}/txid")),
-            txversion: Indexes6::new(client.clone(), &format!("{base_path}/txversion")),
+            base_size: Indexes6::new(client.clone(), &format!("{base_path}_base_size")),
+            first_txindex: Indexes2::new(client.clone(), &format!("{base_path}_first_txindex")),
+            first_txinindex: Indexes6::new(client.clone(), &format!("{base_path}_first_txinindex")),
+            first_txoutindex: Indexes6::new(client.clone(), &format!("{base_path}_first_txoutindex")),
+            height: Indexes6::new(client.clone(), &format!("{base_path}_height")),
+            is_explicitly_rbf: Indexes6::new(client.clone(), &format!("{base_path}_is_explicitly_rbf")),
+            rawlocktime: Indexes6::new(client.clone(), &format!("{base_path}_rawlocktime")),
+            total_size: Indexes6::new(client.clone(), &format!("{base_path}_total_size")),
+            txid: Indexes6::new(client.clone(), &format!("{base_path}_txid")),
+            txversion: Indexes6::new(client.clone(), &format!("{base_path}_txversion")),
         }
     }
 }
@@ -3708,11 +3708,11 @@ pub struct CatalogTree_Indexed_Txin {
 impl CatalogTree_Indexed_Txin {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            first_txinindex: Indexes2::new(client.clone(), &format!("{base_path}/first_txinindex")),
-            outpoint: Indexes24::new(client.clone(), &format!("{base_path}/outpoint")),
-            outputtype: Indexes24::new(client.clone(), &format!("{base_path}/outputtype")),
-            txindex: Indexes24::new(client.clone(), &format!("{base_path}/txindex")),
-            typeindex: Indexes24::new(client.clone(), &format!("{base_path}/typeindex")),
+            first_txinindex: Indexes2::new(client.clone(), &format!("{base_path}_first_txinindex")),
+            outpoint: Indexes24::new(client.clone(), &format!("{base_path}_outpoint")),
+            outputtype: Indexes24::new(client.clone(), &format!("{base_path}_outputtype")),
+            txindex: Indexes24::new(client.clone(), &format!("{base_path}_txindex")),
+            typeindex: Indexes24::new(client.clone(), &format!("{base_path}_typeindex")),
         }
     }
 }
@@ -3729,11 +3729,11 @@ pub struct CatalogTree_Indexed_Txout {
 impl CatalogTree_Indexed_Txout {
     pub fn new(client: Arc<BrkClientBase>, base_path: &str) -> Self {
         Self {
-            first_txoutindex: Indexes2::new(client.clone(), &format!("{base_path}/first_txoutindex")),
-            outputtype: Indexes25::new(client.clone(), &format!("{base_path}/outputtype")),
-            txindex: Indexes25::new(client.clone(), &format!("{base_path}/txindex")),
-            typeindex: Indexes25::new(client.clone(), &format!("{base_path}/typeindex")),
-            value: Indexes25::new(client.clone(), &format!("{base_path}/value")),
+            first_txoutindex: Indexes2::new(client.clone(), &format!("{base_path}_first_txoutindex")),
+            outputtype: Indexes25::new(client.clone(), &format!("{base_path}_outputtype")),
+            txindex: Indexes25::new(client.clone(), &format!("{base_path}_txindex")),
+            typeindex: Indexes25::new(client.clone(), &format!("{base_path}_typeindex")),
+            value: Indexes25::new(client.clone(), &format!("{base_path}_value")),
         }
     }
 }
@@ -3745,6 +3745,9 @@ pub struct BrkClient {
 }
 
 impl BrkClient {
+    /// Client version.
+    pub const VERSION: &'static str = "v0.1.0-alpha.1";
+
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
         let base = Arc::new(BrkClientBase::new(base_url));

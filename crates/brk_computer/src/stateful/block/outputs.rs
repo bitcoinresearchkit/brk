@@ -4,7 +4,7 @@ use brk_types::{Sats, TxIndex, TypeIndex};
 use crate::stateful::{
     address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
     compute::{TxOutData, VecsReaders},
-    states::Transacted,
+    state::Transacted,
 };
 
 use super::{

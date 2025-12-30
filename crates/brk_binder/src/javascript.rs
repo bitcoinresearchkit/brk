@@ -6,7 +6,7 @@ use brk_grouper::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
 };
-use brk_types::{pools, Index, TreeNode};
+use brk_types::{Index, PoolSlug, TreeNode, pools};
 use serde_json::Value;
 
 use crate::{
@@ -29,7 +29,6 @@ pub fn generate_javascript_client(
     writeln!(output, "// Auto-generated BRK JavaScript client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
 
-    generate_constants(&mut output);
     generate_type_definitions(&mut output, schemas);
     generate_base_client(&mut output);
     generate_index_accessors(&mut output, &metadata.index_set_patterns);
@@ -68,60 +67,63 @@ fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn generate_constants(output: &mut String) {
-    writeln!(output, "// Constants\n").unwrap();
+fn generate_static_constants(output: &mut String) {
+    use serde::Serialize;
+
+    fn static_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
+        let json = serde_json::to_string_pretty(value).unwrap();
+        // Indent the JSON for proper formatting inside the class
+        let indented = json
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                if i == 0 {
+                    line.to_string()
+                } else {
+                    format!("  {}", line)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        writeln!(
+            output,
+            "  static {} = /** @type {{const}} */ ({});\n",
+            name, indented
+        )
+        .unwrap();
+    }
+
+    fn static_const_raw(output: &mut String, name: &str, value: &str) {
+        writeln!(output, "  static {} = {};\n", name, value).unwrap();
+    }
 
     // VERSION
-    writeln!(output, "export const VERSION = \"v{VERSION}\";\n").unwrap();
+    static_const_raw(output, "VERSION", &format!("\"v{}\"", VERSION));
 
     // INDEXES
     let indexes = Index::all();
-    writeln!(output, "export const INDEXES = /** @type {{const}} */ ([").unwrap();
-    for index in &indexes {
-        writeln!(output, "  \"{}\",", index.serialize_long()).unwrap();
-    }
-    writeln!(output, "]);\n").unwrap();
+    let indexes_json: Vec<&'static str> = indexes.iter().map(|i| i.serialize_long()).collect();
+    static_const(output, "INDEXES", &indexes_json);
 
     // POOL_ID_TO_POOL_NAME
     let pools = pools();
     let mut sorted_pools: Vec<_> = pools.iter().collect();
     sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    let pool_map: std::collections::BTreeMap<PoolSlug, &'static str> =
+        sorted_pools.iter().map(|p| (p.slug(), p.name)).collect();
+    static_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
 
-    writeln!(output, "export const POOL_ID_TO_POOL_NAME = /** @type {{const}} */ ({{").unwrap();
-    for pool in &sorted_pools {
-        writeln!(output, "  {}: \"{}\",", pool.slug(), pool.name).unwrap();
-    }
-    writeln!(output, "}});\n").unwrap();
-
-    // Cohort names - serialize from brk_grouper using serde_json
-    generate_cohort_names(output);
-}
-
-fn generate_cohort_names(output: &mut String) {
-    use serde::Serialize;
-
-    fn export_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
-        let json = serde_json::to_string_pretty(value).unwrap();
-        writeln!(
-            output,
-            "export const {} = /** @type {{const}} */ ({});\n",
-            name, json
-        )
-        .unwrap();
-    }
-
-    writeln!(output, "// Cohort names\n").unwrap();
-
-    export_const(output, "TERM_NAMES", &TERM_NAMES);
-    export_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
-    export_const(output, "YEAR_NAMES", &YEAR_NAMES);
-    export_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
-    export_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
-    export_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
-    export_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
-    export_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
-    export_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
-    export_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
+    // Cohort names
+    static_const(output, "TERM_NAMES", &TERM_NAMES);
+    static_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
+    static_const(output, "YEAR_NAMES", &YEAR_NAMES);
+    static_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
+    static_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
+    static_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
+    static_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
+    static_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
+    static_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
+    static_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -794,6 +796,10 @@ fn generate_main_client(
     writeln!(output, " * @extends BrkClientBase").unwrap();
     writeln!(output, " */").unwrap();
     writeln!(output, "class BrkClient extends BrkClientBase {{").unwrap();
+
+    // Generate static properties for constants
+    generate_static_constants(output);
+
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @param {{BrkClientOptions|string}} options").unwrap();
     writeln!(output, "   */").unwrap();

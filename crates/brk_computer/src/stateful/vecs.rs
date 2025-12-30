@@ -22,7 +22,7 @@ use crate::{
     indexes, price,
     stateful::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
-        states::BlockState,
+        state::BlockState,
     },
     txins,
     utils::OptionExt,

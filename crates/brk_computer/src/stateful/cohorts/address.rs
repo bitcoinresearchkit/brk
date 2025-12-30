@@ -14,7 +14,7 @@ use crate::{
     Indexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
-    stateful::states::AddressCohortState,
+    stateful::state::AddressCohortState,
 };
 
 use super::{

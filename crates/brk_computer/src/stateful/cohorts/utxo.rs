@@ -9,7 +9,7 @@ use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{
     Indexes, indexes, price,
-    stateful::{CohortVecs, DynCohortVecs, states::UTXOCohortState},
+    stateful::{CohortVecs, DynCohortVecs, state::UTXOCohortState},
 };
 
 use super::super::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};

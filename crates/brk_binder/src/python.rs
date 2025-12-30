@@ -4,7 +4,7 @@ use brk_grouper::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
 };
-use brk_types::{pools, Index, TreeNode};
+use brk_types::{Index, TreeNode, pools};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -36,7 +36,6 @@ pub fn generate_python_client(
     writeln!(output, "import httpx\n").unwrap();
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
-    generate_constants(&mut output);
     generate_type_definitions(&mut output, schemas);
     generate_base_client(&mut output);
     generate_metric_node(&mut output);
@@ -50,53 +49,54 @@ pub fn generate_python_client(
     Ok(())
 }
 
-fn generate_constants(output: &mut String) {
-    writeln!(output, "# Constants\n").unwrap();
+fn generate_class_constants(output: &mut String) {
+    fn class_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
+        let json = serde_json::to_string_pretty(value).unwrap();
+        // Indent all lines for class body
+        let indented = json
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                if i == 0 {
+                    format!("    {} = {}", name, line)
+                } else {
+                    format!("    {}", line)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        writeln!(output, "{}\n", indented).unwrap();
+    }
 
     // VERSION
-    writeln!(output, "VERSION: Final[str] = \"v{VERSION}\"\n").unwrap();
+    writeln!(output, "    VERSION = \"v{}\"\n", VERSION).unwrap();
 
     // INDEXES
     let indexes = Index::all();
-    writeln!(output, "INDEXES: Final[tuple[str, ...]] = (").unwrap();
-    for index in &indexes {
-        writeln!(output, "    \"{}\",", index.serialize_long()).unwrap();
-    }
-    writeln!(output, ")\n").unwrap();
+    let indexes_list: Vec<&str> = indexes.iter().map(|i| i.serialize_long()).collect();
+    class_const(output, "INDEXES", &indexes_list);
 
     // POOL_ID_TO_POOL_NAME
     let pools = pools();
     let mut sorted_pools: Vec<_> = pools.iter().collect();
     sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-
-    writeln!(output, "POOL_ID_TO_POOL_NAME: Final[dict[str, str]] = {{").unwrap();
-    for pool in &sorted_pools {
-        writeln!(output, "    \"{}\": \"{}\",", pool.slug(), pool.name).unwrap();
-    }
-    writeln!(output, "}}\n").unwrap();
+    let pool_map: std::collections::BTreeMap<String, &str> = sorted_pools
+        .iter()
+        .map(|p| (p.slug().to_string(), p.name))
+        .collect();
+    class_const(output, "POOL_ID_TO_POOL_NAME", &pool_map);
 
     // Cohort names
-    generate_cohort_names(output);
-}
-
-fn generate_cohort_names(output: &mut String) {
-    fn export_const<T: Serialize>(output: &mut String, name: &str, value: &T) {
-        let json = serde_json::to_string_pretty(value).unwrap();
-        writeln!(output, "{}: Final = {}\n", name, json).unwrap();
-    }
-
-    writeln!(output, "# Cohort names\n").unwrap();
-
-    export_const(output, "TERM_NAMES", &TERM_NAMES);
-    export_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
-    export_const(output, "YEAR_NAMES", &YEAR_NAMES);
-    export_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
-    export_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
-    export_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
-    export_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
-    export_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
-    export_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
-    export_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
+    class_const(output, "TERM_NAMES", &TERM_NAMES);
+    class_const(output, "EPOCH_NAMES", &EPOCH_NAMES);
+    class_const(output, "YEAR_NAMES", &YEAR_NAMES);
+    class_const(output, "SPENDABLE_TYPE_NAMES", &SPENDABLE_TYPE_NAMES);
+    class_const(output, "AGE_RANGE_NAMES", &AGE_RANGE_NAMES);
+    class_const(output, "MAX_AGE_NAMES", &MAX_AGE_NAMES);
+    class_const(output, "MIN_AGE_NAMES", &MIN_AGE_NAMES);
+    class_const(output, "AMOUNT_RANGE_NAMES", &AMOUNT_RANGE_NAMES);
+    class_const(output, "GE_AMOUNT_NAMES", &GE_AMOUNT_NAMES);
+    class_const(output, "LT_AMOUNT_NAMES", &LT_AMOUNT_NAMES);
 }
 
 fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -846,7 +846,11 @@ fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
         "    \"\"\"Main BRK client with catalog tree and API methods.\"\"\""
     )
     .unwrap();
-    writeln!(output, "    ").unwrap();
+    writeln!(output).unwrap();
+
+    // Generate class-level constants
+    generate_class_constants(output);
+
     writeln!(
         output,
         "    def __init__(self, base_url: str = 'http://localhost:3000', timeout: float = 30.0):"
