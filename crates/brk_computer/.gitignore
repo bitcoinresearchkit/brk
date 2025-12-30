@@ -1,2 +1,2 @@
-bottlenecks.md
-BUG.md
+*.md
+!README.md

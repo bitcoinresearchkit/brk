@@ -155,13 +155,6 @@ impl Vecs {
             exit,
         )?;
 
-        self.halvingepoch_to_timestamp.compute_transform(
-            starting_indexes.halvingepoch,
-            &indexes.block.halvingepoch_to_first_height,
-            |(i, h, ..)| (i, height_to_timestamp_iter.get_unwrap(h)),
-            exit,
-        )?;
-
         Ok(())
     }
 }

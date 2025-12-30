@@ -167,7 +167,6 @@ impl Vecs {
             )?,
             // Timestamp metrics (moved from epoch)
             difficultyepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
-            halvingepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 db,
                 "timestamp",
