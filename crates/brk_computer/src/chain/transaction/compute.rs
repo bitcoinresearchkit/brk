@@ -4,7 +4,7 @@ use brk_types::{FeeRate, Sats, StoredU64, TxVersion};
 use vecdb::{Exit, TypedVecIterator, unlikely};
 
 use super::Vecs;
-use crate::{Indexes, grouped::ComputedVecsFromHeight, indexes, price, txins};
+use crate::{ComputeIndexes, grouped::ComputedVecsFromHeight, indexes, price, txins};
 
 impl Vecs {
     pub fn compute(
@@ -12,7 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         txins: &txins::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {

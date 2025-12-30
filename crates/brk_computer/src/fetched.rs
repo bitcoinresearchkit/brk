@@ -10,7 +10,7 @@ use vecdb::{
     PAGE_SIZE, TypedVecIterator, VecIndex,
 };
 
-use super::{Indexes, indexes, utils::OptionExt};
+use super::{ComputeIndexes, indexes, utils::OptionExt};
 
 pub const DB_NAME: &str = "fetched";
 
@@ -59,7 +59,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, indexes, starting_indexes, exit)?;
@@ -72,7 +72,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let height_to_timestamp = &indexer.vecs.block.height_to_timestamp;

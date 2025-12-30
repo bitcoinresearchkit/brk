@@ -1,7 +1,7 @@
 use std::path::Path;
 
+use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
-use brk_grouper::{CohortContext, Filter, Filtered};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use rayon::prelude::*;
@@ -11,7 +11,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes, price,
     stateful::state::AddressCohortState,
@@ -250,7 +250,7 @@ impl DynCohortVecs for AddressCohortVecs {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_addr_count.compute_rest(
@@ -268,7 +268,7 @@ impl DynCohortVecs for AddressCohortVecs {
 impl CohortVecs for AddressCohortVecs {
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -293,7 +293,7 @@ impl CohortVecs for AddressCohortVecs {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,

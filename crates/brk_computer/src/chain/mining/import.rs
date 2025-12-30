@@ -17,7 +17,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let v0 = Version::ZERO;
-        let v2 = Version::TWO;
         let v4 = Version::new(4);
         let v5 = Version::new(5);
 
@@ -168,40 +167,6 @@ impl Vecs {
                 version + v0,
                 indexes,
                 sum(),
-            )?,
-            indexes_to_blocks_before_next_difficulty_adjustment:
-                ComputedVecsFromHeight::forced_import(
-                    db,
-                    "blocks_before_next_difficulty_adjustment",
-                    Source::Compute,
-                    version + v2,
-                    indexes,
-                    last(),
-                )?,
-            indexes_to_days_before_next_difficulty_adjustment:
-                ComputedVecsFromHeight::forced_import(
-                    db,
-                    "days_before_next_difficulty_adjustment",
-                    Source::Compute,
-                    version + v2,
-                    indexes,
-                    last(),
-                )?,
-            indexes_to_blocks_before_next_halving: ComputedVecsFromHeight::forced_import(
-                db,
-                "blocks_before_next_halving",
-                Source::Compute,
-                version + v2,
-                indexes,
-                last(),
-            )?,
-            indexes_to_days_before_next_halving: ComputedVecsFromHeight::forced_import(
-                db,
-                "days_before_next_halving",
-                Source::Compute,
-                version + v2,
-                indexes,
-                last(),
             )?,
         })
     }

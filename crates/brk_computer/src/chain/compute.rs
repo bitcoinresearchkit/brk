@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{indexes, price, txins, Indexes};
+use crate::{indexes, price, txins, ComputeIndexes};
 
 use super::Vecs;
 
@@ -12,13 +12,13 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         txins: &txins::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         // Independent computations first
         self.block.compute(indexer, indexes, starting_indexes, exit)?;
-        self.epoch.compute(indexer, indexes, starting_indexes, exit)?;
+        self.epoch.compute(indexes, starting_indexes, exit)?;
         self.transaction.compute(indexer, indexes, txins, starting_indexes, price, exit)?;
 
         // Coinbase depends on block and transaction

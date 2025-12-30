@@ -12,7 +12,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{LazyVecsBuilder, Source},
     indexes,
     utils::OptionExt,
@@ -139,7 +139,7 @@ where
     pub fn compute_all<F>(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
@@ -155,7 +155,7 @@ where
     pub fn compute_rest(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         height_vec: Option<&impl IterableVec<Height, T>>,
     ) -> Result<()> {

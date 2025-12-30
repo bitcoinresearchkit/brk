@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use brk_error::Result;
-use brk_grouper::{
+use brk_cohort::{
     ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge, ByMinAge,
     BySpendableType, ByTerm, ByYear, Filter, Filtered, StateLevel, UTXOGroups,
 };
+use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
 use derive_deref::{Deref, DerefMut};
@@ -12,16 +12,13 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{PERCENTILES, PERCENTILES_LEN},
     indexes, price,
     stateful::DynCohortVecs,
 };
 
-use super::{
-    super::traits::CohortVecs,
-    vecs::UTXOCohortVecs,
-};
+use super::{super::traits::CohortVecs, vecs::UTXOCohortVecs};
 
 const VERSION: Version = Version::new(0);
 
@@ -59,7 +56,15 @@ impl UTXOCohorts {
         // Create all cohorts first (while borrowing all_supply), then assemble struct
         let price_only = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
-                db, f, name, v, indexes, price, states_path, StateLevel::PriceOnly, all_supply,
+                db,
+                f,
+                name,
+                v,
+                indexes,
+                price,
+                states_path,
+                StateLevel::PriceOnly,
+                all_supply,
             )
         };
 
@@ -67,12 +72,28 @@ impl UTXOCohorts {
 
         let full = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
-                db, f, name, v, indexes, price, states_path, StateLevel::Full, all_supply,
+                db,
+                f,
+                name,
+                v,
+                indexes,
+                price,
+                states_path,
+                StateLevel::Full,
+                all_supply,
             )
         };
         let none = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
-                db, f, name, v, indexes, price, states_path, StateLevel::None, all_supply,
+                db,
+                f,
+                name,
+                v,
+                indexes,
+                price,
+                states_path,
+                StateLevel::None,
+                all_supply,
             )
         };
 
@@ -104,7 +125,7 @@ impl UTXOCohorts {
     /// Compute overlapping cohorts from component age/amount range cohorts.
     pub fn compute_overlapping_vecs(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let by_age_range = &self.0.age_range;
@@ -172,7 +193,7 @@ impl UTXOCohorts {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.par_iter_mut()
@@ -185,7 +206,7 @@ impl UTXOCohorts {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &S,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,

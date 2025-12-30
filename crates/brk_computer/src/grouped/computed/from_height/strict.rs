@@ -7,7 +7,7 @@ use vecdb::{
     AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec,
 };
 
-use crate::{Indexes, indexes};
+use crate::{ComputeIndexes, indexes};
 
 use crate::grouped::{ComputedVecValue, EagerVecsBuilder, LazyVecsBuilder, VecBuilderOptions};
 
@@ -64,7 +64,7 @@ where
 
     pub fn compute<F>(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>

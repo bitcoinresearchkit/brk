@@ -1,4 +1,4 @@
-use brk_grouper::{AmountBucket, ByAddressType};
+use brk_cohort::{AmountBucket, ByAddressType};
 use brk_types::{Dollars, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 

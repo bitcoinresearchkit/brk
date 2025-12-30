@@ -14,7 +14,7 @@ use crate::{
         LazyVecsFrom2FromHeight, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin, Source,
         VecBuilderOptions,
     },
-    indexes::{self, Indexes},
+    indexes::{self, ComputeIndexes},
     price,
 };
 
@@ -211,7 +211,7 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_pool: &impl IterableVec<Height, PoolSlug>,
         price: Option<&price::Vecs>,
         exit: &Exit,

@@ -1,46 +1,17 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
-use brk_types::Timestamp;
+use brk_types::StoredU32;
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{Indexes, indexes};
+use crate::{chain::TARGET_BLOCKS_PER_DAY_F32, indexes, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.timeindexes_to_timestamp
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.dateindex,
-                    &indexes.time.dateindex_to_date,
-                    |(di, d, ..)| (di, Timestamp::from(d)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        let mut height_to_timestamp_iter = indexer.vecs.block.height_to_timestamp.iter()?;
-
-        self.difficultyepoch_to_timestamp.compute_transform(
-            starting_indexes.difficultyepoch,
-            &indexes.block.difficultyepoch_to_first_height,
-            |(i, h, ..)| (i, height_to_timestamp_iter.get_unwrap(h)),
-            exit,
-        )?;
-
-        self.halvingepoch_to_timestamp.compute_transform(
-            starting_indexes.halvingepoch,
-            &indexes.block.halvingepoch_to_first_height,
-            |(i, h, ..)| (i, height_to_timestamp_iter.get_unwrap(h)),
-            exit,
-        )?;
-
         let mut height_to_difficultyepoch_iter =
             indexes.block.height_to_difficultyepoch.into_iter();
         self.indexes_to_difficultyepoch
@@ -79,6 +50,65 @@ impl Vecs {
                 )?;
                 Ok(())
             })?;
+
+        // Countdown metrics (moved from mining)
+        self.indexes_to_blocks_before_next_difficulty_adjustment
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &indexes.block.height_to_height,
+                    |(h, ..)| (h, StoredU32::from(h.left_before_next_diff_adj())),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_days_before_next_difficulty_adjustment
+            .compute_all(indexes, starting_indexes, exit, |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_blocks_before_next_difficulty_adjustment
+                        .height
+                        .as_ref()
+                        .unwrap(),
+                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        self.indexes_to_blocks_before_next_halving.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &indexes.block.height_to_height,
+                    |(h, ..)| (h, StoredU32::from(h.left_before_next_halving())),
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
+
+        self.indexes_to_days_before_next_halving.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_blocks_before_next_halving
+                        .height
+                        .as_ref()
+                        .unwrap(),
+                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
+                    exit,
+                )?;
+                Ok(())
+            },
+        )?;
 
         Ok(())
     }

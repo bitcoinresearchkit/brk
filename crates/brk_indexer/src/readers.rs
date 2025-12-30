@@ -1,4 +1,4 @@
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use vecdb::{GenericStoredVec, Reader};
 
 use crate::Vecs;

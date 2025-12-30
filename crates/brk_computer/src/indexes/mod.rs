@@ -3,16 +3,15 @@ mod block;
 mod time;
 mod transaction;
 
-use std::{ops::Deref, path::Path};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{
-    DateIndex, DecadeIndex, DifficultyEpoch, HalvingEpoch, Height, MonthIndex, QuarterIndex,
-    SemesterIndex, Version, WeekIndex, YearIndex,
-};
-use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
+use brk_types::{Indexes, Version};
+
+pub use brk_types::ComputeIndexes;
+use vecdb::{Database, Exit, PAGE_SIZE};
 
 pub use address::Vecs as AddressVecs;
 pub use block::Vecs as BlockVecs;
@@ -63,9 +62,9 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: brk_indexer::Indexes,
+        starting_indexes: Indexes,
         exit: &Exit,
-    ) -> Result<Indexes> {
+    ) -> Result<ComputeIndexes> {
         let indexes = self.compute_(indexer, starting_indexes, exit)?;
         let _lock = exit.lock();
         self.db.compact()?;
@@ -75,9 +74,9 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: brk_indexer::Indexes,
+        starting_indexes: Indexes,
         exit: &Exit,
-    ) -> Result<Indexes> {
+    ) -> Result<ComputeIndexes> {
         // Transaction indexes
         self.transaction.compute(indexer, &starting_indexes, exit)?;
 
@@ -90,60 +89,17 @@ impl Vecs {
             .time
             .compute(indexer, &starting_indexes, starting_dateindex, &self.block, exit)?;
 
-        Ok(Indexes {
-            indexes: starting_indexes,
-            dateindex: time_indexes.dateindex,
-            weekindex: time_indexes.weekindex,
-            monthindex: time_indexes.monthindex,
-            quarterindex: time_indexes.quarterindex,
-            semesterindex: time_indexes.semesterindex,
-            yearindex: time_indexes.yearindex,
-            decadeindex: time_indexes.decadeindex,
-            difficultyepoch: starting_difficultyepoch,
-            halvingepoch: starting_halvingepoch,
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Indexes {
-    indexes: brk_indexer::Indexes,
-    pub dateindex: DateIndex,
-    pub weekindex: WeekIndex,
-    pub monthindex: MonthIndex,
-    pub quarterindex: QuarterIndex,
-    pub semesterindex: SemesterIndex,
-    pub yearindex: YearIndex,
-    pub decadeindex: DecadeIndex,
-    pub difficultyepoch: DifficultyEpoch,
-    pub halvingepoch: HalvingEpoch,
-}
-
-impl Indexes {
-    pub fn update_from_height(&mut self, height: Height, indexes: &Vecs) {
-        self.indexes.height = height;
-        self.dateindex = DateIndex::try_from(
-            indexes
-                .block
-                .height_to_date_fixed
-                .into_iter()
-                .get_unwrap(height),
-        )
-        .unwrap();
-        self.weekindex = WeekIndex::from(self.dateindex);
-        self.monthindex = MonthIndex::from(self.dateindex);
-        self.quarterindex = QuarterIndex::from(self.monthindex);
-        self.semesterindex = SemesterIndex::from(self.monthindex);
-        self.yearindex = YearIndex::from(self.monthindex);
-        self.decadeindex = DecadeIndex::from(self.dateindex);
-        self.difficultyepoch = DifficultyEpoch::from(self.height);
-        self.halvingepoch = HalvingEpoch::from(self.height);
-    }
-}
-
-impl Deref for Indexes {
-    type Target = brk_indexer::Indexes;
-    fn deref(&self) -> &Self::Target {
-        &self.indexes
+        Ok(ComputeIndexes::new(
+            starting_indexes,
+            time_indexes.dateindex,
+            time_indexes.weekindex,
+            time_indexes.monthindex,
+            time_indexes.quarterindex,
+            time_indexes.semesterindex,
+            time_indexes.yearindex,
+            time_indexes.decadeindex,
+            starting_difficultyepoch,
+            starting_halvingepoch,
+        ))
     }
 }

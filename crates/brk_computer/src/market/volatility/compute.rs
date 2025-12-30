@@ -3,12 +3,12 @@ use brk_types::{DateIndex, StoredF32};
 use vecdb::{CollectableVec, Exit};
 
 use super::Vecs;
-use crate::Indexes;
+use crate::ComputeIndexes;
 
 impl Vecs {
     pub fn compute<V>(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         _1d_price_returns_dateindex: &V,
     ) -> Result<()>

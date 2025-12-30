@@ -1,5 +1,5 @@
+use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
-use brk_grouper::{AmountBucket, ByAddressType};
 use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
 use vecdb::{VecIndex, unlikely};
 

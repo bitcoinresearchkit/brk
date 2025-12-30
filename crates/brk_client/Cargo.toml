@@ -9,7 +9,7 @@ repository.workspace = true
 build = "build.rs"
 
 [dependencies]
-brk_grouper = { workspace = true }
+brk_cohort = { workspace = true }
 brk_types = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }

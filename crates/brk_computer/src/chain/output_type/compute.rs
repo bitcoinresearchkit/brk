@@ -4,7 +4,7 @@ use brk_types::{Height, StoredU64};
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{chain::transaction, indexes, Indexes};
+use crate::{chain::transaction, indexes, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -12,7 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         transaction_vecs: &transaction::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_p2a_count

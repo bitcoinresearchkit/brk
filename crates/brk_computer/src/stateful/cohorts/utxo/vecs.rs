@@ -1,13 +1,13 @@
 use std::path::Path;
 
+use brk_cohort::{CohortContext, Filter, Filtered, StateLevel};
 use brk_error::Result;
-use brk_grouper::{CohortContext, Filter, Filtered, StateLevel};
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::state::UTXOCohortState};
+use crate::{ComputeIndexes, indexes, price, stateful::state::UTXOCohortState};
 
 use crate::stateful::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
 
@@ -211,7 +211,7 @@ impl DynCohortVecs for UTXOCohortVecs {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
@@ -222,7 +222,7 @@ impl DynCohortVecs for UTXOCohortVecs {
 impl CohortVecs for UTXOCohortVecs {
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -237,7 +237,7 @@ impl CohortVecs for UTXOCohortVecs {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,

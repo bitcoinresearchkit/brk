@@ -1,29 +1,20 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use crate::{
-    grouped::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes,
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let v0 = Version::ZERO;
+        let v2 = Version::TWO;
         let last = || VecBuilderOptions::default().add_last();
 
         Ok(Self {
-            difficultyepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
-            halvingepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
-            timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "timestamp",
-                Source::Compute,
-                version + v0,
-                indexes,
-                VecBuilderOptions::default().add_first(),
-            )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 db,
                 "difficultyepoch",
@@ -37,6 +28,41 @@ impl Vecs {
                 "halvingepoch",
                 Source::Compute,
                 version + v0,
+                indexes,
+                last(),
+            )?,
+            // Countdown metrics (moved from mining)
+            indexes_to_blocks_before_next_difficulty_adjustment:
+                ComputedVecsFromHeight::forced_import(
+                    db,
+                    "blocks_before_next_difficulty_adjustment",
+                    Source::Compute,
+                    version + v2,
+                    indexes,
+                    last(),
+                )?,
+            indexes_to_days_before_next_difficulty_adjustment:
+                ComputedVecsFromHeight::forced_import(
+                    db,
+                    "days_before_next_difficulty_adjustment",
+                    Source::Compute,
+                    version + v2,
+                    indexes,
+                    last(),
+                )?,
+            indexes_to_blocks_before_next_halving: ComputedVecsFromHeight::forced_import(
+                db,
+                "blocks_before_next_halving",
+                Source::Compute,
+                version + v2,
+                indexes,
+                last(),
+            )?,
+            indexes_to_days_before_next_halving: ComputedVecsFromHeight::forced_import(
+                db,
+                "days_before_next_halving",
+                Source::Compute,
+                version + v2,
                 indexes,
                 last(),
             )?,

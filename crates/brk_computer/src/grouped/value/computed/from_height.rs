@@ -4,7 +4,7 @@ use brk_types::{Bitcoin, Dollars, Height, Sats, Version};
 use vecdb::{CollectableVec, Database, EagerVec, Exit, IterableCloneableVec, PcoVec};
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{LazyVecsFromHeight, SatsToBitcoin, Source},
     indexes, price,
     traits::ComputeFromBitcoin,
@@ -74,7 +74,7 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
@@ -93,7 +93,7 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         height: Option<&impl CollectableVec<Height, Sats>>,
     ) -> Result<()> {

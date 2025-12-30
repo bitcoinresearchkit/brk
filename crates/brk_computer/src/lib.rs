@@ -27,7 +27,7 @@ mod txins;
 mod txouts;
 mod utils;
 
-use indexes::Indexes;
+use indexes::ComputeIndexes;
 use utils::OptionExt;
 
 #[derive(Clone, Traversable)]

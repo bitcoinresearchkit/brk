@@ -1,7 +1,7 @@
 use std::thread;
 
+use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_grouper::ByAddressType;
 use brk_indexer::Indexer;
 use brk_types::{DateIndex, Height, OutputType, Sats, TxIndex, TypeIndex};
 use log::info;
@@ -12,11 +12,11 @@ use crate::{
     chain, indexes, price,
     stateful::{
         address::AddressTypeToAddressCount,
-        compute::write::{process_address_updates, write},
         block::{
             AddressCache, InputsResult, process_inputs, process_outputs, process_received,
             process_sent,
         },
+        compute::write::{process_address_updates, write},
         state::{BlockState, Transacted},
     },
     txins,
@@ -63,10 +63,15 @@ pub fn process_blocks(
 
     // From chain (via .height.u() or .height.unwrap_sum() patterns):
     let height_to_tx_count = chain.transaction.indexes_to_tx_count.height.u();
-    let height_to_output_count = chain.transaction.indexes_to_output_count.height.unwrap_sum();
+    let height_to_output_count = chain
+        .transaction
+        .indexes_to_output_count
+        .height
+        .unwrap_sum();
     let height_to_input_count = chain.transaction.indexes_to_input_count.height.unwrap_sum();
     let height_to_unclaimed_rewards = chain
-        .coinbase.indexes_to_unclaimed_rewards
+        .coinbase
+        .indexes_to_unclaimed_rewards
         .sats
         .height
         .as_ref()

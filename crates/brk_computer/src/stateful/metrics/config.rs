@@ -1,4 +1,4 @@
-use brk_grouper::{CohortContext, Filter};
+use brk_cohort::{CohortContext, Filter};
 use brk_types::Version;
 use vecdb::Database;
 

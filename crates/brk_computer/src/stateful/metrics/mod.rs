@@ -12,14 +12,14 @@ pub use realized::RealizedMetrics;
 pub use supply::SupplyMetrics;
 pub use unrealized::UnrealizedMetrics;
 
+use brk_cohort::Filter;
 use brk_error::Result;
-use brk_grouper::Filter;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price as price_vecs, stateful::state::CohortState};
+use crate::{ComputeIndexes, indexes, price as price_vecs, stateful::state::CohortState};
 
 /// All metrics for a cohort, organized by category.
 #[derive(Clone, Traversable)]
@@ -205,7 +205,7 @@ impl CohortMetrics {
     /// Compute aggregate cohort values from separate cohorts.
     pub fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -261,7 +261,7 @@ impl CohortMetrics {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price_vecs::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.supply
@@ -290,7 +290,7 @@ impl CohortMetrics {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price_vecs::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,

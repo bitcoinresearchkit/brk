@@ -7,7 +7,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{
         ComputedStandardDeviationVecsFromDateIndex, LazyVecsFrom2FromDateIndex, PriceTimesRatio,
         StandardDeviationVecsOptions, source::Source,
@@ -157,7 +157,7 @@ impl ComputedRatioVecsFromDateIndex {
     pub fn compute_all<F>(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         compute: F,
     ) -> Result<()>
@@ -176,7 +176,7 @@ impl ComputedRatioVecsFromDateIndex {
     pub fn compute_rest(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {

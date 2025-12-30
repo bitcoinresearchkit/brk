@@ -11,7 +11,7 @@ use vecdb::{BytesVec, Database, EagerVec, Exit, ImportableVec, PAGE_SIZE, PcoVec
 use crate::{fetched, grouped::Source, utils::OptionExt};
 
 use super::{
-    Indexes,
+    ComputeIndexes,
     grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, VecBuilderOptions},
     indexes,
 };
@@ -189,7 +189,7 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         fetched: &fetched::Vecs,
         exit: &Exit,
     ) -> Result<()> {
@@ -201,7 +201,7 @@ impl Vecs {
 
     fn compute_(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         fetched: &fetched::Vecs,
         exit: &Exit,
     ) -> Result<()> {

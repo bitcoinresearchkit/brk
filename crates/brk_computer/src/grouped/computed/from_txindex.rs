@@ -12,7 +12,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{LazyVecsBuilder, Source},
     indexes, price,
     utils::OptionExt,
@@ -135,7 +135,7 @@ where
     //     &mut self,
     //     indexer: &Indexer,
     //     indexes: &indexes::Vecs,
-    //     starting_indexes: &Indexes,
+    //     starting_indexes: &ComputeIndexes,
     //     exit: &Exit,
     //     mut compute: F,
     // ) -> Result<()>
@@ -166,7 +166,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         txindex: Option<&impl CollectableVec<TxIndex, T>>,
     ) -> Result<()> {
@@ -196,7 +196,7 @@ where
     fn compute_after_height(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.dateindex.from_aligned(
@@ -216,7 +216,7 @@ impl ComputedVecsFromTxindex<Bitcoin> {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         sats: &ComputedVecsFromTxindex<Sats>,
         txindex: Option<&impl CollectableVec<TxIndex, Bitcoin>>,
@@ -314,7 +314,7 @@ impl ComputedVecsFromTxindex<Dollars> {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         bitcoin: &ComputedVecsFromTxindex<Bitcoin>,
         txindex: Option<&impl CollectableVec<TxIndex, Dollars>>,

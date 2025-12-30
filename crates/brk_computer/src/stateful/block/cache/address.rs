@@ -1,4 +1,4 @@
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use brk_types::{AnyAddressDataIndexEnum, LoadedAddressData, OutputType, TypeIndex};
 use vecdb::GenericStoredVec;
 
@@ -7,11 +7,11 @@ use crate::stateful::{
     compute::VecsReaders,
 };
 
-use super::lookup::AddressLookup;
 use super::super::cohort::{
-    update_tx_counts, EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec,
-    WithAddressDataSource,
+    EmptyAddressDataWithSource, LoadedAddressDataWithSource, TxIndexVec, WithAddressDataSource,
+    update_tx_counts,
 };
+use super::lookup::AddressLookup;
 
 /// Cache for address data within a flush interval.
 pub struct AddressCache {

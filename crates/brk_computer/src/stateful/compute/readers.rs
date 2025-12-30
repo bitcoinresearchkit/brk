@@ -1,4 +1,4 @@
-use brk_grouper::{ByAddressType, ByAnyAddress};
+use brk_cohort::{ByAddressType, ByAnyAddress};
 use brk_indexer::Indexer;
 use brk_types::{
     Height, OutPoint, OutputType, Sats, StoredU64, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
@@ -9,7 +9,10 @@ use vecdb::{
 };
 
 use crate::{
-    stateful::{address::{AddressesDataVecs, AnyAddressIndexesVecs}, RangeMap},
+    stateful::{
+        RangeMap,
+        address::{AddressesDataVecs, AnyAddressIndexesVecs},
+    },
     txins,
 };
 

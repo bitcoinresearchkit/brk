@@ -22,7 +22,7 @@ pub fn iter_difficulty_epochs(
         .unwrap_or_default();
 
     let mut epoch_to_height_iter = computer.indexes.block.difficultyepoch_to_first_height.iter();
-    let mut epoch_to_timestamp_iter = computer.chain.epoch.difficultyepoch_to_timestamp.iter();
+    let mut epoch_to_timestamp_iter = computer.chain.block.difficultyepoch_to_timestamp.iter();
     let mut epoch_to_difficulty_iter = computer
         .chain
         .mining

@@ -6,7 +6,7 @@ use vecdb::Exit;
 use super::Vecs;
 use crate::{
     chain::{coinbase, transaction},
-    indexes, price, Indexes,
+    indexes, price, ComputeIndexes,
 };
 
 impl Vecs {
@@ -17,7 +17,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         transaction_vecs: &transaction::Vecs,
         coinbase_vecs: &coinbase::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {

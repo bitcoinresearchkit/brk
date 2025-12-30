@@ -10,7 +10,7 @@ use vecdb::{
     TypedVecIterator,
 };
 
-use super::Indexes;
+use super::ComputeIndexes;
 
 pub const DB_NAME: &str = "blks";
 
@@ -49,7 +49,7 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
@@ -62,7 +62,7 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         parser: &Reader,
         exit: &Exit,
     ) -> Result<()> {

@@ -2,13 +2,13 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{price, utils::OptionExt, Indexes};
+use crate::{price, utils::OptionExt, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let close = price.timeindexes_to_price_close.dateindex.u();

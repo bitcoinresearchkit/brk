@@ -8,7 +8,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{
         ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromHeight,
         HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyHeightValueVecs,
@@ -157,7 +157,7 @@ impl SupplyMetrics {
     /// Compute aggregate values from separate cohorts.
     pub fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -185,7 +185,7 @@ impl SupplyMetrics {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_supply

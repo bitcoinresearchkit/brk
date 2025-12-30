@@ -11,7 +11,7 @@ build = "build.rs"
 [dependencies]
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
-brk_grouper = { workspace = true }
+brk_cohort = { workspace = true }
 brk_iterator = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }

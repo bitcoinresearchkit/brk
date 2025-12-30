@@ -1,4 +1,4 @@
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use derive_deref::{Deref, DerefMut};
 
 /// A vector for each address type.

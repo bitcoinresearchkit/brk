@@ -16,6 +16,10 @@ pub use brk_bundler as bundler;
 #[doc(inline)]
 pub use brk_client as client;
 
+#[cfg(feature = "cohort")]
+#[doc(inline)]
+pub use brk_cohort as cohort;
+
 #[cfg(feature = "computer")]
 #[doc(inline)]
 pub use brk_computer as computer;
@@ -27,10 +31,6 @@ pub use brk_error as error;
 #[cfg(feature = "fetcher")]
 #[doc(inline)]
 pub use brk_fetcher as fetcher;
-
-#[cfg(feature = "grouper")]
-#[doc(inline)]
-pub use brk_grouper as grouper;
 
 #[cfg(feature = "indexer")]
 #[doc(inline)]

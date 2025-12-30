@@ -1,4 +1,4 @@
-# brk_grouper
+# brk_cohort
 
 UTXO and address cohort filtering for on-chain analytics.
 

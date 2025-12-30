@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
 use serde_json::json;
 
-use brk_grouper::{
+use brk_cohort::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
 };
@@ -374,6 +374,14 @@ class MetricNode {{
   }}
 
   /**
+   * Get the path for this metric.
+   * @returns {{string}}
+   */
+  get path() {{
+    return this._path;
+  }}
+
+  /**
    * Fetch all data points for this metric.
    * @param {{(value: T[]) => void}} [onUpdate] - Called when data is available (may be called twice: cache then fresh)
    * @returns {{Promise<T[]>}}
@@ -473,11 +481,12 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
         }
         writeln!(output, " */\n").unwrap();
 
-        // Outer type with 'by' property
+        // Outer type with 'by' property and indexes method
         writeln!(output, "/**").unwrap();
         writeln!(output, " * @template T").unwrap();
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
         writeln!(output, " * @property {{{}<T>}} by", by_type_name).unwrap();
+        writeln!(output, " * @property {{() => Index[]}} indexes").unwrap();
         writeln!(output, " */\n").unwrap();
 
         // Generate factory function
@@ -512,6 +521,9 @@ fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern]) {
             .unwrap();
         }
 
+        writeln!(output, "    }},").unwrap();
+        writeln!(output, "    indexes() {{").unwrap();
+        writeln!(output, "      return /** @type {{Index[]}} */ (Object.keys(this.by));").unwrap();
         writeln!(output, "    }}").unwrap();
         writeln!(output, "  }};").unwrap();
         writeln!(output, "}}\n").unwrap();

@@ -4,7 +4,7 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Sats, Version};
 use vecdb::{CollectableVec, Database, EagerVec, Exit, IterableCloneableVec, PcoVec};
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{ComputedVecsFromDateIndex, LazyVecsFromDateIndex, SatsToBitcoin},
     indexes, price,
     traits::ComputeFromBitcoin,
@@ -71,7 +71,7 @@ impl ComputedValueVecsFromDateIndex {
     pub fn compute_all<F>(
         &mut self,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
@@ -89,7 +89,7 @@ impl ComputedValueVecsFromDateIndex {
     pub fn compute_rest(
         &mut self,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         dateindex: Option<&impl CollectableVec<DateIndex, Sats>>,
     ) -> Result<()> {

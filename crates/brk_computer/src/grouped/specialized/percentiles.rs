@@ -6,7 +6,7 @@ use vecdb::{
     AnyExportableVec, AnyStoredVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec,
 };
 
-use crate::{Indexes, indexes};
+use crate::{ComputeIndexes, indexes};
 
 use super::super::{ComputedVecsFromDateIndex, Source, VecBuilderOptions};
 
@@ -65,7 +65,7 @@ impl PricePercentiles {
         Ok(())
     }
 
-    pub fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    pub fn compute_rest(&mut self, starting_indexes: &ComputeIndexes, exit: &Exit) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
             vec.compute_rest(
                 starting_indexes,

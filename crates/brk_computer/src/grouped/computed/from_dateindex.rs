@@ -9,7 +9,7 @@ use vecdb::{
     PcoVec,
 };
 
-use crate::{Indexes, grouped::LazyVecsBuilder, indexes, utils::OptionExt};
+use crate::{ComputeIndexes, grouped::LazyVecsBuilder, indexes, utils::OptionExt};
 
 use crate::grouped::{ComputedVecValue, EagerVecsBuilder, Source, VecBuilderOptions};
 
@@ -114,7 +114,7 @@ where
 
     pub fn compute_all<F>(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         mut compute: F,
     ) -> Result<()>
@@ -129,7 +129,7 @@ where
 
     pub fn compute_rest(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         dateindex: Option<&impl IterableVec<DateIndex, T>>,
     ) -> Result<()> {

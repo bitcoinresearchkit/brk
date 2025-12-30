@@ -66,7 +66,7 @@ impl Query {
 
         let mut timestamp_iter = computer
             .chain
-            .epoch
+            .block
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()

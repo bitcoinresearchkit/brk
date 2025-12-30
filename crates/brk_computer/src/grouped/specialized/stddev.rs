@@ -8,7 +8,7 @@ use vecdb::{
     PcoVec, VecIndex,
 };
 
-use crate::{Indexes, grouped::source::Source, indexes, price, utils::OptionExt};
+use crate::{ComputeIndexes, grouped::source::Source, indexes, price, utils::OptionExt};
 
 use super::super::{
     ClosePriceTimesRatio, ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, VecBuilderOptions,
@@ -195,7 +195,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
     pub fn compute_all(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         source: &impl CollectableVec<DateIndex, StoredF32>,
     ) -> Result<()> {
@@ -221,7 +221,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
     pub fn compute_rest(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         sma_opt: Option<&impl IterableVec<DateIndex, StoredF32>>,
         source: &impl CollectableVec<DateIndex, StoredF32>,

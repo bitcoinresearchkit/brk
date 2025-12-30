@@ -29,7 +29,7 @@ use brk::types::Height;
 | `computer` | `brk_computer` | Metric computation |
 | `error` | `brk_error` | Error types |
 | `fetcher` | `brk_fetcher` | Price data fetching |
-| `grouper` | `brk_grouper` | Cohort filtering |
+| `cohort` | `brk_cohort` | Cohort filtering |
 | `indexer` | `brk_indexer` | Blockchain indexing |
 | `iterator` | `brk_iterator` | Block iteration |
 | `logger` | `brk_logger` | Logging setup |

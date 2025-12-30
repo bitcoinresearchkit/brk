@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Write as FmtWrite, fs, io, path::Path};
 
-use brk_grouper::{
+use brk_cohort::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
     MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, YEAR_NAMES,
 };

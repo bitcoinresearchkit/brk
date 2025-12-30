@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
-use crate::{Indexes, indexes, price};
+use crate::{ComputeIndexes, indexes, price};
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -38,7 +38,7 @@ pub trait DynCohortVecs: Send + Sync {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -48,7 +48,7 @@ pub trait CohortVecs: DynCohortVecs {
     /// Compute aggregate cohort from component cohorts.
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()>;
@@ -59,7 +59,7 @@ pub trait CohortVecs: DynCohortVecs {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,

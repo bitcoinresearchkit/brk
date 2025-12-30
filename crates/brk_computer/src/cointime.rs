@@ -8,7 +8,7 @@ use vecdb::{Database, Exit, PAGE_SIZE, TypedVecIterator};
 use crate::{grouped::ComputedVecsFromDateIndex, utils::OptionExt};
 
 use super::{
-    Indexes, chain,
+    ComputeIndexes, chain,
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
         Source, VecBuilderOptions,
@@ -198,7 +198,7 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         chain: &chain::Vecs,
         stateful: &stateful::Vecs,
@@ -214,7 +214,7 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         chain: &chain::Vecs,
         stateful: &stateful::Vecs,

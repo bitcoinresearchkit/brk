@@ -3,13 +3,13 @@ use brk_types::StoredU16;
 use vecdb::{Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
-use crate::{Indexes, price, traits::ComputeDrawdown, utils::OptionExt};
+use crate::{ComputeIndexes, price, traits::ComputeDrawdown, utils::OptionExt};
 
 impl Vecs {
     pub fn compute(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.height_to_price_ath.compute_all_time_high(

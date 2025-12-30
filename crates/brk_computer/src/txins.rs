@@ -10,7 +10,7 @@ use vecdb::{
     TypedVecIterator, VecIndex,
 };
 
-use super::Indexes;
+use super::ComputeIndexes;
 
 const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 pub const DB_NAME: &str = "txins";
@@ -48,7 +48,7 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, starting_indexes, exit)?;
@@ -60,7 +60,7 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let target = indexer.vecs.txin.txinindex_to_outpoint.len();

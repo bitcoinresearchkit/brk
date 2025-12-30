@@ -1,13 +1,13 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, Height, MonthIndex, QuarterIndex, SemesterIndex, StoredU32, StoredU64,
-    Timestamp, WeekIndex, Weight, YearIndex,
+    DateIndex, DecadeIndex, DifficultyEpoch, HalvingEpoch, Height, MonthIndex, QuarterIndex,
+    SemesterIndex, StoredU32, StoredU64, Timestamp, WeekIndex, Weight, YearIndex,
 };
 use vecdb::{EagerVec, LazyVecFrom1, PcoVec};
 
 use crate::grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight};
 
-/// Block-related metrics: count, interval, size, weight, vbytes
+/// Block-related metrics: count, interval, size, weight, vbytes, timestamps
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     pub dateindex_to_block_count_target: LazyVecFrom1<DateIndex, StoredU64, DateIndex, DateIndex>,
@@ -32,4 +32,7 @@ pub struct Vecs {
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
+    pub difficultyepoch_to_timestamp: EagerVec<PcoVec<DifficultyEpoch, Timestamp>>,
+    pub halvingepoch_to_timestamp: EagerVec<PcoVec<HalvingEpoch, Timestamp>>,
+    pub timeindexes_to_timestamp: ComputedVecsFromDateIndex<Timestamp>,
 }

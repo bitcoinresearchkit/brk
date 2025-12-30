@@ -17,7 +17,7 @@ full = [
     "computer",
     "error",
     "fetcher",
-    "grouper",
+    "cohort",
     "indexer",
     "iterator",
     "logger",
@@ -38,7 +38,7 @@ client = ["brk_client"]
 computer = ["brk_computer"]
 error = ["brk_error"]
 fetcher = ["brk_fetcher"]
-grouper = ["brk_grouper"]
+cohort = ["brk_cohort"]
 indexer = ["brk_indexer"]
 iterator = ["brk_iterator"]
 logger = ["brk_logger"]
@@ -60,7 +60,7 @@ brk_client = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_error = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
-brk_grouper = { workspace = true, optional = true }
+brk_cohort = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_iterator = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }

@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_grouper::{ByAmountRange, GroupedByType};
+use brk_cohort::{ByAmountRange, GroupedByType};
 use brk_types::{OutputType, Sats, SupplyState};
 
 #[derive(Default, Debug)]

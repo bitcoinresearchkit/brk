@@ -44,7 +44,7 @@ fn generate_imports(output: &mut String) {
         output,
         r#"use std::sync::Arc;
 use serde::de::DeserializeOwned;
-pub use brk_grouper::*;
+pub use brk_cohort::*;
 pub use brk_types::*;
 
 "#

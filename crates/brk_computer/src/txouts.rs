@@ -10,7 +10,7 @@ use vecdb::{
     Stamp, TypedVecIterator, VecIndex,
 };
 
-use super::{Indexes, txins};
+use super::{ComputeIndexes, txins};
 
 pub const DB_NAME: &str = "txouts";
 const HEIGHT_BATCH: u32 = 10_000;
@@ -47,7 +47,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         txins: &txins::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_(indexer, txins, starting_indexes, exit)?;
@@ -60,7 +60,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         txins: &txins::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let target_height = indexer.vecs.block.height_to_blockhash.len();

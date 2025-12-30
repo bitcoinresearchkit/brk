@@ -4,6 +4,7 @@ use log::error;
 use vecdb::GenericStoredVec;
 
 use super::BlockProcessor;
+use crate::IndexesExt;
 
 impl BlockProcessor<'_> {
     pub fn process_block_metadata(&mut self) -> Result<()> {

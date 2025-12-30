@@ -1,4 +1,4 @@
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use brk_types::{Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;

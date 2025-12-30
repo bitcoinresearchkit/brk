@@ -1,5 +1,5 @@
+use brk_cohort::ByAddressType;
 use brk_error::{Error, Result};
-use brk_grouper::ByAddressType;
 use brk_types::{
     AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType,
     Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,

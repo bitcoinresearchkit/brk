@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{StoredF32, StoredF64, StoredU32};
+use brk_types::{StoredF32, StoredF64};
 
 use crate::grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight};
 
@@ -24,8 +24,4 @@ pub struct Vecs {
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_difficulty_as_hash: ComputedVecsFromHeight<StoredF32>,
     pub indexes_to_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
-    pub indexes_to_blocks_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredU32>,
-    pub indexes_to_days_before_next_difficulty_adjustment: ComputedVecsFromHeight<StoredF32>,
-    pub indexes_to_blocks_before_next_halving: ComputedVecsFromHeight<StoredU32>,
-    pub indexes_to_days_before_next_halving: ComputedVecsFromHeight<StoredF32>,
 }

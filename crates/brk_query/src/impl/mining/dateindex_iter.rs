@@ -49,7 +49,7 @@ impl<'a> DateIndexIter<'a> {
         let mut timestamps = self
             .computer
             .chain
-            .epoch
+            .block
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()

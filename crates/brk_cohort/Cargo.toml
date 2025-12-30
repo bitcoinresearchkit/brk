@@ -1,6 +1,6 @@
 [package]
-name = "brk_grouper"
-description = "Groups used throughout BRK"
+name = "brk_cohort"
+description = "Cohort definitions used throughout BRK"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

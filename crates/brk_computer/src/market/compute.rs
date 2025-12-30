@@ -1,7 +1,7 @@
 use brk_error::Result;
 use vecdb::Exit;
 
-use crate::{price, Indexes};
+use crate::{price, ComputeIndexes};
 use crate::utils::OptionExt;
 
 use super::Vecs;
@@ -10,7 +10,7 @@ impl Vecs {
     pub fn compute(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // ATH metrics (independent)

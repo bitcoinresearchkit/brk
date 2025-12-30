@@ -8,7 +8,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
         LazyVecsFrom2FromHeight, LazyVecsFromHeight, PercentageDollarsF32, Source,
@@ -515,7 +515,7 @@ impl RealizedMetrics {
     /// Compute aggregate values from separate cohorts.
     pub fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -598,7 +598,7 @@ impl RealizedMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_realized_cap.compute_rest(
@@ -690,7 +690,7 @@ impl RealizedMetrics {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,

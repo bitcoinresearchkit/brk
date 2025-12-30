@@ -14,7 +14,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes, chain,
+    ComputeIndexes, chain,
     grouped::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source,
         VecBuilderOptions,
@@ -268,7 +268,7 @@ impl Vecs {
         txins: &txins::Vecs,
         chain: &chain::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &mut Indexes,
+        starting_indexes: &mut ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Find minimum computed height for recovery

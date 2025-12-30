@@ -7,7 +7,7 @@ use vecdb::{
     VecIndex,
 };
 
-use crate::{Indexes, grouped::Source, indexes, price, utils::OptionExt};
+use crate::{ComputeIndexes, grouped::Source, indexes, price, utils::OptionExt};
 
 use crate::grouped::{ComputedVecsFromTxindex, VecBuilderOptions};
 
@@ -113,7 +113,7 @@ impl ComputedValueVecsFromTxindex {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         txindex: Option<&impl CollectableVec<TxIndex, Sats>>,
         price: Option<&price::Vecs>,

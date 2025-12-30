@@ -15,7 +15,7 @@ mod vecs;
 
 use crate::{
     chain,
-    indexes::{self, Indexes},
+    indexes::{self, ComputeIndexes},
     price,
 };
 
@@ -78,7 +78,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
@@ -92,7 +92,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
@@ -109,7 +109,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.height_to_pool.validate_computed_version_or_reset(

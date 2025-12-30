@@ -1,4 +1,4 @@
-use brk_grouper::AGE_BOUNDARIES;
+use brk_cohort::AGE_BOUNDARIES;
 use brk_types::{ONE_DAY_IN_SEC, Timestamp};
 
 use crate::stateful::state::BlockState;

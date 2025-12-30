@@ -5,14 +5,13 @@ use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, LazyVecFrom
 
 use super::Vecs;
 use crate::{
+    chain::{
+        TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DECADE, TARGET_BLOCKS_PER_MONTH,
+        TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
+        TARGET_BLOCKS_PER_YEAR,
+    },
     grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes,
-};
-
-use crate::chain::{
-    TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DECADE, TARGET_BLOCKS_PER_MONTH,
-    TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER, TARGET_BLOCKS_PER_WEEK,
-    TARGET_BLOCKS_PER_YEAR,
 };
 
 impl Vecs {
@@ -165,6 +164,17 @@ impl Vecs {
                 version + v0,
                 indexes,
                 full_stats(),
+            )?,
+            // Timestamp metrics (moved from epoch)
+            difficultyepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
+            halvingepoch_to_timestamp: EagerVec::forced_import(db, "timestamp", version + v0)?,
+            timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
+                db,
+                "timestamp",
+                Source::Compute,
+                version + v0,
+                indexes,
+                VecBuilderOptions::default().add_first(),
             )?,
         })
     }

@@ -7,7 +7,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{ComputedVecsFromHeight, PricePercentiles, Source, VecBuilderOptions},
     stateful::state::CohortState,
 };
@@ -147,7 +147,7 @@ impl PricePaidMetrics {
     /// Compute aggregate values from separate cohorts.
     pub fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
@@ -174,7 +174,7 @@ impl PricePaidMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &crate::indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_min_price_paid.compute_rest(

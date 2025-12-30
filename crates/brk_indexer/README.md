@@ -66,7 +66,7 @@ Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to 
 
 ## Built On
 
+- `brk_cohort` for address type handling
 - `brk_iterator` for block iteration
 - `brk_store` for key-value storage
-- `brk_grouper` for address type handling
 - `brk_types` for domain types

@@ -104,7 +104,7 @@ impl Indexer {
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
             let starting_indexes =
-                Indexes::from((height.incremented(), &mut self.vecs, &self.stores));
+                Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores);
             if starting_indexes.height > client.get_last_height()? {
                 info!("Up to date, nothing to index.");
                 return Ok(starting_indexes);

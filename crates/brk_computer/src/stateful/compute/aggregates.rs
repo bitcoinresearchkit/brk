@@ -3,7 +3,7 @@ use brk_types::{Bitcoin, DateIndex, Dollars, Height};
 use log::info;
 use vecdb::{Exit, IterableVec};
 
-use crate::{Indexes, indexes, price};
+use crate::{ComputeIndexes, indexes, price};
 
 use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 
@@ -15,7 +15,7 @@ use super::super::cohorts::{AddressCohorts, UTXOCohorts};
 pub fn compute_overlapping(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
-    starting_indexes: &Indexes,
+    starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
     info!("Computing overlapping cohorts...");
@@ -34,7 +34,7 @@ pub fn compute_rest_part1(
     address_cohorts: &mut AddressCohorts,
     indexes: &indexes::Vecs,
     price: Option<&price::Vecs>,
-    starting_indexes: &Indexes,
+    starting_indexes: &ComputeIndexes,
     exit: &Exit,
 ) -> Result<()> {
     info!("Computing rest part 1...");
@@ -54,7 +54,7 @@ pub fn compute_rest_part2<S, HM, DM>(
     address_cohorts: &mut AddressCohorts,
     indexes: &indexes::Vecs,
     price: Option<&price::Vecs>,
-    starting_indexes: &Indexes,
+    starting_indexes: &ComputeIndexes,
     height_to_supply: &S,
     height_to_market_cap: Option<&HM>,
     dateindex_to_market_cap: Option<&DM>,

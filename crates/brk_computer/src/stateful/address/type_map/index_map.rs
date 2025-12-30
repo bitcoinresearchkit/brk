@@ -1,6 +1,6 @@
 use std::{collections::hash_map::Entry, mem};
 
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use brk_types::{OutputType, TypeIndex};
 use derive_deref::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
@@ -124,4 +124,3 @@ where
         self
     }
 }
-

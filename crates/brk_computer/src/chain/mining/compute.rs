@@ -1,14 +1,14 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{StoredF32, StoredF64, StoredU32};
+use brk_types::{StoredF32, StoredF64};
 use vecdb::Exit;
 
 use super::Vecs;
 use crate::{
-    chain::{block, coinbase, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F32, TARGET_BLOCKS_PER_DAY_F64},
+    chain::{block, coinbase, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64},
     indexes,
     utils::OptionExt,
-    Indexes,
+    ComputeIndexes,
 };
 
 impl Vecs {
@@ -18,7 +18,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         block_vecs: &block::Vecs,
         coinbase_vecs: &coinbase::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_difficulty.compute_rest(
@@ -113,64 +113,6 @@ impl Vecs {
                     starting_indexes.height,
                     &indexer.vecs.block.height_to_difficulty,
                     1,
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.indexes_to_blocks_before_next_difficulty_adjustment
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &indexes.block.height_to_height,
-                    |(h, ..)| (h, StoredU32::from(h.left_before_next_diff_adj())),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_days_before_next_difficulty_adjustment
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    self.indexes_to_blocks_before_next_difficulty_adjustment
-                        .height
-                        .as_ref()
-                        .unwrap(),
-                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.indexes_to_blocks_before_next_halving.compute_all(
-            indexes,
-            starting_indexes,
-            exit,
-            |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &indexes.block.height_to_height,
-                    |(h, ..)| (h, StoredU32::from(h.left_before_next_halving())),
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        self.indexes_to_days_before_next_halving.compute_all(
-            indexes,
-            starting_indexes,
-            exit,
-            |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    self.indexes_to_blocks_before_next_halving
-                        .height
-                        .as_ref()
-                        .unwrap(),
-                    |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
                     exit,
                 )?;
                 Ok(())

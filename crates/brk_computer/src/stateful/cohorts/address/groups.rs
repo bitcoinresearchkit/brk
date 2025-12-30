@@ -1,23 +1,20 @@
 use std::path::Path;
 
-use brk_error::Result;
-use brk_grouper::{
+use brk_cohort::{
     AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, Filter, Filtered,
 };
+use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
-use crate::{Indexes, indexes, price, stateful::DynCohortVecs};
+use crate::{ComputeIndexes, indexes, price, stateful::DynCohortVecs};
 
 use crate::stateful::metrics::SupplyMetrics;
 
-use super::{
-    super::traits::CohortVecs,
-    vecs::AddressCohortVecs,
-};
+use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 
 const VERSION: Version = Version::new(0);
 
@@ -41,11 +38,13 @@ impl AddressCohorts {
         let v = version + VERSION + Version::ZERO;
 
         // Helper to create a cohort - only amount_range cohorts have state
-        let create =
-            |filter: Filter, name: &'static str, has_state: bool| -> Result<AddressCohortVecs> {
-                let sp = if has_state { Some(states_path) } else { None };
-                AddressCohortVecs::forced_import(db, filter, name, v, indexes, price, sp, all_supply)
-            };
+        let create = |filter: Filter,
+                      name: &'static str,
+                      has_state: bool|
+         -> Result<AddressCohortVecs> {
+            let sp = if has_state { Some(states_path) } else { None };
+            AddressCohortVecs::forced_import(db, filter, name, v, indexes, price, sp, all_supply)
+        };
 
         let full = |f: Filter, name: &'static str| create(f, name, true);
         let none = |f: Filter, name: &'static str| create(f, name, false);
@@ -62,7 +61,7 @@ impl AddressCohorts {
     /// For example, ">=1 BTC" cohort is computed from sum of amount_range cohorts that match.
     pub fn compute_overlapping_vecs(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let by_amount_range = &self.0.amount_range;
@@ -111,7 +110,7 @@ impl AddressCohorts {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.par_iter_mut()
@@ -124,7 +123,7 @@ impl AddressCohorts {
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         height_to_supply: &S,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,

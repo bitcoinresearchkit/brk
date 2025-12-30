@@ -1,14 +1,16 @@
-use brk_grouper::ByAddressType;
+use brk_cohort::ByAddressType;
 use brk_types::{Sats, TxIndex, TypeIndex};
 
 use crate::stateful::{
-    address::{AddressTypeToTypeIndexMap, AddressTypeToVec, AddressesDataVecs, AnyAddressIndexesVecs},
+    address::{
+        AddressTypeToTypeIndexMap, AddressTypeToVec, AddressesDataVecs, AnyAddressIndexesVecs,
+    },
     compute::{TxOutData, VecsReaders},
     state::Transacted,
 };
 
 use super::super::{
-    cache::{load_uncached_address_data, AddressCache},
+    cache::{AddressCache, load_uncached_address_data},
     cohort::{LoadedAddressDataWithSource, TxIndexVec},
 };
 

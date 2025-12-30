@@ -1,7 +1,7 @@
 use std::{fs, path::Path, time::Instant};
 
+use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_grouper::ByAddressType;
 use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
     AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, BlockHashPrefix, Height, OutPoint,
@@ -272,8 +272,8 @@ impl Stores {
             let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
             let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
 
-            for txoutindex in starting_indexes.txoutindex.to_usize()
-                ..vecs.txout.txoutindex_to_outputtype.len()
+            for txoutindex in
+                starting_indexes.txoutindex.to_usize()..vecs.txout.txoutindex_to_outputtype.len()
             {
                 let outputtype = txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
                 if !outputtype.is_address() {

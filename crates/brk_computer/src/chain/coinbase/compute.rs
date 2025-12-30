@@ -5,7 +5,7 @@ use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
 use crate::{
-    Indexes,
+    ComputeIndexes,
     chain::{block, transaction},
     indexes, price,
     utils::OptionExt,
@@ -19,7 +19,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         block_vecs: &block::Vecs,
         transaction_vecs: &transaction::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {

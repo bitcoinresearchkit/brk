@@ -7,14 +7,14 @@ use crate::{
     price,
     traits::{ComputeDCAAveragePriceViaLen, ComputeDCAStackViaLen},
     utils::OptionExt,
-    Indexes,
+    ComputeIndexes,
 };
 
 impl Vecs {
     pub fn compute(
         &mut self,
         price: &price::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let close = price.timeindexes_to_price_close.dateindex.u();

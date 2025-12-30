@@ -1,5 +1,5 @@
+use brk_cohort::ByAddressType;
 use brk_error::Result;
-use brk_grouper::ByAddressType;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use derive_deref::{Deref, DerefMut};
@@ -10,7 +10,7 @@ use vecdb::{
 };
 
 use crate::{
-    Indexes,
+    ComputeIndexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes,
 };
@@ -192,7 +192,7 @@ impl AddressTypeToIndexesToAddressCount {
     pub fn compute(
         &mut self,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
         addresstype_to_height_to_addresscount: &AddressTypeToHeightToAddressCount,
     ) -> Result<()> {

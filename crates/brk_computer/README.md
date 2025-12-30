@@ -67,7 +67,7 @@ Use [mimalloc v3](https://crates.io/crates/mimalloc) as the global allocator to 
 ## Built On
 
 - `brk_indexer` for indexed blockchain data
+- `brk_cohort` for cohort filtering
 - `brk_fetcher` for price data
 - `brk_reader` for raw block access
-- `brk_grouper` for cohort filtering
 - `brk_traversable` for data export

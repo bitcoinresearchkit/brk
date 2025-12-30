@@ -4,14 +4,14 @@ use brk_types::{CheckedSub, Height, StoredU32, StoredU64, Timestamp};
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{Indexes, indexes};
+use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         let mut height_to_timestamp_fixed_iter =
@@ -132,6 +132,34 @@ impl Vecs {
             starting_indexes,
             exit,
             Some(&self.height_to_vbytes),
+        )?;
+
+        // Timestamp metrics (moved from epoch)
+        self.timeindexes_to_timestamp
+            .compute_all(starting_indexes, exit, |vec| {
+                vec.compute_transform(
+                    starting_indexes.dateindex,
+                    &indexes.time.dateindex_to_date,
+                    |(di, d, ..)| (di, Timestamp::from(d)),
+                    exit,
+                )?;
+                Ok(())
+            })?;
+
+        let mut height_to_timestamp_iter = indexer.vecs.block.height_to_timestamp.iter()?;
+
+        self.difficultyepoch_to_timestamp.compute_transform(
+            starting_indexes.difficultyepoch,
+            &indexes.block.difficultyepoch_to_first_height,
+            |(i, h, ..)| (i, height_to_timestamp_iter.get_unwrap(h)),
+            exit,
+        )?;
+
+        self.halvingepoch_to_timestamp.compute_transform(
+            starting_indexes.halvingepoch,
+            &indexes.block.halvingepoch_to_first_height,
+            |(i, h, ..)| (i, height_to_timestamp_iter.get_unwrap(h)),
+            exit,
         )?;
 
         Ok(())
