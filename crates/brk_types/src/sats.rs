@@ -199,7 +199,11 @@ impl Div<Sats> for Sats {
 impl Div<usize> for Sats {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as u64)
+        if rhs == 0 {
+            Self::ZERO
+        } else {
+            Self(self.0 / rhs as u64)
+        }
     }
 }
 

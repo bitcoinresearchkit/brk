@@ -17,8 +17,8 @@ impl Query {
 
         // coinbase = subsidy + fees
         let mut rewards = computer
-            .chain
-            .coinbase
+            .blocks
+            .rewards
             .indexes_to_coinbase
             .sats
             .dateindex

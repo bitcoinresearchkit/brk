@@ -11,39 +11,42 @@ use brk_types::Version;
 use log::info;
 use vecdb::Exit;
 
-mod blks;
-mod chain;
+mod blocks;
+mod transactions;
+mod scripts;
+mod positions;
 mod cointime;
 mod constants;
-mod fetched;
-mod grouped;
+mod internal;
 mod indexes;
 mod market;
 mod pools;
 mod price;
-mod stateful;
+mod distribution;
+mod supply;
 mod traits;
-mod txins;
-mod txouts;
+mod inputs;
+mod outputs;
 mod utils;
 
 use indexes::ComputeIndexes;
-use utils::OptionExt;
 
 #[derive(Clone, Traversable)]
 pub struct Computer {
-    pub blks: blks::Vecs,
-    pub chain: chain::Vecs,
+    pub blocks: blocks::Vecs,
+    pub transactions: transactions::Vecs,
+    pub scripts: scripts::Vecs,
+    pub positions: positions::Vecs,
     pub cointime: cointime::Vecs,
     pub constants: constants::Vecs,
-    pub fetched: Option<fetched::Vecs>,
     pub indexes: indexes::Vecs,
     pub market: market::Vecs,
     pub pools: pools::Vecs,
     pub price: Option<price::Vecs>,
-    pub stateful: stateful::Vecs,
-    pub txins: txins::Vecs,
-    pub txouts: txouts::Vecs,
+    pub distribution: distribution::Vecs,
+    pub supply: supply::Vecs,
+    pub inputs: inputs::Vecs,
+    pub outputs: outputs::Vecs,
 }
 
 const VERSION: Version = Version::new(4);
@@ -64,51 +67,47 @@ impl Computer {
         let big_thread = || thread::Builder::new().stack_size(STACK_SIZE);
 
         let i = Instant::now();
-        let (indexes, fetched, blks, txins, txouts) = thread::scope(|s| -> Result<_> {
-            let fetched_handle = fetcher
-                .map(|fetcher| {
-                    big_thread().spawn_scoped(s, move || {
-                        fetched::Vecs::forced_import(outputs_path, fetcher, VERSION)
-                    })
-                })
-                .transpose()?;
-
-            let blks_handle = big_thread()
-                .spawn_scoped(s, || blks::Vecs::forced_import(&computed_path, VERSION))?;
-
-            let txins_handle = big_thread()
-                .spawn_scoped(s, || txins::Vecs::forced_import(&computed_path, VERSION))?;
-
-            let txouts_handle = big_thread()
-                .spawn_scoped(s, || txouts::Vecs::forced_import(&computed_path, VERSION))?;
+        let (indexes, positions) = thread::scope(|s| -> Result<_> {
+            let positions_handle = big_thread()
+                .spawn_scoped(s, || positions::Vecs::forced_import(&computed_path, VERSION))?;
 
             let indexes = indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?;
-            let fetched = fetched_handle.map(|h| h.join().unwrap()).transpose()?;
-            let blks = blks_handle.join().unwrap()?;
-            let txins = txins_handle.join().unwrap()?;
-            let txouts = txouts_handle.join().unwrap()?;
+            let positions = positions_handle.join().unwrap()?;
 
-            Ok((indexes, fetched, blks, txins, txouts))
+            Ok((indexes, positions))
         })?;
-        info!(
-            "Imported indexes/fetched/blks/txins/txouts in {:?}",
-            i.elapsed()
-        );
+        info!("Imported indexes/positions in {:?}", i.elapsed());
+
+        // inputs/outputs need indexes for count imports
+        let i = Instant::now();
+        let (inputs, outputs) = thread::scope(|s| -> Result<_> {
+            let inputs_handle = big_thread().spawn_scoped(s, || {
+                inputs::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
+
+            let outputs_handle = big_thread().spawn_scoped(s, || {
+                outputs::Vecs::forced_import(&computed_path, VERSION, &indexes)
+            })?;
+
+            let inputs = inputs_handle.join().unwrap()?;
+            let outputs = outputs_handle.join().unwrap()?;
+
+            Ok((inputs, outputs))
+        })?;
+        info!("Imported inputs/outputs in {:?}", i.elapsed());
 
         let i = Instant::now();
         let constants = constants::Vecs::new(VERSION, &indexes);
         // Price must be created before market since market's lazy vecs reference price
-        let price = fetched
-            .is_some()
-            .then(|| price::Vecs::forced_import(&computed_path, VERSION, &indexes).unwrap());
-        let market =
-            market::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
-        info!("Imported price/constants/market in {:?}", i.elapsed());
+        let price = price::Vecs::forced_import(&computed_path, VERSION, &indexes, fetcher)?;
+        let price = price.has_fetcher().then_some(price);
+        info!("Imported price/constants in {:?}", i.elapsed());
 
         let i = Instant::now();
-        let (chain, pools, cointime) = thread::scope(|s| -> Result<_> {
-            let chain_handle = big_thread().spawn_scoped(s, || {
-                chain::Vecs::forced_import(
+        let (blocks, transactions, scripts, pools, cointime) = thread::scope(|s| -> Result<_> {
+            // Import blocks module
+            let blocks_handle = big_thread().spawn_scoped(s, || {
+                blocks::Vecs::forced_import(
                     &computed_path,
                     VERSION,
                     indexer,
@@ -117,45 +116,89 @@ impl Computer {
                 )
             })?;
 
+            // Import transactions module
+            let transactions_handle = big_thread().spawn_scoped(s, || {
+                transactions::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    indexer,
+                    &indexes,
+                    price.as_ref(),
+                )
+            })?;
+
+            // Import scripts module (depends on outputs for adoption ratio denominators)
+            let scripts_handle = big_thread().spawn_scoped(s, || {
+                scripts::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref(), &outputs)
+            })?;
+
             let cointime =
                 cointime::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
 
-            let chain = chain_handle.join().unwrap()?;
+            let blocks = blocks_handle.join().unwrap()?;
+            let transactions = transactions_handle.join().unwrap()?;
+            let scripts = scripts_handle.join().unwrap()?;
 
-            // pools depends on chain for lazy dominance vecs
+            // pools depends on blocks and transactions for lazy dominance vecs
             let pools = pools::Vecs::forced_import(
                 &computed_path,
                 VERSION,
                 &indexes,
                 price.as_ref(),
-                &chain,
+                &blocks,
+                &transactions,
             )?;
 
-            Ok((chain, pools, cointime))
+            Ok((blocks, transactions, scripts, pools, cointime))
         })?;
-        info!("Imported chain/pools/cointime in {:?}", i.elapsed());
+        info!("Imported blocks/transactions/scripts/pools/cointime in {:?}", i.elapsed());
 
         // Threads inside
         let i = Instant::now();
-        let stateful =
-            stateful::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
-        info!("Imported stateful in {:?}", i.elapsed());
+        let distribution =
+            distribution::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref())?;
+        info!("Imported distribution in {:?}", i.elapsed());
+
+        // Supply must be imported after distribution (references distribution's supply)
+        let i = Instant::now();
+        let supply = supply::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            &indexes,
+            price.as_ref(),
+            &distribution,
+        )?;
+        info!("Imported supply in {:?}", i.elapsed());
+
+        // Market must be imported after distribution and transactions (for NVT indicator)
+        let i = Instant::now();
+        let market = market::Vecs::forced_import(
+            &computed_path,
+            VERSION,
+            &indexes,
+            price.as_ref(),
+            &distribution,
+            &transactions,
+        )?;
+        info!("Imported market in {:?}", i.elapsed());
 
         info!("Total import time: {:?}", import_start.elapsed());
 
         let this = Self {
+            blocks,
+            transactions,
+            scripts,
             constants,
             market,
-            stateful,
-            chain,
-            blks,
+            distribution,
+            supply,
+            positions,
             pools,
             cointime,
             indexes,
-            txins,
-            fetched,
+            inputs,
             price,
-            txouts,
+            outputs,
         };
 
         Self::retain_databases(&computed_path)?;
@@ -166,16 +209,19 @@ impl Computer {
     /// Removes database folders that are no longer in use.
     fn retain_databases(computed_path: &Path) -> Result<()> {
         const EXPECTED_DBS: &[&str] = &[
-            blks::DB_NAME,
-            chain::DB_NAME,
+            blocks::DB_NAME,
+            transactions::DB_NAME,
+            scripts::DB_NAME,
+            positions::DB_NAME,
             cointime::DB_NAME,
             indexes::DB_NAME,
             market::DB_NAME,
             pools::DB_NAME,
             price::DB_NAME,
-            stateful::DB_NAME,
-            txins::DB_NAME,
-            txouts::DB_NAME,
+            distribution::DB_NAME,
+            supply::DB_NAME,
+            inputs::DB_NAME,
+            outputs::DB_NAME,
         ];
 
         if !computed_path.exists() {
@@ -209,70 +255,105 @@ impl Computer {
         exit: &Exit,
     ) -> Result<()> {
         let compute_start = Instant::now();
+
+        // Compute blocks.time early (height_to_date, height_to_timestamp_fixed, height_to_date_fixed)
+        // These are needed by indexes::block to compute height_to_dateindex
+        info!("Computing blocks.time (early)...");
+        let i = Instant::now();
+        self.blocks
+            .time
+            .compute_early(indexer, starting_indexes.height, exit)?;
+        info!("Computed blocks.time (early) in {:?}", i.elapsed());
+
         info!("Computing indexes...");
         let i = Instant::now();
-        let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
+        let mut starting_indexes = self.indexes.compute(indexer, &self.blocks.time, starting_indexes, exit)?;
         info!("Computed indexes in {:?}", i.elapsed());
 
-        if let Some(fetched) = self.fetched.as_mut() {
-            info!("Computing fetched...");
+        if let Some(price) = self.price.as_mut() {
+            info!("Fetching prices...");
             let i = Instant::now();
-            fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
-            info!("Computed fetched in {:?}", i.elapsed());
+            price.fetch(indexer, &self.indexes, &starting_indexes, exit)?;
+            info!("Fetched prices in {:?}", i.elapsed());
 
             info!("Computing prices...");
             let i = Instant::now();
-            self.price.um().compute(&starting_indexes, fetched, exit)?;
+            price.compute(&starting_indexes, exit)?;
             info!("Computed prices in {:?}", i.elapsed());
         }
 
         thread::scope(|scope| -> Result<()> {
-            let blks = scope.spawn(|| -> Result<()> {
-                info!("Computing BLKs metadata...");
+            let positions = scope.spawn(|| -> Result<()> {
+                info!("Computing positions metadata...");
                 let i = Instant::now();
-                self.blks
+                self.positions
                     .compute(indexer, &starting_indexes, reader, exit)?;
-                info!("Computed blk in {:?}", i.elapsed());
+                info!("Computed positions in {:?}", i.elapsed());
                 Ok(())
             });
 
-            // Txins must complete before txouts (txouts needs txinindex_to_txoutindex)
-            // and before chain (chain needs txinindex_to_value)
-            info!("Computing txins...");
+            // Inputs must complete first
+            info!("Computing inputs...");
             let i = Instant::now();
-            self.txins.compute(indexer, &starting_indexes, exit)?;
-            info!("Computed txins in {:?}", i.elapsed());
+            self.inputs
+                .compute(indexer, &self.indexes, &starting_indexes, exit)?;
+            info!("Computed inputs in {:?}", i.elapsed());
 
-            let txouts = scope.spawn(|| -> Result<()> {
-                info!("Computing txouts...");
-                let i = Instant::now();
-                self.txouts
-                    .compute(indexer, &self.txins, &starting_indexes, exit)?;
-                info!("Computed txouts in {:?}", i.elapsed());
-                Ok(())
-            });
-
-            info!("Computing chain...");
+            // Scripts (needed for outputs.count.utxo_count)
+            info!("Computing scripts...");
             let i = Instant::now();
-            self.chain.compute(
+            self.scripts
+                .compute(indexer, &self.indexes, self.price.as_ref(), &starting_indexes, exit)?;
+            info!("Computed scripts in {:?}", i.elapsed());
+
+            // Outputs depends on inputs and scripts (for utxo_count)
+            info!("Computing outputs...");
+            let i = Instant::now();
+            self.outputs.compute(
                 indexer,
                 &self.indexes,
-                &self.txins,
+                &self.inputs,
+                &self.scripts,
+                &starting_indexes,
+                exit,
+            )?;
+            info!("Computed outputs in {:?}", i.elapsed());
+
+            // Transactions: count, versions, size, fees, volume
+            info!("Computing transactions...");
+            let i = Instant::now();
+            self.transactions.compute(
+                indexer,
+                &self.indexes,
+                &self.inputs,
+                &self.outputs,
                 &starting_indexes,
                 self.price.as_ref(),
                 exit,
             )?;
-            info!("Computed chain in {:?}", i.elapsed());
+            info!("Computed transactions in {:?}", i.elapsed());
+
+            // Blocks depends on transactions.fees for rewards computation
+            info!("Computing blocks...");
+            let i = Instant::now();
+            self.blocks.compute(
+                indexer,
+                &self.indexes,
+                &self.transactions,
+                &starting_indexes,
+                self.price.as_ref(),
+                exit,
+            )?;
+            info!("Computed blocks in {:?}", i.elapsed());
 
             if let Some(price) = self.price.as_ref() {
                 info!("Computing market...");
                 let i = Instant::now();
-                self.market.compute(price, &starting_indexes, exit)?;
+                self.market.compute(price, &self.blocks, &self.distribution, &starting_indexes, exit)?;
                 info!("Computed market in {:?}", i.elapsed());
             }
 
-            blks.join().unwrap()?;
-            txouts.join().unwrap()?;
+            positions.join().unwrap()?;
             Ok(())
         })?;
 
@@ -292,22 +373,39 @@ impl Computer {
                 Ok(())
             });
 
-            info!("Computing stateful...");
+            info!("Computing distribution...");
             let i = Instant::now();
-            self.stateful.compute(
+            self.distribution.compute(
                 indexer,
                 &self.indexes,
-                &self.txins,
-                &self.chain,
+                &self.inputs,
+                &self.outputs,
+                &self.transactions,
+                &self.blocks,
                 self.price.as_ref(),
                 &mut starting_indexes,
                 exit,
             )?;
-            info!("Computed stateful in {:?}", i.elapsed());
+            info!("Computed distribution in {:?}", i.elapsed());
 
             pools.join().unwrap()?;
             Ok(())
         })?;
+
+        // Supply must be computed after distribution (uses actual circulating supply)
+        info!("Computing supply...");
+        let i = Instant::now();
+        self.supply.compute(
+            &self.indexes,
+            &self.scripts,
+            &self.blocks,
+            &self.transactions,
+            &self.distribution,
+            &starting_indexes,
+            self.price.as_ref(),
+            exit,
+        )?;
+        info!("Computed supply in {:?}", i.elapsed());
 
         info!("Computing cointime...");
         let i = Instant::now();
@@ -315,8 +413,9 @@ impl Computer {
             &self.indexes,
             &starting_indexes,
             self.price.as_ref(),
-            &self.chain,
-            &self.stateful,
+            &self.blocks,
+            &self.supply,
+            &self.distribution,
             exit,
         )?;
         info!("Computed cointime in {:?}", i.elapsed());
@@ -332,12 +431,18 @@ impl Computer {
         use brk_traversable::Traversable;
 
         std::iter::empty()
-            .chain(self.blks.iter_any_exportable().map(|v| (blks::DB_NAME, v)))
+            .chain(self.blocks.iter_any_exportable().map(|v| (blocks::DB_NAME, v)))
             .chain(
-                self.chain
+                self.transactions
                     .iter_any_exportable()
-                    .map(|v| (chain::DB_NAME, v)),
+                    .map(|v| (transactions::DB_NAME, v)),
             )
+            .chain(
+                self.scripts
+                    .iter_any_exportable()
+                    .map(|v| (scripts::DB_NAME, v)),
+            )
+            .chain(self.positions.iter_any_exportable().map(|v| (positions::DB_NAME, v)))
             .chain(
                 self.cointime
                     .iter_any_exportable()
@@ -347,11 +452,6 @@ impl Computer {
                 self.constants
                     .iter_any_exportable()
                     .map(|v| (constants::DB_NAME, v)),
-            )
-            .chain(
-                self.fetched
-                    .iter_any_exportable()
-                    .map(|v| (fetched::DB_NAME, v)),
             )
             .chain(
                 self.indexes
@@ -374,19 +474,24 @@ impl Computer {
                     .map(|v| (price::DB_NAME, v)),
             )
             .chain(
-                self.stateful
+                self.distribution
                     .iter_any_exportable()
-                    .map(|v| (stateful::DB_NAME, v)),
+                    .map(|v| (distribution::DB_NAME, v)),
             )
             .chain(
-                self.txins
+                self.supply
                     .iter_any_exportable()
-                    .map(|v| (txins::DB_NAME, v)),
+                    .map(|v| (supply::DB_NAME, v)),
             )
             .chain(
-                self.txouts
+                self.inputs
                     .iter_any_exportable()
-                    .map(|v| (txouts::DB_NAME, v)),
+                    .map(|v| (inputs::DB_NAME, v)),
+            )
+            .chain(
+                self.outputs
+                    .iter_any_exportable()
+                    .map(|v| (outputs::DB_NAME, v)),
             )
     }
 }

@@ -3,7 +3,7 @@
 use std::{
     fs,
     io::Cursor,
-    path::Path,
+    path::PathBuf,
     thread::{self, sleep},
     time::Duration,
 };
@@ -83,15 +83,29 @@ pub fn run() -> color_eyre::Result<()> {
 
     let future = async move {
         let bundle_path = if website.is_some() {
-            let websites_dev_path = Path::new("../../websites");
-            let modules_dev_path = Path::new("../../modules");
+            // Try to find local dev directories - check cwd and parent directories
+            let find_dev_dirs = || -> Option<(PathBuf, PathBuf)> {
+                let mut dir = std::env::current_dir().ok()?;
+                loop {
+                    let websites = dir.join("websites");
+                    let modules = dir.join("modules");
+                    if websites.exists() && modules.exists() {
+                        return Some((websites, modules));
+                    }
+                    // Stop at workspace root (crates/ indicates we're there)
+                    if dir.join("crates").exists() {
+                        return None;
+                    }
+                    dir = dir.parent()?.to_path_buf();
+                }
+            };
 
             let websites_path;
             let modules_path;
 
-            if fs::exists(websites_dev_path)? && fs::exists(modules_dev_path)? {
-                websites_path = websites_dev_path.to_path_buf();
-                modules_path = modules_dev_path.to_path_buf();
+            if let Some((websites, modules)) = find_dev_dirs() {
+                websites_path = websites;
+                modules_path = modules;
             } else {
                 let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
 
@@ -105,7 +119,7 @@ pub fn run() -> color_eyre::Result<()> {
                         "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
                     );
 
-                    let response = minreq::get(url).send()?;
+                    let response = minreq::get(url).with_timeout(60).send()?;
                     let bytes = response.as_bytes();
                     let cursor = Cursor::new(bytes);
 

@@ -1,0 +1,19 @@
+[package]
+name = "brk_bindgen"
+description = "A trait-based generator of client bindings for multiple languages"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+build = "build.rs"
+
+[dependencies]
+brk_cohort = { workspace = true }
+brk_query = { workspace = true }
+brk_types = { workspace = true }
+oas3 = "0.20"
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+vecdb = { workspace = true }

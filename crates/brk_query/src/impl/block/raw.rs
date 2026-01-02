@@ -27,7 +27,7 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let position = computer.blks.height_to_position.read_once(height)?;
+        let position = computer.positions.height_to_position.read_once(height)?;
         let size = indexer.vecs.block.height_to_total_size.read_once(height)?;
 
         reader.read_raw_bytes(position, *size as usize)

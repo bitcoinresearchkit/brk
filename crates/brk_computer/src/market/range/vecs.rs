@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, StoredF32};
 use vecdb::{EagerVec, PcoVec};
 
-use crate::grouped::ComputedVecsFromDateIndex;
+use crate::internal::ComputedVecsFromDateIndex;
 
 /// Price range and choppiness metrics
 #[derive(Clone, Traversable)]

@@ -1,0 +1,268 @@
+//! Python type definitions generation.
+
+use std::collections::{HashMap, HashSet};
+use std::fmt::Write;
+
+use serde_json::Value;
+
+use crate::{TypeSchemas, escape_python_keyword, ref_to_type_name};
+
+/// Generate type definitions from schemas.
+pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
+    if schemas.is_empty() {
+        return;
+    }
+
+    writeln!(output, "# Type definitions\n").unwrap();
+
+    let sorted_names = topological_sort_schemas(schemas);
+
+    for name in sorted_names {
+        let Some(schema) = schemas.get(&name) else {
+            continue;
+        };
+        if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
+            writeln!(output, "class {}(TypedDict):", name).unwrap();
+            for (prop_name, prop_schema) in props {
+                let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
+                let safe_name = escape_python_keyword(prop_name);
+                writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
+            }
+            writeln!(output).unwrap();
+        } else {
+            let py_type = schema_to_python_type_ctx(schema, Some(&name));
+            writeln!(output, "{} = {}", name, py_type).unwrap();
+        }
+    }
+    writeln!(output).unwrap();
+}
+
+/// Topologically sort schema names so dependencies come before dependents (avoids forward references).
+/// Types that reference other types (via $ref) must be defined after their dependencies.
+fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
+    // Build dependency graph
+    let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
+    for (name, schema) in schemas {
+        let mut type_deps = HashSet::new();
+        collect_schema_refs(schema, &mut type_deps);
+        // Only keep deps that are in our schemas
+        type_deps.retain(|d| schemas.contains_key(d));
+        deps.insert(name.clone(), type_deps);
+    }
+
+    // Kahn's algorithm for topological sort
+    let mut in_degree: HashMap<String, usize> = HashMap::new();
+    for name in schemas.keys() {
+        in_degree.insert(name.clone(), 0);
+    }
+    for type_deps in deps.values() {
+        for dep in type_deps {
+            *in_degree.entry(dep.clone()).or_insert(0) += 1;
+        }
+    }
+
+    // Start with types that have no dependents (are not referenced by others)
+    let mut queue: Vec<String> = in_degree
+        .iter()
+        .filter(|(_, count)| **count == 0)
+        .map(|(name, _)| name.clone())
+        .collect();
+    queue.sort(); // Deterministic order
+
+    let mut result = Vec::new();
+    while let Some(name) = queue.pop() {
+        result.push(name.clone());
+        if let Some(type_deps) = deps.get(&name) {
+            for dep in type_deps {
+                if let Some(count) = in_degree.get_mut(dep) {
+                    *count = count.saturating_sub(1);
+                    if *count == 0 {
+                        queue.push(dep.clone());
+                        queue.sort(); // Keep sorted for determinism
+                    }
+                }
+            }
+        }
+    }
+
+    // Reverse so dependencies come first
+    result.reverse();
+
+    // Add any types that weren't processed (e.g., due to circular refs or other edge cases)
+    let result_set: HashSet<_> = result.iter().cloned().collect();
+    let mut missing: Vec<_> = schemas
+        .keys()
+        .filter(|k| !result_set.contains(*k))
+        .cloned()
+        .collect();
+    missing.sort();
+    result.extend(missing);
+
+    result
+}
+
+/// Collect all type references ($ref) from a schema
+fn collect_schema_refs(schema: &Value, refs: &mut HashSet<String>) {
+    match schema {
+        Value::Object(map) => {
+            if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str())
+                && let Some(type_name) = ref_to_type_name(ref_path)
+            {
+                refs.insert(type_name.to_string());
+            }
+            for value in map.values() {
+                collect_schema_refs(value, refs);
+            }
+        }
+        Value::Array(arr) => {
+            for item in arr {
+                collect_schema_refs(item, refs);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Convert a single JSON type string to Python type
+fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> String {
+    match ty {
+        "integer" => "int".to_string(),
+        "number" => "float".to_string(),
+        "boolean" => "bool".to_string(),
+        "string" => "str".to_string(),
+        "null" => "None".to_string(),
+        "array" => {
+            let item_type = schema
+                .get("items")
+                .map(|s| schema_to_python_type_ctx(s, current_type))
+                .unwrap_or_else(|| "Any".to_string());
+            format!("List[{}]", item_type)
+        }
+        "object" => {
+            if let Some(add_props) = schema.get("additionalProperties") {
+                let value_type = schema_to_python_type_ctx(add_props, current_type);
+                return format!("dict[str, {}]", value_type);
+            }
+            "dict".to_string()
+        }
+        _ => "Any".to_string(),
+    }
+}
+
+/// Convert JSON Schema to Python type with context for detecting self-references
+pub fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> String {
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
+        for item in all_of {
+            let resolved = schema_to_python_type_ctx(item, current_type);
+            if resolved != "Any" {
+                return resolved;
+            }
+        }
+    }
+
+    // Handle $ref
+    if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
+        let type_name = ref_to_type_name(ref_path).unwrap_or("Any");
+        // Quote self-references to handle recursive types
+        if current_type == Some(type_name) {
+            return format!("\"{}\"", type_name);
+        }
+        return type_name.to_string();
+    }
+
+    // Handle enum (array of string values)
+    if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
+        let literals: Vec<String> = enum_values
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| format!("\"{}\"", s))
+            .collect();
+        if !literals.is_empty() {
+            return format!("Literal[{}]", literals.join(", "));
+        }
+    }
+
+    if let Some(ty) = schema.get("type") {
+        if let Some(type_array) = ty.as_array() {
+            let types: Vec<String> = type_array
+                .iter()
+                .filter_map(|t| t.as_str())
+                .filter(|t| *t != "null") // Filter out null for cleaner Optional handling
+                .map(|t| json_type_to_python(t, schema, current_type))
+                .collect();
+            let has_null = type_array.iter().any(|t| t.as_str() == Some("null"));
+
+            if types.len() == 1 {
+                let base_type = &types[0];
+                return if has_null {
+                    format!("Optional[{}]", base_type)
+                } else {
+                    base_type.clone()
+                };
+            } else if !types.is_empty() {
+                let union = format!("Union[{}]", types.join(", "));
+                return if has_null {
+                    format!("Optional[{}]", union)
+                } else {
+                    union
+                };
+            }
+        }
+
+        if let Some(ty_str) = ty.as_str() {
+            return json_type_to_python(ty_str, schema, current_type);
+        }
+    }
+
+    if let Some(variants) = schema
+        .get("anyOf")
+        .or_else(|| schema.get("oneOf"))
+        .and_then(|v| v.as_array())
+    {
+        let types: Vec<String> = variants
+            .iter()
+            .map(|v| schema_to_python_type_ctx(v, current_type))
+            .collect();
+        let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
+        if !filtered.is_empty() {
+            return format!(
+                "Union[{}]",
+                filtered
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
+        return format!("Union[{}]", types.join(", "));
+    }
+
+    // Check for format hint without type (common in OpenAPI)
+    if let Some(format) = schema.get("format").and_then(|f| f.as_str()) {
+        return match format {
+            "int32" | "int64" => "int".to_string(),
+            "float" | "double" => "float".to_string(),
+            "date" | "date-time" => "str".to_string(),
+            _ => "Any".to_string(),
+        };
+    }
+
+    "Any".to_string()
+}
+
+/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "number" -> "int")
+pub fn js_type_to_python(js_type: &str) -> String {
+    if let Some(inner) = js_type.strip_suffix("[]") {
+        format!("List[{}]", js_type_to_python(inner))
+    } else {
+        match js_type {
+            "number" => "int".to_string(),
+            "boolean" => "bool".to_string(),
+            "string" => "str".to_string(),
+            "null" => "None".to_string(),
+            "Object" | "object" => "dict".to_string(),
+            "*" => "Any".to_string(),
+            _ => js_type.to_string(),
+        }
+    }
+}

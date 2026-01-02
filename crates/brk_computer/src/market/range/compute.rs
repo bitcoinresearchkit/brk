@@ -12,9 +12,9 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let open = price.timeindexes_to_price_open.dateindex.u();
-        let low = price.timeindexes_to_price_low.dateindex.u();
-        let high = price.timeindexes_to_price_high.dateindex.u();
+        let open = price.usd.timeindexes_to_price_open.dateindex.u();
+        let low = price.usd.timeindexes_to_price_low.dateindex.u();
+        let high = price.usd.timeindexes_to_price_high.dateindex.u();
 
         self.indexes_to_price_1w_min
             .compute_all(starting_indexes, exit, |v| {

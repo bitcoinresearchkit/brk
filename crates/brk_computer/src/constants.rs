@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{StoredF32, StoredI16, StoredU16, Version};
 
 use super::{
-    grouped::{ConstantVecs, ReturnF32Tenths, ReturnI16, ReturnU16},
+    internal::{ConstantVecs, ReturnF32Tenths, ReturnI16, ReturnU16},
     indexes,
 };
 

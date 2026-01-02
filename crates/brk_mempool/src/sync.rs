@@ -4,14 +4,14 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
 use derive_deref::Deref;
-use log::{debug, error};
+use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
 
@@ -224,9 +224,9 @@ impl MempoolInner {
 
         self.dirty.store(false, Ordering::Release);
 
-        let i = Instant::now();
+        // let i = Instant::now();
         self.rebuild_projected_blocks();
-        debug!("mempool: rebuild_projected_blocks in {:?}", i.elapsed());
+        // debug!("mempool: rebuild_projected_blocks in {:?}", i.elapsed());
     }
 
     /// Rebuild projected blocks snapshot.

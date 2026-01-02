@@ -25,16 +25,18 @@ let mut computer = Computer::forced_import(&outputs_path, &indexer, fetcher)?;
 computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
 // Access computed data
-let supply = computer.chain.height_to_supply.get(height)?;
-let realized_cap = computer.stateful.utxo.all.height_to_realized_cap.get(height)?;
+let supply = computer.distribution.utxo_cohorts.all.metrics.supply.height_to_supply.get(height)?;
+let realized_cap = computer.distribution.utxo_cohorts.all.metrics.realized.height_to_realized_cap.get(height)?;
 ```
 
 ## Metric Categories
 
 | Module | Examples |
 |--------|----------|
-| `chain` | Supply, subsidy, fees, transaction counts |
-| `stateful` | Realized cap, MVRV, SOPR, unrealized P&L |
+| `blocks` | Block count, interval, size, mining metrics, rewards |
+| `transactions` | Transaction count, fee, size, volume |
+| `scripts` | Output type counts |
+| `distribution` | Realized cap, MVRV, SOPR, unrealized P&L, supply |
 | `cointime` | Liveliness, vaultedness, true market mean |
 | `pools` | Per-pool block counts, rewards, fees |
 | `market` | Market cap, NVT, Puell multiple |

@@ -14,13 +14,13 @@ impl Vecs {
     ) -> Result<()> {
         self.height_to_price_ath.compute_all_time_high(
             starting_indexes.height,
-            &price.chainindexes_to_price_high.height,
+            &price.usd.chainindexes_to_price_high.height,
             exit,
         )?;
 
         self.height_to_price_drawdown.compute_drawdown(
             starting_indexes.height,
-            &price.chainindexes_to_price_close.height,
+            &price.usd.chainindexes_to_price_close.height,
             &self.height_to_price_ath,
             exit,
         )?;
@@ -29,7 +29,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_all_time_high(
                     starting_indexes.dateindex,
-                    price.timeindexes_to_price_high.dateindex.u(),
+                    price.usd.timeindexes_to_price_high.dateindex.u(),
                     exit,
                 )?;
                 Ok(())
@@ -37,7 +37,7 @@ impl Vecs {
 
         self.indexes_to_days_since_price_ath
             .compute_all(starting_indexes, exit, |v| {
-                let mut high_iter = price.timeindexes_to_price_high.dateindex.u().into_iter();
+                let mut high_iter = price.usd.timeindexes_to_price_high.dateindex.u().into_iter();
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,

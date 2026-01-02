@@ -32,7 +32,7 @@ impl Query {
         //
         // let iter = DateIndexIter::new(computer, start, current_height.to_usize());
         //
-        // let vecs = &computer.chain.indexes_to_fee_rate.dateindex;
+        // let vecs = &computer.transactions.transaction.indexes_to_fee_rate.dateindex;
         // let mut min = vecs.unwrap_min().iter();
         // let mut pct10 = vecs.unwrap_pct10().iter();
         // let mut pct25 = vecs.unwrap_pct25().iter();

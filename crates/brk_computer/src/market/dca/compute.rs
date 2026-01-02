@@ -17,7 +17,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = price.timeindexes_to_price_close.dateindex.u();
+        let close = price.usd.timeindexes_to_price_close.dateindex.u();
 
         // DCA by period - stack and avg_price
         self._1w_dca_stack

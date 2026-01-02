@@ -72,7 +72,7 @@ impl Client {
 
     /// Returns the numbers of block in the longest chain.
     pub fn get_last_height(&self) -> Result<Height> {
-        debug!("Get last height...");
+        // debug!("Get last height...");
         self.call(|c| c.get_block_count())
             .map(Height::from)
             .map_err(Into::into)
@@ -262,10 +262,13 @@ impl Client {
                     return Ok((block_info.height.into(), hash));
                 }
 
-                let mut hash = block_info
-                    .previous_block_hash
-                    .map(BlockHash::from)
-                    .ok_or(Error::NotFound("Genesis block has no previous block".into()))?;
+                let mut hash =
+                    block_info
+                        .previous_block_hash
+                        .map(BlockHash::from)
+                        .ok_or(Error::NotFound(
+                            "Genesis block has no previous block".into(),
+                        ))?;
 
                 loop {
                     if self.is_in_main_chain(&hash)? {
@@ -277,7 +280,9 @@ impl Client {
                     hash = info
                         .previous_block_hash
                         .map(BlockHash::from)
-                        .ok_or(Error::NotFound("Reached genesis without finding main chain".into()))?;
+                        .ok_or(Error::NotFound(
+                            "Reached genesis without finding main chain".into(),
+                        ))?;
                 }
             }
             Err(_) => Err(Error::NotFound("Block hash not found in blockchain".into())),

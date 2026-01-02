@@ -16,15 +16,15 @@ impl Query {
         let iter = DateIndexIter::new(computer, start, current_height.to_usize());
 
         let mut sizes_vec = computer
-            .chain
-            .block
+            .blocks
+            .size
             .indexes_to_block_size
             .dateindex
             .unwrap_average()
             .iter();
         let mut weights_vec = computer
-            .chain
-            .block
+            .blocks
+            .weight
             .indexes_to_block_weight
             .dateindex
             .unwrap_average()

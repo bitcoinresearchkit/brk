@@ -27,50 +27,56 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
         LOG_FILE.set(Mutex::new(BufWriter::new(file))).ok();
     }
 
-    Builder::from_env(Env::default().default_filter_or(
-        "info,bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off",
-        // "debug,fjall=trace,bitcoin=off,bitcoincore-rpc=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off",
-    ))
-    .format(move |buf, record| {
-        let date_time = Timestamp::now()
-            .to_zoned(tz::TimeZone::system())
-            .strftime("%Y-%m-%d %H:%M:%S")
-            .to_string();
-        let level = record.level().as_str().to_lowercase();
-        let level = format!("{level:5}");
-        let target = record.target();
-        let dash = "-";
-        let args = record.args();
+    #[cfg(debug_assertions)]
+    let default_level = "debug";
+    #[cfg(not(debug_assertions))]
+    let default_level = "info";
 
-        if let Some(hook) = LOG_HOOK.get() {
-            hook(&args.to_string());
-        }
+    let filter = format!(
+        "{default_level},bitcoin=off,bitcoincore-rpc=off,fjall=off,brk_fjall=off,lsm_tree=off,brk_rolldown=off,rolldown=off,rmcp=off,brk_rmcp=off,tracing=off,aide=off,rustls=off,notify=off,oxc_resolver=off,tower_http=off"
+    );
 
-        if let Some(file) = LOG_FILE.get() {
-            let _ = write(&mut *file.lock(), &date_time, target, &level, dash, args);
-        }
+    Builder::from_env(Env::default().default_filter_or(filter))
+        .format(move |buf, record| {
+            let date_time = Timestamp::now()
+                .to_zoned(tz::TimeZone::system())
+                .strftime("%Y-%m-%d %H:%M:%S")
+                .to_string();
+            let level = record.level().as_str().to_lowercase();
+            let level = format!("{level:5}");
+            let target = record.target();
+            let dash = "-";
+            let args = record.args();
 
-        let colored_date_time = date_time.bright_black();
-        let colored_level = match level.chars().next().unwrap() {
-            'e' => level.red().to_string(),
-            'w' => level.yellow().to_string(),
-            'i' => level.green().to_string(),
-            'd' => level.blue().to_string(),
-            't' => level.cyan().to_string(),
-            _ => panic!(),
-        };
-        let colored_dash = dash.bright_black();
+            if let Some(hook) = LOG_HOOK.get() {
+                hook(&args.to_string());
+            }
 
-        write(
-            buf,
-            colored_date_time,
-            target,
-            colored_level,
-            colored_dash,
-            args,
-        )
-    })
-    .init();
+            if let Some(file) = LOG_FILE.get() {
+                let _ = write(&mut *file.lock(), &date_time, target, &level, dash, args);
+            }
+
+            let colored_date_time = date_time.bright_black();
+            let colored_level = match level.chars().next().unwrap() {
+                'e' => level.red().to_string(),
+                'w' => level.yellow().to_string(),
+                'i' => level.green().to_string(),
+                'd' => level.blue().to_string(),
+                't' => level.cyan().to_string(),
+                _ => panic!(),
+            };
+            let colored_dash = dash.bright_black();
+
+            write(
+                buf,
+                colored_date_time,
+                target,
+                colored_level,
+                colored_dash,
+                args,
+            )
+        })
+        .init();
 
     Ok(())
 }

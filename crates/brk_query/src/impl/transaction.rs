@@ -121,7 +121,8 @@ impl Query {
         // Look up spend status
         let computer = self.computer();
         let txinindex = computer
-            .txouts
+            .outputs
+            .spent
             .txoutindex_to_txinindex
             .read_once(txoutindex)?;
 
@@ -168,7 +169,7 @@ impl Query {
 
         // Get spend status for each output
         let computer = self.computer();
-        let mut txoutindex_to_txinindex_iter = computer.txouts.txoutindex_to_txinindex.iter()?;
+        let mut txoutindex_to_txinindex_iter = computer.outputs.spent.txoutindex_to_txinindex.iter()?;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -203,7 +204,7 @@ impl Query {
             .tx
             .txindex_to_first_txinindex
             .read_once(txindex)?;
-        let position = computer.blks.txindex_to_position.read_once(txindex)?;
+        let position = computer.positions.txindex_to_position.read_once(txindex)?;
 
         // Get block info for status
         let block_hash = indexer.vecs.block.height_to_blockhash.read_once(height)?;
@@ -313,7 +314,7 @@ impl Query {
         let computer = self.computer();
 
         let total_size = indexer.vecs.tx.txindex_to_total_size.read_once(txindex)?;
-        let position = computer.blks.txindex_to_position.read_once(txindex)?;
+        let position = computer.positions.txindex_to_position.read_once(txindex)?;
 
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
 

@@ -43,8 +43,8 @@ impl Query {
 
         // Get timestamps using difficultyepoch_to_timestamp for epoch start
         let epoch_start_timestamp = computer
-            .chain
-            .block
+            .blocks
+            .time
             .difficultyepoch_to_timestamp
             .read_once(current_epoch)?;
         let current_timestamp = indexer

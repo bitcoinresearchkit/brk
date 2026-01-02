@@ -13,6 +13,8 @@ use brk_types::{Indexes, Version};
 pub use brk_types::ComputeIndexes;
 use vecdb::{Database, Exit, PAGE_SIZE};
 
+use crate::blocks;
+
 pub use address::Vecs as AddressVecs;
 pub use block::Vecs as BlockVecs;
 pub use time::Vecs as TimeVecs;
@@ -62,10 +64,11 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
+        blocks_time: &blocks::time::Vecs,
         starting_indexes: Indexes,
         exit: &Exit,
     ) -> Result<ComputeIndexes> {
-        let indexes = self.compute_(indexer, starting_indexes, exit)?;
+        let indexes = self.compute_(indexer, blocks_time, starting_indexes, exit)?;
         let _lock = exit.lock();
         self.db.compact()?;
         Ok(indexes)
@@ -74,6 +77,7 @@ impl Vecs {
     fn compute_(
         &mut self,
         indexer: &Indexer,
+        blocks_time: &blocks::time::Vecs,
         starting_indexes: Indexes,
         exit: &Exit,
     ) -> Result<ComputeIndexes> {
@@ -81,8 +85,9 @@ impl Vecs {
         self.transaction.compute(indexer, &starting_indexes, exit)?;
 
         // Block indexes (height, dateindex, difficultyepoch, halvingepoch)
+        // Uses blocks_time.height_to_date_fixed computed in blocks::time::compute_early
         let (starting_dateindex, starting_difficultyepoch, starting_halvingepoch) =
-            self.block.compute(indexer, &starting_indexes, exit)?;
+            self.block.compute(indexer, blocks_time, &starting_indexes, exit)?;
 
         // Time indexes (depends on block.height_to_dateindex)
         let time_indexes = self

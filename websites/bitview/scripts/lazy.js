@@ -1,6 +1,6 @@
 const imports = {
   async signals() {
-    return import("./modules/brk-signals/index.js").then((d) => d.default);
+    return import("./signals.js").then((d) => d.default);
   },
   async leanQr() {
     return import("./modules/lean-qr/2.6.0/index.mjs").then((d) => d);
@@ -13,17 +13,17 @@ const imports = {
   async brkClient() {
     return import("./modules/brk-client/index.js").then((d) => d);
   },
-  async brkResources() {
-    return import("./modules/brk-resources/index.js").then((d) => d);
+  async resources() {
+    return import("./resources.js").then((d) => d);
   },
 
   async chart() {
     return window.document.fonts.ready.then(() =>
-      import("./core/chart/index.js").then((d) => d.default),
+      import("./chart/index.js").then((d) => d.default),
     );
   },
   async options() {
-    return import("./core/options/full.js").then((d) => d);
+    return import("./options/full.js").then((d) => d);
   },
 };
 

@@ -73,7 +73,8 @@ impl Binance {
         default_retry(|_| {
             let url = Self::url("interval=1m&limit=1000");
             info!("Fetching {url} ...");
-            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let json: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
             Self::parse_ohlc_array(&json)
         })
     }
@@ -95,7 +96,8 @@ impl Binance {
         default_retry(|_| {
             let url = Self::url("interval=1d");
             info!("Fetching {url} ...");
-            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let json: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
             Self::parse_date_ohlc_array(&json)
         })
     }
@@ -205,6 +207,7 @@ impl Binance {
 
     pub fn ping() -> Result<()> {
         minreq::get("https://api.binance.com/api/v3/ping")
+            .with_timeout(10)
             .send()?;
         Ok(())
     }

@@ -23,8 +23,31 @@ use vecdb::{Formattable, Pco};
 pub struct Weight(u64);
 
 impl Weight {
+    /// Maximum block weight in Bitcoin (4 million weight units).
+    /// Note: Pre-SegWit 1MB blocks have weight = size * 4 = 4M, so this is consistent across all blocks.
+    pub const MAX_BLOCK: Self = Self(4_000_000);
+
+    /// Compute weight from base size and total size.
+    /// Formula: weight = base_size * 3 + total_size
+    /// (since total_size = base_size + witness_size, this equals base_size * 4 + witness_size)
+    #[inline]
+    pub fn from_sizes(base_size: u32, total_size: u32) -> Self {
+        let wu = base_size as u64 * 3 + total_size as u64;
+        Self(wu)
+    }
+
     pub fn to_vbytes_ceil(&self) -> u64 {
         bitcoin::Weight::from(*self).to_vbytes_ceil()
+    }
+
+    pub fn to_vbytes_floor(&self) -> u64 {
+        bitcoin::Weight::from(*self).to_vbytes_floor()
+    }
+
+    /// Returns block fullness as a percentage (0-100+) relative to MAX_BLOCK.
+    #[inline]
+    pub fn fullness(&self) -> f32 {
+        (self.0 as f64 / Self::MAX_BLOCK.0 as f64 * 100.0) as f32
     }
 }
 

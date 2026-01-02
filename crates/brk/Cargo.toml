@@ -32,7 +32,7 @@ full = [
     "types",
 ]
 bencher = ["brk_bencher"]
-binder = ["brk_binder"]
+binder = ["brk_bindgen"]
 bundler = ["brk_bundler"]
 client = ["brk_client"]
 computer = ["brk_computer"]
@@ -54,7 +54,7 @@ types = ["brk_types"]
 
 [dependencies]
 brk_bencher = { workspace = true, optional = true }
-brk_binder = { workspace = true, optional = true }
+brk_bindgen = { workspace = true, optional = true }
 brk_bundler = { workspace = true, optional = true }
 brk_client = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }

@@ -32,9 +32,7 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + closes.version(),
-        )?;
+        self.validate_computed_version_or_reset(closes.version())?;
 
         let index = max_from.to_usize().min(self.len());
 
@@ -74,7 +72,8 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
                 self.truncate_push_at(i, stack)
             })?;
 
-        self.safe_write(exit)?;
+        let _lock = exit.lock();
+        self.write()?;
 
         Ok(())
     }
@@ -86,9 +85,7 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + closes.version(),
-        )?;
+        self.validate_computed_version_or_reset(closes.version())?;
 
         let from = from.to_usize();
         let index = max_from.min(DateIndex::from(self.len()));
@@ -118,7 +115,8 @@ impl ComputeDCAStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
                 self.truncate_push_at(i, stack)
             })?;
 
-        self.safe_write(exit)?;
+        let _lock = exit.lock();
+        self.write()?;
 
         Ok(())
     }
@@ -150,9 +148,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
         len: usize,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ONE + self.inner_version() + stacks.version(),
-        )?;
+        self.validate_computed_version_or_reset(Version::ONE + stacks.version())?;
 
         let index = max_from.min(DateIndex::from(self.len()));
 
@@ -176,7 +172,8 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
                 self.truncate_push_at(i, avg_price)
             })?;
 
-        self.safe_write(exit)?;
+        let _lock = exit.lock();
+        self.write()?;
 
         Ok(())
     }
@@ -188,9 +185,7 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
         from: DateIndex,
         exit: &Exit,
     ) -> Result<()> {
-        self.validate_computed_version_or_reset(
-            Version::ZERO + self.inner_version() + stacks.version(),
-        )?;
+        self.validate_computed_version_or_reset(stacks.version())?;
 
         let index = max_from.min(DateIndex::from(self.len()));
 
@@ -208,7 +203,8 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
                 self.truncate_push_at(i, avg_price)
             })?;
 
-        self.safe_write(exit)?;
+        let _lock = exit.lock();
+        self.write()?;
 
         Ok(())
     }

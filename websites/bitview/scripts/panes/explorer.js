@@ -1,5 +1,5 @@
-import { randomFromArray } from "../core/array";
-import { explorerElement } from "../core/elements";
+import { randomFromArray } from "../utils/array";
+import { explorerElement } from "../utils/elements";
 
 /**
  * @param {Object} args
@@ -9,7 +9,7 @@ import { explorerElement } from "../core/elements";
  * @param {Signals} args.signals
  * @param {WebSockets} args.webSockets
  * @param {Resources} args.resources
- * @param {BRK} args.brk
+ * @param {BrkClient} args.brk
  */
 export function init({
   colors,

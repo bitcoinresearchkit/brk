@@ -29,6 +29,9 @@ impl From<(Sats, VSize)> for FeeRate {
         }
         let sats = u64::from(sats);
         let vsize = u64::from(vsize);
+        if vsize == 0 {
+            return Self(f64::NAN);
+        }
         Self((sats * 1000).div_ceil(vsize) as f64 / 1000.0)
     }
 }
@@ -62,7 +65,11 @@ impl AddAssign for FeeRate {
 impl Div<usize> for FeeRate {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as f64)
+        if rhs == 0 {
+            Self(f64::NAN)
+        } else {
+            Self(self.0 / rhs as f64)
+        }
     }
 }
 

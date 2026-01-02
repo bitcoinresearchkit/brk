@@ -90,14 +90,23 @@ impl CheckedSub<usize> for StoredF32 {
 impl Div<usize> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as f32)
+        if rhs == 0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs as f32)
+        }
     }
 }
 
 impl Div<StoredU32> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: StoredU32) -> Self::Output {
-        Self(self.0 / f32::from(rhs))
+        let rhs = f32::from(rhs);
+        if rhs == 0.0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs)
+        }
     }
 }
 
@@ -138,14 +147,23 @@ impl From<Close<Dollars>> for StoredF32 {
 impl Div<Dollars> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
-        Self::from(self.0 as f64 / *rhs)
+        let rhs = *rhs;
+        if rhs == 0.0 {
+            Self::NAN
+        } else {
+            Self::from(self.0 as f64 / rhs)
+        }
     }
 }
 
 impl Div<StoredF32> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: StoredF32) -> Self::Output {
-        Self::from(self.0 / rhs.0)
+        if rhs.0 == 0.0 {
+            Self::NAN
+        } else {
+            Self::from(self.0 / rhs.0)
+        }
     }
 }
 

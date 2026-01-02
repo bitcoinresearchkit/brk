@@ -4,7 +4,7 @@ use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec};
 
 use super::Vecs;
 use crate::{
-    grouped::{
+    internal::{
         ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, LazyVecsFromDateIndex,
         PercentageDiffCloseDollars, Source, StoredU16ToYears, VecBuilderOptions,
     },
@@ -54,7 +54,7 @@ impl Vecs {
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "price_drawdown",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &indexes_to_price_ath,
             );
 

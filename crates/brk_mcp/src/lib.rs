@@ -61,7 +61,7 @@ impl MCP {
             _ => format!("{}{}", self.base_url, params.path),
         };
 
-        match minreq::get(&url).send() {
+        match minreq::get(&url).with_timeout(30).send() {
             Ok(response) => {
                 let body = response.as_str().unwrap_or("").to_string();
                 Ok(CallToolResult::success(vec![Content::text(body)]))

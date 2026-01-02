@@ -5,10 +5,11 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
-use crate::{indexes, price};
+use crate::{distribution, indexes, price, transactions};
 
 use super::{
-    AthVecs, DcaVecs, HistoryVecs, MovingAverageVecs, RangeVecs, Vecs, VolatilityVecs,
+    AthVecs, DcaVecs, IndicatorsVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
+    Vecs, VolatilityVecs,
 };
 
 impl Vecs {
@@ -17,6 +18,8 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
+        distribution: &distribution::Vecs,
+        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -26,20 +29,24 @@ impl Vecs {
         let price = price.expect("price required for market");
 
         let ath = AthVecs::forced_import(&db, version, indexes, price)?;
-        let volatility = VolatilityVecs::forced_import(&db, version, indexes)?;
+        let lookback = LookbackVecs::forced_import(&db, version, indexes)?;
+        let returns = ReturnsVecs::forced_import(&db, version, indexes, price, &lookback)?;
+        let volatility = VolatilityVecs::forced_import(version, &returns);
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes, Some(price))?;
-        let history = HistoryVecs::forced_import(&db, version, indexes, price)?;
         let dca = DcaVecs::forced_import(&db, version, indexes, price)?;
+        let indicators = IndicatorsVecs::forced_import(&db, version, indexes, true, distribution, transactions, &moving_average)?;
 
         let this = Self {
             db,
             ath,
+            lookback,
+            returns,
             volatility,
             range,
             moving_average,
-            history,
             dca,
+            indicators,
         };
 
         this.db.retain_regions(

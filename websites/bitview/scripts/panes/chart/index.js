@@ -2,11 +2,11 @@ import {
   createShadow,
   createHorizontalChoiceField,
   createHeader,
-} from "../../core/dom";
-import { chartElement } from "../../core/elements";
-import { ios, canShare } from "../../core/env";
-import { serdeChartableIndex, serdeOptNumber } from "../../core/serde";
-import { throttle } from "../../core/timing";
+} from "../../utils/dom";
+import { chartElement } from "../../utils/elements";
+import { ios, canShare } from "../../utils/env";
+import { serdeChartableIndex, serdeOptNumber } from "../../utils/serde";
+import { throttle } from "../../utils/timing";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -26,7 +26,7 @@ const CANDLE = "candle";
  * @param {Signals} args.signals
  * @param {WebSockets} args.webSockets
  * @param {Resources} args.resources
- * @param {BRK} args.brk
+ * @param {BrkClient} args.brk
  */
 export function init({
   colors,
@@ -78,6 +78,7 @@ export function init({
     colors,
     id: "charts",
     resources,
+    brk,
     index,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
       // TODO: Although it mostly works in practice, need to make it more robust, there is no guarantee that this runs in order and wait for `from` and `to` to update when `index` and thus `TIMERANGE_LS_KEY` is updated
@@ -327,7 +328,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    metric: "price_ohlc",
+                    metric: brk.tree.computed.price.usd.priceOhlc,
                     name: "Price",
                     unit: topUnit,
                     setDataCallback: printLatest,
@@ -337,7 +338,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    metric: "price_close",
+                    metric: brk.tree.computed.price.usd.priceClose,
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -357,7 +358,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    metric: "price_ohlc_in_sats",
+                    metric: brk.tree.computed.price.sats.priceOhlcInSats,
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
@@ -368,7 +369,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    metric: "price_close_in_sats",
+                    metric: brk.tree.computed.price.sats.priceCloseInSats,
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -432,7 +433,8 @@ export function init({
             blueprints[unit]?.forEach((blueprint, order) => {
               order += orderStart;
 
-              const indexes = brk.getIndexesFromMetric(blueprint.metric);
+              // Tree-first: metric is now an accessor with .by property
+              const indexes = Object.keys(blueprint.metric.by);
 
               if (indexes.includes(index)) {
                 switch (blueprint.type) {
@@ -503,7 +505,7 @@ export function init({
 /**
  * @param {Object} args
  * @param {Accessor<ChartOption>} args.option
- * @param {BRK} args.brk
+ * @param {BrkClient} args.brk
  * @param {Signals} args.signals
  */
 function createIndexSelector({ option, brk, signals }) {
@@ -530,9 +532,11 @@ function createIndexSelector({ option, brk, signals }) {
     const rawIndexes = new Set(
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
-        .filter((blueprint) => !blueprint.metric.startsWith("constant_"))
-        .map((blueprint) => brk.getIndexesFromMetric(blueprint.metric))
-        .flat(),
+        .filter((blueprint) => {
+          const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
+          return !path.includes("constant_");
+        })
+        .flatMap((blueprint) => blueprint.metric.indexes()),
     );
 
     const serializedIndexes = [...rawIndexes].flatMap((index) => {

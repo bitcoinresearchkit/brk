@@ -48,8 +48,8 @@ impl<'a> DateIndexIter<'a> {
             + 1;
         let mut timestamps = self
             .computer
-            .chain
-            .block
+            .blocks
+            .time
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()

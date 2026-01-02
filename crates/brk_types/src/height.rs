@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    fs,
     ops::{Add, AddAssign, Rem},
 };
 
@@ -45,7 +46,7 @@ impl Height {
     }
 
     pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
-        std::fs::write(path, self.to_bytes())
+        fs::write(path, self.to_bytes())
     }
 
     pub fn increment(&mut self) {

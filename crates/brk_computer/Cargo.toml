@@ -23,7 +23,7 @@ brk_traversable = { workspace = true }
 brk_types = { workspace = true }
 derive_deref = { workspace = true }
 log = { workspace = true }
-pco = "0.4.7"
+pco = "0.4.9"
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }

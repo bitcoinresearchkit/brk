@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{Close, Dollars, Sats, StoredF32};
 
-use crate::grouped::{ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex};
+use crate::internal::{ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex};
 
 /// Dollar-cost averaging metrics by time period and year class
 #[derive(Clone, Traversable)]

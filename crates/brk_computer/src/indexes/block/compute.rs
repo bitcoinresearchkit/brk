@@ -1,14 +1,16 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Date, DateIndex, DifficultyEpoch, HalvingEpoch};
+use brk_types::{DateIndex, DifficultyEpoch, HalvingEpoch};
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
+use crate::blocks;
 
 impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
+        blocks_time: &blocks::time::Vecs,
         starting_indexes: &brk_indexer::Indexes,
         exit: &Exit,
     ) -> Result<(DateIndex, DifficultyEpoch, HalvingEpoch)> {
@@ -25,45 +27,9 @@ impl Vecs {
             exit,
         )?;
 
-        self.height_to_date.compute_transform(
-            starting_indexes.height,
-            &indexer.vecs.block.height_to_timestamp,
-            |(h, t, ..)| (h, Date::from(t)),
-            exit,
-        )?;
-
-        let mut prev_timestamp_fixed = None;
-        self.height_to_timestamp_fixed.compute_transform(
-            starting_indexes.height,
-            &indexer.vecs.block.height_to_timestamp,
-            |(h, timestamp, height_to_timestamp_fixed_iter)| {
-                if prev_timestamp_fixed.is_none()
-                    && let Some(prev_h) = h.decremented()
-                {
-                    prev_timestamp_fixed.replace(
-                        height_to_timestamp_fixed_iter
-                            .into_iter()
-                            .get_unwrap(prev_h),
-                    );
-                }
-                let timestamp_fixed =
-                    prev_timestamp_fixed.map_or(timestamp, |prev_d| prev_d.max(timestamp));
-                prev_timestamp_fixed.replace(timestamp_fixed);
-                (h, timestamp_fixed)
-            },
-            exit,
-        )?;
-
-        self.height_to_date_fixed.compute_transform(
-            starting_indexes.height,
-            &self.height_to_timestamp_fixed,
-            |(h, t, ..)| (h, Date::from(t)),
-            exit,
-        )?;
-
         let decremented_starting_height = starting_indexes.height.decremented().unwrap_or_default();
 
-        // DateIndex (computed before time module needs it)
+        // DateIndex (uses blocks_time.height_to_date_fixed computed in blocks::time::compute_early)
         let starting_dateindex = self
             .height_to_dateindex
             .into_iter()
@@ -72,7 +38,7 @@ impl Vecs {
 
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
-            &self.height_to_date_fixed,
+            &blocks_time.height_to_date_fixed,
             |(h, d, ..)| (h, DateIndex::try_from(d).unwrap()),
             exit,
         )?;
@@ -115,7 +81,7 @@ impl Vecs {
         self.difficultyepoch_to_height_count.compute_count_from_indexes(
             starting_difficultyepoch,
             &self.difficultyepoch_to_first_height,
-            &self.height_to_date,
+            &blocks_time.height_to_date,
             exit,
         )?;
 

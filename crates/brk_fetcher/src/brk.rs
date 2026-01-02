@@ -46,7 +46,8 @@ impl BRK {
             );
             info!("Fetching {url} ...");
 
-            let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let body: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
 
             body.as_array()
                 .ok_or(Error::Parse("Expected JSON array".into()))?
@@ -86,7 +87,8 @@ impl BRK {
             );
             info!("Fetching {url}...");
 
-            let body: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let body: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
 
             body.as_array()
                 .ok_or(Error::Parse("Expected JSON array".into()))?
@@ -120,6 +122,7 @@ impl BRK {
 
     pub fn ping() -> Result<()> {
         minreq::get(API_URL)
+            .with_timeout(10)
             .send()?;
         Ok(())
     }

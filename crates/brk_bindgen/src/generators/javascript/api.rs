@@ -1,0 +1,112 @@
+//! JavaScript API method generation.
+
+use std::fmt::Write;
+
+use crate::{Endpoint, Parameter, to_camel_case};
+
+/// Generate API methods for the BrkClient class.
+pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
+    for endpoint in endpoints {
+        if !endpoint.should_generate() {
+            continue;
+        }
+
+        let method_name = endpoint_to_method_name(endpoint);
+        let return_type = endpoint.response_type.as_deref().unwrap_or("*");
+
+        writeln!(output, "  /**").unwrap();
+        if let Some(summary) = &endpoint.summary {
+            writeln!(output, "   * {}", summary).unwrap();
+        }
+        if let Some(desc) = &endpoint.description
+            && endpoint.summary.as_ref() != Some(desc)
+        {
+            writeln!(output, "   * @description {}", desc).unwrap();
+        }
+
+        for param in &endpoint.path_params {
+            let desc = param.description.as_deref().unwrap_or("");
+            writeln!(
+                output,
+                "   * @param {{{}}} {} {}",
+                param.param_type, param.name, desc
+            )
+            .unwrap();
+        }
+        for param in &endpoint.query_params {
+            let optional = if param.required { "" } else { "=" };
+            let desc = param.description.as_deref().unwrap_or("");
+            writeln!(
+                output,
+                "   * @param {{{}{}}} [{}] {}",
+                param.param_type, optional, param.name, desc
+            )
+            .unwrap();
+        }
+
+        writeln!(output, "   * @returns {{Promise<{}>}}", return_type).unwrap();
+        writeln!(output, "   */").unwrap();
+
+        let params = build_method_params(endpoint);
+        writeln!(output, "  async {}({}) {{", method_name, params).unwrap();
+
+        let path = build_path_template(&endpoint.path, &endpoint.path_params);
+
+        if endpoint.query_params.is_empty() {
+            writeln!(output, "    return this.get(`{}`);", path).unwrap();
+        } else {
+            writeln!(output, "    const params = new URLSearchParams();").unwrap();
+            for param in &endpoint.query_params {
+                if param.required {
+                    writeln!(
+                        output,
+                        "    params.set('{}', String({}));",
+                        param.name, param.name
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(
+                        output,
+                        "    if ({} !== undefined) params.set('{}', String({}));",
+                        param.name, param.name, param.name
+                    )
+                    .unwrap();
+                }
+            }
+            writeln!(output, "    const query = params.toString();").unwrap();
+            writeln!(
+                output,
+                "    return this.get(`{}${{query ? '?' + query : ''}}`);",
+                path
+            )
+            .unwrap();
+        }
+
+        writeln!(output, "  }}\n").unwrap();
+    }
+}
+
+fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
+    to_camel_case(&endpoint.operation_name())
+}
+
+fn build_method_params(endpoint: &Endpoint) -> String {
+    let mut params = Vec::new();
+    for param in &endpoint.path_params {
+        params.push(param.name.clone());
+    }
+    for param in &endpoint.query_params {
+        params.push(param.name.clone());
+    }
+    params.join(", ")
+}
+
+fn build_path_template(path: &str, path_params: &[Parameter]) -> String {
+    let mut result = path.to_string();
+    for param in path_params {
+        let placeholder = format!("{{{}}}", param.name);
+        let interpolation = format!("${{{}}}", param.name);
+        result = result.replace(&placeholder, &interpolation);
+    }
+    result
+}

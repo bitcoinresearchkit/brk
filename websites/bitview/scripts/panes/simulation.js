@@ -1,21 +1,23 @@
+// @ts-nocheck
+
 import {
   createDateRange,
   dateToDateIndex,
   differenceBetweenDates,
-} from "../core/date";
+} from "../utils/date";
 import {
   createButtonElement,
   createFieldElement,
   createHeader,
   createSelect,
-} from "../core/dom";
-import { simulationElement } from "../core/elements";
+} from "../utils/dom";
+import { simulationElement } from "../utils/elements";
 import {
   numberToDollars,
   numberToPercentage,
   numberToUSNumber,
-} from "../core/format";
-import { serdeDate, serdeOptDate, serdeOptNumber } from "../core/serde";
+} from "../utils/format";
+import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde";
 
 /**
  * @param {Object} args

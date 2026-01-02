@@ -16,8 +16,8 @@ impl Query {
         let iter = DateIndexIter::new(computer, start, current_height.to_usize());
 
         let mut fees = computer
-            .chain
-            .transaction
+            .transactions
+            .fees
             .indexes_to_fee
             .sats
             .dateindex

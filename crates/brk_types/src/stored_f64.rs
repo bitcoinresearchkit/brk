@@ -85,21 +85,34 @@ impl Mul<Dollars> for StoredF64 {
 impl Div<usize> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as f64)
+        if rhs == 0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs as f64)
+        }
     }
 }
 
 impl Div for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
-        Self(self.0 / rhs.0)
+        if rhs.0 == 0.0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs.0)
+        }
     }
 }
 
 impl Div<Dollars> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
-        Self::from(self.0 / *rhs)
+        let rhs = *rhs;
+        if rhs == 0.0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs)
+        }
     }
 }
 
@@ -201,7 +214,12 @@ impl Sum for StoredF64 {
 impl Div<Bitcoin> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: Bitcoin) -> Self::Output {
-        Self(self.0 / f64::from(rhs))
+        let rhs = f64::from(rhs);
+        if rhs == 0.0 {
+            Self::NAN
+        } else {
+            Self(self.0 / rhs)
+        }
     }
 }
 

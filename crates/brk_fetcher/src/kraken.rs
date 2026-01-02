@@ -39,7 +39,8 @@ impl Kraken {
         default_retry(|_| {
             let url = Self::url(1);
             info!("Fetching {url} ...");
-            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let json: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
             Self::parse_ohlc_response(&json)
         })
     }
@@ -60,7 +61,8 @@ impl Kraken {
         default_retry(|_| {
             let url = Self::url(1440);
             info!("Fetching {url} ...");
-            let json: Value = serde_json::from_slice(minreq::get(url).send()?.as_bytes())?;
+            let json: Value =
+                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
             Self::parse_date_ohlc_response(&json)
         })
     }
@@ -96,6 +98,7 @@ impl Kraken {
 
     pub fn ping() -> Result<()> {
         minreq::get("https://api.kraken.com/0/public/Time")
+            .with_timeout(10)
             .send()?;
         Ok(())
     }

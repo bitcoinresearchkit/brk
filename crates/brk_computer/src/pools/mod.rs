@@ -14,7 +14,7 @@ use vecdb::{
 mod vecs;
 
 use crate::{
-    chain,
+    blocks, transactions,
     indexes::{self, ComputeIndexes},
     price,
 };
@@ -36,7 +36,8 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        chain: &chain::Vecs,
+        blocks: &blocks::Vecs,
+        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
@@ -55,7 +56,8 @@ impl Vecs {
                         version + Version::ZERO,
                         indexes,
                         price,
-                        chain,
+                        blocks,
+                        transactions,
                     )
                     .map(|vecs| (pool.slug, vecs))
                 })
@@ -112,9 +114,8 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_pool.validate_computed_version_or_reset(
-            self.height_to_pool.version() + indexer.stores.height_to_coinbase_tag.version(),
-        )?;
+        self.height_to_pool
+            .validate_computed_version_or_reset(indexer.stores.height_to_coinbase_tag.version())?;
 
         let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
         let mut txindex_to_first_txoutindex_iter =
@@ -215,7 +216,8 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.height_to_pool.safe_write(exit)?;
+        let _lock = exit.lock();
+        self.height_to_pool.write()?;
         Ok(())
     }
 }

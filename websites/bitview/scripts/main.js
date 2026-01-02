@@ -1,11 +1,11 @@
-import { createColors } from "./core/colors";
-import { createWebSockets } from "./core/ws";
-import * as formatters from "./core/format";
+import { createColors } from "./utils/colors";
+import { createWebSockets } from "./utils/ws";
+import * as formatters from "./utils/format";
 import modules from "./lazy";
-import { onFirstIntersection, getElementById, isHidden } from "./core/dom";
-import { next } from "./core/timing";
-import { replaceHistory } from "./core/url";
-import { removeStored, writeToStorage } from "./core/storage";
+import { onFirstIntersection, getElementById, isHidden } from "./utils/dom";
+import { next } from "./utils/timing";
+import { replaceHistory } from "./utils/url";
+import { removeStored, writeToStorage } from "./utils/storage";
 import {
   asideElement,
   asideLabelElement,
@@ -22,7 +22,7 @@ import {
   simulationElement,
   style,
   tableElement,
-} from "./core/elements";
+} from "./utils/elements";
 
 function initFrameSelectors() {
   const children = Array.from(frameSelectorsElement.children);
@@ -109,15 +109,15 @@ initFrameSelectors();
 Promise.all([
   modules.signals(),
   modules.brkClient(),
-  modules.brkResources(),
+  modules.resources(),
   modules.options(),
-]).then(([signals, { BrkClient, VERSION }, { createResources }, { initOptions }]) =>
+]).then(([signals, { BrkClient }, { createResources }, { initOptions }]) =>
   signals.createRoot(() => {
     const brk = new BrkClient("/");
     const resources = createResources(signals);
     const owner = signals.getOwner();
 
-    console.log(`VERSION = ${VERSION}`);
+    console.log(`VERSION = ${brk.VERSION}`);
 
     function initDark() {
       const preferredColorSchemeMatchMedia = window.matchMedia(

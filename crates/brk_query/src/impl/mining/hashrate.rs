@@ -26,7 +26,7 @@ impl Query {
             .read_once(current_height)?;
 
         let current_hashrate = *computer
-            .chain
+            .blocks
             .mining
             .indexes_to_hash_rate
             .dateindex
@@ -57,7 +57,7 @@ impl Query {
 
         // Create iterators for the loop
         let mut hashrate_iter = computer
-            .chain
+            .blocks
             .mining
             .indexes_to_hash_rate
             .dateindex
@@ -65,8 +65,8 @@ impl Query {
             .iter();
 
         let mut timestamp_iter = computer
-            .chain
-            .block
+            .blocks
+            .time
             .timeindexes_to_timestamp
             .dateindex
             .as_ref()

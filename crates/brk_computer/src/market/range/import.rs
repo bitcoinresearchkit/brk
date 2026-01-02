@@ -4,7 +4,7 @@ use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
 use crate::{
-    grouped::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
+    internal::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
     indexes,
 };
 

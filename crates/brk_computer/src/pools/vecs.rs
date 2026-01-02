@@ -7,8 +7,8 @@ use vecdb::{
 };
 
 use crate::{
-    chain,
-    grouped::{
+    blocks, transactions,
+    internal::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
         DollarsPlus, LazyValueVecsFrom2FromHeight, LazyVecsFrom2FromDateIndex,
         LazyVecsFrom2FromHeight, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin, Source,
@@ -46,7 +46,8 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
-        chain: &chain::Vecs,
+        blocks: &blocks::Vecs,
+        transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
         let compute_dollars = price.is_some();
@@ -89,8 +90,8 @@ impl Vecs {
                 .as_ref()
                 .unwrap()
                 .boxed_clone(),
-            chain
-                .coinbase.indexes_to_subsidy
+            blocks
+                .rewards.indexes_to_subsidy
                 .sats
                 .height
                 .as_ref()
@@ -116,7 +117,7 @@ impl Vecs {
                 .as_ref()
                 .unwrap()
                 .boxed_clone(),
-            chain.transaction.indexes_to_fee.sats.height.unwrap_sum().boxed_clone(),
+            transactions.fees.indexes_to_fee.sats.height.unwrap_sum().boxed_clone(),
         );
 
         let indexes_to_fee = ComputedValueVecsFromHeight::forced_import(
@@ -138,14 +139,14 @@ impl Vecs {
                     .as_ref()
                     .unwrap()
                     .boxed_clone(),
-                chain
-                    .block.indexes_to_block_count
+                blocks
+                    .count.indexes_to_block_count
                     .height
                     .as_ref()
                     .unwrap()
                     .boxed_clone(),
                 &indexes_to_blocks_mined,
-                &chain.block.indexes_to_block_count,
+                &blocks.count.indexes_to_block_count,
             ),
             indexes_to_1d_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
                 &suffix("1d_dominance"),
@@ -155,32 +156,32 @@ impl Vecs {
                     .as_ref()
                     .unwrap()
                     .boxed_clone(),
-                chain
-                    .block.indexes_to_block_count
+                blocks
+                    .count.indexes_to_block_count
                     .height
                     .as_ref()
                     .unwrap()
                     .boxed_clone(),
                 &indexes_to_blocks_mined,
-                &chain.block.indexes_to_block_count,
+                &blocks.count.indexes_to_block_count,
             ),
             indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
                 &suffix("1w_dominance"),
                 version,
                 &indexes_to_1w_blocks_mined,
-                &chain.block.indexes_to_1w_block_count,
+                &blocks.count.indexes_to_1w_block_count,
             ),
             indexes_to_1m_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
                 &suffix("1m_dominance"),
                 version,
                 &indexes_to_1m_blocks_mined,
-                &chain.block.indexes_to_1m_block_count,
+                &blocks.count.indexes_to_1m_block_count,
             ),
             indexes_to_1y_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
                 &suffix("1y_dominance"),
                 version,
                 &indexes_to_1y_blocks_mined,
-                &chain.block.indexes_to_1y_block_count,
+                &blocks.count.indexes_to_1y_block_count,
             ),
             slug,
             indexes_to_blocks_mined,

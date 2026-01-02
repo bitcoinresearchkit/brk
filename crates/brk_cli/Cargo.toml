@@ -9,7 +9,7 @@ repository.workspace = true
 build = "build.rs"
 
 [dependencies]
-brk_binder = { workspace = true }
+brk_bindgen = { workspace = true }
 brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true }

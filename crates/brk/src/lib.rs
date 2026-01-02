@@ -6,7 +6,7 @@ pub use brk_bencher as bencher;
 
 #[cfg(feature = "binder")]
 #[doc(inline)]
-pub use brk_binder as binder;
+pub use brk_bindgen as binder;
 
 #[cfg(feature = "bundler")]
 #[doc(inline)]

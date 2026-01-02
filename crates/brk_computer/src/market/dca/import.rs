@@ -4,7 +4,7 @@ use vecdb::Database;
 
 use super::Vecs;
 use crate::{
-    grouped::{
+    internal::{
         ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, PercentageDiffCloseDollars, Source,
         VecBuilderOptions,
     },
@@ -221,74 +221,74 @@ impl Vecs {
         let _1w_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "1w_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_1w_dca_avg_price,
         );
         let _1m_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "1m_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_1m_dca_avg_price,
         );
         let _3m_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "3m_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_3m_dca_avg_price,
         );
         let _6m_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "6m_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_6m_dca_avg_price,
         );
         let _1y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "1y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_1y_dca_avg_price,
         );
         let _2y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "2y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_2y_dca_avg_price,
         );
         let _3y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "3y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_3y_dca_avg_price,
         );
         let _4y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "4y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_4y_dca_avg_price,
         );
         let _5y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "5y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_5y_dca_avg_price,
         );
         let _6y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "6y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_6y_dca_avg_price,
         );
         let _8y_dca_returns = LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
             "8y_dca_returns",
             version + v0,
-            &price.timeindexes_to_price_close,
+            &price.usd.timeindexes_to_price_close,
             &_8y_dca_avg_price,
         );
         let _10y_dca_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "10y_dca_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &_10y_dca_avg_price,
             );
 
@@ -535,77 +535,77 @@ impl Vecs {
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2025_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2025_avg_price,
             );
         let dca_class_2024_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2024_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2024_avg_price,
             );
         let dca_class_2023_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2023_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2023_avg_price,
             );
         let dca_class_2022_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2022_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2022_avg_price,
             );
         let dca_class_2021_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2021_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2021_avg_price,
             );
         let dca_class_2020_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2020_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2020_avg_price,
             );
         let dca_class_2019_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2019_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2019_avg_price,
             );
         let dca_class_2018_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2018_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2018_avg_price,
             );
         let dca_class_2017_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2017_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2017_avg_price,
             );
         let dca_class_2016_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2016_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2016_avg_price,
             );
         let dca_class_2015_returns =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "dca_class_2015_returns",
                 version + v0,
-                &price.timeindexes_to_price_close,
+                &price.usd.timeindexes_to_price_close,
                 &dca_class_2015_avg_price,
             );
 

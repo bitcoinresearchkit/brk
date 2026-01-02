@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{Close, Dollars, Height, StoredF32, StoredU16};
 use vecdb::{EagerVec, PcoVec};
 
-use crate::grouped::{
+use crate::internal::{
     ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, LazyVecsFromDateIndex,
 };
 

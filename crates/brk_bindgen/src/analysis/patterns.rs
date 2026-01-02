@@ -1,0 +1,290 @@
+//! Structural pattern detection using bottom-up analysis.
+//!
+//! This module detects repeating tree structures and analyzes them
+//! using the bottom-up name deconstruction algorithm.
+
+use std::collections::{BTreeSet, HashMap};
+
+use brk_types::TreeNode;
+
+use super::analyze_all_field_positions;
+use crate::{PatternField, StructuralPattern, schema_to_json_type, to_pascal_case};
+
+/// Context for pattern detection, holding all intermediate state.
+struct PatternContext {
+    /// Maps field signatures to pattern names
+    signature_to_pattern: HashMap<Vec<PatternField>, String>,
+    /// Counts how many times each signature appears
+    signature_counts: HashMap<Vec<PatternField>, usize>,
+    /// Maps normalized signatures to pattern names (for naming consistency)
+    normalized_to_name: HashMap<Vec<PatternField>, String>,
+    /// Counts pattern name usage (for unique naming)
+    name_counts: HashMap<String, usize>,
+    /// Maps signatures to their child field lists
+    signature_to_child_fields: HashMap<Vec<PatternField>, Vec<Vec<PatternField>>>,
+}
+
+impl PatternContext {
+    fn new() -> Self {
+        Self {
+            signature_to_pattern: HashMap::new(),
+            signature_counts: HashMap::new(),
+            normalized_to_name: HashMap::new(),
+            name_counts: HashMap::new(),
+            signature_to_child_fields: HashMap::new(),
+        }
+    }
+}
+
+/// Detect structural patterns in the tree using a bottom-up approach.
+///
+/// Returns (patterns, concrete_to_pattern, concrete_to_type_param).
+pub fn detect_structural_patterns(
+    tree: &TreeNode,
+) -> (
+    Vec<StructuralPattern>,
+    HashMap<Vec<PatternField>, String>,
+    HashMap<Vec<PatternField>, String>,
+) {
+    let mut ctx = PatternContext::new();
+    resolve_branch_patterns(tree, "root", &mut ctx);
+
+    let (generic_patterns, generic_mappings, type_mappings) =
+        detect_generic_patterns(&ctx.signature_to_pattern);
+
+    let mut patterns: Vec<StructuralPattern> = ctx.signature_to_pattern
+        .iter()
+        .filter(|(sig, _)| {
+            ctx.signature_counts.get(*sig).copied().unwrap_or(0) >= 2
+                && !generic_mappings.contains_key(*sig)
+        })
+        .map(|(fields, name)| {
+            let child_fields_list = ctx.signature_to_child_fields.get(fields);
+            let fields_with_type_params = fields
+                .iter()
+                .enumerate()
+                .map(|(i, f)| {
+                    let type_param = child_fields_list
+                        .and_then(|list| list.get(i))
+                        .and_then(|cf| type_mappings.get(cf).cloned());
+                    PatternField {
+                        type_param,
+                        ..f.clone()
+                    }
+                })
+                .collect();
+            StructuralPattern {
+                name: name.clone(),
+                fields: fields_with_type_params,
+                field_positions: HashMap::new(),
+                is_generic: false,
+            }
+        })
+        .collect();
+
+    patterns.extend(generic_patterns);
+
+    let mut pattern_lookup: HashMap<Vec<PatternField>, String> = HashMap::new();
+    for (sig, name) in &ctx.signature_to_pattern {
+        if ctx.signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
+            pattern_lookup.insert(sig.clone(), name.clone());
+        }
+    }
+    pattern_lookup.extend(generic_mappings.clone());
+
+    let concrete_to_pattern = pattern_lookup.clone();
+
+    // Use the new bottom-up field position analysis
+    analyze_all_field_positions(tree, &mut patterns, &pattern_lookup);
+
+    patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
+    (patterns, concrete_to_pattern, type_mappings)
+}
+
+/// Detect generic patterns by grouping signatures by their normalized form.
+fn detect_generic_patterns(
+    signature_to_pattern: &HashMap<Vec<PatternField>, String>,
+) -> (
+    Vec<StructuralPattern>,
+    HashMap<Vec<PatternField>, String>,
+    HashMap<Vec<PatternField>, String>,
+) {
+    let mut normalized_groups: HashMap<
+        Vec<PatternField>,
+        Vec<(Vec<PatternField>, String, String)>,
+    > = HashMap::new();
+
+    for (fields, name) in signature_to_pattern {
+        if let Some((normalized, extracted_type)) = normalize_fields_for_generic(fields) {
+            normalized_groups
+                .entry(normalized)
+                .or_default()
+                .push((fields.clone(), name.clone(), extracted_type));
+        }
+    }
+
+    let mut patterns = Vec::new();
+    let mut pattern_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+    let mut type_mappings: HashMap<Vec<PatternField>, String> = HashMap::new();
+
+    for (normalized_fields, group) in normalized_groups {
+        if group.len() >= 2 {
+            let generic_name = group[0].1.clone();
+            for (concrete_fields, _, extracted_type) in &group {
+                pattern_mappings.insert(concrete_fields.clone(), generic_name.clone());
+                type_mappings.insert(concrete_fields.clone(), extracted_type.clone());
+            }
+            patterns.push(StructuralPattern {
+                name: generic_name,
+                fields: normalized_fields,
+                field_positions: HashMap::new(),
+                is_generic: true,
+            });
+        }
+    }
+
+    (patterns, pattern_mappings, type_mappings)
+}
+
+/// Normalize fields by replacing concrete value types with "T".
+fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternField>, String)> {
+    let leaf_types: Vec<&str> = fields
+        .iter()
+        .filter(|f| f.is_leaf())
+        .map(|f| f.rust_type.as_str())
+        .collect();
+
+    if leaf_types.is_empty() {
+        return None;
+    }
+
+    let first_type = leaf_types[0];
+    if !leaf_types.iter().all(|t| *t == first_type) {
+        return None;
+    }
+
+    let normalized = fields
+        .iter()
+        .map(|f| {
+            if f.is_branch() {
+                f.clone()
+            } else {
+                PatternField {
+                    name: f.name.clone(),
+                    rust_type: "T".to_string(),
+                    json_type: "T".to_string(),
+                    indexes: f.indexes.clone(),
+                    type_param: None,
+                }
+            }
+        })
+        .collect();
+
+    Some((normalized, crate::extract_inner_type(first_type)))
+}
+
+/// Recursively resolve branch patterns bottom-up.
+fn resolve_branch_patterns(
+    node: &TreeNode,
+    field_name: &str,
+    ctx: &mut PatternContext,
+) -> Option<(String, Vec<PatternField>)> {
+    let TreeNode::Branch(children) = node else {
+        return None;
+    };
+
+    let mut fields: Vec<PatternField> = Vec::new();
+    let mut child_fields_vec: Vec<Vec<PatternField>> = Vec::new();
+
+    for (child_name, child_node) in children {
+        let (rust_type, json_type, indexes, child_fields) = match child_node {
+            TreeNode::Leaf(leaf) => (
+                leaf.value_type().to_string(),
+                schema_to_json_type(&leaf.schema),
+                leaf.indexes().clone(),
+                Vec::new(),
+            ),
+            TreeNode::Branch(_) => {
+                let (pattern_name, child_pattern_fields) =
+                    resolve_branch_patterns(child_node, child_name, ctx)
+                        .unwrap_or_else(|| ("Unknown".to_string(), Vec::new()));
+                (
+                    pattern_name.clone(),
+                    pattern_name,
+                    BTreeSet::new(),
+                    child_pattern_fields,
+                )
+            }
+        };
+        fields.push(PatternField {
+            name: child_name.clone(),
+            rust_type,
+            json_type,
+            indexes,
+            type_param: None,
+        });
+        child_fields_vec.push(child_fields);
+    }
+
+    fields.sort_by(|a, b| a.name.cmp(&b.name));
+    *ctx.signature_counts.entry(fields.clone()).or_insert(0) += 1;
+
+    ctx.signature_to_child_fields
+        .entry(fields.clone())
+        .or_insert(child_fields_vec);
+
+    let pattern_name = if let Some(existing) = ctx.signature_to_pattern.get(&fields) {
+        existing.clone()
+    } else {
+        let normalized = normalize_fields_for_naming(&fields);
+        let name = ctx
+            .normalized_to_name
+            .entry(normalized)
+            .or_insert_with(|| generate_pattern_name(field_name, &mut ctx.name_counts))
+            .clone();
+        ctx.signature_to_pattern.insert(fields.clone(), name.clone());
+        name
+    };
+
+    Some((pattern_name, fields))
+}
+
+/// Normalize fields for naming (same structure = same name).
+fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
+    fields
+        .iter()
+        .map(|f| {
+            if f.is_branch() {
+                f.clone()
+            } else {
+                PatternField {
+                    name: f.name.clone(),
+                    rust_type: "_".to_string(),
+                    json_type: "_".to_string(),
+                    indexes: f.indexes.clone(),
+                    type_param: None,
+                }
+            }
+        })
+        .collect()
+}
+
+/// Generate a unique pattern name.
+fn generate_pattern_name(field_name: &str, name_counts: &mut HashMap<String, usize>) -> String {
+    let pascal = to_pascal_case(field_name);
+    let sanitized = if pascal.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+        format!("_{}", pascal)
+    } else {
+        pascal
+    };
+
+    let base_name = format!("{}Pattern", sanitized);
+    let count = name_counts.entry(base_name.clone()).or_insert(0);
+    *count += 1;
+
+    if *count == 1 {
+        base_name
+    } else {
+        format!("{}{}", base_name, count)
+    }
+}

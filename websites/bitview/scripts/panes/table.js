@@ -1,15 +1,17 @@
-import { randomFromArray } from "../core/array";
-import { createButtonElement, createHeader, createSelect } from "../core/dom";
-import { tableElement } from "../core/elements";
-import { serdeMetrics, serdeString, serdeUnit } from "../core/serde";
-import { resetParams } from "../core/url";
+// @ts-nocheck
+
+import { randomFromArray } from "../utils/array";
+import { createButtonElement, createHeader, createSelect } from "../utils/dom";
+import { tableElement } from "../utils/elements";
+import { serdeMetrics, serdeString, serdeUnit } from "../utils/serde";
+import { resetParams } from "../utils/url";
 
 /**
  * @param {Object} args
  * @param {Signals} args.signals
  * @param {Option} args.option
  * @param {Resources} args.resources
- * @param {BRK} args.brk
+ * @param {BrkClient} args.brk
  */
 export function init({ signals, option, resources, brk }) {
   tableElement.innerHTML = "wip, will hopefuly be back soon, sorry !";
@@ -46,7 +48,7 @@ export function init({ signals, option, resources, brk }) {
 //  * @param {Object} args
 //  * @param {Option} args.option
 //  * @param {Signals} args.signals
-//  * @param {BRK} args.brk
+//  * @param {BrkClient} args.brk
 //  * @param {Resources} args.resources
 //  */
 // function createTable({ brk, signals, option, resources }) {

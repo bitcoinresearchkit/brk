@@ -1,16 +1,13 @@
 use brk_traversable::Traversable;
-use brk_types::{Date, DateIndex, DifficultyEpoch, HalvingEpoch, Height, StoredU64, Timestamp};
+use brk_types::{DateIndex, DifficultyEpoch, HalvingEpoch, Height, StoredU64};
 use vecdb::{EagerVec, PcoVec};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub height_to_date: EagerVec<PcoVec<Height, Date>>,
-    pub height_to_date_fixed: EagerVec<PcoVec<Height, Date>>,
     pub height_to_dateindex: EagerVec<PcoVec<Height, DateIndex>>,
     pub height_to_difficultyepoch: EagerVec<PcoVec<Height, DifficultyEpoch>>,
     pub height_to_halvingepoch: EagerVec<PcoVec<Height, HalvingEpoch>>,
     pub height_to_height: EagerVec<PcoVec<Height, Height>>,
-    pub height_to_timestamp_fixed: EagerVec<PcoVec<Height, Timestamp>>,
     pub height_to_txindex_count: EagerVec<PcoVec<Height, StoredU64>>,
     pub difficultyepoch_to_difficultyepoch: EagerVec<PcoVec<DifficultyEpoch, DifficultyEpoch>>,
     pub difficultyepoch_to_first_height: EagerVec<PcoVec<DifficultyEpoch, Height>>,

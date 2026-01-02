@@ -42,14 +42,14 @@ bitcoin = { version = "0.32.8", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_alloc = { version = "0.1.0-alpha.1", path = "crates/brk_alloc" }
 brk_bencher = { version = "0.1.0-alpha.1", path = "crates/brk_bencher" }
-brk_binder = { version = "0.1.0-alpha.1", path = "crates/brk_binder" }
+brk_bindgen = { version = "0.1.0-alpha.1", path = "crates/brk_bindgen" }
 brk_bundler = { version = "0.1.0-alpha.1", path = "crates/brk_bundler" }
 brk_cli = { version = "0.1.0-alpha.1", path = "crates/brk_cli" }
 brk_client = { version = "0.1.0-alpha.1", path = "crates/brk_client" }
+brk_cohort = { version = "0.1.0-alpha.1", path = "crates/brk_cohort" }
 brk_computer = { version = "0.1.0-alpha.1", path = "crates/brk_computer" }
 brk_error = { version = "0.1.0-alpha.1", path = "crates/brk_error" }
 brk_fetcher = { version = "0.1.0-alpha.1", path = "crates/brk_fetcher" }
-brk_grouper = { version = "0.1.0-alpha.1", path = "crates/brk_grouper" }
 brk_indexer = { version = "0.1.0-alpha.1", path = "crates/brk_indexer" }
 brk_query = { version = "0.1.0-alpha.1", path = "crates/brk_query", features = ["tokio"] }
 brk_iterator = { version = "0.1.0-alpha.1", path = "crates/brk_iterator" }
@@ -66,8 +66,9 @@ brk_traversable_derive = { version = "0.1.0-alpha.1", path = "crates/brk_travers
 byteview = "0.9.1"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
+env_logger = "0.11.8"
 # fjall = "3.0.0-rc.6"
-fjall = { path = "../fjall" }
+fjall = { git = "https://github.com/fjall-rs/fjall" }
 jiff = "0.2.17"
 log = "0.4.29"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
@@ -81,7 +82,7 @@ serde_derive = "1.0.228"
 serde_json = { version = "1.0.148", features = ["float_roundtrip"] }
 smallvec = "1.15.1"
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
-# vecdb = { version = "0.5.0", features = ["derive", "serde_json", "pco", "schemars"] }
+# vecdb = { version = "0.5.2", features = ["derive", "serde_json", "pco", "schemars"] }
 vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { git = "https://github.com/anydb-rs/anydb", features = ["derive", "serde_json", "pco"] }
 

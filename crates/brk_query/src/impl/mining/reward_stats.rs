@@ -13,8 +13,8 @@ impl Query {
         let start_block = Height::from(current_height.to_usize().saturating_sub(block_count - 1));
 
         let mut coinbase_iter = computer
-            .chain
-            .coinbase
+            .blocks
+            .rewards
             .indexes_to_coinbase
             .sats
             .height
@@ -22,16 +22,16 @@ impl Query {
             .unwrap()
             .iter();
         let mut fee_iter = computer
-            .chain
-            .transaction
+            .transactions
+            .fees
             .indexes_to_fee
             .sats
             .height
             .unwrap_sum()
             .iter();
         let mut tx_count_iter = computer
-            .chain
-            .transaction
+            .transactions
+            .count
             .indexes_to_tx_count
             .height
             .as_ref()
