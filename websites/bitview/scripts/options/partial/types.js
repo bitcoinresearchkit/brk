@@ -121,14 +121,14 @@
  * @property {Color} color
  * @property {UtxoCohortPattern} tree
  *
- * Age cohorts (term, maxAge, minAge, ageRange, epoch) - have price percentiles
+ * Age cohorts (term, maxAge, minAge, ageRange, epoch) - have cost basis percentiles
  * @typedef {Object} AgeCohortObject
  * @property {string} name
  * @property {string} title
  * @property {Color} color
- * @property {PatternWithPricePercentiles} tree
+ * @property {PatternWithCostBasisPercentiles} tree
  *
- * Amount cohorts (geAmount, ltAmount, amountRange, type) - no price percentiles
+ * Amount cohorts (geAmount, ltAmount, amountRange, type) - no cost basis percentiles
  * @typedef {Object} AmountCohortObject
  * @property {string} name
  * @property {string} title

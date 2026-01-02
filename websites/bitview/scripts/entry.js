@@ -40,17 +40,17 @@
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithRealizedPrice
  * @typedef {AllUtxoPattern} PatternWithFullRealized
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithNupl
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithPricePaidStats
+ * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithCostBasis
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithActivity
- * @typedef {AllUtxoPattern | MaxAgePattern | MinAgePattern} PatternWithPricePercentiles
+ * @typedef {AllUtxoPattern | MaxAgePattern | MinAgePattern} PatternWithCostBasisPercentiles
  *
  * Cohort objects with specific pattern capabilities
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithRealizedPrice }} CohortWithRealizedPrice
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithFullRealized }} CohortWithFullRealized
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithNupl }} CohortWithNupl
- * @typedef {{ name: string, title: string, color: Color, tree: PatternWithPricePaidStats }} CohortWithPricePaidStats
+ * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasis }} CohortWithCostBasis
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithActivity }} CohortWithActivity
- * @typedef {{ name: string, title: string, color: Color, tree: PatternWithPricePercentiles }} CohortWithPricePercentiles
+ * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasisPercentiles }} CohortWithCostBasisPercentiles
  *
  * Tree branch types
  * @typedef {InstanceType<typeof BrkClient>["tree"]["computed"]["market"]} Market

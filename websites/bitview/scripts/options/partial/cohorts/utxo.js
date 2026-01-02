@@ -3,8 +3,8 @@
  * Creates option trees for UTXO-based cohorts (no addrCount)
  *
  * Two main builders:
- * - createAgeCohortFolder: For term, maxAge, minAge, ageRange, epoch (has price percentiles)
- * - createAmountCohortFolder: For geAmount, ltAmount, amountRange, type (no price percentiles)
+ * - createAgeCohortFolder: For term, maxAge, minAge, ageRange, epoch (has cost basis percentiles)
+ * - createAmountCohortFolder: For geAmount, ltAmount, amountRange, type (no cost basis percentiles)
  */
 
 import {
@@ -16,13 +16,13 @@ import {
   createRealizedPriceSeries,
   createRealizedPriceRatioSeries,
   createRealizedCapSeries,
-  createPricePaidMinMaxSeries,
-  createPricePercentilesSeries,
+  createCostBasisMinMaxSeries,
+  createCostBasisPercentilesSeries,
 } from "./shared.js";
 
 /**
  * Create a cohort folder for age-based UTXO cohorts (term, maxAge, minAge, ageRange, epoch)
- * These cohorts have price percentiles via PricePaidPattern2
+ * These cohorts have cost basis percentiles via CostBasisPattern2
  * @param {PartialContext} ctx
  * @param {AgeCohortObject | AgeCohortGroupObject} args
  * @returns {PartialOptionsGroup}
@@ -40,7 +40,7 @@ export function createAgeCohortFolder(ctx, args) {
       createUtxoCountSection(ctx, list, useGroupName, title),
       createRealizedSection(ctx, list, args, useGroupName, isSingle, title),
       ...createUnrealizedSection(ctx, list, useGroupName, title),
-      ...createPricePaidSectionWithPercentiles(ctx, list, useGroupName, title),
+      ...createCostBasisSectionWithPercentiles(ctx, list, useGroupName, title),
       ...createActivitySection(ctx, list, useGroupName, title),
     ],
   };
@@ -48,7 +48,7 @@ export function createAgeCohortFolder(ctx, args) {
 
 /**
  * Create a cohort folder for amount-based UTXO cohorts (geAmount, ltAmount, amountRange, type)
- * These cohorts have only min/max price paid via PricePaidPattern
+ * These cohorts have only min/max cost basis via CostBasisPattern
  * @param {PartialContext} ctx
  * @param {AmountCohortObject | AmountCohortGroupObject} args
  * @returns {PartialOptionsGroup}
@@ -66,7 +66,7 @@ export function createAmountCohortFolder(ctx, args) {
       createUtxoCountSection(ctx, list, useGroupName, title),
       createRealizedSection(ctx, list, args, useGroupName, isSingle, title),
       ...createUnrealizedSection(ctx, list, useGroupName, title),
-      ...createPricePaidSectionBasic(ctx, list, useGroupName, title),
+      ...createCostBasisSectionBasic(ctx, list, useGroupName, title),
       ...createActivitySection(ctx, list, useGroupName, title),
     ],
   };
@@ -87,7 +87,7 @@ export function createUtxoCohortFolder(ctx, args) {
   const title = args.title ? `${useGroupName ? "by" : "of"} ${args.title}` : "";
 
   // Runtime check for percentiles
-  const hasPercentiles = "pricePercentiles" in list[0].tree.pricePaid;
+  const hasPercentiles = "percentiles" in list[0].tree.costBasis;
 
   return {
     name: args.name || "all",
@@ -97,8 +97,8 @@ export function createUtxoCohortFolder(ctx, args) {
       createRealizedSection(ctx, list, args, useGroupName, isSingle, title),
       ...createUnrealizedSection(ctx, list, useGroupName, title),
       ...(hasPercentiles
-        ? createPricePaidSectionWithPercentiles(ctx, /** @type {readonly AgeCohortObject[]} */ (list), useGroupName, title)
-        : createPricePaidSectionBasic(ctx, list, useGroupName, title)),
+        ? createCostBasisSectionWithPercentiles(ctx, /** @type {readonly AgeCohortObject[]} */ (list), useGroupName, title)
+        : createCostBasisSectionBasic(ctx, list, useGroupName, title)),
       ...createActivitySection(ctx, list, useGroupName, title),
     ],
   };
@@ -372,38 +372,38 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
 }
 
 /**
- * Create price paid section for cohorts WITH percentiles (age cohorts)
+ * Create cost basis section for cohorts WITH percentiles (age cohorts)
  * @param {PartialContext} ctx
  * @param {readonly AgeCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createPricePaidSectionWithPercentiles(ctx, list, useGroupName, title) {
+function createCostBasisSectionWithPercentiles(ctx, list, useGroupName, title) {
   const { s } = ctx;
 
   return [
     {
-      name: "Price Paid",
+      name: "Cost Basis",
       tree: [
         {
           name: "min",
-          title: `Min Price Paid ${title}`,
+          title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.minPricePaid, name: useGroupName ? name : "Min", color }),
+            s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? name : "Min", color }),
           ),
         },
         {
           name: "max",
-          title: `Max Price Paid ${title}`,
+          title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.maxPricePaid, name: useGroupName ? name : "Max", color }),
+            s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? name : "Max", color }),
           ),
         },
         {
           name: "percentiles",
-          title: `Price Paid Percentiles ${title}`,
-          top: createPricePercentilesSeries(ctx, list, useGroupName),
+          title: `Cost Basis Percentiles ${title}`,
+          top: createCostBasisPercentilesSeries(ctx, list, useGroupName),
         },
       ],
     },
@@ -411,32 +411,32 @@ function createPricePaidSectionWithPercentiles(ctx, list, useGroupName, title) {
 }
 
 /**
- * Create price paid section for cohorts WITHOUT percentiles (amount cohorts)
+ * Create cost basis section for cohorts WITHOUT percentiles (amount cohorts)
  * @param {PartialContext} ctx
  * @param {readonly UtxoCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createPricePaidSectionBasic(ctx, list, useGroupName, title) {
+function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
   const { s } = ctx;
 
   return [
     {
-      name: "Price Paid",
+      name: "Cost Basis",
       tree: [
         {
           name: "min",
-          title: `Min Price Paid ${title}`,
+          title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.minPricePaid, name: useGroupName ? name : "Min", color }),
+            s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? name : "Min", color }),
           ),
         },
         {
           name: "max",
-          title: `Max Price Paid ${title}`,
+          title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.maxPricePaid, name: useGroupName ? name : "Max", color }),
+            s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? name : "Max", color }),
           ),
         },
       ],

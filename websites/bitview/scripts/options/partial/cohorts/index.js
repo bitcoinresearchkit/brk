@@ -20,6 +20,6 @@ export {
   createRealizedPriceSeries,
   createRealizedPriceRatioSeries,
   createRealizedCapSeries,
-  createPricePaidMinMaxSeries,
-  createPricePercentilesSeries,
+  createCostBasisMinMaxSeries,
+  createCostBasisPercentilesSeries,
 } from "./shared.js";

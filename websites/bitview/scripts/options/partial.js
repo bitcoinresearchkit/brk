@@ -2500,7 +2500,7 @@ export function createPartialOptions({ colors, brk }) {
                     top: list.flatMap(({ color, name, tree }) => {
                       return /** @type {const} */ ([
                         s({
-                          metric: tree.pricePaid.minPricePaid,
+                          metric: tree.costBasis.minCostBasis,
                           name,
                           color: color,
                         }),
@@ -2513,7 +2513,7 @@ export function createPartialOptions({ colors, brk }) {
                     top: list.flatMap(({ color, name, tree }) => {
                       return /** @type {const} */ ([
                         s({
-                          metric: tree.pricePaid.maxPricePaid,
+                          metric: tree.costBasis.maxCostBasis,
                           name,
                           color: color,
                         }),
@@ -2526,7 +2526,7 @@ export function createPartialOptions({ colors, brk }) {
           : [
               {
                 name: "Cost Basis",
-                title: `Costs Basis ${title}`,
+                title: `Cost Basis ${title}`,
                 top: [
                   s({
                     metric: args.tree.realizedPrice,
@@ -2534,13 +2534,13 @@ export function createPartialOptions({ colors, brk }) {
                     color: args.color,
                   }),
                   s({
-                    metric: args.tree.pricePaid.minPricePaid,
+                    metric: args.tree.costBasis.minCostBasis,
                     name: "Min",
                     color: colors.green,
                     defaultActive: false,
                   }),
                   s({
-                    metric: args.tree.pricePaid.maxPricePaid,
+                    metric: args.tree.costBasis.maxCostBasis,
                     name: "Max",
                     color: colors.red,
                   }),

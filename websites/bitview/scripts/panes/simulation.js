@@ -644,7 +644,7 @@ export function init({ colors, createChartElement, signals, resources }) {
       equals: false,
     },
   );
-  const averagePricePaidData = signals.createSignal(
+  const averageCostBasisData = signals.createSignal(
     /** @type {LineData[]} */ ([]),
     {
       equals: false,
@@ -772,7 +772,7 @@ export function init({ colors, createChartElement, signals, resources }) {
             title: "Average Cost Basis",
             type: "Line",
             color: colors.lime,
-            data: averagePricePaidData,
+            data: averageCostBasisData,
           },
         ],
       },
@@ -873,7 +873,7 @@ export function init({ colors, createChartElement, signals, resources }) {
             totalValueData().length = 0;
             investmentData().length = 0;
             bitcoinAddedData().length = 0;
-            averagePricePaidData().length = 0;
+            averageCostBasisData().length = 0;
             bitcoinPriceData().length = 0;
             buyCountData().length = 0;
             totalFeesPaidData().length = 0;
@@ -887,7 +887,7 @@ export function init({ colors, createChartElement, signals, resources }) {
             let investedAmount = 0;
             let postFeesInvestedAmount = 0;
             let buyCount = 0;
-            let averagePricePaid = 0;
+            let averageCostBasis = 0;
             let bitcoinValue = 0;
             let roi = 0;
             let totalValue = 0;
@@ -951,7 +951,7 @@ export function init({ colors, createChartElement, signals, resources }) {
 
               totalValue = dollars + bitcoinValue;
 
-              averagePricePaid = postFeesInvestedAmount / bitcoin;
+              averageCostBasis = postFeesInvestedAmount / bitcoin;
 
               roi = (bitcoinValue / postFeesInvestedAmount - 1) * 100;
 
@@ -1010,9 +1010,9 @@ export function init({ colors, createChartElement, signals, resources }) {
                 value: bitcoinAdded,
               });
 
-              averagePricePaidData().push({
+              averageCostBasisData().push({
                 time,
-                value: averagePricePaid,
+                value: averageCostBasis,
               });
 
               buyCountData().push({
@@ -1057,12 +1057,12 @@ export function init({ colors, createChartElement, signals, resources }) {
             const serSats = c("orange", f(sats));
             const serBitcoin = c("orange", `~${f(bitcoin)}`);
             const serBitcoinValue = c("amber", fd(bitcoinValue));
-            const serAveragePricePaid = c("lime", fd(averagePricePaid));
+            const serAverageCostBasis = c("lime", fd(averageCostBasis));
             const serRoi = c("yellow", fp(roi / 100));
             const serDollars = c("emerald", fd(dollars));
             const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
 
-            p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
+            p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average cost basis of ${serAverageCostBasis} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
 
             const dayDiff = Math.floor(
               differenceBetweenDates(new Date(), lastInvestDay),
@@ -1092,7 +1092,7 @@ export function init({ colors, createChartElement, signals, resources }) {
             totalValueData.set((a) => a);
             investmentData.set((a) => a);
             bitcoinAddedData.set((a) => a);
-            averagePricePaidData.set((a) => a);
+            averageCostBasisData.set((a) => a);
             bitcoinPriceData.set((a) => a);
             buyCountData.set((a) => a);
             totalFeesPaidData.set((a) => a);

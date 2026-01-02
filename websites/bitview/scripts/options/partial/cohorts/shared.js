@@ -178,39 +178,39 @@ export function createRealizedCapSeries(ctx, list, useGroupName) {
 }
 
 /**
- * Create price paid min/max series (available on all cohorts)
+ * Create cost basis min/max series (available on all cohorts)
  * @param {PartialContext} ctx
  * @param {readonly CohortObject[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createPricePaidMinMaxSeries(ctx, list, useGroupName) {
+export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
   const { s } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({ metric: tree.pricePaid.minPricePaid, name: useGroupName ? `${name} min` : "Min", color }),
-    s({ metric: tree.pricePaid.maxPricePaid, name: useGroupName ? `${name} max` : "Max", color }),
+    s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? `${name} min` : "Min", color }),
+    s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? `${name} max` : "Max", color }),
   ]);
 }
 
 /**
- * Create price percentile series (only for cohorts with PricePaidPattern2)
+ * Create cost basis percentile series (only for cohorts with CostBasisPattern2)
  * @param {PartialContext} ctx
- * @param {readonly CohortWithPricePercentiles[]} list
+ * @param {readonly CohortWithCostBasisPercentiles[]} list
  * @param {boolean} useGroupName
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function createPricePercentilesSeries(ctx, list, useGroupName) {
+export function createCostBasisPercentilesSeries(ctx, list, useGroupName) {
   const { s, colors } = ctx;
 
   return list.flatMap(({ color, name, tree }) => {
-    const pp = tree.pricePaid.pricePercentiles;
+    const percentiles = tree.costBasis.percentiles;
     return [
-      s({ metric: pp.pct10, name: useGroupName ? `${name} p10` : "p10", color, defaultActive: false }),
-      s({ metric: pp.pct25, name: useGroupName ? `${name} p25` : "p25", color, defaultActive: false }),
-      s({ metric: pp.pct50, name: useGroupName ? `${name} p50` : "p50", color }),
-      s({ metric: pp.pct75, name: useGroupName ? `${name} p75` : "p75", color, defaultActive: false }),
-      s({ metric: pp.pct90, name: useGroupName ? `${name} p90` : "p90", color, defaultActive: false }),
+      s({ metric: percentiles.pct10, name: useGroupName ? `${name} p10` : "p10", color, defaultActive: false }),
+      s({ metric: percentiles.pct25, name: useGroupName ? `${name} p25` : "p25", color, defaultActive: false }),
+      s({ metric: percentiles.pct50, name: useGroupName ? `${name} p50` : "p50", color }),
+      s({ metric: percentiles.pct75, name: useGroupName ? `${name} p75` : "p75", color, defaultActive: false }),
+      s({ metric: percentiles.pct90, name: useGroupName ? `${name} p90` : "p90", color, defaultActive: false }),
     ];
   });
 }

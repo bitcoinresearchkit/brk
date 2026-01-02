@@ -63,12 +63,11 @@ brk_store = { version = "0.1.0-alpha.1", path = "crates/brk_store" }
 brk_types = { version = "0.1.0-alpha.1", path = "crates/brk_types" }
 brk_traversable = { version = "0.1.0-alpha.1", path = "crates/brk_traversable", features = ["pco", "derive"] }
 brk_traversable_derive = { version = "0.1.0-alpha.1", path = "crates/brk_traversable_derive" }
-byteview = "0.9.1"
+byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 env_logger = "0.11.8"
-# fjall = "3.0.0-rc.6"
-fjall = { git = "https://github.com/fjall-rs/fjall" }
+fjall = "3.0.0"
 jiff = "0.2.17"
 log = "0.4.29"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }

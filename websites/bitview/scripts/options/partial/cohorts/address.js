@@ -1,7 +1,7 @@
 /**
  * Address cohort folder builder
  * Creates option trees for address-based cohorts (has addrCount)
- * Address cohorts use _0satsPattern which has PricePaidPattern (no percentiles)
+ * Address cohorts use _0satsPattern which has CostBasisPattern (no percentiles)
  */
 
 import {
@@ -104,8 +104,8 @@ export function createAddressCohortFolder(ctx, args) {
       // Unrealized section
       ...createUnrealizedSection(ctx, list, useGroupName, title),
 
-      // Price paid section (no percentiles for address cohorts)
-      ...createPricePaidSection(ctx, list, useGroupName, title),
+      // Cost basis section (no percentiles for address cohorts)
+      ...createCostBasisSection(ctx, list, useGroupName, title),
 
       // Activity section
       ...createActivitySection(ctx, list, useGroupName, title),
@@ -237,32 +237,32 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
 }
 
 /**
- * Create price paid section (no percentiles for address cohorts)
+ * Create cost basis section (no percentiles for address cohorts)
  * @param {PartialContext} ctx
  * @param {readonly AddressCohortObject[]} list
  * @param {boolean} useGroupName
  * @param {string} title
  * @returns {PartialOptionsTree}
  */
-function createPricePaidSection(ctx, list, useGroupName, title) {
+function createCostBasisSection(ctx, list, useGroupName, title) {
   const { s } = ctx;
 
   return [
     {
-      name: "Price Paid",
+      name: "Cost Basis",
       tree: [
         {
           name: "min",
-          title: `Min Price Paid ${title}`,
+          title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.minPricePaid, name: useGroupName ? name : "Min", color }),
+            s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? name : "Min", color }),
           ),
         },
         {
           name: "max",
-          title: `Max Price Paid ${title}`,
+          title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.pricePaid.maxPricePaid, name: useGroupName ? name : "Max", color }),
+            s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? name : "Max", color }),
           ),
         },
       ],
