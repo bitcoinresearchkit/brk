@@ -16,8 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
-
         let full_stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -29,7 +27,7 @@ impl Vecs {
 
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
-            version + v0,
+            version,
             indexer.vecs.tx.txindex_to_height.boxed_clone(),
             indexer.vecs.tx.height_to_first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
@@ -45,7 +43,7 @@ impl Vecs {
                 db,
                 "tx_count",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,

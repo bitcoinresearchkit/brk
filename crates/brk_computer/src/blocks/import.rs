@@ -9,8 +9,8 @@ use vecdb::{Database, PAGE_SIZE};
 use crate::{indexes, price};
 
 use super::{
-    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, MiningVecs,
-    RewardsVecs, SizeVecs, TimeVecs, Vecs, WeightVecs,
+    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, MiningVecs, RewardsVecs, SizeVecs,
+    TimeVecs, Vecs, WeightVecs,
 };
 
 impl Vecs {
@@ -24,7 +24,7 @@ impl Vecs {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        let version = parent_version + Version::ZERO;
+        let version = parent_version;
         let compute_dollars = price.is_some();
 
         let count = CountVecs::forced_import(&db, version, indexes)?;

@@ -48,10 +48,16 @@ export function initOptions({ colors, signals, brk, qrcode }) {
    * @param {AnyFetchedSeriesBlueprint[]} [arr]
    */
   function arrayToRecord(arr = []) {
-    return (arr || []).reduce((record, blueprint) => {
+    return [...(arr || [])].reduce((record, blueprint) => {
+      if (!blueprint.metric) {
+        throw new Error(
+          `Blueprint missing metric: ${JSON.stringify(blueprint)}`,
+        );
+      }
       markUsed(blueprint.metric);
       // Use any index's path - unit is the same regardless of index (e.g., supply is "sats" for both height and dateindex)
-      const unit = blueprint.unit ?? serdeUnit.deserialize(blueprint.metric.name);
+      const unit =
+        blueprint.unit ?? serdeUnit.deserialize(blueprint.metric.name);
       record[unit] ??= [];
       record[unit].push(blueprint);
       return record;

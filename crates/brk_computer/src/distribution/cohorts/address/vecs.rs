@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
+use brk_types::{DateIndex, Dollars, Height, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
@@ -12,9 +12,10 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
-    indexes, price,
     distribution::state::AddressCohortState,
+    indexes,
+    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    price,
 };
 
 use crate::distribution::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
@@ -73,11 +74,8 @@ impl AddressCohortVecs {
             price,
         };
 
-        let height_to_addr_count = EagerVec::forced_import(
-            db,
-            &cfg.name("addr_count"),
-            version + VERSION + Version::ZERO,
-        )?;
+        let height_to_addr_count =
+            EagerVec::forced_import(db, &cfg.name("addr_count"), version + VERSION)?;
 
         Ok(Self {
             starting_height: None,
@@ -91,7 +89,7 @@ impl AddressCohortVecs {
                 db,
                 &cfg.name("addr_count"),
                 Source::Vec(height_to_addr_count.boxed_clone()),
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -290,7 +288,6 @@ impl CohortVecs for AddressCohortVecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
-        height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -299,7 +296,6 @@ impl CohortVecs for AddressCohortVecs {
             indexes,
             price,
             starting_indexes,
-            height_to_supply,
             height_to_market_cap,
             dateindex_to_market_cap,
             exit,

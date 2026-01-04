@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Sats, Version};
+use brk_types::{DateIndex, Dollars, Height, Sats};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
@@ -9,11 +9,11 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes,
+    distribution::state::UnrealizedState,
     internal::{
         ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromDateIndex,
         DollarsMinus, DollarsPlus, LazyVecsFromDateIndex, Source, VecBuilderOptions,
     },
-    distribution::state::UnrealizedState,
 };
 
 use super::ImportConfig;
@@ -57,23 +57,22 @@ pub struct UnrealizedMetrics {
 impl UnrealizedMetrics {
     /// Import unrealized metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let compute_dollars = cfg.compute_dollars();
         let last = VecBuilderOptions::default().add_last();
 
         let dateindex_to_supply_in_profit =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version)?;
         let dateindex_to_supply_in_loss =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version)?;
         let dateindex_to_unrealized_profit =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version)?;
         let dateindex_to_unrealized_loss =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version)?;
         let height_to_unrealized_loss: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version)?;
         let height_to_neg_unrealized_loss = LazyVecFrom1::transformed::<Negate>(
             &cfg.name("neg_unrealized_loss"),
-            cfg.version + v0,
+            cfg.version,
             height_to_unrealized_loss.boxed_clone(),
         );
 
@@ -81,26 +80,26 @@ impl UnrealizedMetrics {
             cfg.db,
             &cfg.name("unrealized_loss"),
             Source::Vec(dateindex_to_unrealized_loss.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             last,
         )?;
 
         let indexes_to_neg_unrealized_loss = LazyVecsFromDateIndex::from_computed::<Negate>(
             &cfg.name("neg_unrealized_loss"),
-            cfg.version + v0,
+            cfg.version,
             Some(dateindex_to_unrealized_loss.boxed_clone()),
             &indexes_to_unrealized_loss,
         );
 
         // Extract profit sources for lazy net/total vecs
         let height_to_unrealized_profit: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version)?;
         let indexes_to_unrealized_profit = ComputedVecsFromDateIndex::forced_import(
             cfg.db,
             &cfg.name("unrealized_profit"),
             Source::Vec(dateindex_to_unrealized_profit.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             last,
         )?;
@@ -108,13 +107,13 @@ impl UnrealizedMetrics {
         // Create lazy height vecs from profit/loss sources
         let height_to_net_unrealized_pnl = LazyVecFrom2::transformed::<DollarsMinus>(
             &cfg.name("net_unrealized_pnl"),
-            cfg.version + v0,
+            cfg.version,
             height_to_unrealized_profit.boxed_clone(),
             height_to_unrealized_loss.boxed_clone(),
         );
         let height_to_total_unrealized_pnl = LazyVecFrom2::transformed::<DollarsPlus>(
             &cfg.name("total_unrealized_pnl"),
-            cfg.version + v0,
+            cfg.version,
             height_to_unrealized_profit.boxed_clone(),
             height_to_unrealized_loss.boxed_clone(),
         );
@@ -124,7 +123,7 @@ impl UnrealizedMetrics {
             cfg.db,
             &cfg.name("net_unrealized_pnl"),
             Source::Compute,
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             last,
         )?;
@@ -132,15 +131,15 @@ impl UnrealizedMetrics {
             cfg.db,
             &cfg.name("total_unrealized_pnl"),
             Source::Compute,
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             last,
         )?;
 
         let height_to_supply_in_profit: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version)?;
         let height_to_supply_in_loss: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version)?;
 
         let price_source = cfg
             .price
@@ -150,14 +149,14 @@ impl UnrealizedMetrics {
             cfg.db,
             &cfg.name("supply_in_profit"),
             Source::Vec(height_to_supply_in_profit.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             price_source.clone(),
         )?;
         let height_to_supply_in_loss_value = ComputedHeightValueVecs::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             Source::Vec(height_to_supply_in_loss.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             price_source,
         )?;
 
@@ -168,7 +167,7 @@ impl UnrealizedMetrics {
                 cfg.db,
                 &cfg.name("supply_in_profit"),
                 Source::Vec(dateindex_to_supply_in_profit.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 last,
                 compute_dollars,
                 cfg.indexes,
@@ -178,7 +177,7 @@ impl UnrealizedMetrics {
                 cfg.db,
                 &cfg.name("supply_in_loss"),
                 Source::Vec(dateindex_to_supply_in_loss.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 last,
                 compute_dollars,
                 cfg.indexes,

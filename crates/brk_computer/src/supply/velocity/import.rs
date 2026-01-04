@@ -15,13 +15,11 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
-
         let indexes_to_btc = ComputedVecsFromDateIndex::forced_import(
             db,
             "btc_velocity",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             VecBuilderOptions::default().add_average(),
         )?;
@@ -31,7 +29,7 @@ impl Vecs {
                 db,
                 "usd_velocity",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 VecBuilderOptions::default().add_average(),
             )

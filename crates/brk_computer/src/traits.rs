@@ -210,6 +210,53 @@ impl ComputeDCAAveragePriceViaLen for EagerVec<PcoVec<DateIndex, Dollars>> {
     }
 }
 
+pub trait ComputeLumpSumStackViaLen {
+    fn compute_lump_sum_stack_via_len(
+        &mut self,
+        max_from: DateIndex,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
+        lookback_prices: &impl IterableVec<DateIndex, Dollars>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()>;
+}
+
+impl ComputeLumpSumStackViaLen for EagerVec<PcoVec<DateIndex, Sats>> {
+    /// Compute lump sum stack: sats you would have if you invested (len * DCA_AMOUNT) at the lookback price
+    fn compute_lump_sum_stack_via_len(
+        &mut self,
+        max_from: DateIndex,
+        closes: &impl IterableVec<DateIndex, Close<Dollars>>,
+        lookback_prices: &impl IterableVec<DateIndex, Dollars>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset(closes.version())?;
+
+        let index = max_from.to_usize().min(self.len());
+        let total_invested = DCA_AMOUNT * len;
+
+        lookback_prices
+            .iter()
+            .enumerate()
+            .skip(index)
+            .try_for_each(|(i, lookback_price)| {
+                let stack = if lookback_price == Dollars::ZERO {
+                    Sats::ZERO
+                } else {
+                    Sats::from(Bitcoin::from(total_invested / lookback_price))
+                };
+
+                self.truncate_push_at(i, stack)
+            })?;
+
+        let _lock = exit.lock();
+        self.write()?;
+
+        Ok(())
+    }
+}
+
 pub trait ComputeFromBitcoin<I> {
     fn compute_from_bitcoin(
         &mut self,

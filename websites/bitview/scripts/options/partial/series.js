@@ -3,7 +3,7 @@
 /**
  * Create a single series from a tree accessor
  * @param {Object} args
- * @param {MetricAccessor<any>} args.metric - Tree accessor with .by property
+ * @param {AnyMetricPattern} args.metric - Tree accessor with .by property
  * @param {string} args.name - Display name for the series
  * @param {Color} [args.color]
  * @param {Unit} [args.unit]

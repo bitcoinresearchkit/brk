@@ -1,7 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, TreeNode, Version, WeekIndex,
+    YearIndex,
 };
 use schemars::JsonSchema;
 use vecdb::{
@@ -9,7 +10,7 @@ use vecdb::{
     PcoVec,
 };
 
-use crate::{ComputeIndexes, internal::LazyVecsBuilder, indexes, utils::OptionExt};
+use crate::{ComputeIndexes, indexes, internal::LazyVecsBuilder, utils::OptionExt};
 
 use crate::internal::{ComputedVecValue, EagerVecsBuilder, Source, VecBuilderOptions};
 
@@ -45,12 +46,12 @@ where
     ) -> Result<Self> {
         let dateindex = source
             .is_compute()
-            .then(|| EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap());
+            .then(|| EagerVec::forced_import(db, name, version + VERSION).unwrap());
 
         let dateindex_extra = EagerVecsBuilder::forced_import(
             db,
             name,
-            version + VERSION + Version::ZERO,
+            version + VERSION,
             options.copy_self_extra(),
         )?;
 
@@ -61,7 +62,7 @@ where
         Ok(Self {
             weekindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.weekindex_to_weekindex.boxed_clone(),
@@ -69,7 +70,7 @@ where
             ),
             monthindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.monthindex_to_monthindex.boxed_clone(),
@@ -77,7 +78,7 @@ where
             ),
             quarterindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.quarterindex_to_quarterindex.boxed_clone(),
@@ -85,7 +86,7 @@ where
             ),
             semesterindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.semesterindex_to_semesterindex.boxed_clone(),
@@ -93,7 +94,7 @@ where
             ),
             yearindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.yearindex_to_yearindex.boxed_clone(),
@@ -101,7 +102,7 @@ where
             ),
             decadeindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 indexes.time.decadeindex_to_decadeindex.boxed_clone(),
@@ -151,9 +152,9 @@ impl<T> Traversable for ComputedVecsFromDateIndex<T>
 where
     T: ComputedVecValue + JsonSchema,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+    fn to_tree_node(&self) -> TreeNode {
         let dateindex_extra_node = self.dateindex_extra.to_tree_node();
-        brk_traversable::TreeNode::Branch(
+        TreeNode::Branch(
             [
                 self.dateindex
                     .as_ref()

@@ -9,7 +9,7 @@
     "module": "ESNext",
     "outDir": "/tmp/brk",
     "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
-  "exclude": ["assets", "scripts/modules"]
+  "exclude": ["assets", "./scripts/modules", "../../modules"],
 }

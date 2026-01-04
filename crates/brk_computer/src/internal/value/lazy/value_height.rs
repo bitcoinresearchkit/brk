@@ -27,7 +27,7 @@ impl ComputedHeightValueVecs {
     ) -> Result<Self> {
         let sats = source
             .is_compute()
-            .then(|| EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap());
+            .then(|| EagerVec::forced_import(db, name, version + VERSION).unwrap());
 
         let sats_source: IterableBoxedVec<Height, Sats> = source
             .vec()
@@ -35,14 +35,14 @@ impl ComputedHeightValueVecs {
 
         let bitcoin = LazyVecFrom1::transformed::<SatsToBitcoin>(
             &format!("{name}_btc"),
-            version + VERSION + Version::ZERO,
+            version + VERSION,
             sats_source.clone(),
         );
 
         let dollars = price_source.map(|price| {
             LazyVecFrom2::transformed::<ClosePriceTimesSats>(
                 &format!("{name}_usd"),
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 price,
                 sats_source.clone(),
             )

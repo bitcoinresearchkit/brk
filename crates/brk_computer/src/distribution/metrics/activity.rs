@@ -8,9 +8,9 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes,
+    ComputeIndexes, indexes,
     internal::{ComputedValueVecsFromHeight, ComputedVecsFromHeight, Source, VecBuilderOptions},
-    indexes, price,
+    price,
 };
 
 use super::ImportConfig;
@@ -40,17 +40,16 @@ pub struct ActivityMetrics {
 impl ActivityMetrics {
     /// Import activity metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let compute_dollars = cfg.compute_dollars();
         let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
 
         let height_to_sent: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version)?;
         let indexes_to_sent = ComputedValueVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("sent"),
             Source::Vec(height_to_sent.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             sum_cum,
             compute_dollars,
             cfg.indexes,
@@ -63,20 +62,20 @@ impl ActivityMetrics {
             height_to_satblocks_destroyed: EagerVec::forced_import(
                 cfg.db,
                 &cfg.name("satblocks_destroyed"),
-                cfg.version + v0,
+                cfg.version,
             )?,
 
             height_to_satdays_destroyed: EagerVec::forced_import(
                 cfg.db,
                 &cfg.name("satdays_destroyed"),
-                cfg.version + v0,
+                cfg.version,
             )?,
 
             indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("coinblocks_destroyed"),
                 Source::Compute,
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 sum_cum,
             )?,
@@ -85,7 +84,7 @@ impl ActivityMetrics {
                 cfg.db,
                 &cfg.name("coindays_destroyed"),
                 Source::Compute,
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 sum_cum,
             )?,

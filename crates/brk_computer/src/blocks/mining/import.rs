@@ -5,8 +5,8 @@ use vecdb::{Database, IterableCloneableVec};
 
 use super::Vecs;
 use crate::{
-    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
     indexes,
+    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
 };
 
 impl Vecs {
@@ -16,7 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v4 = Version::new(4);
         let v5 = Version::new(5);
 
@@ -36,7 +35,7 @@ impl Vecs {
                 db,
                 "hash_rate_1w_sma",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -44,7 +43,7 @@ impl Vecs {
                 db,
                 "hash_rate_1m_sma",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -52,7 +51,7 @@ impl Vecs {
                 db,
                 "hash_rate_2m_sma",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -60,7 +59,7 @@ impl Vecs {
                 db,
                 "hash_rate_1y_sma",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -148,7 +147,7 @@ impl Vecs {
                 db,
                 "difficulty",
                 Source::Vec(indexer.vecs.block.height_to_difficulty.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -156,7 +155,7 @@ impl Vecs {
                 db,
                 "difficulty_as_hash",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -164,7 +163,7 @@ impl Vecs {
                 db,
                 "difficulty_adjustment",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 sum(),
             )?,

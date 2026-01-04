@@ -16,7 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -26,7 +25,7 @@ impl Vecs {
 
         let height_to_interval = LazyVecFrom1::init(
             "interval",
-            version + v0,
+            version,
             indexer.vecs.block.height_to_timestamp.boxed_clone(),
             |height: Height, timestamp_iter| {
                 let timestamp = timestamp_iter.get(height)?;
@@ -46,7 +45,7 @@ impl Vecs {
                 db,
                 "block_interval",
                 Source::Vec(height_to_interval.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 stats(),
             )?,

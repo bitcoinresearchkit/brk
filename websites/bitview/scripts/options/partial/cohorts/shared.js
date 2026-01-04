@@ -47,7 +47,8 @@ export function createSingleSupplySeries(ctx, cohort, title) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyTotalSeries(ctx, list) {
-  const { s, constant100 } = ctx;
+  const { s, brk } = ctx;
+  const constant100 = brk.tree.computed.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
     s({ metric: tree.supply.supply.sats, name, color }),
@@ -206,11 +207,11 @@ export function createCostBasisPercentilesSeries(ctx, list, useGroupName) {
   return list.flatMap(({ color, name, tree }) => {
     const percentiles = tree.costBasis.percentiles;
     return [
-      s({ metric: percentiles.pct10, name: useGroupName ? `${name} p10` : "p10", color, defaultActive: false }),
-      s({ metric: percentiles.pct25, name: useGroupName ? `${name} p25` : "p25", color, defaultActive: false }),
-      s({ metric: percentiles.pct50, name: useGroupName ? `${name} p50` : "p50", color }),
-      s({ metric: percentiles.pct75, name: useGroupName ? `${name} p75` : "p75", color, defaultActive: false }),
-      s({ metric: percentiles.pct90, name: useGroupName ? `${name} p90` : "p90", color, defaultActive: false }),
+      s({ metric: percentiles.costBasisPct10, name: useGroupName ? `${name} p10` : "p10", color, defaultActive: false }),
+      s({ metric: percentiles.costBasisPct25, name: useGroupName ? `${name} p25` : "p25", color, defaultActive: false }),
+      s({ metric: percentiles.costBasisPct50, name: useGroupName ? `${name} p50` : "p50", color }),
+      s({ metric: percentiles.costBasisPct75, name: useGroupName ? `${name} p75` : "p75", color, defaultActive: false }),
+      s({ metric: percentiles.costBasisPct90, name: useGroupName ? `${name} p90` : "p90", color, defaultActive: false }),
     ];
   });
 }

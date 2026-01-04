@@ -14,9 +14,9 @@ use vecdb::{
 mod vecs;
 
 use crate::{
-    blocks, transactions,
+    blocks,
     indexes::{self, ComputeIndexes},
-    price,
+    price, transactions,
 };
 
 pub const DB_NAME: &str = "pools";
@@ -46,14 +46,14 @@ impl Vecs {
         let version = parent_version + Version::new(3) + Version::new(pools.len() as u64);
 
         let this = Self {
-            height_to_pool: BytesVec::forced_import(&db, "pool", version + Version::ZERO)?,
+            height_to_pool: BytesVec::forced_import(&db, "pool", version)?,
             vecs: pools
                 .iter()
                 .map(|pool| {
                     vecs::Vecs::forced_import(
                         &db,
                         pool.slug,
-                        version + Version::ZERO,
+                        version,
                         indexes,
                         price,
                         blocks,

@@ -1,11 +1,5 @@
 import { s, fromBlockCount, fromBitcoin, fromBlockSize } from "./series.js";
-import {
-  getConstant,
-  flattenConstant,
-  createPriceLine,
-  createPriceLines,
-  line,
-} from "./constants.js";
+import { createPriceLine, createPriceLines, line } from "./constants.js";
 
 /**
  * Create a context object with all dependencies for building partial options
@@ -16,13 +10,10 @@ import {
  */
 export function createContext({ colors, brk }) {
   const constants = brk.tree.computed.constants;
-  const constant100 = flattenConstant(constants.constant100);
 
   return {
     colors,
     brk,
-    constants,
-    constant100,
 
     // Series helpers
     s,
@@ -33,9 +24,6 @@ export function createContext({ colors, brk }) {
     fromBlockSize: (pattern, title, color) =>
       fromBlockSize(colors, pattern, title, color),
 
-    // Constant helpers
-    getConstant: (num) => getConstant(constants, num),
-    flattenConstant,
     createPriceLine: (args) => createPriceLine({ constants, colors, ...args }),
     createPriceLines: (args) =>
       createPriceLines({ constants, colors, ...args }),

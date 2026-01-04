@@ -15,8 +15,6 @@ import {
   createUtxoCountSeries,
   createRealizedPriceSeries,
   createRealizedPriceRatioSeries,
-  createRealizedCapSeries,
-  createCostBasisMinMaxSeries,
   createCostBasisPercentilesSeries,
 } from "./shared.js";
 
@@ -97,7 +95,12 @@ export function createUtxoCohortFolder(ctx, args) {
       createRealizedSection(ctx, list, args, useGroupName, isSingle, title),
       ...createUnrealizedSection(ctx, list, useGroupName, title),
       ...(hasPercentiles
-        ? createCostBasisSectionWithPercentiles(ctx, /** @type {readonly AgeCohortObject[]} */ (list), useGroupName, title)
+        ? createCostBasisSectionWithPercentiles(
+            ctx,
+            /** @type {readonly AgeCohortObject[]} */ (list),
+            useGroupName,
+            title,
+          )
         : createCostBasisSectionBasic(ctx, list, useGroupName, title)),
       ...createActivitySection(ctx, list, useGroupName, title),
     ],
@@ -120,7 +123,11 @@ function createSupplySection(ctx, list, args, useGroupName, isSingle, title) {
       ? {
           name: "supply",
           title: `Supply ${title}`,
-          bottom: createSingleSupplySeries(ctx, /** @type {UtxoCohortObject} */ (args), title),
+          bottom: createSingleSupplySeries(
+            ctx,
+            /** @type {UtxoCohortObject} */ (args),
+            title,
+          ),
         }
       : {
           name: "supply",
@@ -188,13 +195,29 @@ function createRealizedSection(ctx, list, args, useGroupName, isSingle, title) {
               bottom: createRealizedPriceRatioSeries(ctx, list),
             },
           ]
-        : createRealizedPriceOptions(ctx, /** @type {UtxoCohortObject} */ (args), title)),
+        : createRealizedPriceOptions(
+            ctx,
+            /** @type {UtxoCohortObject} */ (args),
+            title,
+          )),
       {
         name: "capitalization",
         title: `Realized Capitalization ${title}`,
-        bottom: createRealizedCapWithExtras(ctx, list, args, useGroupName, title),
+        bottom: createRealizedCapWithExtras(
+          ctx,
+          list,
+          args,
+          useGroupName,
+          title,
+        ),
       },
-      ...(!useGroupName ? createRealizedPnlSection(ctx, /** @type {UtxoCohortObject} */ (args), title) : []),
+      ...(!useGroupName
+        ? createRealizedPnlSection(
+            ctx,
+            /** @type {UtxoCohortObject} */ (args),
+            title,
+          )
+        : []),
     ],
   };
 }
@@ -214,7 +237,9 @@ function createRealizedPriceOptions(ctx, args, title) {
     {
       name: "price",
       title: `Realized Price ${title}`,
-      top: [s({ metric: tree.realized.realizedPrice, name: "realized", color })],
+      top: [
+        s({ metric: tree.realized.realizedPrice, name: "realized", color }),
+      ],
     },
   ];
 }
@@ -390,14 +415,22 @@ function createCostBasisSectionWithPercentiles(ctx, list, useGroupName, title) {
           name: "min",
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? name : "Min", color }),
+            s({
+              metric: tree.costBasis.minCostBasis,
+              name: useGroupName ? name : "Min",
+              color,
+            }),
           ),
         },
         {
           name: "max",
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? name : "Max", color }),
+            s({
+              metric: tree.costBasis.maxCostBasis,
+              name: useGroupName ? name : "Max",
+              color,
+            }),
           ),
         },
         {
@@ -429,14 +462,22 @@ function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
           name: "min",
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.costBasis.minCostBasis, name: useGroupName ? name : "Min", color }),
+            s({
+              metric: tree.costBasis.minCostBasis,
+              name: useGroupName ? name : "Min",
+              color,
+            }),
           ),
         },
         {
           name: "max",
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({ metric: tree.costBasis.maxCostBasis, name: useGroupName ? name : "Max", color }),
+            s({
+              metric: tree.costBasis.maxCostBasis,
+              name: useGroupName ? name : "Max",
+              color,
+            }),
           ),
         },
       ],

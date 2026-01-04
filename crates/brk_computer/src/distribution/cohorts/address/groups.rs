@@ -5,12 +5,12 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{DateIndex, Dollars, Height, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
-use crate::{ComputeIndexes, indexes, price, distribution::DynCohortVecs};
+use crate::{ComputeIndexes, distribution::DynCohortVecs, indexes, price};
 
 use crate::distribution::metrics::SupplyMetrics;
 
@@ -35,7 +35,7 @@ impl AddressCohorts {
         states_path: &Path,
         all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
-        let v = version + VERSION + Version::ZERO;
+        let v = version + VERSION;
 
         // Helper to create a cohort - only amount_range cohorts have state
         let create = |filter: Filter,
@@ -119,18 +119,16 @@ impl AddressCohorts {
 
     /// Second phase of post-processing: compute relative metrics.
     #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<S, HM, DM>(
+    pub fn compute_rest_part2<HM, DM>(
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
-        height_to_supply: &S,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,
         exit: &Exit,
     ) -> Result<()>
     where
-        S: IterableVec<Height, Bitcoin> + Sync,
         HM: IterableVec<Height, Dollars> + Sync,
         DM: IterableVec<DateIndex, Dollars> + Sync,
     {
@@ -139,7 +137,6 @@ impl AddressCohorts {
                 indexes,
                 price,
                 starting_indexes,
-                height_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
                 exit,

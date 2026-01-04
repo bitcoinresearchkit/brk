@@ -1,17 +1,19 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, Height, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex,
-    YearIndex,
+    DateIndex, DecadeIndex, Height, MonthIndex, QuarterIndex, SemesterIndex, TreeNode, Version,
+    WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Formattable, IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecValue};
+use vecdb::{
+    AnyExportableVec, Formattable, IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecValue,
+};
 
-use crate::indexes;
+use crate::{indexes, internal::ComputedVecValue};
 
 /// Lazy constant vecs for all index levels.
 /// Uses const generic transforms to return the same value for every index.
-#[derive(Clone, Traversable)]
+#[derive(Clone)]
 pub struct ConstantVecs<T>
 where
     T: VecValue + Formattable + Serialize + JsonSchema,
@@ -81,5 +83,46 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
                 indexes.time.decadeindex_to_decadeindex.boxed_clone(),
             ),
         }
+    }
+}
+
+impl<T> Traversable for ConstantVecs<T>
+where
+    T: ComputedVecValue + JsonSchema,
+{
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
+            [
+                Some(("height".to_string(), self.height.to_tree_node())),
+                Some(("dateindex".to_string(), self.dateindex.to_tree_node())),
+                Some(("weekindex".to_string(), self.weekindex.to_tree_node())),
+                Some(("monthindex".to_string(), self.monthindex.to_tree_node())),
+                Some(("quarterindex".to_string(), self.quarterindex.to_tree_node())),
+                Some((
+                    "semesterindex".to_string(),
+                    self.semesterindex.to_tree_node(),
+                )),
+                Some(("yearindex".to_string(), self.yearindex.to_tree_node())),
+                Some(("decadeindex".to_string(), self.decadeindex.to_tree_node())),
+            ]
+            .into_iter()
+            .flatten()
+            .collect(),
+        )
+        .merge_branches()
+        .unwrap()
+    }
+
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        let mut regular_iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
+            Box::new(self.height.iter_any_exportable());
+        regular_iter = Box::new(regular_iter.chain(self.dateindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.weekindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.monthindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.quarterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.semesterindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.yearindex.iter_any_exportable()));
+        regular_iter = Box::new(regular_iter.chain(self.decadeindex.iter_any_exportable()));
+        regular_iter
     }
 }

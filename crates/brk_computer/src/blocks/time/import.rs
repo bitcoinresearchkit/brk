@@ -18,13 +18,12 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let height_to_timestamp_fixed =
-            EagerVec::forced_import(db, "timestamp_fixed", version + Version::ZERO)?;
+        let height_to_timestamp_fixed = EagerVec::forced_import(db, "timestamp_fixed", version)?;
 
         Ok(Self {
             height_to_date: LazyVecFrom1::init(
                 "date",
-                version + Version::ZERO,
+                version,
                 indexer.vecs.block.height_to_timestamp.boxed_clone(),
                 |height: Height, timestamp_iter| {
                     timestamp_iter.get_at(height.to_usize()).map(Date::from)
@@ -32,14 +31,14 @@ impl Vecs {
             ),
             height_to_date_fixed: LazyVecFrom1::init(
                 "date_fixed",
-                version + Version::ZERO,
+                version,
                 height_to_timestamp_fixed.boxed_clone(),
                 |height: Height, timestamp_iter| timestamp_iter.get(height).map(Date::from),
             ),
             height_to_timestamp_fixed,
             difficultyepoch_to_timestamp: LazyVecFrom2::init(
                 "timestamp",
-                version + Version::ZERO,
+                version,
                 indexes.block.difficultyepoch_to_first_height.boxed_clone(),
                 indexer.vecs.block.height_to_timestamp.boxed_clone(),
                 |di: DifficultyEpoch, first_height_iter, timestamp_iter| {
@@ -52,7 +51,7 @@ impl Vecs {
                 db,
                 "timestamp",
                 Source::Compute,
-                version + Version::ZERO,
+                version,
                 indexes,
                 VecBuilderOptions::default().add_first(),
             )?,

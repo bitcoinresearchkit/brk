@@ -1,5 +1,3 @@
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateChart } from '../modules/lightweight-charts/5.0.9/dist/typings' */
-
 import {
   createChart as _createChart,
   CandlestickSeries,
@@ -29,7 +27,7 @@ import { style } from "../utils/elements";
  * @typedef {Object} Indexed
  * @property {number} index
  *
- * @typedef {_ISeriesApi<SeriesType, number>} ISeries
+ * @typedef {_ISeriesApi<LCSeriesType, number>} ISeries
  * @typedef {_ISeriesApi<'Candlestick', number>} CandlestickISeries
  * @typedef {_ISeriesApi<'Histogram', number>} HistogramISeries
  * @typedef {_ISeriesApi<'Line', number>} LineISeries
@@ -275,7 +273,7 @@ function createChartElement({
   /**
    * @param {Object} args
    * @param {Unit} args.unit
-   * @param {SeriesType} args.seriesType
+   * @param {LCSeriesType} args.seriesType
    * @param {number} args.paneIndex
    */
   function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
@@ -315,8 +313,8 @@ function createChartElement({
    * @param {Unit} args.unit
    * @param {number} args.order
    * @param {Color[]} args.colors
-   * @param {SeriesType} args.seriesType
-   * @param {MetricAccessor<unknown>} [args.metric]
+   * @param {LCSeriesType} args.seriesType
+   * @param {AnyMetricPattern} [args.metric]
    * @param {SetDataCallback} [args.setDataCallback]
    * @param {Accessor<WhitespaceData<number>[]>} [args.data]
    * @param {number} args.paneIndex
@@ -559,7 +557,7 @@ function createChartElement({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {MetricAccessor<unknown>} [args.metric]
+     * @param {AnyMetricPattern} [args.metric]
      * @param {Accessor<CandlestickData[]>} [args.data]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -618,8 +616,8 @@ function createChartElement({
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {Color} args.color
-     * @param {MetricAccessor<unknown>} [args.metric]
+     * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
+     * @param {AnyMetricPattern} [args.metric]
      * @param {Accessor<HistogramData[]>} [args.data]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
@@ -630,7 +628,7 @@ function createChartElement({
       metric,
       name,
       unit,
-      color,
+      color = [colors.green, colors.red],
       order,
       paneIndex = 0,
       defaultActive,
@@ -638,21 +636,26 @@ function createChartElement({
       data,
       options,
     }) {
+      const isDualColor = Array.isArray(color);
+      const positiveColor = isDualColor ? color[0] : color;
+      const negativeColor = isDualColor ? color[1] : color;
+
       /** @type {HistogramISeries} */
       const iseries = /** @type {any} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Histogram'>} */ (HistogramSeries),
           {
-            color: color(),
+            color: positiveColor(),
             visible: defaultActive !== false,
             priceLineVisible: false,
+            ...options,
           },
           paneIndex,
         )
       );
 
       return addSeries({
-        colors: [color],
+        colors: isDualColor ? [positiveColor, negativeColor] : [positiveColor],
         iseries,
         name,
         order,
@@ -660,7 +663,20 @@ function createChartElement({
         seriesType: "Bar",
         unit,
         data,
-        setDataCallback,
+        setDataCallback: isDualColor
+          ? (args) => {
+              iseries.setData(
+                iseries.data().map((d) => ({
+                  ...d,
+                  color:
+                    "value" in d && d.value >= 0
+                      ? positiveColor()
+                      : negativeColor(),
+                })),
+              );
+              setDataCallback?.(args);
+            }
+          : setDataCallback,
         defaultActive,
         metric,
       });
@@ -671,7 +687,7 @@ function createChartElement({
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Accessor<LineData[]>} [args.data]
-     * @param {MetricAccessor<unknown>} [args.metric]
+     * @param {AnyMetricPattern} [args.metric]
      * @param {Color} [args.color]
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
@@ -730,7 +746,7 @@ function createChartElement({
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Accessor<BaselineData[]>} [args.data]
-     * @param {MetricAccessor<unknown>} [args.metric]
+     * @param {AnyMetricPattern} [args.metric]
      * @param {SetDataCallback} [args.setDataCallback]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]

@@ -22,7 +22,7 @@ brk_query = { workspace = true }
 brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
 brk_server = { workspace = true }
-clap = { version = "4.5.53", features = ["derive", "string"] }
+clap = { version = "4.5.54", features = ["derive", "string"] }
 color-eyre = { workspace = true }
 brk_alloc = { workspace = true }
 log = { workspace = true }

@@ -27,7 +27,7 @@
  *
  * @typedef {Object} HistogramSeriesBlueprintSpecific
  * @property {"Histogram"} type
- * @property {Color} color
+ * @property {Color | [Color, Color]} [color] - Single color or [positive, negative] colors (defaults to green/red)
  * @property {HistogramSeriesPartialOptions} [options]
  * @property {Accessor<HistogramData[]>} [data]
  * @typedef {BaseSeriesBlueprint & HistogramSeriesBlueprintSpecific} HistogramSeriesBlueprint
@@ -36,7 +36,7 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ metric: MetricAccessor<any>, unit?: Unit }} FetchedAnySeriesOptions
+ * @typedef {{ metric: AnyMetricPattern, unit?: Unit }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
@@ -168,17 +168,13 @@
  * @typedef {Object} PartialContext
  * @property {Colors} colors
  * @property {BrkClient} brk
- * @property {BrkClient["tree"]["computed"]["constants"]} constants
- * @property {(args: { metric: MetricAccessor<any>, name: string, color?: Color, defaultActive?: boolean, unit?: Unit, options?: LineSeriesPartialOptions }) => AnyFetchedSeriesBlueprint} s
+ * @property {(args: { metric: AnyMetricPattern, name: string, color?: Color, defaultActive?: boolean, unit?: Unit, options?: LineSeriesPartialOptions }) => AnyFetchedSeriesBlueprint} s
  * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
  * @property {(pattern: BitcoinPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
  * @property {(pattern: BlockSizePattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
- * @property {(num: number) => Constant0Pattern<any>} getConstant
- * @property {(pattern: Constant0Pattern<any>) => MetricAccessor<any>} flattenConstant
- * @property {(args: { number?: number, name?: string, defaultActive?: boolean, lineStyle?: number, color?: Color, unit: Unit }) => FetchedLineSeriesBlueprint} createPriceLine
+ * @property {(args: { number?: number, name?: string, defaultActive?: boolean, lineStyle?: LineStyle, color?: Color, unit: Unit }) => FetchedLineSeriesBlueprint} createPriceLine
  * @property {(args: { numbers: number[], unit: Unit }) => FetchedLineSeriesBlueprint[]} createPriceLines
- * @property {(args: { constant: Constant0Pattern<any>, name: string, unit: Unit, color?: Color, lineStyle?: number, defaultActive?: boolean }) => FetchedLineSeriesBlueprint} line
- * @property {MetricAccessor<any>} constant100
+ * @property {(args: { constant: AnyMetricPattern, name: string, unit: Unit, color?: Color, lineStyle?: number, defaultActive?: boolean }) => FetchedLineSeriesBlueprint} line
  */
 
 // Re-export for type consumers

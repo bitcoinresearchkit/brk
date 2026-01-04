@@ -1,9 +1,4 @@
 /**
- * @import { Signal, Signals } from "./signals";
- * @import { MetricNode } from "./modules/brk-client/index";
- */
-
-/**
  * @template T
  * @typedef {Object} Resource
  * @property {Signal<T | null>} data

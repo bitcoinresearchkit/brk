@@ -80,7 +80,7 @@ serde_bytes = "0.11.19"
 serde_derive = "1.0.228"
 serde_json = { version = "1.0.148", features = ["float_roundtrip"] }
 smallvec = "1.15.1"
-tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 # vecdb = { version = "0.5.2", features = ["derive", "serde_json", "pco", "schemars"] }
 vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { git = "https://github.com/anydb-rs/anydb", features = ["derive", "serde_json", "pco"] }

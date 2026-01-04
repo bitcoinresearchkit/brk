@@ -199,7 +199,8 @@ pub async fn bundle(
             .unwrap();
 
         // Poll watcher to catch programmatic edits (e.g., Claude Code's atomic writes)
-        let poll_config = notify::Config::default().with_poll_interval(Duration::from_secs(1));
+        let poll_config = notify::Config::default()
+            .with_poll_interval(Duration::from_secs(1));
         let mut poll_watcher = PollWatcher::new(
             move |res: Result<notify::Event, notify::Error>| match res {
                 Ok(event) => match event.kind {

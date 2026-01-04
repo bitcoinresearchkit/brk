@@ -60,7 +60,7 @@ where
             first: options.first.then(|| {
                 Box::new(LazyVecFrom2::init(
                     &maybe_suffix("first"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra
                         .first
                         .as_ref()
@@ -77,7 +77,7 @@ where
             last: options.last.then(|| {
                 Box::new(LazyVecFrom2::init(
                     name,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra.last.as_ref().map_or_else(
                         || {
                             source
@@ -102,7 +102,7 @@ where
             min: options.min.then(|| {
                 Box::new(LazyVecFrom2::init(
                     &maybe_suffix("min"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra
                         .min
                         .as_ref()
@@ -121,7 +121,7 @@ where
             max: options.max.then(|| {
                 Box::new(LazyVecFrom2::init(
                     &maybe_suffix("max"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra
                         .max
                         .as_ref()
@@ -140,7 +140,7 @@ where
             average: options.average.then(|| {
                 Box::new(LazyVecFrom2::init(
                     &maybe_suffix("avg"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra
                         .average
                         .as_ref()
@@ -172,7 +172,7 @@ where
                     } else {
                         maybe_suffix("sum")
                     }),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra
                         .sum
                         .as_ref()
@@ -200,7 +200,7 @@ where
             cumulative: options.cumulative.then(|| {
                 Box::new(LazyVecFrom2::init(
                     &suffix("cumulative"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION,
                     source_extra.cumulative.u().boxed_clone(),
                     len_source.clone(),
                     |i: I, source, len_source| {

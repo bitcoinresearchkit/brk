@@ -24,7 +24,7 @@ impl Vecs {
                 db,
                 "input_count",
                 Source::Vec(indexes.transaction.txindex_to_input_count.boxed_clone()),
-                version + Version::ZERO,
+                version,
                 indexes,
                 full_stats(),
             )?,

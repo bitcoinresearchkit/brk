@@ -16,7 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let full_stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -28,7 +27,7 @@ impl Vecs {
 
         let height_to_vbytes = LazyVecFrom1::init(
             "vbytes",
-            version + v0,
+            version,
             indexer.vecs.block.height_to_weight.boxed_clone(),
             |height: Height, weight_iter| {
                 weight_iter
@@ -42,7 +41,7 @@ impl Vecs {
                 db,
                 "block_size",
                 Source::Vec(indexer.vecs.block.height_to_total_size.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,
@@ -50,7 +49,7 @@ impl Vecs {
                 db,
                 "block_vbytes",
                 Source::Vec(height_to_vbytes.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,

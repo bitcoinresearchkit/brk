@@ -33,22 +33,21 @@ pub struct CostBasisMetrics {
 impl CostBasisMetrics {
     /// Import cost basis metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let extended = cfg.extended();
         let last = VecBuilderOptions::default().add_last();
 
         let height_to_min_cost_basis =
-            EagerVec::forced_import(cfg.db, &cfg.name("min_cost_basis"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("min_cost_basis"), cfg.version)?;
 
         let height_to_max_cost_basis =
-            EagerVec::forced_import(cfg.db, &cfg.name("max_cost_basis"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("max_cost_basis"), cfg.version)?;
 
         Ok(Self {
             indexes_to_min_cost_basis: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("min_cost_basis"),
                 Source::Vec(height_to_min_cost_basis.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 last,
             )?,
@@ -56,7 +55,7 @@ impl CostBasisMetrics {
                 cfg.db,
                 &cfg.name("max_cost_basis"),
                 Source::Vec(height_to_max_cost_basis.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 last,
             )?,
@@ -67,7 +66,7 @@ impl CostBasisMetrics {
                     CostBasisPercentiles::forced_import(
                         cfg.db,
                         &cfg.name(""),
-                        cfg.version + v0,
+                        cfg.version,
                         cfg.indexes,
                         true,
                     )

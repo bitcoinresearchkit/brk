@@ -7,7 +7,7 @@ import {
   createUtxoCohortFolder,
   createAddressCohortFolder,
 } from "./cohorts/index.js";
-import { createMarketSection } from "./market.js";
+import { createMarketSection } from "./market/index.js";
 import { createChainSection } from "./chain.js";
 import { createCointimeSection } from "./cointime.js";
 

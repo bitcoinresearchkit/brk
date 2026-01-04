@@ -7,15 +7,15 @@ use vecdb::{
 };
 
 use crate::{
-    blocks, transactions,
+    blocks,
+    indexes::{self, ComputeIndexes},
     internal::{
         ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
         DollarsPlus, LazyValueVecsFrom2FromHeight, LazyVecsFrom2FromDateIndex,
         LazyVecsFrom2FromHeight, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin, Source,
         VecBuilderOptions,
     },
-    indexes::{self, ComputeIndexes},
-    price,
+    price, transactions,
 };
 
 #[derive(Clone, Traversable)]
@@ -51,7 +51,7 @@ impl Vecs {
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
         let compute_dollars = price.is_some();
-        let version = parent_version + Version::ZERO;
+        let version = parent_version;
 
         let last = VecBuilderOptions::default().add_last();
         let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
@@ -91,7 +91,8 @@ impl Vecs {
                 .unwrap()
                 .boxed_clone(),
             blocks
-                .rewards.indexes_to_subsidy
+                .rewards
+                .indexes_to_subsidy
                 .sats
                 .height
                 .as_ref()
@@ -117,7 +118,13 @@ impl Vecs {
                 .as_ref()
                 .unwrap()
                 .boxed_clone(),
-            transactions.fees.indexes_to_fee.sats.height.unwrap_sum().boxed_clone(),
+            transactions
+                .fees
+                .indexes_to_fee
+                .sats
+                .height
+                .unwrap_sum()
+                .boxed_clone(),
         );
 
         let indexes_to_fee = ComputedValueVecsFromHeight::forced_import(
@@ -140,7 +147,8 @@ impl Vecs {
                     .unwrap()
                     .boxed_clone(),
                 blocks
-                    .count.indexes_to_block_count
+                    .count
+                    .indexes_to_block_count
                     .height
                     .as_ref()
                     .unwrap()
@@ -157,7 +165,8 @@ impl Vecs {
                     .unwrap()
                     .boxed_clone(),
                 blocks
-                    .count.indexes_to_block_count
+                    .count
+                    .indexes_to_block_count
                     .height
                     .as_ref()
                     .unwrap()

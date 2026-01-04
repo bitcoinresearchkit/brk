@@ -7,73 +7,22 @@ use crate::{utils::OptionExt, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(&mut self, starting_indexes: &ComputeIndexes, exit: &Exit) -> Result<()> {
-        // CAGR computed from returns
-        self._2y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._2y_price_returns.dateindex.u(),
-                2 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._3y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._3y_price_returns.dateindex.u(),
-                3 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._4y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._4y_price_returns.dateindex.u(),
-                4 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._5y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._5y_price_returns.dateindex.u(),
-                5 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._6y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._6y_price_returns.dateindex.u(),
-                6 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._8y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._8y_price_returns.dateindex.u(),
-                8 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
-        self._10y_cagr.compute_all(starting_indexes, exit, |v| {
-            v.compute_cagr(
-                starting_indexes.dateindex,
-                self._10y_price_returns.dateindex.u(),
-                10 * 365,
-                exit,
-            )?;
-            Ok(())
-        })?;
+        // CAGR computed from returns (2y+ periods only)
+        let price_returns_dca = self.price_returns.as_dca_period();
+        for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_returns_dca) {
+            cagr.compute_all(starting_indexes, exit, |v| {
+                v.compute_cagr(
+                    starting_indexes.dateindex,
+                    returns.dateindex.u(),
+                    days as usize,
+                    exit,
+                )?;
+                Ok(())
+            })?;
+        }
 
         // Returns standard deviation (computed from 1d returns)
-        let _1d_price_returns_dateindex = self._1d_price_returns.dateindex.u();
+        let _1d_price_returns_dateindex = self.price_returns._1d.dateindex.u();
 
         self.indexes_to_1d_returns_1w_sd.compute_all(
             starting_indexes,

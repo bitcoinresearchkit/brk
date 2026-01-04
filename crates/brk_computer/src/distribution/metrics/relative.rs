@@ -108,7 +108,6 @@ impl RelativeMetrics {
         supply: &SupplyMetrics,
         all_supply: Option<&SupplyMetrics>,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v1 = Version::ONE;
         let v2 = Version::new(2);
         let extended = cfg.extended();
@@ -227,7 +226,7 @@ impl RelativeMetrics {
             height_to_unrealized_profit_rel_to_market_cap: global_market_cap_height.map(|mc| {
                 LazyVecFrom2::transformed::<PercentageDollarsF32>(
                     &cfg.name("unrealized_profit_rel_to_market_cap"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_profit.boxed_clone(),
                     mc.boxed_clone(),
                 )
@@ -235,7 +234,7 @@ impl RelativeMetrics {
             height_to_unrealized_loss_rel_to_market_cap: global_market_cap_height.map(|mc| {
                 LazyVecFrom2::transformed::<PercentageDollarsF32>(
                     &cfg.name("unrealized_loss_rel_to_market_cap"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_loss.boxed_clone(),
                     mc.boxed_clone(),
                 )
@@ -243,7 +242,7 @@ impl RelativeMetrics {
             height_to_neg_unrealized_loss_rel_to_market_cap: global_market_cap_height.map(|mc| {
                 LazyVecFrom2::transformed::<NegPercentageDollarsF32>(
                     &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_loss.boxed_clone(),
                     mc.boxed_clone(),
                 )
@@ -401,7 +400,7 @@ impl RelativeMetrics {
             height_to_unrealized_profit_rel_to_own_total_unrealized_pnl: extended.then(|| {
                 LazyVecFrom2::transformed::<Ratio32>(
                     &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_profit.boxed_clone(),
                     unrealized.height_to_total_unrealized_pnl.boxed_clone(),
                 )
@@ -409,7 +408,7 @@ impl RelativeMetrics {
             height_to_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
                 LazyVecFrom2::transformed::<Ratio32>(
                     &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_loss.boxed_clone(),
                     unrealized.height_to_total_unrealized_pnl.boxed_clone(),
                 )
@@ -417,7 +416,7 @@ impl RelativeMetrics {
             height_to_neg_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
                 LazyVecFrom2::transformed::<NegRatio32>(
                     &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
-                    cfg.version + v0,
+                    cfg.version,
                     unrealized.height_to_unrealized_loss.boxed_clone(),
                     unrealized.height_to_total_unrealized_pnl.boxed_clone(),
                 )

@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height};
+use brk_types::{DateIndex, Dollars, Height};
 use log::info;
 use vecdb::{Exit, IterableVec};
 
@@ -49,19 +49,17 @@ pub fn compute_rest_part1(
 ///
 /// Computes supply ratios, market cap ratios, etc. using total references.
 #[allow(clippy::too_many_arguments)]
-pub fn compute_rest_part2<S, HM, DM>(
+pub fn compute_rest_part2<HM, DM>(
     utxo_cohorts: &mut UTXOCohorts,
     address_cohorts: &mut AddressCohorts,
     indexes: &indexes::Vecs,
     price: Option<&price::Vecs>,
     starting_indexes: &ComputeIndexes,
-    height_to_supply: &S,
     height_to_market_cap: Option<&HM>,
     dateindex_to_market_cap: Option<&DM>,
     exit: &Exit,
 ) -> Result<()>
 where
-    S: IterableVec<Height, Bitcoin> + Sync,
     HM: IterableVec<Height, Dollars> + Sync,
     DM: IterableVec<DateIndex, Dollars> + Sync,
 {
@@ -71,7 +69,6 @@ where
         indexes,
         price,
         starting_indexes,
-        height_to_supply,
         height_to_market_cap,
         dateindex_to_market_cap,
         exit,
@@ -81,7 +78,6 @@ where
         indexes,
         price,
         starting_indexes,
-        height_to_supply,
         height_to_market_cap,
         dateindex_to_market_cap,
         exit,

@@ -15,28 +15,25 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
-
-        let height_to_opreturn = EagerVec::forced_import(db, "opreturn_supply", version + v0)?;
+        let height_to_opreturn = EagerVec::forced_import(db, "opreturn_supply", version)?;
 
         let indexes_to_opreturn = ComputedValueVecsFromHeight::forced_import(
             db,
             "opreturn_supply",
             Source::Vec(height_to_opreturn.boxed_clone()),
-            version + v0,
+            version,
             VecBuilderOptions::default().add_last().add_cumulative(),
             compute_dollars,
             indexes,
         )?;
 
-        let height_to_unspendable =
-            EagerVec::forced_import(db, "unspendable_supply", version + v0)?;
+        let height_to_unspendable = EagerVec::forced_import(db, "unspendable_supply", version)?;
 
         let indexes_to_unspendable = ComputedValueVecsFromHeight::forced_import(
             db,
             "unspendable_supply",
             Source::Vec(height_to_unspendable.boxed_clone()),
-            version + v0,
+            version,
             VecBuilderOptions::default().add_last().add_cumulative(),
             compute_dollars,
             indexes,

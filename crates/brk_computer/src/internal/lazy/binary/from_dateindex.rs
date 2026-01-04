@@ -1,11 +1,14 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, TreeNode, Version, WeekIndex,
+    YearIndex,
 };
 use schemars::JsonSchema;
 use vecdb::{AnyExportableVec, BinaryTransform, IterableCloneableVec, LazyVecFrom2};
 
-use crate::internal::{ComputedVecValue, ComputedVecsFromDateIndex, ComputedVecsFromHeight, LazyTransform2Builder};
+use crate::internal::{
+    ComputedVecValue, ComputedVecsFromDateIndex, ComputedVecsFromHeight, LazyTransform2Builder,
+};
 
 const VERSION: Version = Version::ZERO;
 
@@ -215,8 +218,8 @@ where
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::Branch(
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
             [
                 self.dateindex
                     .as_ref()

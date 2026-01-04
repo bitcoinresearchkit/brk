@@ -10,7 +10,6 @@ use crate::{
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v2 = Version::TWO;
         let last = || VecBuilderOptions::default().add_last();
 
@@ -19,7 +18,7 @@ impl Vecs {
                 db,
                 "difficultyepoch",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,

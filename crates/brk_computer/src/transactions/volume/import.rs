@@ -4,8 +4,8 @@ use vecdb::Database;
 
 use super::Vecs;
 use crate::{
-    internal::{ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, Source, VecBuilderOptions},
     indexes,
+    internal::{ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, Source, VecBuilderOptions},
 };
 
 impl Vecs {
@@ -15,7 +15,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v2 = Version::TWO;
         let last = || VecBuilderOptions::default().add_last();
 
@@ -24,7 +23,7 @@ impl Vecs {
                 db,
                 "sent_sum",
                 Source::Compute,
-                version + v0,
+                version,
                 VecBuilderOptions::default().add_sum(),
                 compute_dollars,
                 indexes,
@@ -33,7 +32,7 @@ impl Vecs {
                 db,
                 "annualized_volume",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -41,7 +40,7 @@ impl Vecs {
                 db,
                 "annualized_volume_btc",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,
@@ -49,7 +48,7 @@ impl Vecs {
                 db,
                 "annualized_volume_usd",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 last(),
             )?,

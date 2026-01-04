@@ -15,7 +15,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "epoch" | "month" | "quarter" | "semester" | "year" | "decade" } ChartableIndexName
+ * @typedef {"timestamp" | "date" | "week" | "month" | "quarter" | "semester" | "year" | "decade" } ChartableIndexName
  */
 
 /**
@@ -433,6 +433,8 @@ export function init({
             blueprints[unit]?.forEach((blueprint, order) => {
               order += orderStart;
 
+              const options = blueprint.options;
+
               // Tree-first: metric is now an accessor with .by property
               const indexes = Object.keys(blueprint.metric.by);
 
@@ -447,7 +449,7 @@ export function init({
                         defaultActive: blueprint.defaultActive,
                         paneIndex,
                         options: {
-                          ...blueprint.options,
+                          ...options,
                           topLineColor:
                             blueprint.color?.() ?? blueprint.colors?.[0](),
                           bottomLineColor:
@@ -467,7 +469,7 @@ export function init({
                         color: blueprint.color,
                         defaultActive: blueprint.defaultActive,
                         paneIndex,
-                        options: blueprint.options,
+                        options,
                         order,
                       }),
                     );
@@ -486,7 +488,7 @@ export function init({
                         unit,
                         defaultActive: blueprint.defaultActive,
                         paneIndex,
-                        options: blueprint.options,
+                        options,
                         order,
                       }),
                     );
@@ -513,12 +515,10 @@ function createIndexSelector({ option, brk, signals }) {
     "timestamp",
     "date",
     "week",
-    "epoch",
     "month",
     "quarter",
     "semester",
     "year",
-    // "h.epoch",
     "decade",
   ]);
 

@@ -5,8 +5,9 @@ use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec};
 
 use super::Vecs;
 use crate::{
-    indexes, price,
+    indexes,
     internal::{ComputedValueVecsFromTxindex, ComputedVecsFromTxindex, Source, VecBuilderOptions},
+    price,
 };
 
 impl Vecs {
@@ -17,8 +18,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
-
         let stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -26,10 +25,10 @@ impl Vecs {
                 .add_percentiles()
         };
 
-        let txindex_to_input_value = EagerVec::forced_import(db, "input_value", version + v0)?;
-        let txindex_to_output_value = EagerVec::forced_import(db, "output_value", version + v0)?;
-        let txindex_to_fee = EagerVec::forced_import(db, "fee", version + v0)?;
-        let txindex_to_fee_rate = EagerVec::forced_import(db, "fee_rate", version + v0)?;
+        let txindex_to_input_value = EagerVec::forced_import(db, "input_value", version)?;
+        let txindex_to_output_value = EagerVec::forced_import(db, "output_value", version)?;
+        let txindex_to_fee = EagerVec::forced_import(db, "fee", version)?;
+        let txindex_to_fee_rate = EagerVec::forced_import(db, "fee_rate", version)?;
 
         Ok(Self {
             txindex_to_input_value,
@@ -42,7 +41,7 @@ impl Vecs {
                 indexer,
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
-                version + v0,
+                version,
                 price,
                 VecBuilderOptions::default()
                     .add_sum()
@@ -55,7 +54,7 @@ impl Vecs {
                 db,
                 "fee_rate",
                 Source::Vec(txindex_to_fee_rate.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 stats(),
             )?,

@@ -5,43 +5,18 @@
  * Examples: 0 → constant0, 38.2 → constant382, -1 → constantMinus1
  * @param {BrkClient["tree"]["computed"]["constants"]} constants
  * @param {number} num
- * @returns {Constant0Pattern<any>}
+ * @returns {AnyMetricPattern}
  */
 export function getConstant(constants, num) {
   const key =
     num >= 0
       ? `constant${String(num).replace(".", "")}`
       : `constantMinus${Math.abs(num)}`;
-  const constant = /** @type {Constant0Pattern<any> | undefined} */ (
-    /** @type {Record<string, Constant0Pattern<any>>} */ (constants)[key]
+  const constant = /** @type {AnyMetricPattern | undefined} */ (
+    /** @type {Record<string, AnyMetricPattern>} */ (constants)[key]
   );
   if (!constant) throw new Error(`Unknown constant: ${num} (key: ${key})`);
   return constant;
-}
-
-/**
- * Flatten a Constant0Pattern into a simple MetricAccessor
- * Constant0Pattern has { dateindex: { by: {...} }, height: { by: {...} }, ... }
- * This flattens it to { by: { dateindex: MetricNode, height: MetricNode, ... } }
- * @param {Constant0Pattern<any>} pattern
- * @returns {MetricAccessor<any>}
- */
-export function flattenConstant(pattern) {
-  return {
-    by: {
-      dateindex: pattern.dateindex.by.dateindex,
-      decadeindex: pattern.decadeindex.by.decadeindex,
-      height: pattern.height.by.height,
-      monthindex: pattern.monthindex.by.monthindex,
-      quarterindex: pattern.quarterindex.by.quarterindex,
-      semesterindex: pattern.semesterindex.by.semesterindex,
-      weekindex: pattern.weekindex.by.weekindex,
-      yearindex: pattern.yearindex.by.yearindex,
-    },
-    indexes() {
-      return /** @type {Index[]} */ (Object.keys(this.by));
-    },
-  };
 }
 
 /**
@@ -68,7 +43,7 @@ export function createPriceLine({
   lineStyle,
 }) {
   return {
-    metric: flattenConstant(getConstant(constants, number)),
+    metric: getConstant(constants, number),
     title: name ?? `${number}`,
     unit,
     defaultActive,
@@ -92,7 +67,7 @@ export function createPriceLine({
  */
 export function createPriceLines({ constants, colors, numbers, unit }) {
   return numbers.map((number) => ({
-    metric: flattenConstant(getConstant(constants, number)),
+    metric: getConstant(constants, number),
     title: `${number}`,
     unit,
     defaultActive: !number,
@@ -109,7 +84,7 @@ export function createPriceLines({ constants, colors, numbers, unit }) {
  * Create a constant line series
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {Constant0Pattern<any>} args.constant
+ * @param {AnyMetricPattern} args.constant
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {Color} [args.color]
@@ -127,7 +102,7 @@ export function line({
   defaultActive,
 }) {
   return {
-    metric: flattenConstant(constant),
+    metric: constant,
     title: name,
     unit,
     defaultActive,

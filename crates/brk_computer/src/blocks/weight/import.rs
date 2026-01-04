@@ -6,7 +6,9 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromHeight, LazyVecsFromHeight, Source, VecBuilderOptions, WeightToFullness},
+    internal::{
+        ComputedVecsFromHeight, LazyVecsFromHeight, Source, VecBuilderOptions, WeightToFullness,
+    },
 };
 
 impl Vecs {
@@ -16,7 +18,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let full_stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -30,14 +31,14 @@ impl Vecs {
             db,
             "block_weight",
             Source::Vec(indexer.vecs.block.height_to_weight.boxed_clone()),
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
 
         let indexes_to_block_fullness = LazyVecsFromHeight::from_computed::<WeightToFullness>(
             "block_fullness",
-            version + v0,
+            version,
             indexer.vecs.block.height_to_weight.boxed_clone(),
             &indexes_to_block_weight,
         );

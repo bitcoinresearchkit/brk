@@ -32,15 +32,11 @@ impl LazyHeightValueVecs {
     {
         let v = version + VERSION;
 
-        let sats = LazyVecFrom1::transformed::<SatsTransform>(
-            name,
-            v + Version::ZERO,
-            sats_source.clone(),
-        );
+        let sats = LazyVecFrom1::transformed::<SatsTransform>(name, v, sats_source.clone());
 
         let bitcoin = LazyVecFrom1::transformed::<BitcoinTransform>(
             &format!("{name}_btc"),
-            v + Version::ZERO,
+            v,
             sats_source.clone(),
         );
 
@@ -48,7 +44,7 @@ impl LazyHeightValueVecs {
         let dollars = price_source.map(|price| {
             LazyVecFrom2::transformed::<DollarsTransform>(
                 &format!("{name}_usd"),
-                v + Version::ZERO,
+                v,
                 price,
                 sats_source,
             )

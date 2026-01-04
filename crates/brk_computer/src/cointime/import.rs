@@ -6,7 +6,7 @@ use brk_types::Version;
 use vecdb::{Database, PAGE_SIZE};
 
 use super::{
-    ActivityVecs, AdjustedVecs, CapVecs, PricingVecs, SupplyVecs, ValueVecs, Vecs, DB_NAME,
+    ActivityVecs, AdjustedVecs, CapVecs, PricingVecs, SupplyVecs, ValueVecs, Vecs, DB_NAME, VERSION,
 };
 use crate::{indexes, price};
 
@@ -21,15 +21,15 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
-        let v0 = parent_version;
-        let v1 = parent_version + Version::ONE;
+        let version = parent_version + VERSION;
+        let v1 = version + Version::ONE;
 
-        let activity = ActivityVecs::forced_import(&db, v0, indexes)?;
+        let activity = ActivityVecs::forced_import(&db, version, indexes)?;
         let supply = SupplyVecs::forced_import(&db, v1, indexes, compute_dollars)?;
         let value = ValueVecs::forced_import(&db, v1, indexes)?;
         let cap = CapVecs::forced_import(&db, v1, indexes)?;
-        let pricing = PricingVecs::forced_import(&db, v0, indexes, price)?;
-        let adjusted = AdjustedVecs::forced_import(&db, v0, indexes)?;
+        let pricing = PricingVecs::forced_import(&db, version, indexes, price)?;
+        let adjusted = AdjustedVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
             db,

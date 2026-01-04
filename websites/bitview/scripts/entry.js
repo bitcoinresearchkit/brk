@@ -1,9 +1,11 @@
 /**
  * @import * as _ from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  *
+ * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateChart, LineStyle } from './modules/lightweight-charts/5.0.9/dist/typings'
+ *
  * @import { Signal, Signals, Accessor } from "./signals";
  *
- * @import { BrkClient, CatalogTree_Computed_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Computed_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Computed_Distribution_UtxoCohorts_All as AllUtxoPattern, UpTo1dPattern as MaxAgePattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, BitcoinPattern, BlockSizePattern, BlockIntervalPattern, CoinbasePattern, Constant0Pattern, ActivePriceRatioPattern, _0satsPattern, PricePaidPattern2, UnclaimedRewardsPattern as ValuePattern, SentPattern as RewardPattern, Metric } from "./modules/brk-client/index.js"
+ * @import { BrkClient, CatalogTree_Computed_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Computed_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Computed_Distribution_UtxoCohorts_All as AllUtxoPattern, UpTo1dPattern as MaxAgePattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, BitcoinPattern, BlockSizePattern, BlockIntervalPattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, SentPattern as RewardPattern, Metric, MetricPattern, AnyMetricPattern } from "./modules/brk-client/index.js"
  *
  * @import { Resources, MetricResource } from './resources'
  *
@@ -13,7 +15,7 @@
  *
  * @import { WebSockets } from "./utils/ws"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, UtxoCohortGroupObject, AddressCohortGroupObject, CohortGroupObject, MetricAccessor, FetchedLineSeriesBlueprint, PartialContext, AgeCohortObject, AmountCohortObject, AgeCohortGroupObject, AmountCohortGroupObject } from "./options/partial/index.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, UtxoCohortGroupObject, AddressCohortGroupObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, AgeCohortObject, AmountCohortObject, AgeCohortGroupObject, AmountCohortGroupObject } from "./options/partial/index.js"
  *
  * @import { Unit } from "./utils/serde"
  *
@@ -58,7 +60,7 @@
  * @typedef {Market["dca"]} MarketDca
  *
  * Generic tree node type for walking
- * @typedef {MetricAccessor<unknown> | Record<string, unknown>} TreeNode
+ * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode
  */
 
 // DO NOT CHANGE, Exact format is expected in `brk_bundler`

@@ -6,16 +6,17 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Sats, Version};
+use brk_types::{DateIndex, Dollars, Height, Sats, Version};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{
     ComputeIndexes,
-    internal::{PERCENTILES, PERCENTILES_LEN},
-    indexes, price,
     distribution::DynCohortVecs,
+    indexes,
+    internal::{PERCENTILES, PERCENTILES_LEN},
+    price,
 };
 
 use super::{super::traits::CohortVecs, vecs::UTXOCohortVecs};
@@ -35,7 +36,7 @@ impl UTXOCohorts {
         price: Option<&price::Vecs>,
         states_path: &Path,
     ) -> Result<Self> {
-        let v = version + VERSION + Version::ZERO;
+        let v = version + VERSION;
 
         // Create "all" cohort first - it doesn't need global sources (it IS the global source)
         let all = UTXOCohortVecs::forced_import(
@@ -202,18 +203,16 @@ impl UTXOCohorts {
 
     /// Second phase of post-processing: compute relative metrics.
     #[allow(clippy::too_many_arguments)]
-    pub fn compute_rest_part2<S, HM, DM>(
+    pub fn compute_rest_part2<HM, DM>(
         &mut self,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
-        height_to_supply: &S,
         height_to_market_cap: Option<&HM>,
         dateindex_to_market_cap: Option<&DM>,
         exit: &Exit,
     ) -> Result<()>
     where
-        S: IterableVec<Height, Bitcoin> + Sync,
         HM: IterableVec<Height, Dollars> + Sync,
         DM: IterableVec<DateIndex, Dollars> + Sync,
     {
@@ -222,7 +221,6 @@ impl UTXOCohorts {
                 indexes,
                 price,
                 starting_indexes,
-                height_to_supply,
                 height_to_market_cap,
                 dateindex_to_market_cap,
                 exit,

@@ -31,8 +31,9 @@ impl Vecs {
         // Moving average metrics (independent)
         self.moving_average.compute(price, starting_indexes, exit)?;
 
-        // DCA metrics
-        self.dca.compute(price, starting_indexes, exit)?;
+        // DCA metrics (depends on lookback for lump sum comparison)
+        self.dca
+            .compute(price, &self.lookback, starting_indexes, exit)?;
 
         self.indicators.compute(
             &blocks.rewards,

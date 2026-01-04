@@ -27,7 +27,7 @@ impl Vecs {
         let db = Database::open(&parent_path.join(DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 1_000_000)?;
 
-        let version = parent_version + Version::ZERO;
+        let version = parent_version;
 
         let this = Self {
             height_to_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,

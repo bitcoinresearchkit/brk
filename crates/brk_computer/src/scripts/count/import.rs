@@ -20,7 +20,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         outputs: &outputs::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
         let full_stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -34,7 +33,7 @@ impl Vecs {
             db,
             "p2a_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -42,7 +41,7 @@ impl Vecs {
             db,
             "p2ms_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -50,7 +49,7 @@ impl Vecs {
             db,
             "p2pk33_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -58,7 +57,7 @@ impl Vecs {
             db,
             "p2pk65_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -66,7 +65,7 @@ impl Vecs {
             db,
             "p2pkh_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -74,7 +73,7 @@ impl Vecs {
             db,
             "p2sh_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -82,7 +81,7 @@ impl Vecs {
             db,
             "p2tr_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -90,7 +89,7 @@ impl Vecs {
             db,
             "p2wpkh_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -98,7 +97,7 @@ impl Vecs {
             db,
             "p2wsh_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -108,7 +107,7 @@ impl Vecs {
             db,
             "segwit_count",
             Source::Compute,
-            version + v0,
+            version,
             indexes,
             full_stats(),
         )?;
@@ -119,7 +118,7 @@ impl Vecs {
         let indexes_to_taproot_adoption =
             LazyVecsFrom2FromHeight::from_height_and_txindex::<PercentageU64F32>(
                 "taproot_adoption",
-                version + v0,
+                version,
                 indexes_to_p2tr_count.height.u().boxed_clone(),
                 outputs.count.indexes_to_count.height.sum.u().boxed_clone(),
                 &indexes_to_p2tr_count,
@@ -128,7 +127,7 @@ impl Vecs {
         let indexes_to_segwit_adoption =
             LazyVecsFrom2FromHeight::from_height_and_txindex::<PercentageU64F32>(
                 "segwit_adoption",
-                version + v0,
+                version,
                 indexes_to_segwit_count.height.u().boxed_clone(),
                 outputs.count.indexes_to_count.height.sum.u().boxed_clone(),
                 &indexes_to_segwit_count,
@@ -149,7 +148,7 @@ impl Vecs {
                 db,
                 "opreturn_count",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,
@@ -157,7 +156,7 @@ impl Vecs {
                 db,
                 "emptyoutput_count",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,
@@ -165,7 +164,7 @@ impl Vecs {
                 db,
                 "unknownoutput_count",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 full_stats(),
             )?,

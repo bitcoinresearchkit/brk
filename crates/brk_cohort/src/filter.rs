@@ -68,12 +68,17 @@ impl Filter {
     }
 
     /// Whether to compute extended metrics (realized cap ratios, profit/loss ratios, percentiles)
-    /// For UTXO context: false for Type and Amount filters
+    /// For UTXO context: true only for age range cohorts (Range) and aggregate cohorts (All, Term)
     /// For Address context: always false
     pub fn is_extended(&self, context: CohortContext) -> bool {
         match context {
             CohortContext::Address => false,
-            CohortContext::Utxo => !matches!(self, Filter::Type(_) | Filter::Amount(_)),
+            CohortContext::Utxo => {
+                matches!(
+                    self,
+                    Filter::All | Filter::Term(_) | Filter::Time(TimeFilter::Range(_))
+                )
+            }
         }
     }
 

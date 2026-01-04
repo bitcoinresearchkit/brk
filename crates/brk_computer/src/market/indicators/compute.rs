@@ -39,7 +39,7 @@ impl Vecs {
             })?;
         }
 
-        let returns_dateindex = returns._1d_price_returns.dateindex.u();
+        let returns_dateindex = returns.price_returns._1d.dateindex.u();
 
         self.dateindex_to_rsi_gains.compute_transform(
             starting_indexes.dateindex,
@@ -55,14 +55,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex_to_rsi_avg_gain_14d.compute_sma(
+        self.dateindex_to_rsi_avg_gain_14d.compute_rma(
             starting_indexes.dateindex,
             &self.dateindex_to_rsi_gains,
             14,
             exit,
         )?;
 
-        self.dateindex_to_rsi_avg_loss_14d.compute_sma(
+        self.dateindex_to_rsi_avg_loss_14d.compute_rma(
             starting_indexes.dateindex,
             &self.dateindex_to_rsi_losses,
             14,

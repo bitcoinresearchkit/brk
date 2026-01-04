@@ -12,6 +12,8 @@ use crate::{
     transactions,
 };
 
+const VERSION: Version = Version::ZERO;
+
 impl Vecs {
     pub fn forced_import(
         db: &Database,
@@ -22,7 +24,7 @@ impl Vecs {
         transactions: &transactions::Vecs,
         moving_average: &moving_average::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
+        let v = version + VERSION;
         let last = || VecBuilderOptions::default().add_last();
 
         let indexes_to_nvt = distribution
@@ -37,44 +39,45 @@ impl Vecs {
             .map(|(market_cap, volume)| {
                 LazyVecsFrom2FromDateIndex::from_dateindex_and_height::<Ratio32>(
                     "nvt",
-                    version + v0,
+                    v,
                     market_cap,
                     volume,
                 )
             });
 
-        let dateindex_to_rsi_gains = EagerVec::forced_import(db, "rsi_gains", version + v0)?;
-        let dateindex_to_rsi_losses = EagerVec::forced_import(db, "rsi_losses", version + v0)?;
+        let dateindex_to_rsi_gains = EagerVec::forced_import(db, "rsi_gains", v)?;
+        let dateindex_to_rsi_losses = EagerVec::forced_import(db, "rsi_losses", v)?;
+        // v1: Changed from SMA to RMA (Wilder's smoothing)
         let dateindex_to_rsi_avg_gain_14d =
-            EagerVec::forced_import(db, "rsi_avg_gain_14d", version + v0)?;
+            EagerVec::forced_import(db, "rsi_avg_gain_14d", v + Version::ONE)?;
         let dateindex_to_rsi_avg_loss_14d =
-            EagerVec::forced_import(db, "rsi_avg_loss_14d", version + v0)?;
+            EagerVec::forced_import(db, "rsi_avg_loss_14d", v + Version::ONE)?;
         let dateindex_to_rsi_14d = LazyVecFrom2::transformed::<RsiFormula>(
             "rsi_14d",
-            version + v0,
+            v,
             dateindex_to_rsi_avg_gain_14d.boxed_clone(),
             dateindex_to_rsi_avg_loss_14d.boxed_clone(),
         );
 
-        let dateindex_to_macd_line = EagerVec::forced_import(db, "macd_line", version + v0)?;
-        let dateindex_to_macd_signal = EagerVec::forced_import(db, "macd_signal", version + v0)?;
+        let dateindex_to_macd_line = EagerVec::forced_import(db, "macd_line", v)?;
+        let dateindex_to_macd_signal = EagerVec::forced_import(db, "macd_signal", v)?;
         let dateindex_to_macd_histogram = LazyVecFrom2::transformed::<DifferenceF32>(
             "macd_histogram",
-            version + v0,
+            v,
             dateindex_to_macd_line.boxed_clone(),
             dateindex_to_macd_signal.boxed_clone(),
         );
 
-        let dateindex_to_rsi_14d_min = EagerVec::forced_import(db, "rsi_14d_min", version + v0)?;
-        let dateindex_to_rsi_14d_max = EagerVec::forced_import(db, "rsi_14d_max", version + v0)?;
-        let dateindex_to_stoch_rsi = EagerVec::forced_import(db, "stoch_rsi", version + v0)?;
-        let dateindex_to_stoch_rsi_k = EagerVec::forced_import(db, "stoch_rsi_k", version + v0)?;
-        let dateindex_to_stoch_rsi_d = EagerVec::forced_import(db, "stoch_rsi_d", version + v0)?;
+        let dateindex_to_rsi_14d_min = EagerVec::forced_import(db, "rsi_14d_min", v)?;
+        let dateindex_to_rsi_14d_max = EagerVec::forced_import(db, "rsi_14d_max", v)?;
+        let dateindex_to_stoch_rsi = EagerVec::forced_import(db, "stoch_rsi", v)?;
+        let dateindex_to_stoch_rsi_k = EagerVec::forced_import(db, "stoch_rsi_k", v)?;
+        let dateindex_to_stoch_rsi_d = EagerVec::forced_import(db, "stoch_rsi_d", v)?;
 
-        let dateindex_to_stoch_k = EagerVec::forced_import(db, "stoch_k", version + v0)?;
-        let dateindex_to_stoch_d = EagerVec::forced_import(db, "stoch_d", version + v0)?;
+        let dateindex_to_stoch_k = EagerVec::forced_import(db, "stoch_k", v)?;
+        let dateindex_to_stoch_d = EagerVec::forced_import(db, "stoch_d", v)?;
 
-        let dateindex_to_gini = EagerVec::forced_import(db, "gini", version + v0)?;
+        let dateindex_to_gini = EagerVec::forced_import(db, "gini", v)?;
 
         // Pi Cycle Top: 111d SMA / (2 * 350d SMA) - signals top when > 1
         let dateindex_to_pi_cycle = moving_average
@@ -86,7 +89,7 @@ impl Vecs {
             .map(|(sma_111, sma_350_x2)| {
                 LazyVecFrom2::transformed::<Ratio32>(
                     "pi_cycle",
-                    version + v0,
+                    v,
                     sma_111.boxed_clone(),
                     sma_350_x2.boxed_clone(),
                 )
@@ -99,7 +102,7 @@ impl Vecs {
                         db,
                         "puell_multiple",
                         Source::Compute,
-                        version + v0,
+                        v,
                         indexes,
                         last(),
                     )

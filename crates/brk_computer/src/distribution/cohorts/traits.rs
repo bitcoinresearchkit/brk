@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{DateIndex, Dollars, Height, Version};
 use vecdb::{Exit, IterableVec};
 
 use crate::{ComputeIndexes, indexes, price};
@@ -63,7 +63,6 @@ pub trait CohortVecs: DynCohortVecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
-        height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,

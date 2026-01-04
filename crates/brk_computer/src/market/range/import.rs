@@ -4,13 +4,12 @@ use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
 use crate::{
-    internal::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
     indexes,
+    internal::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v1 = Version::ONE;
         let last = VecBuilderOptions::default().add_last();
 
@@ -82,12 +81,12 @@ impl Vecs {
             dateindex_to_price_true_range: EagerVec::forced_import(
                 db,
                 "price_true_range",
-                version + v0,
+                version,
             )?,
             dateindex_to_price_true_range_2w_sum: EagerVec::forced_import(
                 db,
                 "price_true_range_2w_sum",
-                version + v0,
+                version,
             )?,
             indexes_to_price_2w_choppiness_index: ComputedVecsFromDateIndex::forced_import(
                 db,

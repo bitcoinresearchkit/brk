@@ -7,7 +7,7 @@
  * @param {string} args.name
  * @param {string} args.title
  * @param {string} args.legend
- * @param {MetricAccessor<any>} args.price
+ * @param {AnyMetricPattern} args.price
  * @param {ActivePriceRatioPattern} args.ratio
  * @param {Color} [args.color]
  * @returns {PartialOptionsTree}

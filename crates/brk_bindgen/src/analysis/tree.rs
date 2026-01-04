@@ -112,24 +112,27 @@ fn collect_indexes_from_tree(
 
 /// Get the metric base for a pattern instance by analyzing all leaf descendants.
 ///
-/// For root-level instances (no common prefix among leaves), returns empty string.
-/// For cohort-level instances, returns the common prefix among all leaves.
+/// For root-level instances (no common prefix/suffix among leaves), returns empty string.
+/// For cohort-level instances, returns the common prefix or suffix among all leaves.
 pub fn get_pattern_instance_base(node: &TreeNode) -> String {
     let leaf_names = get_all_leaf_names(node);
     if leaf_names.is_empty() {
         return String::new();
     }
 
-    // Find the longest common prefix among all leaf names
+    // First try to find a common prefix
     let common_prefix = find_common_prefix_at_underscore(&leaf_names);
-
-    // If no common prefix, we're at root level
-    if common_prefix.is_empty() {
-        return String::new();
+    if !common_prefix.is_empty() {
+        return common_prefix.trim_end_matches('_').to_string();
     }
 
-    // Return the common prefix (without trailing underscore)
-    common_prefix.trim_end_matches('_').to_string()
+    // If no common prefix, try to find a common suffix
+    let common_suffix = find_common_suffix_at_underscore(&leaf_names);
+    if !common_suffix.is_empty() {
+        return common_suffix.trim_start_matches('_').to_string();
+    }
+
+    String::new()
 }
 
 /// Find the longest common prefix at an underscore boundary.
@@ -182,6 +185,14 @@ fn find_common_prefix_at_underscore(names: &[String]) -> String {
     }
 
     String::new()
+}
+
+/// Find the longest common suffix at an underscore boundary.
+fn find_common_suffix_at_underscore(names: &[String]) -> String {
+    // Reverse strings, find common prefix, reverse result
+    let reversed: Vec<String> = names.iter().map(|s| s.chars().rev().collect()).collect();
+    let prefix = find_common_prefix_at_underscore(&reversed);
+    prefix.chars().rev().collect()
 }
 
 /// Infer the accumulated name for a child node based on a descendant leaf name.

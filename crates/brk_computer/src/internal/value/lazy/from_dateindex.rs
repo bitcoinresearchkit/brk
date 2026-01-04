@@ -35,14 +35,14 @@ impl LazyValueVecsFromDateIndex {
 
         let sats = LazyVecsFromDateIndex::from_computed::<SatsTransform>(
             name,
-            v + Version::ZERO,
+            v,
             source.sats.dateindex.as_ref().map(|v| v.boxed_clone()),
             &source.sats,
         );
 
         let bitcoin = LazyVecsFromDateIndex::from_computed::<BitcoinTransform>(
             &format!("{name}_btc"),
-            v + Version::ZERO,
+            v,
             source.sats.dateindex.as_ref().map(|v| v.boxed_clone()),
             &source.sats,
         );
@@ -50,7 +50,7 @@ impl LazyValueVecsFromDateIndex {
         let dollars = source.dollars.as_ref().map(|dollars_source| {
             LazyVecsFromDateIndex::from_computed::<DollarsTransform>(
                 &format!("{name}_usd"),
-                v + Version::ZERO,
+                v,
                 dollars_source.dateindex.as_ref().map(|v| v.boxed_clone()),
                 dollars_source,
             )

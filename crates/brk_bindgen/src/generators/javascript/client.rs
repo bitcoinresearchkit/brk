@@ -66,6 +66,8 @@ class BrkError extends Error {{
  * @property {{(index: Index) => Endpoint<T>|undefined}} get - Get an endpoint for a specific index
  */
 
+/** @typedef {{MetricPattern<unknown>}} AnyMetricPattern */
+
 /**
  * Create an endpoint for a metric index.
  * @template T

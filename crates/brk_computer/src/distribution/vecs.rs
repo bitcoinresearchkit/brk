@@ -19,8 +19,7 @@ use crate::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
         state::BlockState,
     },
-    indexes,
-    inputs,
+    indexes, inputs,
     internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
     outputs, price, transactions,
 };
@@ -63,7 +62,7 @@ const SAVED_STAMPED_CHANGES: u16 = 10;
 impl Vecs {
     pub fn forced_import(
         parent: &Path,
-        version: Version,
+        parent_version: Version,
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
@@ -74,7 +73,7 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 20_000_000)?;
         db.set_min_regions(50_000)?;
 
-        let v0 = version + VERSION + Version::ZERO;
+        let version = parent_version + VERSION;
 
         let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, price, &states_path)?;
 
@@ -90,37 +89,37 @@ impl Vecs {
 
         // Create address data BytesVecs first so we can also use them for identity mappings
         let loadedaddressindex_to_loadedaddressdata = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "loadedaddressdata", v0)
+            vecdb::ImportOptions::new(&db, "loadedaddressdata", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
         let emptyaddressindex_to_emptyaddressdata = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "emptyaddressdata", v0)
+            vecdb::ImportOptions::new(&db, "emptyaddressdata", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
 
         // Identity mappings for traversable
         let loadedaddressindex_to_loadedaddressindex = LazyVecFrom1::init(
             "loadedaddressindex",
-            v0,
+            version,
             loadedaddressindex_to_loadedaddressdata.boxed_clone(),
             |index, _| Some(index),
         );
         let emptyaddressindex_to_emptyaddressindex = LazyVecFrom1::init(
             "emptyaddressindex",
-            v0,
+            version,
             emptyaddressindex_to_emptyaddressdata.boxed_clone(),
             |index, _| Some(index),
         );
 
         // Extract address type height vecs before struct literal to use as sources
         let addresstype_to_height_to_addr_count =
-            AddressTypeToHeightToAddressCount::forced_import(&db, "addr_count", v0)?;
+            AddressTypeToHeightToAddressCount::forced_import(&db, "addr_count", version)?;
         let addresstype_to_height_to_empty_addr_count =
-            AddressTypeToHeightToAddressCount::forced_import(&db, "empty_addr_count", v0)?;
+            AddressTypeToHeightToAddressCount::forced_import(&db, "empty_addr_count", version)?;
 
         let this = Self {
             chain_state: BytesVec::forced_import_with(
-                vecdb::ImportOptions::new(&db, "chain", v0)
+                vecdb::ImportOptions::new(&db, "chain", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
@@ -128,7 +127,7 @@ impl Vecs {
                 &db,
                 "addr_count",
                 Source::Compute,
-                v0,
+                version,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
@@ -136,23 +135,24 @@ impl Vecs {
                 &db,
                 "empty_addr_count",
                 Source::Compute,
-                v0,
+                version,
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
-            addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount::forced_import(
-                &db,
-                "addr_count",
-                v0,
-                indexes,
-                &addresstype_to_height_to_addr_count,
-            )?,
+            addresstype_to_indexes_to_addr_count:
+                AddressTypeToIndexesToAddressCount::forced_import(
+                    &db,
+                    "addr_count",
+                    version,
+                    indexes,
+                    &addresstype_to_height_to_addr_count,
+                )?,
             addresstype_to_indexes_to_empty_addr_count:
                 AddressTypeToIndexesToAddressCount::forced_import(
                     &db,
                     "empty_addr_count",
-                    v0,
+                    version,
                     indexes,
                     &addresstype_to_height_to_empty_addr_count,
                 )?,
@@ -162,7 +162,7 @@ impl Vecs {
             utxo_cohorts,
             address_cohorts,
 
-            any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, v0)?,
+            any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, version)?,
             addresses_data: AddressesDataVecs {
                 loaded: loadedaddressindex_to_loadedaddressdata,
                 empty: emptyaddressindex_to_emptyaddressdata,
@@ -328,10 +328,51 @@ impl Vecs {
             exit,
         )?;
 
+        // 6b. Compute address count dateindex vecs (per-addresstype)
+        self.addresstype_to_indexes_to_addr_count.compute(
+            indexes,
+            starting_indexes,
+            exit,
+            &self.addresstype_to_height_to_addr_count,
+        )?;
+        self.addresstype_to_indexes_to_empty_addr_count.compute(
+            indexes,
+            starting_indexes,
+            exit,
+            &self.addresstype_to_height_to_empty_addr_count,
+        )?;
+
+        // 6c. Compute global address count dateindex vecs (sum of all address types)
+        let addr_count_sources: Vec<_> =
+            self.addresstype_to_height_to_addr_count.values().collect();
+        self.indexes_to_addr_count
+            .compute_all(indexes, starting_indexes, exit, |height_vec| {
+                Ok(height_vec.compute_sum_of_others(
+                    starting_indexes.height,
+                    &addr_count_sources,
+                    exit,
+                )?)
+            })?;
+
+        let empty_addr_count_sources: Vec<_> = self
+            .addresstype_to_height_to_empty_addr_count
+            .values()
+            .collect();
+        self.indexes_to_empty_addr_count.compute_all(
+            indexes,
+            starting_indexes,
+            exit,
+            |height_vec| {
+                Ok(height_vec.compute_sum_of_others(
+                    starting_indexes.height,
+                    &empty_addr_count_sources,
+                    exit,
+                )?)
+            },
+        )?;
+
         // 7. Compute rest part2 (relative metrics)
         let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
-
-        let height_to_supply = &supply_metrics.height_to_supply_value.bitcoin.clone();
 
         let height_to_market_cap = supply_metrics
             .height_to_supply_value
@@ -354,7 +395,6 @@ impl Vecs {
             indexes,
             price,
             starting_indexes,
-            height_to_supply,
             height_to_market_cap_ref,
             dateindex_to_market_cap_ref,
             exit,

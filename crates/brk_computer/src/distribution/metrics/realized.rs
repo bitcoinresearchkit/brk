@@ -9,13 +9,14 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes,
+    distribution::state::RealizedState,
+    indexes,
     internal::{
         ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
         LazyVecsFrom2FromHeight, LazyVecsFromDateIndex, LazyVecsFromHeight, PercentageDollarsF32,
         Source, StoredF32Identity, VecBuilderOptions,
     },
-    indexes, price,
-    distribution::state::RealizedState,
+    price,
     utils::OptionExt,
 };
 
@@ -93,7 +94,6 @@ pub struct RealizedMetrics {
 impl RealizedMetrics {
     /// Import realized metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v1 = Version::ONE;
         let v3 = Version::new(3);
         let extended = cfg.extended();
@@ -103,13 +103,13 @@ impl RealizedMetrics {
         let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
 
         let height_to_realized_loss: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("realized_loss"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_loss"), cfg.version)?;
 
         let indexes_to_realized_loss = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_loss"),
             Source::Vec(height_to_realized_loss.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             sum_cum,
         )?;
@@ -126,7 +126,7 @@ impl RealizedMetrics {
             cfg.db,
             &cfg.name("realized_value"),
             Source::Compute,
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             sum,
         )?;
@@ -145,25 +145,25 @@ impl RealizedMetrics {
 
         // Extract vecs needed for lazy ratio construction
         let height_to_realized_cap: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("realized_cap"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_cap"), cfg.version)?;
 
         let indexes_to_realized_cap = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_cap"),
             Source::Vec(height_to_realized_cap.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             last,
         )?;
 
         let height_to_realized_profit: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("realized_profit"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("realized_profit"), cfg.version)?;
 
         let indexes_to_realized_profit = ComputedVecsFromHeight::forced_import(
             cfg.db,
             &cfg.name("realized_profit"),
             Source::Vec(height_to_realized_profit.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             sum_cum,
         )?;
@@ -172,7 +172,7 @@ impl RealizedMetrics {
             cfg.db,
             &cfg.name("net_realized_pnl"),
             Source::Compute,
-            cfg.version + v0,
+            cfg.version,
             cfg.indexes,
             sum_cum,
         )?;
@@ -216,32 +216,24 @@ impl RealizedMetrics {
             cfg.db,
             &cfg.name("realized_price"),
             Source::Compute,
-            cfg.version + v0,
+            cfg.version + v1,
             cfg.indexes,
             last,
         )?;
 
         let height_to_value_created =
-            EagerVec::forced_import(cfg.db, &cfg.name("value_created"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("value_created"), cfg.version)?;
         let height_to_value_destroyed =
-            EagerVec::forced_import(cfg.db, &cfg.name("value_destroyed"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("value_destroyed"), cfg.version)?;
 
         let height_to_adjusted_value_created = compute_adjusted
             .then(|| {
-                EagerVec::forced_import(
-                    cfg.db,
-                    &cfg.name("adjusted_value_created"),
-                    cfg.version + v0,
-                )
+                EagerVec::forced_import(cfg.db, &cfg.name("adjusted_value_created"), cfg.version)
             })
             .transpose()?;
         let height_to_adjusted_value_destroyed = compute_adjusted
             .then(|| {
-                EagerVec::forced_import(
-                    cfg.db,
-                    &cfg.name("adjusted_value_destroyed"),
-                    cfg.version + v0,
-                )
+                EagerVec::forced_import(cfg.db, &cfg.name("adjusted_value_destroyed"), cfg.version)
             })
             .transpose()?;
 
@@ -250,7 +242,7 @@ impl RealizedMetrics {
             cfg.db,
             &cfg.name("realized_price"),
             Some(&indexes_to_realized_price),
-            cfg.version + v0,
+            cfg.version + v1,
             cfg.indexes,
             extended,
             cfg.price,
@@ -260,7 +252,7 @@ impl RealizedMetrics {
         // ratio = close / realized_price = market_cap / realized_cap = MVRV
         let indexes_to_mvrv = LazyVecsFromDateIndex::from_computed::<StoredF32Identity>(
             &cfg.name("mvrv"),
-            cfg.version + v0,
+            cfg.version,
             indexes_to_realized_price_extra
                 .ratio
                 .dateindex
@@ -283,7 +275,7 @@ impl RealizedMetrics {
                         cfg.db,
                         &cfg.name("realized_cap_rel_to_own_market_cap"),
                         Source::Compute,
-                        cfg.version + v0,
+                        cfg.version,
                         cfg.indexes,
                         last,
                     )
@@ -293,7 +285,7 @@ impl RealizedMetrics {
                 cfg.db,
                 &cfg.name("realized_cap_30d_delta"),
                 Source::Compute,
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 last,
             )?,
@@ -329,7 +321,7 @@ impl RealizedMetrics {
                 cfg.db,
                 &cfg.name("value_created"),
                 Source::Vec(height_to_value_created.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 sum,
             )?,
@@ -337,7 +329,7 @@ impl RealizedMetrics {
                 cfg.db,
                 &cfg.name("value_destroyed"),
                 Source::Vec(height_to_value_destroyed.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 sum,
             )?,
@@ -356,7 +348,7 @@ impl RealizedMetrics {
                                 .unwrap()
                                 .boxed_clone(),
                         ),
-                        cfg.version + v0,
+                        cfg.version,
                         cfg.indexes,
                         sum,
                     )
@@ -373,7 +365,7 @@ impl RealizedMetrics {
                                 .unwrap()
                                 .boxed_clone(),
                         ),
-                        cfg.version + v0,
+                        cfg.version,
                         cfg.indexes,
                         sum,
                     )

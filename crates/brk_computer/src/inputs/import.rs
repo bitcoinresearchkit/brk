@@ -17,7 +17,7 @@ impl Vecs {
         let db = Database::open(&parent_path.join(super::DB_NAME))?;
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        let version = parent_version + Version::ZERO;
+        let version = parent_version;
 
         let spent = SpentVecs::forced_import(&db, version)?;
         let count = CountVecs::forced_import(&db, version, indexes)?;

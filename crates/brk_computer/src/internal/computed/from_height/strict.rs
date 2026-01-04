@@ -1,7 +1,7 @@
 use brk_error::Result;
 
 use brk_traversable::Traversable;
-use brk_types::{DifficultyEpoch, Height, Version};
+use brk_types::{DifficultyEpoch, Height, TreeNode, Version};
 use schemars::JsonSchema;
 use vecdb::{
     AnyExportableVec, Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec,
@@ -36,12 +36,12 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let height = EagerVec::forced_import(db, name, version + VERSION + Version::ZERO)?;
+        let height = EagerVec::forced_import(db, name, version + VERSION)?;
 
         let height_extra = EagerVecsBuilder::forced_import(
             db,
             name,
-            version + VERSION + Version::ZERO,
+            version + VERSION,
             options.copy_self_extra(),
         )?;
 
@@ -50,15 +50,18 @@ where
         Ok(Self {
             difficultyepoch: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 Some(height.boxed_clone()),
                 &height_extra,
-                indexes.block.difficultyepoch_to_difficultyepoch.boxed_clone(),
+                indexes
+                    .block
+                    .difficultyepoch_to_difficultyepoch
+                    .boxed_clone(),
                 options.into(),
             ),
             height,
             height_extra,
-            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION , format, options)?,
         })
     }
 
@@ -84,9 +87,9 @@ impl<T> Traversable for ComputedVecsFromHeightStrict<T>
 where
     T: ComputedVecValue + JsonSchema,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+    fn to_tree_node(&self) -> TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();
-        brk_traversable::TreeNode::Branch(
+        TreeNode::Branch(
             [
                 Some(("height".to_string(), self.height.to_tree_node())),
                 if height_extra_node.is_empty() {

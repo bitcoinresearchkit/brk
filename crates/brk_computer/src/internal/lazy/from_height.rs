@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
     DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
-    Version, WeekIndex, YearIndex,
+    TreeNode, Version, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
 use vecdb::{AnyExportableVec, IterableBoxedVec, LazyVecFrom1, UnaryTransform};
@@ -72,9 +72,9 @@ where
     T: ComputedVecValue + JsonSchema,
     S1T: ComputedVecValue,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+    fn to_tree_node(&self) -> TreeNode {
         let height_extra_node = self.height_extra.to_tree_node();
-        brk_traversable::TreeNode::Branch(
+        TreeNode::Branch(
             [
                 Some(("height".to_string(), self.height.to_tree_node())),
                 if height_extra_node.is_empty() {

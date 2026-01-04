@@ -9,12 +9,7 @@ use crate::{
 };
 
 impl Vecs {
-    pub fn forced_import(
-        db: &Database,
-        version: Version,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        let v0 = Version::ZERO;
+    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
 
         Ok(Self {
@@ -22,7 +17,7 @@ impl Vecs {
                 db,
                 "tx_v1",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 sum_cum(),
             )?,
@@ -30,7 +25,7 @@ impl Vecs {
                 db,
                 "tx_v2",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 sum_cum(),
             )?,
@@ -38,7 +33,7 @@ impl Vecs {
                 db,
                 "tx_v3",
                 Source::Compute,
-                version + v0,
+                version,
                 indexes,
                 sum_cum(),
             )?,

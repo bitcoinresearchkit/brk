@@ -51,7 +51,8 @@ impl Vecs {
             );
 
         let dateindex_to_sharpe_1w = returns
-            ._1w_price_returns
+            .price_returns
+            ._1w
             .dateindex
             .as_ref()
             .zip(indexes_to_price_1w_volatility.dateindex.as_ref())
@@ -65,7 +66,8 @@ impl Vecs {
             });
 
         let dateindex_to_sharpe_1m = returns
-            ._1m_price_returns
+            .price_returns
+            ._1m
             .dateindex
             .as_ref()
             .zip(indexes_to_price_1m_volatility.dateindex.as_ref())
@@ -79,7 +81,8 @@ impl Vecs {
             });
 
         let dateindex_to_sharpe_1y = returns
-            ._1y_price_returns
+            .price_returns
+            ._1y
             .dateindex
             .as_ref()
             .zip(indexes_to_price_1y_volatility.dateindex.as_ref())
@@ -94,7 +97,8 @@ impl Vecs {
 
         // Sortino ratio = returns / downside volatility
         let dateindex_to_sortino_1w = returns
-            ._1w_price_returns
+            .price_returns
+            ._1w
             .dateindex
             .as_ref()
             .zip(returns.indexes_to_downside_1w_sd.sd.dateindex.as_ref())
@@ -108,7 +112,8 @@ impl Vecs {
             });
 
         let dateindex_to_sortino_1m = returns
-            ._1m_price_returns
+            .price_returns
+            ._1m
             .dateindex
             .as_ref()
             .zip(returns.indexes_to_downside_1m_sd.sd.dateindex.as_ref())
@@ -122,7 +127,8 @@ impl Vecs {
             });
 
         let dateindex_to_sortino_1y = returns
-            ._1y_price_returns
+            .price_returns
+            ._1y
             .dateindex
             .as_ref()
             .zip(returns.indexes_to_downside_1y_sd.sd.dateindex.as_ref())

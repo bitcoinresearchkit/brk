@@ -42,15 +42,29 @@ fn any_handler(
 
         let mut path = files_path.join(&sanitized);
 
-        // Canonicalize and verify the path stays within the allowed directory
+        // Canonicalize and verify the path stays within the project root
+        // (allows symlinks to modules/ which is outside the website directory)
         if let Ok(canonical) = path.canonicalize()
             && let Ok(canonical_base) = files_path.canonicalize()
-            && !canonical.starts_with(&canonical_base)
         {
-            let mut response: Response<Body> =
-                (StatusCode::FORBIDDEN, "Access denied".to_string()).into_response();
-            response.headers_mut().insert_cors();
-            return response;
+            // Allow paths within files_path OR within project root (2 levels up)
+            let project_root = canonical_base.parent().and_then(|p| p.parent());
+            let allowed = canonical.starts_with(&canonical_base)
+                || project_root.is_some_and(|root| canonical.starts_with(root));
+            if !allowed {
+                let mut response: Response<Body> =
+                    (StatusCode::FORBIDDEN, "Access denied".to_string()).into_response();
+                response.headers_mut().insert_cors();
+                return response;
+            }
+        }
+
+        // Auto-resolve .js extension for ES module imports
+        if !path.exists() && path.extension().is_none() {
+            let with_js = path.with_extension("js");
+            if with_js.exists() {
+                path = with_js;
+            }
         }
 
         if !path.exists() || path.is_dir() {
@@ -91,9 +105,10 @@ fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Respo
 
 fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Result<Response> {
     let (modified, date) = headers.check_if_modified_since(path)?;
-    if modified == ModifiedState::NotModifiedSince {
-        return Ok(Response::new_not_modified());
-    }
+    // TODO: Re-enable for production
+    // if modified == ModifiedState::NotModifiedSince {
+    //     return Ok(Response::new_not_modified());
+    // }
 
     let serialized_path = path.to_str().unwrap();
 
@@ -102,7 +117,8 @@ fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Resu
         .is_some_and(|extension| extension == "html")
         || serialized_path.ends_with("service-worker.js");
 
-    let guard_res = if !must_revalidate {
+    // TODO: Re-enable caching for production
+    let guard_res = if false && !must_revalidate {
         Some(state.cache.get_value_or_guard(
             &path.to_str().unwrap().to_owned(),
             Some(Duration::from_millis(50)),
@@ -133,17 +149,19 @@ fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Resu
     headers.insert_cors();
     headers.insert_content_type(path);
 
-    if must_revalidate {
-        headers.insert_cache_control_must_revalidate();
-    } else if path.extension().is_some_and(|extension| {
-        extension == "jpg"
-            || extension == "png"
-            || extension == "woff2"
-            || extension == "js"
-            || extension == "map"
-    }) {
-        headers.insert_cache_control_immutable();
-    }
+    // TODO: Re-enable immutable caching for production
+    // if must_revalidate {
+    //     headers.insert_cache_control_must_revalidate();
+    // } else if path.extension().is_some_and(|extension| {
+    //     extension == "jpg"
+    //         || extension == "png"
+    //         || extension == "woff2"
+    //         || extension == "js"
+    //         || extension == "map"
+    // }) {
+    //     headers.insert_cache_control_immutable();
+    // }
+    headers.insert_cache_control_must_revalidate();
 
     headers.insert_last_modified(date);
 

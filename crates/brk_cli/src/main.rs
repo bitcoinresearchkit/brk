@@ -132,15 +132,7 @@ pub fn run() -> color_eyre::Result<()> {
                 modules_path = downloaded_modules_path;
             }
 
-            Some(
-                bundle(
-                    &modules_path,
-                    &websites_path,
-                    website.to_folder_name(),
-                    true,
-                )
-                .await?,
-            )
+            Some(websites_path.join(website.to_folder_name()))
         } else {
             None
         };

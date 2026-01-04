@@ -123,8 +123,6 @@ export const serdeChartableIndex = {
         return "date";
       case "decadeindex":
         return "decade";
-      case "difficultyepoch":
-        return "epoch";
       case "height":
         return "timestamp";
       case "monthindex":
@@ -153,8 +151,6 @@ export const serdeChartableIndex = {
         return "dateindex";
       case "week":
         return "weekindex";
-      case "epoch":
-        return "difficultyepoch";
       case "month":
         return "monthindex";
       case "quarter":
@@ -308,7 +304,7 @@ export const serdeUnit = {
         (v.includes("_usd") && !v.endsWith("velocity")) ||
         v.includes("cointime_value") ||
         v.endsWith("_ago") ||
-        v.endsWith("cost_basis") ||
+        v.includes("cost_basis") ||
         v.endsWith("_price") ||
         (v.startsWith("price") && (v.endsWith("min") || v.endsWith("max"))) ||
         (v.endsWith("_cap") && !v.includes("rel_to")) ||

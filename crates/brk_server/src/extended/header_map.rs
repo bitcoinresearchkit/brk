@@ -135,7 +135,7 @@ impl HeaderMapExtended for HeaderMap {
             .map(|s| s.to_str().unwrap_or_default())
             .unwrap_or_default()
         {
-            "js" => self.insert_content_type_application_javascript(),
+            "js" | "mjs" => self.insert_content_type_application_javascript(),
             "json" | "map" => self.insert_content_type_application_json(),
             "html" => self.insert_content_type_text_html(),
             "css" => self.insert_content_type_text_css(),

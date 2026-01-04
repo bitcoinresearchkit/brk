@@ -9,21 +9,19 @@ use crate::{
 
 impl Vecs {
     pub fn import(version: Version, distribution: &distribution::Vecs) -> Self {
-        let v0 = Version::ZERO;
-
         // Reference distribution's actual circulating supply lazily
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         let height_to_sats = LazyVecFrom1::init(
             "circulating_sats",
-            version + v0,
+            version,
             supply_metrics.height_to_supply.boxed_clone(),
             |height, iter| iter.get(height),
         );
 
         let height_to_btc = LazyVecFrom1::transformed::<SatsToBitcoin>(
             "circulating_btc",
-            version + v0,
+            version,
             supply_metrics.height_to_supply.boxed_clone(),
         );
 
@@ -34,7 +32,7 @@ impl Vecs {
             .map(|d| {
                 LazyVecFrom1::init(
                     "circulating_usd",
-                    version + v0,
+                    version,
                     d.boxed_clone(),
                     |height, iter| iter.get(height),
                 )
@@ -45,7 +43,7 @@ impl Vecs {
             SatsIdentity,
             SatsToBitcoin,
             DollarsIdentity,
-        >("circulating", &supply_metrics.indexes_to_supply, version + v0);
+        >("circulating", &supply_metrics.indexes_to_supply, version);
 
         Self {
             height_to_sats,

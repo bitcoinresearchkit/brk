@@ -17,7 +17,7 @@ pub use unrealized::*;
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_types::{DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Exit, IterableVec};
 
@@ -319,7 +319,6 @@ impl CohortMetrics {
         indexes: &indexes::Vecs,
         price: Option<&price_vecs::Vecs>,
         starting_indexes: &ComputeIndexes,
-        height_to_supply: &impl IterableVec<Height, Bitcoin>,
         height_to_market_cap: Option<&impl IterableVec<Height, Dollars>>,
         dateindex_to_market_cap: Option<&impl IterableVec<DateIndex, Dollars>>,
         exit: &Exit,
@@ -329,7 +328,7 @@ impl CohortMetrics {
                 indexes,
                 price,
                 starting_indexes,
-                height_to_supply,
+                &self.supply.height_to_supply_value.bitcoin,
                 height_to_market_cap,
                 dateindex_to_market_cap,
                 exit,

@@ -1,6 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, TreeNode, Version, WeekIndex,
+    YearIndex,
 };
 use schemars::JsonSchema;
 use vecdb::{AnyExportableVec, IterableBoxedVec, LazyVecFrom1, UnaryTransform};
@@ -65,9 +66,9 @@ where
     T: ComputedVecValue + JsonSchema,
     S1T: ComputedVecValue,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
+    fn to_tree_node(&self) -> TreeNode {
         let dateindex_extra_node = self.dateindex_extra.to_tree_node();
-        brk_traversable::TreeNode::Branch(
+        TreeNode::Branch(
             [
                 self.dateindex
                     .as_ref()

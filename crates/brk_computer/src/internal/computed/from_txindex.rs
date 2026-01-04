@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
-    Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
+    Sats, SemesterIndex, TreeNode, TxIndex, Version, WeekIndex, YearIndex,
 };
 use schemars::JsonSchema;
 use vecdb::{
@@ -12,9 +12,9 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes,
+    ComputeIndexes, indexes,
     internal::{LazyVecsBuilder, Source},
-    indexes, price,
+    price,
     utils::OptionExt,
 };
 
@@ -54,22 +54,20 @@ where
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> Result<Self> {
-        let txindex = source.is_compute().then(|| {
-            Box::new(EagerVec::forced_import(db, name, version + VERSION + Version::ZERO).unwrap())
-        });
+        let txindex = source
+            .is_compute()
+            .then(|| Box::new(EagerVec::forced_import(db, name, version + VERSION).unwrap()));
 
-        let height =
-            EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
+        let height = EagerVecsBuilder::forced_import(db, name, version + VERSION, options)?;
 
         let options = options.remove_percentiles();
 
-        let dateindex =
-            EagerVecsBuilder::forced_import(db, name, version + VERSION + Version::ZERO, options)?;
+        let dateindex = EagerVecsBuilder::forced_import(db, name, version + VERSION, options)?;
 
         Ok(Self {
             weekindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.weekindex_to_weekindex.boxed_clone(),
@@ -77,15 +75,18 @@ where
             ),
             difficultyepoch: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &height,
-                indexes.block.difficultyepoch_to_difficultyepoch.boxed_clone(),
+                indexes
+                    .block
+                    .difficultyepoch_to_difficultyepoch
+                    .boxed_clone(),
                 options.into(),
             ),
             monthindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.monthindex_to_monthindex.boxed_clone(),
@@ -93,7 +94,7 @@ where
             ),
             quarterindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.quarterindex_to_quarterindex.boxed_clone(),
@@ -101,7 +102,7 @@ where
             ),
             semesterindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.semesterindex_to_semesterindex.boxed_clone(),
@@ -109,7 +110,7 @@ where
             ),
             yearindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.yearindex_to_yearindex.boxed_clone(),
@@ -117,7 +118,7 @@ where
             ),
             decadeindex: LazyVecsBuilder::forced_import(
                 name,
-                version + VERSION + Version::ZERO,
+                version + VERSION,
                 None,
                 &dateindex,
                 indexes.time.decadeindex_to_decadeindex.boxed_clone(),
@@ -127,7 +128,7 @@ where
             txindex,
             height,
             dateindex,
-            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(db, name, version + VERSION , format, options)?,
         })
     }
 
@@ -402,8 +403,8 @@ impl<T> Traversable for ComputedVecsFromTxindex<T>
 where
     T: ComputedVecValue + JsonSchema,
 {
-    fn to_tree_node(&self) -> brk_traversable::TreeNode {
-        brk_traversable::TreeNode::Branch(
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(
             [
                 self.txindex
                     .as_ref()

@@ -16,8 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v0 = Version::ZERO;
-
         let stats = || {
             VecBuilderOptions::default()
                 .add_average()
@@ -27,7 +25,7 @@ impl Vecs {
 
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
-            version + v0,
+            version,
             indexer.vecs.tx.txindex_to_base_size.boxed_clone(),
             indexer.vecs.tx.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
@@ -42,7 +40,7 @@ impl Vecs {
         // Derive directly from eager sources to avoid Lazy <- Lazy
         let txindex_to_vsize = LazyVecFrom2::init(
             "vsize",
-            version + v0,
+            version,
             indexer.vecs.tx.txindex_to_base_size.boxed_clone(),
             indexer.vecs.tx.txindex_to_total_size.boxed_clone(),
             |index: TxIndex, txindex_to_base_size_iter, txindex_to_total_size_iter| {
@@ -59,7 +57,7 @@ impl Vecs {
                 db,
                 "tx_vsize",
                 Source::Vec(txindex_to_vsize.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 stats(),
             )?,
@@ -67,7 +65,7 @@ impl Vecs {
                 db,
                 "tx_weight",
                 Source::Vec(txindex_to_weight.boxed_clone()),
-                version + v0,
+                version,
                 indexes,
                 stats(),
             )?,

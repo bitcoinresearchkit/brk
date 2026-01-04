@@ -8,13 +8,13 @@ use vecdb::{
 };
 
 use crate::{
-    ComputeIndexes,
+    ComputeIndexes, indexes,
     internal::{
         ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromHeight,
         HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyHeightValueVecs,
         LazyValueVecsFromDateIndex, Source, VecBuilderOptions,
     },
-    indexes, price,
+    price,
 };
 
 use super::ImportConfig;
@@ -47,13 +47,12 @@ pub struct SupplyMetrics {
 impl SupplyMetrics {
     /// Import supply metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v1 = Version::ONE;
         let compute_dollars = cfg.compute_dollars();
         let last = VecBuilderOptions::default().add_last();
 
         let height_to_supply: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("supply"), cfg.version)?;
 
         let price_source = cfg
             .price
@@ -63,7 +62,7 @@ impl SupplyMetrics {
             cfg.db,
             &cfg.name("supply"),
             Source::Vec(height_to_supply.boxed_clone()),
-            cfg.version + v0,
+            cfg.version,
             price_source.clone(),
         )?;
 
@@ -86,25 +85,25 @@ impl SupplyMetrics {
             &cfg.name("supply_half"),
             height_to_supply.boxed_clone(),
             price_source,
-            cfg.version + v0,
+            cfg.version,
         );
 
         let indexes_to_supply_half =
             LazyValueVecsFromDateIndex::from_source::<HalveSats, HalveSatsToBitcoin, HalveDollars>(
                 &cfg.name("supply_half"),
                 &indexes_to_supply,
-                cfg.version + v0,
+                cfg.version,
             );
 
         let height_to_utxo_count =
-            EagerVec::forced_import(cfg.db, &cfg.name("utxo_count"), cfg.version + v0)?;
+            EagerVec::forced_import(cfg.db, &cfg.name("utxo_count"), cfg.version)?;
 
         Ok(Self {
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
                 Source::Vec(height_to_utxo_count.boxed_clone()),
-                cfg.version + v0,
+                cfg.version,
                 cfg.indexes,
                 last,
             )?,
