@@ -3340,56 +3340,6 @@ impl Price111dSmaPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActivePriceRatioPattern {
-    pub ratio: MetricPattern4<StoredF32>,
-    pub ratio_1m_sma: MetricPattern4<StoredF32>,
-    pub ratio_1w_sma: MetricPattern4<StoredF32>,
-    pub ratio_1y_sd: Ratio1ySdPattern,
-    pub ratio_2y_sd: Ratio1ySdPattern,
-    pub ratio_4y_sd: Ratio1ySdPattern,
-    pub ratio_pct1: MetricPattern4<StoredF32>,
-    pub ratio_pct1_usd: MetricPattern4<Dollars>,
-    pub ratio_pct2: MetricPattern4<StoredF32>,
-    pub ratio_pct2_usd: MetricPattern4<Dollars>,
-    pub ratio_pct5: MetricPattern4<StoredF32>,
-    pub ratio_pct5_usd: MetricPattern4<Dollars>,
-    pub ratio_pct95: MetricPattern4<StoredF32>,
-    pub ratio_pct95_usd: MetricPattern4<Dollars>,
-    pub ratio_pct98: MetricPattern4<StoredF32>,
-    pub ratio_pct98_usd: MetricPattern4<Dollars>,
-    pub ratio_pct99: MetricPattern4<StoredF32>,
-    pub ratio_pct99_usd: MetricPattern4<Dollars>,
-    pub ratio_sd: Ratio1ySdPattern,
-}
-
-impl ActivePriceRatioPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            ratio: MetricPattern4::new(client.clone(), acc.clone()),
-            ratio_1m_sma: MetricPattern4::new(client.clone(), _m(&acc, "1m_sma")),
-            ratio_1w_sma: MetricPattern4::new(client.clone(), _m(&acc, "1w_sma")),
-            ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "1y")),
-            ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "2y")),
-            ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "4y")),
-            ratio_pct1: MetricPattern4::new(client.clone(), _m(&acc, "pct1")),
-            ratio_pct1_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct1_usd")),
-            ratio_pct2: MetricPattern4::new(client.clone(), _m(&acc, "pct2")),
-            ratio_pct2_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct2_usd")),
-            ratio_pct5: MetricPattern4::new(client.clone(), _m(&acc, "pct5")),
-            ratio_pct5_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct5_usd")),
-            ratio_pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
-            ratio_pct95_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct95_usd")),
-            ratio_pct98: MetricPattern4::new(client.clone(), _m(&acc, "pct98")),
-            ratio_pct98_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct98_usd")),
-            ratio_pct99: MetricPattern4::new(client.clone(), _m(&acc, "pct99")),
-            ratio_pct99_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct99_usd")),
-            ratio_sd: Ratio1ySdPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct PercentilesPattern {
     pub cost_basis_pct05: MetricPattern4<Dollars>,
     pub cost_basis_pct10: MetricPattern4<Dollars>,
@@ -3435,6 +3385,56 @@ impl PercentilesPattern {
             cost_basis_pct85: MetricPattern4::new(client.clone(), _m(&acc, "pct85")),
             cost_basis_pct90: MetricPattern4::new(client.clone(), _m(&acc, "pct90")),
             cost_basis_pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActivePriceRatioPattern {
+    pub ratio: MetricPattern4<StoredF32>,
+    pub ratio_1m_sma: MetricPattern4<StoredF32>,
+    pub ratio_1w_sma: MetricPattern4<StoredF32>,
+    pub ratio_1y_sd: Ratio1ySdPattern,
+    pub ratio_2y_sd: Ratio1ySdPattern,
+    pub ratio_4y_sd: Ratio1ySdPattern,
+    pub ratio_pct1: MetricPattern4<StoredF32>,
+    pub ratio_pct1_usd: MetricPattern4<Dollars>,
+    pub ratio_pct2: MetricPattern4<StoredF32>,
+    pub ratio_pct2_usd: MetricPattern4<Dollars>,
+    pub ratio_pct5: MetricPattern4<StoredF32>,
+    pub ratio_pct5_usd: MetricPattern4<Dollars>,
+    pub ratio_pct95: MetricPattern4<StoredF32>,
+    pub ratio_pct95_usd: MetricPattern4<Dollars>,
+    pub ratio_pct98: MetricPattern4<StoredF32>,
+    pub ratio_pct98_usd: MetricPattern4<Dollars>,
+    pub ratio_pct99: MetricPattern4<StoredF32>,
+    pub ratio_pct99_usd: MetricPattern4<Dollars>,
+    pub ratio_sd: Ratio1ySdPattern,
+}
+
+impl ActivePriceRatioPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            ratio: MetricPattern4::new(client.clone(), acc.clone()),
+            ratio_1m_sma: MetricPattern4::new(client.clone(), _m(&acc, "1m_sma")),
+            ratio_1w_sma: MetricPattern4::new(client.clone(), _m(&acc, "1w_sma")),
+            ratio_1y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "1y")),
+            ratio_2y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "2y")),
+            ratio_4y_sd: Ratio1ySdPattern::new(client.clone(), _m(&acc, "4y")),
+            ratio_pct1: MetricPattern4::new(client.clone(), _m(&acc, "pct1")),
+            ratio_pct1_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct1_usd")),
+            ratio_pct2: MetricPattern4::new(client.clone(), _m(&acc, "pct2")),
+            ratio_pct2_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct2_usd")),
+            ratio_pct5: MetricPattern4::new(client.clone(), _m(&acc, "pct5")),
+            ratio_pct5_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct5_usd")),
+            ratio_pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
+            ratio_pct95_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct95_usd")),
+            ratio_pct98: MetricPattern4::new(client.clone(), _m(&acc, "pct98")),
+            ratio_pct98_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct98_usd")),
+            ratio_pct99: MetricPattern4::new(client.clone(), _m(&acc, "pct99")),
+            ratio_pct99_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct99_usd")),
+            ratio_sd: Ratio1ySdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3704,38 +3704,6 @@ impl<T: DeserializeOwned> ClassAvgPricePattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct RelativePattern2 {
-    pub neg_unrealized_loss_rel_to_own_market_cap: MetricPattern5<StoredF32>,
-    pub neg_unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
-    pub net_unrealized_pnl_rel_to_own_market_cap: MetricPattern3<StoredF32>,
-    pub net_unrealized_pnl_rel_to_own_total_unrealized_pnl: MetricPattern3<StoredF32>,
-    pub supply_in_loss_rel_to_own_supply: MetricPattern5<StoredF64>,
-    pub supply_in_profit_rel_to_own_supply: MetricPattern5<StoredF64>,
-    pub unrealized_loss_rel_to_own_market_cap: MetricPattern5<StoredF32>,
-    pub unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
-    pub unrealized_profit_rel_to_own_market_cap: MetricPattern5<StoredF32>,
-    pub unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
-}
-
-impl RelativePattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            neg_unrealized_loss_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_own_market_cap")),
-            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            net_unrealized_pnl_rel_to_own_market_cap: MetricPattern3::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_market_cap")),
-            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: MetricPattern3::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
-            supply_in_loss_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
-            unrealized_loss_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_market_cap")),
-            unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_total_unrealized_pnl")),
-            unrealized_profit_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_market_cap")),
-            unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_total_unrealized_pnl")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct RelativePattern {
     pub neg_unrealized_loss_rel_to_market_cap: MetricPattern5<StoredF32>,
     pub net_unrealized_pnl_rel_to_market_cap: MetricPattern3<StoredF32>,
@@ -3768,33 +3736,65 @@ impl RelativePattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct RelativePattern2 {
+    pub neg_unrealized_loss_rel_to_own_market_cap: MetricPattern5<StoredF32>,
+    pub neg_unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
+    pub net_unrealized_pnl_rel_to_own_market_cap: MetricPattern3<StoredF32>,
+    pub net_unrealized_pnl_rel_to_own_total_unrealized_pnl: MetricPattern3<StoredF32>,
+    pub supply_in_loss_rel_to_own_supply: MetricPattern5<StoredF64>,
+    pub supply_in_profit_rel_to_own_supply: MetricPattern5<StoredF64>,
+    pub unrealized_loss_rel_to_own_market_cap: MetricPattern5<StoredF32>,
+    pub unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
+    pub unrealized_profit_rel_to_own_market_cap: MetricPattern5<StoredF32>,
+    pub unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern5<StoredF32>,
+}
+
+impl RelativePattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            neg_unrealized_loss_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_own_market_cap")),
+            neg_unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "neg_unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            net_unrealized_pnl_rel_to_own_market_cap: MetricPattern3::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_market_cap")),
+            net_unrealized_pnl_rel_to_own_total_unrealized_pnl: MetricPattern3::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_total_unrealized_pnl")),
+            supply_in_loss_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
+            unrealized_loss_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_market_cap")),
+            unrealized_loss_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_total_unrealized_pnl")),
+            unrealized_profit_rel_to_own_market_cap: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_market_cap")),
+            unrealized_profit_rel_to_own_total_unrealized_pnl: MetricPattern5::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_total_unrealized_pnl")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct BlockSizePattern<T> {
-    pub average: MetricPattern2<T>,
+    pub average: MetricPattern1<T>,
     pub cumulative: MetricPattern1<T>,
-    pub max: MetricPattern2<T>,
-    pub median: MetricPattern21<T>,
-    pub min: MetricPattern2<T>,
-    pub pct10: MetricPattern21<T>,
-    pub pct25: MetricPattern21<T>,
-    pub pct75: MetricPattern21<T>,
-    pub pct90: MetricPattern21<T>,
-    pub sum: MetricPattern2<T>,
+    pub max: MetricPattern1<T>,
+    pub median: MetricPattern25<T>,
+    pub min: MetricPattern1<T>,
+    pub pct10: MetricPattern25<T>,
+    pub pct25: MetricPattern25<T>,
+    pub pct75: MetricPattern25<T>,
+    pub pct90: MetricPattern25<T>,
+    pub sum: MetricPattern1<T>,
 }
 
 impl<T: DeserializeOwned> BlockSizePattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            average: MetricPattern2::new(client.clone(), _m(&acc, "avg")),
+            average: MetricPattern1::new(client.clone(), _m(&acc, "avg")),
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
-            median: MetricPattern21::new(client.clone(), _m(&acc, "median")),
-            min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
-            pct10: MetricPattern21::new(client.clone(), _m(&acc, "pct10")),
-            pct25: MetricPattern21::new(client.clone(), _m(&acc, "pct25")),
-            pct75: MetricPattern21::new(client.clone(), _m(&acc, "pct75")),
-            pct90: MetricPattern21::new(client.clone(), _m(&acc, "pct90")),
-            sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
+            max: MetricPattern1::new(client.clone(), _m(&acc, "max")),
+            median: MetricPattern25::new(client.clone(), _m(&acc, "median")),
+            min: MetricPattern1::new(client.clone(), _m(&acc, "min")),
+            pct10: MetricPattern25::new(client.clone(), _m(&acc, "pct10")),
+            pct25: MetricPattern25::new(client.clone(), _m(&acc, "pct25")),
+            pct75: MetricPattern25::new(client.clone(), _m(&acc, "pct75")),
+            pct90: MetricPattern25::new(client.clone(), _m(&acc, "pct90")),
+            sum: MetricPattern1::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
@@ -3830,6 +3830,34 @@ impl UnrealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct BlockIntervalPattern<T> {
+    pub average: MetricPattern2<T>,
+    pub max: MetricPattern2<T>,
+    pub median: MetricPattern21<T>,
+    pub min: MetricPattern2<T>,
+    pub pct10: MetricPattern21<T>,
+    pub pct25: MetricPattern21<T>,
+    pub pct75: MetricPattern21<T>,
+    pub pct90: MetricPattern21<T>,
+}
+
+impl<T: DeserializeOwned> BlockIntervalPattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            average: MetricPattern2::new(client.clone(), _m(&acc, "avg")),
+            max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
+            median: MetricPattern21::new(client.clone(), _m(&acc, "median")),
+            min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
+            pct10: MetricPattern21::new(client.clone(), _m(&acc, "pct10")),
+            pct25: MetricPattern21::new(client.clone(), _m(&acc, "pct25")),
+            pct75: MetricPattern21::new(client.clone(), _m(&acc, "pct75")),
+            pct90: MetricPattern21::new(client.clone(), _m(&acc, "pct90")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct AddresstypeToHeightToAddrCountPattern<T> {
     pub p2a: MetricPattern29<T>,
     pub p2pk33: MetricPattern31<T>,
@@ -3853,60 +3881,6 @@ impl<T: DeserializeOwned> AddresstypeToHeightToAddrCountPattern<T> {
             p2tr: MetricPattern35::new(client.clone(), if acc.is_empty() { "p2tr".to_string() } else { format!("p2tr_{acc}") }),
             p2wpkh: MetricPattern36::new(client.clone(), if acc.is_empty() { "p2wpkh".to_string() } else { format!("p2wpkh_{acc}") }),
             p2wsh: MetricPattern37::new(client.clone(), if acc.is_empty() { "p2wsh".to_string() } else { format!("p2wsh_{acc}") }),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct BlockIntervalPattern<T> {
-    pub average: MetricPattern1<T>,
-    pub max: MetricPattern1<T>,
-    pub median: MetricPattern25<T>,
-    pub min: MetricPattern1<T>,
-    pub pct10: MetricPattern25<T>,
-    pub pct25: MetricPattern25<T>,
-    pub pct75: MetricPattern25<T>,
-    pub pct90: MetricPattern25<T>,
-}
-
-impl<T: DeserializeOwned> BlockIntervalPattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            average: MetricPattern1::new(client.clone(), _m(&acc, "avg")),
-            max: MetricPattern1::new(client.clone(), _m(&acc, "max")),
-            median: MetricPattern25::new(client.clone(), _m(&acc, "median")),
-            min: MetricPattern1::new(client.clone(), _m(&acc, "min")),
-            pct10: MetricPattern25::new(client.clone(), _m(&acc, "pct10")),
-            pct25: MetricPattern25::new(client.clone(), _m(&acc, "pct25")),
-            pct75: MetricPattern25::new(client.clone(), _m(&acc, "pct75")),
-            pct90: MetricPattern25::new(client.clone(), _m(&acc, "pct90")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _0satsPattern {
-    pub activity: ActivityPattern2,
-    pub addr_count: MetricPattern1<StoredU64>,
-    pub cost_basis: CostBasisPattern,
-    pub realized: RealizedPattern,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern3,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _0satsPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            realized: RealizedPattern::new(client.clone(), acc.clone()),
-            relative: RelativePattern::new(client.clone(), acc.clone()),
-            supply: SupplyPattern3::new(client.clone(), acc.clone()),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3938,56 +3912,9 @@ impl PeriodCagrPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _0satsPattern2 {
+pub struct _0satsPattern {
     pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub realized: RealizedPattern,
-    pub relative: RelativePattern4,
-    pub supply: SupplyPattern3,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _0satsPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            realized: RealizedPattern::new(client.clone(), acc.clone()),
-            relative: RelativePattern4::new(client.clone(), _m(&acc, "supply_in")),
-            supply: SupplyPattern3::new(client.clone(), acc.clone()),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _10yPattern {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub realized: RealizedPattern4,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern3,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            realized: RealizedPattern4::new(client.clone(), acc.clone()),
-            relative: RelativePattern::new(client.clone(), acc.clone()),
-            supply: SupplyPattern3::new(client.clone(), acc.clone()),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _100btcPattern {
-    pub activity: ActivityPattern2,
+    pub addr_count: MetricPattern1<StoredU64>,
     pub cost_basis: CostBasisPattern,
     pub realized: RealizedPattern,
     pub relative: RelativePattern,
@@ -3995,11 +3922,12 @@ pub struct _100btcPattern {
     pub unrealized: UnrealizedPattern,
 }
 
-impl _100btcPattern {
+impl _0satsPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
             cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
             realized: RealizedPattern::new(client.clone(), acc.clone()),
             relative: RelativePattern::new(client.clone(), acc.clone()),
@@ -4034,6 +3962,78 @@ impl _10yTo12yPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _10yPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub realized: RealizedPattern4,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern3,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            realized: RealizedPattern4::new(client.clone(), acc.clone()),
+            relative: RelativePattern::new(client.clone(), acc.clone()),
+            supply: SupplyPattern3::new(client.clone(), acc.clone()),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _0satsPattern2 {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub realized: RealizedPattern,
+    pub relative: RelativePattern4,
+    pub supply: SupplyPattern3,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _0satsPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            realized: RealizedPattern::new(client.clone(), acc.clone()),
+            relative: RelativePattern4::new(client.clone(), _m(&acc, "supply_in")),
+            supply: SupplyPattern3::new(client.clone(), acc.clone()),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _100btcPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub realized: RealizedPattern,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern3,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _100btcPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            realized: RealizedPattern::new(client.clone(), acc.clone()),
+            relative: RelativePattern::new(client.clone(), acc.clone()),
+            supply: SupplyPattern3::new(client.clone(), acc.clone()),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct SegwitAdoptionPattern<T> {
     pub average: MetricPattern2<T>,
     pub base: MetricPattern25<T>,
@@ -4053,28 +4053,6 @@ impl<T: DeserializeOwned> SegwitAdoptionPattern<T> {
             max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
             min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
             sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct ActivityPattern2 {
-    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
-    pub coindays_destroyed: BlockCountPattern<StoredF64>,
-    pub satblocks_destroyed: MetricPattern25<Sats>,
-    pub satdays_destroyed: MetricPattern25<Sats>,
-    pub sent: SentPattern,
-}
-
-impl ActivityPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            coinblocks_destroyed: BlockCountPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
-            coindays_destroyed: BlockCountPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
-            satblocks_destroyed: MetricPattern25::new(client.clone(), _m(&acc, "satblocks_destroyed")),
-            satdays_destroyed: MetricPattern25::new(client.clone(), _m(&acc, "satdays_destroyed")),
-            sent: SentPattern::new(client.clone(), _m(&acc, "sent")),
         }
     }
 }
@@ -4102,21 +4080,23 @@ impl SupplyPattern3 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
-    pub base: MetricPattern25<Sats>,
-    pub bitcoin: MetricPattern4<Bitcoin>,
-    pub dollars: MetricPattern4<Dollars>,
-    pub sats: MetricPattern4<Sats>,
+pub struct ActivityPattern2 {
+    pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
+    pub coindays_destroyed: BlockCountPattern<StoredF64>,
+    pub satblocks_destroyed: MetricPattern25<Sats>,
+    pub satdays_destroyed: MetricPattern25<Sats>,
+    pub sent: SentPattern,
 }
 
-impl SupplyPattern2 {
+impl ActivityPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            base: MetricPattern25::new(client.clone(), acc.clone()),
-            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
-            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
-            sats: MetricPattern4::new(client.clone(), acc.clone()),
+            coinblocks_destroyed: BlockCountPattern::new(client.clone(), _m(&acc, "coinblocks_destroyed")),
+            coindays_destroyed: BlockCountPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            satblocks_destroyed: MetricPattern25::new(client.clone(), _m(&acc, "satblocks_destroyed")),
+            satdays_destroyed: MetricPattern25::new(client.clone(), _m(&acc, "satdays_destroyed")),
+            sent: SentPattern::new(client.clone(), _m(&acc, "sent")),
         }
     }
 }
@@ -4142,6 +4122,26 @@ impl OpreturnPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct SupplyPattern2 {
+    pub base: MetricPattern25<Sats>,
+    pub bitcoin: MetricPattern4<Bitcoin>,
+    pub dollars: MetricPattern4<Dollars>,
+    pub sats: MetricPattern4<Sats>,
+}
+
+impl SupplyPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            base: MetricPattern25::new(client.clone(), acc.clone()),
+            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
+            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
+            sats: MetricPattern4::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct SentPattern {
     pub base: MetricPattern25<Sats>,
     pub bitcoin: BlockCountPattern<Bitcoin>,
@@ -4157,24 +4157,6 @@ impl SentPattern {
             bitcoin: BlockCountPattern::new(client.clone(), _m(&acc, "btc")),
             dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
             sats: SatsPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinbasePattern {
-    pub bitcoin: BitcoinPattern<Bitcoin>,
-    pub dollars: BitcoinPattern<Dollars>,
-    pub sats: BitcoinPattern<Sats>,
-}
-
-impl CoinbasePattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
-            dollars: BitcoinPattern::new(client.clone(), _m(&acc, "usd")),
-            sats: BitcoinPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -4234,19 +4216,19 @@ impl CostBasisPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BlockCountPattern<T> {
-    pub base: MetricPattern25<T>,
-    pub cumulative: MetricPattern1<T>,
-    pub sum: MetricPattern2<T>,
+pub struct CoinbasePattern {
+    pub bitcoin: BitcoinPattern<Bitcoin>,
+    pub dollars: BitcoinPattern<Dollars>,
+    pub sats: BitcoinPattern<Sats>,
 }
 
-impl<T: DeserializeOwned> BlockCountPattern<T> {
+impl CoinbasePattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            base: MetricPattern25::new(client.clone(), acc.clone()),
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
+            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
+            dollars: BitcoinPattern::new(client.clone(), _m(&acc, "usd")),
+            sats: BitcoinPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -4270,17 +4252,19 @@ impl<T: DeserializeOwned> BitcoinPattern2<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SatsPattern4 {
-    pub cumulative: MetricPattern1<Sats>,
-    pub last: MetricPattern2<Sats>,
+pub struct BlockCountPattern<T> {
+    pub base: MetricPattern25<T>,
+    pub cumulative: MetricPattern1<T>,
+    pub sum: MetricPattern2<T>,
 }
 
-impl SatsPattern4 {
+impl<T: DeserializeOwned> BlockCountPattern<T> {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
+            base: MetricPattern25::new(client.clone(), acc.clone()),
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            last: MetricPattern2::new(client.clone(), acc.clone()),
+            sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
@@ -4297,6 +4281,38 @@ impl RelativePattern4 {
         Self {
             supply_in_loss_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "loss_rel_to_own_supply")),
             supply_in_profit_rel_to_own_supply: MetricPattern5::new(client.clone(), _m(&acc, "profit_rel_to_own_supply")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SupplyValuePattern {
+    pub bitcoin: MetricPattern25<Bitcoin>,
+    pub dollars: MetricPattern25<Dollars>,
+}
+
+impl SupplyValuePattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bitcoin: MetricPattern25::new(client.clone(), _m(&acc, "btc")),
+            dollars: MetricPattern25::new(client.clone(), _m(&acc, "usd")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _1dReturns1mSdPattern {
+    pub sd: MetricPattern4<StoredF32>,
+    pub sma: MetricPattern4<StoredF32>,
+}
+
+impl _1dReturns1mSdPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            sd: MetricPattern4::new(client.clone(), _m(&acc, "sd")),
+            sma: MetricPattern4::new(client.clone(), _m(&acc, "sma")),
         }
     }
 }
@@ -4334,33 +4350,17 @@ impl CostBasisPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyValuePattern {
-    pub bitcoin: MetricPattern25<Bitcoin>,
-    pub dollars: MetricPattern25<Dollars>,
+pub struct SatsPattern4 {
+    pub cumulative: MetricPattern1<Sats>,
+    pub last: MetricPattern2<Sats>,
 }
 
-impl SupplyValuePattern {
+impl SatsPattern4 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            bitcoin: MetricPattern25::new(client.clone(), _m(&acc, "btc")),
-            dollars: MetricPattern25::new(client.clone(), _m(&acc, "usd")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _1dReturns1mSdPattern {
-    pub sd: MetricPattern4<StoredF32>,
-    pub sma: MetricPattern4<StoredF32>,
-}
-
-impl _1dReturns1mSdPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            sd: MetricPattern4::new(client.clone(), _m(&acc, "sd")),
-            sma: MetricPattern4::new(client.clone(), _m(&acc, "sma")),
+            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
+            last: MetricPattern2::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -5772,6 +5772,7 @@ pub struct CatalogTree_Computed_Market_Ath {
     pub max_years_between_price_aths: MetricPattern4<StoredF32>,
     pub price_ath: MetricPattern3<Dollars>,
     pub price_drawdown: MetricPattern3<StoredF32>,
+    pub years_since_price_ath: MetricPattern4<StoredF32>,
 }
 
 impl CatalogTree_Computed_Market_Ath {
@@ -5782,6 +5783,7 @@ impl CatalogTree_Computed_Market_Ath {
             max_years_between_price_aths: MetricPattern4::new(client.clone(), format!("{base_path}_max_years_between_price_aths")),
             price_ath: MetricPattern3::new(client.clone(), format!("{base_path}_price_ath")),
             price_drawdown: MetricPattern3::new(client.clone(), format!("{base_path}_price_drawdown")),
+            years_since_price_ath: MetricPattern4::new(client.clone(), format!("{base_path}_years_since_price_ath")),
         }
     }
 }
@@ -7139,7 +7141,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.1.0-alpha.1";
+    pub const VERSION: &'static str = "v0.1.0-alpha.2";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

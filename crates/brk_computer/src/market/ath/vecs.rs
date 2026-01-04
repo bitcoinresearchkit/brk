@@ -14,6 +14,7 @@ pub struct Vecs {
     pub indexes_to_price_ath: ComputedVecsFromDateIndex<Dollars>,
     pub indexes_to_price_drawdown: LazyVecsFrom2FromDateIndex<StoredF32, Close<Dollars>, Dollars>,
     pub indexes_to_days_since_price_ath: ComputedVecsFromDateIndex<StoredU16>,
+    pub indexes_to_years_since_price_ath: LazyVecsFromDateIndex<StoredF32, StoredU16>,
     pub indexes_to_max_days_between_price_aths: ComputedVecsFromDateIndex<StoredU16>,
     pub indexes_to_max_years_between_price_aths: LazyVecsFromDateIndex<StoredF32, StoredU16>,
 }

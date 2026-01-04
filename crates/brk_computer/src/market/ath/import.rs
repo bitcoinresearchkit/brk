@@ -50,6 +50,26 @@ impl Vecs {
                 &indexes_to_max_days_between_price_aths,
             );
 
+        let indexes_to_days_since_price_ath = ComputedVecsFromDateIndex::forced_import(
+            db,
+            "days_since_price_ath",
+            Source::Compute,
+            version,
+            indexes,
+            last,
+        )?;
+
+        let indexes_to_years_since_price_ath =
+            LazyVecsFromDateIndex::from_computed::<StoredU16ToYears>(
+                "years_since_price_ath",
+                version,
+                indexes_to_days_since_price_ath
+                    .dateindex
+                    .as_ref()
+                    .map(|v| v.boxed_clone()),
+                &indexes_to_days_since_price_ath,
+            );
+
         let indexes_to_price_drawdown =
             LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
                 "price_drawdown",
@@ -63,14 +83,8 @@ impl Vecs {
             height_to_price_drawdown: EagerVec::forced_import(db, "price_drawdown", version)?,
             indexes_to_price_ath,
             indexes_to_price_drawdown,
-            indexes_to_days_since_price_ath: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "days_since_price_ath",
-                Source::Compute,
-                version,
-                indexes,
-                last,
-            )?,
+            indexes_to_days_since_price_ath,
+            indexes_to_years_since_price_ath,
             indexes_to_max_days_between_price_aths,
             indexes_to_max_years_between_price_aths,
         })
