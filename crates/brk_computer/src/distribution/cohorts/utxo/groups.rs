@@ -38,7 +38,33 @@ impl UTXOCohorts {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        // Create "all" cohort first - it doesn't need global sources (it IS the global source)
+        // Phase 1: Import base cohorts that don't need adjusted (age_range, amount_range, etc.)
+        // These are the source cohorts for overlapping computations.
+        let base = |f: Filter, name: &'static str| {
+            UTXOCohortVecs::forced_import(
+                db,
+                f,
+                name,
+                v,
+                indexes,
+                price,
+                states_path,
+                StateLevel::Full,
+                None,
+                None,
+            )
+        };
+
+        let age_range = ByAgeRange::try_new(&base)?;
+        let amount_range = ByAmountRange::try_new(&base)?;
+        let epoch = ByEpoch::try_new(&base)?;
+        let year = ByYear::try_new(&base)?;
+        let type_ = BySpendableType::try_new(&base)?;
+
+        // Get up_to_1h realized for adjusted computation (cohort - up_to_1h)
+        let up_to_1h_realized = age_range.up_to_1h.metrics.realized.as_ref();
+
+        // Phase 2: Import "all" cohort (needs up_to_1h for adjusted, is global supply source)
         let all = UTXOCohortVecs::forced_import(
             db,
             Filter::All,
@@ -49,13 +75,13 @@ impl UTXOCohorts {
             states_path,
             StateLevel::PriceOnly,
             None,
+            up_to_1h_realized,
         )?;
 
-        // Get reference to all's supply for other cohorts to use as global source
         let all_supply = Some(&all.metrics.supply);
 
-        // Create all cohorts first (while borrowing all_supply), then assemble struct
-        let price_only = |f: Filter, name: &'static str| {
+        // Phase 3: Import cohorts that need adjusted and/or all_supply
+        let price_only_adjusted = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,
                 f,
@@ -66,12 +92,13 @@ impl UTXOCohorts {
                 states_path,
                 StateLevel::PriceOnly,
                 all_supply,
+                up_to_1h_realized,
             )
         };
 
-        let term = ByTerm::try_new(&price_only)?;
+        let term = ByTerm::try_new(&price_only_adjusted)?;
 
-        let full = |f: Filter, name: &'static str| {
+        let none_adjusted = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,
                 f,
@@ -80,10 +107,15 @@ impl UTXOCohorts {
                 indexes,
                 price,
                 states_path,
-                StateLevel::Full,
+                StateLevel::None,
                 all_supply,
+                up_to_1h_realized,
             )
         };
+
+        let max_age = ByMaxAge::try_new(&none_adjusted)?;
+
+        // Phase 4: Import remaining cohorts (no adjusted needed)
         let none = |f: Filter, name: &'static str| {
             UTXOCohortVecs::forced_import(
                 db,
@@ -95,16 +127,11 @@ impl UTXOCohorts {
                 states_path,
                 StateLevel::None,
                 all_supply,
+                None,
             )
         };
 
-        let epoch = ByEpoch::try_new(&full)?;
-        let year = ByYear::try_new(&full)?;
-        let type_ = BySpendableType::try_new(&full)?;
-        let max_age = ByMaxAge::try_new(&none)?;
         let min_age = ByMinAge::try_new(&none)?;
-        let age_range = ByAgeRange::try_new(&full)?;
-        let amount_range = ByAmountRange::try_new(&full)?;
         let lt_amount = ByLowerThanAmount::try_new(&none)?;
         let ge_amount = ByGreatEqualAmount::try_new(&none)?;
 

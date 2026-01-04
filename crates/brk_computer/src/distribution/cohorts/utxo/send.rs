@@ -1,4 +1,4 @@
-use brk_types::{CheckedSub, Height};
+use brk_types::{Age, Height};
 use rustc_hash::FxHashMap;
 use vecdb::VecIndex;
 
@@ -35,37 +35,22 @@ impl UTXOCohorts {
             let block_state = &chain_state[height.to_usize()];
             let prev_price = block_state.price;
             let blocks_old = chain_len - 1 - height.to_usize();
-            let days_old = last_timestamp.difference_in_days_between(block_state.timestamp);
-            let days_old_float =
-                last_timestamp.difference_in_days_between_float(block_state.timestamp);
-            let older_than_hour = last_timestamp
-                .checked_sub(block_state.timestamp)
-                .unwrap()
-                .is_more_than_hour();
+            let age = Age::new(last_timestamp, block_state.timestamp, blocks_old);
 
             // Update age range cohort (direct index lookup)
-            self.0
-                .age_range
-                .get_mut_by_days_old(days_old)
-                .state
-                .um()
-                .send(
-                    &sent.spendable_supply,
-                    current_price,
-                    prev_price,
-                    blocks_old,
-                    days_old_float,
-                    older_than_hour,
-                );
+            self.0.age_range.get_mut(age).state.um().send(
+                &sent.spendable_supply,
+                current_price,
+                prev_price,
+                age,
+            );
 
             // Update epoch cohort (direct lookup by height)
             self.0.epoch.mut_vec_from_height(height).state.um().send(
                 &sent.spendable_supply,
                 current_price,
                 prev_price,
-                blocks_old,
-                days_old_float,
-                older_than_hour,
+                age,
             );
 
             // Update year cohort (direct lookup by timestamp)
@@ -74,42 +59,31 @@ impl UTXOCohorts {
                 .mut_vec_from_timestamp(block_state.timestamp)
                 .state
                 .um()
-                .send(
-                    &sent.spendable_supply,
-                    current_price,
-                    prev_price,
-                    blocks_old,
-                    days_old_float,
-                    older_than_hour,
-                );
+                .send(&sent.spendable_supply, current_price, prev_price, age);
 
             // Update output type cohorts
             sent.by_type
                 .spendable
                 .iter_typed()
                 .for_each(|(output_type, supply_state)| {
-                    self.0.type_.get_mut(output_type).state.um().send(
-                        supply_state,
-                        current_price,
-                        prev_price,
-                        blocks_old,
-                        days_old_float,
-                        older_than_hour,
-                    )
+                    self.0
+                        .type_
+                        .get_mut(output_type)
+                        .state
+                        .um()
+                        .send(supply_state, current_price, prev_price, age)
                 });
 
             // Update amount range cohorts
             sent.by_size_group
                 .iter_typed()
                 .for_each(|(group, supply_state)| {
-                    self.0.amount_range.get_mut(group).state.um().send(
-                        supply_state,
-                        current_price,
-                        prev_price,
-                        blocks_old,
-                        days_old_float,
-                        older_than_hour,
-                    );
+                    self.0
+                        .amount_range
+                        .get_mut(group)
+                        .state
+                        .um()
+                        .send(supply_state, current_price, prev_price, age);
                 });
         }
     }

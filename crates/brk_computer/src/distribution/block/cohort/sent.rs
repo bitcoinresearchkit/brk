@@ -1,7 +1,7 @@
 use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
-use brk_types::{CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
-use vecdb::{VecIndex, unlikely};
+use brk_types::{Age, CheckedSub, Dollars, Height, Sats, Timestamp, TypeIndex};
+use vecdb::{unlikely, VecIndex};
 
 use crate::distribution::{address::HeightToAddressTypeToVec, cohorts::AddressCohorts};
 
@@ -11,7 +11,7 @@ use super::super::cache::AddressLookup;
 ///
 /// For each spent UTXO:
 /// 1. Look up address data
-/// 2. Calculate age metrics (blocks_old, days_old)
+/// 2. Calculate age metrics
 /// 3. Update address balance and cohort membership
 /// 4. Handle addresses becoming empty
 ///
@@ -33,13 +33,8 @@ pub fn process_sent(
     for (prev_height, by_type) in sent_data.into_iter() {
         let prev_price = height_to_price.map(|v| v[prev_height.to_usize()]);
         let prev_timestamp = height_to_timestamp[prev_height.to_usize()];
-
         let blocks_old = current_height.to_usize() - prev_height.to_usize();
-        let days_old = current_timestamp.difference_in_days_between_float(prev_timestamp);
-        let older_than_hour = current_timestamp
-            .checked_sub(prev_timestamp)
-            .unwrap()
-            .is_more_than_hour();
+        let age = Age::new(current_timestamp, prev_timestamp, blocks_old);
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             // Cache mutable refs for this address type
@@ -123,15 +118,7 @@ pub fn process_sent(
                         .state
                         .as_mut()
                         .unwrap()
-                        .send(
-                            addr_data,
-                            value,
-                            current_price,
-                            prev_price,
-                            blocks_old,
-                            days_old,
-                            older_than_hour,
-                        )?;
+                        .send(addr_data, value, current_price, prev_price, age)?;
                 }
             }
         }

@@ -13,8 +13,8 @@ use crate::{
     indexes,
     internal::{
         ComputedRatioVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-        LazyVecsFrom2FromHeight, LazyVecsFromDateIndex, LazyVecsFromHeight, PercentageDollarsF32,
-        Source, StoredF32Identity, VecBuilderOptions,
+        DollarsMinus, LazyVecsFrom2FromHeight, LazyVecsFromDateIndex, LazyVecsFromHeight,
+        PercentageDollarsF32, Source, StoredF32Identity, VecBuilderOptions,
     },
     price,
     utils::OptionExt,
@@ -64,11 +64,11 @@ pub struct RealizedMetrics {
     pub height_to_value_destroyed: EagerVec<PcoVec<Height, Dollars>>,
     pub indexes_to_value_destroyed: ComputedVecsFromHeight<Dollars>,
 
-    // === Adjusted Value (optional) ===
-    pub height_to_adjusted_value_created: Option<EagerVec<PcoVec<Height, Dollars>>>,
-    pub indexes_to_adjusted_value_created: Option<ComputedVecsFromHeight<Dollars>>,
-    pub height_to_adjusted_value_destroyed: Option<EagerVec<PcoVec<Height, Dollars>>>,
-    pub indexes_to_adjusted_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
+    // === Adjusted Value (lazy: cohort - up_to_1h) ===
+    pub indexes_to_adjusted_value_created:
+        Option<LazyVecsFrom2FromHeight<Dollars, Dollars, Dollars>>,
+    pub indexes_to_adjusted_value_destroyed:
+        Option<LazyVecsFrom2FromHeight<Dollars, Dollars, Dollars>>,
 
     // === SOPR (Spent Output Profit Ratio) ===
     pub dateindex_to_sopr: EagerVec<PcoVec<DateIndex, StoredF64>>,
@@ -226,16 +226,48 @@ impl RealizedMetrics {
         let height_to_value_destroyed =
             EagerVec::forced_import(cfg.db, &cfg.name("value_destroyed"), cfg.version)?;
 
-        let height_to_adjusted_value_created = compute_adjusted
+        let indexes_to_value_created = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("value_created"),
+            Source::Vec(height_to_value_created.boxed_clone()),
+            cfg.version,
+            cfg.indexes,
+            sum,
+        )?;
+        let indexes_to_value_destroyed = ComputedVecsFromHeight::forced_import(
+            cfg.db,
+            &cfg.name("value_destroyed"),
+            Source::Vec(height_to_value_destroyed.boxed_clone()),
+            cfg.version,
+            cfg.indexes,
+            sum,
+        )?;
+
+        // Create lazy adjusted vecs if compute_adjusted and up_to_1h is available
+        let indexes_to_adjusted_value_created = (compute_adjusted && cfg.up_to_1h_realized.is_some())
             .then(|| {
-                EagerVec::forced_import(cfg.db, &cfg.name("adjusted_value_created"), cfg.version)
-            })
-            .transpose()?;
-        let height_to_adjusted_value_destroyed = compute_adjusted
-            .then(|| {
-                EagerVec::forced_import(cfg.db, &cfg.name("adjusted_value_destroyed"), cfg.version)
-            })
-            .transpose()?;
+                let up_to_1h = cfg.up_to_1h_realized.unwrap();
+                LazyVecsFrom2FromHeight::from_computed::<DollarsMinus>(
+                    &cfg.name("adjusted_value_created"),
+                    cfg.version,
+                    height_to_value_created.boxed_clone(),
+                    up_to_1h.height_to_value_created.boxed_clone(),
+                    &indexes_to_value_created,
+                    &up_to_1h.indexes_to_value_created,
+                )
+            });
+        let indexes_to_adjusted_value_destroyed =
+            (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
+                let up_to_1h = cfg.up_to_1h_realized.unwrap();
+                LazyVecsFrom2FromHeight::from_computed::<DollarsMinus>(
+                    &cfg.name("adjusted_value_destroyed"),
+                    cfg.version,
+                    height_to_value_destroyed.boxed_clone(),
+                    up_to_1h.height_to_value_destroyed.boxed_clone(),
+                    &indexes_to_value_destroyed,
+                    &up_to_1h.indexes_to_value_destroyed,
+                )
+            });
 
         // Create realized_price_extra first so we can reference its ratio for MVRV proxy
         let indexes_to_realized_price_extra = ComputedRatioVecsFromDateIndex::forced_import(
@@ -317,62 +349,14 @@ impl RealizedMetrics {
                 .transpose()?,
 
             // === Value Created/Destroyed ===
-            indexes_to_value_created: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("value_created"),
-                Source::Vec(height_to_value_created.boxed_clone()),
-                cfg.version,
-                cfg.indexes,
-                sum,
-            )?,
-            indexes_to_value_destroyed: ComputedVecsFromHeight::forced_import(
-                cfg.db,
-                &cfg.name("value_destroyed"),
-                Source::Vec(height_to_value_destroyed.boxed_clone()),
-                cfg.version,
-                cfg.indexes,
-                sum,
-            )?,
             height_to_value_created,
+            indexes_to_value_created,
             height_to_value_destroyed,
+            indexes_to_value_destroyed,
 
-            // === Adjusted Value (optional) ===
-            indexes_to_adjusted_value_created: compute_adjusted
-                .then(|| {
-                    ComputedVecsFromHeight::forced_import(
-                        cfg.db,
-                        &cfg.name("adjusted_value_created"),
-                        Source::Vec(
-                            height_to_adjusted_value_created
-                                .as_ref()
-                                .unwrap()
-                                .boxed_clone(),
-                        ),
-                        cfg.version,
-                        cfg.indexes,
-                        sum,
-                    )
-                })
-                .transpose()?,
-            indexes_to_adjusted_value_destroyed: compute_adjusted
-                .then(|| {
-                    ComputedVecsFromHeight::forced_import(
-                        cfg.db,
-                        &cfg.name("adjusted_value_destroyed"),
-                        Source::Vec(
-                            height_to_adjusted_value_destroyed
-                                .as_ref()
-                                .unwrap()
-                                .boxed_clone(),
-                        ),
-                        cfg.version,
-                        cfg.indexes,
-                        sum,
-                    )
-                })
-                .transpose()?,
-            height_to_adjusted_value_created,
-            height_to_adjusted_value_destroyed,
+            // === Adjusted Value (lazy: cohort - up_to_1h) ===
+            indexes_to_adjusted_value_created,
+            indexes_to_adjusted_value_destroyed,
 
             // === SOPR ===
             dateindex_to_sopr: EagerVec::forced_import(
@@ -464,22 +448,12 @@ impl RealizedMetrics {
 
     /// Get minimum length across height-indexed vectors written in block loop.
     pub fn min_stateful_height_len(&self) -> usize {
-        let mut min = self
-            .height_to_realized_cap
+        self.height_to_realized_cap
             .len()
             .min(self.height_to_realized_profit.len())
             .min(self.height_to_realized_loss.len())
             .min(self.height_to_value_created.len())
-            .min(self.height_to_value_destroyed.len());
-
-        if let Some(v) = &self.height_to_adjusted_value_created {
-            min = min.min(v.len());
-        }
-        if let Some(v) = &self.height_to_adjusted_value_destroyed {
-            min = min.min(v.len());
-        }
-
-        min
+            .min(self.height_to_value_destroyed.len())
     }
 
     /// Push realized state values to height-indexed vectors.
@@ -495,13 +469,6 @@ impl RealizedMetrics {
         self.height_to_value_destroyed
             .truncate_push(height, state.value_destroyed)?;
 
-        if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
-            v.truncate_push(height, state.adj_value_created)?;
-        }
-        if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
-            v.truncate_push(height, state.adj_value_destroyed)?;
-        }
-
         Ok(())
     }
 
@@ -512,31 +479,19 @@ impl RealizedMetrics {
         self.height_to_realized_loss.write()?;
         self.height_to_value_created.write()?;
         self.height_to_value_destroyed.write()?;
-        if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
-            v.write()?;
-        }
-        if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
-            v.write()?;
-        }
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
-            &mut self.height_to_realized_cap,
+        [
+            &mut self.height_to_realized_cap as &mut dyn AnyStoredVec,
             &mut self.height_to_realized_profit,
             &mut self.height_to_realized_loss,
             &mut self.height_to_value_created,
             &mut self.height_to_value_destroyed,
-        ];
-        if let Some(v) = self.height_to_adjusted_value_created.as_mut() {
-            vecs.push(v);
-        }
-        if let Some(v) = self.height_to_adjusted_value_destroyed.as_mut() {
-            vecs.push(v);
-        }
-        vecs.into_par_iter()
+        ]
+        .into_par_iter()
     }
 
     /// Validate computed versions against base version.
@@ -592,37 +547,6 @@ impl RealizedMetrics {
                 .collect::<Vec<_>>(),
             exit,
         )?;
-
-        if self.height_to_adjusted_value_created.is_some() {
-            self.height_to_adjusted_value_created
-                .um()
-                .compute_sum_of_others(
-                    starting_indexes.height,
-                    &others
-                        .iter()
-                        .map(|v| {
-                            v.height_to_adjusted_value_created
-                                .as_ref()
-                                .unwrap_or(&v.height_to_value_created)
-                        })
-                        .collect::<Vec<_>>(),
-                    exit,
-                )?;
-            self.height_to_adjusted_value_destroyed
-                .um()
-                .compute_sum_of_others(
-                    starting_indexes.height,
-                    &others
-                        .iter()
-                        .map(|v| {
-                            v.height_to_adjusted_value_destroyed
-                                .as_ref()
-                                .unwrap_or(&v.height_to_value_destroyed)
-                        })
-                        .collect::<Vec<_>>(),
-                    exit,
-                )?;
-        }
 
         Ok(())
     }
@@ -695,25 +619,6 @@ impl RealizedMetrics {
             Some(&self.height_to_value_destroyed),
         )?;
 
-        // Optional: adjusted value
-        if let Some(adjusted_value_created) = self.indexes_to_adjusted_value_created.as_mut() {
-            adjusted_value_created.compute_rest(
-                indexes,
-                starting_indexes,
-                exit,
-                self.height_to_adjusted_value_created.as_ref(),
-            )?;
-        }
-
-        if let Some(adjusted_value_destroyed) = self.indexes_to_adjusted_value_destroyed.as_mut() {
-            adjusted_value_destroyed.compute_rest(
-                indexes,
-                starting_indexes,
-                exit,
-                self.height_to_adjusted_value_destroyed.as_ref(),
-            )?;
-        }
-
         Ok(())
     }
 
@@ -784,16 +689,20 @@ impl RealizedMetrics {
             exit,
         )?;
 
-        // Optional: adjusted SOPR
+        // Optional: adjusted SOPR (lazy: cohort - up_to_1h)
         if let (Some(adjusted_sopr), Some(adj_created), Some(adj_destroyed)) = (
             self.dateindex_to_adjusted_sopr.as_mut(),
-            self.indexes_to_adjusted_value_created.as_ref(),
-            self.indexes_to_adjusted_value_destroyed.as_ref(),
+            self.indexes_to_adjusted_value_created
+                .as_ref()
+                .and_then(|v| v.dateindex.sum.as_ref()),
+            self.indexes_to_adjusted_value_destroyed
+                .as_ref()
+                .and_then(|v| v.dateindex.sum.as_ref()),
         ) {
             adjusted_sopr.compute_divide(
                 starting_indexes.dateindex,
-                adj_created.dateindex.unwrap_sum(),
-                adj_destroyed.dateindex.unwrap_sum(),
+                adj_created.as_ref(),
+                adj_destroyed.as_ref(),
                 exit,
             )?;
 

@@ -1,7 +1,5 @@
-use crate::DAYS_5M;
-
 /// Classification for short-term vs long-term holders.
-/// The threshold is 150 days (approximately 5 months).
+/// The threshold is 150 days (approximately 5 months) = 3600 hours.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Term {
     /// Short-Term Holder: < 150 days
@@ -11,5 +9,6 @@ pub enum Term {
 }
 
 impl Term {
-    pub const THRESHOLD_DAYS: usize = DAYS_5M;
+    /// Threshold in hours (150 days * 24 hours = 3600 hours)
+    pub const THRESHOLD_HOURS: usize = 24 * 150; // 3600
 }

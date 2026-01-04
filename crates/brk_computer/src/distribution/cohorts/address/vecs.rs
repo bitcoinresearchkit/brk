@@ -72,6 +72,7 @@ impl AddressCohortVecs {
             version,
             indexes,
             price,
+            up_to_1h_realized: None,
         };
 
         let height_to_addr_count =

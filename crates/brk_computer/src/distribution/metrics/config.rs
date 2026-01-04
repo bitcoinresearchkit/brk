@@ -4,6 +4,8 @@ use vecdb::Database;
 
 use crate::{indexes, price};
 
+use super::RealizedMetrics;
+
 /// Configuration for importing metrics.
 pub struct ImportConfig<'a> {
     pub db: &'a Database,
@@ -13,6 +15,9 @@ pub struct ImportConfig<'a> {
     pub version: Version,
     pub indexes: &'a indexes::Vecs,
     pub price: Option<&'a price::Vecs>,
+    /// Source for lazy adjusted computation: adjusted = cohort - up_to_1h.
+    /// Required for cohorts where `compute_adjusted()` is true.
+    pub up_to_1h_realized: Option<&'a RealizedMetrics>,
 }
 
 impl<'a> ImportConfig<'a> {

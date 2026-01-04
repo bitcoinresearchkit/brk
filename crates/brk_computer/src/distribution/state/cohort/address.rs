@@ -1,13 +1,10 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Dollars, Height, LoadedAddressData, Sats, SupplyState};
+use brk_types::{Age, Dollars, Height, LoadedAddressData, Sats, SupplyState};
 use vecdb::unlikely;
 
-use super::{
-    super::cost_basis::RealizedState,
-    base::CohortState,
-};
+use super::{super::cost_basis::RealizedState, base::CohortState};
 
 #[derive(Clone)]
 pub struct AddressCohortState {
@@ -43,16 +40,13 @@ impl AddressCohortState {
         self.inner.reset_single_iteration_values();
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn send(
         &mut self,
         addressdata: &mut LoadedAddressData,
         value: Sats,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
-        blocks_old: usize,
-        days_old: f64,
-        older_than_hour: bool,
+        age: Age,
     ) -> Result<()> {
         let compute_price = current_price.is_some();
 
@@ -76,9 +70,7 @@ impl AddressCohortState {
             },
             current_price,
             prev_price,
-            blocks_old,
-            days_old,
-            older_than_hour,
+            age,
             compute_price.then(|| (addressdata.realized_price(), &supply_state)),
             prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
         );

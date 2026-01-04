@@ -9,7 +9,7 @@ use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
 use crate::{ComputeIndexes, indexes, price, distribution::state::UTXOCohortState};
 
-use crate::distribution::metrics::{CohortMetrics, ImportConfig, SupplyMetrics};
+use crate::distribution::metrics::{CohortMetrics, ImportConfig, RealizedMetrics, SupplyMetrics};
 
 use super::super::traits::{CohortVecs, DynCohortVecs};
 
@@ -33,6 +33,9 @@ impl UTXOCohortVecs {
     ///
     /// `all_supply` is the supply metrics from the "all" cohort, used as global
     /// sources for `*_rel_to_market_cap` ratios. Pass `None` for the "all" cohort itself.
+    ///
+    /// `up_to_1h_realized` is used for cohorts where `compute_adjusted()` is true,
+    /// to create lazy adjusted vecs: adjusted = cohort - up_to_1h.
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
@@ -44,6 +47,7 @@ impl UTXOCohortVecs {
         states_path: &Path,
         state_level: StateLevel,
         all_supply: Option<&SupplyMetrics>,
+        up_to_1h_realized: Option<&RealizedMetrics>,
     ) -> Result<Self> {
         let compute_dollars = price.is_some();
         let full_name = CohortContext::Utxo.full_name(&filter, name);
@@ -56,6 +60,7 @@ impl UTXOCohortVecs {
             version,
             indexes,
             price,
+            up_to_1h_realized,
         };
 
         Ok(Self {

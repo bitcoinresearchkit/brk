@@ -29,13 +29,13 @@ impl Filter {
         }
     }
 
-    /// Check if a time value (days) is contained by this filter
-    pub fn contains_time(&self, days: usize) -> bool {
+    /// Check if a time value (hours) is contained by this filter
+    pub fn contains_time(&self, hours: usize) -> bool {
         match self {
             Filter::All => true,
-            Filter::Term(Term::Sth) => days < Term::THRESHOLD_DAYS,
-            Filter::Term(Term::Lth) => days >= Term::THRESHOLD_DAYS,
-            Filter::Time(t) => t.contains(days),
+            Filter::Term(Term::Sth) => hours < Term::THRESHOLD_HOURS,
+            Filter::Term(Term::Lth) => hours >= Term::THRESHOLD_HOURS,
+            Filter::Time(t) => t.contains(hours),
             _ => false,
         }
     }
@@ -54,12 +54,12 @@ impl Filter {
         match (self, other) {
             (Filter::All, _) => true,
             (Filter::Term(Term::Sth), Filter::Time(t)) => {
-                matches!(t, TimeFilter::LowerThan(d) if *d <= Term::THRESHOLD_DAYS)
-                    || matches!(t, TimeFilter::Range(r) if r.end <= Term::THRESHOLD_DAYS)
+                matches!(t, TimeFilter::LowerThan(h) if *h <= Term::THRESHOLD_HOURS)
+                    || matches!(t, TimeFilter::Range(r) if r.end <= Term::THRESHOLD_HOURS)
             }
             (Filter::Term(Term::Lth), Filter::Time(t)) => {
-                matches!(t, TimeFilter::GreaterOrEqual(d) if *d >= Term::THRESHOLD_DAYS)
-                    || matches!(t, TimeFilter::Range(r) if r.start >= Term::THRESHOLD_DAYS)
+                matches!(t, TimeFilter::GreaterOrEqual(h) if *h >= Term::THRESHOLD_HOURS)
+                    || matches!(t, TimeFilter::Range(r) if r.start >= Term::THRESHOLD_HOURS)
             }
             (Filter::Time(t1), Filter::Time(t2)) => t1.includes(t2),
             (Filter::Amount(a1), Filter::Amount(a2)) => a1.includes(a2),
@@ -89,17 +89,17 @@ impl Filter {
     }
 
     /// Whether to compute adjusted metrics (adjusted SOPR, adjusted value created/destroyed)
-    /// For UTXO context: true for All, Term, max_age (LowerThan), and up_to_1d age range
+    /// For UTXO context: true for All, STH, and max_age (LowerThan)
     /// For Address context: always false
+    /// Note: LTH doesn't need adjusted (everything >= 5 months is already > 1 hour)
+    /// Note: age ranges don't need adjusted (0-1h data lives in its own cohort)
     pub fn compute_adjusted(&self, context: CohortContext) -> bool {
         match context {
             CohortContext::Address => false,
-            CohortContext::Utxo => match self {
-                Filter::All | Filter::Term(_) => true,
-                Filter::Time(TimeFilter::LowerThan(_)) => true,
-                Filter::Time(TimeFilter::Range(r)) if r.start == 0 => true,
-                _ => false,
-            },
+            CohortContext::Utxo => matches!(
+                self,
+                Filter::All | Filter::Term(Term::Sth) | Filter::Time(TimeFilter::LowerThan(_))
+            ),
         }
     }
 }

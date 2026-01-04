@@ -8,9 +8,7 @@ pub struct RealizedState {
     pub profit: Dollars,
     pub loss: Dollars,
     pub value_created: Dollars,
-    pub adj_value_created: Dollars,
     pub value_destroyed: Dollars,
-    pub adj_value_destroyed: Dollars,
 }
 
 impl RealizedState {
@@ -19,9 +17,7 @@ impl RealizedState {
         profit: Dollars::NAN,
         loss: Dollars::NAN,
         value_created: Dollars::NAN,
-        adj_value_created: Dollars::NAN,
         value_destroyed: Dollars::NAN,
-        adj_value_destroyed: Dollars::NAN,
     };
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -29,9 +25,7 @@ impl RealizedState {
             self.profit = Dollars::ZERO;
             self.loss = Dollars::ZERO;
             self.value_created = Dollars::ZERO;
-            self.adj_value_created = Dollars::ZERO;
             self.value_destroyed = Dollars::ZERO;
-            self.adj_value_destroyed = Dollars::ZERO;
         }
     }
 
@@ -49,9 +43,7 @@ impl RealizedState {
             self.profit = Dollars::ZERO;
             self.loss = Dollars::ZERO;
             self.value_created = Dollars::ZERO;
-            self.adj_value_created = Dollars::ZERO;
             self.value_destroyed = Dollars::ZERO;
-            self.adj_value_destroyed = Dollars::ZERO;
         }
 
         self.cap += realized_cap;
@@ -74,18 +66,12 @@ impl RealizedState {
         supply_state: &SupplyState,
         current_price: Dollars,
         prev_price: Dollars,
-        older_than_hour: bool,
     ) {
         let current_value = current_price * supply_state.value;
         let prev_value = prev_price * supply_state.value;
 
         self.value_created += current_value;
         self.value_destroyed += prev_value;
-
-        if older_than_hour {
-            self.adj_value_created += current_value;
-            self.adj_value_destroyed += prev_value;
-        }
 
         match current_price.cmp(&prev_price) {
             Ordering::Greater => {

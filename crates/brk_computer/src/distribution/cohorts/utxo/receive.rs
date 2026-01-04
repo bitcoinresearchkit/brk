@@ -8,7 +8,7 @@ impl UTXOCohorts {
     /// Process received outputs for this block.
     ///
     /// New UTXOs are added to:
-    /// - The "up_to_1d" age cohort (all new UTXOs start at 0 days old)
+    /// - The "up_to_1h" age cohort (all new UTXOs start at 0 hours old)
     /// - The appropriate epoch cohort based on block height
     /// - The appropriate year cohort based on block timestamp
     /// - The appropriate output type cohort (P2PKH, P2SH, etc.)
@@ -22,9 +22,9 @@ impl UTXOCohorts {
     ) {
         let supply_state = received.spendable_supply;
 
-        // New UTXOs go into up_to_1d, current epoch, and current year
+        // New UTXOs go into up_to_1h, current epoch, and current year
         [
-            &mut self.0.age_range.up_to_1d,
+            &mut self.0.age_range.up_to_1h,
             self.0.epoch.mut_vec_from_height(height),
             self.0.year.mut_vec_from_timestamp(timestamp),
         ]

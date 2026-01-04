@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Dollars, Height, Sats, SupplyState};
+use brk_types::{Age, Dollars, Height, Sats, SupplyState};
 
 use crate::internal::PERCENTILES_LEN;
 
@@ -246,17 +246,13 @@ impl CohortState {
         supply: &SupplyState,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
-        blocks_old: usize,
-        days_old: f64,
-        older_than_hour: bool,
+        age: Age,
     ) {
         self.send_(
             supply,
             current_price,
             prev_price,
-            blocks_old,
-            days_old,
-            older_than_hour,
+            age,
             None,
             prev_price.map(|prev_price| (prev_price, supply)),
         );
@@ -269,9 +265,7 @@ impl CohortState {
         supply: &SupplyState,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
-        blocks_old: usize,
-        days_old: f64,
-        older_than_hour: bool,
+        age: Age,
         price_to_amount_increment: Option<(Dollars, &SupplyState)>,
         price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
     ) {
@@ -283,14 +277,13 @@ impl CohortState {
 
         if supply.value > Sats::ZERO {
             self.sent += supply.value;
-            self.satblocks_destroyed += supply.value * blocks_old;
-            self.satdays_destroyed +=
-                Sats::from((u64::from(supply.value) as f64 * days_old).floor() as u64);
+            self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
+            self.satdays_destroyed += age.satdays_destroyed(supply.value);
 
             if let Some(realized) = self.realized.as_mut() {
                 let current_price = current_price.unwrap();
                 let prev_price = prev_price.unwrap();
-                realized.send(supply, current_price, prev_price, older_than_hour);
+                realized.send(supply, current_price, prev_price);
 
                 if let Some((price, supply)) = price_to_amount_increment
                     && supply.value.is_not_zero()
