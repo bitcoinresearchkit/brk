@@ -51,19 +51,20 @@ class BrkError extends Error {{
 
 /**
  * @template T
- * @typedef {{Object}} Endpoint
- * @property {{(onUpdate?: (value: T[]) => void) => Promise<T[]>}} get - Fetch all data points
- * @property {{(from?: number, to?: number, onUpdate?: (value: T[]) => void) => Promise<T[]>}} range - Fetch data in range
+ * @typedef {{Object}} MetricEndpoint
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} get - Fetch all data points
+ * @property {{(from?: number, to?: number, onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} range - Fetch data in range
  * @property {{string}} path - The endpoint path
  */
+/** @typedef {{MetricEndpoint<unknown>}} AnyMetricEndpoint */
 
 /**
  * @template T
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
- * @property {{Partial<Record<Index, Endpoint<T>>>}} by - Index endpoints (lazy getters)
+ * @property {{Partial<Record<Index, MetricEndpoint<T>>>}} by - Index endpoints (lazy getters)
  * @property {{() => Index[]}} indexes - Get the list of available indexes
- * @property {{(index: Index) => Endpoint<T>|undefined}} get - Get an endpoint for a specific index
+ * @property {{(index: Index) => MetricEndpoint<T>|undefined}} get - Get an endpoint for a specific index
  */
 
 /** @typedef {{MetricPattern<unknown>}} AnyMetricPattern */
@@ -74,7 +75,7 @@ class BrkError extends Error {{
  * @param {{BrkClientBase}} client
  * @param {{string}} name - The metric vec name
  * @param {{Index}} index - The index name
- * @returns {{Endpoint<T>}}
+ * @returns {{MetricEndpoint<T>}}
  */
 function _endpoint(client, name, index) {{
   const p = `/api/metric/${{name}}/${{index}}`;
@@ -232,7 +233,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         let by_fields: Vec<String> = pattern
             .indexes
             .iter()
-            .map(|idx| format!("{}: Endpoint<T>", idx.serialize_long()))
+            .map(|idx| format!("{}: MetricEndpoint<T>", idx.serialize_long()))
             .collect();
         let by_type = format!("{{ {} }}", by_fields.join(", "));
 
@@ -240,7 +241,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, " * @template T").unwrap();
         writeln!(
             output,
-            " * @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => Endpoint<T>|undefined }}}} {}",
+            " * @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpoint<T>|undefined }}}} {}",
             by_type, pattern.name
         )
         .unwrap();
