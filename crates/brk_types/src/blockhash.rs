@@ -2,7 +2,7 @@ use std::{fmt, mem, str::FromStr};
 
 use bitcoin::hashes::Hash;
 use brk_error::Error;
-use derive_deref::Deref;
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, de};
 use vecdb::{Bytes, Formattable};

@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::{ComputedBlockLast, ComputedBlockSum, ComputedDateLast, DerivedComputedBlockLast},
 };
 
 impl Vecs {
@@ -19,153 +19,116 @@ impl Vecs {
         let v4 = Version::new(4);
         let v5 = Version::new(5);
 
-        let last = || VecBuilderOptions::default().add_last();
-        let sum = || VecBuilderOptions::default().add_sum();
-
         Ok(Self {
-            indexes_to_hash_rate: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_rate: ComputedBlockLast::forced_import(
                 db,
                 "hash_rate",
-                Source::Compute,
                 version + v5,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_rate_1w_sma: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_rate_1w_sma: ComputedDateLast::forced_import(
                 db,
                 "hash_rate_1w_sma",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_rate_1m_sma: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_rate_1m_sma: ComputedDateLast::forced_import(
                 db,
                 "hash_rate_1m_sma",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_rate_2m_sma: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_rate_2m_sma: ComputedDateLast::forced_import(
                 db,
                 "hash_rate_2m_sma",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_rate_1y_sma: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_hash_rate_1y_sma: ComputedDateLast::forced_import(
                 db,
                 "hash_rate_1y_sma",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_price_ths: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_price_ths: ComputedBlockLast::forced_import(
                 db,
                 "hash_price_ths",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_price_ths_min: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_price_ths_min: ComputedBlockLast::forced_import(
                 db,
                 "hash_price_ths_min",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_price_phs: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_price_phs: ComputedBlockLast::forced_import(
                 db,
                 "hash_price_phs",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_price_phs_min: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_price_phs_min: ComputedBlockLast::forced_import(
                 db,
                 "hash_price_phs_min",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_price_rebound: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_price_rebound: ComputedBlockLast::forced_import(
                 db,
                 "hash_price_rebound",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_value_ths: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_value_ths: ComputedBlockLast::forced_import(
                 db,
                 "hash_value_ths",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_value_ths_min: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_value_ths_min: ComputedBlockLast::forced_import(
                 db,
                 "hash_value_ths_min",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_value_phs: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_value_phs: ComputedBlockLast::forced_import(
                 db,
                 "hash_value_phs",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_value_phs_min: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_value_phs_min: ComputedBlockLast::forced_import(
                 db,
                 "hash_value_phs_min",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_hash_value_rebound: ComputedVecsFromHeight::forced_import(
+            indexes_to_hash_value_rebound: ComputedBlockLast::forced_import(
                 db,
                 "hash_value_rebound",
-                Source::Compute,
                 version + v4,
                 indexes,
-                last(),
             )?,
-            indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
+            // Derived from external indexer data - no height storage needed
+            indexes_to_difficulty: DerivedComputedBlockLast::forced_import(
                 db,
                 "difficulty",
-                Source::Vec(indexer.vecs.block.height_to_difficulty.boxed_clone()),
+                indexer.vecs.block.height_to_difficulty.boxed_clone(),
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_difficulty_as_hash: ComputedVecsFromHeight::forced_import(
+            indexes_to_difficulty_as_hash: ComputedBlockLast::forced_import(
                 db,
                 "difficulty_as_hash",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_difficulty_adjustment: ComputedVecsFromHeight::forced_import(
+            indexes_to_difficulty_adjustment: ComputedBlockSum::forced_import(
                 db,
                 "difficulty_adjustment",
-                Source::Compute,
                 version,
                 indexes,
-                sum(),
             )?,
         })
     }

@@ -6,8 +6,8 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, LazyVecsFromDateIndex,
-        PercentageDiffCloseDollars, Source, StoredU16ToYears, VecBuilderOptions,
+        BinaryDateLast, ComputedDateLast, LazyDateLast, PercentageDiffCloseDollars,
+        StoredU16ToYears,
     },
     price,
 };
@@ -19,59 +19,33 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: &price::Vecs,
     ) -> Result<Self> {
-        let last = VecBuilderOptions::default().add_last();
+        let indexes_to_price_ath =
+            ComputedDateLast::forced_import(db, "price_ath", version, indexes)?;
 
-        let indexes_to_price_ath = ComputedVecsFromDateIndex::forced_import(
-            db,
-            "price_ath",
-            Source::Compute,
+        let indexes_to_max_days_between_price_aths =
+            ComputedDateLast::forced_import(db, "max_days_between_price_aths", version, indexes)?;
+
+        let indexes_to_max_years_between_price_aths = LazyDateLast::from_computed::<StoredU16ToYears>(
+            "max_years_between_price_aths",
             version,
-            indexes,
-            last,
-        )?;
+            indexes_to_max_days_between_price_aths
+                .dateindex
+                .boxed_clone(),
+            &indexes_to_max_days_between_price_aths,
+        );
 
-        let indexes_to_max_days_between_price_aths = ComputedVecsFromDateIndex::forced_import(
-            db,
-            "max_days_between_price_aths",
-            Source::Compute,
+        let indexes_to_days_since_price_ath =
+            ComputedDateLast::forced_import(db, "days_since_price_ath", version, indexes)?;
+
+        let indexes_to_years_since_price_ath = LazyDateLast::from_computed::<StoredU16ToYears>(
+            "years_since_price_ath",
             version,
-            indexes,
-            last,
-        )?;
-
-        let indexes_to_max_years_between_price_aths =
-            LazyVecsFromDateIndex::from_computed::<StoredU16ToYears>(
-                "max_years_between_price_aths",
-                version,
-                indexes_to_max_days_between_price_aths
-                    .dateindex
-                    .as_ref()
-                    .map(|v| v.boxed_clone()),
-                &indexes_to_max_days_between_price_aths,
-            );
-
-        let indexes_to_days_since_price_ath = ComputedVecsFromDateIndex::forced_import(
-            db,
-            "days_since_price_ath",
-            Source::Compute,
-            version,
-            indexes,
-            last,
-        )?;
-
-        let indexes_to_years_since_price_ath =
-            LazyVecsFromDateIndex::from_computed::<StoredU16ToYears>(
-                "years_since_price_ath",
-                version,
-                indexes_to_days_since_price_ath
-                    .dateindex
-                    .as_ref()
-                    .map(|v| v.boxed_clone()),
-                &indexes_to_days_since_price_ath,
-            );
+            indexes_to_days_since_price_ath.dateindex.boxed_clone(),
+            &indexes_to_days_since_price_ath,
+        );
 
         let indexes_to_price_drawdown =
-            LazyVecsFrom2FromDateIndex::from_computed::<PercentageDiffCloseDollars>(
+            BinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                 "price_drawdown",
                 version,
                 &price.usd.timeindexes_to_price_close,

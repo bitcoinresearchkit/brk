@@ -13,18 +13,18 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_block_size.compute_rest(
+        self.indexes_to_block_size.derive_from(
             indexes,
             starting_indexes,
+            &indexer.vecs.block.height_to_total_size,
             exit,
-            Some(&indexer.vecs.block.height_to_total_size),
         )?;
 
-        self.indexes_to_block_vbytes.compute_rest(
+        self.indexes_to_block_vbytes.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_vbytes,
             exit,
-            Some(&self.height_to_vbytes),
         )?;
 
         Ok(())

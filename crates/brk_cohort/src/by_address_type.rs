@@ -1,10 +1,9 @@
 use std::ops::{Add, AddAssign};
 
 use brk_error::Result;
-use brk_traversable::{Traversable, TreeNode};
+use brk_traversable::Traversable;
 use brk_types::OutputType;
 use rayon::prelude::*;
-use vecdb::AnyExportableVec;
 
 use super::Filter;
 
@@ -17,7 +16,7 @@ pub const P2WSH: &str = "p2wsh";
 pub const P2TR: &str = "p2tr";
 pub const P2A: &str = "p2a";
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Traversable)]
 pub struct ByAddressType<T> {
     pub p2pk65: T,
     pub p2pk33: T,
@@ -287,38 +286,5 @@ impl<T> ByAddressType<Option<T>> {
         self.values_mut().for_each(|opt| {
             opt.take();
         });
-    }
-}
-
-impl<T: Traversable> Traversable for ByAddressType<T> {
-    fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(
-            [
-                (P2PK65, &self.p2pk65),
-                (P2PK33, &self.p2pk33),
-                (P2PKH, &self.p2pkh),
-                (P2SH, &self.p2sh),
-                (P2WPKH, &self.p2wpkh),
-                (P2WSH, &self.p2wsh),
-                (P2TR, &self.p2tr),
-                (P2A, &self.p2a),
-            ]
-            .into_iter()
-            .map(|(name, field)| (name.to_string(), field.to_tree_node()))
-            .collect(),
-        )
-    }
-
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        let mut iter: Box<dyn Iterator<Item = &dyn AnyExportableVec>> =
-            Box::new(self.p2pk65.iter_any_exportable());
-        iter = Box::new(iter.chain(self.p2pk33.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2pkh.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2sh.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2wpkh.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2wsh.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2tr.iter_any_exportable()));
-        iter = Box::new(iter.chain(self.p2a.iter_any_exportable()));
-        iter
     }
 }

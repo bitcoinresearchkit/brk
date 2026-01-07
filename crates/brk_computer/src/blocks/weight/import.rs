@@ -7,7 +7,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedVecsFromHeight, LazyVecsFromHeight, Source, VecBuilderOptions, WeightToFullness,
+        DerivedComputedBlockFull, LazyBlockFull, WeightToFullness,
     },
 };
 
@@ -18,30 +18,21 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let full_stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-                .add_sum()
-                .add_cumulative()
-        };
-
-        let indexes_to_block_weight = ComputedVecsFromHeight::forced_import(
+        let indexes_to_block_weight = DerivedComputedBlockFull::forced_import(
             db,
             "block_weight",
-            Source::Vec(indexer.vecs.block.height_to_weight.boxed_clone()),
+            indexer.vecs.block.height_to_weight.boxed_clone(),
             version,
             indexes,
-            full_stats(),
         )?;
 
-        let indexes_to_block_fullness = LazyVecsFromHeight::from_computed::<WeightToFullness>(
-            "block_fullness",
-            version,
-            indexer.vecs.block.height_to_weight.boxed_clone(),
-            &indexes_to_block_weight,
-        );
+        let indexes_to_block_fullness =
+            LazyBlockFull::from_derived::<WeightToFullness>(
+                "block_fullness",
+                version,
+                indexer.vecs.block.height_to_weight.boxed_clone(),
+                &indexes_to_block_weight,
+            );
 
         Ok(Self {
             indexes_to_block_weight,

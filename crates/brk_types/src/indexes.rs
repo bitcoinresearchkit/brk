@@ -1,4 +1,4 @@
-use std::ops::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 
 use crate::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, MonthIndex,
@@ -68,8 +68,10 @@ impl Indexes {
 
 /// Extended indexes with time-based granularities.
 /// Used by brk_computer for time-series aggregation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deref, DerefMut)]
 pub struct ComputeIndexes {
+    #[deref]
+    #[deref_mut]
     indexes: Indexes,
     pub dateindex: DateIndex,
     pub weekindex: WeekIndex,
@@ -111,15 +113,3 @@ impl ComputeIndexes {
     }
 }
 
-impl Deref for ComputeIndexes {
-    type Target = Indexes;
-    fn deref(&self) -> &Self::Target {
-        &self.indexes
-    }
-}
-
-impl DerefMut for ComputeIndexes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.indexes
-    }
-}

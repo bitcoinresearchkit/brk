@@ -1,5 +1,5 @@
 use brk_cohort::ByAddressType;
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 
 /// A vector for each address type.
 #[derive(Debug, Deref, DerefMut)]

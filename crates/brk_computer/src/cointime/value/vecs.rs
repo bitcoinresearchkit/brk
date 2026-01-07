@@ -1,11 +1,11 @@
 use brk_traversable::Traversable;
 use brk_types::StoredF64;
 
-use crate::internal::ComputedVecsFromHeight;
+use crate::internal::ComputedBlockSumCum;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes_to_cointime_value_destroyed: ComputedVecsFromHeight<StoredF64>,
-    pub indexes_to_cointime_value_created: ComputedVecsFromHeight<StoredF64>,
-    pub indexes_to_cointime_value_stored: ComputedVecsFromHeight<StoredF64>,
+    pub indexes_to_cointime_value_destroyed: ComputedBlockSumCum<StoredF64>,
+    pub indexes_to_cointime_value_created: ComputedBlockSumCum<StoredF64>,
+    pub indexes_to_cointime_value_stored: ComputedBlockSumCum<StoredF64>,
 }

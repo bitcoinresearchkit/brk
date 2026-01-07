@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
 * Copyright (c) 2025, Leon Sorokin
 * All rights reserved. (MIT Licensed)

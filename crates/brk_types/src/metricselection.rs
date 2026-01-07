@@ -1,12 +1,11 @@
-use std::ops::Deref;
-
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{DataRangeFormat, Index, Metric, Metrics};
 
 /// Selection of metrics to query
-#[derive(Debug, Deserialize, JsonSchema)]
+#[derive(Debug, Deref, Deserialize, JsonSchema)]
 pub struct MetricSelection {
     /// Requested metrics
     #[serde(alias = "m")]
@@ -16,15 +15,9 @@ pub struct MetricSelection {
     #[serde(alias = "i")]
     pub index: Index,
 
+    #[deref]
     #[serde(flatten)]
     pub range: DataRangeFormat,
-}
-
-impl Deref for MetricSelection {
-    type Target = DataRangeFormat;
-    fn deref(&self) -> &Self::Target {
-        &self.range
-    }
 }
 
 impl From<(Index, Metric, DataRangeFormat)> for MetricSelection {

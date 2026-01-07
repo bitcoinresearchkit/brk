@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use derive_deref::Deref;
+use derive_more::Deref;
 
 pub const XOR_LEN: usize = 8;
 

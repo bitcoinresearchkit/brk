@@ -12,21 +12,21 @@ use log::info;
 use vecdb::Exit;
 
 mod blocks;
-mod transactions;
-mod scripts;
-mod positions;
 mod cointime;
 mod constants;
-mod internal;
-mod indexes;
-mod market;
-mod pools;
-mod price;
 mod distribution;
+mod indexes;
+mod inputs;
+mod internal;
+mod market;
+mod outputs;
+mod pools;
+mod positions;
+mod price;
+mod scripts;
 mod supply;
 mod traits;
-mod inputs;
-mod outputs;
+mod transactions;
 mod utils;
 
 use indexes::ComputeIndexes;
@@ -68,8 +68,9 @@ impl Computer {
 
         let i = Instant::now();
         let (indexes, positions) = thread::scope(|s| -> Result<_> {
-            let positions_handle = big_thread()
-                .spawn_scoped(s, || positions::Vecs::forced_import(&computed_path, VERSION))?;
+            let positions_handle = big_thread().spawn_scoped(s, || {
+                positions::Vecs::forced_import(&computed_path, VERSION)
+            })?;
 
             let indexes = indexes::Vecs::forced_import(&computed_path, VERSION, indexer)?;
             let positions = positions_handle.join().unwrap()?;
@@ -129,7 +130,13 @@ impl Computer {
 
             // Import scripts module (depends on outputs for adoption ratio denominators)
             let scripts_handle = big_thread().spawn_scoped(s, || {
-                scripts::Vecs::forced_import(&computed_path, VERSION, &indexes, price.as_ref(), &outputs)
+                scripts::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    &indexes,
+                    price.as_ref(),
+                    &outputs,
+                )
             })?;
 
             let cointime =
@@ -151,7 +158,10 @@ impl Computer {
 
             Ok((blocks, transactions, scripts, pools, cointime))
         })?;
-        info!("Imported blocks/transactions/scripts/pools/cointime in {:?}", i.elapsed());
+        info!(
+            "Imported blocks/transactions/scripts/pools/cointime in {:?}",
+            i.elapsed()
+        );
 
         // Threads inside
         let i = Instant::now();
@@ -267,7 +277,9 @@ impl Computer {
 
         info!("Computing indexes...");
         let i = Instant::now();
-        let mut starting_indexes = self.indexes.compute(indexer, &self.blocks.time, starting_indexes, exit)?;
+        let mut starting_indexes =
+            self.indexes
+                .compute(indexer, &self.blocks.time, starting_indexes, exit)?;
         info!("Computed indexes in {:?}", i.elapsed());
 
         if let Some(price) = self.price.as_mut() {
@@ -302,8 +314,13 @@ impl Computer {
             // Scripts (needed for outputs.count.utxo_count)
             info!("Computing scripts...");
             let i = Instant::now();
-            self.scripts
-                .compute(indexer, &self.indexes, self.price.as_ref(), &starting_indexes, exit)?;
+            self.scripts.compute(
+                indexer,
+                &self.indexes,
+                self.price.as_ref(),
+                &starting_indexes,
+                exit,
+            )?;
             info!("Computed scripts in {:?}", i.elapsed());
 
             // Outputs depends on inputs and scripts (for utxo_count)
@@ -346,13 +363,6 @@ impl Computer {
             )?;
             info!("Computed blocks in {:?}", i.elapsed());
 
-            if let Some(price) = self.price.as_ref() {
-                info!("Computing market...");
-                let i = Instant::now();
-                self.market.compute(price, &self.blocks, &self.distribution, &starting_indexes, exit)?;
-                info!("Computed market in {:?}", i.elapsed());
-            }
-
             positions.join().unwrap()?;
             Ok(())
         })?;
@@ -366,7 +376,6 @@ impl Computer {
                     indexer,
                     &self.indexes,
                     &starting_indexes_clone,
-                    self.price.as_ref(),
                     exit,
                 )?;
                 info!("Computed pools in {:?}", i.elapsed());
@@ -391,6 +400,20 @@ impl Computer {
             pools.join().unwrap()?;
             Ok(())
         })?;
+
+        // Market must be computed after distribution (uses distribution data for gini)
+        if let Some(price) = self.price.as_ref() {
+            info!("Computing market...");
+            let i = Instant::now();
+            self.market.compute(
+                price,
+                &self.blocks,
+                &self.distribution,
+                &starting_indexes,
+                exit,
+            )?;
+            info!("Computed market in {:?}", i.elapsed());
+        }
 
         // Supply must be computed after distribution (uses actual circulating supply)
         info!("Computing supply...");
@@ -431,7 +454,11 @@ impl Computer {
         use brk_traversable::Traversable;
 
         std::iter::empty()
-            .chain(self.blocks.iter_any_exportable().map(|v| (blocks::DB_NAME, v)))
+            .chain(
+                self.blocks
+                    .iter_any_exportable()
+                    .map(|v| (blocks::DB_NAME, v)),
+            )
             .chain(
                 self.transactions
                     .iter_any_exportable()
@@ -442,7 +469,11 @@ impl Computer {
                     .iter_any_exportable()
                     .map(|v| (scripts::DB_NAME, v)),
             )
-            .chain(self.positions.iter_any_exportable().map(|v| (positions::DB_NAME, v)))
+            .chain(
+                self.positions
+                    .iter_any_exportable()
+                    .map(|v| (positions::DB_NAME, v)),
+            )
             .chain(
                 self.cointime
                     .iter_any_exportable()
@@ -495,36 +526,3 @@ impl Computer {
             )
     }
 }
-
-// pub fn generate_allocation_files(monitored: &pools::Vecs) -> Result<()> {
-//     info!("Generating allocative files...");
-
-//     let mut flamegraph = allocative::FlameGraphBuilder::default();
-//     flamegraph.visit_root(monitored);
-//     let output = flamegraph.finish();
-
-//     let folder = format!(
-//         "at-{}",
-//         jiff::Timestamp::now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
-//     );
-
-//     let path = std::path::PathBuf::from(&format!("./target/flamegraph/{folder}"));
-//     std::fs::create_dir_all(&path)?;
-
-//     // fs::write(path.join("flamegraph.src"), &output.flamegraph())?;
-
-//     let mut fg_svg = Vec::new();
-//     inferno::flamegraph::from_reader(
-//         &mut inferno::flamegraph::Options::default(),
-//         output.flamegraph().write().as_bytes(),
-//         &mut fg_svg,
-//     )?;
-
-//     std::fs::write(path.join("flamegraph.svg"), &fg_svg)?;
-
-//     std::fs::write(path.join("warnings.txt"), output.warnings())?;
-
-//     info!("Successfully generate allocative files");
-
-//     Ok(())
-// }

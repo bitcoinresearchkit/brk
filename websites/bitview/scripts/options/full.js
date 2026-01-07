@@ -1,13 +1,12 @@
-import { createPartialOptions } from "./partial/index.js";
+import { createPartialOptions } from "./partial.js";
 import {
   createButtonElement,
   createAnchorElement,
   insertElementAtIndex,
-} from "../utils/dom";
-import { serdeUnit } from "../utils/serde";
-import { pushHistory, resetParams } from "../utils/url";
-import { readStored, writeToStorage } from "../utils/storage";
-import { stringToId } from "../utils/format";
+} from "../utils/dom.js";
+import { pushHistory, resetParams } from "../utils/url.js";
+import { readStored, writeToStorage } from "../utils/storage.js";
+import { stringToId } from "../utils/format.js";
 import { collect, markUsed, logUnused } from "./unused.js";
 
 /**
@@ -47,21 +46,28 @@ export function initOptions({ colors, signals, brk, qrcode }) {
   /**
    * @param {AnyFetchedSeriesBlueprint[]} [arr]
    */
-  function arrayToRecord(arr = []) {
-    return [...(arr || [])].reduce((record, blueprint) => {
+  function arrayToMap(arr = []) {
+    /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
+    const map = new Map();
+    for (const blueprint of arr || []) {
       if (!blueprint.metric) {
         throw new Error(
           `Blueprint missing metric: ${JSON.stringify(blueprint)}`,
         );
       }
+      if (!blueprint.unit) {
+        throw new Error(
+          `Blueprint missing unit: ${blueprint.title}`,
+        );
+      }
       markUsed(blueprint.metric);
-      // Use any index's path - unit is the same regardless of index (e.g., supply is "sats" for both height and dateindex)
-      const unit =
-        blueprint.unit ?? serdeUnit.deserialize(blueprint.metric.name);
-      record[unit] ??= [];
-      record[unit].push(blueprint);
-      return record;
-    }, /** @type {Record<Unit, AnyFetchedSeriesBlueprint[]>} */ ({}));
+      const unit = blueprint.unit;
+      if (!map.has(unit)) {
+        map.set(unit, []);
+      }
+      map.get(unit)?.push(blueprint);
+    }
+    return map;
   }
 
   /**
@@ -77,11 +83,10 @@ export function initOptions({ colors, signals, brk, qrcode }) {
   /**
    * @param {Object} args
    * @param {Option} args.option
-   * @param {string} args.frame
    * @param {Signal<string | null>} args.qrcode
    * @param {string} [args.name]
    */
-  function createOptionElement({ option, frame, name, qrcode }) {
+  function createOptionElement({ option, name, qrcode }) {
     const title = option.title;
     if (option.kind === "url") {
       const href = option.url();
@@ -299,8 +304,8 @@ export function initOptions({ colors, signals, brk, qrcode }) {
               name,
               title,
               path,
-              top: arrayToRecord(anyPartial.top),
-              bottom: arrayToRecord(anyPartial.bottom),
+              top: arrayToMap(anyPartial.top),
+              bottom: arrayToMap(anyPartial.bottom),
             }),
           );
         }
@@ -338,7 +343,6 @@ export function initOptions({ colors, signals, brk, qrcode }) {
 
           const element = createOptionElement({
             option,
-            frame: "nav",
             qrcode,
           });
 

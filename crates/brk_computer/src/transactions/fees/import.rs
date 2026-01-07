@@ -1,12 +1,12 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec};
+use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedValueVecsFromTxindex, ComputedVecsFromTxindex, Source, VecBuilderOptions},
+    internal::{ComputedTxDistribution, ValueDerivedTxFull},
     price,
 };
 
@@ -18,13 +18,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-        };
-
         let txindex_to_input_value = EagerVec::forced_import(db, "input_value", version)?;
         let txindex_to_output_value = EagerVec::forced_import(db, "output_value", version)?;
         let txindex_to_fee = EagerVec::forced_import(db, "fee", version)?;
@@ -35,28 +28,20 @@ impl Vecs {
             txindex_to_output_value,
             txindex_to_fee: txindex_to_fee.clone(),
             txindex_to_fee_rate: txindex_to_fee_rate.clone(),
-            indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
+            indexes_to_fee: ValueDerivedTxFull::forced_import(
                 db,
                 "fee",
-                indexer,
-                indexes,
-                Source::Vec(txindex_to_fee.boxed_clone()),
                 version,
+                indexes,
+                indexer,
                 price,
-                VecBuilderOptions::default()
-                    .add_sum()
-                    .add_cumulative()
-                    .add_percentiles()
-                    .add_minmax()
-                    .add_average(),
+                &txindex_to_fee,
             )?,
-            indexes_to_fee_rate: ComputedVecsFromTxindex::forced_import(
+            indexes_to_fee_rate: ComputedTxDistribution::forced_import(
                 db,
                 "fee_rate",
-                Source::Vec(txindex_to_fee_rate.boxed_clone()),
                 version,
                 indexes,
-                stats(),
             )?,
         })
     }

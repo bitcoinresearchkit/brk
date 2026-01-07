@@ -3,7 +3,7 @@ use vecdb::Exit;
 
 use super::Vecs;
 use super::super::activity;
-use crate::{distribution, indexes, price, ComputeIndexes, utils::OptionExt};
+use crate::{distribution, indexes, price, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -26,7 +26,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    activity.indexes_to_vaultedness.height.u(),
+                    &activity.indexes_to_vaultedness.height,
                     exit,
                 )?;
                 Ok(())
@@ -42,7 +42,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    activity.indexes_to_liveliness.height.u(),
+                    &activity.indexes_to_liveliness.height,
                     exit,
                 )?;
                 Ok(())

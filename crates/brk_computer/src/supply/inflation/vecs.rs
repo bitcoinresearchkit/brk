@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
 use brk_types::StoredF32;
 
-use crate::internal::ComputedVecsFromDateIndex;
+use crate::internal::ComputedVecsDateAverage;
 
 /// Inflation rate metrics
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes: ComputedVecsFromDateIndex<StoredF32>,
+    pub indexes: ComputedVecsDateAverage<StoredF32>,
 }

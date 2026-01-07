@@ -37,7 +37,6 @@ impl Vecs {
             inputs,
             &self.size,
             starting_indexes,
-            price,
             exit,
         )?;
 

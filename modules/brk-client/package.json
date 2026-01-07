@@ -1,6 +1,6 @@
 {
   "name": "@bitcoinresearchkit/client",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "BRK JavaScript client",
   "type": "module",
   "main": "index.js",

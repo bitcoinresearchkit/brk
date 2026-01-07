@@ -12,7 +12,7 @@ build = "build.rs"
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 byteview = { workspace = true }
-derive_deref = { workspace = true }
+derive_more = { workspace = true }
 itoa = "1.0.17"
 jiff = { workspace = true }
 num_enum = "0.7.5"

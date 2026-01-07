@@ -4,7 +4,7 @@ use vecdb::Exit;
 
 use super::super::{activity, value};
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, distribution, indexes, utils::OptionExt};
+use crate::{blocks, distribution, indexes, utils::OptionExt, ComputeIndexes};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -36,16 +36,17 @@ impl Vecs {
 
         self.indexes_to_thermo_cap
             .compute_all(indexes, starting_indexes, exit, |vec| {
+                // KISS: height_cumulative is now a concrete field (not Option)
                 vec.compute_transform(
                     starting_indexes.height,
-                    blocks
+                    &blocks
                         .rewards
                         .indexes_to_subsidy
                         .dollars
                         .as_ref()
                         .unwrap()
-                        .height_extra
-                        .unwrap_cumulative(),
+                        .height_cumulative
+                        .0,
                     |(i, v, ..)| (i, v),
                     exit,
                 )?;
@@ -57,7 +58,7 @@ impl Vecs {
                 vec.compute_subtract(
                     starting_indexes.height,
                     realized_cap,
-                    self.indexes_to_thermo_cap.height.u(),
+                    &self.indexes_to_thermo_cap.height,
                     exit,
                 )?;
                 Ok(())
@@ -68,7 +69,7 @@ impl Vecs {
                 vec.compute_divide(
                     starting_indexes.height,
                     realized_cap,
-                    activity.indexes_to_vaultedness.height.u(),
+                    &activity.indexes_to_vaultedness.height,
                     exit,
                 )?;
                 Ok(())
@@ -79,7 +80,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     realized_cap,
-                    activity.indexes_to_liveliness.height.u(),
+                    &activity.indexes_to_liveliness.height,
                     exit,
                 )?;
                 Ok(())
@@ -90,15 +91,9 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform3(
                     starting_indexes.height,
-                    value
-                        .indexes_to_cointime_value_destroyed
-                        .height_extra
-                        .unwrap_cumulative(),
+                    value.indexes_to_cointime_value_destroyed.height_cumulative.inner(),
                     circulating_supply,
-                    activity
-                        .indexes_to_coinblocks_stored
-                        .height_extra
-                        .unwrap_cumulative(),
+                    activity.indexes_to_coinblocks_stored.height_cumulative.inner(),
                     |(i, destroyed, supply, stored, ..)| {
                         let destroyed: f64 = *destroyed;
                         let supply: f64 = supply.into();

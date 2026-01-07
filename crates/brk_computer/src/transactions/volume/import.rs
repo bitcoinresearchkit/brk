@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, Source, VecBuilderOptions},
+    internal::{ComputedDateLast, ValueBlockSum},
 };
 
 impl Vecs {
@@ -16,65 +16,50 @@ impl Vecs {
         compute_dollars: bool,
     ) -> Result<Self> {
         let v2 = Version::TWO;
-        let last = || VecBuilderOptions::default().add_last();
 
         Ok(Self {
-            indexes_to_sent_sum: ComputedValueVecsFromHeight::forced_import(
+            indexes_to_sent_sum: ValueBlockSum::forced_import(
                 db,
                 "sent_sum",
-                Source::Compute,
                 version,
-                VecBuilderOptions::default().add_sum(),
-                compute_dollars,
                 indexes,
+                compute_dollars,
             )?,
-            indexes_to_annualized_volume: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_annualized_volume: ComputedDateLast::forced_import(
                 db,
                 "annualized_volume",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_annualized_volume_btc: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_annualized_volume_btc: ComputedDateLast::forced_import(
                 db,
                 "annualized_volume_btc",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_annualized_volume_usd: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_annualized_volume_usd: ComputedDateLast::forced_import(
                 db,
                 "annualized_volume_usd",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_tx_per_sec: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_tx_per_sec: ComputedDateLast::forced_import(
                 db,
                 "tx_per_sec",
-                Source::Compute,
                 version + v2,
                 indexes,
-                last(),
             )?,
-            indexes_to_outputs_per_sec: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_outputs_per_sec: ComputedDateLast::forced_import(
                 db,
                 "outputs_per_sec",
-                Source::Compute,
                 version + v2,
                 indexes,
-                last(),
             )?,
-            indexes_to_inputs_per_sec: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_inputs_per_sec: ComputedDateLast::forced_import(
                 db,
                 "inputs_per_sec",
-                Source::Compute,
                 version + v2,
                 indexes,
-                last(),
             )?,
         })
     }

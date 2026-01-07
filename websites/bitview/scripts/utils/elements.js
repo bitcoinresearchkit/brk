@@ -1,4 +1,4 @@
-import { getElementById } from "./dom";
+import { getElementById } from "./dom.js";
 
 export const style = getComputedStyle(window.document.documentElement);
 

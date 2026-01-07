@@ -5,7 +5,7 @@ use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, escape_python_keyword, ref_to_type_name};
+use crate::{TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, ref_to_type_name};
 
 /// Generate type definitions from schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -18,6 +18,10 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     let sorted_names = topological_sort_schemas(schemas);
 
     for name in sorted_names {
+        if MANUAL_GENERIC_TYPES.contains(&name.as_str()) {
+            continue;
+        }
+
         let Some(schema) = schemas.get(&name) else {
             continue;
         };

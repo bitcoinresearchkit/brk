@@ -30,7 +30,6 @@ impl Query {
             .mining
             .indexes_to_hash_rate
             .dateindex
-            .unwrap_last()
             .read_once(current_dateindex)? as u128;
 
         // Calculate start height based on time period
@@ -61,7 +60,6 @@ impl Query {
             .mining
             .indexes_to_hash_rate
             .dateindex
-            .unwrap_last()
             .iter();
 
         let mut timestamp_iter = computer
@@ -69,8 +67,6 @@ impl Query {
             .time
             .timeindexes_to_timestamp
             .dateindex
-            .as_ref()
-            .expect("timeindexes_to_timestamp.dateindex should exist")
             .iter();
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);

@@ -13,11 +13,11 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_block_weight.compute_rest(
+        self.indexes_to_block_weight.derive_from(
             indexes,
             starting_indexes,
+            &indexer.vecs.block.height_to_weight,
             exit,
-            Some(&indexer.vecs.block.height_to_weight),
         )?;
 
         Ok(())

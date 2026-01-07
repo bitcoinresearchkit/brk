@@ -19,22 +19,21 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.height_to_supply_value.bitcoin;
-        let realized_price = distribution
+        let realized_price = &distribution
             .utxo_cohorts
             .all
             .metrics
             .realized
             .u()
             .indexes_to_realized_price
-            .height
-            .u();
+            .height;
 
         self.indexes_to_vaulted_price
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
                     realized_price,
-                    activity.indexes_to_vaultedness.height.u(),
+                    &activity.indexes_to_vaultedness.height,
                     exit,
                 )?;
                 Ok(())
@@ -44,7 +43,7 @@ impl Vecs {
             price,
             starting_indexes,
             exit,
-            Some(self.indexes_to_vaulted_price.dateindex.unwrap_last()),
+            Some(&self.indexes_to_vaulted_price.dateindex.0),
         )?;
 
         self.indexes_to_active_price
@@ -52,7 +51,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     realized_price,
-                    activity.indexes_to_liveliness.height.u(),
+                    &activity.indexes_to_liveliness.height,
                     exit,
                 )?;
                 Ok(())
@@ -62,7 +61,7 @@ impl Vecs {
             price,
             starting_indexes,
             exit,
-            Some(self.indexes_to_active_price.dateindex.unwrap_last()),
+            Some(&self.indexes_to_active_price.dateindex.0),
         )?;
 
         self.indexes_to_true_market_mean.compute_all(
@@ -72,7 +71,7 @@ impl Vecs {
             |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
-                    cap.indexes_to_investor_cap.height.u(),
+                    &cap.indexes_to_investor_cap.height,
                     &supply.indexes_to_active_supply.bitcoin.height,
                     exit,
                 )?;
@@ -84,7 +83,7 @@ impl Vecs {
             price,
             starting_indexes,
             exit,
-            Some(self.indexes_to_true_market_mean.dateindex.unwrap_last()),
+            Some(&self.indexes_to_true_market_mean.dateindex.0),
         )?;
 
         // cointime_price = cointime_cap / circulating_supply
@@ -92,7 +91,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_divide(
                     starting_indexes.height,
-                    cap.indexes_to_cointime_cap.height.u(),
+                    &cap.indexes_to_cointime_cap.height,
                     circulating_supply,
                     exit,
                 )?;
@@ -103,7 +102,7 @@ impl Vecs {
             price,
             starting_indexes,
             exit,
-            Some(self.indexes_to_cointime_price.dateindex.unwrap_last()),
+            Some(&self.indexes_to_cointime_price.dateindex.0),
         )?;
 
         Ok(())

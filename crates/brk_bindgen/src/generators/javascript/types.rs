@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, ref_to_type_name, to_camel_case};
+use crate::{TypeSchemas, generators::MANUAL_GENERIC_TYPES, ref_to_type_name, to_camel_case};
 
 /// Generate JSDoc type definitions from OpenAPI schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -15,6 +15,10 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
     writeln!(output, "// Type definitions\n").unwrap();
 
     for (name, schema) in schemas {
+        if MANUAL_GENERIC_TYPES.contains(&name.as_str()) {
+            continue;
+        }
+
         let js_type = schema_to_js_type(schema, Some(name));
 
         if is_primitive_alias(schema) {

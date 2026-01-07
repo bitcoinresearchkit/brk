@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedValueVecsFromHeight, Source, VecBuilderOptions},
+    internal::ValueBlockLast,
 };
 
 impl Vecs {
@@ -15,25 +15,21 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let last = || VecBuilderOptions::default().add_last();
-
-        macro_rules! value_h {
-            ($name:expr) => {
-                ComputedValueVecsFromHeight::forced_import(
-                    db,
-                    $name,
-                    Source::Compute,
-                    version,
-                    last(),
-                    compute_dollars,
-                    indexes,
-                )?
-            };
-        }
-
         Ok(Self {
-            indexes_to_vaulted_supply: value_h!("vaulted_supply"),
-            indexes_to_active_supply: value_h!("active_supply"),
+            indexes_to_vaulted_supply: ValueBlockLast::forced_import(
+                db,
+                "vaulted_supply",
+                version,
+                indexes,
+                compute_dollars,
+            )?,
+            indexes_to_active_supply: ValueBlockLast::forced_import(
+                db,
+                "active_supply",
+                version,
+                indexes,
+                compute_dollars,
+            )?,
         })
     }
 }

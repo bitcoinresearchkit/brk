@@ -13,12 +13,12 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_count.compute_rest(
+        self.indexes_to_count.derive_from(
             indexer,
             indexes,
             starting_indexes,
+            &indexes.transaction.txindex_to_input_count,
             exit,
-            Some(&indexes.transaction.txindex_to_input_count),
         )?;
 
         Ok(())

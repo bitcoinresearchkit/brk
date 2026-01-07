@@ -3,8 +3,10 @@ use std::{borrow::Cow, collections::BTreeMap};
 use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
-use brk_types::{Index, IndexInfo, Limit, Metric, MetricCount, PaginatedMetrics, Pagination, PaginationIndex};
-use derive_deref::{Deref, DerefMut};
+use brk_types::{
+    Index, IndexInfo, Limit, Metric, MetricCount, PaginatedMetrics, Pagination, PaginationIndex,
+};
+use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
 use vecdb::AnyExportableVec;
 
@@ -67,8 +69,7 @@ impl<'a> Vecs<'a> {
             .flat_map(|tree| tree.values())
             .filter(|vec| vec.region_names().is_empty())
             .count();
-        this.counts.stored_endpoints =
-            this.counts.total_endpoints - this.counts.lazy_endpoints;
+        this.counts.stored_endpoints = this.counts.total_endpoints - this.counts.lazy_endpoints;
         this.indexes = this
             .index_to_metric_to_vec
             .keys()

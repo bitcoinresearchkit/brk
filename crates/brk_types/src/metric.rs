@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use derive_deref::Deref;
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 

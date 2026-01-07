@@ -10,9 +10,8 @@ use vecdb::{
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedHeightValueVecs, ComputedValueVecsFromDateIndex, ComputedVecsFromHeight,
-        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyHeightValueVecs,
-        LazyValueVecsFromDateIndex, Source, VecBuilderOptions,
+        DerivedComputedBlockLast, HalfClosePriceTimesSats, HalveDollars, HalveSats,
+        HalveSatsToBitcoin, LazyBlockValue, LazyDerivedBlockValue, LazyValueDateLast, ValueDateLast,
     },
     price,
 };
@@ -22,26 +21,13 @@ use super::ImportConfig;
 /// Supply and UTXO count metrics for a cohort.
 #[derive(Clone, Traversable)]
 pub struct SupplyMetrics {
-    /// Total supply at each height
     pub height_to_supply: EagerVec<PcoVec<Height, Sats>>,
-
-    /// Supply value in BTC and USD (computed from height_to_supply)
-    pub height_to_supply_value: ComputedHeightValueVecs,
-
-    /// Supply indexed by date
-    pub indexes_to_supply: ComputedValueVecsFromDateIndex,
-
-    /// UTXO count at each height
+    pub height_to_supply_value: LazyDerivedBlockValue,
+    pub indexes_to_supply: ValueDateLast,
     pub height_to_utxo_count: EagerVec<PcoVec<Height, StoredU64>>,
-
-    /// UTXO count indexed by various dimensions
-    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredU64>,
-
-    /// Half of supply value (used for computing median) - lazy from supply_value
-    pub height_to_supply_half_value: LazyHeightValueVecs,
-
-    /// Half of supply indexed by date - lazy from indexes_to_supply
-    pub indexes_to_supply_half: LazyValueVecsFromDateIndex,
+    pub indexes_to_utxo_count: DerivedComputedBlockLast<StoredU64>,
+    pub height_to_supply_half_value: LazyBlockValue,
+    pub indexes_to_supply_half: LazyValueDateLast,
 }
 
 impl SupplyMetrics {
@@ -49,7 +35,6 @@ impl SupplyMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         let compute_dollars = cfg.compute_dollars();
-        let last = VecBuilderOptions::default().add_last();
 
         let height_to_supply: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(cfg.db, &cfg.name("supply"), cfg.version)?;
@@ -58,26 +43,23 @@ impl SupplyMetrics {
             .price
             .map(|p| p.usd.chainindexes_to_price_close.height.boxed_clone());
 
-        let height_to_supply_value = ComputedHeightValueVecs::forced_import(
-            cfg.db,
+        let height_to_supply_value = LazyDerivedBlockValue::from_source(
             &cfg.name("supply"),
-            Source::Vec(height_to_supply.boxed_clone()),
+            height_to_supply.boxed_clone(),
             cfg.version,
             price_source.clone(),
-        )?;
+        );
 
-        let indexes_to_supply = ComputedValueVecsFromDateIndex::forced_import(
+        let indexes_to_supply = ValueDateLast::forced_import(
             cfg.db,
             &cfg.name("supply"),
-            Source::Compute,
             cfg.version + v1,
-            last,
             compute_dollars,
             cfg.indexes,
         )?;
 
         // Create lazy supply_half from supply sources
-        let height_to_supply_half_value = LazyHeightValueVecs::from_sources::<
+        let height_to_supply_half_value = LazyBlockValue::from_sources::<
             HalveSats,
             HalveSatsToBitcoin,
             HalfClosePriceTimesSats,
@@ -89,7 +71,7 @@ impl SupplyMetrics {
         );
 
         let indexes_to_supply_half =
-            LazyValueVecsFromDateIndex::from_source::<HalveSats, HalveSatsToBitcoin, HalveDollars>(
+            LazyValueDateLast::from_source::<HalveSats, HalveSatsToBitcoin, HalveDollars>(
                 &cfg.name("supply_half"),
                 &indexes_to_supply,
                 cfg.version,
@@ -99,13 +81,12 @@ impl SupplyMetrics {
             EagerVec::forced_import(cfg.db, &cfg.name("utxo_count"), cfg.version)?;
 
         Ok(Self {
-            indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_utxo_count: DerivedComputedBlockLast::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
-                Source::Vec(height_to_utxo_count.boxed_clone()),
+                height_to_utxo_count.boxed_clone(),
                 cfg.version,
                 cfg.indexes,
-                last,
             )?,
             height_to_supply,
             height_to_supply_value,
@@ -208,11 +189,11 @@ impl SupplyMetrics {
                 Ok(())
             })?;
 
-        self.indexes_to_utxo_count.compute_rest(
+        self.indexes_to_utxo_count.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_utxo_count,
             exit,
-            Some(&self.height_to_utxo_count),
         )?;
 
         Ok(())

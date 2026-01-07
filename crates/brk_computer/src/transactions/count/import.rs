@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec, LazyVecFrom2};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::ComputedBlockFull,
 };
 
 impl Vecs {
@@ -16,15 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let full_stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-                .add_sum()
-                .add_cumulative()
-        };
-
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version,
@@ -39,13 +30,11 @@ impl Vecs {
         );
 
         Ok(Self {
-            indexes_to_tx_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_tx_count: ComputedBlockFull::forced_import(
                 db,
                 "tx_count",
-                Source::Compute,
                 version,
                 indexes,
-                full_stats(),
             )?,
             txindex_to_is_coinbase,
         })

@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
-use derive_deref::Deref;
+use derive_more::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

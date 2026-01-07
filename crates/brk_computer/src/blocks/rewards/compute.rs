@@ -3,14 +3,9 @@ use brk_indexer::Indexer;
 use brk_types::{CheckedSub, Dollars, HalvingEpoch, Height, Sats, StoredF32, TxOutIndex};
 use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
-use super::Vecs;
-use crate::{
-    transactions,
-    ComputeIndexes,
-    indexes, price,
-    utils::OptionExt,
-};
 use super::super::count;
+use super::Vecs;
+use crate::{indexes, price, transactions, ComputeIndexes};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -53,13 +48,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        let mut height_to_coinbase_iter = self
-            .indexes_to_coinbase
-            .sats
-            .height
-            .as_ref()
-            .unwrap()
-            .into_iter();
+        let mut height_to_coinbase_iter = self.indexes_to_coinbase.sats.height.into_iter();
         self.height_to_24h_coinbase_sum.compute_transform(
             starting_indexes.height,
             &count_vecs.height_to_24h_block_count,
@@ -75,12 +64,8 @@ impl Vecs {
         )?;
         drop(height_to_coinbase_iter);
 
-        if let Some(mut height_to_coinbase_iter) = self
-            .indexes_to_coinbase
-            .dollars
-            .as_ref()
-            .map(|c| c.height.u().into_iter())
-        {
+        if let Some(ref dollars) = self.indexes_to_coinbase.dollars {
+            let mut height_to_coinbase_iter = dollars.height.into_iter();
             self.height_to_24h_coinbase_usd_sum.compute_transform(
                 starting_indexes.height,
                 &count_vecs.height_to_24h_block_count,
@@ -98,10 +83,11 @@ impl Vecs {
 
         self.indexes_to_subsidy
             .compute_all(indexes, price, starting_indexes, exit, |vec| {
+                // KISS: height.sum_cum.sum.0 is now a concrete field
                 vec.compute_transform2(
                     starting_indexes.height,
-                    self.indexes_to_coinbase.sats.height.u(),
-                    transactions_fees.indexes_to_fee.sats.height.unwrap_sum(),
+                    &self.indexes_to_coinbase.sats.height,
+                    &transactions_fees.indexes_to_fee.sats.height.sum_cum.sum.0,
                     |(height, coinbase, fees, ..)| {
                         (
                             height,
@@ -124,7 +110,7 @@ impl Vecs {
             |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_subsidy.sats.height.u(),
+                    &self.indexes_to_subsidy.sats.height,
                     |(height, subsidy, ..)| {
                         let halving = HalvingEpoch::from(height);
                         let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
@@ -136,10 +122,11 @@ impl Vecs {
             },
         )?;
 
+        // KISS: dateindex.sum_cum.sum.0 is now a concrete field
         self.dateindex_to_fee_dominance.compute_transform2(
             starting_indexes.dateindex,
-            transactions_fees.indexes_to_fee.sats.dateindex.unwrap_sum(),
-            self.indexes_to_coinbase.sats.dateindex.unwrap_sum(),
+            &transactions_fees.indexes_to_fee.sats.dateindex.sum_cum.sum.0,
+            &self.indexes_to_coinbase.sats.dateindex.sum_cum.sum.0,
             |(i, fee, coinbase, ..)| {
                 let coinbase_f64 = u64::from(coinbase) as f64;
                 let dominance = if coinbase_f64 == 0.0 {
@@ -154,8 +141,8 @@ impl Vecs {
 
         self.dateindex_to_subsidy_dominance.compute_transform2(
             starting_indexes.dateindex,
-            self.indexes_to_subsidy.sats.dateindex.unwrap_sum(),
-            self.indexes_to_coinbase.sats.dateindex.unwrap_sum(),
+            &self.indexes_to_subsidy.sats.dateindex.sum_cum.sum.0,
+            &self.indexes_to_coinbase.sats.dateindex.sum_cum.sum.0,
             |(i, subsidy, coinbase, ..)| {
                 let coinbase_f64 = u64::from(coinbase) as f64;
                 let dominance = if coinbase_f64 == 0.0 {
@@ -169,13 +156,15 @@ impl Vecs {
         )?;
 
         if let Some(sma) = self.indexes_to_subsidy_usd_1y_sma.as_mut() {
-            let date_to_coinbase_usd_sum = self
+            let date_to_coinbase_usd_sum = &self
                 .indexes_to_coinbase
                 .dollars
                 .as_ref()
                 .unwrap()
                 .dateindex
-                .unwrap_sum();
+                .sum_cum
+                .sum
+                .0;
 
             sma.compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(

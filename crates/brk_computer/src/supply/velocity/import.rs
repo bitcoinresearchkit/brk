@@ -3,10 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
-};
+use crate::{indexes, internal::ComputedVecsDateAverage};
 
 impl Vecs {
     pub fn forced_import(
@@ -15,23 +12,19 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let indexes_to_btc = ComputedVecsFromDateIndex::forced_import(
+        let indexes_to_btc = ComputedVecsDateAverage::forced_import(
             db,
             "btc_velocity",
-            Source::Compute,
             version,
             indexes,
-            VecBuilderOptions::default().add_average(),
         )?;
 
         let indexes_to_usd = compute_dollars.then(|| {
-            ComputedVecsFromDateIndex::forced_import(
+            ComputedVecsDateAverage::forced_import(
                 db,
                 "usd_velocity",
-                Source::Compute,
                 version,
                 indexes,
-                VecBuilderOptions::default().add_average(),
             )
             .unwrap()
         });

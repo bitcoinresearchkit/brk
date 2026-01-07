@@ -4,7 +4,7 @@ use vecdb::{IterableCloneableVec, LazyVecFrom1};
 use super::Vecs;
 use crate::{
     distribution,
-    internal::{DollarsIdentity, LazyVecsFromDateIndex},
+    internal::{DollarsIdentity, LazyDateLast},
 };
 
 impl Vecs {
@@ -22,12 +22,12 @@ impl Vecs {
                 })
             });
 
-        // Market cap by indexes (lazy from distribution's supply in USD)
+        // Market cap by indexes (lazy from distribution's supply in USD) - KISS
         let indexes = supply_metrics.indexes_to_supply.dollars.as_ref().map(|d| {
-            LazyVecsFromDateIndex::from_computed::<DollarsIdentity>(
+            // KISS: dateindex is no longer Option, use from_source
+            LazyDateLast::from_source::<DollarsIdentity>(
                 "market_cap",
                 version,
-                d.dateindex.as_ref().map(|v| v.boxed_clone()),
                 d,
             )
         });

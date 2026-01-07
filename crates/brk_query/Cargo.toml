@@ -21,7 +21,7 @@ brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
 brk_traversable = { workspace = true }
 brk_types = { workspace = true }
-derive_deref = { workspace = true }
+derive_more = { workspace = true }
 jiff = { workspace = true }
 # quickmatch = { path = "../../../quickmatch" }
 quickmatch = "0.1.8"

@@ -2,12 +2,56 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Type, parse_macro_input};
 
+/// Struct-level attributes for Traversable derive
+#[derive(Default)]
+struct StructAttr {
+    /// If true, call .merge_branches().unwrap() on the final result
+    merge: bool,
+    /// If true, delegate to the single field (transparent newtype pattern)
+    transparent: bool,
+    /// If set, wrap the result in Branch { key: inner }
+    wrap: Option<String>,
+}
+
+fn get_struct_attr(attrs: &[syn::Attribute]) -> StructAttr {
+    let mut result = StructAttr::default();
+    for attr in attrs {
+        if !attr.path().is_ident("traversable") {
+            continue;
+        }
+
+        // Try parsing as single ident (merge, transparent)
+        if let Ok(ident) = attr.parse_args::<syn::Ident>() {
+            match ident.to_string().as_str() {
+                "merge" => result.merge = true,
+                "transparent" => result.transparent = true,
+                _ => {}
+            }
+            continue;
+        }
+
+        // Try parsing as name-value (wrap = "...")
+        if let Ok(meta) = attr.parse_args::<syn::MetaNameValue>()
+            && meta.path.is_ident("wrap")
+            && let syn::Expr::Lit(syn::ExprLit {
+                lit: syn::Lit::Str(lit_str),
+                ..
+            }) = &meta.value
+        {
+            result.wrap = Some(lit_str.value());
+        }
+    }
+    result
+}
+
 #[proc_macro_derive(Traversable, attributes(traversable))]
 pub fn derive_traversable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
     let generics = &input.generics;
     let (impl_generics, ty_generics, _) = generics.split_for_impl();
+
+    let struct_attr = get_struct_attr(&input.attrs);
 
     let Data::Struct(data) = &input.data else {
         return syn::Error::new_spanned(
@@ -18,15 +62,24 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
         .into();
     };
 
-    // Handle single-field tuple struct delegation
+    // Handle single-field tuple struct delegation (automatic transparent)
     if let Fields::Unnamed(fields) = &data.fields
         && fields.unnamed.len() == 1
     {
         let where_clause = build_where_clause(generics, &[]);
+        let to_tree_node_body = if let Some(wrap_key) = &struct_attr.wrap {
+            quote! {
+                brk_traversable::TreeNode::wrap(#wrap_key, self.0.to_tree_node())
+            }
+        } else {
+            quote! {
+                self.0.to_tree_node()
+            }
+        };
         return TokenStream::from(quote! {
             impl #impl_generics Traversable for #name #ty_generics #where_clause {
                 fn to_tree_node(&self) -> brk_traversable::TreeNode {
-                    self.0.to_tree_node()
+                    #to_tree_node_body
                 }
 
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
@@ -51,11 +104,35 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
         });
     };
 
+    // Handle transparent delegation for named structs (delegates to first field)
+    if struct_attr.transparent {
+        let first_field = named_fields
+            .named
+            .first()
+            .expect("transparent requires at least one field");
+        let field_name = first_field
+            .ident
+            .as_ref()
+            .expect("named field must have ident");
+        let where_clause = build_where_clause(generics, &[]);
+        return TokenStream::from(quote! {
+            impl #impl_generics Traversable for #name #ty_generics #where_clause {
+                fn to_tree_node(&self) -> brk_traversable::TreeNode {
+                    self.#field_name.to_tree_node()
+                }
+
+                fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                    self.#field_name.iter_any_exportable()
+                }
+            }
+        });
+    }
+
     let generic_params: Vec<_> = generics.type_params().map(|p| &p.ident).collect();
 
     let (field_infos, generics_needing_traversable) = analyze_fields(named_fields, &generic_params);
 
-    let field_traversals = generate_field_traversals(&field_infos);
+    let field_traversals = generate_field_traversals(&field_infos, struct_attr.merge);
     let iterator_impl = generate_iterator_impl(&field_infos);
     let where_clause = build_where_clause(generics, &generics_needing_traversable);
 
@@ -79,6 +156,8 @@ struct FieldInfo<'a> {
     name: &'a syn::Ident,
     is_option: bool,
     attr: FieldAttr,
+    rename: Option<String>,
+    wrap: Option<String>,
 }
 
 fn analyze_fields<'a>(
@@ -89,12 +168,10 @@ fn analyze_fields<'a>(
     let mut generics_set = std::collections::BTreeSet::new();
 
     for field in &fields.named {
-        let field_attr = get_field_attr(field);
-
-        // Skip attribute means don't process at all
-        if field_attr.is_none() {
+        let Some((attr, rename, wrap)) = get_field_attr(field) else {
+            // Skip attribute means don't process at all
             continue;
-        }
+        };
 
         if !matches!(field.vis, syn::Visibility::Public(_)) {
             continue;
@@ -116,27 +193,52 @@ fn analyze_fields<'a>(
         field_infos.push(FieldInfo {
             name: field_name,
             is_option: is_option_type(&field.ty),
-            attr: field_attr.unwrap(),
+            attr,
+            rename,
+            wrap,
         });
     }
 
     (field_infos, generics_set.into_iter().collect())
 }
 
-/// Returns None for skip, Some(attr) for normal/flatten
-fn get_field_attr(field: &syn::Field) -> Option<FieldAttr> {
+/// Returns None for skip, Some((attr, rename, wrap)) for normal/flatten
+fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Option<String>)> {
+    let mut attr_type = FieldAttr::Normal;
+    let mut rename = None;
+    let mut wrap = None;
+
     for attr in &field.attrs {
-        if attr.path().is_ident("traversable")
-            && let Ok(ident) = attr.parse_args::<syn::Ident>()
+        if !attr.path().is_ident("traversable") {
+            continue;
+        }
+
+        // Try parsing as a single ident (skip, flatten)
+        if let Ok(ident) = attr.parse_args::<syn::Ident>() {
+            match ident.to_string().as_str() {
+                "skip" => return None,
+                "flatten" => attr_type = FieldAttr::Flatten,
+                _ => {}
+            }
+            continue;
+        }
+
+        // Try parsing as name-value pairs (rename = "...", wrap = "...")
+        if let Ok(meta) = attr.parse_args::<syn::MetaNameValue>()
+            && let syn::Expr::Lit(syn::ExprLit {
+                lit: syn::Lit::Str(lit_str),
+                ..
+            }) = &meta.value
         {
-            return match ident.to_string().as_str() {
-                "skip" => None,
-                "flatten" => Some(FieldAttr::Flatten),
-                _ => Some(FieldAttr::Normal),
-            };
+            if meta.path.is_ident("rename") {
+                rename = Some(lit_str.value());
+            } else if meta.path.is_ident("wrap") {
+                wrap = Some(lit_str.value());
+            }
         }
     }
-    Some(FieldAttr::Normal)
+
+    Some((attr_type, rename, wrap))
 }
 
 fn is_option_type(ty: &Type) -> bool {
@@ -148,91 +250,47 @@ fn is_option_type(ty: &Type) -> bool {
     )
 }
 
-fn generate_field_traversals(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
+fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::TokenStream {
     let has_flatten = infos.iter().any(|i| matches!(i.attr, FieldAttr::Flatten));
-    let has_normal = infos.iter().any(|i| matches!(i.attr, FieldAttr::Normal));
 
-    if !has_flatten {
-        // Fast path: no flatten, simple collection
-        let entries = infos.iter().map(|info| {
-            let field_name = info.name;
-            let field_name_str = field_name.to_string();
-
-            if info.is_option {
-                quote! {
-                    self.#field_name.as_ref().map(|nested| (String::from(#field_name_str), nested.to_tree_node()))
-                }
-            } else {
-                quote! {
-                    Some((String::from(#field_name_str), self.#field_name.to_tree_node()))
-                }
-            }
-        });
-
-        return quote! {
-            let collected: std::collections::BTreeMap<_, _> = [#(#entries,)*]
-                .into_iter()
-                .flatten()
-                .collect();
-
-            brk_traversable::TreeNode::Branch(collected)
-        };
-    }
-
-    // Has flatten fields
-    if !has_normal {
-        // Only flatten fields, no normal fields - need explicit type annotation
-        let flatten_entries = infos.iter()
-            .filter(|i| matches!(i.attr, FieldAttr::Flatten))
-            .map(|info| {
-                let field_name = info.name;
-
-                if info.is_option {
-                    quote! {
-                        if let Some(ref nested) = self.#field_name {
-                            if let brk_traversable::TreeNode::Branch(map) = nested.to_tree_node() {
-                                collected.extend(map);
-                            }
-                        }
-                    }
-                } else {
-                    quote! {
-                        if let brk_traversable::TreeNode::Branch(map) = self.#field_name.to_tree_node() {
-                            collected.extend(map);
-                        }
-                    }
-                }
-            });
-
-        return quote! {
-            let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
-                std::collections::BTreeMap::new();
-
-            #(#flatten_entries)*
-
-            brk_traversable::TreeNode::Branch(collected)
-        };
-    }
-
-    // Has both normal and flatten fields
-    let normal_entries = infos.iter()
+    // Generate normal field entries
+    let normal_entries: Vec<_> = infos
+        .iter()
         .filter(|i| matches!(i.attr, FieldAttr::Normal))
         .map(|info| {
             let field_name = info.name;
-            let field_name_str = field_name.to_string();
+            // Use rename if specified, otherwise use field name
+            let key_str = info
+                .rename.as_deref()
+                .unwrap_or_else(|| field_name.to_string().leak());
+
+            // Generate tree node expression, optionally wrapped
+            let node_expr = if let Some(wrap_key) = &info.wrap {
+                quote! { brk_traversable::TreeNode::wrap(#wrap_key, nested.to_tree_node()) }
+            } else {
+                quote! { nested.to_tree_node() }
+            };
 
             if info.is_option {
                 quote! {
-                    self.#field_name.as_ref().map(|nested| (String::from(#field_name_str), nested.to_tree_node()))
+                    self.#field_name.as_ref().map(|nested| (String::from(#key_str), #node_expr))
                 }
             } else {
+                let node_expr_self = if let Some(wrap_key) = &info.wrap {
+                    quote! { brk_traversable::TreeNode::wrap(#wrap_key, self.#field_name.to_tree_node()) }
+                } else {
+                    quote! { self.#field_name.to_tree_node() }
+                };
                 quote! {
-                    Some((String::from(#field_name_str), self.#field_name.to_tree_node()))
+                    Some((String::from(#key_str), #node_expr_self))
                 }
             }
-        });
+        })
+        .collect();
 
-    let flatten_entries = infos.iter()
+    // Generate flatten field entries
+    let flatten_entries: Vec<_> = infos
+        .iter()
         .filter(|i| matches!(i.attr, FieldAttr::Flatten))
         .map(|info| {
             let field_name = info.name;
@@ -240,29 +298,73 @@ fn generate_field_traversals(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
             if info.is_option {
                 quote! {
                     if let Some(ref nested) = self.#field_name {
-                        if let brk_traversable::TreeNode::Branch(map) = nested.to_tree_node() {
-                            collected.extend(map);
+                        match nested.to_tree_node() {
+                            brk_traversable::TreeNode::Branch(map) => collected.extend(map),
+                            leaf @ brk_traversable::TreeNode::Leaf(_) => {
+                                // Collapsed leaf from child - insert with field name as key
+                                collected.insert(String::from(stringify!(#field_name)), leaf);
+                            }
                         }
                     }
                 }
             } else {
                 quote! {
-                    if let brk_traversable::TreeNode::Branch(map) = self.#field_name.to_tree_node() {
-                        collected.extend(map);
+                    match self.#field_name.to_tree_node() {
+                        brk_traversable::TreeNode::Branch(map) => collected.extend(map),
+                        leaf @ brk_traversable::TreeNode::Leaf(_) => {
+                            // Collapsed leaf from child - insert with field name as key
+                            collected.insert(String::from(stringify!(#field_name)), leaf);
+                        }
                     }
                 }
             }
-        });
+        })
+        .collect();
+
+    let final_expr = if merge {
+        quote! { brk_traversable::TreeNode::Branch(collected).merge_branches().unwrap() }
+    } else {
+        quote! { brk_traversable::TreeNode::Branch(collected) }
+    };
+
+    // Build collected map initialization based on what we have
+    let (init_collected, extend_flatten) = if !has_flatten {
+        // No flatten fields - simple collection, no need to extend
+        (
+            quote! {
+                let collected: std::collections::BTreeMap<_, _> = [#(#normal_entries,)*]
+                    .into_iter()
+                    .flatten()
+                    .collect();
+            },
+            quote! {},
+        )
+    } else if normal_entries.is_empty() {
+        // Only flatten fields - explicit type annotation needed
+        (
+            quote! {
+                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
+                    std::collections::BTreeMap::new();
+            },
+            quote! { #(#flatten_entries)* },
+        )
+    } else {
+        // Both normal and flatten fields
+        (
+            quote! {
+                let mut collected: std::collections::BTreeMap<_, _> = [#(#normal_entries,)*]
+                    .into_iter()
+                    .flatten()
+                    .collect();
+            },
+            quote! { #(#flatten_entries)* },
+        )
+    };
 
     quote! {
-        let mut collected: std::collections::BTreeMap<_, _> = [#(#normal_entries,)*]
-            .into_iter()
-            .flatten()
-            .collect();
-
-        #(#flatten_entries)*
-
-        brk_traversable::TreeNode::Branch(collected)
+        #init_collected
+        #extend_flatten
+        #final_expr
     }
 }
 

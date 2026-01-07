@@ -81,10 +81,9 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, price, exit)?;
+        self.compute_(indexer, indexes, starting_indexes, exit)?;
         let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
@@ -95,13 +94,12 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_height_to_pool(indexer, indexes, starting_indexes, exit)?;
 
         self.vecs.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(indexes, starting_indexes, &self.height_to_pool, price, exit)
+            vecs.compute(indexes, starting_indexes, &self.height_to_pool, exit)
         })?;
 
         Ok(())

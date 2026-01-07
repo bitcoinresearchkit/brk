@@ -1,5 +1,3 @@
-import { serdeString } from "./serde";
-
 /**
  * @param {string} id
  * @returns {HTMLElement}
@@ -215,15 +213,17 @@ export function importStyle(href) {
 }
 
 /**
- * @template {Readonly<string[]>} T
+ * @template T
  * @param {Object} args
- * @param {T[number]} args.defaultValue
+ * @param {T} args.defaultValue
  * @param {string} [args.id]
- * @param {T | Accessor<T>} args.choices
+ * @param {readonly T[] | Accessor<readonly T[]>} args.choices
  * @param {string} [args.keyPrefix]
  * @param {string} args.key
  * @param {boolean} [args.sorted]
  * @param {Signals} args.signals
+ * @param {(choice: T) => string} [args.toKey] - Extract string key for storage (defaults to identity for strings)
+ * @param {(choice: T) => string} [args.toLabel] - Extract display label (defaults to identity for strings)
  */
 export function createHorizontalChoiceField({
   id,
@@ -233,9 +233,13 @@ export function createHorizontalChoiceField({
   key,
   signals,
   sorted,
+  toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
 }) {
+  const defaultKey = toKey(defaultValue);
+
   const choices = signals.createMemo(() => {
-    /** @type {T} */
+    /** @type {readonly T[]} */
     let c;
     if (typeof unsortedChoices === "function") {
       c = unsortedChoices();
@@ -244,16 +248,28 @@ export function createHorizontalChoiceField({
     }
 
     return sorted
-      ? /** @type {T} */ (
-          /** @type {any} */ (c.toSorted((a, b) => a.localeCompare(b)))
+      ? /** @type {readonly T[]} */ (
+          /** @type {any} */ (
+            c.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
+          )
         )
       : c;
   });
 
-  /** @type {Signal<T[number]>} */
+  /**
+   * @param {string} storedKey
+   * @returns {T}
+   */
+  function fromKey(storedKey) {
+    const found = choices().find((c) => toKey(c) === storedKey);
+    return found ?? defaultValue;
+  }
+
+  /** @type {Signal<T>} */
   const selected = signals.createSignal(defaultValue, {
     save: {
-      ...serdeString,
+      serialize: (v) => toKey(v),
+      deserialize: (s) => fromKey(s),
       keyPrefix: keyPrefix ?? "",
       key,
       saveDefaultValue: true,
@@ -268,8 +284,10 @@ export function createHorizontalChoiceField({
 
   signals.createEffect(choices, (choices) => {
     const s = selected();
-    if (!choices.includes(s)) {
-      if (choices.includes(defaultValue)) {
+    const sKey = toKey(s);
+    const keys = choices.map(toKey);
+    if (!keys.includes(sKey)) {
+      if (keys.includes(defaultKey)) {
         selected.set(() => defaultValue);
       } else if (choices.length) {
         selected.set(() => choices[0]);
@@ -279,17 +297,18 @@ export function createHorizontalChoiceField({
     div.innerHTML = "";
 
     choices.forEach((choice) => {
-      const inputValue = choice;
+      const choiceKey = toKey(choice);
+      const choiceLabel = toLabel(choice);
       const { label } = createLabeledInput({
-        inputId: `${id ?? key}-${choice.toLowerCase()}`,
+        inputId: `${id ?? key}-${choiceKey.toLowerCase()}`,
         inputName: id ?? key,
-        inputValue,
-        inputChecked: inputValue === selected(),
-        // title: choice,
+        inputValue: choiceKey,
+        inputChecked: choiceKey === sKey,
+        // title: choiceLabel,
         type: "radio",
       });
 
-      const text = window.document.createTextNode(choice);
+      const text = window.document.createTextNode(choiceLabel);
       label.append(text);
       div.append(label);
     });
@@ -298,7 +317,7 @@ export function createHorizontalChoiceField({
   field.addEventListener("change", (event) => {
     // @ts-ignore
     const value = event.target.value;
-    selected.set(value);
+    selected.set(() => fromKey(value));
   });
 
   return { field, selected };

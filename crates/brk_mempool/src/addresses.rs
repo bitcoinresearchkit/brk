@@ -1,22 +1,13 @@
-use std::ops::Deref;
-
 use brk_types::{AddressBytes, AddressMempoolStats, Transaction, Txid};
+use derive_more::Deref;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Per-address stats with associated transaction set.
 pub type AddressStats = (AddressMempoolStats, FxHashSet<Txid>);
 
 /// Tracks per-address mempool statistics.
-#[derive(Default)]
+#[derive(Default, Deref)]
 pub struct AddressTracker(FxHashMap<AddressBytes, AddressStats>);
-
-impl Deref for AddressTracker {
-    type Target = FxHashMap<AddressBytes, AddressStats>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 impl AddressTracker {
     /// Add a transaction to address tracking.

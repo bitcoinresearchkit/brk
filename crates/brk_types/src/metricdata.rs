@@ -10,7 +10,7 @@ use vecdb::AnySerializableVec;
 /// All metric data endpoints return this structure when format is JSON.
 /// This type is not instantiated - use `MetricData::serialize()` to write JSON bytes directly.
 #[derive(JsonSchema, Deserialize)]
-pub struct MetricData {
+pub struct MetricData<T = Value> {
     /// Total number of data points in the metric
     pub total: usize,
     /// Start index (inclusive) of the returned range
@@ -18,7 +18,7 @@ pub struct MetricData {
     /// End index (exclusive) of the returned range
     pub to: usize,
     /// The metric data
-    pub data: Vec<Value>,
+    pub data: Vec<T>,
 }
 
 impl MetricData {

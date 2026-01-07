@@ -7,7 +7,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_types::{CentsCompact, Dollars, Height, Sats, SupplyState};
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use pco::standalone::{simple_decompress, simpler_compress};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};

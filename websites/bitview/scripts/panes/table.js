@@ -1,10 +1,10 @@
 // @ts-nocheck
 
-import { randomFromArray } from "../utils/array";
-import { createButtonElement, createHeader, createSelect } from "../utils/dom";
-import { tableElement } from "../utils/elements";
-import { serdeMetrics, serdeString, serdeUnit } from "../utils/serde";
-import { resetParams } from "../utils/url";
+import { randomFromArray } from "../utils/array.js";
+import { createButtonElement, createHeader, createSelect } from "../utils/dom.js";
+import { tableElement } from "../utils/elements.js";
+import { serdeMetrics, serdeString } from "../utils/serde.js";
+import { resetParams } from "../utils/url.js";
 
 /**
  * @param {Object} args

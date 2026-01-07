@@ -4,7 +4,7 @@ use brk_types::StoredU64;
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{indexes, utils::OptionExt, ComputeIndexes};
+use crate::{indexes, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -147,14 +147,14 @@ impl Vecs {
             })?;
 
         // Compute segwit_count = p2wpkh + p2wsh + p2tr
-        let mut p2wsh_iter = self.indexes_to_p2wsh_count.height.u().into_iter();
-        let mut p2tr_iter = self.indexes_to_p2tr_count.height.u().into_iter();
+        let mut p2wsh_iter = self.indexes_to_p2wsh_count.height.into_iter();
+        let mut p2tr_iter = self.indexes_to_p2tr_count.height.into_iter();
 
         self.indexes_to_segwit_count
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_p2wpkh_count.height.u(),
+                    &self.indexes_to_p2wpkh_count.height,
                     |(h, p2wpkh, ..)| {
                         let sum = *p2wpkh + *p2wsh_iter.get_unwrap(h) + *p2tr_iter.get_unwrap(h);
                         (h, StoredU64::from(sum))

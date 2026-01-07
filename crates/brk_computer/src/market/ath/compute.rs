@@ -3,7 +3,7 @@ use brk_types::StoredU16;
 use vecdb::{Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, price, traits::ComputeDrawdown, utils::OptionExt};
+use crate::{ComputeIndexes, price, traits::ComputeDrawdown};
 
 impl Vecs {
     pub fn compute(
@@ -25,23 +25,21 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_price_ath
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_price_ath.compute_all(starting_indexes, exit, |v| {
                 v.compute_all_time_high(
                     starting_indexes.dateindex,
-                    price.usd.timeindexes_to_price_high.dateindex.u(),
+                    &price.usd.timeindexes_to_price_high.dateindex,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_days_since_price_ath
-            .compute_all(starting_indexes, exit, |v| {
-                let mut high_iter = price.usd.timeindexes_to_price_high.dateindex.u().into_iter();
+        self.indexes_to_days_since_price_ath.compute_all(starting_indexes, exit, |v| {
+                let mut high_iter = price.usd.timeindexes_to_price_high.dateindex.into_iter();
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_price_ath.dateindex.u(),
+                    &self.indexes_to_price_ath.dateindex,
                     |(i, ath, slf)| {
                         if prev.is_none() {
                             let i = i.to_usize();
@@ -64,12 +62,11 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_max_days_between_price_aths
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_max_days_between_price_aths.compute_all(starting_indexes, exit, |v| {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.indexes_to_days_since_price_ath.dateindex.u(),
+                    &self.indexes_to_days_since_price_ath.dateindex,
                     |(i, days, slf)| {
                         if prev.is_none() {
                             let i = i.to_usize();

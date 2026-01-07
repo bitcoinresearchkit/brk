@@ -2,7 +2,7 @@ use std::{collections::hash_map::Entry, mem};
 
 use brk_cohort::ByAddressType;
 use brk_types::{OutputType, TypeIndex};
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
 use smallvec::{Array, SmallVec};
 

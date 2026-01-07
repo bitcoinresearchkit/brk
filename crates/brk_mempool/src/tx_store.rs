@@ -1,19 +1,10 @@
-use std::ops::Deref;
-
 use brk_types::{TxWithHex, Txid};
+use derive_more::Deref;
 use rustc_hash::FxHashMap;
 
 /// Store of full transaction data for API access.
-#[derive(Default)]
+#[derive(Default, Deref)]
 pub struct TxStore(FxHashMap<Txid, TxWithHex>);
-
-impl Deref for TxStore {
-    type Target = FxHashMap<Txid, TxWithHex>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 impl TxStore {
     /// Check if a transaction exists.

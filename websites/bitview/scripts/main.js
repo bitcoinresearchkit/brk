@@ -1,11 +1,11 @@
-import { createColors } from "./utils/colors";
-import { createWebSockets } from "./utils/ws";
-import * as formatters from "./utils/format";
-import modules from "./lazy";
-import { onFirstIntersection, getElementById, isHidden } from "./utils/dom";
-import { next } from "./utils/timing";
-import { replaceHistory } from "./utils/url";
-import { removeStored, writeToStorage } from "./utils/storage";
+import { createColors } from "./utils/colors.js";
+import { createWebSockets } from "./utils/ws.js";
+import * as formatters from "./utils/format.js";
+import modules from "./lazy.js";
+import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
+import { next } from "./utils/timing.js";
+import { replaceHistory } from "./utils/url.js";
+import { removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
   asideLabelElement,
@@ -164,7 +164,7 @@ Promise.all([
       qrcode,
     });
 
-    window.addEventListener("popstate", (event) => {
+    window.addEventListener("popstate", (_event) => {
       const path = window.document.location.pathname
         .split("/")
         .filter((v) => v);
@@ -375,7 +375,6 @@ Promise.all([
       await getFirstChild();
       if (!ul) throw Error("Unreachable");
 
-      let i = 0;
       while (path.length > 1) {
         const name = path.shift();
         if (!name) throw "Unreachable";
@@ -440,7 +439,7 @@ Promise.all([
           /** @type {{ option: Option, title: string }[]} */
           let list = [];
 
-          let [indexes, info, order] = searchResult || [null, null, null];
+          let [indexes, _info, order] = searchResult || [null, null, null];
 
           const minIndex = pageIndex * RESULTS_PER_PAGE;
 
@@ -577,7 +576,6 @@ Promise.all([
 
               const element = options.createOptionElement({
                 option,
-                frame: "search",
                 name: title,
                 qrcode,
               });

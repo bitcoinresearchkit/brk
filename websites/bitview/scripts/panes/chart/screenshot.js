@@ -1,4 +1,4 @@
-import { ios } from "../../utils/env";
+import { ios } from "../../utils/env.js";
 import { domToBlob } from "../../modules/modern-screenshot/4.6.6/dist/index.mjs";
 
 /**

@@ -5,15 +5,21 @@ use brk_types::{
 };
 use vecdb::{BytesVec, EagerVec, LazyVecFrom1};
 
-use crate::internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict};
+use crate::internal::{
+    ComputedChainFirst, ComputedChainLast, ComputedChainMax, ComputedChainMin, ComputedDateLast,
+    ComputedVecsDateFirst, ComputedVecsDateMax, ComputedVecsDateMin,
+};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     // Derived price data in cents
-    pub dateindex_to_price_close_in_cents: LazyVecFrom1<DateIndex, Close<Cents>, DateIndex, OHLCCents>,
-    pub dateindex_to_price_high_in_cents: LazyVecFrom1<DateIndex, High<Cents>, DateIndex, OHLCCents>,
+    pub dateindex_to_price_close_in_cents:
+        LazyVecFrom1<DateIndex, Close<Cents>, DateIndex, OHLCCents>,
+    pub dateindex_to_price_high_in_cents:
+        LazyVecFrom1<DateIndex, High<Cents>, DateIndex, OHLCCents>,
     pub dateindex_to_price_low_in_cents: LazyVecFrom1<DateIndex, Low<Cents>, DateIndex, OHLCCents>,
-    pub dateindex_to_price_open_in_cents: LazyVecFrom1<DateIndex, Open<Cents>, DateIndex, OHLCCents>,
+    pub dateindex_to_price_open_in_cents:
+        LazyVecFrom1<DateIndex, Open<Cents>, DateIndex, OHLCCents>,
     pub height_to_price_close_in_cents: LazyVecFrom1<Height, Close<Cents>, Height, OHLCCents>,
     pub height_to_price_high_in_cents: LazyVecFrom1<Height, High<Cents>, Height, OHLCCents>,
     pub height_to_price_low_in_cents: LazyVecFrom1<Height, Low<Cents>, Height, OHLCCents>,
@@ -24,16 +30,16 @@ pub struct Vecs {
     pub height_to_price_ohlc: LazyVecFrom1<Height, OHLCDollars, Height, OHLCCents>,
 
     // Computed time indexes
-    pub timeindexes_to_price_close: ComputedVecsFromDateIndex<Close<Dollars>>,
-    pub timeindexes_to_price_high: ComputedVecsFromDateIndex<High<Dollars>>,
-    pub timeindexes_to_price_low: ComputedVecsFromDateIndex<Low<Dollars>>,
-    pub timeindexes_to_price_open: ComputedVecsFromDateIndex<Open<Dollars>>,
+    pub timeindexes_to_price_close: ComputedDateLast<Close<Dollars>>,
+    pub timeindexes_to_price_high: ComputedVecsDateMax<High<Dollars>>,
+    pub timeindexes_to_price_low: ComputedVecsDateMin<Low<Dollars>>,
+    pub timeindexes_to_price_open: ComputedVecsDateFirst<Open<Dollars>>,
 
-    // Computed chain indexes
-    pub chainindexes_to_price_close: ComputedVecsFromHeightStrict<Close<Dollars>>,
-    pub chainindexes_to_price_high: ComputedVecsFromHeightStrict<High<Dollars>>,
-    pub chainindexes_to_price_low: ComputedVecsFromHeightStrict<Low<Dollars>>,
-    pub chainindexes_to_price_open: ComputedVecsFromHeightStrict<Open<Dollars>>,
+    // Computed chain indexes (KISS types)
+    pub chainindexes_to_price_close: ComputedChainLast<Close<Dollars>>,
+    pub chainindexes_to_price_high: ComputedChainMax<High<Dollars>>,
+    pub chainindexes_to_price_low: ComputedChainMin<Low<Dollars>>,
+    pub chainindexes_to_price_open: ComputedChainFirst<Open<Dollars>>,
 
     // Period OHLC
     pub weekindex_to_price_ohlc: EagerVec<BytesVec<WeekIndex, OHLCDollars>>,

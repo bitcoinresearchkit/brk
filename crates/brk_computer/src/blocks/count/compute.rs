@@ -47,38 +47,35 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_1w_block_count
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_sum(
-                    starting_indexes.dateindex,
-                    self.indexes_to_block_count.dateindex.unwrap_sum(),
-                    7,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_1w_block_count.compute_all(starting_indexes, exit, |v| {
+            v.compute_sum(
+                starting_indexes.dateindex,
+                self.indexes_to_block_count.dateindex.sum.inner(),
+                7,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.indexes_to_1m_block_count
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_sum(
-                    starting_indexes.dateindex,
-                    self.indexes_to_block_count.dateindex.unwrap_sum(),
-                    30,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_1m_block_count.compute_all(starting_indexes, exit, |v| {
+            v.compute_sum(
+                starting_indexes.dateindex,
+                self.indexes_to_block_count.dateindex.sum.inner(),
+                30,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.indexes_to_1y_block_count
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_sum(
-                    starting_indexes.dateindex,
-                    self.indexes_to_block_count.dateindex.unwrap_sum(),
-                    365,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_1y_block_count.compute_all(starting_indexes, exit, |v| {
+            v.compute_sum(
+                starting_indexes.dateindex,
+                self.indexes_to_block_count.dateindex.sum.inner(),
+                365,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         Ok(())
     }

@@ -6,7 +6,10 @@ use super::super::ohlc;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, Source, VecBuilderOptions},
+    internal::{
+        ComputedChainFirst, ComputedChainLast, ComputedChainMax, ComputedChainMin,
+        ComputedDateLast, ComputedVecsDateFirst, ComputedVecsDateMax, ComputedVecsDateMin,
+    },
 };
 
 impl Vecs {
@@ -16,11 +19,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         ohlc: &ohlc::Vecs,
     ) -> Result<Self> {
-        let first = || VecBuilderOptions::default().add_first();
-        let last = || VecBuilderOptions::default().add_last();
-        let min = || VecBuilderOptions::default().add_min();
-        let max = || VecBuilderOptions::default().add_max();
-
         let height_to_price_ohlc = LazyVecFrom1::init(
             "price_ohlc",
             version,
@@ -101,65 +99,53 @@ impl Vecs {
             height_to_price_high_in_cents,
             height_to_price_low_in_cents,
             height_to_price_open_in_cents,
-            timeindexes_to_price_open: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_open",
-                Source::Compute,
-                version,
-                indexes,
-                first(),
-            )?,
-            timeindexes_to_price_high: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_high",
-                Source::Compute,
-                version,
-                indexes,
-                max(),
-            )?,
-            timeindexes_to_price_low: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_low",
-                Source::Compute,
-                version,
-                indexes,
-                min(),
-            )?,
-            timeindexes_to_price_close: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_close",
-                Source::Compute,
-                version,
-                indexes,
-                last(),
-            )?,
-            chainindexes_to_price_open: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_open: ComputedVecsDateFirst::forced_import(
                 db,
                 "price_open",
                 version,
                 indexes,
-                first(),
             )?,
-            chainindexes_to_price_high: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_high: ComputedVecsDateMax::forced_import(
                 db,
                 "price_high",
                 version,
                 indexes,
-                max(),
             )?,
-            chainindexes_to_price_low: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_low: ComputedVecsDateMin::forced_import(
                 db,
                 "price_low",
                 version,
                 indexes,
-                min(),
             )?,
-            chainindexes_to_price_close: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_close: ComputedDateLast::forced_import(
                 db,
                 "price_close",
                 version,
                 indexes,
-                last(),
+            )?,
+            chainindexes_to_price_open: ComputedChainFirst::forced_import(
+                db,
+                "price_open",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_high: ComputedChainMax::forced_import(
+                db,
+                "price_high",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_low: ComputedChainMin::forced_import(
+                db,
+                "price_low",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_close: ComputedChainLast::forced_import(
+                db,
+                "price_close",
+                version,
+                indexes,
             )?,
             weekindex_to_price_ohlc: EagerVec::forced_import(db, "price_ohlc", version)?,
             difficultyepoch_to_price_ohlc: EagerVec::forced_import(db, "price_ohlc", version)?,

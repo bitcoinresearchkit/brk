@@ -4,10 +4,7 @@ use brk_types::{CheckedSub, Height, Timestamp, Version};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom1};
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
-};
+use crate::{indexes, internal::DerivedComputedBlockDistribution};
 
 impl Vecs {
     pub fn forced_import(
@@ -16,13 +13,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-        };
-
         let height_to_interval = LazyVecFrom1::init(
             "interval",
             version,
@@ -40,16 +30,17 @@ impl Vecs {
             },
         );
 
+        let indexes_to_block_interval = DerivedComputedBlockDistribution::forced_import(
+            db,
+            "block_interval",
+            height_to_interval.boxed_clone(),
+            version,
+            indexes,
+        )?;
+
         Ok(Self {
-            indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
-                db,
-                "block_interval",
-                Source::Vec(height_to_interval.boxed_clone()),
-                version,
-                indexes,
-                stats(),
-            )?,
             height_to_interval,
+            indexes_to_block_interval,
         })
     }
 }

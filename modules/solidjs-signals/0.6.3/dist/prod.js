@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/core/error.ts
 var NotReadyError = class extends Error {
 };

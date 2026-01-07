@@ -10,10 +10,9 @@ use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-        DollarsPlus, LazyValueVecsFrom2FromHeight, LazyVecsFrom2FromDateIndex,
-        LazyVecsFrom2FromHeight, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin, Source,
-        VecBuilderOptions,
+        BinaryBlockSumCum, BinaryDateLast, ComputedBlockSumCum, ComputedDateLast,
+        DerivedValueBlockSumCum, DollarsPlus, MaskSats, PercentageU32F32, SatsPlus,
+        SatsPlusToBitcoin, ValueBinaryBlock,
     },
     price, transactions,
 };
@@ -22,21 +21,22 @@ use crate::{
 pub struct Vecs {
     slug: PoolSlug,
 
-    pub indexes_to_blocks_mined: ComputedVecsFromHeight<StoredU32>,
-    pub indexes_to_1w_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
-    pub indexes_to_1m_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
-    pub indexes_to_1y_blocks_mined: ComputedVecsFromDateIndex<StoredU32>,
+    pub indexes_to_blocks_mined: ComputedBlockSumCum<StoredU32>,
+    pub indexes_to_1w_blocks_mined: ComputedDateLast<StoredU32>,
+    pub indexes_to_1m_blocks_mined: ComputedDateLast<StoredU32>,
+    pub indexes_to_1y_blocks_mined: ComputedDateLast<StoredU32>,
     pub height_to_subsidy: LazyVecFrom2<Height, Sats, Height, StoredU32, Height, Sats>,
     pub height_to_fee: LazyVecFrom2<Height, Sats, Height, StoredU32, Height, Sats>,
-    pub indexes_to_subsidy: ComputedValueVecsFromHeight,
-    pub indexes_to_fee: ComputedValueVecsFromHeight,
-    pub indexes_to_coinbase: LazyValueVecsFrom2FromHeight,
-    pub indexes_to_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
-    pub indexes_to_1d_dominance: LazyVecsFrom2FromHeight<StoredF32, StoredU32, StoredU32>,
-    pub indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
-    pub indexes_to_1m_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
-    pub indexes_to_1y_dominance: LazyVecsFrom2FromDateIndex<StoredF32, StoredU32, StoredU32>,
-    pub indexes_to_days_since_block: ComputedVecsFromDateIndex<StoredU16>,
+    pub indexes_to_subsidy: DerivedValueBlockSumCum,
+    pub indexes_to_fee: DerivedValueBlockSumCum,
+    pub indexes_to_coinbase: ValueBinaryBlock,
+    pub indexes_to_dominance: BinaryBlockSumCum<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1d_dominance: BinaryBlockSumCum<StoredF32, StoredU32, StoredU32>,
+    // KISS: both sources are ComputedVecsDateLast
+    pub indexes_to_1w_dominance: BinaryDateLast<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1m_dominance: BinaryDateLast<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_1y_dominance: BinaryDateLast<StoredF32, StoredU32, StoredU32>,
+    pub indexes_to_days_since_block: ComputedDateLast<StoredU16>,
 }
 
 impl Vecs {
@@ -50,143 +50,90 @@ impl Vecs {
         transactions: &transactions::Vecs,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
-        let compute_dollars = price.is_some();
         let version = parent_version;
 
-        let last = VecBuilderOptions::default().add_last();
-        let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
+        let indexes_to_blocks_mined =
+            ComputedBlockSumCum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
 
-        macro_rules! import_di {
-            ($name:expr) => {
-                ComputedVecsFromDateIndex::forced_import(
-                    db,
-                    &suffix($name),
-                    Source::Compute,
-                    version,
-                    indexes,
-                    last.clone(),
-                )?
-            };
-        }
+        let indexes_to_1w_blocks_mined =
+            ComputedDateLast::forced_import(db, &suffix("1w_blocks_mined"), version, indexes)?;
+        let indexes_to_1m_blocks_mined =
+            ComputedDateLast::forced_import(db, &suffix("1m_blocks_mined"), version, indexes)?;
+        let indexes_to_1y_blocks_mined =
+            ComputedDateLast::forced_import(db, &suffix("1y_blocks_mined"), version, indexes)?;
 
-        let indexes_to_blocks_mined = ComputedVecsFromHeight::forced_import(
-            db,
-            &suffix("blocks_mined"),
-            Source::Compute,
-            version,
-            indexes,
-            sum_cum,
-        )?;
-
-        let indexes_to_1w_blocks_mined = import_di!("1w_blocks_mined");
-        let indexes_to_1m_blocks_mined = import_di!("1m_blocks_mined");
-        let indexes_to_1y_blocks_mined = import_di!("1y_blocks_mined");
-
+        // KISS: height is now a concrete field (no Option)
         let height_to_subsidy = LazyVecFrom2::transformed::<MaskSats>(
-            &suffix("subsidy"),
+            &suffix("height_subsidy"),
             version,
-            indexes_to_blocks_mined
-                .height
-                .as_ref()
-                .unwrap()
-                .boxed_clone(),
-            blocks
-                .rewards
-                .indexes_to_subsidy
-                .sats
-                .height
-                .as_ref()
-                .unwrap()
-                .boxed_clone(),
+            indexes_to_blocks_mined.height.boxed_clone(),
+            blocks.rewards.indexes_to_subsidy.sats.height.boxed_clone(),
         );
 
-        let indexes_to_subsidy = ComputedValueVecsFromHeight::forced_import(
+        let indexes_to_subsidy = DerivedValueBlockSumCum::forced_import(
             db,
             &suffix("subsidy"),
-            Source::Vec(height_to_subsidy.boxed_clone()),
             version,
-            sum_cum,
-            compute_dollars,
             indexes,
+            height_to_subsidy.boxed_clone(),
+            price,
         )?;
 
+        // KISS: height.sum_cum.sum.0 is now a concrete field
         let height_to_fee = LazyVecFrom2::transformed::<MaskSats>(
-            &suffix("fee"),
+            &suffix("height_fee"),
             version,
-            indexes_to_blocks_mined
-                .height
-                .as_ref()
-                .unwrap()
-                .boxed_clone(),
+            indexes_to_blocks_mined.height.boxed_clone(),
             transactions
                 .fees
                 .indexes_to_fee
                 .sats
                 .height
-                .unwrap_sum()
+                .sum_cum
+                .sum
+                .0
                 .boxed_clone(),
         );
 
-        let indexes_to_fee = ComputedValueVecsFromHeight::forced_import(
+        let indexes_to_fee = DerivedValueBlockSumCum::forced_import(
             db,
             &suffix("fee"),
-            Source::Vec(height_to_fee.boxed_clone()),
             version,
-            sum_cum,
-            compute_dollars,
             indexes,
+            height_to_fee.boxed_clone(),
+            price,
         )?;
 
         Ok(Self {
-            indexes_to_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
+            indexes_to_dominance: BinaryBlockSumCum::from_computed::<PercentageU32F32>(
                 &suffix("dominance"),
                 version,
-                indexes_to_blocks_mined
-                    .height
-                    .as_ref()
-                    .unwrap()
-                    .boxed_clone(),
-                blocks
-                    .count
-                    .indexes_to_block_count
-                    .height
-                    .as_ref()
-                    .unwrap()
-                    .boxed_clone(),
+                indexes_to_blocks_mined.height.boxed_clone(),
+                blocks.count.indexes_to_block_count.height.boxed_clone(),
                 &indexes_to_blocks_mined,
                 &blocks.count.indexes_to_block_count,
             ),
-            indexes_to_1d_dominance: LazyVecsFrom2FromHeight::from_computed::<PercentageU32F32>(
+            indexes_to_1d_dominance: BinaryBlockSumCum::from_computed::<PercentageU32F32>(
                 &suffix("1d_dominance"),
                 version,
-                indexes_to_blocks_mined
-                    .height
-                    .as_ref()
-                    .unwrap()
-                    .boxed_clone(),
-                blocks
-                    .count
-                    .indexes_to_block_count
-                    .height
-                    .as_ref()
-                    .unwrap()
-                    .boxed_clone(),
+                indexes_to_blocks_mined.height.boxed_clone(),
+                blocks.count.indexes_to_block_count.height.boxed_clone(),
                 &indexes_to_blocks_mined,
                 &blocks.count.indexes_to_block_count,
             ),
-            indexes_to_1w_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+            indexes_to_1w_dominance: BinaryDateLast::from_computed_both_last::<PercentageU32F32>(
                 &suffix("1w_dominance"),
                 version,
                 &indexes_to_1w_blocks_mined,
                 &blocks.count.indexes_to_1w_block_count,
             ),
-            indexes_to_1m_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+            indexes_to_1m_dominance: BinaryDateLast::from_computed_both_last::<PercentageU32F32>(
                 &suffix("1m_dominance"),
                 version,
                 &indexes_to_1m_blocks_mined,
                 &blocks.count.indexes_to_1m_block_count,
             ),
-            indexes_to_1y_dominance: LazyVecsFrom2FromDateIndex::from_computed::<PercentageU32F32>(
+            indexes_to_1y_dominance: BinaryDateLast::from_computed_both_last::<PercentageU32F32>(
                 &suffix("1y_dominance"),
                 version,
                 &indexes_to_1y_blocks_mined,
@@ -197,7 +144,7 @@ impl Vecs {
             indexes_to_1w_blocks_mined,
             indexes_to_1m_blocks_mined,
             indexes_to_1y_blocks_mined,
-            indexes_to_coinbase: LazyValueVecsFrom2FromHeight::from_computed::<
+            indexes_to_coinbase: ValueBinaryBlock::from_derived::<
                 SatsPlus,
                 SatsPlusToBitcoin,
                 DollarsPlus,
@@ -213,17 +160,20 @@ impl Vecs {
             height_to_fee,
             indexes_to_subsidy,
             indexes_to_fee,
-            indexes_to_days_since_block: import_di!("days_since_block"),
+            indexes_to_days_since_block: ComputedDateLast::forced_import(
+                db,
+                &suffix("days_since_block"),
+                version,
+                indexes,
+            )?,
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn compute(
         &mut self,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         height_to_pool: &impl IterableVec<Height, PoolSlug>,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         self.indexes_to_blocks_mined
@@ -250,7 +200,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
+                    self.indexes_to_blocks_mined.dateindex.sum.inner(),
                     7,
                     exit,
                 )?;
@@ -261,7 +211,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
+                    self.indexes_to_blocks_mined.dateindex.sum.inner(),
                     30,
                     exit,
                 )?;
@@ -272,36 +222,30 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_sum(
                     starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
+                    self.indexes_to_blocks_mined.dateindex.sum.inner(),
                     365,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_subsidy.compute_rest(
+        self.indexes_to_subsidy.derive_from(
             indexes,
-            price,
             starting_indexes,
+            &self.height_to_subsidy,
             exit,
-            Some(&self.height_to_subsidy),
         )?;
 
-        self.indexes_to_fee.compute_rest(
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            Some(&self.height_to_fee),
-        )?;
+        self.indexes_to_fee
+            .derive_from(indexes, starting_indexes, &self.height_to_fee, exit)?;
 
         self.indexes_to_days_since_block
             .compute_all(starting_indexes, exit, |v| {
                 let mut prev = None;
                 v.compute_transform2(
                     starting_indexes.dateindex,
-                    self.indexes_to_blocks_mined.dateindex.unwrap_sum(),
-                    self.indexes_to_blocks_mined.dateindex.unwrap_cumulative(),
+                    self.indexes_to_blocks_mined.dateindex.sum.inner(),
+                    self.indexes_to_blocks_mined.dateindex.cumulative.inner(),
                     |(i, sum, cumulative, slf)| {
                         if prev.is_none() {
                             let i = i.to_usize();

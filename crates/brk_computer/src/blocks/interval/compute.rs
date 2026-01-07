@@ -2,7 +2,7 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes};
+use crate::{indexes, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -11,11 +11,11 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_block_interval.compute_rest(
+        self.indexes_to_block_interval.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_interval,
             exit,
-            Some(&self.height_to_interval),
         )?;
 
         Ok(())

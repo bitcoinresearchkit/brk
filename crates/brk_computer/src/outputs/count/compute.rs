@@ -16,12 +16,12 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_count.compute_rest(
+        self.indexes_to_count.derive_from(
             indexer,
             indexes,
             starting_indexes,
+            &indexes.transaction.txindex_to_output_count,
             exit,
-            Some(&indexes.transaction.txindex_to_output_count),
         )?;
 
         self.indexes_to_utxo_count
@@ -29,23 +29,26 @@ impl Vecs {
                 let mut input_count_iter = inputs_count
                     .indexes_to_count
                     .height
-                    .unwrap_cumulative()
+                    .sum_cum
+                    .cumulative
+                    .0
                     .into_iter();
-                let mut opreturn_count_iter = scripts_count
+                let mut opreturn_cumulative_iter = scripts_count
                     .indexes_to_opreturn_count
-                    .height_extra
-                    .unwrap_cumulative()
+                    .rest
+                    .height_cumulative
+                    .0
                     .into_iter();
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_count.height.unwrap_cumulative(),
+                    &self.indexes_to_count.height.sum_cum.cumulative.0,
                     |(h, output_count, ..)| {
                         let input_count = input_count_iter.get_unwrap(h);
-                        let opreturn_count = opreturn_count_iter.get_unwrap(h);
+                        let opreturn_count = *opreturn_cumulative_iter.get_unwrap(h);
                         let block_count = u64::from(h + 1_usize);
                         // -1 > genesis output is unspendable
                         let mut utxo_count =
-                            *output_count - (*input_count - block_count) - *opreturn_count - 1;
+                            *output_count - (*input_count - block_count) - opreturn_count - 1;
 
                         // txid dup: e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468
                         // Block 91_722 https://mempool.space/block/00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e

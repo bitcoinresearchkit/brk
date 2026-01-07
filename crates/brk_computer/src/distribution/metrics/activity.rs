@@ -9,8 +9,7 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedValueVecsFromHeight, ComputedVecsFromHeight, Source, VecBuilderOptions},
-    price,
+    internal::{ComputedBlockSumCum, DerivedValueBlockSumCum},
 };
 
 use super::ImportConfig;
@@ -21,8 +20,8 @@ pub struct ActivityMetrics {
     /// Total satoshis sent at each height
     pub height_to_sent: EagerVec<PcoVec<Height, Sats>>,
 
-    /// Sent amounts indexed by various dimensions
-    pub indexes_to_sent: ComputedValueVecsFromHeight,
+    /// Sent amounts indexed by various dimensions (derives from height_to_sent)
+    pub indexes_to_sent: DerivedValueBlockSumCum,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub height_to_satblocks_destroyed: EagerVec<PcoVec<Height, Sats>>,
@@ -31,28 +30,24 @@ pub struct ActivityMetrics {
     pub height_to_satdays_destroyed: EagerVec<PcoVec<Height, Sats>>,
 
     /// Coin-blocks destroyed (in BTC rather than sats)
-    pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
+    pub indexes_to_coinblocks_destroyed: ComputedBlockSumCum<StoredF64>,
 
     /// Coin-days destroyed (in BTC rather than sats)
-    pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
+    pub indexes_to_coindays_destroyed: ComputedBlockSumCum<StoredF64>,
 }
 
 impl ActivityMetrics {
     /// Import activity metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let compute_dollars = cfg.compute_dollars();
-        let sum_cum = VecBuilderOptions::default().add_sum().add_cumulative();
-
         let height_to_sent: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(cfg.db, &cfg.name("sent"), cfg.version)?;
-        let indexes_to_sent = ComputedValueVecsFromHeight::forced_import(
+        let indexes_to_sent = DerivedValueBlockSumCum::forced_import(
             cfg.db,
             &cfg.name("sent"),
-            Source::Vec(height_to_sent.boxed_clone()),
             cfg.version,
-            sum_cum,
-            compute_dollars,
             cfg.indexes,
+            height_to_sent.boxed_clone(),
+            cfg.price,
         )?;
 
         Ok(Self {
@@ -71,22 +66,18 @@ impl ActivityMetrics {
                 cfg.version,
             )?,
 
-            indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
+            indexes_to_coinblocks_destroyed: ComputedBlockSumCum::forced_import(
                 cfg.db,
                 &cfg.name("coinblocks_destroyed"),
-                Source::Compute,
                 cfg.version,
                 cfg.indexes,
-                sum_cum,
             )?,
 
-            indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
+            indexes_to_coindays_destroyed: ComputedBlockSumCum::forced_import(
                 cfg.db,
                 &cfg.name("coindays_destroyed"),
-                Source::Compute,
                 cfg.version,
                 cfg.indexes,
-                sum_cum,
             )?,
         })
     }
@@ -174,16 +165,14 @@ impl ActivityMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_sent.compute_rest(
+        self.indexes_to_sent.derive_from(
             indexes,
-            price,
             starting_indexes,
+            &self.height_to_sent,
             exit,
-            Some(&self.height_to_sent),
         )?;
 
         self.indexes_to_coinblocks_destroyed

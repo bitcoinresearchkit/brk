@@ -228,3 +228,15 @@ impl<K: Debug, V: Traversable> Traversable for BTreeMap<K, V> {
         iter
     }
 }
+
+/// Unit type implementation - used as ZST placeholder for disabled features
+/// (e.g., Unpriced variants where dollar fields are not needed)
+impl Traversable for () {
+    fn to_tree_node(&self) -> TreeNode {
+        TreeNode::Branch(BTreeMap::new())
+    }
+
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::empty()
+    }
+}

@@ -295,7 +295,7 @@ impl CohortMetrics {
         self.supply
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;
         self.activity
-            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
+            .compute_rest_part1(indexes, starting_indexes, exit)?;
 
         if let Some(realized) = self.realized.as_mut() {
             realized.compute_rest_part1(indexes, starting_indexes, exit)?;

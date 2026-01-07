@@ -118,11 +118,23 @@ def _m(acc: str, s: str) -> str:
     .unwrap();
 }
 
-/// Generate the Endpoint class
+/// Generate the MetricData and MetricEndpoint classes
 pub fn generate_endpoint_class(output: &mut String) {
     writeln!(
         output,
-        r#"class Endpoint(Generic[T]):
+        r#"class MetricData(TypedDict, Generic[T]):
+    """Metric data with range information."""
+    total: int
+    from_: int  # 'from' is reserved in Python
+    to: int
+    data: List[T]
+
+
+# Type alias for non-generic usage
+AnyMetricData = MetricData[Any]
+
+
+class MetricEndpoint(Generic[T]):
     """An endpoint for a specific metric + index combination."""
 
     def __init__(self, client: BrkClientBase, name: str, index: str):
@@ -130,11 +142,11 @@ pub fn generate_endpoint_class(output: &mut String) {
         self._name = name
         self._index = index
 
-    def get(self) -> List[T]:
+    def get(self) -> MetricData[T]:
         """Fetch all data points for this metric/index."""
         return self._client.get(self.path())
 
-    def range(self, from_val: Optional[int] = None, to_val: Optional[int] = None) -> List[T]:
+    def range(self, from_val: Optional[int] = None, to_val: Optional[int] = None) -> MetricData[T]:
         """Fetch data points within a range."""
         params = []
         if from_val is not None:
@@ -150,6 +162,10 @@ pub fn generate_endpoint_class(output: &mut String) {
         return f"/api/metric/{{self._name}}/{{self._index}}"
 
 
+# Type alias for non-generic usage
+AnyMetricEndpoint = MetricEndpoint[Any]
+
+
 class MetricPattern(Protocol[T]):
     """Protocol for metric patterns with different index sets."""
 
@@ -162,7 +178,7 @@ class MetricPattern(Protocol[T]):
         """Get the list of available indexes for this metric."""
         ...
 
-    def get(self, index: str) -> Optional[Endpoint[T]]:
+    def get(self, index: str) -> Optional[MetricEndpoint[T]]:
         """Get an endpoint for a specific index, if supported."""
         ...
 
@@ -199,10 +215,10 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
             let index_name = index.serialize_long();
-            writeln!(output, "    def {}(self) -> Endpoint[T]:", method_name).unwrap();
+            writeln!(output, "    def {}(self) -> MetricEndpoint[T]:", method_name).unwrap();
             writeln!(
                 output,
-                "        return Endpoint(self._client, self._name, '{}')",
+                "        return MetricEndpoint(self._client, self._name, '{}')",
                 index_name
             )
             .unwrap();
@@ -250,7 +266,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output).unwrap();
 
         // Generate get(index) method
-        writeln!(output, "    def get(self, index: str) -> Optional[Endpoint[T]]:").unwrap();
+        writeln!(output, "    def get(self, index: str) -> Optional[MetricEndpoint[T]]:").unwrap();
         writeln!(output, "        \"\"\"Get an endpoint for a specific index, if supported.\"\"\"").unwrap();
         for (i, index) in pattern.indexes.iter().enumerate() {
             let method_name = index_to_field_name(index);

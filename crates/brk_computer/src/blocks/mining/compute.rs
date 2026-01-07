@@ -5,11 +5,7 @@ use vecdb::Exit;
 
 use super::Vecs;
 use super::super::{count, rewards, ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64};
-use crate::{
-    indexes,
-    utils::OptionExt,
-    ComputeIndexes,
-};
+use crate::{indexes, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -21,11 +17,11 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_difficulty.compute_rest(
+        self.indexes_to_difficulty.derive_from(
             indexes,
             starting_indexes,
+            &indexer.vecs.block.height_to_difficulty,
             exit,
-            Some(&indexer.vecs.block.height_to_difficulty),
         )?;
 
         self.indexes_to_difficulty_as_hash
@@ -45,7 +41,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &count_vecs.height_to_24h_block_count,
-                    self.indexes_to_difficulty_as_hash.height.u(),
+                    &self.indexes_to_difficulty_as_hash.height,
                     |(i, block_count_sum, difficulty_as_hash, ..)| {
                         (
                             i,
@@ -60,44 +56,40 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_hash_rate_1w_sma
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_hash_rate_1w_sma.compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
+                    self.indexes_to_hash_rate.dateindex.inner(),
                     7,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_hash_rate_1m_sma
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_hash_rate_1m_sma.compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
+                    self.indexes_to_hash_rate.dateindex.inner(),
                     30,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_hash_rate_2m_sma
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_hash_rate_2m_sma.compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
+                    self.indexes_to_hash_rate.dateindex.inner(),
                     2 * 30,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_hash_rate_1y_sma
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_hash_rate_1y_sma.compute_all(starting_indexes, exit, |v| {
                 v.compute_sma(
                     starting_indexes.dateindex,
-                    self.indexes_to_hash_rate.dateindex.unwrap_last(),
+                    self.indexes_to_hash_rate.dateindex.inner(),
                     365,
                     exit,
                 )?;
@@ -124,7 +116,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &rewards_vecs.height_to_24h_coinbase_usd_sum,
-                    self.indexes_to_hash_rate.height.u(),
+                    &self.indexes_to_hash_rate.height,
                     |(i, coinbase_sum, hashrate, ..)| {
                         let hashrate_ths = *hashrate / ONE_TERA_HASH;
                         let price = if hashrate_ths == 0.0 {
@@ -143,7 +135,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_ths.height.u(),
+                    &self.indexes_to_hash_price_ths.height,
                     |(i, price, ..)| (i, (*price * 1000.0).into()),
                     exit,
                 )?;
@@ -155,7 +147,7 @@ impl Vecs {
                 v.compute_transform2(
                     starting_indexes.height,
                     &rewards_vecs.height_to_24h_coinbase_sum,
-                    self.indexes_to_hash_rate.height.u(),
+                    &self.indexes_to_hash_rate.height,
                     |(i, coinbase_sum, hashrate, ..)| {
                         let hashrate_ths = *hashrate / ONE_TERA_HASH;
                         let value = if hashrate_ths == 0.0 {
@@ -174,7 +166,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_ths.height.u(),
+                    &self.indexes_to_hash_value_ths.height,
                     |(i, value, ..)| (i, (*value * 1000.0).into()),
                     exit,
                 )?;
@@ -185,7 +177,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_ths.height.u(),
+                    &self.indexes_to_hash_price_ths.height,
                     exit,
                     true,
                 )?;
@@ -196,7 +188,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_phs.height.u(),
+                    &self.indexes_to_hash_price_phs.height,
                     exit,
                     true,
                 )?;
@@ -207,7 +199,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_ths.height.u(),
+                    &self.indexes_to_hash_value_ths.height,
                     exit,
                     true,
                 )?;
@@ -218,7 +210,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_all_time_low_(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_phs.height.u(),
+                    &self.indexes_to_hash_value_phs.height,
                     exit,
                     true,
                 )?;
@@ -229,8 +221,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
                     starting_indexes.height,
-                    self.indexes_to_hash_price_phs.height.u(),
-                    self.indexes_to_hash_price_phs_min.height.u(),
+                    &self.indexes_to_hash_price_phs.height,
+                    &self.indexes_to_hash_price_phs_min.height,
                     exit,
                 )?;
                 Ok(())
@@ -240,8 +232,8 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_percentage_difference(
                     starting_indexes.height,
-                    self.indexes_to_hash_value_phs.height.u(),
-                    self.indexes_to_hash_value_phs_min.height.u(),
+                    &self.indexes_to_hash_value_phs.height,
+                    &self.indexes_to_hash_value_phs_min.height,
                     exit,
                 )?;
                 Ok(())

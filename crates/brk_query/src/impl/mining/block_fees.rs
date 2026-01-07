@@ -15,13 +15,15 @@ impl Query {
 
         let iter = DateIndexIter::new(computer, start, current_height.to_usize());
 
+        // KISS: dateindex.average.0 is now a concrete field
         let mut fees = computer
             .transactions
             .fees
             .indexes_to_fee
             .sats
             .dateindex
-            .unwrap_average()
+            .average
+            .0
             .iter();
 
         Ok(iter.collect(|di, ts, h| {

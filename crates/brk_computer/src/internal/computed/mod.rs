@@ -1,9 +1,11 @@
-mod from_dateindex;
-mod from_height;
-mod from_txindex;
-mod traits;
+mod block;
+mod chain;
+mod date;
+mod derived_block;
+mod tx;
 
-pub use from_dateindex::*;
-pub use from_height::*;
-pub use from_txindex::*;
-pub use traits::*;
+pub use block::*;
+pub use chain::*;
+pub use date::*;
+pub use derived_block::*;
+pub use tx::*;

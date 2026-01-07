@@ -2,7 +2,7 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{price, utils::OptionExt, ComputeIndexes};
+use crate::{price, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -11,7 +11,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = price.usd.timeindexes_to_price_close.dateindex.u();
+        let close = &price.usd.timeindexes_to_price_close.dateindex;
 
         for (sma, period) in [
             (&mut self.indexes_to_price_1w_sma, 7),

@@ -1,23 +1,23 @@
 /**
  * @import * as _ from "./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.d.ts"
  *
- * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateChart, LineStyle } from './modules/lightweight-charts/5.0.9/dist/typings'
+ * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateChart, LineStyle } from './modules/lightweight-charts/5.0.9/dist/typings.js'
  *
- * @import { Signal, Signals, Accessor } from "./signals";
+ * @import { Signal, Signals, Accessor } from "./signals.js";
  *
- * @import { BrkClient, CatalogTree_Computed_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Computed_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Computed_Distribution_UtxoCohorts_All as AllUtxoPattern, UpTo1dPattern as MaxAgePattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, BitcoinPattern, BlockSizePattern, BlockIntervalPattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, SentPattern as RewardPattern, Metric, MetricPattern, AnyMetricPattern } from "./modules/brk-client/index.js"
+ * @import { BrkClient, CatalogTree_Computed_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Computed_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Computed_Distribution_UtxoCohorts_All as AllUtxoPattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, BitcoinPattern, BlockSizePattern, BlockIntervalPattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, SentPattern as RewardPattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, DollarsPattern, CountPattern2 } from "./modules/brk-client/index.js"
  *
- * @import { Resources, MetricResource } from './resources'
+ * @import { Resources, MetricResource } from './resources.js'
  *
- * @import { Valued, SingleValueData, CandlestickData, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart } from "./chart/index"
+ * @import { Valued, SingleValueData, CandlestickData, Series, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, CreateChartElement, Chart, Legend } from "./chart/index.js"
  *
- * @import { Color, ColorName, Colors } from "./utils/colors"
+ * @import { Color, ColorName, Colors } from "./utils/colors.js"
  *
- * @import { WebSockets } from "./utils/ws"
+ * @import { WebSockets } from "./utils/ws.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, UtxoCohortGroupObject, AddressCohortGroupObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, AgeCohortObject, AmountCohortObject, AgeCohortGroupObject, AmountCohortGroupObject } from "./options/partial/index.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, UtxoCohortGroupObject, AddressCohortGroupObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, AgeCohortObject, AmountCohortObject, AgeCohortGroupObject, AmountCohortGroupObject } from "./options/partial.js"
  *
- * @import { Unit } from "./utils/serde"
+ * @import { UnitObject as Unit } from "./utils/units.js"
  *
  * @import { ChartableIndexName } from "./panes/chart/index.js";
  */
@@ -34,7 +34,7 @@
  * @typedef {keyof PoolIdToPoolName} PoolId
  *
  * Pattern unions by cohort type
- * @typedef {AllUtxoPattern | MaxAgePattern | MinAgePattern | UtxoAmountPattern} UtxoCohortPattern
+ * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} UtxoCohortPattern
  * @typedef {AddressAmountPattern} AddressCohortPattern
  * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
  *
@@ -44,7 +44,7 @@
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithNupl
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithCostBasis
  * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithActivity
- * @typedef {AllUtxoPattern | MaxAgePattern | MinAgePattern} PatternWithCostBasisPercentiles
+ * @typedef {AllUtxoPattern | MinAgePattern} PatternWithCostBasisPercentiles
  *
  * Cohort objects with specific pattern capabilities
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithRealizedPrice }} CohortWithRealizedPrice
@@ -61,6 +61,9 @@
  *
  * Generic tree node type for walking
  * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode
+ *
+ * Chartable index IDs (subset of IndexName that can be charted)
+ * @typedef {"height" | "dateindex" | "weekindex" | "monthindex" | "quarterindex" | "semesterindex" | "yearindex" | "decadeindex"} ChartableIndex
  */
 
 // DO NOT CHANGE, Exact format is expected in `brk_bundler`

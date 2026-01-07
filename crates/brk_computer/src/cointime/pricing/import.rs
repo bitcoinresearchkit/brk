@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes, price,
-    internal::{ComputedRatioVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::{ComputedRatioVecsDate, ComputedBlockLast},
 };
 
 impl Vecs {
@@ -15,17 +15,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let last = || VecBuilderOptions::default().add_last();
-
         macro_rules! computed_h {
             ($name:expr) => {
-                ComputedVecsFromHeight::forced_import(
+                ComputedBlockLast::forced_import(
                     db,
                     $name,
-                    Source::Compute,
                     version,
                     indexes,
-                    last(),
                 )?
             };
         }
@@ -38,7 +34,7 @@ impl Vecs {
 
         macro_rules! ratio_di {
             ($name:expr, $source:expr) => {
-                ComputedRatioVecsFromDateIndex::forced_import(
+                ComputedRatioVecsDate::forced_import(
                     db,
                     $name,
                     Some($source),

@@ -20,14 +20,18 @@ impl Query {
             .size
             .indexes_to_block_size
             .dateindex
-            .unwrap_average()
+            .distribution
+            .average
+            .0
             .iter();
         let mut weights_vec = computer
             .blocks
             .weight
             .indexes_to_block_weight
             .dateindex
-            .unwrap_average()
+            .distribution
+            .average
+            .0
             .iter();
 
         let entries: Vec<_> = iter.collect(|di, ts, h| {

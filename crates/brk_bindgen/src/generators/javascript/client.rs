@@ -51,6 +51,16 @@ class BrkError extends Error {{
 
 /**
  * @template T
+ * @typedef {{Object}} MetricData
+ * @property {{number}} total - Total number of data points
+ * @property {{number}} from - Start index (inclusive)
+ * @property {{number}} to - End index (exclusive)
+ * @property {{T[]}} data - The metric data
+ */
+/** @typedef {{MetricData<unknown>}} AnyMetricData */
+
+/**
+ * @template T
  * @typedef {{Object}} MetricEndpoint
  * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} get - Fetch all data points
  * @property {{(from?: number, to?: number, onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} range - Fetch data in range

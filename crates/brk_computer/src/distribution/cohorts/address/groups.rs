@@ -6,7 +6,7 @@ use brk_cohort::{
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Version};
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 

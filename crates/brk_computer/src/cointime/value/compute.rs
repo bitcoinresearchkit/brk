@@ -3,7 +3,7 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{distribution, indexes, price, utils::OptionExt, ComputeIndexes};
+use crate::{distribution, indexes, price, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -30,7 +30,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &price.usd.chainindexes_to_price_close.height,
-                    indexes_to_coinblocks_destroyed.height.u(),
+                    &indexes_to_coinblocks_destroyed.height,
                     exit,
                 )?;
                 Ok(())
@@ -45,7 +45,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &price.usd.chainindexes_to_price_close.height,
-                    activity.indexes_to_coinblocks_created.height.u(),
+                    &activity.indexes_to_coinblocks_created.height,
                     exit,
                 )?;
                 Ok(())
@@ -60,7 +60,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &price.usd.chainindexes_to_price_close.height,
-                    activity.indexes_to_coinblocks_stored.height.u(),
+                    &activity.indexes_to_coinblocks_stored.height,
                     exit,
                 )?;
                 Ok(())

@@ -136,9 +136,56 @@ pub fn generate_main_client(
 
     generate_api_methods(output, endpoints);
 
+    // Instance method: mergeMetricPatterns
+    writeln!(output, r#"
+  /**
+   * Merge multiple MetricPatterns into a single pattern.
+   * Throws if any two patterns have overlapping indexes.
+   * @template T
+   * @param {{...MetricPattern<T>}} patterns - The patterns to merge
+   * @returns {{MetricPattern<T>}} A new merged pattern
+   */
+  mergeMetricPatterns(...patterns) {{
+    if (patterns.length === 0) {{
+      throw new BrkError('mergeMetricPatterns requires at least one pattern');
+    }}
+    if (patterns.length === 1) {{
+      return patterns[0];
+    }}
+
+    const seenIndexes = /** @type {{Map<Index, string>}} */ (new Map());
+    const mergedBy = /** @type {{Partial<Record<Index, MetricEndpoint<T>>>}} */ ({{}});
+
+    for (const pattern of patterns) {{
+      for (const index of pattern.indexes()) {{
+        const existing = seenIndexes.get(index);
+        if (existing !== undefined) {{
+          throw new BrkError(`Index '${{index}}' exists in both '${{existing}}' and '${{pattern.name}}'`);
+        }}
+        seenIndexes.set(index, pattern.name);
+        Object.defineProperty(mergedBy, index, {{
+          get() {{ return pattern.get(index); }},
+          enumerable: true,
+          configurable: true,
+        }});
+      }}
+    }}
+
+    const allIndexes = /** @type {{Index[]}} */ ([...seenIndexes.keys()]);
+    const firstName = patterns[0].name;
+
+    return {{
+      name: firstName,
+      by: mergedBy,
+      indexes() {{ return allIndexes; }},
+      get(index) {{ return mergedBy[index]; }},
+    }};
+  }}
+"#).unwrap();
+
     writeln!(output, "}}\n").unwrap();
 
-    writeln!(output, "export {{ BrkClient, BrkClientBase, BrkError }};").unwrap();
+    writeln!(output, "export {{ BrkClient, BrkError }};").unwrap();
 }
 
 fn generate_tree_initializer(

@@ -2,17 +2,14 @@ use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
     IterableCloneableVec, PcoVec, TypedVecIterator,
 };
 
-use crate::{
-    ComputeIndexes, indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
-};
+use crate::{ComputeIndexes, indexes, internal::DerivedComputedBlockLast};
 
 /// Address count per address type (runtime state).
 #[derive(Debug, Default, Deref, DerefMut)]
@@ -142,11 +139,13 @@ impl AddressTypeToHeightToAddressCount {
 
 /// Address count per address type, indexed by various indexes (dateindex, etc.).
 #[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);
+pub struct AddressTypeToIndexesToAddressCount(ByAddressType<DerivedComputedBlockLast<StoredU64>>);
 
-impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToIndexesToAddressCount {
+impl From<ByAddressType<DerivedComputedBlockLast<StoredU64>>>
+    for AddressTypeToIndexesToAddressCount
+{
     #[inline]
-    fn from(value: ByAddressType<ComputedVecsFromHeight<StoredU64>>) -> Self {
+    fn from(value: ByAddressType<DerivedComputedBlockLast<StoredU64>>) -> Self {
         Self(value)
     }
 }
@@ -160,17 +159,16 @@ impl AddressTypeToIndexesToAddressCount {
         sources: &AddressTypeToHeightToAddressCount,
     ) -> Result<Self> {
         Ok(Self::from(ByAddressType::<
-            ComputedVecsFromHeight<StoredU64>,
+            DerivedComputedBlockLast<StoredU64>,
         >::try_zip_with_name(
             sources,
             |type_name, source| {
-                ComputedVecsFromHeight::forced_import(
+                DerivedComputedBlockLast::forced_import(
                     db,
                     &format!("{type_name}_{name}"),
-                    Source::Vec(source.boxed_clone()),
+                    source.boxed_clone(),
                     version,
                     indexes,
-                    VecBuilderOptions::default().add_last(),
                 )
             },
         )?))
@@ -183,53 +181,53 @@ impl AddressTypeToIndexesToAddressCount {
         exit: &Exit,
         addresstype_to_height_to_addresscount: &AddressTypeToHeightToAddressCount,
     ) -> Result<()> {
-        self.p2pk65.compute_rest(
+        self.p2pk65.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2pk65,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2pk65),
         )?;
-        self.p2pk33.compute_rest(
+        self.p2pk33.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2pk33,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2pk33),
         )?;
-        self.p2pkh.compute_rest(
+        self.p2pkh.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2pkh,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2pkh),
         )?;
-        self.p2sh.compute_rest(
+        self.p2sh.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2sh,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2sh),
         )?;
-        self.p2wpkh.compute_rest(
+        self.p2wpkh.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2wpkh,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2wpkh),
         )?;
-        self.p2wsh.compute_rest(
+        self.p2wsh.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2wsh,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2wsh),
         )?;
-        self.p2tr.compute_rest(
+        self.p2tr.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2tr,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2tr),
         )?;
-        self.p2a.compute_rest(
+        self.p2a.derive_from(
             indexes,
             starting_indexes,
+            &addresstype_to_height_to_addresscount.p2a,
             exit,
-            Some(&addresstype_to_height_to_addresscount.p2a),
         )?;
         Ok(())
     }

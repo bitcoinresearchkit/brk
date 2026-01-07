@@ -2,12 +2,9 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_types::{Sats, SupplyState};
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 
-use super::{
-    super::cost_basis::RealizedState,
-    base::CohortState,
-};
+use super::{super::cost_basis::RealizedState, base::CohortState};
 
 #[derive(Clone, Deref, DerefMut)]
 pub struct UTXOCohortState(CohortState);

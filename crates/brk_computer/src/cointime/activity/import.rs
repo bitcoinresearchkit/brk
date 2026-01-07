@@ -5,36 +5,42 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::{ComputedBlockLast, ComputedBlockSumCum},
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let last = || VecBuilderOptions::default().add_last();
-        let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
-
-        macro_rules! computed_h {
-            ($name:expr, $opts:expr) => {
-                ComputedVecsFromHeight::forced_import(
-                    db,
-                    $name,
-                    Source::Compute,
-                    version,
-                    indexes,
-                    $opts,
-                )?
-            };
-        }
-
         Ok(Self {
-            indexes_to_coinblocks_created: computed_h!("coinblocks_created", sum_cum()),
-            indexes_to_coinblocks_stored: computed_h!("coinblocks_stored", sum_cum()),
-            indexes_to_liveliness: computed_h!("liveliness", last()),
-            indexes_to_vaultedness: computed_h!("vaultedness", last()),
-            indexes_to_activity_to_vaultedness_ratio: computed_h!(
+            indexes_to_coinblocks_created: ComputedBlockSumCum::forced_import(
+                db,
+                "coinblocks_created",
+                version,
+                indexes,
+            )?,
+            indexes_to_coinblocks_stored: ComputedBlockSumCum::forced_import(
+                db,
+                "coinblocks_stored",
+                version,
+                indexes,
+            )?,
+            indexes_to_liveliness: ComputedBlockLast::forced_import(
+                db,
+                "liveliness",
+                version,
+                indexes,
+            )?,
+            indexes_to_vaultedness: ComputedBlockLast::forced_import(
+                db,
+                "vaultedness",
+                version,
+                indexes,
+            )?,
+            indexes_to_activity_to_vaultedness_ratio: ComputedBlockLast::forced_import(
+                db,
                 "activity_to_vaultedness_ratio",
-                last()
-            ),
+                version,
+                indexes,
+            )?,
         })
     }
 }

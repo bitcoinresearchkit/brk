@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
-use derive_deref::Deref;
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco};

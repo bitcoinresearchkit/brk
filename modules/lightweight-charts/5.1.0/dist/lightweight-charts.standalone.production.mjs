@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*!
  * @license
  * TradingView Lightweight Charts™ v5.1.0

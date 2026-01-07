@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, Parameter, escape_python_keyword, to_snake_case};
+use crate::{Endpoint, Parameter, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, to_snake_case};
 
 use super::client::generate_class_constants;
 use super::types::js_type_to_python;
@@ -41,11 +41,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = endpoint
-            .response_type
-            .as_deref()
-            .map(js_type_to_python)
-            .unwrap_or_else(|| "Any".to_string());
+        let return_type = normalize_return_type(
+            &endpoint
+                .response_type
+                .as_deref()
+                .map(js_type_to_python)
+                .unwrap_or_else(|| "Any".to_string()),
+        );
 
         // Build method signature
         let params = build_method_params(endpoint);
@@ -146,6 +148,15 @@ fn build_path_template(path: &str, path_params: &[Parameter]) -> String {
         let safe_name = escape_python_keyword(&param.name);
         let interpolation = format!("{{{}}}", safe_name);
         result = result.replace(&placeholder, &interpolation);
+    }
+    result
+}
+
+/// Replace generic types with their Any variants in return types.
+fn normalize_return_type(return_type: &str) -> String {
+    let mut result = return_type.to_string();
+    for type_name in MANUAL_GENERIC_TYPES {
+        result = result.replace(type_name, &format!("Any{}", type_name));
     }
     result
 }

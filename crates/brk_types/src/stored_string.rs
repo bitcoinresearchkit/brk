@@ -1,7 +1,7 @@
 use std::{borrow::Cow, str};
 
 use byteview::ByteView;
-use derive_deref::Deref;
+use derive_more::Deref;
 use serde::Serialize;
 use vecdb::PrintableIndex;
 

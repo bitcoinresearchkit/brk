@@ -20,7 +20,6 @@ use crate::{
         state::{BlockState, Transacted},
     },
     inputs, outputs,
-    utils::OptionExt,
 };
 
 use super::{
@@ -63,10 +62,10 @@ pub fn process_blocks(
     let height_to_first_txoutindex = &indexer.vecs.txout.height_to_first_txoutindex;
     let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
 
-    // From transactions and inputs/outputs (via .height.u() or .height.unwrap_sum() patterns):
-    let height_to_tx_count = transactions.count.indexes_to_tx_count.height.u();
-    let height_to_output_count = outputs.count.indexes_to_count.height.unwrap_sum();
-    let height_to_input_count = inputs.count.indexes_to_count.height.unwrap_sum();
+    // From transactions and inputs/outputs (via .height or .height.sum_cum.sum patterns):
+    let height_to_tx_count = &transactions.count.indexes_to_tx_count.height;
+    let height_to_output_count = &outputs.count.indexes_to_count.height.sum_cum.sum.0;
+    let height_to_input_count = &inputs.count.indexes_to_count.height.sum_cum.sum.0;
     // From blocks:
     let height_to_timestamp = &blocks.time.height_to_timestamp_fixed;
     let height_to_date = &blocks.time.height_to_date_fixed;
@@ -77,7 +76,7 @@ pub fn process_blocks(
 
     // From price (optional):
     let height_to_price = price.map(|p| &p.usd.chainindexes_to_price_close.height);
-    let dateindex_to_price = price.map(|p| p.usd.timeindexes_to_price_close.dateindex.u());
+    let dateindex_to_price = price.map(|p| &p.usd.timeindexes_to_price_close.dateindex);
 
     // Access pre-computed vectors from context for thread-safe access
     let height_to_price_vec = &ctx.height_to_price;

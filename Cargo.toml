@@ -65,7 +65,7 @@ brk_traversable = { version = "0.1.0-alpha.2", path = "crates/brk_traversable", 
 brk_traversable_derive = { version = "0.1.0-alpha.2", path = "crates/brk_traversable_derive" }
 byteview = "0.10.0"
 color-eyre = "0.6.5"
-derive_deref = "1.1.1"
+derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 env_logger = "0.11.8"
 fjall = "3.0.0"
 jiff = "0.2.17"
@@ -81,8 +81,8 @@ serde_derive = "1.0.228"
 serde_json = { version = "1.0.148", features = ["float_roundtrip"] }
 smallvec = "1.15.1"
 tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
-vecdb = { version = "0.5.4", features = ["derive", "serde_json", "pco", "schemars"] }
-# vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
+# vecdb = { version = "0.5.4", features = ["derive", "serde_json", "pco", "schemars"] }
+vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { git = "https://github.com/anydb-rs/anydb", features = ["derive", "serde_json", "pco"] }
 
 [workspace.metadata.release]

@@ -4,7 +4,7 @@ use vecdb::Exit;
 
 use super::Vecs;
 use super::super::usd;
-use crate::{utils::OptionExt, ComputeIndexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
     pub fn compute(
@@ -63,7 +63,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    usd.timeindexes_to_price_open.dateindex.u(),
+                    &usd.timeindexes_to_price_open.dateindex,
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )?;
@@ -74,7 +74,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    usd.timeindexes_to_price_low.dateindex.u(),
+                    &usd.timeindexes_to_price_low.dateindex,
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )?;
@@ -85,7 +85,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    usd.timeindexes_to_price_high.dateindex.u(),
+                    &usd.timeindexes_to_price_high.dateindex,
                     |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
                     exit,
                 )?;
@@ -96,7 +96,7 @@ impl Vecs {
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    usd.timeindexes_to_price_close.dateindex.u(),
+                    &usd.timeindexes_to_price_close.dateindex,
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )?;
@@ -127,22 +127,10 @@ impl Vecs {
         // DateIndex OHLC in sats
         self.dateindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.dateindex,
-            self.timeindexes_to_price_open_in_sats
-                .dateindex
-                .as_ref()
-                .unwrap(),
-            self.timeindexes_to_price_high_in_sats
-                .dateindex
-                .as_ref()
-                .unwrap(),
-            self.timeindexes_to_price_low_in_sats
-                .dateindex
-                .as_ref()
-                .unwrap(),
-            self.timeindexes_to_price_close_in_sats
-                .dateindex
-                .as_ref()
-                .unwrap(),
+            &self.timeindexes_to_price_open_in_sats.dateindex,
+            &self.timeindexes_to_price_high_in_sats.dateindex,
+            &self.timeindexes_to_price_low_in_sats.dateindex,
+            &self.timeindexes_to_price_close_in_sats.dateindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -160,16 +148,10 @@ impl Vecs {
         // Period OHLC in sats
         self.weekindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.weekindex,
-            self.timeindexes_to_price_open_in_sats
-                .weekindex
-                .unwrap_first(),
-            self.timeindexes_to_price_high_in_sats
-                .weekindex
-                .unwrap_max(),
-            self.timeindexes_to_price_low_in_sats.weekindex.unwrap_min(),
-            self.timeindexes_to_price_close_in_sats
-                .weekindex
-                .unwrap_last(),
+            &*self.timeindexes_to_price_open_in_sats.weekindex,
+            &*self.timeindexes_to_price_high_in_sats.weekindex,
+            &*self.timeindexes_to_price_low_in_sats.weekindex,
+            &*self.timeindexes_to_price_close_in_sats.weekindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -187,18 +169,10 @@ impl Vecs {
         self.difficultyepoch_to_price_ohlc_in_sats
             .compute_transform4(
                 starting_indexes.difficultyepoch,
-                self.chainindexes_to_price_open_in_sats
-                    .difficultyepoch
-                    .unwrap_first(),
-                self.chainindexes_to_price_high_in_sats
-                    .difficultyepoch
-                    .unwrap_max(),
-                self.chainindexes_to_price_low_in_sats
-                    .difficultyepoch
-                    .unwrap_min(),
-                self.chainindexes_to_price_close_in_sats
-                    .difficultyepoch
-                    .unwrap_last(),
+                &*self.chainindexes_to_price_open_in_sats.difficultyepoch,
+                &*self.chainindexes_to_price_high_in_sats.difficultyepoch,
+                &*self.chainindexes_to_price_low_in_sats.difficultyepoch,
+                &*self.chainindexes_to_price_close_in_sats.difficultyepoch,
                 |(i, open, high, low, close, _)| {
                     (
                         i,
@@ -215,18 +189,10 @@ impl Vecs {
 
         self.monthindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.monthindex,
-            self.timeindexes_to_price_open_in_sats
-                .monthindex
-                .unwrap_first(),
-            self.timeindexes_to_price_high_in_sats
-                .monthindex
-                .unwrap_max(),
-            self.timeindexes_to_price_low_in_sats
-                .monthindex
-                .unwrap_min(),
-            self.timeindexes_to_price_close_in_sats
-                .monthindex
-                .unwrap_last(),
+            &*self.timeindexes_to_price_open_in_sats.monthindex,
+            &*self.timeindexes_to_price_high_in_sats.monthindex,
+            &*self.timeindexes_to_price_low_in_sats.monthindex,
+            &*self.timeindexes_to_price_close_in_sats.monthindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -243,18 +209,10 @@ impl Vecs {
 
         self.quarterindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.quarterindex,
-            self.timeindexes_to_price_open_in_sats
-                .quarterindex
-                .unwrap_first(),
-            self.timeindexes_to_price_high_in_sats
-                .quarterindex
-                .unwrap_max(),
-            self.timeindexes_to_price_low_in_sats
-                .quarterindex
-                .unwrap_min(),
-            self.timeindexes_to_price_close_in_sats
-                .quarterindex
-                .unwrap_last(),
+            &*self.timeindexes_to_price_open_in_sats.quarterindex,
+            &*self.timeindexes_to_price_high_in_sats.quarterindex,
+            &*self.timeindexes_to_price_low_in_sats.quarterindex,
+            &*self.timeindexes_to_price_close_in_sats.quarterindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -272,18 +230,10 @@ impl Vecs {
         self.semesterindex_to_price_ohlc_in_sats
             .compute_transform4(
                 starting_indexes.semesterindex,
-                self.timeindexes_to_price_open_in_sats
-                    .semesterindex
-                    .unwrap_first(),
-                self.timeindexes_to_price_high_in_sats
-                    .semesterindex
-                    .unwrap_max(),
-                self.timeindexes_to_price_low_in_sats
-                    .semesterindex
-                    .unwrap_min(),
-                self.timeindexes_to_price_close_in_sats
-                    .semesterindex
-                    .unwrap_last(),
+                &*self.timeindexes_to_price_open_in_sats.semesterindex,
+                &*self.timeindexes_to_price_high_in_sats.semesterindex,
+                &*self.timeindexes_to_price_low_in_sats.semesterindex,
+                &*self.timeindexes_to_price_close_in_sats.semesterindex,
                 |(i, open, high, low, close, _)| {
                     (
                         i,
@@ -300,16 +250,10 @@ impl Vecs {
 
         self.yearindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.yearindex,
-            self.timeindexes_to_price_open_in_sats
-                .yearindex
-                .unwrap_first(),
-            self.timeindexes_to_price_high_in_sats
-                .yearindex
-                .unwrap_max(),
-            self.timeindexes_to_price_low_in_sats.yearindex.unwrap_min(),
-            self.timeindexes_to_price_close_in_sats
-                .yearindex
-                .unwrap_last(),
+            &*self.timeindexes_to_price_open_in_sats.yearindex,
+            &*self.timeindexes_to_price_high_in_sats.yearindex,
+            &*self.timeindexes_to_price_low_in_sats.yearindex,
+            &*self.timeindexes_to_price_close_in_sats.yearindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -326,18 +270,10 @@ impl Vecs {
 
         self.decadeindex_to_price_ohlc_in_sats.compute_transform4(
             starting_indexes.decadeindex,
-            self.timeindexes_to_price_open_in_sats
-                .decadeindex
-                .unwrap_first(),
-            self.timeindexes_to_price_high_in_sats
-                .decadeindex
-                .unwrap_max(),
-            self.timeindexes_to_price_low_in_sats
-                .decadeindex
-                .unwrap_min(),
-            self.timeindexes_to_price_close_in_sats
-                .decadeindex
-                .unwrap_last(),
+            &*self.timeindexes_to_price_open_in_sats.decadeindex,
+            &*self.timeindexes_to_price_high_in_sats.decadeindex,
+            &*self.timeindexes_to_price_low_in_sats.decadeindex,
+            &*self.timeindexes_to_price_close_in_sats.decadeindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,

@@ -4,7 +4,7 @@ use vecdb::{IterableCloneableVec, LazyVecFrom1};
 use super::Vecs;
 use crate::{
     distribution,
-    internal::{DollarsIdentity, LazyValueVecsFromDateIndex, SatsIdentity, SatsToBitcoin},
+    internal::{DollarsIdentity, LazyValueDateLast, SatsIdentity, SatsToBitcoin},
 };
 
 impl Vecs {
@@ -38,8 +38,8 @@ impl Vecs {
                 )
             });
 
-        // Create lazy identity wrapper around the FULL supply (not half!)
-        let indexes = LazyValueVecsFromDateIndex::from_source::<
+        // Create lazy identity wrapper around the FULL supply (not half!) - KISS
+        let indexes = LazyValueDateLast::from_source::<
             SatsIdentity,
             SatsToBitcoin,
             DollarsIdentity,

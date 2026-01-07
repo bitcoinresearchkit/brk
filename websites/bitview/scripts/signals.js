@@ -1,7 +1,7 @@
 /**
- * @import { SignalOptions } from "./modules/solidjs-signals/0.6.3/dist/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./modules/solidjs-signals/0.6.3/dist/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "./modules/solidjs-signals/0.6.3/dist/types/signals";
+ * @import { SignalOptions } from "./modules/solidjs-signals/0.6.3/dist/types/core/core.js"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./modules/solidjs-signals/0.6.3/dist/types/core/owner.js"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Setter } from "./modules/solidjs-signals/0.6.3/dist/types/signals.js";
  */
 
 /**
@@ -24,7 +24,7 @@ import {
   onCleanup,
 } from "./modules/solidjs-signals/0.6.3/dist/prod.js";
 
-let effectCount = 0;
+// let effectCount = 0;
 
 const signals = {
   createSolidSignal: /** @type {typeof CreateSignal} */ (createSignal),
@@ -95,8 +95,8 @@ const signals = {
           }-${paramKey}`,
       );
 
-      /** @type { ((this: Window, ev: PopStateEvent) => any) | undefined} */
-      let popstateCallback;
+      // /** @type { ((this: Window, ev: PopStateEvent) => any) | undefined} */
+      // let popstateCallback;
 
       let serialized = /** @type {string | null} */ (null);
       if (options.save.serializeParam !== false) {

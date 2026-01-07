@@ -10,7 +10,7 @@ use vecdb::{
 use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
-    internal::{ComputedVecsFromHeight, CostBasisPercentiles, Source, VecBuilderOptions},
+    internal::{CostBasisPercentiles, DerivedComputedBlockLast},
 };
 
 use super::ImportConfig;
@@ -20,11 +20,11 @@ use super::ImportConfig;
 pub struct CostBasisMetrics {
     /// Minimum cost basis for any UTXO at this height
     pub height_to_min_cost_basis: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_min_cost_basis: ComputedVecsFromHeight<Dollars>,
+    pub indexes_to_min_cost_basis: DerivedComputedBlockLast<Dollars>,
 
     /// Maximum cost basis for any UTXO at this height
     pub height_to_max_cost_basis: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_max_cost_basis: ComputedVecsFromHeight<Dollars>,
+    pub indexes_to_max_cost_basis: DerivedComputedBlockLast<Dollars>,
 
     /// Cost basis distribution percentiles (median, quartiles, etc.)
     pub percentiles: Option<CostBasisPercentiles>,
@@ -34,7 +34,6 @@ impl CostBasisMetrics {
     /// Import cost basis metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let extended = cfg.extended();
-        let last = VecBuilderOptions::default().add_last();
 
         let height_to_min_cost_basis =
             EagerVec::forced_import(cfg.db, &cfg.name("min_cost_basis"), cfg.version)?;
@@ -43,21 +42,19 @@ impl CostBasisMetrics {
             EagerVec::forced_import(cfg.db, &cfg.name("max_cost_basis"), cfg.version)?;
 
         Ok(Self {
-            indexes_to_min_cost_basis: ComputedVecsFromHeight::forced_import(
+            indexes_to_min_cost_basis: DerivedComputedBlockLast::forced_import(
                 cfg.db,
                 &cfg.name("min_cost_basis"),
-                Source::Vec(height_to_min_cost_basis.boxed_clone()),
+                height_to_min_cost_basis.boxed_clone(),
                 cfg.version,
                 cfg.indexes,
-                last,
             )?,
-            indexes_to_max_cost_basis: ComputedVecsFromHeight::forced_import(
+            indexes_to_max_cost_basis: DerivedComputedBlockLast::forced_import(
                 cfg.db,
                 &cfg.name("max_cost_basis"),
-                Source::Vec(height_to_max_cost_basis.boxed_clone()),
+                height_to_max_cost_basis.boxed_clone(),
                 cfg.version,
                 cfg.indexes,
-                last,
             )?,
             height_to_min_cost_basis,
             height_to_max_cost_basis,
@@ -145,8 +142,7 @@ impl CostBasisMetrics {
                     .vecs
                     .iter_mut()
                     .flatten()
-                    .filter_map(|v| v.dateindex.as_mut())
-                    .map(|v| v as &mut dyn AnyStoredVec),
+                    .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec),
             );
         }
         vecs.into_par_iter()
@@ -193,18 +189,18 @@ impl CostBasisMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_min_cost_basis.compute_rest(
+        self.indexes_to_min_cost_basis.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_min_cost_basis,
             exit,
-            Some(&self.height_to_min_cost_basis),
         )?;
 
-        self.indexes_to_max_cost_basis.compute_rest(
+        self.indexes_to_max_cost_basis.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_max_cost_basis,
             exit,
-            Some(&self.height_to_max_cost_basis),
         )?;
 
         Ok(())

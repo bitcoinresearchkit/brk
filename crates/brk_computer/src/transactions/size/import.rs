@@ -4,10 +4,7 @@ use brk_types::{TxIndex, VSize, Version, Weight};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom2, VecIndex};
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedVecsFromTxindex, Source, VecBuilderOptions},
-};
+use crate::{indexes, internal::ComputedTxDistribution};
 
 impl Vecs {
     pub fn forced_import(
@@ -16,13 +13,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-        };
-
         let txindex_to_weight = LazyVecFrom2::init(
             "weight",
             version,
@@ -52,23 +42,15 @@ impl Vecs {
             },
         );
 
+        let indexes_to_tx_vsize =
+            ComputedTxDistribution::forced_import(db, "tx_vsize", version, indexes)?;
+
+        let indexes_to_tx_weight =
+            ComputedTxDistribution::forced_import(db, "tx_weight", version, indexes)?;
+
         Ok(Self {
-            indexes_to_tx_vsize: ComputedVecsFromTxindex::forced_import(
-                db,
-                "tx_vsize",
-                Source::Vec(txindex_to_vsize.boxed_clone()),
-                version,
-                indexes,
-                stats(),
-            )?,
-            indexes_to_tx_weight: ComputedVecsFromTxindex::forced_import(
-                db,
-                "tx_weight",
-                Source::Vec(txindex_to_weight.boxed_clone()),
-                version,
-                indexes,
-                stats(),
-            )?,
+            indexes_to_tx_vsize,
+            indexes_to_tx_weight,
             txindex_to_vsize,
             txindex_to_weight,
         })

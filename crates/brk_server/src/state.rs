@@ -1,4 +1,6 @@
-use std::{ops::Deref, path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
+
+use derive_more::Deref;
 
 use axum::{
     body::{Body, Bytes},
@@ -13,18 +15,12 @@ use crate::{
     extended::{ResponseExtended, ResultExtended},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Deref)]
 pub struct AppState {
+    #[deref]
     pub query: AsyncQuery,
     pub path: Option<PathBuf>,
     pub cache: Arc<Cache<String, Bytes>>,
-}
-
-impl Deref for AppState {
-    type Target = AsyncQuery;
-    fn deref(&self) -> &Self::Target {
-        &self.query
-    }
 }
 
 impl AppState {

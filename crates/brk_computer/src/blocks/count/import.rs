@@ -10,14 +10,11 @@ use crate::{
         TARGET_BLOCKS_PER_YEAR,
     },
     indexes,
-    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::{ComputedBlockSumCum, ComputedDateLast},
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let last = || VecBuilderOptions::default().add_last();
-        let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
-
         Ok(Self {
             dateindex_to_block_count_target: LazyVecFrom1::init(
                 "block_count_target",
@@ -62,37 +59,29 @@ impl Vecs {
                 |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
             ),
             height_to_24h_block_count: EagerVec::forced_import(db, "24h_block_count", version)?,
-            indexes_to_block_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_block_count: ComputedBlockSumCum::forced_import(
                 db,
                 "block_count",
-                Source::Compute,
                 version,
                 indexes,
-                sum_cum(),
             )?,
-            indexes_to_1w_block_count: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_1w_block_count: ComputedDateLast::forced_import(
                 db,
                 "1w_block_count",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_1m_block_count: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_1m_block_count: ComputedDateLast::forced_import(
                 db,
                 "1m_block_count",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
-            indexes_to_1y_block_count: ComputedVecsFromDateIndex::forced_import(
+            indexes_to_1y_block_count: ComputedDateLast::forced_import(
                 db,
                 "1y_block_count",
-                Source::Compute,
                 version,
                 indexes,
-                last(),
             )?,
         })
     }

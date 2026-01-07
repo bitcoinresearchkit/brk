@@ -20,7 +20,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::ComputedBlockLast,
     outputs, price, transactions,
 };
 
@@ -49,8 +49,8 @@ pub struct Vecs {
 
     pub addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount,
     pub addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount,
-    pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
-    pub indexes_to_empty_addr_count: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_addr_count: ComputedBlockLast<StoredU64>,
+    pub indexes_to_empty_addr_count: ComputedBlockLast<StoredU64>,
     pub loadedaddressindex_to_loadedaddressindex:
         LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
     pub emptyaddressindex_to_emptyaddressindex:
@@ -123,21 +123,17 @@ impl Vecs {
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_addr_count: ComputedBlockLast::forced_import(
                 &db,
                 "addr_count",
-                Source::Compute,
                 version,
                 indexes,
-                VecBuilderOptions::default().add_last(),
             )?,
-            indexes_to_empty_addr_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_empty_addr_count: ComputedBlockLast::forced_import(
                 &db,
                 "empty_addr_count",
-                Source::Compute,
                 version,
                 indexes,
-                VecBuilderOptions::default().add_last(),
             )?,
 
             addresstype_to_indexes_to_addr_count:
@@ -380,11 +376,12 @@ impl Vecs {
             .as_ref()
             .cloned();
 
+        // KISS: dateindex is no longer Option, just clone directly
         let dateindex_to_market_cap = supply_metrics
             .indexes_to_supply
             .dollars
             .as_ref()
-            .and_then(|v| v.dateindex.as_ref().cloned());
+            .map(|v| v.dateindex.clone());
 
         let height_to_market_cap_ref = height_to_market_cap.as_ref();
         let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();

@@ -8,48 +8,46 @@ use vecdb::{
     PcoVec, VecIndex,
 };
 
-use crate::{ComputeIndexes, internal::source::Source, indexes, price, utils::OptionExt};
+use crate::{ComputeIndexes, indexes, price};
 
-use super::super::{
-    ClosePriceTimesRatio, ComputedVecsFromDateIndex, LazyVecsFrom2FromDateIndex, VecBuilderOptions,
-};
+use super::super::{BinaryDateLast, ClosePriceTimesRatio, ComputedDateLast};
 
 #[derive(Clone, Traversable)]
-pub struct ComputedStandardDeviationVecsFromDateIndex {
+pub struct ComputedStandardDeviationVecsDate {
     days: usize,
 
-    pub sma: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub sma: Option<ComputedDateLast<StoredF32>>,
 
-    pub sd: ComputedVecsFromDateIndex<StoredF32>,
+    pub sd: ComputedDateLast<StoredF32>,
 
-    pub zscore: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub zscore: Option<ComputedDateLast<StoredF32>>,
 
-    pub p0_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub p1sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub p1_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub p2sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub p2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub p3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m0_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m1sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m1_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m2sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m2_5sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub m3sd: Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub p0_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub p1sd: Option<ComputedDateLast<StoredF32>>,
+    pub p1_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub p2sd: Option<ComputedDateLast<StoredF32>>,
+    pub p2_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub p3sd: Option<ComputedDateLast<StoredF32>>,
+    pub m0_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub m1sd: Option<ComputedDateLast<StoredF32>>,
+    pub m1_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub m2sd: Option<ComputedDateLast<StoredF32>>,
+    pub m2_5sd: Option<ComputedDateLast<StoredF32>>,
+    pub m3sd: Option<ComputedDateLast<StoredF32>>,
 
-    pub _0sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub p3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m0_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2_5sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
-    pub m3sd_usd: Option<LazyVecsFrom2FromDateIndex<Dollars, Close<Dollars>, StoredF32>>,
+    pub _0sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p0_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p3sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m0_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m3sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -96,37 +94,32 @@ impl StandardDeviationVecsOptions {
     }
 }
 
-impl ComputedStandardDeviationVecsFromDateIndex {
+impl ComputedStandardDeviationVecsDate {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         db: &Database,
         name: &str,
         days: usize,
-        sma: Source<DateIndex, StoredF32>,
         parent_version: Version,
         indexes: &indexes::Vecs,
         options: StandardDeviationVecsOptions,
         price_vecs: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let opts = VecBuilderOptions::default().add_last();
         let version = parent_version + Version::ONE;
 
         macro_rules! import {
             ($suffix:expr) => {
-                ComputedVecsFromDateIndex::forced_import(
+                ComputedDateLast::forced_import(
                     db,
                     &format!("{name}_{}", $suffix),
-                    Source::Compute,
                     version,
                     indexes,
-                    opts,
                 )
                 .unwrap()
             };
         }
 
-        // Create sources first so lazy vecs can reference them
-        let sma_vec = sma.is_compute().then(|| import!("sma"));
+        let sma_vec = Some(import!("sma"));
         let p0_5sd = options.bands().then(|| import!("p0_5sd"));
         let p1sd = options.bands().then(|| import!("p1sd"));
         let p1_5sd = options.bands().then(|| import!("p1_5sd"));
@@ -140,7 +133,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         let m2_5sd = options.bands().then(|| import!("m2_5sd"));
         let m3sd = options.bands().then(|| import!("m3sd"));
 
-        // Create lazy USD vecs from price and band sources
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
                 price_vecs
@@ -148,7 +140,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     .zip($band.as_ref())
                     .filter(|_| options.price_bands())
                     .map(|(p, b)| {
-                        LazyVecsFrom2FromDateIndex::from_computed::<ClosePriceTimesRatio>(
+                        BinaryDateLast::from_computed_both_last::<ClosePriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             version,
                             p,
@@ -226,7 +218,8 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         sma_opt: Option<&impl IterableVec<DateIndex, StoredF32>>,
         source: &impl CollectableVec<DateIndex, StoredF32>,
     ) -> Result<()> {
-        let sma = sma_opt.unwrap_or_else(|| unsafe { mem::transmute(&self.sma.u().dateindex) });
+        let sma = sma_opt
+            .unwrap_or_else(|| unsafe { mem::transmute(&self.sma.as_ref().unwrap().dateindex) });
 
         let min_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
@@ -252,18 +245,18 @@ impl ComputedStandardDeviationVecsFromDateIndex {
 
         sorted.sort_unstable();
 
-        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut p1sd = self.p1sd.as_mut().map(|c| c.dateindex.um());
-        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut p2sd = self.p2sd.as_mut().map(|c| c.dateindex.um());
-        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut p3sd = self.p3sd.as_mut().map(|c| c.dateindex.um());
-        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut m1sd = self.m1sd.as_mut().map(|c| c.dateindex.um());
-        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut m2sd = self.m2sd.as_mut().map(|c| c.dateindex.um());
-        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| c.dateindex.um());
-        let mut m3sd = self.m3sd.as_mut().map(|c| c.dateindex.um());
+        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut p1sd = self.p1sd.as_mut().map(|c| &mut c.dateindex);
+        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut p2sd = self.p2sd.as_mut().map(|c| &mut c.dateindex);
+        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut p3sd = self.p3sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m1sd = self.m1sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m2sd = self.m2sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| &mut c.dateindex);
+        let mut m3sd = self.m3sd.as_mut().map(|c| &mut c.dateindex);
 
         let min_date_usize = min_date.to_usize();
         let mut sma_iter = sma.iter().skip(starting_dateindex.to_usize());
@@ -274,11 +267,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
             .skip(starting_dateindex.to_usize())
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_date_usize {
-                    self.sd
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, StoredF32::NAN)?;
+                    self.sd.dateindex.truncate_push_at(index, StoredF32::NAN)?;
 
                     if let Some(v) = p0_5sd.as_mut() {
                         v.truncate_push_at(index, StoredF32::NAN)?
@@ -322,56 +311,52 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
 
-                    let avg = sma_iter.next().unwrap();
+                    let average = sma_iter.next().unwrap();
 
                     let population =
                         index.checked_sub(min_date_usize).unwrap().to_usize() as f32 + 1.0;
 
                     let sd = StoredF32::from(
-                        (sorted.iter().map(|v| (**v - *avg).powi(2)).sum::<f32>() / population)
+                        (sorted.iter().map(|v| (**v - *average).powi(2)).sum::<f32>() / population)
                             .sqrt(),
                     );
 
-                    self.sd
-                        .dateindex
-                        .as_mut()
-                        .unwrap()
-                        .truncate_push_at(index, sd)?;
+                    self.sd.dateindex.truncate_push_at(index, sd)?;
                     if let Some(v) = p0_5sd.as_mut() {
-                        v.truncate_push_at(index, avg + StoredF32::from(0.5 * *sd))?
+                        v.truncate_push_at(index, average + StoredF32::from(0.5 * *sd))?
                     }
                     if let Some(v) = p1sd.as_mut() {
-                        v.truncate_push_at(index, avg + sd)?
+                        v.truncate_push_at(index, average + sd)?
                     }
                     if let Some(v) = p1_5sd.as_mut() {
-                        v.truncate_push_at(index, avg + StoredF32::from(1.5 * *sd))?
+                        v.truncate_push_at(index, average + StoredF32::from(1.5 * *sd))?
                     }
                     if let Some(v) = p2sd.as_mut() {
-                        v.truncate_push_at(index, avg + 2 * sd)?
+                        v.truncate_push_at(index, average + 2 * sd)?
                     }
                     if let Some(v) = p2_5sd.as_mut() {
-                        v.truncate_push_at(index, avg + StoredF32::from(2.5 * *sd))?
+                        v.truncate_push_at(index, average + StoredF32::from(2.5 * *sd))?
                     }
                     if let Some(v) = p3sd.as_mut() {
-                        v.truncate_push_at(index, avg + 3 * sd)?
+                        v.truncate_push_at(index, average + 3 * sd)?
                     }
                     if let Some(v) = m0_5sd.as_mut() {
-                        v.truncate_push_at(index, avg - StoredF32::from(0.5 * *sd))?
+                        v.truncate_push_at(index, average - StoredF32::from(0.5 * *sd))?
                     }
                     if let Some(v) = m1sd.as_mut() {
-                        v.truncate_push_at(index, avg - sd)?
+                        v.truncate_push_at(index, average - sd)?
                     }
                     if let Some(v) = m1_5sd.as_mut() {
-                        v.truncate_push_at(index, avg - StoredF32::from(1.5 * *sd))?
+                        v.truncate_push_at(index, average - StoredF32::from(1.5 * *sd))?
                     }
                     if let Some(v) = m2sd.as_mut() {
-                        v.truncate_push_at(index, avg - 2 * sd)?
+                        v.truncate_push_at(index, average - 2 * sd)?
                     }
                     if let Some(v) = m2_5sd.as_mut() {
-                        v.truncate_push_at(index, avg - StoredF32::from(2.5 * *sd))?
+                        v.truncate_push_at(index, average - StoredF32::from(2.5 * *sd))?
                     }
                     if let Some(v) = m3sd.as_mut() {
-                        v.truncate_push_at(index, avg - 3 * sd)?
+                        v.truncate_push_at(index, average - 3 * sd)?
                     }
                 }
 
@@ -399,7 +384,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
                     starting_indexes.dateindex,
                     source,
                     sma,
-                    self.sd.dateindex.u(),
+                    &self.sd.dateindex,
                     exit,
                 )?;
                 Ok(())
@@ -409,9 +394,7 @@ impl ComputedStandardDeviationVecsFromDateIndex {
         Ok(())
     }
 
-    fn mut_stateful_computed(
-        &mut self,
-    ) -> impl Iterator<Item = &mut ComputedVecsFromDateIndex<StoredF32>> {
+    fn mut_stateful_computed(&mut self) -> impl Iterator<Item = &mut ComputedDateLast<StoredF32>> {
         [
             Some(&mut self.sd),
             self.p0_5sd.as_mut(),
@@ -434,6 +417,6 @@ impl ComputedStandardDeviationVecsFromDateIndex {
     fn mut_stateful_date_vecs(
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
-        self.mut_stateful_computed().map(|c| c.dateindex.um())
+        self.mut_stateful_computed().map(|c| &mut c.dateindex)
     }
 }

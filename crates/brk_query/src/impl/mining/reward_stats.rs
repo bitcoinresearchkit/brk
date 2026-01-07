@@ -12,30 +12,30 @@ impl Query {
         let end_block = current_height;
         let start_block = Height::from(current_height.to_usize().saturating_sub(block_count - 1));
 
+        // KISS: height is now a concrete field (no Option)
         let mut coinbase_iter = computer
             .blocks
             .rewards
             .indexes_to_coinbase
             .sats
             .height
-            .as_ref()
-            .unwrap()
             .iter();
+        // KISS: height.sum_cum.sum.0 is now a concrete field
         let mut fee_iter = computer
             .transactions
             .fees
             .indexes_to_fee
             .sats
             .height
-            .unwrap_sum()
+            .sum_cum
+            .sum
+            .0
             .iter();
         let mut tx_count_iter = computer
             .transactions
             .count
             .indexes_to_tx_count
             .height
-            .as_ref()
-            .unwrap()
             .iter();
 
         let mut total_reward = Sats::ZERO;

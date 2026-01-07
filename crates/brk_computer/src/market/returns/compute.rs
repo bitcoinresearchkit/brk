@@ -3,7 +3,7 @@ use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{utils::OptionExt, ComputeIndexes};
+use crate::ComputeIndexes;
 
 impl Vecs {
     pub fn compute(&mut self, starting_indexes: &ComputeIndexes, exit: &Exit) -> Result<()> {
@@ -11,9 +11,10 @@ impl Vecs {
         let price_returns_dca = self.price_returns.as_dca_period();
         for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_returns_dca) {
             cagr.compute_all(starting_indexes, exit, |v| {
+                // KISS: dateindex is no longer Option
                 v.compute_cagr(
                     starting_indexes.dateindex,
-                    returns.dateindex.u(),
+                    &returns.dateindex,
                     days as usize,
                     exit,
                 )?;
@@ -21,8 +22,8 @@ impl Vecs {
             })?;
         }
 
-        // Returns standard deviation (computed from 1d returns)
-        let _1d_price_returns_dateindex = self.price_returns._1d.dateindex.u();
+        // KISS: dateindex is no longer Option
+        let _1d_price_returns_dateindex = &self.price_returns._1d.dateindex;
 
         self.indexes_to_1d_returns_1w_sd.compute_all(
             starting_indexes,

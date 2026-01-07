@@ -15,8 +15,7 @@ impl Vecs {
     ) -> Result<()> {
         let mut height_to_difficultyepoch_iter =
             indexes.block.height_to_difficultyepoch.into_iter();
-        self.indexes_to_difficultyepoch
-            .compute_all(starting_indexes, exit, |vec| {
+        self.indexes_to_difficultyepoch.compute_all(starting_indexes, exit, |vec| {
                 let mut height_count_iter = indexes.time.dateindex_to_height_count.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
@@ -48,10 +47,7 @@ impl Vecs {
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_blocks_before_next_difficulty_adjustment
-                        .height
-                        .as_ref()
-                        .unwrap(),
+                    &self.indexes_to_blocks_before_next_difficulty_adjustment.height,
                     |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
                     exit,
                 )?;

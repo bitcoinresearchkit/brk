@@ -19,7 +19,7 @@ use brk_rpc::Client;
 use brk_types::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
 use crossbeam::channel::bounded;
-use derive_deref::Deref;
+use derive_more::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;

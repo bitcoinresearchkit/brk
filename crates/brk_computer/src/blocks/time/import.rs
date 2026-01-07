@@ -6,10 +6,7 @@ use vecdb::{
 };
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedVecsFromDateIndex, Source, VecBuilderOptions},
-};
+use crate::{indexes, internal::ComputedVecsDateFirst};
 
 impl Vecs {
     pub fn forced_import(
@@ -47,13 +44,11 @@ impl Vecs {
                         .and_then(|h: Height| timestamp_iter.get(h))
                 },
             ),
-            timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
+            timeindexes_to_timestamp: ComputedVecsDateFirst::forced_import(
                 db,
                 "timestamp",
-                Source::Compute,
                 version,
                 indexes,
-                VecBuilderOptions::default().add_first(),
             )?,
         })
     }

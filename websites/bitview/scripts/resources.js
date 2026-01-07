@@ -10,17 +10,19 @@
 /**
  * @template T
  * @typedef {Object} RangeState
- * @property {Signal<T | null>} response
+ * @property {Signal<MetricData<T> | null>} response
  * @property {Signal<boolean>} loading
  */
+/** @typedef {RangeState<unknown>} AnyRangeState */
 
 /**
  * @template T
  * @typedef {Object} MetricResource
  * @property {string} path
  * @property {(from?: number, to?: number) => RangeState<T>} range
- * @property {(from?: number, to?: number) => Promise<T[] | null>} fetch
+ * @property {(from?: number, to?: number) => Promise<MetricData<T> | null>} fetch
  */
+/** @typedef {MetricResource<unknown>} AnyMetricResource */
 
 /**
  * @typedef {ReturnType<typeof createResources>} Resources
@@ -57,7 +59,7 @@ export function createResources(signals) {
           error.set(null);
           try {
             const result = await fetcher(...args);
-            data.set(result);
+            data.set(() => result);
             return result;
           } catch (e) {
             error.set(e instanceof Error ? e : new Error(String(e)));
@@ -71,12 +73,12 @@ export function createResources(signals) {
   }
 
   /**
-   * Create a reactive resource wrapper for a MetricNode with multi-range support
+   * Create a reactive resource wrapper for a MetricEndpoint with multi-range support
    * @template T
-   * @param {MetricNode<T>} node
+   * @param {MetricEndpoint<T>} endpoint
    * @returns {MetricResource<T>}
    */
-  function useMetricNode(node) {
+  function useMetricEndpoint(endpoint) {
     return signals.runWithOwner(owner, () => {
       /** @type {Map<string, RangeState<T>>} */
       const ranges = new Map();
@@ -85,20 +87,24 @@ export function createResources(signals) {
        * Get or create range state
        * @param {number} [from=-10000]
        * @param {number} [to]
+       * @returns {RangeState<T>}
        */
       function range(from = -10000, to) {
         const key = `${from}-${to ?? ""}`;
-        if (!ranges.has(key)) {
-          ranges.set(key, {
-            response: signals.createSignal(/** @type {T | null} */ (null)),
-            loading: signals.createSignal(false),
-          });
-        }
-        return /** @type {RangeState<T>} */ (ranges.get(key));
+        const existing = ranges.get(key);
+        if (existing) return existing;
+
+        /** @type {RangeState<T>} */
+        const state = {
+          response: signals.createSignal(/** @type {MetricData<T> | null} */ (null)),
+          loading: signals.createSignal(false),
+        };
+        ranges.set(key, state);
+        return state;
       }
 
       return {
-        path: node.path,
+        path: endpoint.path,
         range,
         /**
          * Fetch data for a range
@@ -109,7 +115,7 @@ export function createResources(signals) {
           const r = range(from, to);
           r.loading.set(true);
           try {
-            const result = await node.range(from, to, r.response.set);
+            const result = await endpoint.range(from, to, r.response.set);
             return result;
           } finally {
             r.loading.set(false);
@@ -119,5 +125,5 @@ export function createResources(signals) {
     });
   }
 
-  return { createResource, useMetricNode };
+  return { createResource, useMetricEndpoint };
 }

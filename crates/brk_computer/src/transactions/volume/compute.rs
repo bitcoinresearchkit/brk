@@ -34,46 +34,42 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_annualized_volume
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_sum(
-                    starting_indexes.dateindex,
-                    self.indexes_to_sent_sum.sats.dateindex.unwrap_sum(),
-                    365,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_annualized_volume.compute_all(starting_indexes, exit, |v| {
+            v.compute_sum(
+                starting_indexes.dateindex,
+                &self.indexes_to_sent_sum.sats.dateindex.0,
+                365,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.indexes_to_annualized_volume_btc
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_sum(
-                    starting_indexes.dateindex,
-                    self.indexes_to_sent_sum.bitcoin.dateindex.unwrap_sum(),
-                    365,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.indexes_to_annualized_volume_btc.compute_all(starting_indexes, exit, |v| {
+            v.compute_sum(
+                starting_indexes.dateindex,
+                &*self.indexes_to_sent_sum.bitcoin.dateindex,
+                365,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         if let Some(indexes_to_sent_sum) = self.indexes_to_sent_sum.dollars.as_ref() {
-            self.indexes_to_annualized_volume_usd
-                .compute_all(starting_indexes, exit, |v| {
-                    v.compute_sum(
-                        starting_indexes.dateindex,
-                        indexes_to_sent_sum.dateindex.unwrap_sum(),
-                        365,
-                        exit,
-                    )?;
-                    Ok(())
-                })?;
+            self.indexes_to_annualized_volume_usd.compute_all(starting_indexes, exit, |v| {
+                v.compute_sum(
+                    starting_indexes.dateindex,
+                    &indexes_to_sent_sum.dateindex.0,
+                    365,
+                    exit,
+                )?;
+                Ok(())
+            })?;
         }
 
-        self.indexes_to_tx_per_sec
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_tx_per_sec.compute_all(starting_indexes, exit, |v| {
                 v.compute_transform2(
                     starting_indexes.dateindex,
-                    count_vecs.indexes_to_tx_count.dateindex.unwrap_sum(),
+                    &count_vecs.indexes_to_tx_count.dateindex.sum_cum.sum.0,
                     &indexes.time.dateindex_to_date,
                     |(i, tx_count, date, ..)| {
                         let completion = date.completion();
@@ -89,11 +85,10 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_inputs_per_sec
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_inputs_per_sec.compute_all(starting_indexes, exit, |v| {
                 v.compute_transform2(
                     starting_indexes.dateindex,
-                    inputs_count.indexes_to_count.dateindex.unwrap_sum(),
+                    &inputs_count.indexes_to_count.dateindex.sum_cum.sum.0,
                     &indexes.time.dateindex_to_date,
                     |(i, input_count, date, ..)| {
                         let completion = date.completion();
@@ -109,11 +104,10 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_outputs_per_sec
-            .compute_all(starting_indexes, exit, |v| {
+        self.indexes_to_outputs_per_sec.compute_all(starting_indexes, exit, |v| {
                 v.compute_transform2(
                     starting_indexes.dateindex,
-                    outputs_count.indexes_to_count.dateindex.unwrap_sum(),
+                    &outputs_count.indexes_to_count.dateindex.sum_cum.sum.0,
                     &indexes.time.dateindex_to_date,
                     |(i, output_count, date, ..)| {
                         let completion = date.completion();

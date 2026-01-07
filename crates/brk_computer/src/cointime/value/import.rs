@@ -3,32 +3,29 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
-};
+use crate::{indexes, internal::ComputedBlockSumCum};
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        let sum_cum = || VecBuilderOptions::default().add_sum().add_cumulative();
-
-        macro_rules! computed_h {
-            ($name:expr) => {
-                ComputedVecsFromHeight::forced_import(
-                    db,
-                    $name,
-                    Source::Compute,
-                    version,
-                    indexes,
-                    sum_cum(),
-                )?
-            };
-        }
-
         Ok(Self {
-            indexes_to_cointime_value_destroyed: computed_h!("cointime_value_destroyed"),
-            indexes_to_cointime_value_created: computed_h!("cointime_value_created"),
-            indexes_to_cointime_value_stored: computed_h!("cointime_value_stored"),
+            indexes_to_cointime_value_destroyed: ComputedBlockSumCum::forced_import(
+                db,
+                "cointime_value_destroyed",
+                version,
+                indexes,
+            )?,
+            indexes_to_cointime_value_created: ComputedBlockSumCum::forced_import(
+                db,
+                "cointime_value_created",
+                version,
+                indexes,
+            )?,
+            indexes_to_cointime_value_stored: ComputedBlockSumCum::forced_import(
+                db,
+                "cointime_value_stored",
+                version,
+                indexes,
+            )?,
         })
     }
 }

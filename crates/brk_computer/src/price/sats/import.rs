@@ -5,20 +5,14 @@ use vecdb::{Database, EagerVec, ImportableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, Source, VecBuilderOptions},
+    internal::{
+        ComputedChainFirst, ComputedChainLast, ComputedChainMax, ComputedChainMin,
+        ComputedDateLast, ComputedVecsDateFirst, ComputedVecsDateMax, ComputedVecsDateMin,
+    },
 };
 
 impl Vecs {
-    pub fn forced_import(
-        db: &Database,
-        version: Version,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        let first = || VecBuilderOptions::default().add_first();
-        let last = || VecBuilderOptions::default().add_last();
-        let min = || VecBuilderOptions::default().add_min();
-        let max = || VecBuilderOptions::default().add_max();
-
+    pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
             dateindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 db,
@@ -30,65 +24,53 @@ impl Vecs {
                 "price_ohlc_in_sats",
                 version,
             )?,
-            timeindexes_to_price_open_in_sats: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_open_in_sats",
-                Source::Compute,
-                version,
-                indexes,
-                first(),
-            )?,
-            timeindexes_to_price_high_in_sats: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_high_in_sats",
-                Source::Compute,
-                version,
-                indexes,
-                max(),
-            )?,
-            timeindexes_to_price_low_in_sats: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_low_in_sats",
-                Source::Compute,
-                version,
-                indexes,
-                min(),
-            )?,
-            timeindexes_to_price_close_in_sats: ComputedVecsFromDateIndex::forced_import(
-                db,
-                "price_close_in_sats",
-                Source::Compute,
-                version,
-                indexes,
-                last(),
-            )?,
-            chainindexes_to_price_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_open_in_sats: ComputedVecsDateFirst::forced_import(
                 db,
                 "price_open_in_sats",
                 version,
                 indexes,
-                first(),
             )?,
-            chainindexes_to_price_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_high_in_sats: ComputedVecsDateMax::forced_import(
                 db,
                 "price_high_in_sats",
                 version,
                 indexes,
-                max(),
             )?,
-            chainindexes_to_price_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_low_in_sats: ComputedVecsDateMin::forced_import(
                 db,
                 "price_low_in_sats",
                 version,
                 indexes,
-                min(),
             )?,
-            chainindexes_to_price_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
+            timeindexes_to_price_close_in_sats: ComputedDateLast::forced_import(
                 db,
                 "price_close_in_sats",
                 version,
                 indexes,
-                last(),
+            )?,
+            chainindexes_to_price_open_in_sats: ComputedChainFirst::forced_import(
+                db,
+                "price_open_in_sats",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_high_in_sats: ComputedChainMax::forced_import(
+                db,
+                "price_high_in_sats",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_low_in_sats: ComputedChainMin::forced_import(
+                db,
+                "price_low_in_sats",
+                version,
+                indexes,
+            )?,
+            chainindexes_to_price_close_in_sats: ComputedChainLast::forced_import(
+                db,
+                "price_close_in_sats",
+                version,
+                indexes,
             )?,
             weekindex_to_price_ohlc_in_sats: EagerVec::forced_import(
                 db,

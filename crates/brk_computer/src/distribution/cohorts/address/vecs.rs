@@ -14,7 +14,7 @@ use crate::{
     ComputeIndexes,
     distribution::state::AddressCohortState,
     indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::DerivedComputedBlockLast,
     price,
 };
 
@@ -42,7 +42,7 @@ pub struct AddressCohortVecs {
     pub height_to_addr_count: EagerVec<PcoVec<Height, StoredU64>>,
 
     /// Address count indexed by various dimensions
-    pub indexes_to_addr_count: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_addr_count: DerivedComputedBlockLast<StoredU64>,
 }
 
 impl AddressCohortVecs {
@@ -86,13 +86,12 @@ impl AddressCohortVecs {
 
             metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
 
-            indexes_to_addr_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_addr_count: DerivedComputedBlockLast::forced_import(
                 db,
                 &cfg.name("addr_count"),
-                Source::Vec(height_to_addr_count.boxed_clone()),
+                height_to_addr_count.boxed_clone(),
                 version + VERSION,
                 indexes,
-                VecBuilderOptions::default().add_last(),
             )?,
             height_to_addr_count,
         })
@@ -248,11 +247,11 @@ impl DynCohortVecs for AddressCohortVecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_addr_count.compute_rest(
+        self.indexes_to_addr_count.derive_from(
             indexes,
             starting_indexes,
+            &self.height_to_addr_count,
             exit,
-            Some(&self.height_to_addr_count),
         )?;
         self.metrics
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;

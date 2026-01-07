@@ -23,6 +23,7 @@ brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
 brk_types = { workspace = true }
 brk_traversable = { workspace = true }
+derive_more = { workspace = true }
 vecdb = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }

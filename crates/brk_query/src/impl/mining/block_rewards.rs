@@ -16,13 +16,16 @@ impl Query {
         let iter = DateIndexIter::new(computer, start, current_height.to_usize());
 
         // coinbase = subsidy + fees
+        // KISS: dateindex.distribution.average.0 is now a concrete field
         let mut rewards = computer
             .blocks
             .rewards
             .indexes_to_coinbase
             .sats
             .dateindex
-            .unwrap_average()
+            .distribution
+            .average
+            .0
             .iter();
 
         Ok(iter.collect(|di, ts, h| {

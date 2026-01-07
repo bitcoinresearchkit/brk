@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};

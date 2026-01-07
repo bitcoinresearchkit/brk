@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{ComputeIndexes, indexes};
 
-use super::super::{ComputedVecsFromDateIndex, Source, VecBuilderOptions};
+use super::super::ComputedDateLast;
 
 pub const PERCENTILES: [u8; 19] = [
     5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
@@ -17,7 +17,7 @@ pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
 #[derive(Clone)]
 pub struct CostBasisPercentiles {
-    pub vecs: [Option<ComputedVecsFromDateIndex<Dollars>>; PERCENTILES_LEN],
+    pub vecs: [Option<ComputedDateLast<Dollars>>; PERCENTILES_LEN],
 }
 
 const VERSION: Version = Version::ZERO;
@@ -32,13 +32,11 @@ impl CostBasisPercentiles {
     ) -> Result<Self> {
         let vecs = PERCENTILES.map(|p| {
             compute.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
+                ComputedDateLast::forced_import(
                     db,
                     &format!("{name}_cost_basis_pct{p:02}"),
-                    Source::Compute,
                     version + VERSION,
                     indexes,
-                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             })
@@ -52,8 +50,7 @@ impl CostBasisPercentiles {
         self.vecs
             .iter()
             .filter_map(|v| v.as_ref())
-            .filter_map(|v| v.dateindex.as_ref())
-            .map(|v| v.len())
+            .map(|v| v.dateindex.len())
             .min()
             .unwrap_or(usize::MAX)
     }
@@ -67,10 +64,7 @@ impl CostBasisPercentiles {
     ) -> Result<()> {
         for (i, vec) in self.vecs.iter_mut().enumerate() {
             if let Some(v) = vec {
-                v.dateindex
-                    .as_mut()
-                    .unwrap()
-                    .truncate_push(dateindex, percentile_prices[i])?;
+                v.dateindex.truncate_push(dateindex, percentile_prices[i])?;
             }
         }
         Ok(())
@@ -87,7 +81,7 @@ impl CostBasisPercentiles {
         Ok(())
     }
 
-    pub fn get(&self, percentile: u8) -> Option<&ComputedVecsFromDateIndex<Dollars>> {
+    pub fn get(&self, percentile: u8) -> Option<&ComputedDateLast<Dollars>> {
         PERCENTILES
             .iter()
             .position(|&p| p == percentile)
@@ -98,9 +92,7 @@ impl CostBasisPercentiles {
 impl CostBasisPercentiles {
     pub fn write(&mut self) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
-            if let Some(dateindex_vec) = vec.dateindex.as_mut() {
-                dateindex_vec.write()?;
-            }
+            vec.dateindex.write()?;
         }
         Ok(())
     }
@@ -110,8 +102,7 @@ impl CostBasisPercentiles {
         self.vecs
             .iter_mut()
             .flatten()
-            .filter_map(|v| v.dateindex.as_mut())
-            .map(|v| v as &mut dyn AnyStoredVec)
+            .map(|v| &mut v.dateindex as &mut dyn AnyStoredVec)
             .collect::<Vec<_>>()
             .into_par_iter()
     }
@@ -119,9 +110,7 @@ impl CostBasisPercentiles {
     /// Validate computed versions or reset if mismatched.
     pub fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
         for vec in self.vecs.iter_mut().flatten() {
-            if let Some(dateindex_vec) = vec.dateindex.as_mut() {
-                dateindex_vec.validate_computed_version_or_reset(version)?;
-            }
+            vec.dateindex.validate_computed_version_or_reset(version)?;
         }
         Ok(())
     }

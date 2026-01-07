@@ -4,7 +4,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,

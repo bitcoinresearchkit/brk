@@ -10,7 +10,7 @@ use std::{
 use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
-use derive_deref::Deref;
+use derive_more::Deref;
 use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;

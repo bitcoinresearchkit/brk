@@ -1,13 +1,13 @@
-use std::ops::Deref;
-
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{DataRange, Format};
 
 /// Data range with output format for API query parameters
-#[derive(Default, Debug, Deserialize, JsonSchema)]
+#[derive(Default, Debug, Deref, Deserialize, JsonSchema)]
 pub struct DataRangeFormat {
+    #[deref]
     #[serde(flatten)]
     pub range: DataRange,
 
@@ -37,9 +37,3 @@ impl DataRangeFormat {
     }
 }
 
-impl Deref for DataRangeFormat {
-    type Target = DataRange;
-    fn deref(&self) -> &Self::Target {
-        &self.range
-    }
-}

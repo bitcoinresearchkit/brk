@@ -5,7 +5,7 @@ use vecdb::{Exit, unlikely};
 
 use super::Vecs;
 use super::super::size;
-use crate::{indexes, inputs, price, ComputeIndexes};
+use crate::{indexes, inputs, ComputeIndexes};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -16,7 +16,6 @@ impl Vecs {
         txins: &inputs::Vecs,
         size_vecs: &size::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         self.txindex_to_input_value.compute_sum_from_indexes(
@@ -58,21 +57,20 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_fee.compute_rest(
+        self.indexes_to_fee.derive_from(
             indexer,
             indexes,
             starting_indexes,
+            &self.txindex_to_fee,
             exit,
-            Some(&self.txindex_to_fee),
-            price,
         )?;
 
-        self.indexes_to_fee_rate.compute_rest(
+        self.indexes_to_fee_rate.derive_from(
             indexer,
             indexes,
             starting_indexes,
+            &self.txindex_to_fee_rate,
             exit,
-            Some(&self.txindex_to_fee_rate),
         )?;
 
         Ok(())

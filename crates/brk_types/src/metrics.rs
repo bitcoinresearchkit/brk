@@ -1,6 +1,6 @@
 use std::{fmt, mem};
 
-use derive_deref::Deref;
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 

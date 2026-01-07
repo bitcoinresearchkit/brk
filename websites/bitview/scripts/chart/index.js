@@ -13,12 +13,12 @@ import {
   createHorizontalChoiceField,
   createLabeledInput,
   createSpanName,
-} from "../utils/dom";
-import { createOklchToRGBA } from "./oklch";
-import { throttle } from "../utils/timing";
-import { serdeBool } from "../utils/serde";
-import { stringToId } from "../utils/format";
-import { style } from "../utils/elements";
+} from "../utils/dom.js";
+import { createOklchToRGBA } from "./oklch.js";
+import { throttle } from "../utils/timing.js";
+import { serdeBool } from "../utils/serde.js";
+import { stringToId } from "../utils/format.js";
+import { style } from "../utils/elements.js";
 
 /**
  * @typedef {Object} Valued
@@ -52,7 +52,12 @@ import { style } from "../utils/elements";
  * @typedef {_BaselineData<number>} BaselineData
  * @typedef {_HistogramData<number>} HistogramData
  *
- * @typedef {function({ iseries: ISeries; unit: Unit; index: IndexName }): void} SetDataCallback
+ * @typedef {function({ iseries: ISeries; unit: Unit; index: ChartableIndex }): void} SetDataCallback
+ *
+ * @typedef {Object} Legend
+ * @property {HTMLLegendElement} element
+ * @property {function({ series: Series, name: string, order: number, colors: Color[] }): void} addOrReplace
+ * @property {function(number): void} removeFrom
  */
 
 const oklchToRGBA = createOklchToRGBA();
@@ -67,7 +72,7 @@ const lineWidth = /** @type {any} */ (1.5);
  * @param {Colors} args.colors
  * @param {Resources} args.resources
  * @param {BrkClient} args.brk
- * @param {Accessor<IndexName>} args.index
+ * @param {Accessor<ChartableIndex>} args.index
  * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
  * @param {true} [args.fitContent]
  * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
@@ -191,10 +196,7 @@ function createChartElement({
 
     ichart.applyOptions({
       timeScale: {
-        timeVisible:
-          index === "height" ||
-          index === "difficultyepoch" ||
-          index === "halvingepoch",
+        timeVisible: index === "height",
         ...(!fitContent
           ? {
               minBarSpacing,
@@ -288,7 +290,7 @@ function createChartElement({
           choices: /** @type {const} */ (["lin", "log"]),
           id: stringToId(`${id} ${paneIndex} ${unit}`),
           defaultValue:
-            unit === "usd" && seriesType !== "Baseline" ? "log" : "lin",
+            unit.id === "usd" && seriesType !== "Baseline" ? "log" : "lin",
           key: `${id}-price-scale-${paneIndex}`,
           signals,
         });
@@ -379,17 +381,20 @@ function createChartElement({
         signals.createEffect(index, (index) => {
           // Get timestamp metric from tree based on index type
           // timestampFixed has height only, timestamp has date-based indexes
+          /** @type {AnyMetricPattern} */
           const timeMetric =
             index === "height"
               ? brk.tree.computed.blocks.time.timestampFixed
               : brk.tree.computed.blocks.time.timestamp;
+          /** @type {AnyMetricPattern} */
+          const valuesMetric = metric;
           const timeNode = timeMetric.by[index];
-          const valuesNode = metric.by[index];
+          const valuesNode = valuesMetric.by[index];
           if (!timeNode || !valuesNode)
             throw new Error(`Missing node for index: ${index}`);
 
-          const timeResource = resources.useMetricNode(timeNode);
-          const valuesResource = resources.useMetricNode(valuesNode);
+          const timeResource = resources.useMetricEndpoint(timeNode);
+          const valuesResource = resources.useMetricEndpoint(valuesNode);
           _valuesResource = valuesResource;
 
           series.url.set(() => `${brk.baseUrl}${valuesResource.path}`);
@@ -706,7 +711,7 @@ function createChartElement({
       data,
       options,
     }) {
-      color ||= unit === "usd" ? colors.green : colors.orange;
+      color ||= unit.id === "usd" ? colors.green : colors.orange;
 
       /** @type {LineISeries} */
       const iseries = /** @type {any} */ (

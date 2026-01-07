@@ -1,13 +1,16 @@
-use std::{borrow::Cow, ops::Deref};
+use std::borrow::Cow;
+
+use derive_more::Deref;
 
 use crate::BlkMetadata;
 
 use super::{BlockHash, Height};
 
-#[derive(Debug)]
+#[derive(Debug, Deref)]
 pub struct Block {
     height: Height,
     hash: BlockHash,
+    #[deref]
     block: bitcoin::Block,
 }
 
@@ -64,15 +67,9 @@ impl From<ReadBlock> for Block {
     }
 }
 
-impl Deref for Block {
-    type Target = bitcoin::Block;
-    fn deref(&self) -> &Self::Target {
-        &self.block
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Deref)]
 pub struct ReadBlock {
+    #[deref]
     block: Block,
     metadata: BlkMetadata,
     tx_metadata: Vec<BlkMetadata>,
@@ -103,9 +100,3 @@ impl ReadBlock {
     }
 }
 
-impl Deref for ReadBlock {
-    type Target = Block;
-    fn deref(&self) -> &Self::Target {
-        &self.block
-    }
-}

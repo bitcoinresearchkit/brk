@@ -1,5 +1,5 @@
 use brk_types::Height;
-use derive_deref::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
 
 use super::vec::AddressTypeToVec;

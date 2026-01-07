@@ -32,8 +32,8 @@ impl Query {
         for (pool_id, pool_vecs) in &computer.pools.vecs {
             let mut cumulative = pool_vecs
                 .indexes_to_blocks_mined
-                .height_extra
-                .unwrap_cumulative()
+                .height_cumulative
+                .inner()
                 .iter();
 
             let count_at_end: u32 = *cumulative.get(current_height).unwrap_or_default();
@@ -102,8 +102,8 @@ impl Query {
 
         let mut cumulative = pool_vecs
             .indexes_to_blocks_mined
-            .height_extra
-            .unwrap_cumulative()
+            .height_cumulative
+            .inner()
             .iter();
 
         // Get total blocks (all time)

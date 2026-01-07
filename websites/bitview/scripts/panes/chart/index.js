@@ -2,11 +2,12 @@ import {
   createShadow,
   createHorizontalChoiceField,
   createHeader,
-} from "../../utils/dom";
-import { chartElement } from "../../utils/elements";
-import { ios, canShare } from "../../utils/env";
-import { serdeChartableIndex, serdeOptNumber } from "../../utils/serde";
-import { throttle } from "../../utils/timing";
+} from "../../utils/dom.js";
+import { chartElement } from "../../utils/elements.js";
+import { ios, canShare } from "../../utils/env.js";
+import { serdeChartableIndex, serdeOptNumber } from "../../utils/serde.js";
+import { throttle } from "../../utils/timing.js";
+import { Unit } from "../../utils/units.js";
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
@@ -45,7 +46,6 @@ export function init({
 
   const { index, fieldset } = createIndexSelector({
     option,
-    brk,
     signals,
   });
 
@@ -169,13 +169,12 @@ export function init({
 
   const { field: topUnitField, selected: topUnit } =
     createHorizontalChoiceField({
-      defaultValue: "usd",
+      defaultValue: Unit.usd,
       keyPrefix,
       key: "unit-0",
-      choices: /** @type {const} */ ([
-        /** @satisfies {Unit} */ ("usd"),
-        /** @satisfies {Unit} */ ("sats"),
-      ]),
+      choices: [Unit.usd, Unit.sats],
+      toKey: (u) => u.id,
+      toLabel: (u) => u.name,
       signals,
       sorted: true,
     });
@@ -205,7 +204,7 @@ export function init({
 
     const latest = { ..._latest };
 
-    if (unit === "sats") {
+    if (unit === Unit.sats) {
       latest.open = Math.floor(ONE_BTC_IN_SATS / latest.open);
       latest.high = Math.floor(ONE_BTC_IN_SATS / latest.high);
       latest.low = Math.floor(ONE_BTC_IN_SATS / latest.low);
@@ -277,26 +276,30 @@ export function init({
   signals.createEffect(option, (option) => {
     headingElement.innerHTML = option.title;
 
-    const bottomUnits = /** @type {readonly Unit[]} */ (
-      Object.keys(option.bottom)
-    );
-    const { field: bottomUnitField, selected: bottomUnit } =
-      createHorizontalChoiceField({
-        defaultValue: bottomUnits.at(0) || "",
+    const bottomUnits = Array.from(option.bottom.keys());
+
+    /** @type {{ field: HTMLDivElement, selected: Accessor<Unit> } | undefined} */
+    let bottomUnitSelector;
+
+    if (bottomUnits.length) {
+      bottomUnitSelector = createHorizontalChoiceField({
+        defaultValue: bottomUnits[0],
         keyPrefix,
         key: "unit-1",
         choices: bottomUnits,
+        toKey: (u) => u.id,
+        toLabel: (u) => u.name,
         signals,
         sorted: true,
       });
 
-    if (bottomUnits.length) {
+      const field = bottomUnitSelector.field;
       chart.addFieldsetIfNeeded({
         id: "charts-unit-1",
         paneIndex: 1,
         position: "nw",
         createChild() {
-          return bottomUnitField;
+          return field;
         },
       });
     }
@@ -323,7 +326,7 @@ export function init({
           console.log({ topUnit, topSeriesType });
 
           switch (topUnit) {
-            case "usd": {
+            case Unit.usd: {
               switch (topSeriesType) {
                 case null:
                 case CANDLE: {
@@ -353,7 +356,7 @@ export function init({
               }
               break;
             }
-            case "sats": {
+            case Unit.sats: {
               switch (topSeriesType) {
                 case null:
                 case CANDLE: {
@@ -404,100 +407,117 @@ export function init({
         },
       );
 
-      [
-        {
-          blueprints: option.top,
-          paneIndex: 0,
-          unit: topUnit,
-          seriesList: seriesListTop,
-          orderStart: 1,
-          legend: chart.legendTop,
-        },
-        {
+      /**
+       * @param {Object} args
+       * @param {Map<Unit, AnyFetchedSeriesBlueprint[]>} args.blueprints
+       * @param {number} args.paneIndex
+       * @param {Accessor<Unit>} args.unit
+       * @param {Series[]} args.seriesList
+       * @param {number} args.orderStart
+       * @param {Legend} args.legend
+       */
+      function processPane({
+        blueprints,
+        paneIndex,
+        unit,
+        seriesList,
+        orderStart,
+        legend,
+      }) {
+        signals.createEffect(unit, (unit) => {
+          legend.removeFrom(orderStart);
+
+          seriesList.splice(orderStart).forEach((series) => {
+            series.remove();
+          });
+
+          blueprints.get(unit)?.forEach((blueprint, order) => {
+            order += orderStart;
+
+            const options = blueprint.options;
+
+            // Tree-first: metric is now an accessor with .by property
+            const indexes = Object.keys(blueprint.metric.by);
+
+            if (indexes.includes(index)) {
+              switch (blueprint.type) {
+                case "Baseline": {
+                  seriesList.push(
+                    chart.addBaselineSeries({
+                      metric: blueprint.metric,
+                      name: blueprint.title,
+                      unit,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options: {
+                        ...options,
+                        topLineColor:
+                          blueprint.color?.() ?? blueprint.colors?.[0](),
+                        bottomLineColor:
+                          blueprint.color?.() ?? blueprint.colors?.[1](),
+                      },
+                      order,
+                    }),
+                  );
+                  break;
+                }
+                case "Histogram": {
+                  seriesList.push(
+                    chart.addHistogramSeries({
+                      metric: blueprint.metric,
+                      name: blueprint.title,
+                      unit,
+                      color: blueprint.color,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options,
+                      order,
+                    }),
+                  );
+                  break;
+                }
+                case "Candlestick": {
+                  throw Error("TODO");
+                }
+                case "Line":
+                case undefined:
+                  seriesList.push(
+                    chart.addLineSeries({
+                      metric: blueprint.metric,
+                      color: blueprint.color,
+                      name: blueprint.title,
+                      unit,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options,
+                      order,
+                    }),
+                  );
+              }
+            }
+          });
+        });
+      }
+
+      processPane({
+        blueprints: option.top,
+        paneIndex: 0,
+        unit: topUnit,
+        seriesList: seriesListTop,
+        orderStart: 1,
+        legend: chart.legendTop,
+      });
+
+      if (bottomUnitSelector) {
+        processPane({
           blueprints: option.bottom,
           paneIndex: 1,
-          unit: bottomUnit,
+          unit: bottomUnitSelector.selected,
           seriesList: seriesListBottom,
           orderStart: 0,
           legend: chart.legendBottom,
-        },
-      ].forEach(
-        ({ blueprints, paneIndex, unit, seriesList, orderStart, legend }) => {
-          signals.createEffect(unit, (unit) => {
-            legend.removeFrom(orderStart);
-
-            seriesList.splice(orderStart).forEach((series) => {
-              series.remove();
-            });
-
-            blueprints[unit]?.forEach((blueprint, order) => {
-              order += orderStart;
-
-              const options = blueprint.options;
-
-              // Tree-first: metric is now an accessor with .by property
-              const indexes = Object.keys(blueprint.metric.by);
-
-              if (indexes.includes(index)) {
-                switch (blueprint.type) {
-                  case "Baseline": {
-                    seriesList.push(
-                      chart.addBaselineSeries({
-                        metric: blueprint.metric,
-                        name: blueprint.title,
-                        unit,
-                        defaultActive: blueprint.defaultActive,
-                        paneIndex,
-                        options: {
-                          ...options,
-                          topLineColor:
-                            blueprint.color?.() ?? blueprint.colors?.[0](),
-                          bottomLineColor:
-                            blueprint.color?.() ?? blueprint.colors?.[1](),
-                        },
-                        order,
-                      }),
-                    );
-                    break;
-                  }
-                  case "Histogram": {
-                    seriesList.push(
-                      chart.addHistogramSeries({
-                        metric: blueprint.metric,
-                        name: blueprint.title,
-                        unit,
-                        color: blueprint.color,
-                        defaultActive: blueprint.defaultActive,
-                        paneIndex,
-                        options,
-                        order,
-                      }),
-                    );
-                    break;
-                  }
-                  case "Candlestick": {
-                    throw Error("TODO");
-                  }
-                  case "Line":
-                  case undefined:
-                    seriesList.push(
-                      chart.addLineSeries({
-                        metric: blueprint.metric,
-                        color: blueprint.color,
-                        name: blueprint.title,
-                        unit,
-                        defaultActive: blueprint.defaultActive,
-                        paneIndex,
-                        options,
-                        order,
-                      }),
-                    );
-                }
-              }
-            });
-          });
-        },
-      );
+        });
+      }
 
       firstRun = false;
     });
@@ -507,10 +527,9 @@ export function init({
 /**
  * @param {Object} args
  * @param {Accessor<ChartOption>} args.option
- * @param {BrkClient} args.brk
  * @param {Signals} args.signals
  */
-function createIndexSelector({ option, brk, signals }) {
+function createIndexSelector({ option, signals }) {
   const choices_ = /** @satisfies {ChartableIndexName[]} */ ([
     "timestamp",
     "date",
@@ -526,11 +545,11 @@ function createIndexSelector({ option, brk, signals }) {
   const choices = signals.createMemo(() => {
     const o = option();
 
-    if (!Object.keys(o.top).length && !Object.keys(o.bottom).length) {
+    if (!o.top.size && !o.bottom.size) {
       return [...choices_];
     }
     const rawIndexes = new Set(
-      [Object.values(o.top), Object.values(o.bottom)]
+      [Array.from(o.top.values()), Array.from(o.bottom.values())]
         .flat(2)
         .filter((blueprint) => {
           const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
@@ -549,8 +568,10 @@ function createIndexSelector({ option, brk, signals }) {
     );
   });
 
+  /** @type {ChartableIndexName} */
+  const defaultIndex = "date";
   const { field, selected } = createHorizontalChoiceField({
-    defaultValue: "date",
+    defaultValue: defaultIndex,
     keyPrefix,
     key: "index",
     choices,

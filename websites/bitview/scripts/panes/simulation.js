@@ -4,20 +4,20 @@ import {
   createDateRange,
   dateToDateIndex,
   differenceBetweenDates,
-} from "../utils/date";
+} from "../utils/date.js";
 import {
   createButtonElement,
   createFieldElement,
   createHeader,
   createSelect,
-} from "../utils/dom";
-import { simulationElement } from "../utils/elements";
+} from "../utils/dom.js";
+import { simulationElement } from "../utils/elements.js";
 import {
   numberToDollars,
   numberToPercentage,
   numberToUSNumber,
-} from "../utils/format";
-import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde";
+} from "../utils/format.js";
+import { serdeDate, serdeOptDate, serdeOptNumber } from "../utils/serde.js";
 
 /**
  * @param {Object} args

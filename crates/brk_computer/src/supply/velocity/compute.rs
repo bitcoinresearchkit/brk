@@ -2,7 +2,7 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{distribution, transactions, utils::OptionExt, ComputeIndexes};
+use crate::{distribution, transactions, ComputeIndexes};
 
 impl Vecs {
     pub fn compute(
@@ -20,17 +20,13 @@ impl Vecs {
             .supply
             .indexes_to_supply;
 
-        // BTC velocity
+        // BTC velocity - KISS: dateindex is no longer Option
         self.indexes_to_btc
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_divide(
                     starting_indexes.dateindex,
-                    transactions
-                        .volume
-                        .indexes_to_annualized_volume_btc
-                        .dateindex
-                        .u(),
-                    circulating_supply.bitcoin.dateindex.u(),
+                    &transactions.volume.indexes_to_annualized_volume_btc.dateindex,
+                    &*circulating_supply.bitcoin.dateindex,
                     exit,
                 )?;
                 Ok(())
@@ -38,18 +34,14 @@ impl Vecs {
 
         // USD velocity
         if let Some(usd_velocity) = self.indexes_to_usd.as_mut()
-            && let Some(volume_usd) = transactions
-                .volume
-                .indexes_to_annualized_volume_usd
-                .dateindex
-                .as_ref()
             && let Some(supply_usd) = circulating_supply.dollars.as_ref()
         {
+            // KISS: dateindex is no longer Option
             usd_velocity.compute_all(starting_indexes, exit, |v| {
                 v.compute_divide(
                     starting_indexes.dateindex,
-                    volume_usd,
-                    supply_usd.dateindex.u(),
+                    &transactions.volume.indexes_to_annualized_volume_usd.dateindex,
+                    &supply_usd.dateindex,
                     exit,
                 )?;
                 Ok(())

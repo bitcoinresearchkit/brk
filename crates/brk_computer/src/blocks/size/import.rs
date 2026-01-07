@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec, LazyVecFrom1, VecIndex};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedVecsFromHeight, Source, VecBuilderOptions},
+    internal::DerivedComputedBlockFull,
 };
 
 impl Vecs {
@@ -16,15 +16,6 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let full_stats = || {
-            VecBuilderOptions::default()
-                .add_average()
-                .add_minmax()
-                .add_percentiles()
-                .add_sum()
-                .add_cumulative()
-        };
-
         let height_to_vbytes = LazyVecFrom1::init(
             "vbytes",
             version,
@@ -37,21 +28,19 @@ impl Vecs {
         );
 
         Ok(Self {
-            indexes_to_block_size: ComputedVecsFromHeight::forced_import(
+            indexes_to_block_size: DerivedComputedBlockFull::forced_import(
                 db,
                 "block_size",
-                Source::Vec(indexer.vecs.block.height_to_total_size.boxed_clone()),
+                indexer.vecs.block.height_to_total_size.boxed_clone(),
                 version,
                 indexes,
-                full_stats(),
             )?,
-            indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
+            indexes_to_block_vbytes: DerivedComputedBlockFull::forced_import(
                 db,
                 "block_vbytes",
-                Source::Vec(height_to_vbytes.boxed_clone()),
+                height_to_vbytes.boxed_clone(),
                 version,
                 indexes,
-                full_stats(),
             )?,
             height_to_vbytes,
         })

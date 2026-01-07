@@ -1,5 +1,5 @@
-import { randomFromArray } from "../utils/array";
-import { explorerElement } from "../utils/elements";
+import { randomFromArray } from "../utils/array.js";
+import { explorerElement } from "../utils/elements.js";
 
 /**
  * @param {Object} args
@@ -12,13 +12,13 @@ import { explorerElement } from "../utils/elements";
  * @param {BrkClient} args.brk
  */
 export function init({
-  colors,
-  createChartElement,
-  option,
-  signals,
-  webSockets,
-  resources,
-  brk,
+  colors: _colors,
+  createChartElement: _createChartElement,
+  option: _option,
+  signals: _signals,
+  webSockets: _webSockets,
+  resources: _resources,
+  brk: _brk,
 }) {
   const chain = window.document.createElement("div");
   chain.id = "chain";
@@ -39,7 +39,7 @@ export function init({
   ];
 
   for (let i = 0; i <= 10; i++) {
-    const { name, color } = randomFromArray(miners);
+    const { name, color: _color } = randomFromArray(miners);
     const { cubeElement, leftFaceElement, rightFaceElement, topFaceElement } =
       createCube();
 
