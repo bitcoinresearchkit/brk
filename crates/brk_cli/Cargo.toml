@@ -30,7 +30,7 @@ tracing = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
-toml = "0.9.10"
+toml = "0.9.11"
 vecdb = { workspace = true }
 zip = { version = "7.0.0", default-features = false, features = ["deflate"] }
 
