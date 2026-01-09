@@ -22,11 +22,10 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         if let (Some(puell), Some(sma), Some(coinbase_dollars)) = (
-            self.indexes_to_puell_multiple.as_mut(),
-            rewards.indexes_to_subsidy_usd_1y_sma.as_ref(),
-            rewards.indexes_to_coinbase.dollars.as_ref(),
+            self.puell_multiple.as_mut(),
+            rewards.subsidy_usd_1y_sma.as_ref(),
+            rewards.coinbase.dollars.as_ref(),
         ) {
-            // KISS: dateindex.sum is now a concrete field
             let date_to_coinbase_usd_sum = &coinbase_dollars.dateindex.sum_cum.sum.0;
 
             puell.compute_all(starting_indexes, exit, |v| {
@@ -40,51 +39,50 @@ impl Vecs {
             })?;
         }
 
-        // KISS: dateindex is no longer Option
         let returns_dateindex = &returns.price_returns._1d.dateindex;
 
-        self.dateindex_to_rsi_gains.compute_transform(
+        self.rsi_gains.compute_transform(
             starting_indexes.dateindex,
             returns_dateindex,
             |(i, ret, ..)| (i, StoredF32::from((*ret).max(0.0))),
             exit,
         )?;
 
-        self.dateindex_to_rsi_losses.compute_transform(
+        self.rsi_losses.compute_transform(
             starting_indexes.dateindex,
             returns_dateindex,
             |(i, ret, ..)| (i, StoredF32::from((-*ret).max(0.0))),
             exit,
         )?;
 
-        self.dateindex_to_rsi_average_gain_14d.compute_rma(
+        self.rsi_average_gain_14d.compute_rma(
             starting_indexes.dateindex,
-            &self.dateindex_to_rsi_gains,
+            &self.rsi_gains,
             14,
             exit,
         )?;
 
-        self.dateindex_to_rsi_average_loss_14d.compute_rma(
+        self.rsi_average_loss_14d.compute_rma(
             starting_indexes.dateindex,
-            &self.dateindex_to_rsi_losses,
+            &self.rsi_losses,
             14,
             exit,
         )?;
 
         let ema12 = &moving_average
-            .indexes_to_price_12d_ema
+            .price_12d_ema
             .price
             .as_ref()
             .unwrap()
             .dateindex;
         let ema26 = &moving_average
-            .indexes_to_price_26d_ema
+            .price_26d_ema
             .price
             .as_ref()
             .unwrap()
             .dateindex;
 
-        self.dateindex_to_macd_line.compute_transform2(
+        self.macd_line.compute_transform2(
             starting_indexes.dateindex,
             ema12,
             ema26,
@@ -92,33 +90,21 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex_to_macd_signal.compute_ema(
-            starting_indexes.dateindex,
-            &self.dateindex_to_macd_line,
-            9,
-            exit,
-        )?;
+        self.macd_signal
+            .compute_ema(starting_indexes.dateindex, &self.macd_line, 9, exit)?;
 
         // Stochastic RSI: StochRSI = (RSI - min) / (max - min) * 100
-        self.dateindex_to_rsi_14d_min.compute_min(
-            starting_indexes.dateindex,
-            &self.dateindex_to_rsi_14d,
-            14,
-            exit,
-        )?;
+        self.rsi_14d_min
+            .compute_min(starting_indexes.dateindex, &self.rsi_14d, 14, exit)?;
 
-        self.dateindex_to_rsi_14d_max.compute_max(
-            starting_indexes.dateindex,
-            &self.dateindex_to_rsi_14d,
-            14,
-            exit,
-        )?;
+        self.rsi_14d_max
+            .compute_max(starting_indexes.dateindex, &self.rsi_14d, 14, exit)?;
 
-        self.dateindex_to_stoch_rsi.compute_transform3(
+        self.stoch_rsi.compute_transform3(
             starting_indexes.dateindex,
-            &self.dateindex_to_rsi_14d,
-            &self.dateindex_to_rsi_14d_min,
-            &self.dateindex_to_rsi_14d_max,
+            &self.rsi_14d,
+            &self.rsi_14d_min,
+            &self.rsi_14d_max,
             |(i, rsi, min, max, ..)| {
                 let range = *max - *min;
                 let stoch = if range == 0.0 {
@@ -131,26 +117,18 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex_to_stoch_rsi_k.compute_sma(
-            starting_indexes.dateindex,
-            &self.dateindex_to_stoch_rsi,
-            3,
-            exit,
-        )?;
+        self.stoch_rsi_k
+            .compute_sma(starting_indexes.dateindex, &self.stoch_rsi, 3, exit)?;
 
-        self.dateindex_to_stoch_rsi_d.compute_sma(
-            starting_indexes.dateindex,
-            &self.dateindex_to_stoch_rsi_k,
-            3,
-            exit,
-        )?;
+        self.stoch_rsi_d
+            .compute_sma(starting_indexes.dateindex, &self.stoch_rsi_k, 3, exit)?;
 
         // Stochastic Oscillator: K = (close - low_14) / (high_14 - low_14) * 100
         {
-            let close = &price.usd.timeindexes_to_price_close.dateindex;
-            let low_2w = &range.indexes_to_price_2w_min.dateindex;
-            let high_2w = &range.indexes_to_price_2w_max.dateindex;
-            self.dateindex_to_stoch_k.compute_transform3(
+            let close = &price.usd.split.close.dateindex;
+            let low_2w = &range.price_2w_min.dateindex;
+            let high_2w = &range.price_2w_max.dateindex;
+            self.stoch_k.compute_transform3(
                 starting_indexes.dateindex,
                 close,
                 low_2w,
@@ -167,23 +145,19 @@ impl Vecs {
                 exit,
             )?;
 
-            self.dateindex_to_stoch_d.compute_sma(
-                starting_indexes.dateindex,
-                &self.dateindex_to_stoch_k,
-                3,
-                exit,
-            )?;
+            self.stoch_d
+                .compute_sma(starting_indexes.dateindex, &self.stoch_k, 3, exit)?;
         }
 
         let amount_range = &distribution.utxo_cohorts.amount_range;
-        // KISS: dateindex is now always present (not Option)
+
         let supply_vecs: Vec<_> = amount_range
             .iter()
-            .map(|c| &c.metrics.supply.indexes_to_supply.sats_dateindex)
+            .map(|c| &c.metrics.supply.supply.sats.dateindex.0)
             .collect();
         let count_vecs: Vec<_> = amount_range
             .iter()
-            .map(|c| &c.metrics.supply.indexes_to_utxo_count.dateindex)
+            .map(|c| &c.metrics.outputs.utxo_count.dateindex)
             .collect();
 
         if let Some(first_supply) = supply_vecs.first()
@@ -198,7 +172,7 @@ impl Vecs {
             let mut supply_iters: Vec<_> = supply_vecs.iter().map(|v| v.into_iter()).collect();
             let mut count_iters: Vec<_> = count_vecs.iter().map(|v| v.into_iter()).collect();
 
-            self.dateindex_to_gini.compute_to(
+            self.gini.compute_to(
                 starting_indexes.dateindex,
                 first_supply.len(),
                 version,

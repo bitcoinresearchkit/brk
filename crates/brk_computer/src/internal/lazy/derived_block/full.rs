@@ -10,7 +10,7 @@ use crate::internal::{
     ComputedVecValue, DerivedComputedBlockFull, DerivedDateFull, Full, LazyDateFull, NumericValue,
 };
 
-use super::super::transform::LazyTransformFull;
+use super::super::transform::LazyTransformStats;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -21,9 +21,8 @@ where
 {
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub dates: LazyDateFull<T, S1T>,
-    pub difficultyepoch: LazyTransformFull<DifficultyEpoch, T, S1T>,
+    pub difficultyepoch: LazyTransformStats<DifficultyEpoch, T, S1T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -49,7 +48,7 @@ where
 
         Self {
             dates: LazyDateFull::from_full::<F>(name, v, dateindex, periods),
-            difficultyepoch: LazyTransformFull::from_boxed::<F>(
+            difficultyepoch: LazyTransformStats::from_boxed::<F>(
                 name,
                 v,
                 difficultyepoch.average.boxed_clone(),
@@ -73,7 +72,7 @@ where
 
         Self {
             dates: LazyDateFull::from_full::<F>(name, v, &source.dateindex, &source.dates),
-            difficultyepoch: LazyTransformFull::from_boxed::<F>(
+            difficultyepoch: LazyTransformStats::from_boxed::<F>(
                 name,
                 v,
                 source.difficultyepoch.average.boxed_clone(),

@@ -14,7 +14,9 @@ bridge/
 _*
 !__*.py
 /*.md
+/*.py
 /api.json
+/*.json
 
 # Logs
 *.log*

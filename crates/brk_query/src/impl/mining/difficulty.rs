@@ -22,16 +22,16 @@ impl Query {
         // Get current epoch
         let current_epoch = computer
             .indexes
-            .block
-            .height_to_difficultyepoch
+            .height
+            .difficultyepoch
             .read_once(current_height)?;
         let current_epoch_usize: usize = current_epoch.into();
 
         // Get epoch start height
         let epoch_start_height = computer
             .indexes
-            .block
-            .difficultyepoch_to_first_height
+            .difficultyepoch
+            .first_height
             .read_once(current_epoch)?;
         let epoch_start_u32: u32 = epoch_start_height.into();
 
@@ -45,12 +45,13 @@ impl Query {
         let epoch_start_timestamp = computer
             .blocks
             .time
-            .difficultyepoch_to_timestamp
+            .timestamp
+            .difficultyepoch
             .read_once(current_epoch)?;
         let current_timestamp = indexer
             .vecs
-            .block
-            .height_to_timestamp
+            .blocks
+            .timestamp
             .read_once(current_height)?;
 
         // Calculate average block time in current epoch
@@ -85,19 +86,19 @@ impl Query {
             let prev_epoch = DifficultyEpoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
                 .indexes
-                .block
-                .difficultyepoch_to_first_height
+                .difficultyepoch
+                .first_height
                 .read_once(prev_epoch)?;
 
             let prev_difficulty = indexer
                 .vecs
-                .block
-                .height_to_difficulty
+                .blocks
+                .difficulty
                 .read_once(prev_epoch_start)?;
             let curr_difficulty = indexer
                 .vecs
-                .block
-                .height_to_difficulty
+                .blocks
+                .difficulty
                 .read_once(epoch_start_height)?;
 
             if *prev_difficulty > 0.0 {

@@ -5,7 +5,7 @@ use brk_rmcp::transport::{
     StreamableHttpServerConfig,
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
 };
-use log::info;
+use tracing::info;
 
 use crate::MCP;
 

@@ -26,14 +26,13 @@ brk_traversable = { workspace = true }
 derive_more = { workspace = true }
 vecdb = { workspace = true }
 jiff = { workspace = true }
-log = { workspace = true }
 quick_cache = "0.6.18"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
+tracing = { workspace = true }
 tower-http = { version = "0.6.8", features = ["compression-full", "trace"] }
-tracing = "0.1.44"
 
 [dev-dependencies]
 brk_mempool = { workspace = true }

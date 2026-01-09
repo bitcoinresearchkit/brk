@@ -10,7 +10,7 @@ use vecdb::{
 
 use crate::{ComputeIndexes, indexes, price};
 
-use super::super::{BinaryDateLast, ClosePriceTimesRatio, ComputedDateLast};
+use super::super::{ClosePriceTimesRatio, ComputedDateLast, LazyBinaryDateLast};
 
 #[derive(Clone, Traversable)]
 pub struct ComputedStandardDeviationVecsDate {
@@ -35,19 +35,19 @@ pub struct ComputedStandardDeviationVecsDate {
     pub m2_5sd: Option<ComputedDateLast<StoredF32>>,
     pub m3sd: Option<ComputedDateLast<StoredF32>>,
 
-    pub _0sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p0_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p1_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p2_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub p3sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m0_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m1_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m2_5sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
-    pub m3sd_usd: Option<BinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub _0sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p0_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p1_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p2_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub p3sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m0_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m1_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m2_5sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
+    pub m3sd_usd: Option<LazyBinaryDateLast<Dollars, Close<Dollars>, StoredF32>>,
 }
 
 #[derive(Debug, Default)]
@@ -136,11 +136,11 @@ impl ComputedStandardDeviationVecsDate {
         macro_rules! lazy_usd {
             ($band:expr, $suffix:expr) => {
                 price_vecs
-                    .map(|p| &p.usd.timeindexes_to_price_close)
+                    .map(|p| &p.usd.split.close)
                     .zip($band.as_ref())
                     .filter(|_| options.price_bands())
                     .map(|(p, b)| {
-                        BinaryDateLast::from_computed_both_last::<ClosePriceTimesRatio>(
+                        LazyBinaryDateLast::from_computed_both_last::<ClosePriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             version,
                             p,
@@ -245,18 +245,23 @@ impl ComputedStandardDeviationVecsDate {
 
         sorted.sort_unstable();
 
-        let mut p0_5sd = self.p0_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut p1sd = self.p1sd.as_mut().map(|c| &mut c.dateindex);
-        let mut p1_5sd = self.p1_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut p2sd = self.p2sd.as_mut().map(|c| &mut c.dateindex);
-        let mut p2_5sd = self.p2_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut p3sd = self.p3sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m0_5sd = self.m0_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m1sd = self.m1sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m1_5sd = self.m1_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m2sd = self.m2sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m2_5sd = self.m2_5sd.as_mut().map(|c| &mut c.dateindex);
-        let mut m3sd = self.m3sd.as_mut().map(|c| &mut c.dateindex);
+        macro_rules! band_ref {
+            ($field:ident) => {
+                self.$field.as_mut().map(|c| &mut c.dateindex)
+            };
+        }
+        let mut p0_5sd = band_ref!(p0_5sd);
+        let mut p1sd = band_ref!(p1sd);
+        let mut p1_5sd = band_ref!(p1_5sd);
+        let mut p2sd = band_ref!(p2sd);
+        let mut p2_5sd = band_ref!(p2_5sd);
+        let mut p3sd = band_ref!(p3sd);
+        let mut m0_5sd = band_ref!(m0_5sd);
+        let mut m1sd = band_ref!(m1sd);
+        let mut m1_5sd = band_ref!(m1_5sd);
+        let mut m2sd = band_ref!(m2sd);
+        let mut m2_5sd = band_ref!(m2_5sd);
+        let mut m3sd = band_ref!(m3sd);
 
         let min_date_usize = min_date.to_usize();
         let mut sma_iter = sma.iter().skip(starting_dateindex.to_usize());
@@ -269,42 +274,13 @@ impl ComputedStandardDeviationVecsDate {
                 if index < min_date_usize {
                     self.sd.dateindex.truncate_push_at(index, StoredF32::NAN)?;
 
-                    if let Some(v) = p0_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
+                    macro_rules! push_nan {
+                        ($($band:ident),*) => {
+                            $(if let Some(v) = $band.as_mut() { v.truncate_push_at(index, StoredF32::NAN)? })*
+                        };
                     }
-                    if let Some(v) = p1sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = p1_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = p2sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = p2_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = p3sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m0_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m1sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m1_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m2sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m2_5sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
-                    if let Some(v) = m3sd.as_mut() {
-                        v.truncate_push_at(index, StoredF32::NAN)?
-                    }
+                    push_nan!(p0_5sd, p1sd, p1_5sd, p2sd, p2_5sd, p3sd, m0_5sd, m1sd, m1_5sd, m2sd, m2_5sd, m3sd);
+
                     // Advance iterator to stay in sync
                     sma_iter.next();
                 } else {

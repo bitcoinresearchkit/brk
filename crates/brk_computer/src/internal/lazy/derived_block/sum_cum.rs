@@ -22,7 +22,6 @@ where
 {
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub dates: LazyDateSumCum<T, S1T>,
     pub difficultyepoch: LazyTransformSumCum<DifficultyEpoch, T, S1T>,
 }
@@ -45,7 +44,7 @@ where
 
         Self {
             dates: LazyDateSumCum::from_sum_cum::<F>(name, v, dateindex, periods),
-            difficultyepoch: LazyTransformSumCum::from_boxed::<F>(
+            difficultyepoch: LazyTransformSumCum::from_boxed_sum_raw::<F>(
                 name,
                 v,
                 difficultyepoch.sum.boxed_clone(),
@@ -66,7 +65,7 @@ where
 
         Self {
             dates: LazyDateSumCum::from_sum_cum::<F>(name, v, &source.dateindex, &source.dates),
-            difficultyepoch: LazyTransformSumCum::from_boxed::<F>(
+            difficultyepoch: LazyTransformSumCum::from_boxed_sum_raw::<F>(
                 name,
                 v,
                 source.difficultyepoch.sum.boxed_clone(),

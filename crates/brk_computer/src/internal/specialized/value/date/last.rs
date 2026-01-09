@@ -11,12 +11,12 @@ use crate::{ComputeIndexes, indexes, price};
 use super::ValueDerivedDateLast;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(merge)]
 pub struct ValueDateLast {
     #[traversable(rename = "sats")]
     pub sats_dateindex: EagerVec<PcoVec<DateIndex, Sats>>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: ValueDerivedDateLast,
 }
 
@@ -47,27 +47,41 @@ impl ValueDateLast {
         })
     }
 
+    pub fn compute_sats<F>(&mut self, mut compute: F) -> Result<()>
+    where
+        F: FnMut(&mut EagerVec<PcoVec<DateIndex, Sats>>) -> Result<()>,
+    {
+        compute(&mut self.sats_dateindex)
+    }
+
     pub fn compute_all<F>(
         &mut self,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
-        mut compute: F,
+        compute: F,
     ) -> Result<()>
     where
         F: FnMut(&mut EagerVec<PcoVec<DateIndex, Sats>>) -> Result<()>,
     {
-        compute(&mut self.sats_dateindex)?;
-        self.rest.compute_rest(price, starting_indexes, exit)?;
-        Ok(())
+        self.compute_sats(compute)?;
+        self.compute_dollars_from_price(price, starting_indexes, exit)
     }
 
-    pub fn compute_rest(
+    pub fn compute_dollars<F>(&mut self, compute: F) -> Result<()>
+    where
+        F: FnMut(&mut crate::internal::ComputedDateLast<brk_types::Dollars>) -> Result<()>,
+    {
+        self.rest.compute_dollars(compute)
+    }
+
+    pub fn compute_dollars_from_price(
         &mut self,
         price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.rest.compute_rest(price, starting_indexes, exit)
+        self.rest
+            .compute_dollars_from_price(price, starting_indexes, exit)
     }
 }

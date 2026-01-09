@@ -1,5 +1,7 @@
+mod block;
 mod date;
+mod tx;
 
+pub use block::*;
 pub use date::*;
-
-// tx derived types have been moved to computed/tx/
+pub use tx::*;

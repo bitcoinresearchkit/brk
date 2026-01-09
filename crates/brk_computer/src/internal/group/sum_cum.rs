@@ -23,6 +23,14 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> SumCum<I, T> {
         })
     }
 
+    /// Import with raw sum name (no _sum suffix) for cases where sum should merge with base.
+    pub fn forced_import_sum_raw(db: &Database, name: &str, version: Version) -> Result<Self> {
+        Ok(Self {
+            sum: SumVec::forced_import_raw(db, name, version)?,
+            cumulative: CumulativeVec::forced_import(db, name, version)?,
+        })
+    }
+
     /// Compute sum and cumulative from source data.
     pub fn compute<A>(
         &mut self,

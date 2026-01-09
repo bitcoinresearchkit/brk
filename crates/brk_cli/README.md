@@ -57,4 +57,3 @@ Full benchmark data: [`https://github.com/bitcoinresearchkit/benches/tree/main/b
 - `brk_computer` for metric computation
 - `brk_mempool` for mempool monitoring
 - `brk_server` for HTTP API
-- `brk_bundler` for web interface bundling

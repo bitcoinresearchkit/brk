@@ -2,8 +2,8 @@ use std::{thread::sleep, time::Duration};
 
 use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, jsonrpc};
 use brk_error::Result;
-use log::info;
 use parking_lot::RwLock;
+use tracing::info;
 
 pub use bitcoincore_rpc::Auth;
 

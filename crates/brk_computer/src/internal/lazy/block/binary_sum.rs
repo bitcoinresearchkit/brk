@@ -4,9 +4,9 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, LazyVecFrom2};
+use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
 
-use crate::internal::{ComputedVecValue, DerivedComputedBlockSum, NumericValue};
+use crate::internal::{ComputedBlockSum, ComputedVecValue, DerivedComputedBlockSum, NumericValue};
 
 use super::super::derived_block::LazyDerivedBlock2Sum;
 
@@ -20,11 +20,10 @@ where
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    #[traversable(wrap = "base")]
+    #[traversable(wrap = "sum")]
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlock2Sum<T, S1T, S2T>,
 }
 
@@ -47,6 +46,25 @@ where
         Self {
             height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
             rest: LazyDerivedBlock2Sum::from_derived::<F>(name, v, source1, source2),
+        }
+    }
+
+    pub fn from_computed<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &ComputedBlockSum<S1T>,
+        source2: &ComputedBlockSum<S2T>,
+    ) -> Self {
+        let v = version + VERSION;
+
+        Self {
+            height: LazyVecFrom2::transformed::<F>(
+                name,
+                v,
+                source1.height.boxed_clone(),
+                source2.height.boxed_clone(),
+            ),
+            rest: LazyDerivedBlock2Sum::from_derived::<F>(name, v, &source1.rest, &source2.rest),
         }
     }
 }

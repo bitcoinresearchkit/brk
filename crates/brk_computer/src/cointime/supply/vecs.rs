@@ -4,6 +4,6 @@ use crate::internal::ValueBlockLast;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes_to_vaulted_supply: ValueBlockLast,
-    pub indexes_to_active_supply: ValueBlockLast,
+    pub vaulted_supply: ValueBlockLast,
+    pub active_supply: ValueBlockLast,
 }

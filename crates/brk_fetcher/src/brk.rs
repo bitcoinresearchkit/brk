@@ -1,9 +1,12 @@
 use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
-use brk_types::{Cents, CheckedSub, Close, Date, DateIndex, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
-use log::info;
+use brk_types::{
+    Cents, CheckedSub, Close, Date, DateIndex, Dollars, Height, High, Low, OHLCCents, Open,
+    Timestamp,
+};
 use serde_json::Value;
+use tracing::info;
 
 use crate::{PriceSource, default_retry};
 
@@ -121,9 +124,7 @@ impl BRK {
     }
 
     pub fn ping() -> Result<()> {
-        minreq::get(API_URL)
-            .with_timeout(10)
-            .send()?;
+        minreq::get(API_URL).with_timeout(10).send()?;
         Ok(())
     }
 }

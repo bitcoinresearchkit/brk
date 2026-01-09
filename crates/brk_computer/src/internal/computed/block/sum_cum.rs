@@ -21,11 +21,10 @@ pub struct ComputedBlockSumCum<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(wrap = "base")]
+    #[traversable(wrap = "sum")]
     pub height: EagerVec<PcoVec<Height, T>>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: DerivedComputedBlockSumCum<T>,
 }
 
@@ -67,6 +66,16 @@ where
         F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     {
         compute(&mut self.height)?;
+        self.compute_rest(indexes, starting_indexes, exit)
+    }
+
+    /// Compute rest from self.height (for stateful computation patterns).
+    pub fn compute_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.rest.derive_from(indexes, starting_indexes, &self.height, exit)
     }
 

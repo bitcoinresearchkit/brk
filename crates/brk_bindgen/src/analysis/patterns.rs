@@ -199,7 +199,7 @@ fn resolve_branch_patterns(
     for (child_name, child_node) in children {
         let (rust_type, json_type, indexes, child_fields) = match child_node {
             TreeNode::Leaf(leaf) => (
-                leaf.value_type().to_string(),
+                leaf.kind().to_string(),
                 schema_to_json_type(&leaf.schema),
                 leaf.indexes().clone(),
                 Vec::new(),

@@ -11,7 +11,9 @@ use super::{Distribution, SumCum};
 /// Matches the common full_stats() pattern: average + minmax + percentiles + sum + cumulative
 #[derive(Clone, Traversable)]
 pub struct Full<I: VecIndex, T: ComputedVecValue + JsonSchema> {
+    #[traversable(flatten)]
     pub distribution: Distribution<I, T>,
+    #[traversable(flatten)]
     pub sum_cum: SumCum<I, T>,
 }
 

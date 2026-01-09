@@ -4,7 +4,7 @@ use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
-use log::info;
+use tracing::info;
 
 mod binance;
 mod brk;

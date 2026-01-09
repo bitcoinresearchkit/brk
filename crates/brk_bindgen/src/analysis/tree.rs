@@ -35,7 +35,7 @@ pub fn get_node_fields(
         .map(|(name, node)| {
             let (rust_type, json_type, indexes) = match node {
                 TreeNode::Leaf(leaf) => (
-                    leaf.value_type().to_string(),
+                    leaf.kind().to_string(),
                     schema_to_json_type(&leaf.schema),
                     leaf.indexes().clone(),
                 ),
@@ -228,7 +228,7 @@ pub fn get_fields_with_child_info(
         .map(|(name, node)| {
             let (rust_type, json_type, indexes, child_fields) = match node {
                 TreeNode::Leaf(leaf) => (
-                    leaf.value_type().to_string(),
+                    leaf.kind().to_string(),
                     schema_to_json_type(&leaf.schema),
                     leaf.indexes().clone(),
                     None,

@@ -3,9 +3,11 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{IterableBoxedVec, IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
 use crate::internal::{ComputedVecValue, Full};
+
+use super::LazyPercentiles;
 
 #[derive(Clone, Traversable)]
 pub struct LazyTransformFull<I, T, S1T = T>
@@ -17,6 +19,7 @@ where
     pub average: LazyVecFrom1<I, T, I, S1T>,
     pub min: LazyVecFrom1<I, T, I, S1T>,
     pub max: LazyVecFrom1<I, T, I, S1T>,
+    pub percentiles: LazyPercentiles<I, T, S1T>,
     pub sum: LazyVecFrom1<I, T, I, S1T>,
     pub cumulative: LazyVecFrom1<I, T, I, S1T>,
 }
@@ -48,42 +51,22 @@ where
                 version,
                 source.distribution.minmax.max.0.boxed_clone(),
             ),
+            percentiles: LazyPercentiles::from_percentiles::<F>(
+                name,
+                version,
+                &source.distribution.percentiles,
+            ),
             sum: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_sum"),
                 version,
                 source.sum_cum.sum.0.boxed_clone(),
             ),
             cumulative: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_cum"),
+                &format!("{name}_cumulative"),
                 version,
                 source.sum_cum.cumulative.0.boxed_clone(),
             ),
         }
     }
 
-    pub fn from_boxed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        average_source: IterableBoxedVec<I, S1T>,
-        min_source: IterableBoxedVec<I, S1T>,
-        max_source: IterableBoxedVec<I, S1T>,
-        sum_source: IterableBoxedVec<I, S1T>,
-        cumulative_source: IterableBoxedVec<I, S1T>,
-    ) -> Self {
-        Self {
-            average: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_average"),
-                version,
-                average_source,
-            ),
-            min: LazyVecFrom1::transformed::<F>(&format!("{name}_min"), version, min_source),
-            max: LazyVecFrom1::transformed::<F>(&format!("{name}_max"), version, max_source),
-            sum: LazyVecFrom1::transformed::<F>(&format!("{name}_sum"), version, sum_source),
-            cumulative: LazyVecFrom1::transformed::<F>(
-                &format!("{name}_cum"),
-                version,
-                cumulative_source,
-            ),
-        }
-    }
 }

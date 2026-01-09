@@ -16,8 +16,8 @@ impl Query {
         let max_height = Height::from(
             indexer
                 .vecs
-                .block
-                .height_to_blockhash
+                .blocks
+                .blockhash
                 .len()
                 .saturating_sub(1),
         );
@@ -30,8 +30,8 @@ impl Query {
             Some(
                 indexer
                     .vecs
-                    .block
-                    .height_to_blockhash
+                    .blocks
+                    .blockhash
                     .read_once(height.incremented())?,
             )
         } else {

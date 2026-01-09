@@ -3,10 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::{ComputedDateLast, ValueBlockSum},
-};
+use crate::{indexes, internal::{ComputedDateLast, ValueBlockSum, ValueDateLast}};
 
 impl Vecs {
     pub fn forced_import(
@@ -18,44 +15,28 @@ impl Vecs {
         let v2 = Version::TWO;
 
         Ok(Self {
-            indexes_to_sent_sum: ValueBlockSum::forced_import(
+            sent_sum: ValueBlockSum::forced_import(
                 db,
                 "sent_sum",
                 version,
                 indexes,
                 compute_dollars,
             )?,
-            indexes_to_annualized_volume: ComputedDateLast::forced_import(
+            annualized_volume: ValueDateLast::forced_import(
                 db,
                 "annualized_volume",
                 version,
+                compute_dollars,
                 indexes,
             )?,
-            indexes_to_annualized_volume_btc: ComputedDateLast::forced_import(
-                db,
-                "annualized_volume_btc",
-                version,
-                indexes,
-            )?,
-            indexes_to_annualized_volume_usd: ComputedDateLast::forced_import(
-                db,
-                "annualized_volume_usd",
-                version,
-                indexes,
-            )?,
-            indexes_to_tx_per_sec: ComputedDateLast::forced_import(
-                db,
-                "tx_per_sec",
-                version + v2,
-                indexes,
-            )?,
-            indexes_to_outputs_per_sec: ComputedDateLast::forced_import(
+            tx_per_sec: ComputedDateLast::forced_import(db, "tx_per_sec", version + v2, indexes)?,
+            outputs_per_sec: ComputedDateLast::forced_import(
                 db,
                 "outputs_per_sec",
                 version + v2,
                 indexes,
             )?,
-            indexes_to_inputs_per_sec: ComputedDateLast::forced_import(
+            inputs_per_sec: ComputedDateLast::forced_import(
                 db,
                 "inputs_per_sec",
                 version + v2,

@@ -8,7 +8,7 @@ use crate::internal::ComputedVecValue;
 
 /// Cumulative sum across aggregation periods
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(wrap = "cumulative")]
+#[traversable(transparent)]
 pub struct CumulativeVec<I: VecIndex, T: ComputedVecValue + JsonSchema>(
     pub EagerVec<PcoVec<I, T>>,
 );

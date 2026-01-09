@@ -103,6 +103,8 @@ impl<'a> Vecs<'a> {
                 .into_iter()
                 .collect(),
             )
+            .merge_branches()
+            .unwrap()
             .simplify()
             .unwrap(),
         );

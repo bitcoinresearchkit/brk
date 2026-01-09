@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{indexes, ComputeIndexes};
+use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     pub fn compute(
@@ -13,12 +13,8 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_block_weight.derive_from(
-            indexes,
-            starting_indexes,
-            &indexer.vecs.block.height_to_weight,
-            exit,
-        )?;
+        self.weight
+            .derive_from(indexes, starting_indexes, &indexer.vecs.blocks.weight, exit)?;
 
         Ok(())
     }

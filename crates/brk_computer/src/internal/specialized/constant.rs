@@ -44,42 +44,42 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
             height: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.block.height_to_height.boxed_clone(),
+                indexes.height.identity.boxed_clone(),
             ),
             dateindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.dateindex_to_dateindex.boxed_clone(),
+                indexes.dateindex.identity.boxed_clone(),
             ),
             weekindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.weekindex_to_weekindex.boxed_clone(),
+                indexes.weekindex.identity.boxed_clone(),
             ),
             monthindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.monthindex_to_monthindex.boxed_clone(),
+                indexes.monthindex.identity.boxed_clone(),
             ),
             quarterindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.quarterindex_to_quarterindex.boxed_clone(),
+                indexes.quarterindex.identity.boxed_clone(),
             ),
             semesterindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.semesterindex_to_semesterindex.boxed_clone(),
+                indexes.semesterindex.identity.boxed_clone(),
             ),
             yearindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.yearindex_to_yearindex.boxed_clone(),
+                indexes.yearindex.identity.boxed_clone(),
             ),
             decadeindex: LazyVecFrom1::transformed::<F>(
                 name,
                 version,
-                indexes.time.decadeindex_to_decadeindex.boxed_clone(),
+                indexes.decadeindex.identity.boxed_clone(),
             ),
         }
     }

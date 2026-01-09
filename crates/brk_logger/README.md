@@ -8,7 +8,7 @@ Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall,
 
 ## Key Features
 
-- **Dual output**: Console (colorized) + optional file logging
+- **Dual output**: Console (colorized) + optional file logging with size-based rotation (42MB, 2 files)
 - **Log hooks**: Register callbacks to intercept log messages programmatically
 - **Sensible defaults**: Pre-configured filters silence common verbose libraries
 - **Timestamp formatting**: Uses system timezone via jiff
@@ -27,7 +27,7 @@ brk_logger::register_hook(|msg| {
 ## Usage
 
 ```rust,ignore
-use log::info;
+use tracing::info;
 
 fn main() -> std::io::Result<()> {
     brk_logger::init(None)?;

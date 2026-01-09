@@ -20,7 +20,6 @@ where
 {
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub dates: LazyDate2Sum<T, S1T, S2T>,
     pub difficultyepoch: LazyTransform2Sum<DifficultyEpoch, T, S1T, S2T>,
 }

@@ -7,7 +7,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        BinaryDateLast, ComputedDateLast, ComputedStandardDeviationVecsDate,
+        ComputedDateLast, ComputedStandardDeviationVecsDate, LazyBinaryDateLast,
         PercentageDiffCloseDollars, StandardDeviationVecsOptions,
     },
     market::dca::ByDcaCagr,
@@ -24,15 +24,14 @@ impl Vecs {
     ) -> Result<Self> {
         let v1 = Version::ONE;
 
-        // KISS: Price returns (lazy, from price.close and lookback.price_ago)
         let price_returns =
             LOOKBACK_PERIOD_NAMES
                 .zip_ref(&lookback.price_ago)
                 .map(|(name, price_ago)| {
-                    BinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                         &format!("{name}_price_returns"),
                         version,
-                        &price.usd.timeindexes_to_price_close,
+                        &price.usd.split.close,
                         price_ago,
                     )
                 });
@@ -42,7 +41,7 @@ impl Vecs {
             ComputedDateLast::forced_import(db, &format!("{name}_cagr"), version, indexes)
         })?;
 
-        let indexes_to_1d_returns_1w_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let _1d_returns_1w_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "1d_returns_1w_sd",
             7,
@@ -51,7 +50,7 @@ impl Vecs {
             StandardDeviationVecsOptions::default(),
             None,
         )?;
-        let indexes_to_1d_returns_1m_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let _1d_returns_1m_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "1d_returns_1m_sd",
             30,
@@ -60,7 +59,7 @@ impl Vecs {
             StandardDeviationVecsOptions::default(),
             None,
         )?;
-        let indexes_to_1d_returns_1y_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let _1d_returns_1y_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "1d_returns_1y_sd",
             365,
@@ -70,9 +69,8 @@ impl Vecs {
             None,
         )?;
 
-        let dateindex_to_downside_returns =
-            EagerVec::forced_import(db, "downside_returns", version)?;
-        let indexes_to_downside_1w_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let downside_returns = EagerVec::forced_import(db, "downside_returns", version)?;
+        let downside_1w_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "downside_1w_sd",
             7,
@@ -81,7 +79,7 @@ impl Vecs {
             StandardDeviationVecsOptions::default(),
             None,
         )?;
-        let indexes_to_downside_1m_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let downside_1m_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "downside_1m_sd",
             30,
@@ -90,7 +88,7 @@ impl Vecs {
             StandardDeviationVecsOptions::default(),
             None,
         )?;
-        let indexes_to_downside_1y_sd = ComputedStandardDeviationVecsDate::forced_import(
+        let downside_1y_sd = ComputedStandardDeviationVecsDate::forced_import(
             db,
             "downside_1y_sd",
             365,
@@ -103,15 +101,13 @@ impl Vecs {
         Ok(Self {
             price_returns,
             cagr,
-
-            indexes_to_1d_returns_1w_sd,
-            indexes_to_1d_returns_1m_sd,
-            indexes_to_1d_returns_1y_sd,
-
-            dateindex_to_downside_returns,
-            indexes_to_downside_1w_sd,
-            indexes_to_downside_1m_sd,
-            indexes_to_downside_1y_sd,
+            _1d_returns_1w_sd,
+            _1d_returns_1m_sd,
+            _1d_returns_1y_sd,
+            downside_returns,
+            downside_1w_sd,
+            downside_1m_sd,
+            downside_1y_sd,
         })
     }
 }

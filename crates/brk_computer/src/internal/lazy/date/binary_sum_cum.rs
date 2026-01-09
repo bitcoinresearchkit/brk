@@ -7,7 +7,10 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec};
 
-use crate::internal::{ComputedVecValue, DerivedDateFull, DerivedDateSumCum, SumCum};
+use crate::internal::{
+    ComputedBlockLast, ComputedBlockSumCum, ComputedVecValue, DerivedComputedBlockLast,
+    DerivedComputedBlockSumCum, DerivedDateFull, DerivedDateSumCum, NumericValue, SumCum,
+};
 
 use super::super::transform::LazyTransform2SumCum;
 
@@ -47,56 +50,24 @@ where
     ) -> Self {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources::<F>(
+                    name, v,
+                    periods1.$p.sum.boxed_clone(), periods2.$p.sum.boxed_clone(),
+                    periods1.$p.cumulative.boxed_clone(), periods2.$p.cumulative.boxed_clone(),
+                )
+            };
+        }
+
         Self {
             dateindex: LazyTransform2SumCum::from_sum_cum::<F>(name, v, dateindex1, dateindex2),
-            weekindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.weekindex.sum.boxed_clone(),
-                periods2.weekindex.sum.boxed_clone(),
-                periods1.weekindex.cumulative.boxed_clone(),
-                periods2.weekindex.cumulative.boxed_clone(),
-            ),
-            monthindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.monthindex.sum.boxed_clone(),
-                periods2.monthindex.sum.boxed_clone(),
-                periods1.monthindex.cumulative.boxed_clone(),
-                periods2.monthindex.cumulative.boxed_clone(),
-            ),
-            quarterindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.quarterindex.sum.boxed_clone(),
-                periods2.quarterindex.sum.boxed_clone(),
-                periods1.quarterindex.cumulative.boxed_clone(),
-                periods2.quarterindex.cumulative.boxed_clone(),
-            ),
-            semesterindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.semesterindex.sum.boxed_clone(),
-                periods2.semesterindex.sum.boxed_clone(),
-                periods1.semesterindex.cumulative.boxed_clone(),
-                periods2.semesterindex.cumulative.boxed_clone(),
-            ),
-            yearindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.yearindex.sum.boxed_clone(),
-                periods2.yearindex.sum.boxed_clone(),
-                periods1.yearindex.cumulative.boxed_clone(),
-                periods2.yearindex.cumulative.boxed_clone(),
-            ),
-            decadeindex: LazyTransform2SumCum::from_sources::<F>(
-                name,
-                v,
-                periods1.decadeindex.sum.boxed_clone(),
-                periods2.decadeindex.sum.boxed_clone(),
-                periods1.decadeindex.cumulative.boxed_clone(),
-                periods2.decadeindex.cumulative.boxed_clone(),
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 
@@ -110,44 +81,202 @@ where
     ) -> Self {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
+                    name, v, &dates1.$p, &dates2.$p,
+                )
+            };
+        }
+
         Self {
             dateindex: LazyTransform2SumCum::from_sum_cum::<F>(name, v, dateindex1, dateindex2),
-            weekindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.weekindex,
-                &dates2.weekindex,
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    // --- Raw variants (no _sum suffix) for pure SumCum types ---
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_computed_sum_raw<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        dateindex1: &SumCum<DateIndex, S1T>,
+        periods1: &DerivedDateSumCum<S1T>,
+        dateindex2: &SumCum<DateIndex, S2T>,
+        periods2: &DerivedDateSumCum<S2T>,
+    ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources_sum_raw::<F>(
+                    name, v,
+                    periods1.$p.sum.boxed_clone(), periods2.$p.sum.boxed_clone(),
+                    periods1.$p.cumulative.boxed_clone(), periods2.$p.cumulative.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyTransform2SumCum::from_sum_cum_sum_raw::<F>(name, v, dateindex1, dateindex2),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    // --- Methods accepting SumCum + Last sources ---
+
+    pub fn from_computed_last<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &ComputedBlockSumCum<S1T>,
+        source2: &ComputedBlockLast<S2T>,
+    ) -> Self
+    where
+        S1T: PartialOrd,
+        S2T: NumericValue,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+                    name, v,
+                    source1.rest.$p.sum.boxed_clone(),
+                    source1.rest.$p.cumulative.boxed_clone(),
+                    source2.rest.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyTransform2SumCum::from_sum_cum_last_sum_raw::<F>(
+                name, v, &source1.dateindex, &source2.dateindex,
             ),
-            monthindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.monthindex,
-                &dates2.monthindex,
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    pub fn from_derived_computed_last<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &DerivedComputedBlockSumCum<S1T>,
+        source2: &ComputedBlockLast<S2T>,
+    ) -> Self
+    where
+        S1T: NumericValue,
+        S2T: NumericValue,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+                    name, v,
+                    source1.$p.sum.boxed_clone(),
+                    source1.$p.cumulative.boxed_clone(),
+                    source2.rest.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyTransform2SumCum::from_sum_cum_last_sum_raw::<F>(
+                name, v, &source1.dateindex, &source2.dateindex,
             ),
-            quarterindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.quarterindex,
-                &dates2.quarterindex,
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    pub fn from_computed_derived_last<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &ComputedBlockSumCum<S1T>,
+        source2: &DerivedComputedBlockLast<S2T>,
+    ) -> Self
+    where
+        S1T: PartialOrd,
+        S2T: NumericValue,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+                    name, v,
+                    source1.rest.$p.sum.boxed_clone(),
+                    source1.rest.$p.cumulative.boxed_clone(),
+                    source2.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyTransform2SumCum::from_sum_cum_last_sum_raw::<F>(
+                name, v, &source1.dateindex, &source2.dateindex,
             ),
-            semesterindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.semesterindex,
-                &dates2.semesterindex,
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
+        }
+    }
+
+    pub fn from_derived_last<F: BinaryTransform<S1T, S2T, T>>(
+        name: &str,
+        version: Version,
+        source1: &DerivedComputedBlockSumCum<S1T>,
+        source2: &DerivedComputedBlockLast<S2T>,
+    ) -> Self
+    where
+        S1T: NumericValue,
+        S2T: NumericValue,
+    {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+                    name, v,
+                    source1.$p.sum.boxed_clone(),
+                    source1.$p.cumulative.boxed_clone(),
+                    source2.$p.boxed_clone(),
+                )
+            };
+        }
+
+        Self {
+            dateindex: LazyTransform2SumCum::from_sum_cum_last_sum_raw::<F>(
+                name, v, &source1.dateindex, &source2.dateindex,
             ),
-            yearindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.yearindex,
-                &dates2.yearindex,
-            ),
-            decadeindex: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
-                name,
-                v,
-                &dates1.decadeindex,
-                &dates2.decadeindex,
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

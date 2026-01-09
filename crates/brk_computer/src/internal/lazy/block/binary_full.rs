@@ -22,7 +22,6 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlock2SumCum<T, S1T, S2T>,
 }
 

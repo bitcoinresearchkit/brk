@@ -9,7 +9,7 @@ use vecdb::{
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        BinaryDateLast, ComputedStandardDeviationVecsDate, PriceTimesRatio,
+        ComputedStandardDeviationVecsDate, LazyBinaryDateLast, PriceTimesRatio,
         StandardDeviationVecsOptions,
     },
     price,
@@ -31,12 +31,12 @@ pub struct ComputedRatioVecsDate {
     pub ratio_pct5: Option<ComputedDateLast<StoredF32>>,
     pub ratio_pct2: Option<ComputedDateLast<StoredF32>>,
     pub ratio_pct1: Option<ComputedDateLast<StoredF32>>,
-    pub ratio_pct99_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct98_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct95_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct5_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct2_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
-    pub ratio_pct1_usd: Option<BinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct99_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct98_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct95_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct5_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct2_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
+    pub ratio_pct1_usd: Option<LazyBinaryDateLast<Dollars, Dollars, StoredF32>>,
 
     pub ratio_sd: Option<ComputedStandardDeviationVecsDate>,
     pub ratio_4y_sd: Option<ComputedStandardDeviationVecsDate>,
@@ -97,7 +97,7 @@ impl ComputedRatioVecsDate {
             ($ratio:expr, $suffix:expr) => {
                 if let Some(mp) = metric_price {
                     $ratio.as_ref().map(|r| {
-                        BinaryDateLast::from_height_and_dateindex_last::<PriceTimesRatio>(
+                        LazyBinaryDateLast::from_height_and_dateindex_last::<PriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             v,
                             mp,
@@ -106,7 +106,7 @@ impl ComputedRatioVecsDate {
                     })
                 } else {
                     price.as_ref().zip($ratio.as_ref()).map(|(p, r)| {
-                        BinaryDateLast::from_computed_both_last::<PriceTimesRatio>(
+                        LazyBinaryDateLast::from_computed_both_last::<PriceTimesRatio>(
                             &format!("{name}_{}", $suffix),
                             v,
                             p,
@@ -167,7 +167,7 @@ impl ComputedRatioVecsDate {
         exit: &Exit,
         price_opt: Option<&impl IterableVec<DateIndex, Dollars>>,
     ) -> Result<()> {
-        let closes = &price.usd.timeindexes_to_price_close.dateindex;
+        let closes = &price.usd.split.close.dateindex;
 
         let price = price_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
@@ -292,81 +292,49 @@ impl ComputedRatioVecsDate {
                 .try_for_each(|v| v.flush())?;
         }
 
-        self.ratio_pct1.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
-        self.ratio_pct2.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
-        self.ratio_pct5.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
-        self.ratio_pct95.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
-        self.ratio_pct98.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
-        self.ratio_pct99.as_mut().unwrap().compute_rest(
-            starting_indexes,
-            exit,
-            None as Option<&EagerVec<PcoVec<_, _>>>,
-        )?;
+        macro_rules! compute_pct_rest {
+            ($($field:ident),*) => {
+                $(self.$field.as_mut().unwrap().compute_rest(
+                    starting_indexes, exit, None as Option<&EagerVec<PcoVec<_, _>>>,
+                )?;)*
+            };
+        }
+        compute_pct_rest!(
+            ratio_pct1,
+            ratio_pct2,
+            ratio_pct5,
+            ratio_pct95,
+            ratio_pct98,
+            ratio_pct99
+        );
 
-        self.ratio_sd.as_mut().unwrap().compute_all(
-            starting_indexes,
-            exit,
-            &self.ratio.dateindex,
-        )?;
-        self.ratio_4y_sd.as_mut().unwrap().compute_all(
-            starting_indexes,
-            exit,
-            &self.ratio.dateindex,
-        )?;
-        self.ratio_2y_sd.as_mut().unwrap().compute_all(
-            starting_indexes,
-            exit,
-            &self.ratio.dateindex,
-        )?;
-        self.ratio_1y_sd.as_mut().unwrap().compute_all(
-            starting_indexes,
-            exit,
-            &self.ratio.dateindex,
-        )?;
+        macro_rules! compute_sd {
+            ($($field:ident),*) => {
+                $(self.$field.as_mut().unwrap().compute_all(
+                    starting_indexes, exit, &self.ratio.dateindex,
+                )?;)*
+            };
+        }
+        compute_sd!(ratio_sd, ratio_4y_sd, ratio_2y_sd, ratio_1y_sd);
 
         Ok(())
     }
 
     fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<PcoVec<DateIndex, StoredF32>>> {
-        let mut vecs = Vec::with_capacity(6);
-        if let Some(v) = self.ratio_pct1.as_mut() {
-            vecs.push(&mut v.dateindex);
+        macro_rules! collect_vecs {
+            ($($field:ident),*) => {{
+                let mut vecs = Vec::with_capacity(6);
+                $(if let Some(v) = self.$field.as_mut() { vecs.push(&mut v.dateindex); })*
+                vecs
+            }};
         }
-        if let Some(v) = self.ratio_pct2.as_mut() {
-            vecs.push(&mut v.dateindex);
-        }
-        if let Some(v) = self.ratio_pct5.as_mut() {
-            vecs.push(&mut v.dateindex);
-        }
-        if let Some(v) = self.ratio_pct95.as_mut() {
-            vecs.push(&mut v.dateindex);
-        }
-        if let Some(v) = self.ratio_pct98.as_mut() {
-            vecs.push(&mut v.dateindex);
-        }
-        if let Some(v) = self.ratio_pct99.as_mut() {
-            vecs.push(&mut v.dateindex);
-        }
-        vecs
+        collect_vecs!(
+            ratio_pct1,
+            ratio_pct2,
+            ratio_pct5,
+            ratio_pct95,
+            ratio_pct98,
+            ratio_pct99
+        )
     }
 }

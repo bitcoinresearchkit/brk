@@ -4,12 +4,12 @@ use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{DateIndex, Height, OutputType, Sats, TxIndex, TypeIndex};
-use log::info;
 use rayon::prelude::*;
+use tracing::info;
 use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
 use crate::{
-    blocks, transactions, indexes, price,
+    blocks,
     distribution::{
         address::AddressTypeToAddressCount,
         block::{
@@ -19,7 +19,7 @@ use crate::{
         compute::write::{process_address_updates, write},
         state::{BlockState, Transacted},
     },
-    inputs, outputs,
+    indexes, inputs, outputs, price, transactions,
 };
 
 use super::{
@@ -58,25 +58,25 @@ pub fn process_blocks(
 
     // References to vectors using correct field paths
     // From indexer.vecs:
-    let height_to_first_txindex = &indexer.vecs.tx.height_to_first_txindex;
-    let height_to_first_txoutindex = &indexer.vecs.txout.height_to_first_txoutindex;
-    let height_to_first_txinindex = &indexer.vecs.txin.height_to_first_txinindex;
+    let height_to_first_txindex = &indexer.vecs.transactions.first_txindex;
+    let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
+    let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
 
     // From transactions and inputs/outputs (via .height or .height.sum_cum.sum patterns):
-    let height_to_tx_count = &transactions.count.indexes_to_tx_count.height;
-    let height_to_output_count = &outputs.count.indexes_to_count.height.sum_cum.sum.0;
-    let height_to_input_count = &inputs.count.indexes_to_count.height.sum_cum.sum.0;
+    let height_to_tx_count = &transactions.count.tx_count.height;
+    let height_to_output_count = &outputs.count.total_count.height.sum_cum.sum.0;
+    let height_to_input_count = &inputs.count.height.sum_cum.sum.0;
     // From blocks:
-    let height_to_timestamp = &blocks.time.height_to_timestamp_fixed;
-    let height_to_date = &blocks.time.height_to_date_fixed;
-    let dateindex_to_first_height = &indexes.time.dateindex_to_first_height;
-    let dateindex_to_height_count = &indexes.time.dateindex_to_height_count;
-    let txindex_to_output_count = &indexes.transaction.txindex_to_output_count;
-    let txindex_to_input_count = &indexes.transaction.txindex_to_input_count;
+    let height_to_timestamp = &blocks.time.timestamp_fixed;
+    let height_to_date = &blocks.time.date_fixed;
+    let dateindex_to_first_height = &indexes.dateindex.first_height;
+    let dateindex_to_height_count = &indexes.dateindex.height_count;
+    let txindex_to_output_count = &indexes.txindex.output_count;
+    let txindex_to_input_count = &indexes.txindex.input_count;
 
     // From price (optional):
-    let height_to_price = price.map(|p| &p.usd.chainindexes_to_price_close.height);
-    let dateindex_to_price = price.map(|p| &p.usd.timeindexes_to_price_close.dateindex);
+    let height_to_price = price.map(|p| &p.usd.split.close.height);
+    let dateindex_to_price = price.map(|p| &p.usd.split.close.dateindex);
 
     // Access pre-computed vectors from context for thread-safe access
     let height_to_price_vec = &ctx.height_to_price;
@@ -103,7 +103,7 @@ pub fn process_blocks(
     // Build txindex -> height lookup map for efficient prev_height computation
     let mut txindex_to_height: RangeMap<TxIndex, Height> = {
         let mut map = RangeMap::with_capacity(last_height.to_usize() + 1);
-        for first_txindex in indexer.vecs.tx.height_to_first_txindex.into_iter() {
+        for first_txindex in indexer.vecs.transactions.first_txindex.into_iter() {
             map.push(first_txindex);
         }
         map
@@ -114,65 +114,30 @@ pub fn process_blocks(
     let mut txin_iters = TxInIterators::new(indexer, inputs, &mut txindex_to_height);
 
     // Create iterators for first address indexes per type
-    let mut first_p2a_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2aaddressindex
-        .into_iter();
-    let mut first_p2pk33_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2pk33addressindex
-        .into_iter();
-    let mut first_p2pk65_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2pk65addressindex
-        .into_iter();
-    let mut first_p2pkh_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2pkhaddressindex
-        .into_iter();
-    let mut first_p2sh_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2shaddressindex
-        .into_iter();
-    let mut first_p2tr_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2traddressindex
-        .into_iter();
-    let mut first_p2wpkh_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2wpkhaddressindex
-        .into_iter();
-    let mut first_p2wsh_iter = indexer
-        .vecs
-        .address
-        .height_to_first_p2wshaddressindex
-        .into_iter();
+    let mut first_p2a_iter = indexer.vecs.addresses.first_p2aaddressindex.into_iter();
+    let mut first_p2pk33_iter = indexer.vecs.addresses.first_p2pk33addressindex.into_iter();
+    let mut first_p2pk65_iter = indexer.vecs.addresses.first_p2pk65addressindex.into_iter();
+    let mut first_p2pkh_iter = indexer.vecs.addresses.first_p2pkhaddressindex.into_iter();
+    let mut first_p2sh_iter = indexer.vecs.addresses.first_p2shaddressindex.into_iter();
+    let mut first_p2tr_iter = indexer.vecs.addresses.first_p2traddressindex.into_iter();
+    let mut first_p2wpkh_iter = indexer.vecs.addresses.first_p2wpkhaddressindex.into_iter();
+    let mut first_p2wsh_iter = indexer.vecs.addresses.first_p2wshaddressindex.into_iter();
 
     // Track running totals - recover from previous height if resuming
-    let (mut addresstype_to_addr_count, mut addresstype_to_empty_addr_count) =
-        if starting_height > Height::ZERO {
-            let addr_count = AddressTypeToAddressCount::from((
-                &vecs.addresstype_to_height_to_addr_count,
-                starting_height,
-            ));
-            let empty_addr_count = AddressTypeToAddressCount::from((
-                &vecs.addresstype_to_height_to_empty_addr_count,
-                starting_height,
-            ));
-            (addr_count, empty_addr_count)
-        } else {
-            (
-                AddressTypeToAddressCount::default(),
-                AddressTypeToAddressCount::default(),
-            )
-        };
+    let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
+        let addr_counts =
+            AddressTypeToAddressCount::from((&vecs.addr_count.by_addresstype, starting_height));
+        let empty_addr_counts = AddressTypeToAddressCount::from((
+            &vecs.empty_addr_count.by_addresstype,
+            starting_height,
+        ));
+        (addr_counts, empty_addr_counts)
+    } else {
+        (
+            AddressTypeToAddressCount::default(),
+            AddressTypeToAddressCount::default(),
+        )
+    };
 
     let mut cache = AddressCache::new();
 
@@ -333,8 +298,8 @@ pub fn process_blocks(
                     &mut vecs.address_cohorts,
                     &mut lookup,
                     block_price,
-                    &mut addresstype_to_addr_count,
-                    &mut addresstype_to_empty_addr_count,
+                    &mut addr_counts,
+                    &mut empty_addr_counts,
                 );
 
                 // Process sent inputs (addresses sending funds)
@@ -344,8 +309,8 @@ pub fn process_blocks(
                     &mut vecs.address_cohorts,
                     &mut lookup,
                     block_price,
-                    &mut addresstype_to_addr_count,
-                    &mut addresstype_to_empty_addr_count,
+                    &mut addr_counts,
+                    &mut empty_addr_counts,
                     height_to_price_vec.as_deref(),
                     height_to_timestamp_vec,
                     height,
@@ -361,10 +326,13 @@ pub fn process_blocks(
         });
 
         // Push to height-indexed vectors
-        vecs.addresstype_to_height_to_addr_count
-            .truncate_push(height, &addresstype_to_addr_count)?;
-        vecs.addresstype_to_height_to_empty_addr_count
-            .truncate_push(height, &addresstype_to_empty_addr_count)?;
+        vecs.addr_count
+            .truncate_push_height(height, addr_counts.sum(), &addr_counts)?;
+        vecs.empty_addr_count.truncate_push_height(
+            height,
+            empty_addr_counts.sum(),
+            &empty_addr_counts,
+        )?;
 
         // Get date info for unrealized state computation
         let date = height_to_date_iter.get_unwrap(height);

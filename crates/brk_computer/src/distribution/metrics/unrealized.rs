@@ -1,18 +1,15 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DateIndex, Dollars, Height, Sats};
+use brk_types::{DateIndex, Dollars, Height};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
-    LazyVecFrom1, LazyVecFrom2, Negate, PcoVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec, Negate};
 
 use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
-        ComputedDateLast, DerivedDateLast, DollarsMinus, DollarsPlus, LazyDateLast,
-        LazyDerivedBlockValue, ValueDerivedDateLast,
+        ComputedHeightDateLast, DollarsMinus, DollarsPlus, LazyBinaryBlockLast, LazyBlockLast,
+        ValueBlockDateLast,
     },
 };
 
@@ -22,36 +19,19 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct UnrealizedMetrics {
     // === Supply in Profit/Loss ===
-    pub height_to_supply_in_profit: EagerVec<PcoVec<Height, Sats>>,
-    pub indexes_to_supply_in_profit: ValueDerivedDateLast,
-    pub height_to_supply_in_loss: EagerVec<PcoVec<Height, Sats>>,
-    pub indexes_to_supply_in_loss: ValueDerivedDateLast,
-    pub dateindex_to_supply_in_profit: EagerVec<PcoVec<DateIndex, Sats>>,
-    pub dateindex_to_supply_in_loss: EagerVec<PcoVec<DateIndex, Sats>>,
-    pub height_to_supply_in_profit_value: LazyDerivedBlockValue,
-    pub height_to_supply_in_loss_value: LazyDerivedBlockValue,
+    pub supply_in_profit: ValueBlockDateLast,
+    pub supply_in_loss: ValueBlockDateLast,
 
     // === Unrealized Profit/Loss ===
-    pub height_to_unrealized_profit: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_unrealized_profit: DerivedDateLast<Dollars>,
-    pub height_to_unrealized_loss: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_unrealized_loss: DerivedDateLast<Dollars>,
-    pub dateindex_to_unrealized_profit: EagerVec<PcoVec<DateIndex, Dollars>>,
-    pub dateindex_to_unrealized_loss: EagerVec<PcoVec<DateIndex, Dollars>>,
+    pub unrealized_profit: ComputedHeightDateLast<Dollars>,
+    pub unrealized_loss: ComputedHeightDateLast<Dollars>,
 
-    // === Negated and Net ===
-    pub height_to_neg_unrealized_loss: LazyVecFrom1<Height, Dollars, Height, Dollars>,
-    pub indexes_to_neg_unrealized_loss: LazyDateLast<Dollars>,
+    // === Negated ===
+    pub neg_unrealized_loss: LazyBlockLast<Dollars>,
 
-    // net = profit - loss (height is lazy, indexes computed)
-    pub height_to_net_unrealized_pnl:
-        LazyVecFrom2<Height, Dollars, Height, Dollars, Height, Dollars>,
-    pub indexes_to_net_unrealized_pnl: ComputedDateLast<Dollars>,
-
-    // total = profit + loss (height is lazy, indexes computed)
-    pub height_to_total_unrealized_pnl:
-        LazyVecFrom2<Height, Dollars, Height, Dollars, Height, Dollars>,
-    pub indexes_to_total_unrealized_pnl: ComputedDateLast<Dollars>,
+    // === Net and Total ===
+    pub net_unrealized_pnl: LazyBinaryBlockLast<Dollars>,
+    pub total_unrealized_pnl: LazyBinaryBlockLast<Dollars>,
 }
 
 impl UnrealizedMetrics {
@@ -59,154 +39,89 @@ impl UnrealizedMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let compute_dollars = cfg.compute_dollars();
 
-        let dateindex_to_supply_in_profit =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version)?;
-        let dateindex_to_supply_in_loss =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version)?;
-        let dateindex_to_unrealized_profit =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version)?;
-        let dateindex_to_unrealized_loss =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version)?;
-        let height_to_unrealized_loss: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_loss"), cfg.version)?;
-        let height_to_neg_unrealized_loss = LazyVecFrom1::transformed::<Negate>(
-            &cfg.name("neg_unrealized_loss"),
+        // === Supply in Profit/Loss ===
+        let supply_in_profit = ValueBlockDateLast::forced_import(
+            cfg.db,
+            &cfg.name("supply_in_profit"),
             cfg.version,
-            height_to_unrealized_loss.boxed_clone(),
-        );
-
-        let indexes_to_unrealized_loss = DerivedDateLast::from_source(
-            &cfg.name("unrealized_loss"),
-            cfg.version,
-            dateindex_to_unrealized_loss.boxed_clone(),
+            compute_dollars,
             cfg.indexes,
-        );
-
-        let indexes_to_neg_unrealized_loss = LazyDateLast::from_derived::<Negate>(
-            &cfg.name("neg_unrealized_loss"),
+            cfg.price,
+        )?;
+        let supply_in_loss = ValueBlockDateLast::forced_import(
+            cfg.db,
+            &cfg.name("supply_in_loss"),
             cfg.version,
-            dateindex_to_unrealized_loss.boxed_clone(),
-            &indexes_to_unrealized_loss,
-        );
+            compute_dollars,
+            cfg.indexes,
+            cfg.price,
+        )?;
 
-        // Extract profit sources for lazy net/total vecs
-        let height_to_unrealized_profit: EagerVec<PcoVec<Height, Dollars>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("unrealized_profit"), cfg.version)?;
-        let indexes_to_unrealized_profit = DerivedDateLast::from_source(
+        // === Unrealized Profit/Loss ===
+        let unrealized_profit = ComputedHeightDateLast::forced_import(
+            cfg.db,
             &cfg.name("unrealized_profit"),
             cfg.version,
-            dateindex_to_unrealized_profit.boxed_clone(),
-            cfg.indexes,
-        );
-
-        // Create lazy height vecs from profit/loss sources
-        let height_to_net_unrealized_pnl = LazyVecFrom2::transformed::<DollarsMinus>(
-            &cfg.name("net_unrealized_pnl"),
-            cfg.version,
-            height_to_unrealized_profit.boxed_clone(),
-            height_to_unrealized_loss.boxed_clone(),
-        );
-        let height_to_total_unrealized_pnl = LazyVecFrom2::transformed::<DollarsPlus>(
-            &cfg.name("total_unrealized_pnl"),
-            cfg.version,
-            height_to_unrealized_profit.boxed_clone(),
-            height_to_unrealized_loss.boxed_clone(),
-        );
-
-        // indexes_to_net/total remain computed (needed by relative.rs)
-        let indexes_to_net_unrealized_pnl = ComputedDateLast::forced_import(
-            cfg.db,
-            &cfg.name("net_unrealized_pnl"),
-            cfg.version,
             cfg.indexes,
         )?;
-        let indexes_to_total_unrealized_pnl = ComputedDateLast::forced_import(
+        let unrealized_loss = ComputedHeightDateLast::forced_import(
             cfg.db,
-            &cfg.name("total_unrealized_pnl"),
+            &cfg.name("unrealized_loss"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let height_to_supply_in_profit: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_profit"), cfg.version)?;
-        let height_to_supply_in_loss: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(cfg.db, &cfg.name("supply_in_loss"), cfg.version)?;
-
-        let price_source = cfg
-            .price
-            .map(|p| p.usd.chainindexes_to_price_close.height.boxed_clone());
-
-        let height_to_supply_in_profit_value = LazyDerivedBlockValue::from_source(
-            &cfg.name("supply_in_profit"),
-            height_to_supply_in_profit.boxed_clone(),
+        // === Negated ===
+        let neg_unrealized_loss = LazyBlockLast::from_computed_height_date::<Negate>(
+            &cfg.name("neg_unrealized_loss"),
             cfg.version,
-            price_source.clone(),
+            &unrealized_loss,
         );
-        let height_to_supply_in_loss_value = LazyDerivedBlockValue::from_source(
-            &cfg.name("supply_in_loss"),
-            height_to_supply_in_loss.boxed_clone(),
+
+        // === Net and Total ===
+        let net_unrealized_pnl = LazyBinaryBlockLast::from_computed_height_date_last::<DollarsMinus>(
+            &cfg.name("net_unrealized_pnl"),
             cfg.version,
-            price_source,
+            &unrealized_profit,
+            &unrealized_loss,
+        );
+        let total_unrealized_pnl = LazyBinaryBlockLast::from_computed_height_date_last::<DollarsPlus>(
+            &cfg.name("total_unrealized_pnl"),
+            cfg.version,
+            &unrealized_profit,
+            &unrealized_loss,
         );
 
         Ok(Self {
-            // === Supply in Profit/Loss ===
-            height_to_supply_in_profit,
-            indexes_to_supply_in_profit: ValueDerivedDateLast::from_source(
-                cfg.db,
-                &cfg.name("supply_in_profit"),
-                dateindex_to_supply_in_profit.boxed_clone(),
-                cfg.version,
-                compute_dollars,
-                cfg.indexes,
-            )?,
-            height_to_supply_in_loss,
-            indexes_to_supply_in_loss: ValueDerivedDateLast::from_source(
-                cfg.db,
-                &cfg.name("supply_in_loss"),
-                dateindex_to_supply_in_loss.boxed_clone(),
-                cfg.version,
-                compute_dollars,
-                cfg.indexes,
-            )?,
-            dateindex_to_supply_in_profit,
-            dateindex_to_supply_in_loss,
-            height_to_supply_in_profit_value,
-            height_to_supply_in_loss_value,
-
-            // === Unrealized Profit/Loss ===
-            height_to_unrealized_profit,
-            indexes_to_unrealized_profit,
-            height_to_unrealized_loss,
-            indexes_to_unrealized_loss,
-            dateindex_to_unrealized_profit,
-            dateindex_to_unrealized_loss,
-
-            height_to_neg_unrealized_loss,
-            indexes_to_neg_unrealized_loss,
-            height_to_net_unrealized_pnl,
-            indexes_to_net_unrealized_pnl,
-            height_to_total_unrealized_pnl,
-            indexes_to_total_unrealized_pnl,
+            supply_in_profit,
+            supply_in_loss,
+            unrealized_profit,
+            unrealized_loss,
+            neg_unrealized_loss,
+            net_unrealized_pnl,
+            total_unrealized_pnl,
         })
     }
 
     /// Get minimum length across height-indexed vectors written in block loop.
     pub fn min_stateful_height_len(&self) -> usize {
-        self.height_to_supply_in_profit
+        self.supply_in_profit
+            .height
             .len()
-            .min(self.height_to_supply_in_loss.len())
-            .min(self.height_to_unrealized_profit.len())
-            .min(self.height_to_unrealized_loss.len())
+            .min(self.supply_in_loss.height.len())
+            .min(self.unrealized_profit.height.len())
+            .min(self.unrealized_loss.height.len())
     }
 
     /// Get minimum length across dateindex-indexed vectors written in block loop.
     pub fn min_stateful_dateindex_len(&self) -> usize {
-        self.dateindex_to_supply_in_profit
+        self.supply_in_profit
+            .indexes
+            .sats_dateindex
             .len()
-            .min(self.dateindex_to_supply_in_loss.len())
-            .min(self.dateindex_to_unrealized_profit.len())
-            .min(self.dateindex_to_unrealized_loss.len())
+            .min(self.supply_in_loss.indexes.sats_dateindex.len())
+            .min(self.unrealized_profit.dateindex.len())
+            .min(self.unrealized_loss.dateindex.len())
     }
 
     /// Push unrealized state values to height-indexed vectors.
@@ -217,23 +132,33 @@ impl UnrealizedMetrics {
         height_state: &UnrealizedState,
         date_state: Option<&UnrealizedState>,
     ) -> Result<()> {
-        self.height_to_supply_in_profit
+        self.supply_in_profit
+            .height
             .truncate_push(height, height_state.supply_in_profit)?;
-        self.height_to_supply_in_loss
+        self.supply_in_loss
+            .height
             .truncate_push(height, height_state.supply_in_loss)?;
-        self.height_to_unrealized_profit
+        self.unrealized_profit
+            .height
             .truncate_push(height, height_state.unrealized_profit)?;
-        self.height_to_unrealized_loss
+        self.unrealized_loss
+            .height
             .truncate_push(height, height_state.unrealized_loss)?;
 
         if let (Some(dateindex), Some(date_state)) = (dateindex, date_state) {
-            self.dateindex_to_supply_in_profit
+            self.supply_in_profit
+                .indexes
+                .sats_dateindex
                 .truncate_push(dateindex, date_state.supply_in_profit)?;
-            self.dateindex_to_supply_in_loss
+            self.supply_in_loss
+                .indexes
+                .sats_dateindex
                 .truncate_push(dateindex, date_state.supply_in_loss)?;
-            self.dateindex_to_unrealized_profit
+            self.unrealized_profit
+                .dateindex
                 .truncate_push(dateindex, date_state.unrealized_profit)?;
-            self.dateindex_to_unrealized_loss
+            self.unrealized_loss
+                .dateindex
                 .truncate_push(dateindex, date_state.unrealized_loss)?;
         }
 
@@ -242,28 +167,28 @@ impl UnrealizedMetrics {
 
     /// Write height-indexed vectors to disk.
     pub fn write(&mut self) -> Result<()> {
-        self.height_to_supply_in_profit.write()?;
-        self.height_to_supply_in_loss.write()?;
-        self.height_to_unrealized_profit.write()?;
-        self.height_to_unrealized_loss.write()?;
-        self.dateindex_to_supply_in_profit.write()?;
-        self.dateindex_to_supply_in_loss.write()?;
-        self.dateindex_to_unrealized_profit.write()?;
-        self.dateindex_to_unrealized_loss.write()?;
+        self.supply_in_profit.height.write()?;
+        self.supply_in_loss.height.write()?;
+        self.unrealized_profit.height.write()?;
+        self.unrealized_loss.height.write()?;
+        self.supply_in_profit.indexes.sats_dateindex.write()?;
+        self.supply_in_loss.indexes.sats_dateindex.write()?;
+        self.unrealized_profit.dateindex.write()?;
+        self.unrealized_loss.dateindex.write()?;
         Ok(())
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         vec![
-            &mut self.height_to_supply_in_profit as &mut dyn AnyStoredVec,
-            &mut self.height_to_supply_in_loss as &mut dyn AnyStoredVec,
-            &mut self.height_to_unrealized_profit as &mut dyn AnyStoredVec,
-            &mut self.height_to_unrealized_loss as &mut dyn AnyStoredVec,
-            &mut self.dateindex_to_supply_in_profit as &mut dyn AnyStoredVec,
-            &mut self.dateindex_to_supply_in_loss as &mut dyn AnyStoredVec,
-            &mut self.dateindex_to_unrealized_profit as &mut dyn AnyStoredVec,
-            &mut self.dateindex_to_unrealized_loss as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.height as &mut dyn AnyStoredVec,
+            &mut self.unrealized_profit.height as &mut dyn AnyStoredVec,
+            &mut self.unrealized_loss.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.indexes.sats_dateindex as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.indexes.sats_dateindex as &mut dyn AnyStoredVec,
+            &mut self.unrealized_profit.rest.dateindex as &mut dyn AnyStoredVec,
+            &mut self.unrealized_loss.rest.dateindex as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
     }
@@ -275,67 +200,73 @@ impl UnrealizedMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_supply_in_profit.compute_sum_of_others(
+        self.supply_in_profit.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.height_to_supply_in_profit)
+                .map(|v| &v.supply_in_profit.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.height_to_supply_in_loss.compute_sum_of_others(
+        self.supply_in_loss.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.height_to_supply_in_loss)
+                .map(|v| &v.supply_in_loss.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.height_to_unrealized_profit.compute_sum_of_others(
+        self.unrealized_profit.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.height_to_unrealized_profit)
+                .map(|v| &v.unrealized_profit.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.height_to_unrealized_loss.compute_sum_of_others(
+        self.unrealized_loss.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.height_to_unrealized_loss)
+                .map(|v| &v.unrealized_loss.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.dateindex_to_supply_in_profit.compute_sum_of_others(
+        self.supply_in_profit
+            .indexes
+            .sats_dateindex
+            .compute_sum_of_others(
+                starting_indexes.dateindex,
+                &others
+                    .iter()
+                    .map(|v| &v.supply_in_profit.indexes.sats_dateindex)
+                    .collect::<Vec<_>>(),
+                exit,
+            )?;
+        self.supply_in_loss
+            .indexes
+            .sats_dateindex
+            .compute_sum_of_others(
+                starting_indexes.dateindex,
+                &others
+                    .iter()
+                    .map(|v| &v.supply_in_loss.indexes.sats_dateindex)
+                    .collect::<Vec<_>>(),
+                exit,
+            )?;
+        self.unrealized_profit.dateindex.compute_sum_of_others(
             starting_indexes.dateindex,
             &others
                 .iter()
-                .map(|v| &v.dateindex_to_supply_in_profit)
+                .map(|v| &v.unrealized_profit.dateindex)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.dateindex_to_supply_in_loss.compute_sum_of_others(
+        self.unrealized_loss.dateindex.compute_sum_of_others(
             starting_indexes.dateindex,
             &others
                 .iter()
-                .map(|v| &v.dateindex_to_supply_in_loss)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.dateindex_to_unrealized_profit.compute_sum_of_others(
-            starting_indexes.dateindex,
-            &others
-                .iter()
-                .map(|v| &v.dateindex_to_unrealized_profit)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.dateindex_to_unrealized_loss.compute_sum_of_others(
-            starting_indexes.dateindex,
-            &others
-                .iter()
-                .map(|v| &v.dateindex_to_unrealized_loss)
+                .map(|v| &v.unrealized_loss.dateindex)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -349,39 +280,11 @@ impl UnrealizedMetrics {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // KISS: compute_rest doesn't need source vec - lazy vecs are set up during import
-        self.indexes_to_supply_in_profit
-            .compute_rest(price, starting_indexes, exit)?;
+        self.supply_in_profit
+            .compute_dollars_from_price(price, starting_indexes, exit)?;
 
-        self.indexes_to_supply_in_loss
-            .compute_rest(price, starting_indexes, exit)?;
-
-        // indexes_to_unrealized_profit/loss are Derived - no compute needed (lazy only)
-
-        // height_to_net/total are lazy, but indexes still need compute
-        // total_unrealized_pnl = profit + loss
-        self.indexes_to_total_unrealized_pnl
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_add(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_unrealized_profit,
-                    &self.dateindex_to_unrealized_loss,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        // net_unrealized_pnl = profit - loss
-        self.indexes_to_net_unrealized_pnl
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_subtract(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_unrealized_profit,
-                    &self.dateindex_to_unrealized_loss,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.supply_in_loss
+            .compute_dollars_from_price(price, starting_indexes, exit)?;
 
         Ok(())
     }

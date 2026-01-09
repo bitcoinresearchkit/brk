@@ -43,67 +43,26 @@ where
         cumulative_source: IterableBoxedVec<DateIndex, T>,
         indexes: &indexes::Vecs,
     ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($idx:ident) => {
+                LazyFull::from_stats_aggregate(
+                    name, v,
+                    average_source.clone(), min_source.clone(), max_source.clone(),
+                    sum_source.clone(), cumulative_source.clone(),
+                    indexes.$idx.identity.boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            weekindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.weekindex_to_weekindex.boxed_clone(),
-            ),
-            monthindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.monthindex_to_monthindex.boxed_clone(),
-            ),
-            quarterindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.quarterindex_to_quarterindex.boxed_clone(),
-            ),
-            semesterindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.semesterindex_to_semesterindex.boxed_clone(),
-            ),
-            yearindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.yearindex_to_yearindex.boxed_clone(),
-            ),
-            decadeindex: LazyFull::from_stats_aggregate(
-                name,
-                version + VERSION,
-                average_source,
-                min_source,
-                max_source,
-                sum_source,
-                cumulative_source,
-                indexes.time.decadeindex_to_decadeindex.boxed_clone(),
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

@@ -69,7 +69,7 @@ impl ValueBlockSum {
         // Compute dollars from bitcoin and price (if enabled)
         if let (Some(dollars), Some(price)) = (self.dollars.as_mut(), price) {
             let height_to_bitcoin = &self.bitcoin.height;
-            let height_to_price_close = &price.usd.chainindexes_to_price_close.height;
+            let height_to_price_close = &price.usd.split.close.height;
 
             dollars.compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_from_bitcoin(

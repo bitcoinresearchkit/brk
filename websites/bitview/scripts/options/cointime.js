@@ -167,7 +167,6 @@ function createCointimePriceWithRatioOptions(
  */
 export function createCointimeSection(ctx) {
   const { colors, brk, s } = ctx;
-  const { mergeMetricPatterns } = brk;
   const { cointime, distribution, supply } = brk.tree.computed;
   const { pricing, cap, activity, supply: cointimeSupply, adjusted } = cointime;
   const { all } = distribution.utxoCohorts;
@@ -381,10 +380,7 @@ export function createCointimeSection(ctx) {
         bottom: [
           // Destroyed comes from the all cohort's activity
           s({
-            metric: mergeMetricPatterns(
-              all.activity.coinblocksDestroyed.base,
-              all.activity.coinblocksDestroyed.sum,
-            ),
+            metric: all.activity.coinblocksDestroyed.sum,
             name: "Destroyed",
             color: colors.red,
             unit: Unit.coinblocks,
@@ -398,10 +394,7 @@ export function createCointimeSection(ctx) {
           }),
           // Created and stored from cointime
           s({
-            metric: mergeMetricPatterns(
-              activity.coinblocksCreated.base,
-              activity.coinblocksCreated.sum,
-            ),
+            metric: activity.coinblocksCreated.sum,
             name: "Created",
             color: colors.orange,
             unit: Unit.coinblocks,
@@ -414,10 +407,7 @@ export function createCointimeSection(ctx) {
             unit: Unit.coinblocks,
           }),
           s({
-            metric: mergeMetricPatterns(
-              activity.coinblocksStored.base,
-              activity.coinblocksStored.sum,
-            ),
+            metric: activity.coinblocksStored.sum,
             name: "Stored",
             color: colors.green,
             unit: Unit.coinblocks,
@@ -464,10 +454,7 @@ export function createCointimeSection(ctx) {
             title: "Cointime-Adjusted Transactions Velocity",
             bottom: [
               s({
-                metric: mergeMetricPatterns(
-                  supply.velocity.btc.dateindex,
-                  supply.velocity.btc.rest,
-                ),
+                metric: supply.velocity.btc.dateindex,
                 name: "BTC",
                 color: colors.orange,
                 unit: Unit.ratio,

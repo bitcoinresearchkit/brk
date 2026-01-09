@@ -14,5 +14,5 @@ bitcoincore-rpc = { workspace = true }
 brk_error = { workspace = true }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
-log = { workspace = true }
+tracing = { workspace = true }
 parking_lot = { workspace = true }

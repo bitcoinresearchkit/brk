@@ -39,49 +39,24 @@ where
         cumulative_source: IterableBoxedVec<DateIndex, T>,
         indexes: &indexes::Vecs,
     ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($idx:ident) => {
+                LazySumCum::from_sources_sum_raw(
+                    name, v, sum_source.clone(), cumulative_source.clone(),
+                    indexes.$idx.identity.boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            weekindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.weekindex_to_weekindex.boxed_clone(),
-            ),
-            monthindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.monthindex_to_monthindex.boxed_clone(),
-            ),
-            quarterindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.quarterindex_to_quarterindex.boxed_clone(),
-            ),
-            semesterindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.semesterindex_to_semesterindex.boxed_clone(),
-            ),
-            yearindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source.clone(),
-                cumulative_source.clone(),
-                indexes.time.yearindex_to_yearindex.boxed_clone(),
-            ),
-            decadeindex: LazySumCum::from_sources(
-                name,
-                version + VERSION,
-                sum_source,
-                cumulative_source,
-                indexes.time.decadeindex_to_decadeindex.boxed_clone(),
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

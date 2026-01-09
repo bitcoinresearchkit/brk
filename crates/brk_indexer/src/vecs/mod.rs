@@ -8,90 +8,90 @@ use vecdb::{AnyStoredVec, Database, PAGE_SIZE, Reader, Stamp};
 
 use crate::parallel_import;
 
-mod address;
+mod addresses;
 mod blocks;
+mod inputs;
 mod macros;
-mod output;
-mod tx;
-mod txin;
-mod txout;
+mod outputs;
+mod scripts;
+mod transactions;
 
-pub use address::*;
+pub use addresses::*;
 pub use blocks::*;
-pub use output::*;
-pub use tx::*;
-pub use txin::*;
-pub use txout::*;
+pub use inputs::*;
+pub use outputs::*;
+pub use scripts::*;
+pub use transactions::*;
 
 use crate::Indexes;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     db: Database,
-    pub block: BlockVecs,
-    pub tx: TxVecs,
-    pub txin: TxinVecs,
-    pub txout: TxoutVecs,
-    pub address: AddressVecs,
-    pub output: OutputVecs,
+    pub blocks: BlocksVecs,
+    pub transactions: TransactionsVecs,
+    pub inputs: InputsVecs,
+    pub outputs: OutputsVecs,
+    pub addresses: AddressesVecs,
+    pub scripts: ScriptsVecs,
 }
 
 impl Vecs {
     pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
-        log::debug!("Opening vecs database...");
+        tracing::debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
-        log::debug!("Setting min len...");
+        tracing::debug!("Setting min len...");
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        log::debug!("Importing sub-vecs in parallel...");
-        let (block, tx, txin, txout, address, output) = parallel_import! {
-            block = {
-                log::debug!("Importing BlockVecs...");
-                let r = BlockVecs::forced_import(&db, version);
-                log::debug!("BlockVecs imported.");
+        tracing::debug!("Importing sub-vecs in parallel...");
+        let (blocks, transactions, inputs, outputs, addresses, scripts) = parallel_import! {
+            blocks = {
+                tracing::debug!("Importing BlocksVecs...");
+                let r = BlocksVecs::forced_import(&db, version);
+                tracing::debug!("BlocksVecs imported.");
                 r
             },
-            tx = {
-                log::debug!("Importing TxVecs...");
-                let r = TxVecs::forced_import(&db, version);
-                log::debug!("TxVecs imported.");
+            transactions = {
+                tracing::debug!("Importing TransactionsVecs...");
+                let r = TransactionsVecs::forced_import(&db, version);
+                tracing::debug!("TransactionsVecs imported.");
                 r
             },
-            txin = {
-                log::debug!("Importing TxinVecs...");
-                let r = TxinVecs::forced_import(&db, version);
-                log::debug!("TxinVecs imported.");
+            inputs = {
+                tracing::debug!("Importing InputsVecs...");
+                let r = InputsVecs::forced_import(&db, version);
+                tracing::debug!("InputsVecs imported.");
                 r
             },
-            txout = {
-                log::debug!("Importing TxoutVecs...");
-                let r = TxoutVecs::forced_import(&db, version);
-                log::debug!("TxoutVecs imported.");
+            outputs = {
+                tracing::debug!("Importing OutputsVecs...");
+                let r = OutputsVecs::forced_import(&db, version);
+                tracing::debug!("OutputsVecs imported.");
                 r
             },
-            address = {
-                log::debug!("Importing AddressVecs...");
-                let r = AddressVecs::forced_import(&db, version);
-                log::debug!("AddressVecs imported.");
+            addresses = {
+                tracing::debug!("Importing AddressesVecs...");
+                let r = AddressesVecs::forced_import(&db, version);
+                tracing::debug!("AddressesVecs imported.");
                 r
             },
-            output = {
-                log::debug!("Importing OutputVecs...");
-                let r = OutputVecs::forced_import(&db, version);
-                log::debug!("OutputVecs imported.");
+            scripts = {
+                tracing::debug!("Importing ScriptsVecs...");
+                let r = ScriptsVecs::forced_import(&db, version);
+                tracing::debug!("ScriptsVecs imported.");
                 r
             },
         };
-        log::debug!("Sub-vecs imported.");
+        tracing::debug!("Sub-vecs imported.");
 
         let this = Self {
             db,
-            block,
-            tx,
-            txin,
-            txout,
-            address,
-            output,
+            blocks,
+            transactions,
+            inputs,
+            outputs,
+            addresses,
+            scripts,
         };
 
         this.db.retain_regions(
@@ -108,18 +108,18 @@ impl Vecs {
         let saved_height = starting_indexes.height.decremented().unwrap_or_default();
         let stamp = Stamp::from(u64::from(saved_height));
 
-        self.block.truncate(starting_indexes.height, stamp)?;
+        self.blocks.truncate(starting_indexes.height, stamp)?;
 
-        self.tx
+        self.transactions
             .truncate(starting_indexes.height, starting_indexes.txindex, stamp)?;
 
-        self.txin
+        self.inputs
             .truncate(starting_indexes.height, starting_indexes.txinindex, stamp)?;
 
-        self.txout
+        self.outputs
             .truncate(starting_indexes.height, starting_indexes.txoutindex, stamp)?;
 
-        self.address.truncate(
+        self.addresses.truncate(
             starting_indexes.height,
             starting_indexes.p2pk65addressindex,
             starting_indexes.p2pk33addressindex,
@@ -132,7 +132,7 @@ impl Vecs {
             stamp,
         )?;
 
-        self.output.truncate(
+        self.scripts.truncate(
             starting_indexes.height,
             starting_indexes.emptyoutputindex,
             starting_indexes.opreturnindex,
@@ -150,12 +150,12 @@ impl Vecs {
         typeindex: TypeIndex,
         reader: &Reader,
     ) -> Result<Option<AddressBytes>> {
-        self.address
+        self.addresses
             .get_bytes_by_type(addresstype, typeindex, reader)
     }
 
     pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
-        self.address.push_bytes_if_needed(index, bytes)
+        self.addresses.push_bytes_if_needed(index, bytes)
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
@@ -180,24 +180,30 @@ impl Vecs {
         Ok(())
     }
 
+    pub fn reset(&mut self) -> Result<()> {
+        self.par_iter_mut_any_stored_vec()
+            .try_for_each(|vec| vec.any_reset())?;
+        Ok(())
+    }
+
     pub fn iter_address_hashes_from(
         &self,
         address_type: OutputType,
         height: Height,
     ) -> Result<Box<dyn Iterator<Item = AddressHash> + '_>> {
-        self.address.iter_hashes_from(address_type, height)
+        self.addresses.iter_hashes_from(address_type, height)
     }
 
     fn par_iter_mut_any_stored_vec(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        self.block
+        self.blocks
             .par_iter_mut_any()
-            .chain(self.tx.par_iter_mut_any())
-            .chain(self.txin.par_iter_mut_any())
-            .chain(self.txout.par_iter_mut_any())
-            .chain(self.address.par_iter_mut_any())
-            .chain(self.output.par_iter_mut_any())
+            .chain(self.transactions.par_iter_mut_any())
+            .chain(self.inputs.par_iter_mut_any())
+            .chain(self.outputs.par_iter_mut_any())
+            .chain(self.addresses.par_iter_mut_any())
+            .chain(self.scripts.par_iter_mut_any())
     }
 
     pub fn db(&self) -> &Database {

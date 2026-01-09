@@ -24,7 +24,6 @@ use brk::types::Height;
 |---------|-------|-------------|
 | `bencher` | `brk_bencher` | Benchmarking utilities |
 | `binder` | `brk_binder` | Client code generation |
-| `bundler` | `brk_bundler` | JS bundling |
 | `client` | `brk_client` | Generated Rust API client |
 | `computer` | `brk_computer` | Metric computation |
 | `error` | `brk_error` | Error types |

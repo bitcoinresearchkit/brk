@@ -10,29 +10,24 @@ pub fn iter_difficulty_epochs(
 ) -> Vec<DifficultyAdjustmentEntry> {
     let start_epoch = computer
         .indexes
-        .block
-        .height_to_difficultyepoch
+        .height
+        .difficultyepoch
         .read_once(Height::from(start_height))
         .unwrap_or_default();
     let end_epoch = computer
         .indexes
-        .block
-        .height_to_difficultyepoch
+        .height
+        .difficultyepoch
         .read_once(Height::from(end_height))
         .unwrap_or_default();
 
     let mut epoch_to_height_iter = computer
         .indexes
-        .block
-        .difficultyepoch_to_first_height
-        .iter();
-    let mut epoch_to_timestamp_iter = computer.blocks.time.difficultyepoch_to_timestamp.iter();
-    let mut epoch_to_difficulty_iter = computer
-        .blocks
-        .mining
-        .indexes_to_difficulty
         .difficultyepoch
+        .first_height
         .iter();
+    let mut epoch_to_timestamp_iter = computer.blocks.time.timestamp.difficultyepoch.iter();
+    let mut epoch_to_difficulty_iter = computer.blocks.mining.difficulty.difficultyepoch.iter();
 
     let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);
     let mut prev_difficulty: Option<f64> = None;

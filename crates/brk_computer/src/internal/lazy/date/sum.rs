@@ -39,15 +39,21 @@ where
         source: &DerivedDateSum<S1T>,
     ) -> Self {
         let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransformSum::from_boxed::<F>(name, v, source.$p.boxed_clone())
+            };
+        }
+
         Self {
             dateindex: LazyTransformSum::from_boxed::<F>(name, v, dateindex_source),
-            weekindex: LazyTransformSum::from_boxed::<F>(name, v, source.weekindex.boxed_clone()),
-            monthindex: LazyTransformSum::from_boxed::<F>(name, v, source.monthindex.boxed_clone()),
-            quarterindex: LazyTransformSum::from_boxed::<F>(name, v, source.quarterindex.boxed_clone()),
-            semesterindex: LazyTransformSum::from_boxed::<F>(name, v, source.semesterindex.boxed_clone()),
-            yearindex: LazyTransformSum::from_boxed::<F>(name, v, source.yearindex.boxed_clone()),
-            decadeindex: LazyTransformSum::from_boxed::<F>(name, v, source.decadeindex.boxed_clone()),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
-
 }

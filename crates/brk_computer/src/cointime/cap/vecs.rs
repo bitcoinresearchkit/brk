@@ -5,9 +5,9 @@ use crate::internal::ComputedBlockLast;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes_to_thermo_cap: ComputedBlockLast<Dollars>,
-    pub indexes_to_investor_cap: ComputedBlockLast<Dollars>,
-    pub indexes_to_vaulted_cap: ComputedBlockLast<Dollars>,
-    pub indexes_to_active_cap: ComputedBlockLast<Dollars>,
-    pub indexes_to_cointime_cap: ComputedBlockLast<Dollars>,
+    pub thermo_cap: ComputedBlockLast<Dollars>,
+    pub investor_cap: ComputedBlockLast<Dollars>,
+    pub vaulted_cap: ComputedBlockLast<Dollars>,
+    pub active_cap: ComputedBlockLast<Dollars>,
+    pub cointime_cap: ComputedBlockLast<Dollars>,
 }

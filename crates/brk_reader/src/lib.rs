@@ -20,9 +20,9 @@ use brk_types::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
 use crossbeam::channel::bounded;
 use derive_more::Deref;
-use log::error;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
+use tracing::error;
 
 mod any_block;
 mod blk_index_to_blk_path;

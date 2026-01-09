@@ -228,7 +228,12 @@ function createRealizedPriceOptions(ctx, args, title) {
       name: "price",
       title: `Realized Price ${title}`,
       top: [
-        s({ metric: tree.realized.realizedPrice, name: "realized", color, unit: Unit.usd }),
+        s({
+          metric: tree.realized.realizedPrice,
+          name: "realized",
+          color,
+          unit: Unit.usd,
+        }),
       ],
     },
   ];
@@ -275,7 +280,11 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
             options: { baseValue: { price: 100 } },
             colors: [colors.red, colors.green],
           }),
-          createPriceLine({ unit: Unit.pctOwnMcap, defaultActive: true, number: 100 }),
+          createPriceLine({
+            unit: Unit.pctOwnMcap,
+            defaultActive: true,
+            number: 100,
+          }),
         ]
       : []),
   ]);
@@ -290,7 +299,6 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  */
 function createRealizedPnlSection(ctx, args, title) {
   const { colors, s, brk } = ctx;
-  const { mergeMetricPatterns } = brk;
   const { tree } = args;
 
   return [
@@ -335,10 +343,13 @@ function createRealizedPnlSection(ctx, args, title) {
           unit: Unit.usd,
         }),
         s({
-          metric: mergeMetricPatterns(
-            tree.realized.negRealizedLoss.base,
-            tree.realized.negRealizedLoss.sum,
-          ),
+          metric: tree.realized.negRealizedLoss.sum,
+          name: "Negative Loss",
+          color: colors.red,
+          unit: Unit.usd,
+        }),
+        s({
+          metric: tree.realized.negRealizedLoss.cumulative,
           name: "Negative Loss",
           color: colors.red,
           unit: Unit.usd,
@@ -509,7 +520,6 @@ function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
  */
 function createActivitySection(ctx, list, useGroupName, title) {
   const { s, brk } = ctx;
-  const { mergeMetricPatterns } = brk;
 
   return [
     {

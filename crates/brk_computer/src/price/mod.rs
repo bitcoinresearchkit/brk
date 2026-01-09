@@ -1,11 +1,11 @@
 mod compute;
 mod fetch;
 
-pub mod ohlc;
+pub mod cents;
 pub mod sats;
 pub mod usd;
 
-pub use ohlc::Vecs as OhlcVecs;
+pub use cents::Vecs as CentsVecs;
 pub use sats::Vecs as SatsVecs;
 pub use usd::Vecs as UsdVecs;
 
@@ -28,7 +28,7 @@ pub struct Vecs {
     #[traversable(skip)]
     pub(crate) fetcher: Option<Fetcher>,
 
-    pub ohlc: OhlcVecs,
+    pub cents: CentsVecs,
     pub usd: UsdVecs,
     pub sats: SatsVecs,
 }
@@ -61,14 +61,14 @@ impl Vecs {
         indexes: &indexes::Vecs,
         fetcher: Option<Fetcher>,
     ) -> brk_error::Result<Self> {
-        let ohlc = OhlcVecs::forced_import(db, version)?;
-        let usd = UsdVecs::forced_import(db, version, indexes, &ohlc)?;
+        let cents = CentsVecs::forced_import(db, version)?;
+        let usd = UsdVecs::forced_import(db, version, indexes)?;
         let sats = SatsVecs::forced_import(db, version, indexes)?;
 
         Ok(Self {
             db: db.clone(),
             fetcher,
-            ohlc,
+            cents,
             usd,
             sats,
         })

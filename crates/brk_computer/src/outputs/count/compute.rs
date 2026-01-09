@@ -4,7 +4,7 @@ use brk_types::{Height, StoredU64};
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{indexes, inputs, scripts, ComputeIndexes};
+use crate::{ComputeIndexes, indexes, inputs, scripts};
 
 impl Vecs {
     pub fn compute(
@@ -16,32 +16,22 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_count.derive_from(
+        self.total_count.derive_from(
             indexer,
             indexes,
             starting_indexes,
-            &indexes.transaction.txindex_to_output_count,
+            &indexes.txindex.output_count,
             exit,
         )?;
 
-        self.indexes_to_utxo_count
+        self.utxo_count
             .compute_all(indexes, starting_indexes, exit, |v| {
-                let mut input_count_iter = inputs_count
-                    .indexes_to_count
-                    .height
-                    .sum_cum
-                    .cumulative
-                    .0
-                    .into_iter();
-                let mut opreturn_cumulative_iter = scripts_count
-                    .indexes_to_opreturn_count
-                    .rest
-                    .height_cumulative
-                    .0
-                    .into_iter();
+                let mut input_count_iter = inputs_count.height.sum_cum.cumulative.0.into_iter();
+                let mut opreturn_cumulative_iter =
+                    scripts_count.opreturn.height_cumulative.0.into_iter();
                 v.compute_transform(
                     starting_indexes.height,
-                    &self.indexes_to_count.height.sum_cum.cumulative.0,
+                    &self.total_count.height.sum_cum.cumulative.0,
                     |(h, output_count, ..)| {
                         let input_count = input_count_iter.get_unwrap(h);
                         let opreturn_count = *opreturn_cumulative_iter.get_unwrap(h);

@@ -4,8 +4,9 @@ use vecdb::Database;
 
 use super::Vecs;
 use crate::{
-    indexes, price,
-    internal::{ComputedRatioVecsDate, ComputedBlockLast},
+    indexes,
+    internal::{ComputedBlockLast, ComputedRatioVecsDate},
+    price,
 };
 
 impl Vecs {
@@ -17,20 +18,15 @@ impl Vecs {
     ) -> Result<Self> {
         macro_rules! computed_h {
             ($name:expr) => {
-                ComputedBlockLast::forced_import(
-                    db,
-                    $name,
-                    version,
-                    indexes,
-                )?
+                ComputedBlockLast::forced_import(db, $name, version, indexes)?
             };
         }
 
         // Extract price vecs before struct literal so they can be used as sources for ratios
-        let indexes_to_vaulted_price = computed_h!("vaulted_price");
-        let indexes_to_active_price = computed_h!("active_price");
-        let indexes_to_true_market_mean = computed_h!("true_market_mean");
-        let indexes_to_cointime_price = computed_h!("cointime_price");
+        let vaulted_price = computed_h!("vaulted_price");
+        let active_price = computed_h!("active_price");
+        let true_market_mean = computed_h!("true_market_mean");
+        let cointime_price = computed_h!("cointime_price");
 
         macro_rules! ratio_di {
             ($name:expr, $source:expr) => {
@@ -47,20 +43,14 @@ impl Vecs {
         }
 
         Ok(Self {
-            indexes_to_vaulted_price_ratio: ratio_di!("vaulted_price", &indexes_to_vaulted_price),
-            indexes_to_vaulted_price,
-            indexes_to_active_price_ratio: ratio_di!("active_price", &indexes_to_active_price),
-            indexes_to_active_price,
-            indexes_to_true_market_mean_ratio: ratio_di!(
-                "true_market_mean",
-                &indexes_to_true_market_mean
-            ),
-            indexes_to_true_market_mean,
-            indexes_to_cointime_price_ratio: ratio_di!(
-                "cointime_price",
-                &indexes_to_cointime_price
-            ),
-            indexes_to_cointime_price,
+            vaulted_price_ratio: ratio_di!("vaulted_price", &vaulted_price),
+            vaulted_price,
+            active_price_ratio: ratio_di!("active_price", &active_price),
+            active_price,
+            true_market_mean_ratio: ratio_di!("true_market_mean", &true_market_mean),
+            true_market_mean,
+            cointime_price_ratio: ratio_di!("cointime_price", &cointime_price),
+            cointime_price,
         })
     }
 }

@@ -1,9 +1,9 @@
 use brk_error::Result;
 use vecdb::Exit;
 
-use super::Vecs;
 use super::super::activity;
-use crate::{distribution, indexes, price, ComputeIndexes};
+use super::Vecs;
+use crate::{ComputeIndexes, distribution, indexes, price};
 
 impl Vecs {
     pub fn compute(
@@ -15,39 +15,36 @@ impl Vecs {
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.height_to_supply;
+        let circulating_supply = &distribution
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .supply
+            .sats
+            .height;
 
-        self.indexes_to_vaulted_supply.compute_all(
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec| {
+        self.vaulted_supply
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    &activity.indexes_to_vaultedness.height,
+                    &activity.vaultedness.height,
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
-        self.indexes_to_active_supply.compute_all(
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |vec| {
+        self.active_supply
+            .compute_all(indexes, price, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
-                    &activity.indexes_to_liveliness.height,
+                    &activity.liveliness.height,
                     exit,
                 )?;
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

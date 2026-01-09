@@ -1,11 +1,13 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Height, TxInIndex, TxOutIndex};
-use log::info;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, Stamp, TypedVecIterator, VecIndex};
+use tracing::info;
+use vecdb::{
+    AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, Stamp, TypedVecIterator, VecIndex,
+};
 
 use super::Vecs;
-use crate::{inputs, ComputeIndexes};
+use crate::{ComputeIndexes, inputs};
 
 const HEIGHT_BATCH: u32 = 10_000;
 
@@ -18,26 +20,25 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let target_height = indexer.vecs.block.height_to_blockhash.len();
+        let target_height = indexer.vecs.blocks.blockhash.len();
         if target_height == 0 {
             return Ok(());
         }
         let target_height = Height::from(target_height - 1);
 
         // Find min_height from current vec length
-        let current_txoutindex = self.txoutindex_to_txinindex.len();
+        let current_txoutindex = self.txinindex.len();
         let min_txoutindex = current_txoutindex.min(starting_indexes.txoutindex.to_usize());
 
         let starting_stamp = Stamp::from(starting_indexes.height);
-        let _ = self.txoutindex_to_txinindex.rollback_before(starting_stamp);
+        let _ = self.txinindex.rollback_before(starting_stamp);
 
-        self.txoutindex_to_txinindex
+        self.txinindex
             .truncate_if_needed(TxOutIndex::from(min_txoutindex))?;
 
-        let mut height_to_first_txoutindex =
-            indexer.vecs.txout.height_to_first_txoutindex.iter()?;
-        let mut height_to_first_txinindex = indexer.vecs.txin.height_to_first_txinindex.iter()?;
-        let mut txinindex_to_txoutindex = inputs.spent.txinindex_to_txoutindex.iter()?;
+        let mut height_to_first_txoutindex = indexer.vecs.outputs.first_txoutindex.iter()?;
+        let mut height_to_first_txinindex = indexer.vecs.inputs.first_txinindex.iter()?;
+        let mut txinindex_to_txoutindex = inputs.spent.txoutindex.iter()?;
 
         // Find starting height from min_txoutindex
         let mut min_height = Height::ZERO;
@@ -65,13 +66,13 @@ impl Vecs {
 
             // Fill txoutindex up to batch_end_height + 1
             let batch_txoutindex = if batch_end_height >= target_height {
-                indexer.vecs.txout.txoutindex_to_value.len()
+                indexer.vecs.outputs.value.len()
             } else {
                 height_to_first_txoutindex
                     .get_unwrap(batch_end_height + 1_u32)
                     .to_usize()
             };
-            self.txoutindex_to_txinindex
+            self.txinindex
                 .fill_to(batch_txoutindex, TxInIndex::UNSPENT)?;
 
             // Get txin range for this height batch
@@ -79,7 +80,7 @@ impl Vecs {
                 .get_unwrap(batch_start_height)
                 .to_usize();
             let txin_end = if batch_end_height >= target_height {
-                inputs.spent.txinindex_to_txoutindex.len()
+                inputs.spent.txoutindex.len()
             } else {
                 height_to_first_txinindex
                     .get_unwrap(batch_end_height + 1_u32)
@@ -102,12 +103,12 @@ impl Vecs {
             pairs.sort_unstable_by_key(|(txoutindex, _)| *txoutindex);
 
             for &(txoutindex, txinindex) in &pairs {
-                self.txoutindex_to_txinindex.update(txoutindex, txinindex)?;
+                self.txinindex.update(txoutindex, txinindex)?;
             }
 
             if batch_end_height < target_height {
                 let _lock = exit.lock();
-                self.txoutindex_to_txinindex.write()?;
+                self.txinindex.write()?;
                 info!(
                     "TxOuts: {:.2}%",
                     batch_end_height.to_usize() as f64 / target_height.to_usize() as f64 * 100.0
@@ -119,7 +120,7 @@ impl Vecs {
         }
 
         let _lock = exit.lock();
-        self.txoutindex_to_txinindex
+        self.txinindex
             .stamped_write_with_changes(Stamp::from(target_height))?;
         db.flush()?;
 

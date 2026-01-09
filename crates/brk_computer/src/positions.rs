@@ -18,8 +18,8 @@ pub const DB_NAME: &str = "positions";
 pub struct Vecs {
     db: Database,
 
-    pub height_to_position: PcoVec<Height, BlkPosition>,
-    pub txindex_to_position: PcoVec<TxIndex, BlkPosition>,
+    pub block_position: PcoVec<Height, BlkPosition>,
+    pub tx_position: PcoVec<TxIndex, BlkPosition>,
 }
 
 impl Vecs {
@@ -30,8 +30,8 @@ impl Vecs {
         let version = parent_version;
 
         let this = Self {
-            height_to_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
-            txindex_to_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
+            block_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
+            tx_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
 
             db,
         };
@@ -67,20 +67,19 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // Validate computed versions against dependencies
-        let dep_version = indexer.vecs.tx.height_to_first_txindex.version()
-            + indexer.vecs.tx.txindex_to_height.version();
-        self.height_to_position
+        let dep_version = indexer.vecs.transactions.first_txindex.version()
+            + indexer.vecs.transactions.height.version();
+        self.block_position
             .validate_computed_version_or_reset(dep_version)?;
-        self.txindex_to_position
+        self.tx_position
             .validate_computed_version_or_reset(dep_version)?;
 
-        let min_txindex =
-            TxIndex::from(self.txindex_to_position.len()).min(starting_indexes.txindex);
+        let min_txindex = TxIndex::from(self.tx_position.len()).min(starting_indexes.txindex);
 
         let Some(min_height) = indexer
             .vecs
-            .tx
-            .txindex_to_height
+            .transactions
+            .height
             .iter()?
             .get(min_txindex)
             .map(|h| h.min(starting_indexes.height))
@@ -88,18 +87,18 @@ impl Vecs {
             return Ok(());
         };
 
-        let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
+        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.iter()?;
 
         parser
             .read(
                 Some(min_height),
-                Some((indexer.vecs.tx.height_to_first_txindex.len() - 1).into()),
+                Some((indexer.vecs.transactions.first_txindex.len() - 1).into()),
             )
             .iter()
             .try_for_each(|block| -> Result<()> {
                 let height = block.height();
 
-                self.height_to_position
+                self.block_position
                     .truncate_push(height, block.metadata().position())?;
 
                 let txindex = height_to_first_txindex_iter.get_unwrap(height);
@@ -107,7 +106,7 @@ impl Vecs {
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {
                         let txindex = txindex + index;
-                        self.txindex_to_position
+                        self.tx_position
                             .truncate_push(txindex, metadata.position())?;
                         Ok(())
                     },
@@ -115,16 +114,16 @@ impl Vecs {
 
                 if *height % 1_000 == 0 {
                     let _lock = exit.lock();
-                    self.height_to_position.flush()?;
-                    self.txindex_to_position.flush()?;
+                    self.block_position.flush()?;
+                    self.tx_position.flush()?;
                 }
 
                 Ok(())
             })?;
 
         let _lock = exit.lock();
-        self.height_to_position.flush()?;
-        self.txindex_to_position.flush()?;
+        self.block_position.flush()?;
+        self.tx_position.flush()?;
 
         Ok(())
     }

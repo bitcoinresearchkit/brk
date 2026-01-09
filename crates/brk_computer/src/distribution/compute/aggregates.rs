@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::{DateIndex, Dollars, Height};
-use log::info;
+use tracing::info;
 use vecdb::{Exit, IterableVec};
 
 use crate::{ComputeIndexes, indexes, price};

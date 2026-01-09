@@ -17,6 +17,6 @@ brk_rpc = { workspace = true }
 brk_types = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 derive_more = { workspace = true }
-log = { workspace = true }
+tracing = { workspace = true }
 parking_lot = { workspace = true }
 rayon = { workspace = true }

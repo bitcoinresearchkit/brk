@@ -14,7 +14,7 @@ brk_rmcp = { version = "0.8.0", features = [
     "transport-worker",
     "transport-streamable-http-server",
 ] }
-log = { workspace = true }
+tracing = { workspace = true }
 minreq = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }

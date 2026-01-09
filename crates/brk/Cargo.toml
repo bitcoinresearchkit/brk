@@ -12,7 +12,6 @@ build = "build.rs"
 full = [
     "bencher",
     "binder",
-    "bundler",
     "client",
     "computer",
     "error",
@@ -33,7 +32,6 @@ full = [
 ]
 bencher = ["brk_bencher"]
 binder = ["brk_bindgen"]
-bundler = ["brk_bundler"]
 client = ["brk_client"]
 computer = ["brk_computer"]
 error = ["brk_error"]
@@ -55,7 +53,6 @@ types = ["brk_types"]
 [dependencies]
 brk_bencher = { workspace = true, optional = true }
 brk_bindgen = { workspace = true, optional = true }
-brk_bundler = { workspace = true, optional = true }
 brk_client = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_error = { workspace = true, optional = true }

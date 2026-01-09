@@ -11,7 +11,7 @@ use crate::internal::ComputedVecValue;
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(wrap = "sum")]
+#[traversable(transparent)]
 pub struct LazySum<I, T, S1I, S2T>(pub LazyVecFrom2<I, T, S1I, T, I, S2T>)
 where
     I: VecIndex,
@@ -32,8 +32,27 @@ where
         source: IterableBoxedVec<S1I, T>,
         len_source: IterableBoxedVec<I, S2T>,
     ) -> Self {
+        Self::from_source_inner(&format!("{name}_sum"), version, source, len_source)
+    }
+
+    /// Create from source without adding _sum suffix.
+    pub fn from_source_raw(
+        name: &str,
+        version: Version,
+        source: IterableBoxedVec<S1I, T>,
+        len_source: IterableBoxedVec<I, S2T>,
+    ) -> Self {
+        Self::from_source_inner(name, version, source, len_source)
+    }
+
+    fn from_source_inner(
+        name: &str,
+        version: Version,
+        source: IterableBoxedVec<S1I, T>,
+        len_source: IterableBoxedVec<I, S2T>,
+    ) -> Self {
         Self(LazyVecFrom2::init(
-            &format!("{name}_sum"),
+            name,
             version + VERSION,
             source,
             len_source,

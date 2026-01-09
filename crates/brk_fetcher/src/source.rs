@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
-use log::info;
+use tracing::info;
 
 /// Default cooldown period for unhealthy sources (5 minutes)
 const DEFAULT_COOLDOWN_SECS: u64 = 5 * 60;

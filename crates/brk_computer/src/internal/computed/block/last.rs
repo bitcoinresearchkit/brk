@@ -58,6 +58,16 @@ where
         F: FnMut(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     {
         compute(&mut self.height)?;
+        self.compute_rest(indexes, starting_indexes, exit)
+    }
+
+    /// Compute rest from self.height (for stateful computation patterns).
+    pub fn compute_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.rest
             .derive_from(indexes, starting_indexes, &self.height, exit)
     }

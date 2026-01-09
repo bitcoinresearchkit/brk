@@ -11,7 +11,6 @@ impl Vecs {
         let price_returns_dca = self.price_returns.as_dca_period();
         for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_returns_dca) {
             cagr.compute_all(starting_indexes, exit, |v| {
-                // KISS: dateindex is no longer Option
                 v.compute_cagr(
                     starting_indexes.dateindex,
                     &returns.dateindex,
@@ -22,27 +21,17 @@ impl Vecs {
             })?;
         }
 
-        // KISS: dateindex is no longer Option
         let _1d_price_returns_dateindex = &self.price_returns._1d.dateindex;
 
-        self.indexes_to_1d_returns_1w_sd.compute_all(
-            starting_indexes,
-            exit,
-            _1d_price_returns_dateindex,
-        )?;
-        self.indexes_to_1d_returns_1m_sd.compute_all(
-            starting_indexes,
-            exit,
-            _1d_price_returns_dateindex,
-        )?;
-        self.indexes_to_1d_returns_1y_sd.compute_all(
-            starting_indexes,
-            exit,
-            _1d_price_returns_dateindex,
-        )?;
+        self._1d_returns_1w_sd
+            .compute_all(starting_indexes, exit, _1d_price_returns_dateindex)?;
+        self._1d_returns_1m_sd
+            .compute_all(starting_indexes, exit, _1d_price_returns_dateindex)?;
+        self._1d_returns_1y_sd
+            .compute_all(starting_indexes, exit, _1d_price_returns_dateindex)?;
 
         // Downside returns: min(return, 0)
-        self.dateindex_to_downside_returns.compute_transform(
+        self.downside_returns.compute_transform(
             starting_indexes.dateindex,
             _1d_price_returns_dateindex,
             |(i, ret, ..)| (i, StoredF32::from((*ret).min(0.0))),
@@ -50,21 +39,12 @@ impl Vecs {
         )?;
 
         // Downside deviation (SD of downside returns)
-        self.indexes_to_downside_1w_sd.compute_all(
-            starting_indexes,
-            exit,
-            &self.dateindex_to_downside_returns,
-        )?;
-        self.indexes_to_downside_1m_sd.compute_all(
-            starting_indexes,
-            exit,
-            &self.dateindex_to_downside_returns,
-        )?;
-        self.indexes_to_downside_1y_sd.compute_all(
-            starting_indexes,
-            exit,
-            &self.dateindex_to_downside_returns,
-        )?;
+        self.downside_1w_sd
+            .compute_all(starting_indexes, exit, &self.downside_returns)?;
+        self.downside_1m_sd
+            .compute_all(starting_indexes, exit, &self.downside_returns)?;
+        self.downside_1y_sd
+            .compute_all(starting_indexes, exit, &self.downside_returns)?;
 
         Ok(())
     }

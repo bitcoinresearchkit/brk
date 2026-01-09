@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, DCA_CLASS_NAMES, DCA_PERIOD_NAMES, Vecs};
 use crate::{
     indexes,
-    internal::{BinaryDateLast, ComputedDateLast, PercentageDiffCloseDollars, ValueDateLast},
+    internal::{ComputedDateLast, LazyBinaryDateLast, PercentageDiffCloseDollars, ValueDateLast},
     price,
 };
 
@@ -31,15 +31,14 @@ impl Vecs {
             )
         })?;
 
-        // KISS: DCA by period - returns (lazy, derived from price and average_price)
         let period_returns =
             DCA_PERIOD_NAMES
                 .zip_ref(&period_average_price)
                 .map(|(name, average_price)| {
-                    BinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                         &format!("{name}_dca_returns"),
                         version,
-                        &price.usd.timeindexes_to_price_close,
+                        &price.usd.split.close,
                         average_price,
                     )
                 });
@@ -70,15 +69,14 @@ impl Vecs {
             ComputedDateLast::forced_import(db, &format!("{name}_average_price"), version, indexes)
         })?;
 
-        // KISS: DCA by year class - returns (lazy)
         let class_returns =
             DCA_CLASS_NAMES
                 .zip_ref(&class_average_price)
                 .map(|(name, average_price)| {
-                    BinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                         &format!("{name}_returns"),
                         version,
-                        &price.usd.timeindexes_to_price_close,
+                        &price.usd.split.close,
                         average_price,
                     )
                 });

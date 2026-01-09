@@ -12,23 +12,19 @@ impl Query {
         let current_height = self.height();
 
         // Get current difficulty
-        let current_difficulty = *indexer
-            .vecs
-            .block
-            .height_to_difficulty
-            .read_once(current_height)?;
+        let current_difficulty = *indexer.vecs.blocks.difficulty.read_once(current_height)?;
 
         // Get current hashrate
         let current_dateindex = computer
             .indexes
-            .block
-            .height_to_dateindex
+            .height
+            .dateindex
             .read_once(current_height)?;
 
         let current_hashrate = *computer
             .blocks
             .mining
-            .indexes_to_hash_rate
+            .hash_rate
             .dateindex
             .read_once(current_dateindex)? as u128;
 
@@ -42,8 +38,8 @@ impl Query {
         // Get hashrate entries using iterators for efficiency
         let start_dateindex = computer
             .indexes
-            .block
-            .height_to_dateindex
+            .height
+            .dateindex
             .read_once(Height::from(start))?;
         let end_dateindex = current_dateindex;
 
@@ -55,19 +51,9 @@ impl Query {
         let step = (total_days / 200).max(1); // Max ~200 data points
 
         // Create iterators for the loop
-        let mut hashrate_iter = computer
-            .blocks
-            .mining
-            .indexes_to_hash_rate
-            .dateindex
-            .iter();
+        let mut hashrate_iter = computer.blocks.mining.hash_rate.dateindex.iter();
 
-        let mut timestamp_iter = computer
-            .blocks
-            .time
-            .timeindexes_to_timestamp
-            .dateindex
-            .iter();
+        let mut timestamp_iter = computer.blocks.time.timestamp.dateindex.iter();
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);
         let mut di = start_dateindex.to_usize();

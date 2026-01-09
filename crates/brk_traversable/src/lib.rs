@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Debug};
+use std::{collections::BTreeMap, fmt::Display};
 
 pub use brk_types::{Index, MetricLeaf, MetricLeafWithSchema, TreeNode};
 
@@ -210,11 +210,11 @@ impl<T: Traversable> Traversable for Option<T> {
     }
 }
 
-impl<K: Debug, V: Traversable> Traversable for BTreeMap<K, V> {
+impl<K: Display, V: Traversable> Traversable for BTreeMap<K, V> {
     fn to_tree_node(&self) -> TreeNode {
         let children = self
             .iter()
-            .map(|(k, v)| (format!("{:?}", k), v.to_tree_node()))
+            .map(|(k, v)| (format!("{}", k), v.to_tree_node()))
             .collect();
         TreeNode::Branch(children)
     }

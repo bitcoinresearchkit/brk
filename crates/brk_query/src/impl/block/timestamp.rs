@@ -24,15 +24,15 @@ impl Query {
         // Get first height of the target date
         let first_height_of_day = computer
             .indexes
-            .time
-            .dateindex_to_first_height
+            .dateindex
+            .first_height
             .read_once(dateindex)
             .unwrap_or(Height::from(0usize));
 
         let start: usize = usize::from(first_height_of_day).min(max_height_usize);
 
         // Use iterator for efficient sequential access
-        let mut timestamp_iter = indexer.vecs.block.height_to_timestamp.iter()?;
+        let mut timestamp_iter = indexer.vecs.blocks.timestamp.iter()?;
 
         // Search forward from start to find the last block <= target timestamp
         let mut best_height = start;
@@ -62,8 +62,8 @@ impl Query {
         let height = Height::from(best_height);
         let blockhash = indexer
             .vecs
-            .block
-            .height_to_blockhash
+            .blocks
+            .blockhash
             .iter()?
             .get_unwrap(height);
 

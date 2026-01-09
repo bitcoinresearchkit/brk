@@ -1,9 +1,11 @@
 {
-  "name": "@bitcoinresearchkit/client",
-  "version": "0.1.0-alpha.2",
+  "bugs": {
+    "url": "https://github.com/bitcoinresearchkit/brk/issues"
+  },
   "description": "BRK JavaScript client",
-  "type": "module",
-  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "exports": {
     ".": "./index.js"
   },
@@ -11,6 +13,7 @@
     "index.js",
     "generated"
   ],
+  "homepage": "https://github.com/bitcoinresearchkit/brk/tree/main/modules/brk-client",
   "keywords": [
     "brk",
     "bitcoin",
@@ -18,16 +21,13 @@
     "research"
   ],
   "license": "MIT",
+  "main": "index.js",
+  "name": "@bitcoinresearchkit/client",
   "repository": {
+    "directory": "modules/brk-client",
     "type": "git",
-    "url": "git+https://github.com/bitcoinresearchkit/brk.git",
-    "directory": "modules/brk-client"
+    "url": "git+https://github.com/bitcoinresearchkit/brk.git"
   },
-  "homepage": "https://github.com/bitcoinresearchkit/brk/tree/main/modules/brk-client",
-  "bugs": {
-    "url": "https://github.com/bitcoinresearchkit/brk/issues"
-  },
-  "engines": {
-    "node": ">=18"
-  }
+  "type": "module",
+  "version": "0.1.0-alpha.2"
 }

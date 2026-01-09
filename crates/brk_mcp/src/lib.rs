@@ -9,9 +9,9 @@ use brk_rmcp::{
     service::RequestContext,
     tool, tool_handler, tool_router,
 };
-use log::info;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use tracing::info;
 
 pub mod route;
 
@@ -41,7 +41,9 @@ impl MCP {
         }
     }
 
-    #[tool(description = "Get the OpenAPI specification describing all available REST API endpoints.")]
+    #[tool(
+        description = "Get the OpenAPI specification describing all available REST API endpoints."
+    )]
     async fn get_openapi(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_openapi");
         Ok(CallToolResult::success(vec![Content::text(
@@ -49,7 +51,9 @@ impl MCP {
         )]))
     }
 
-    #[tool(description = "Call a REST API endpoint. Use get_openapi first to discover available endpoints.")]
+    #[tool(
+        description = "Call a REST API endpoint. Use get_openapi first to discover available endpoints."
+    )]
     async fn fetch(
         &self,
         Parameters(params): Parameters<FetchParams>,

@@ -29,7 +29,6 @@ pub struct DollarsTxFull {
     pub dateindex: Stats<DateIndex, Dollars>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub dates: DerivedDateFull<Dollars>,
 }
 
@@ -61,10 +60,7 @@ impl DollarsTxFull {
                 height.distribution.minmax.max.0.boxed_clone(),
                 height.sum_cum.sum.0.boxed_clone(),
                 height.sum_cum.cumulative.0.boxed_clone(),
-                indexes
-                    .block
-                    .difficultyepoch_to_difficultyepoch
-                    .boxed_clone(),
+                indexes.difficultyepoch.identity.boxed_clone(),
             );
 
         let dates = DerivedDateFull::from_sources(
@@ -97,16 +93,16 @@ impl DollarsTxFull {
         self.height.compute(
             starting_indexes.height,
             &self.txindex,
-            &indexer.vecs.tx.height_to_first_txindex,
-            &indexes.block.height_to_txindex_count,
+            &indexer.vecs.transactions.first_txindex,
+            &indexes.height.txindex_count,
             exit,
         )?;
 
         self.dateindex.compute(
             starting_indexes.dateindex,
             &self.height.distribution.average.0,
-            &indexes.time.dateindex_to_first_height,
-            &indexes.time.dateindex_to_height_count,
+            &indexes.dateindex.first_height,
+            &indexes.dateindex.height_count,
             exit,
         )?;
 

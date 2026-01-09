@@ -198,7 +198,6 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  */
 function createRealizedPnlSection(ctx, args, title) {
   const { colors, s } = ctx;
-  const { mergeMetricPatterns } = ctx.brk;
   const { realized } = args.tree;
 
   return [
@@ -234,10 +233,13 @@ function createRealizedPnlSection(ctx, args, title) {
           unit: Unit.usd,
         }),
         s({
-          metric: mergeMetricPatterns(
-            realized.negRealizedLoss.base,
-            realized.negRealizedLoss.sum,
-          ),
+          metric: realized.negRealizedLoss.sum,
+          name: "Negative Loss",
+          color: colors.red,
+          unit: Unit.usd,
+        }),
+        s({
+          metric: realized.negRealizedLoss.cumulative,
           name: "Negative Loss",
           color: colors.red,
           unit: Unit.usd,
@@ -360,7 +362,6 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
  */
 function createActivitySection(ctx, list, useGroupName, title) {
   const { s, brk } = ctx;
-  const { mergeMetricPatterns } = brk;
 
   return [
     {
@@ -371,10 +372,13 @@ function createActivitySection(ctx, list, useGroupName, title) {
           title: `Coinblocks Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             s({
-              metric: mergeMetricPatterns(
-                tree.activity.coinblocksDestroyed.base,
-                tree.activity.coinblocksDestroyed.sum,
-              ),
+              metric: tree.activity.coinblocksDestroyed.sum,
+              name: useGroupName ? name : "Coinblocks",
+              color,
+              unit: Unit.coinblocks,
+            }),
+            s({
+              metric: tree.activity.coinblocksDestroyed.cumulative,
               name: useGroupName ? name : "Coinblocks",
               color,
               unit: Unit.coinblocks,
@@ -386,10 +390,13 @@ function createActivitySection(ctx, list, useGroupName, title) {
           title: `Coindays Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             s({
-              metric: mergeMetricPatterns(
-                tree.activity.coindaysDestroyed.base,
-                tree.activity.coindaysDestroyed.sum,
-              ),
+              metric: tree.activity.coindaysDestroyed.sum,
+              name: useGroupName ? name : "Coindays",
+              color,
+              unit: Unit.coindays,
+            }),
+            s({
+              metric: tree.activity.coindaysDestroyed.cumulative,
               name: useGroupName ? name : "Coindays",
               color,
               unit: Unit.coindays,

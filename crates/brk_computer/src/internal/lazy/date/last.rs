@@ -7,7 +7,7 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedDateLast, ComputedVecValue, DerivedDateLast};
+use crate::internal::{ComputedBlockLast, ComputedDateLast, ComputedVecValue, DerivedDateLast, NumericValue};
 
 use super::super::transform::LazyTransformLast;
 
@@ -58,22 +58,32 @@ where
         source: &DerivedDateLast<S1T>,
     ) -> Self {
         let v = version + VERSION;
+
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransformLast::from_lazy_last::<F, _, _>(name, v, &source.$p)
+            };
+        }
+
         Self {
             dateindex: LazyTransformLast::from_boxed::<F>(name, v, dateindex_source),
-            weekindex: LazyTransformLast::from_lazy_last::<F, _, _>(name, v, &source.weekindex),
-            monthindex: LazyTransformLast::from_lazy_last::<F, _, _>(name, v, &source.monthindex),
-            quarterindex: LazyTransformLast::from_lazy_last::<F, _, _>(
-                name,
-                v,
-                &source.quarterindex,
-            ),
-            semesterindex: LazyTransformLast::from_lazy_last::<F, _, _>(
-                name,
-                v,
-                &source.semesterindex,
-            ),
-            yearindex: LazyTransformLast::from_lazy_last::<F, _, _>(name, v, &source.yearindex),
-            decadeindex: LazyTransformLast::from_lazy_last::<F, _, _>(name, v, &source.decadeindex),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
+    }
+
+    pub fn from_block_source<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        source: &ComputedBlockLast<S1T>,
+    ) -> Self
+    where
+        S1T: NumericValue,
+    {
+        Self::from_derived::<F>(name, version, source.dateindex.0.boxed_clone(), &source.dates)
     }
 }

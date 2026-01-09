@@ -66,10 +66,31 @@ impl ValueBlockLast {
         self.sats
             .compute_all(indexes, starting_indexes, exit, |v| compute(v))?;
 
-        // Compute dollars from bitcoin and price (if enabled)
+        self.compute_dollars(indexes, price, starting_indexes, exit)
+    }
+
+    /// Compute derived vecs from existing height data.
+    pub fn compute_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.sats.compute_rest(indexes, starting_indexes, exit)?;
+        self.compute_dollars(indexes, price, starting_indexes, exit)
+    }
+
+    fn compute_dollars(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
         if let (Some(dollars), Some(price)) = (self.dollars.as_mut(), price) {
             let height_to_bitcoin = &self.bitcoin.height;
-            let height_to_price_close = &price.usd.chainindexes_to_price_close.height;
+            let height_to_price_close = &price.usd.split.close.height;
 
             dollars.compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_from_bitcoin(

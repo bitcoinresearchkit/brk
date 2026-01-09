@@ -11,7 +11,7 @@ use crate::internal::ComputedVecValue;
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(wrap = "cumulative")]
+#[traversable(transparent)]
 pub struct LazyCumulative<I, T, S1I, S2T>(pub LazyVecFrom2<I, T, S1I, T, I, S2T>)
 where
     I: VecIndex,

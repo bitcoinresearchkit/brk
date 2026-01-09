@@ -80,10 +80,11 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.compute_(indexer, indexes, blocks, starting_indexes, exit)?;
         let _lock = exit.lock();
         self.db.compact()?;
         Ok(())
@@ -93,13 +94,14 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
         self.compute_height_to_pool(indexer, indexes, starting_indexes, exit)?;
 
         self.vecs.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(indexes, starting_indexes, &self.height_to_pool, exit)
+            vecs.compute(indexes, starting_indexes, &self.height_to_pool, blocks, exit)
         })?;
 
         Ok(())
@@ -115,44 +117,44 @@ impl Vecs {
         self.height_to_pool
             .validate_computed_version_or_reset(indexer.stores.height_to_coinbase_tag.version())?;
 
-        let mut height_to_first_txindex_iter = indexer.vecs.tx.height_to_first_txindex.iter()?;
+        let mut height_to_first_txindex_iter = indexer.vecs.transactions.first_txindex.iter()?;
         let mut txindex_to_first_txoutindex_iter =
-            indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut txindex_to_output_count_iter = indexes.transaction.txindex_to_output_count.iter();
+            indexer.vecs.transactions.first_txoutindex.iter()?;
+        let mut txindex_to_output_count_iter = indexes.txindex.output_count.iter();
         let mut txoutindex_to_outputtype_iter =
-            indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
-        let mut txoutindex_to_typeindex_iter = indexer.vecs.txout.txoutindex_to_typeindex.iter()?;
+            indexer.vecs.outputs.outputtype.iter()?;
+        let mut txoutindex_to_typeindex_iter = indexer.vecs.outputs.typeindex.iter()?;
         let mut p2pk65addressindex_to_p2pk65bytes_iter = indexer
             .vecs
-            .address
-            .p2pk65addressindex_to_p2pk65bytes
+            .addresses
+            .p2pk65bytes
             .iter()?;
         let mut p2pk33addressindex_to_p2pk33bytes_iter = indexer
             .vecs
-            .address
-            .p2pk33addressindex_to_p2pk33bytes
+            .addresses
+            .p2pk33bytes
             .iter()?;
         let mut p2pkhaddressindex_to_p2pkhbytes_iter = indexer
             .vecs
-            .address
-            .p2pkhaddressindex_to_p2pkhbytes
+            .addresses
+            .p2pkhbytes
             .iter()?;
         let mut p2shaddressindex_to_p2shbytes_iter =
-            indexer.vecs.address.p2shaddressindex_to_p2shbytes.iter()?;
+            indexer.vecs.addresses.p2shbytes.iter()?;
         let mut p2wpkhaddressindex_to_p2wpkhbytes_iter = indexer
             .vecs
-            .address
-            .p2wpkhaddressindex_to_p2wpkhbytes
+            .addresses
+            .p2wpkhbytes
             .iter()?;
         let mut p2wshaddressindex_to_p2wshbytes_iter = indexer
             .vecs
-            .address
-            .p2wshaddressindex_to_p2wshbytes
+            .addresses
+            .p2wshbytes
             .iter()?;
         let mut p2traddressindex_to_p2trbytes_iter =
-            indexer.vecs.address.p2traddressindex_to_p2trbytes.iter()?;
+            indexer.vecs.addresses.p2trbytes.iter()?;
         let mut p2aaddressindex_to_p2abytes_iter =
-            indexer.vecs.address.p2aaddressindex_to_p2abytes.iter()?;
+            indexer.vecs.addresses.p2abytes.iter()?;
 
         let unknown = self.pools.get_unknown();
 

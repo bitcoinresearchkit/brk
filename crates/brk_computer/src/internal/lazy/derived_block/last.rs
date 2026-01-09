@@ -7,7 +7,8 @@ use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedVecValue, DerivedComputedBlockLast, LazyDateLast, NumericValue,
+    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, DerivedComputedBlockLast,
+    LazyDateLast, NumericValue,
 };
 
 use super::super::transform::LazyTransformLast;
@@ -21,7 +22,6 @@ where
 {
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub dates: LazyDateLast<T, S1T>,
     pub difficultyepoch: LazyTransformLast<DifficultyEpoch, T, S1T>,
 }
@@ -79,6 +79,31 @@ where
                 name,
                 v,
                 source.difficultyepoch.boxed_clone(),
+            ),
+        }
+    }
+
+    pub fn from_computed_height_date<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        source: &ComputedHeightDateLast<S1T>,
+    ) -> Self
+    where
+        S1T: PartialOrd,
+    {
+        let v = version + VERSION;
+
+        Self {
+            dates: LazyDateLast::from_derived::<F>(
+                name,
+                v,
+                source.dateindex.boxed_clone(),
+                &source.rest.rest,
+            ),
+            difficultyepoch: LazyTransformLast::from_boxed::<F>(
+                name,
+                v,
+                source.difficultyepoch.0.boxed_clone(),
             ),
         }
     }

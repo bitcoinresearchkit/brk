@@ -4,10 +4,11 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{IterableBoxedVec, LazyVecFrom1, UnaryTransform};
+use vecdb::{IterableBoxedVec, IterableCloneableVec, LazyVecFrom1, UnaryTransform};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedVecValue, DerivedComputedBlockLast, NumericValue,
+    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, DerivedComputedBlockLast,
+    NumericValue,
 };
 
 use super::super::derived_block::LazyDerivedBlockLast;
@@ -21,7 +22,6 @@ where
     pub height: LazyVecFrom1<Height, T, Height, S1T>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlockLast<T, S1T>,
 }
 
@@ -61,6 +61,21 @@ where
         Self {
             height: LazyVecFrom1::transformed::<F>(name, v, height_source),
             rest: LazyDerivedBlockLast::from_derived_computed::<F>(name, v, source),
+        }
+    }
+
+    pub fn from_computed_height_date<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        source: &ComputedHeightDateLast<S1T>,
+    ) -> Self
+    where
+        S1T: PartialOrd,
+    {
+        let v = version + VERSION;
+        Self {
+            height: LazyVecFrom1::transformed::<F>(name, v, source.height.boxed_clone()),
+            rest: LazyDerivedBlockLast::from_computed_height_date::<F>(name, v, source),
         }
     }
 }

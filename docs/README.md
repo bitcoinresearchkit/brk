@@ -71,7 +71,6 @@ Built on [`rust-bitcoin`], [`vecdb`], and [`fjall`].
 | [`brk_mcp`](./crates/brk_mcp) | Model Context Protocol server for LLM integration |
 | [`brk_binder`](./crates/brk_binder) | Generate typed clients (Rust, JavaScript, Python) |
 | [`brk_client`](./crates/brk_client) | Generated Rust API client |
-| [`brk_bundler`](./crates/brk_bundler) | JavaScript bundling for web interface |
 
 **Internal**
 

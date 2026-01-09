@@ -1,9 +1,9 @@
 use brk_error::Result;
 use vecdb::Exit;
 
-use super::Vecs;
 use super::super::activity;
-use crate::{supply, ComputeIndexes};
+use super::Vecs;
+use crate::{ComputeIndexes, supply};
 
 impl Vecs {
     pub fn compute(
@@ -14,38 +14,39 @@ impl Vecs {
         has_price: bool,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_cointime_adj_inflation_rate
+        self.cointime_adj_inflation_rate
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_multiply(
                     starting_indexes.dateindex,
-                    activity.indexes_to_activity_to_vaultedness_ratio.dateindex.inner(),
-                    &supply.inflation.indexes.dateindex,
+                    activity.activity_to_vaultedness_ratio.dateindex.inner(),
+                    &supply.inflation.dateindex,
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.indexes_to_cointime_adj_tx_btc_velocity
+        self.cointime_adj_tx_btc_velocity
             .compute_all(starting_indexes, exit, |v| {
                 v.compute_multiply(
                     starting_indexes.dateindex,
-                    activity.indexes_to_activity_to_vaultedness_ratio.dateindex.inner(),
-                    &supply.velocity.indexes_to_btc.dateindex,
+                    activity.activity_to_vaultedness_ratio.dateindex.inner(),
+                    &supply.velocity.btc.dateindex,
                     exit,
                 )?;
                 Ok(())
             })?;
 
         if has_price {
-            self.indexes_to_cointime_adj_tx_usd_velocity.compute_all(starting_indexes, exit, |v| {
-                v.compute_multiply(
-                    starting_indexes.dateindex,
-                    activity.indexes_to_activity_to_vaultedness_ratio.dateindex.inner(),
-                    &supply.velocity.indexes_to_usd.as_ref().unwrap().dateindex,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+            self.cointime_adj_tx_usd_velocity
+                .compute_all(starting_indexes, exit, |v| {
+                    v.compute_multiply(
+                        starting_indexes.dateindex,
+                        activity.activity_to_vaultedness_ratio.dateindex.inner(),
+                        &supply.velocity.usd.as_ref().unwrap().dateindex,
+                        exit,
+                    )?;
+                    Ok(())
+                })?;
         }
 
         Ok(())

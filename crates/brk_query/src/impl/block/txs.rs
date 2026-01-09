@@ -31,13 +31,13 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
         let next_first_txindex = indexer
             .vecs
-            .tx
-            .height_to_first_txindex
+            .transactions
+            .first_txindex
             .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.tx.txindex_to_txid.len()));
+            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
@@ -45,8 +45,8 @@ impl Query {
 
         let txids: Vec<Txid> = indexer
             .vecs
-            .tx
-            .txindex_to_txid
+            .transactions
+            .txid
             .iter()?
             .skip(first)
             .take(count)
@@ -67,13 +67,13 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
         let next_first_txindex = indexer
             .vecs
-            .tx
-            .height_to_first_txindex
+            .transactions
+            .first_txindex
             .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.tx.txindex_to_txid.len()));
+            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
@@ -104,13 +104,13 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
         let next_first_txindex = indexer
             .vecs
-            .tx
-            .height_to_first_txindex
+            .transactions
+            .first_txindex
             .read_once(height.incremented())
-            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.tx.txindex_to_txid.len()));
+            .unwrap_or_else(|_| TxIndex::from(indexer.vecs.transactions.txid.len()));
 
         let first: usize = first_txindex.into();
         let next: usize = next_first_txindex.into();
@@ -121,7 +121,7 @@ impl Query {
         }
 
         let txindex = TxIndex::from(first + index);
-        let txid = indexer.vecs.tx.txindex_to_txid.iter()?.get_unwrap(txindex);
+        let txid = indexer.vecs.transactions.txid.iter()?.get_unwrap(txindex);
 
         Ok(txid)
     }

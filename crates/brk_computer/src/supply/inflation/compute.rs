@@ -2,7 +2,7 @@ use brk_error::Result;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, distribution, ComputeIndexes};
+use crate::{ComputeIndexes, blocks, distribution};
 
 impl Vecs {
     pub fn compute(
@@ -13,20 +13,13 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // inflation = daily_subsidy / circulating_supply * 365 * 100
-        let circulating_supply = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .indexes_to_supply;
+        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.supply.sats;
 
-        self.indexes.compute_all(starting_indexes, exit, |v| {
-            // KISS: dateindex.sum is now a concrete field
+        self.compute_all(starting_indexes, exit, |v| {
             v.compute_transform2(
                 starting_indexes.dateindex,
-                &blocks.rewards.indexes_to_subsidy.sats.dateindex.sum_cum.sum.0,
-                // KISS: dateindex is no longer Option
-                &circulating_supply.sats_dateindex,
+                &blocks.rewards.subsidy.sats.dateindex.sum_cum.sum.0,
+                &circulating_supply.dateindex.0,
                 |(i, subsidy_1d_sum, supply, ..)| {
                     let inflation = if *supply > 0 {
                         365.0 * *subsidy_1d_sum as f64 / *supply as f64 * 100.0

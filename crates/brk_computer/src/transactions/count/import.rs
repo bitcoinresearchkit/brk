@@ -4,10 +4,7 @@ use brk_types::{StoredBool, TxIndex, Version};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom2};
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::ComputedBlockFull,
-};
+use crate::{indexes, internal::ComputedBlockFull};
 
 impl Vecs {
     pub fn forced_import(
@@ -19,8 +16,8 @@ impl Vecs {
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version,
-            indexer.vecs.tx.txindex_to_height.boxed_clone(),
-            indexer.vecs.tx.height_to_first_txindex.boxed_clone(),
+            indexer.vecs.transactions.height.boxed_clone(),
+            indexer.vecs.transactions.first_txindex.boxed_clone(),
             |index: TxIndex, txindex_to_height_iter, height_to_first_txindex_iter| {
                 txindex_to_height_iter.get(index).map(|height| {
                     let txindex = height_to_first_txindex_iter.get_unwrap(height);
@@ -30,13 +27,8 @@ impl Vecs {
         );
 
         Ok(Self {
-            indexes_to_tx_count: ComputedBlockFull::forced_import(
-                db,
-                "tx_count",
-                version,
-                indexes,
-            )?,
-            txindex_to_is_coinbase,
+            tx_count: ComputedBlockFull::forced_import(db, "tx_count", version, indexes)?,
+            is_coinbase: txindex_to_is_coinbase,
         })
     }
 }

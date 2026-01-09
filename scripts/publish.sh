@@ -3,7 +3,6 @@ set -e
 
 # Order determined by topological sort of dependency graph
 CRATES=(
-    brk_bundler
     brk_error
     brk_logger
     brk_traversable_derive

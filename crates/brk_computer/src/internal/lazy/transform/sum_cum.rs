@@ -43,6 +43,22 @@ where
         }
     }
 
+    /// Create from SumCum without adding _sum suffix.
+    pub fn from_sum_cum_sum_raw<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        source: &SumCum<I, S1T>,
+    ) -> Self {
+        Self {
+            sum: LazyVecFrom1::transformed::<F>(name, version, source.sum.0.boxed_clone()),
+            cumulative: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_cumulative"),
+                version,
+                source.cumulative.0.boxed_clone(),
+            ),
+        }
+    }
+
     pub fn from_boxed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
@@ -51,6 +67,23 @@ where
     ) -> Self {
         Self {
             sum: LazyVecFrom1::transformed::<F>(&format!("{name}_sum"), version, sum_source),
+            cumulative: LazyVecFrom1::transformed::<F>(
+                &format!("{name}_cumulative"),
+                version,
+                cumulative_source,
+            ),
+        }
+    }
+
+    /// Create from boxed sources without adding _sum suffix.
+    pub fn from_boxed_sum_raw<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        sum_source: IterableBoxedVec<I, S1T>,
+        cumulative_source: IterableBoxedVec<I, S1T>,
+    ) -> Self {
+        Self {
+            sum: LazyVecFrom1::transformed::<F>(name, version, sum_source),
             cumulative: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,

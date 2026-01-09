@@ -5,7 +5,7 @@ use vecdb::{Database, EagerVec, ImportableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedDateLast, ValueBlockFull, ValueBlockSumCum},
+    internal::{ComputedDateLast, ValueBlockFull, ValueBlockHeight, ValueBlockSumCum},
 };
 
 impl Vecs {
@@ -16,40 +16,36 @@ impl Vecs {
         compute_dollars: bool,
     ) -> Result<Self> {
         Ok(Self {
-            height_to_24h_coinbase_sum: EagerVec::forced_import(db, "24h_coinbase_sum", version)?,
-            height_to_24h_coinbase_usd_sum: EagerVec::forced_import(
+            _24h_coinbase_sum: ValueBlockHeight::forced_import(
                 db,
-                "24h_coinbase_usd_sum",
+                "24h_coinbase_sum",
                 version,
+                compute_dollars,
             )?,
-            indexes_to_coinbase: ValueBlockFull::forced_import(
+            coinbase: ValueBlockFull::forced_import(
                 db,
                 "coinbase",
                 version,
                 indexes,
                 compute_dollars,
             )?,
-            indexes_to_subsidy: ValueBlockFull::forced_import(
+            subsidy: ValueBlockFull::forced_import(
                 db,
                 "subsidy",
                 version,
                 indexes,
                 compute_dollars,
             )?,
-            indexes_to_unclaimed_rewards: ValueBlockSumCum::forced_import(
+            unclaimed_rewards: ValueBlockSumCum::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,
                 indexes,
                 compute_dollars,
             )?,
-            dateindex_to_fee_dominance: EagerVec::forced_import(db, "fee_dominance", version)?,
-            dateindex_to_subsidy_dominance: EagerVec::forced_import(
-                db,
-                "subsidy_dominance",
-                version,
-            )?,
-            indexes_to_subsidy_usd_1y_sma: compute_dollars
+            fee_dominance: EagerVec::forced_import(db, "fee_dominance", version)?,
+            subsidy_dominance: EagerVec::forced_import(db, "subsidy_dominance", version)?,
+            subsidy_usd_1y_sma: compute_dollars
                 .then(|| {
                     ComputedDateLast::forced_import(db, "subsidy_usd_1y_sma", version, indexes)
                 })

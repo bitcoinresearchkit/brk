@@ -1,7 +1,8 @@
 use brk_error::Result;
-use brk_types::OHLCDollars;
+use brk_types::{Close, Dollars, High, Low, OHLCDollars, Open};
 use vecdb::Exit;
 
+use super::super::cents;
 use super::Vecs;
 use crate::ComputeIndexes;
 
@@ -9,105 +10,104 @@ impl Vecs {
     pub fn compute(
         &mut self,
         starting_indexes: &ComputeIndexes,
+        cents: &cents::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        // Timeindexes computed vecs
-        self.timeindexes_to_price_close
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.close),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Open: first-value aggregation
+        self.split.open.height.compute_transform(
+            starting_indexes.height,
+            &cents.split.height.open,
+            |(h, open, ..)| (h, Open::new(Dollars::from(*open))),
+            exit,
+        )?;
+        self.split.open.compute_rest(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.dateindex,
+                &cents.split.dateindex.open,
+                |(di, open, ..)| (di, Open::new(Dollars::from(*open))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.timeindexes_to_price_high
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.high),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // High: max-value aggregation
+        self.split.high.height.compute_transform(
+            starting_indexes.height,
+            &cents.split.height.high,
+            |(h, high, ..)| (h, High::new(Dollars::from(*high))),
+            exit,
+        )?;
+        self.split.high.compute_rest(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.dateindex,
+                &cents.split.dateindex.high,
+                |(di, high, ..)| (di, High::new(Dollars::from(*high))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.timeindexes_to_price_low
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.low),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Low: min-value aggregation
+        self.split.low.height.compute_transform(
+            starting_indexes.height,
+            &cents.split.height.low,
+            |(h, low, ..)| (h, Low::new(Dollars::from(*low))),
+            exit,
+        )?;
+        self.split.low.compute_rest(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.dateindex,
+                &cents.split.dateindex.low,
+                |(di, low, ..)| (di, Low::new(Dollars::from(*low))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.timeindexes_to_price_open
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &self.dateindex_to_price_ohlc,
-                    |(di, ohlc, ..)| (di, ohlc.open),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Close: last-value aggregation
+        self.split.close.height.compute_transform(
+            starting_indexes.height,
+            &cents.split.height.close,
+            |(h, close, ..)| (h, Close::new(Dollars::from(*close))),
+            exit,
+        )?;
+        self.split.close.compute_rest(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.dateindex,
+                &cents.split.dateindex.close,
+                |(di, close, ..)| (di, Close::new(Dollars::from(*close))),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        // Chainindexes computed vecs
-        self.chainindexes_to_price_close
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_price_ohlc,
-                    |(h, ohlc, ..)| (h, ohlc.close),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Period OHLC aggregates - time based
+        self.ohlc.dateindex.compute_transform4(
+            starting_indexes.dateindex,
+            &self.split.open.dateindex,
+            &self.split.high.dateindex,
+            &self.split.low.dateindex,
+            &self.split.close.dateindex,
+            |(i, open, high, low, close, _)| {
+                (
+                    i,
+                    OHLCDollars {
+                        open,
+                        high,
+                        low,
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
 
-        self.chainindexes_to_price_high
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_price_ohlc,
-                    |(h, ohlc, ..)| (h, ohlc.high),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.chainindexes_to_price_low
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_price_ohlc,
-                    |(h, ohlc, ..)| (h, ohlc.low),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.chainindexes_to_price_open
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &self.height_to_price_ohlc,
-                    |(h, ohlc, ..)| (h, ohlc.open),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        // Period OHLC aggregates
-        self.weekindex_to_price_ohlc.compute_transform4(
+        self.ohlc.week.compute_transform4(
             starting_indexes.weekindex,
-            &*self.timeindexes_to_price_open.weekindex,
-            &*self.timeindexes_to_price_high.weekindex,
-            &*self.timeindexes_to_price_low.weekindex,
-            &*self.timeindexes_to_price_close.weekindex,
+            &*self.split.open.weekindex,
+            &*self.split.high.weekindex,
+            &*self.split.low.weekindex,
+            &*self.split.close.weekindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -122,32 +122,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.difficultyepoch_to_price_ohlc.compute_transform4(
-            starting_indexes.difficultyepoch,
-            &*self.chainindexes_to_price_open.difficultyepoch,
-            &*self.chainindexes_to_price_high.difficultyepoch,
-            &*self.chainindexes_to_price_low.difficultyepoch,
-            &*self.chainindexes_to_price_close.difficultyepoch,
-            |(i, open, high, low, close, _)| {
-                (
-                    i,
-                    OHLCDollars {
-                        open,
-                        high,
-                        low,
-                        close,
-                    },
-                )
-            },
-            exit,
-        )?;
-
-        self.monthindex_to_price_ohlc.compute_transform4(
+        self.ohlc.month.compute_transform4(
             starting_indexes.monthindex,
-            &*self.timeindexes_to_price_open.monthindex,
-            &*self.timeindexes_to_price_high.monthindex,
-            &*self.timeindexes_to_price_low.monthindex,
-            &*self.timeindexes_to_price_close.monthindex,
+            &*self.split.open.monthindex,
+            &*self.split.high.monthindex,
+            &*self.split.low.monthindex,
+            &*self.split.close.monthindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -162,12 +142,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.quarterindex_to_price_ohlc.compute_transform4(
+        self.ohlc.quarter.compute_transform4(
             starting_indexes.quarterindex,
-            &*self.timeindexes_to_price_open.quarterindex,
-            &*self.timeindexes_to_price_high.quarterindex,
-            &*self.timeindexes_to_price_low.quarterindex,
-            &*self.timeindexes_to_price_close.quarterindex,
+            &*self.split.open.quarterindex,
+            &*self.split.high.quarterindex,
+            &*self.split.low.quarterindex,
+            &*self.split.close.quarterindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -182,12 +162,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.semesterindex_to_price_ohlc.compute_transform4(
+        self.ohlc.semester.compute_transform4(
             starting_indexes.semesterindex,
-            &*self.timeindexes_to_price_open.semesterindex,
-            &*self.timeindexes_to_price_high.semesterindex,
-            &*self.timeindexes_to_price_low.semesterindex,
-            &*self.timeindexes_to_price_close.semesterindex,
+            &*self.split.open.semesterindex,
+            &*self.split.high.semesterindex,
+            &*self.split.low.semesterindex,
+            &*self.split.close.semesterindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -202,12 +182,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.yearindex_to_price_ohlc.compute_transform4(
+        self.ohlc.year.compute_transform4(
             starting_indexes.yearindex,
-            &*self.timeindexes_to_price_open.yearindex,
-            &*self.timeindexes_to_price_high.yearindex,
-            &*self.timeindexes_to_price_low.yearindex,
-            &*self.timeindexes_to_price_close.yearindex,
+            &*self.split.open.yearindex,
+            &*self.split.high.yearindex,
+            &*self.split.low.yearindex,
+            &*self.split.close.yearindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -222,12 +202,53 @@ impl Vecs {
             exit,
         )?;
 
-        self.decadeindex_to_price_ohlc.compute_transform4(
+        self.ohlc.decade.compute_transform4(
             starting_indexes.decadeindex,
-            &*self.timeindexes_to_price_open.decadeindex,
-            &*self.timeindexes_to_price_high.decadeindex,
-            &*self.timeindexes_to_price_low.decadeindex,
-            &*self.timeindexes_to_price_close.decadeindex,
+            &*self.split.open.decadeindex,
+            &*self.split.high.decadeindex,
+            &*self.split.low.decadeindex,
+            &*self.split.close.decadeindex,
+            |(i, open, high, low, close, _)| {
+                (
+                    i,
+                    OHLCDollars {
+                        open,
+                        high,
+                        low,
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        // Period OHLC aggregates - chain based
+        self.ohlc.height.compute_transform4(
+            starting_indexes.height,
+            &self.split.open.height,
+            &self.split.high.height,
+            &self.split.low.height,
+            &self.split.close.height,
+            |(i, open, high, low, close, _)| {
+                (
+                    i,
+                    OHLCDollars {
+                        open,
+                        high,
+                        low,
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.ohlc.difficultyepoch.compute_transform4(
+            starting_indexes.difficultyepoch,
+            &*self.split.open.difficultyepoch,
+            &*self.split.high.difficultyepoch,
+            &*self.split.low.difficultyepoch,
+            &*self.split.close.difficultyepoch,
             |(i, open, high, low, close, _)| {
                 (
                     i,

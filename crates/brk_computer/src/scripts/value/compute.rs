@@ -4,7 +4,7 @@ use brk_types::{Height, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, price, ComputeIndexes};
+use crate::{ComputeIndexes, indexes, price};
 
 impl Vecs {
     pub fn compute(
@@ -15,20 +15,16 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_opreturn_value.compute_all(
-            indexes,
-            price,
-            starting_indexes,
-            exit,
-            |height_vec| {
+        self.opreturn
+            .compute_all(indexes, price, starting_indexes, exit, |height_vec| {
                 // Validate computed versions against dependencies
-                let dep_version = indexer.vecs.txout.height_to_first_txoutindex.version()
-                    + indexer.vecs.txout.txoutindex_to_outputtype.version()
-                    + indexer.vecs.txout.txoutindex_to_value.version();
+                let dep_version = indexer.vecs.outputs.first_txoutindex.version()
+                    + indexer.vecs.outputs.outputtype.version()
+                    + indexer.vecs.outputs.value.version();
                 height_vec.validate_computed_version_or_reset(dep_version)?;
 
                 // Get target height
-                let target_len = indexer.vecs.txout.height_to_first_txoutindex.len();
+                let target_len = indexer.vecs.outputs.first_txoutindex.len();
                 if target_len == 0 {
                     return Ok(());
                 }
@@ -45,10 +41,9 @@ impl Vecs {
 
                 // Prepare iterators
                 let mut height_to_first_txoutindex =
-                    indexer.vecs.txout.height_to_first_txoutindex.iter()?;
-                let mut txoutindex_to_outputtype =
-                    indexer.vecs.txout.txoutindex_to_outputtype.iter()?;
-                let mut txoutindex_to_value = indexer.vecs.txout.txoutindex_to_value.iter()?;
+                    indexer.vecs.outputs.first_txoutindex.iter()?;
+                let mut txoutindex_to_outputtype = indexer.vecs.outputs.outputtype.iter()?;
+                let mut txoutindex_to_value = indexer.vecs.outputs.value.iter()?;
 
                 // Iterate blocks
                 for h in starting_height.to_usize()..=target_height.to_usize() {
@@ -59,7 +54,7 @@ impl Vecs {
                     let next_first_txoutindex = if height < target_height {
                         height_to_first_txoutindex.get_unwrap(height.incremented())
                     } else {
-                        TxOutIndex::from(indexer.vecs.txout.txoutindex_to_value.len())
+                        TxOutIndex::from(indexer.vecs.outputs.value.len())
                     };
 
                     // Sum opreturn values
@@ -80,8 +75,7 @@ impl Vecs {
                 height_vec.write()?;
 
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

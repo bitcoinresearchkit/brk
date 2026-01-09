@@ -18,11 +18,10 @@ where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
 {
-    #[traversable(wrap = "base")]
+    #[traversable(wrap = "sum")]
     pub height: LazyVecFrom1<Height, T, Height, S1T>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlockSumCum<T, S1T>,
 }
 

@@ -1,23 +1,17 @@
 mod average;
 mod cumulative;
+mod first;
 mod last;
 mod max;
-mod median;
 mod min;
-mod pct10;
-mod pct25;
-mod pct75;
-mod pct90;
+mod percentiles;
 mod sum;
 
 pub use average::*;
 pub use cumulative::*;
+pub use first::*;
 pub use last::*;
 pub use max::*;
-pub use median::*;
 pub use min::*;
-pub use pct10::*;
-pub use pct25::*;
-pub use pct75::*;
-pub use pct90::*;
+pub use percentiles::*;
 pub use sum::*;

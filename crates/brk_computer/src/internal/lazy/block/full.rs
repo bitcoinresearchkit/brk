@@ -22,7 +22,6 @@ where
     pub height: LazyVecFrom1<Height, T, Height, S1T>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlockFull<T, S1T>,
 }
 

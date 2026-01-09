@@ -12,25 +12,21 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let indexes_to_opreturn = ValueBlockSumCum::forced_import(
-            db,
-            "opreturn_supply",
-            version,
-            indexes,
-            compute_dollars,
-        )?;
-
-        let indexes_to_unspendable = ValueBlockSumCum::forced_import(
-            db,
-            "unspendable_supply",
-            version,
-            indexes,
-            compute_dollars,
-        )?;
-
         Ok(Self {
-            indexes_to_opreturn,
-            indexes_to_unspendable,
+            opreturn: ValueBlockSumCum::forced_import(
+                db,
+                "opreturn_supply",
+                version,
+                indexes,
+                compute_dollars,
+            )?,
+            unspendable: ValueBlockSumCum::forced_import(
+                db,
+                "unspendable_supply",
+                version,
+                indexes,
+                compute_dollars,
+            )?,
         })
     }
 }

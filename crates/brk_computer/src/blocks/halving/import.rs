@@ -13,19 +13,14 @@ impl Vecs {
         let v2 = Version::TWO;
 
         Ok(Self {
-            indexes_to_halvingepoch: ComputedDateLast::forced_import(
-                db,
-                "halvingepoch",
-                version,
-                indexes,
-            )?,
-            indexes_to_blocks_before_next_halving: ComputedBlockLast::forced_import(
+            halvingepoch: ComputedDateLast::forced_import(db, "halvingepoch", version, indexes)?,
+            blocks_before_next_halving: ComputedBlockLast::forced_import(
                 db,
                 "blocks_before_next_halving",
                 version + v2,
                 indexes,
             )?,
-            indexes_to_days_before_next_halving: ComputedBlockLast::forced_import(
+            days_before_next_halving: ComputedBlockLast::forced_import(
                 db,
                 "days_before_next_halving",
                 version + v2,

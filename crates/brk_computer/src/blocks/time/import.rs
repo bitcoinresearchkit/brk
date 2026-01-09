@@ -1,12 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Date, DifficultyEpoch, Height, Version};
-use vecdb::{
-    Database, EagerVec, ImportableVec, IterableCloneableVec, LazyVecFrom1, LazyVecFrom2, VecIndex,
-};
+use brk_types::{Date, Height, Version};
+use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, LazyVecFrom1, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedVecsDateFirst};
+use crate::{indexes, internal::DerivedComputedBlockFirst};
 
 impl Vecs {
     pub fn forced_import(
@@ -18,35 +16,25 @@ impl Vecs {
         let height_to_timestamp_fixed = EagerVec::forced_import(db, "timestamp_fixed", version)?;
 
         Ok(Self {
-            height_to_date: LazyVecFrom1::init(
+            date: LazyVecFrom1::init(
                 "date",
                 version,
-                indexer.vecs.block.height_to_timestamp.boxed_clone(),
+                indexer.vecs.blocks.timestamp.boxed_clone(),
                 |height: Height, timestamp_iter| {
                     timestamp_iter.get_at(height.to_usize()).map(Date::from)
                 },
             ),
-            height_to_date_fixed: LazyVecFrom1::init(
+            date_fixed: LazyVecFrom1::init(
                 "date_fixed",
                 version,
                 height_to_timestamp_fixed.boxed_clone(),
                 |height: Height, timestamp_iter| timestamp_iter.get(height).map(Date::from),
             ),
-            height_to_timestamp_fixed,
-            difficultyepoch_to_timestamp: LazyVecFrom2::init(
-                "timestamp",
-                version,
-                indexes.block.difficultyepoch_to_first_height.boxed_clone(),
-                indexer.vecs.block.height_to_timestamp.boxed_clone(),
-                |di: DifficultyEpoch, first_height_iter, timestamp_iter| {
-                    first_height_iter
-                        .get(di)
-                        .and_then(|h: Height| timestamp_iter.get(h))
-                },
-            ),
-            timeindexes_to_timestamp: ComputedVecsDateFirst::forced_import(
+            timestamp_fixed: height_to_timestamp_fixed,
+            timestamp: DerivedComputedBlockFirst::forced_import(
                 db,
                 "timestamp",
+                indexer.vecs.blocks.timestamp.boxed_clone(),
                 version,
                 indexes,
             )?,

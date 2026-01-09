@@ -1,6 +1,6 @@
 use std::io;
 
-use log::{debug, error, info, trace};
+use tracing::{debug, error, info, trace};
 
 fn main() -> io::Result<()> {
     brk_logger::init(None)?;

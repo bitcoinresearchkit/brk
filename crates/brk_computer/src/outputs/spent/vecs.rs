@@ -4,5 +4,5 @@ use vecdb::BytesVec;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub txoutindex_to_txinindex: BytesVec<TxOutIndex, TxInIndex>,
+    pub txinindex: BytesVec<TxOutIndex, TxInIndex>,
 }

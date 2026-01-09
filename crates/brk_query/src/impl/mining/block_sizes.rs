@@ -18,7 +18,7 @@ impl Query {
         let mut sizes_vec = computer
             .blocks
             .size
-            .indexes_to_block_size
+            .size
             .dateindex
             .distribution
             .average
@@ -27,7 +27,7 @@ impl Query {
         let mut weights_vec = computer
             .blocks
             .weight
-            .indexes_to_block_weight
+            .weight
             .dateindex
             .distribution
             .average

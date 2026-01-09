@@ -15,27 +15,27 @@ pub struct Readers {
 impl Readers {
     pub fn new(vecs: &Vecs) -> Self {
         Self {
-            txindex_to_first_txoutindex: vecs.tx.txindex_to_first_txoutindex.create_reader(),
-            txoutindex_to_outputtype: vecs.txout.txoutindex_to_outputtype.create_reader(),
-            txoutindex_to_typeindex: vecs.txout.txoutindex_to_typeindex.create_reader(),
+            txindex_to_first_txoutindex: vecs.transactions.first_txoutindex.create_reader(),
+            txoutindex_to_outputtype: vecs.outputs.outputtype.create_reader(),
+            txoutindex_to_typeindex: vecs.outputs.typeindex.create_reader(),
             addressbytes: ByAddressType {
                 p2pk65: vecs
-                    .address
-                    .p2pk65addressindex_to_p2pk65bytes
+                    .addresses
+                    .p2pk65bytes
                     .create_reader(),
                 p2pk33: vecs
-                    .address
-                    .p2pk33addressindex_to_p2pk33bytes
+                    .addresses
+                    .p2pk33bytes
                     .create_reader(),
-                p2pkh: vecs.address.p2pkhaddressindex_to_p2pkhbytes.create_reader(),
-                p2sh: vecs.address.p2shaddressindex_to_p2shbytes.create_reader(),
+                p2pkh: vecs.addresses.p2pkhbytes.create_reader(),
+                p2sh: vecs.addresses.p2shbytes.create_reader(),
                 p2wpkh: vecs
-                    .address
-                    .p2wpkhaddressindex_to_p2wpkhbytes
+                    .addresses
+                    .p2wpkhbytes
                     .create_reader(),
-                p2wsh: vecs.address.p2wshaddressindex_to_p2wshbytes.create_reader(),
-                p2tr: vecs.address.p2traddressindex_to_p2trbytes.create_reader(),
-                p2a: vecs.address.p2aaddressindex_to_p2abytes.create_reader(),
+                p2wsh: vecs.addresses.p2wshbytes.create_reader(),
+                p2tr: vecs.addresses.p2trbytes.create_reader(),
+                p2a: vecs.addresses.p2abytes.create_reader(),
             },
         }
     }

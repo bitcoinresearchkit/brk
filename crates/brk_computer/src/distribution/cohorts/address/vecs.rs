@@ -5,16 +5,13 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec,
-    IterableCloneableVec, IterableVec, PcoVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{
     ComputeIndexes,
     distribution::state::AddressCohortState,
     indexes,
-    internal::DerivedComputedBlockLast,
+    internal::ComputedBlockLast,
     price,
 };
 
@@ -38,11 +35,7 @@ pub struct AddressCohortVecs {
     #[traversable(flatten)]
     pub metrics: CohortMetrics,
 
-    /// Address count at each height
-    pub height_to_addr_count: EagerVec<PcoVec<Height, StoredU64>>,
-
-    /// Address count indexed by various dimensions
-    pub indexes_to_addr_count: DerivedComputedBlockLast<StoredU64>,
+    pub addr_count: ComputedBlockLast<StoredU64>,
 }
 
 impl AddressCohortVecs {
@@ -75,9 +68,6 @@ impl AddressCohortVecs {
             up_to_1h_realized: None,
         };
 
-        let height_to_addr_count =
-            EagerVec::forced_import(db, &cfg.name("addr_count"), version + VERSION)?;
-
         Ok(Self {
             starting_height: None,
 
@@ -86,14 +76,12 @@ impl AddressCohortVecs {
 
             metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
 
-            indexes_to_addr_count: DerivedComputedBlockLast::forced_import(
+            addr_count: ComputedBlockLast::forced_import(
                 db,
                 &cfg.name("addr_count"),
-                height_to_addr_count.boxed_clone(),
                 version + VERSION,
                 indexes,
             )?,
-            height_to_addr_count,
         })
     }
 
@@ -114,7 +102,7 @@ impl AddressCohortVecs {
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_vecs_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(&mut self.height_to_addr_count as &mut dyn AnyStoredVec)
+        rayon::iter::once(&mut self.addr_count.height as &mut dyn AnyStoredVec)
             .chain(self.metrics.par_iter_mut())
     }
 
@@ -135,7 +123,8 @@ impl Filtered for AddressCohortVecs {
 
 impl DynCohortVecs for AddressCohortVecs {
     fn min_stateful_height_len(&self) -> usize {
-        self.height_to_addr_count
+        self.addr_count
+            .height
             .len()
             .min(self.metrics.min_stateful_height_len())
     }
@@ -166,21 +155,25 @@ impl DynCohortVecs for AddressCohortVecs {
                 state.inner.supply.value = self
                     .metrics
                     .supply
-                    .height_to_supply
+                    .supply
+                    .sats
+                    .height
                     .read_once(prev_height)?;
                 state.inner.supply.utxo_count = *self
                     .metrics
-                    .supply
-                    .height_to_utxo_count
+                    .outputs
+                    .utxo_count
+                    .height
                     .read_once(prev_height)?;
-                state.addr_count = *self.height_to_addr_count.read_once(prev_height)?;
+                state.addr_count = *self.addr_count.height.read_once(prev_height)?;
 
                 // Restore realized cap if present
                 if let Some(realized_metrics) = self.metrics.realized.as_mut()
                     && let Some(realized_state) = state.inner.realized.as_mut()
                 {
                     realized_state.cap = realized_metrics
-                        .height_to_realized_cap
+                        .realized_cap
+                        .height
                         .read_once(prev_height)?;
                 }
 
@@ -200,7 +193,8 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         use vecdb::GenericStoredVec;
-        self.height_to_addr_count
+        self.addr_count
+            .height
             .validate_computed_version_or_reset(base_version)?;
         self.metrics.validate_computed_versions(base_version)?;
         Ok(())
@@ -213,7 +207,8 @@ impl DynCohortVecs for AddressCohortVecs {
 
         // Push addr_count from state
         if let Some(state) = self.state.as_ref() {
-            self.height_to_addr_count
+            self.addr_count
+                .height
                 .truncate_push(height, state.addr_count.into())?;
             self.metrics.truncate_push(height, &state.inner)?;
         }
@@ -247,12 +242,8 @@ impl DynCohortVecs for AddressCohortVecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_addr_count.derive_from(
-            indexes,
-            starting_indexes,
-            &self.height_to_addr_count,
-            exit,
-        )?;
+        self.addr_count
+            .compute_rest(indexes, starting_indexes, exit)?;
         self.metrics
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;
         Ok(())
@@ -266,11 +257,11 @@ impl CohortVecs for AddressCohortVecs {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_addr_count.compute_sum_of_others(
+        self.addr_count.height.compute_sum_of_others(
             starting_indexes.height,
             others
                 .iter()
-                .map(|v| &v.height_to_addr_count)
+                .map(|v| &v.addr_count.height)
                 .collect::<Vec<_>>()
                 .as_slice(),
             exit,

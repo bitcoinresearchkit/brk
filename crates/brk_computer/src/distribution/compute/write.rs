@@ -2,8 +2,8 @@ use std::time::Instant;
 
 use brk_error::Result;
 use brk_types::Height;
-use log::info;
 use rayon::prelude::*;
+use tracing::info;
 use vecdb::{AnyStoredVec, GenericStoredVec, Stamp};
 
 use crate::distribution::{
@@ -77,11 +77,8 @@ pub fn write(
     vecs.any_address_indexes
         .par_iter_mut()
         .chain(vecs.addresses_data.par_iter_mut())
-        .chain(vecs.addresstype_to_height_to_addr_count.par_iter_mut())
-        .chain(
-            vecs.addresstype_to_height_to_empty_addr_count
-                .par_iter_mut(),
-        )
+        .chain(vecs.addr_count.par_iter_height_mut())
+        .chain(vecs.empty_addr_count.par_iter_height_mut())
         .chain(rayon::iter::once(
             &mut vecs.chain_state as &mut dyn AnyStoredVec,
         ))

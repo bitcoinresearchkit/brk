@@ -17,7 +17,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &price.usd.timeindexes_to_price_close.dateindex;
+        let close = &price.usd.split.close.dateindex;
 
         // DCA by period - stack
         for (stack, days) in self.period_stack.iter_mut_with_days() {
@@ -51,7 +51,6 @@ impl Vecs {
         // DCA by period - CAGR (computed from returns)
         for (cagr, returns, days) in self.period_cagr.zip_mut_with_period(&self.period_returns) {
             cagr.compute_all(starting_indexes, exit, |v| {
-                // KISS: dateindex is no longer Option
                 v.compute_cagr(
                     starting_indexes.dateindex,
                     &returns.dateindex,

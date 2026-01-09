@@ -142,7 +142,7 @@ fn collect_leaf_type_schemas(node: &TreeNode, schemas: &mut TypeSchemas) {
             collect_schema_definitions(&leaf.schema, schemas);
 
             // Get the type name for this leaf
-            let type_name = extract_inner_type(leaf.value_type());
+            let type_name = extract_inner_type(leaf.kind());
 
             if let Entry::Vacant(e) = schemas.entry(type_name) {
                 // Unwrap single-element allOf

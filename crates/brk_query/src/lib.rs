@@ -61,7 +61,7 @@ impl Query {
 
     /// Current indexed height
     pub fn height(&self) -> Height {
-        Height::from(self.indexer().vecs.block.height_to_blockhash.stamp())
+        Height::from(self.indexer().vecs.blocks.blockhash.stamp())
     }
 
     #[inline]

@@ -4,10 +4,10 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex, StoredU64,
+    EmptyAddressData, EmptyAddressIndex, Height, LoadedAddressData, LoadedAddressIndex,
     SupplyState, Version,
 };
-use log::info;
+use tracing::info;
 use vecdb::{
     AnyVec, BytesVec, Database, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
     LazyVecFrom1, PAGE_SIZE, Stamp, TypedVecIterator, VecIndex,
@@ -19,14 +19,11 @@ use crate::{
         compute::{StartMode, determine_start_mode, process_blocks, recover_state, reset_state},
         state::BlockState,
     },
-    indexes, inputs,
-    internal::ComputedBlockLast,
-    outputs, price, transactions,
+    indexes, inputs, outputs, price, transactions,
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts,
-    address::{AddressTypeToHeightToAddressCount, AddressTypeToIndexesToAddressCount},
+    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, UTXOCohorts, address::AddrCountVecs,
     compute::aggregates,
 };
 
@@ -44,13 +41,8 @@ pub struct Vecs {
     pub utxo_cohorts: UTXOCohorts,
     pub address_cohorts: AddressCohorts,
 
-    pub addresstype_to_height_to_addr_count: AddressTypeToHeightToAddressCount,
-    pub addresstype_to_height_to_empty_addr_count: AddressTypeToHeightToAddressCount,
-
-    pub addresstype_to_indexes_to_addr_count: AddressTypeToIndexesToAddressCount,
-    pub addresstype_to_indexes_to_empty_addr_count: AddressTypeToIndexesToAddressCount,
-    pub indexes_to_addr_count: ComputedBlockLast<StoredU64>,
-    pub indexes_to_empty_addr_count: ComputedBlockLast<StoredU64>,
+    pub addr_count: AddrCountVecs,
+    pub empty_addr_count: AddrCountVecs,
     pub loadedaddressindex_to_loadedaddressindex:
         LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
     pub emptyaddressindex_to_emptyaddressindex:
@@ -111,49 +103,19 @@ impl Vecs {
             |index, _| Some(index),
         );
 
-        // Extract address type height vecs before struct literal to use as sources
-        let addresstype_to_height_to_addr_count =
-            AddressTypeToHeightToAddressCount::forced_import(&db, "addr_count", version)?;
-        let addresstype_to_height_to_empty_addr_count =
-            AddressTypeToHeightToAddressCount::forced_import(&db, "empty_addr_count", version)?;
-
         let this = Self {
             chain_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "chain", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            indexes_to_addr_count: ComputedBlockLast::forced_import(
-                &db,
-                "addr_count",
-                version,
-                indexes,
-            )?,
-            indexes_to_empty_addr_count: ComputedBlockLast::forced_import(
+            addr_count: AddrCountVecs::forced_import(&db, "addr_count", version, indexes)?,
+            empty_addr_count: AddrCountVecs::forced_import(
                 &db,
                 "empty_addr_count",
                 version,
                 indexes,
             )?,
-
-            addresstype_to_indexes_to_addr_count:
-                AddressTypeToIndexesToAddressCount::forced_import(
-                    &db,
-                    "addr_count",
-                    version,
-                    indexes,
-                    &addresstype_to_height_to_addr_count,
-                )?,
-            addresstype_to_indexes_to_empty_addr_count:
-                AddressTypeToIndexesToAddressCount::forced_import(
-                    &db,
-                    "empty_addr_count",
-                    version,
-                    indexes,
-                    &addresstype_to_height_to_empty_addr_count,
-                )?,
-            addresstype_to_height_to_addr_count,
-            addresstype_to_height_to_empty_addr_count,
 
             utxo_cohorts,
             address_cohorts,
@@ -200,14 +162,22 @@ impl Vecs {
         starting_indexes: &mut ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        // 1. Find minimum computed height for recovery
-        let chain_state_height = Height::from(self.chain_state.len());
+        // 1. Find minimum height we have data for across stateful vecs
+        let current_height = Height::from(self.chain_state.len());
         let height_based_min = self.min_stateful_height_len();
         let dateindex_min = self.min_stateful_dateindex_len();
-        let stateful_min = adjust_for_dateindex_gap(height_based_min, dateindex_min, indexes)?;
+        let min_stateful = adjust_for_dateindex_gap(height_based_min, dateindex_min, indexes)?;
 
         // 2. Determine start mode and recover/reset state
-        let start_mode = determine_start_mode(stateful_min, chain_state_height);
+        // Clamp to starting_indexes.height to handle reorg (indexer may require earlier start)
+        let resume_target = current_height.min(starting_indexes.height);
+        if resume_target < current_height {
+            info!(
+                "Reorg detected: rolling back from {} to {}",
+                current_height, resume_target
+            );
+        }
+        let start_mode = determine_start_mode(min_stateful.min(resume_target), resume_target);
 
         // Try to resume from checkpoint, fall back to fresh start if needed
         let recovered_height = match start_mode {
@@ -238,8 +208,8 @@ impl Vecs {
         // Fresh start: reset all state
         let (starting_height, mut chain_state) = if recovered_height.is_zero() {
             self.chain_state.reset()?;
-            self.addresstype_to_height_to_addr_count.reset()?;
-            self.addresstype_to_height_to_empty_addr_count.reset()?;
+            self.addr_count.reset_height()?;
+            self.empty_addr_count.reset_height()?;
             reset_state(
                 &mut self.any_address_indexes,
                 &mut self.addresses_data,
@@ -251,8 +221,8 @@ impl Vecs {
             (Height::ZERO, vec![])
         } else {
             // Recover chain_state from stored values
-            let height_to_timestamp = &blocks.time.height_to_timestamp_fixed;
-            let height_to_price = price.map(|p| &p.usd.chainindexes_to_price_close.height);
+            let height_to_timestamp = &blocks.time.timestamp_fixed;
+            let height_to_price = price.map(|p| &p.usd.split.close.height);
 
             let mut height_to_timestamp_iter = height_to_timestamp.into_iter();
             let mut height_to_price_iter = height_to_price.map(|v| v.into_iter());
@@ -279,14 +249,7 @@ impl Vecs {
             .validate_computed_versions(base_version)?;
 
         // 3. Get last height from indexer
-        let last_height = Height::from(
-            indexer
-                .vecs
-                .block
-                .height_to_blockhash
-                .len()
-                .saturating_sub(1),
-        );
+        let last_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
 
         // 4. Process blocks
         if starting_height <= last_height {
@@ -324,64 +287,26 @@ impl Vecs {
             exit,
         )?;
 
-        // 6b. Compute address count dateindex vecs (per-addresstype)
-        self.addresstype_to_indexes_to_addr_count.compute(
-            indexes,
-            starting_indexes,
-            exit,
-            &self.addresstype_to_height_to_addr_count,
-        )?;
-        self.addresstype_to_indexes_to_empty_addr_count.compute(
-            indexes,
-            starting_indexes,
-            exit,
-            &self.addresstype_to_height_to_empty_addr_count,
-        )?;
-
-        // 6c. Compute global address count dateindex vecs (sum of all address types)
-        let addr_count_sources: Vec<_> =
-            self.addresstype_to_height_to_addr_count.values().collect();
-        self.indexes_to_addr_count
-            .compute_all(indexes, starting_indexes, exit, |height_vec| {
-                Ok(height_vec.compute_sum_of_others(
-                    starting_indexes.height,
-                    &addr_count_sources,
-                    exit,
-                )?)
-            })?;
-
-        let empty_addr_count_sources: Vec<_> = self
-            .addresstype_to_height_to_empty_addr_count
-            .values()
-            .collect();
-        self.indexes_to_empty_addr_count.compute_all(
-            indexes,
-            starting_indexes,
-            exit,
-            |height_vec| {
-                Ok(height_vec.compute_sum_of_others(
-                    starting_indexes.height,
-                    &empty_addr_count_sources,
-                    exit,
-                )?)
-            },
-        )?;
+        // 6b. Compute address count dateindex vecs (by addresstype + all)
+        self.addr_count
+            .compute_rest(indexes, starting_indexes, exit)?;
+        self.empty_addr_count
+            .compute_rest(indexes, starting_indexes, exit)?;
 
         // 7. Compute rest part2 (relative metrics)
         let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
 
         let height_to_market_cap = supply_metrics
-            .height_to_supply_value
+            .supply
             .dollars
             .as_ref()
-            .cloned();
+            .map(|d| d.height.clone());
 
-        // KISS: dateindex is no longer Option, just clone directly
         let dateindex_to_market_cap = supply_metrics
-            .indexes_to_supply
+            .supply
             .dollars
             .as_ref()
-            .map(|v| v.dateindex.clone());
+            .map(|d| d.dateindex.0.clone());
 
         let height_to_market_cap_ref = height_to_market_cap.as_ref();
         let dateindex_to_market_cap_ref = dateindex_to_market_cap.as_ref();
@@ -415,12 +340,8 @@ impl Vecs {
             .min(Height::from(self.chain_state.len()))
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
-            .min(Height::from(
-                self.addresstype_to_height_to_addr_count.min_len(),
-            ))
-            .min(Height::from(
-                self.addresstype_to_height_to_empty_addr_count.min_len(),
-            ))
+            .min(Height::from(self.addr_count.min_len()))
+            .min(Height::from(self.empty_addr_count.min_len()))
     }
 
     /// Get minimum length across all dateindex-indexed stateful vectors.
@@ -446,25 +367,25 @@ fn adjust_for_dateindex_gap(
         return Ok(height_based_min);
     }
 
-    // Skip if height_to_dateindex doesn't cover height_based_min yet
-    if height_based_min.to_usize() >= indexes.block.height_to_dateindex.len() {
+    // Skip if height.dateindex doesn't cover height_based_min yet
+    if height_based_min.to_usize() >= indexes.height.dateindex.len() {
         return Ok(height_based_min);
     }
 
     // Get the dateindex at the height we want to resume at
     let required_dateindex: usize = indexes
-        .block
-        .height_to_dateindex
+        .height
+        .dateindex
         .read_once(height_based_min)?
         .into();
 
     // If dateindex vecs are behind, restart from first height of the missing day
     if dateindex_min < required_dateindex
-        && dateindex_min < indexes.time.dateindex_to_first_height.len()
+        && dateindex_min < indexes.dateindex.first_height.len()
     {
         Ok(indexes
-            .time
-            .dateindex_to_first_height
+            .dateindex
+            .first_height
             .read_once(dateindex_min.into())?)
     } else {
         Ok(height_based_min)

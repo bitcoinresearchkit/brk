@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockHashPrefix, Timestamp};
-use log::error;
+use tracing::error;
 use vecdb::GenericStoredVec;
 
 use super::BlockProcessor;
@@ -35,24 +35,24 @@ impl BlockProcessor<'_> {
         );
 
         self.vecs
-            .block
-            .height_to_blockhash
+            .blocks
+            .blockhash
             .checked_push(height, blockhash.clone())?;
         self.vecs
-            .block
-            .height_to_difficulty
+            .blocks
+            .difficulty
             .checked_push(height, self.block.header.difficulty_float().into())?;
         self.vecs
-            .block
-            .height_to_timestamp
+            .blocks
+            .timestamp
             .checked_push(height, Timestamp::from(self.block.header.time))?;
         self.vecs
-            .block
-            .height_to_total_size
+            .blocks
+            .total_size
             .checked_push(height, self.block.total_size().into())?;
         self.vecs
-            .block
-            .height_to_weight
+            .blocks
+            .weight
             .checked_push(height, self.block.weight().into())?;
 
         Ok(())

@@ -156,6 +156,18 @@ impl Bytes for OHLCCents {
     }
 }
 
+impl Add for OHLCCents {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            open: self.open + rhs.open,
+            high: self.high + rhs.high,
+            low: self.low + rhs.low,
+            close: self.close + rhs.close,
+        }
+    }
+}
+
 /// OHLC (Open, High, Low, Close) data in dollars
 #[derive(Debug, Default, Clone, Copy, JsonSchema)]
 #[repr(C)]

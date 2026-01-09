@@ -47,5 +47,24 @@ where
             ),
         }
     }
+
+    /// Create from sources without adding _sum suffix to sum vec.
+    pub fn from_sources_sum_raw(
+        name: &str,
+        version: Version,
+        sum_source: IterableBoxedVec<S1I, T>,
+        cumulative_source: IterableBoxedVec<S1I, T>,
+        len_source: IterableBoxedVec<I, S2T>,
+    ) -> Self {
+        Self {
+            sum: LazySum::from_source_raw(name, version + VERSION, sum_source, len_source.clone()),
+            cumulative: LazyCumulative::from_source(
+                name,
+                version + VERSION,
+                cumulative_source,
+                len_source,
+            ),
+        }
+    }
 }
 

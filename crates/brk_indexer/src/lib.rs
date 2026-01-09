@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
-use log::{debug, info};
+use tracing::{debug, info};
 use vecdb::Exit;
 mod constants;
 mod indexes;
@@ -98,18 +98,28 @@ impl Indexer {
     ) -> Result<Indexes> {
         debug!("Starting indexing...");
 
-        let last_blockhash = self.vecs.block.height_to_blockhash.iter()?.last();
+        let last_blockhash = self.vecs.blocks.blockhash.iter()?.last();
         debug!("Last block hash found.");
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
-            let starting_indexes =
-                Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores);
-            if starting_indexes.height > client.get_last_height()? {
-                info!("Up to date, nothing to index.");
-                return Ok(starting_indexes);
+            match Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores)
+            {
+                Some(starting_indexes) => {
+                    if starting_indexes.height > client.get_last_height()? {
+                        info!("Up to date, nothing to index.");
+                        return Ok(starting_indexes);
+                    }
+                    (starting_indexes, Some(hash))
+                }
+                None => {
+                    // Data inconsistency detected - reset and start fresh
+                    info!("Data inconsistency detected, resetting indexer...");
+                    self.vecs.reset()?;
+                    self.stores.reset()?;
+                    (Indexes::default(), None)
+                }
             }
-            (starting_indexes, Some(hash))
         } else {
             (Indexes::default(), None)
         };

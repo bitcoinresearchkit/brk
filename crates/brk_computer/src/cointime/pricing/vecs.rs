@@ -1,16 +1,16 @@
 use brk_traversable::Traversable;
 use brk_types::Dollars;
 
-use crate::internal::{ComputedRatioVecsDate, ComputedBlockLast};
+use crate::internal::{ComputedBlockLast, ComputedRatioVecsDate};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes_to_vaulted_price: ComputedBlockLast<Dollars>,
-    pub indexes_to_vaulted_price_ratio: ComputedRatioVecsDate,
-    pub indexes_to_active_price: ComputedBlockLast<Dollars>,
-    pub indexes_to_active_price_ratio: ComputedRatioVecsDate,
-    pub indexes_to_true_market_mean: ComputedBlockLast<Dollars>,
-    pub indexes_to_true_market_mean_ratio: ComputedRatioVecsDate,
-    pub indexes_to_cointime_price: ComputedBlockLast<Dollars>,
-    pub indexes_to_cointime_price_ratio: ComputedRatioVecsDate,
+    pub vaulted_price: ComputedBlockLast<Dollars>,
+    pub vaulted_price_ratio: ComputedRatioVecsDate,
+    pub active_price: ComputedBlockLast<Dollars>,
+    pub active_price_ratio: ComputedRatioVecsDate,
+    pub true_market_mean: ComputedBlockLast<Dollars>,
+    pub true_market_mean_ratio: ComputedRatioVecsDate,
+    pub cointime_price: ComputedBlockLast<Dollars>,
+    pub cointime_price_ratio: ComputedRatioVecsDate,
 }

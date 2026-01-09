@@ -31,7 +31,7 @@ impl Query {
         // For each pool, get cumulative count at end and start, subtract to get range count
         for (pool_id, pool_vecs) in &computer.pools.vecs {
             let mut cumulative = pool_vecs
-                .indexes_to_blocks_mined
+                .blocks_mined
                 .height_cumulative
                 .inner()
                 .iter();
@@ -101,7 +101,7 @@ impl Query {
             .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
 
         let mut cumulative = pool_vecs
-            .indexes_to_blocks_mined
+            .blocks_mined
             .height_cumulative
             .inner()
             .iter();

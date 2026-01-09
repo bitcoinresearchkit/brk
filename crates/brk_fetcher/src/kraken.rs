@@ -2,12 +2,12 @@ use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
-use log::info;
 use serde_json::Value;
+use tracing::info;
 
 use crate::{
     PriceSource, default_retry,
-    ohlc::{compute_ohlc_from_range, ohlc_from_array, timestamp_from_secs, date_from_timestamp},
+    ohlc::{compute_ohlc_from_range, date_from_timestamp, ohlc_from_array, timestamp_from_secs},
 };
 
 #[derive(Default, Clone)]

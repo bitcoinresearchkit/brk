@@ -2,15 +2,13 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableCloneableVec,
-    PcoVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 
 use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
-    internal::{CostBasisPercentiles, DerivedComputedBlockLast},
+    indexes,
+    internal::{ComputedBlockLast, CostBasisPercentiles},
 };
 
 use super::ImportConfig;
@@ -19,12 +17,10 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct CostBasisMetrics {
     /// Minimum cost basis for any UTXO at this height
-    pub height_to_min_cost_basis: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_min_cost_basis: DerivedComputedBlockLast<Dollars>,
+    pub min: ComputedBlockLast<Dollars>,
 
     /// Maximum cost basis for any UTXO at this height
-    pub height_to_max_cost_basis: EagerVec<PcoVec<Height, Dollars>>,
-    pub indexes_to_max_cost_basis: DerivedComputedBlockLast<Dollars>,
+    pub max: ComputedBlockLast<Dollars>,
 
     /// Cost basis distribution percentiles (median, quartiles, etc.)
     pub percentiles: Option<CostBasisPercentiles>,
@@ -35,29 +31,19 @@ impl CostBasisMetrics {
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let extended = cfg.extended();
 
-        let height_to_min_cost_basis =
-            EagerVec::forced_import(cfg.db, &cfg.name("min_cost_basis"), cfg.version)?;
-
-        let height_to_max_cost_basis =
-            EagerVec::forced_import(cfg.db, &cfg.name("max_cost_basis"), cfg.version)?;
-
         Ok(Self {
-            indexes_to_min_cost_basis: DerivedComputedBlockLast::forced_import(
+            min: ComputedBlockLast::forced_import(
                 cfg.db,
                 &cfg.name("min_cost_basis"),
-                height_to_min_cost_basis.boxed_clone(),
                 cfg.version,
                 cfg.indexes,
             )?,
-            indexes_to_max_cost_basis: DerivedComputedBlockLast::forced_import(
+            max: ComputedBlockLast::forced_import(
                 cfg.db,
                 &cfg.name("max_cost_basis"),
-                height_to_max_cost_basis.boxed_clone(),
                 cfg.version,
                 cfg.indexes,
             )?,
-            height_to_min_cost_basis,
-            height_to_max_cost_basis,
             percentiles: extended
                 .then(|| {
                     CostBasisPercentiles::forced_import(
@@ -74,9 +60,7 @@ impl CostBasisMetrics {
 
     /// Get minimum length across height-indexed vectors written in block loop.
     pub fn min_stateful_height_len(&self) -> usize {
-        self.height_to_min_cost_basis
-            .len()
-            .min(self.height_to_max_cost_basis.len())
+        self.min.height.len().min(self.max.height.len())
     }
 
     /// Get minimum length across dateindex-indexed vectors written in block loop.
@@ -89,14 +73,14 @@ impl CostBasisMetrics {
 
     /// Push min/max cost basis from state.
     pub fn truncate_push_minmax(&mut self, height: Height, state: &CohortState) -> Result<()> {
-        self.height_to_min_cost_basis.truncate_push(
+        self.min.height.truncate_push(
             height,
             state
                 .price_to_amount_first_key_value()
                 .map(|(dollars, _)| dollars)
                 .unwrap_or(Dollars::NAN),
         )?;
-        self.height_to_max_cost_basis.truncate_push(
+        self.max.height.truncate_push(
             height,
             state
                 .price_to_amount_last_key_value()
@@ -122,8 +106,8 @@ impl CostBasisMetrics {
 
     /// Write height-indexed vectors to disk.
     pub fn write(&mut self) -> Result<()> {
-        self.height_to_min_cost_basis.write()?;
-        self.height_to_max_cost_basis.write()?;
+        self.min.height.write()?;
+        self.max.height.write()?;
         if let Some(percentiles) = self.percentiles.as_mut() {
             percentiles.write()?;
         }
@@ -132,10 +116,7 @@ impl CostBasisMetrics {
 
     /// Returns a parallel iterator over all vecs for parallel writing.
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
-            &mut self.height_to_min_cost_basis,
-            &mut self.height_to_max_cost_basis,
-        ];
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![&mut self.min.height, &mut self.max.height];
         if let Some(percentiles) = self.percentiles.as_mut() {
             vecs.extend(
                 percentiles
@@ -163,20 +144,14 @@ impl CostBasisMetrics {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_min_cost_basis.compute_min_of_others(
+        self.min.height.compute_min_of_others(
             starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.height_to_min_cost_basis)
-                .collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.min.height).collect::<Vec<_>>(),
             exit,
         )?;
-        self.height_to_max_cost_basis.compute_max_of_others(
+        self.max.height.compute_max_of_others(
             starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.height_to_max_cost_basis)
-                .collect::<Vec<_>>(),
+            &others.iter().map(|v| &v.max.height).collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())
@@ -185,24 +160,12 @@ impl CostBasisMetrics {
     /// First phase of computed metrics (indexes from height).
     pub fn compute_rest_part1(
         &mut self,
-        indexes: &crate::indexes::Vecs,
+        indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_min_cost_basis.derive_from(
-            indexes,
-            starting_indexes,
-            &self.height_to_min_cost_basis,
-            exit,
-        )?;
-
-        self.indexes_to_max_cost_basis.derive_from(
-            indexes,
-            starting_indexes,
-            &self.height_to_max_cost_basis,
-            exit,
-        )?;
-
+        self.min.compute_rest(indexes, starting_indexes, exit)?;
+        self.max.compute_rest(indexes, starting_indexes, exit)?;
         Ok(())
     }
 }

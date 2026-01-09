@@ -1,7 +1,7 @@
 use std::{thread::sleep, time::Duration};
 
 use brk_error::Result;
-use log::info;
+use tracing::info;
 
 pub fn default_retry<T>(function: impl Fn(usize) -> Result<T>) -> Result<T> {
     retry(function, 5, 6)

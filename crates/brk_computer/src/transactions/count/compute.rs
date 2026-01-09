@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{indexes, ComputeIndexes};
+use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     pub fn compute(
@@ -13,12 +13,12 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.indexes_to_tx_count
+        self.tx_count
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.tx.height_to_first_txindex,
-                    &indexer.vecs.tx.txindex_to_txid,
+                    &indexer.vecs.transactions.first_txindex,
+                    &indexer.vecs.transactions.txid,
                     exit,
                 )?;
                 Ok(())

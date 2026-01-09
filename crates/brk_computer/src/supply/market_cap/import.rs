@@ -1,37 +1,20 @@
 use brk_types::Version;
-use vecdb::{IterableCloneableVec, LazyVecFrom1};
+use vecdb::IterableCloneableVec;
 
 use super::Vecs;
-use crate::{
-    distribution,
-    internal::{DollarsIdentity, LazyDateLast},
-};
+use crate::{distribution, internal::{DollarsIdentity, LazyBlockLast}};
 
 impl Vecs {
-    pub fn import(version: Version, distribution: &distribution::Vecs) -> Self {
+    pub fn import(version: Version, distribution: &distribution::Vecs) -> Option<Self> {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
-        // Market cap by height (lazy from distribution's supply in USD)
-        let height = supply_metrics
-            .height_to_supply_value
-            .dollars
-            .as_ref()
-            .map(|d| {
-                LazyVecFrom1::init("market_cap", version, d.boxed_clone(), |height, iter| {
-                    iter.get(height)
-                })
-            });
-
-        // Market cap by indexes (lazy from distribution's supply in USD) - KISS
-        let indexes = supply_metrics.indexes_to_supply.dollars.as_ref().map(|d| {
-            // KISS: dateindex is no longer Option, use from_source
-            LazyDateLast::from_source::<DollarsIdentity>(
+        supply_metrics.supply.dollars.as_ref().map(|d| {
+            Self(LazyBlockLast::from_computed::<DollarsIdentity>(
                 "market_cap",
                 version,
+                d.height.boxed_clone(),
                 d,
-            )
-        });
-
-        Self { height, indexes }
+            ))
+        })
     }
 }

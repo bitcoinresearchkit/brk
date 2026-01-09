@@ -1,4 +1,8 @@
-use std::{fs, path::Path, time::Duration};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use axum::{
     body::Body,
@@ -7,8 +11,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_error::{Error, Result};
-use log::{error, info};
 use quick_cache::sync::GuardResult;
+use tracing::{error, info};
 
 use crate::{AppState, HeaderMapExtended, ModifiedState, ResponseExtended};
 
@@ -59,12 +63,12 @@ fn any_handler(
             }
         }
 
-        // Auto-resolve .js extension for ES module imports
-        if !path.exists() && path.extension().is_none() {
-            let with_js = path.with_extension("js");
-            if with_js.exists() {
-                path = with_js;
-            }
+        // Strip hash from import-mapped URLs (e.g., foo.abc12345.js -> foo.js)
+        if !path.exists()
+            && let Some(unhashed) = strip_importmap_hash(&path)
+            && unhashed.exists()
+        {
+            path = unhashed;
         }
 
         if !path.exists() || path.is_dir() {
@@ -105,10 +109,9 @@ fn path_to_response(headers: &HeaderMap, state: &AppState, path: &Path) -> Respo
 
 fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Result<Response> {
     let (modified, date) = headers.check_if_modified_since(path)?;
-    // TODO: Re-enable for production
-    // if modified == ModifiedState::NotModifiedSince {
-    //     return Ok(Response::new_not_modified());
-    // }
+    if !cfg!(debug_assertions) && modified == ModifiedState::NotModifiedSince {
+        return Ok(Response::new_not_modified());
+    }
 
     let serialized_path = path.to_str().unwrap();
 
@@ -117,8 +120,7 @@ fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Resu
         .is_some_and(|extension| extension == "html")
         || serialized_path.ends_with("service-worker.js");
 
-    // TODO: Re-enable caching for production
-    let guard_res = if false && !must_revalidate {
+    let guard_res = if !cfg!(debug_assertions) && !must_revalidate {
         Some(state.cache.get_value_or_guard(
             &path.to_str().unwrap().to_owned(),
             Some(Duration::from_millis(50)),
@@ -149,21 +151,37 @@ fn path_to_response_(headers: &HeaderMap, state: &AppState, path: &Path) -> Resu
     headers.insert_cors();
     headers.insert_content_type(path);
 
-    // TODO: Re-enable immutable caching for production
-    // if must_revalidate {
-    //     headers.insert_cache_control_must_revalidate();
-    // } else if path.extension().is_some_and(|extension| {
-    //     extension == "jpg"
-    //         || extension == "png"
-    //         || extension == "woff2"
-    //         || extension == "js"
-    //         || extension == "map"
-    // }) {
-    //     headers.insert_cache_control_immutable();
-    // }
-    headers.insert_cache_control_must_revalidate();
+    if cfg!(debug_assertions) || must_revalidate {
+        headers.insert_cache_control_must_revalidate();
+    } else {
+        headers.insert_cache_control_immutable();
+    }
 
     headers.insert_last_modified(date);
 
     Ok(response)
+}
+
+/// Strip importmap hash from filename: `foo.abc12345.js` -> `foo.js`
+/// Hash is 8 hex characters between the name and extension.
+fn strip_importmap_hash(path: &Path) -> Option<PathBuf> {
+    let stem = path.file_stem()?.to_str()?;
+    let ext = path.extension()?.to_str()?;
+
+    // Only process js/mjs/css files
+    if !matches!(ext, "js" | "mjs" | "css") {
+        return None;
+    }
+
+    // Look for pattern: name.HASH where HASH is 8 hex chars
+    let dot_pos = stem.rfind('.')?;
+    let hash = &stem[dot_pos + 1..];
+
+    if hash.len() == 8 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
+        let name = &stem[..dot_pos];
+        let new_name = format!("{}.{}", name, ext);
+        Some(path.with_file_name(new_name))
+    } else {
+        None
+    }
 }

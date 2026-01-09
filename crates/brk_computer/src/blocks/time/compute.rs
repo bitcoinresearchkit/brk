@@ -4,7 +4,7 @@ use brk_types::Timestamp;
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{indexes, ComputeIndexes};
+use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     /// Compute height-to-time fields early, before indexes are computed.
@@ -16,9 +16,9 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let mut prev_timestamp_fixed = None;
-        self.height_to_timestamp_fixed.compute_transform(
+        self.timestamp_fixed.compute_transform(
             starting_height,
-            &indexer.vecs.block.height_to_timestamp,
+            &indexer.vecs.blocks.timestamp,
             |(h, timestamp, height_to_timestamp_fixed_iter)| {
                 if prev_timestamp_fixed.is_none()
                     && let Some(prev_h) = h.decremented()
@@ -46,16 +46,15 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.timeindexes_to_timestamp
-            .compute_all(starting_indexes, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.dateindex,
-                    &indexes.time.dateindex_to_date,
-                    |(di, d, ..)| (di, Timestamp::from(d)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.timestamp.compute_all(|vec| {
+            vec.compute_transform(
+                starting_indexes.dateindex,
+                &indexes.dateindex.date,
+                |(di, d, ..)| (di, Timestamp::from(d)),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         Ok(())
     }

@@ -42,49 +42,20 @@ where
     ) -> Self {
         let v = version + VERSION;
 
+        macro_rules! period {
+            ($p:ident) => {
+                LazyTransform2Sum::from_boxed::<F>(name, v, source1.$p.boxed_clone(), source2.$p.boxed_clone())
+            };
+        }
+
         Self {
-            dateindex: LazyTransform2Sum::from_sum::<F>(
-                name,
-                v,
-                &source1.dateindex,
-                &source2.dateindex,
-            ),
-            weekindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.weekindex.boxed_clone(),
-                source2.weekindex.boxed_clone(),
-            ),
-            monthindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.monthindex.boxed_clone(),
-                source2.monthindex.boxed_clone(),
-            ),
-            quarterindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.quarterindex.boxed_clone(),
-                source2.quarterindex.boxed_clone(),
-            ),
-            semesterindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.semesterindex.boxed_clone(),
-                source2.semesterindex.boxed_clone(),
-            ),
-            yearindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.yearindex.boxed_clone(),
-                source2.yearindex.boxed_clone(),
-            ),
-            decadeindex: LazyTransform2Sum::from_boxed::<F>(
-                name,
-                v,
-                source1.decadeindex.boxed_clone(),
-                source2.decadeindex.boxed_clone(),
-            ),
+            dateindex: LazyTransform2Sum::from_sum::<F>(name, v, &source1.dateindex, &source2.dateindex),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

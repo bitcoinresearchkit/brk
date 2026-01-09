@@ -8,12 +8,12 @@ use super::LazyDerivedBlockValue;
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(merge)]
 pub struct LazyBlockValue {
     #[traversable(rename = "sats")]
     pub sats: LazyVecFrom1<Height, Sats, Height, Sats>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: LazyDerivedBlockValue,
 }
 

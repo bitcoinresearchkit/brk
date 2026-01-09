@@ -138,7 +138,7 @@ impl Query {
             .map(|(key, _)| key.txindex())
             .collect();
 
-        let mut txindex_to_txid_iter = indexer.vecs.tx.txindex_to_txid.iter()?;
+        let mut txindex_to_txid_iter = indexer.vecs.transactions.txid.iter()?;
         let txids: Vec<Txid> = txindices
             .into_iter()
             .map(|txindex| txindex_to_txid_iter.get_unwrap(txindex))
@@ -166,12 +166,12 @@ impl Query {
             .map(|(key, _): (AddressIndexOutPoint, Unit)| (key.txindex(), key.vout()))
             .collect();
 
-        let mut txindex_to_txid_iter = vecs.tx.txindex_to_txid.iter()?;
-        let mut txindex_to_height_iter = vecs.tx.txindex_to_height.iter()?;
-        let mut txindex_to_first_txoutindex_iter = vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut txoutindex_to_value_iter = vecs.txout.txoutindex_to_value.iter()?;
-        let mut height_to_blockhash_iter = vecs.block.height_to_blockhash.iter()?;
-        let mut height_to_timestamp_iter = vecs.block.height_to_timestamp.iter()?;
+        let mut txindex_to_txid_iter = vecs.transactions.txid.iter()?;
+        let mut txindex_to_height_iter = vecs.transactions.height.iter()?;
+        let mut txindex_to_first_txoutindex_iter = vecs.transactions.first_txoutindex.iter()?;
+        let mut txoutindex_to_value_iter = vecs.outputs.value.iter()?;
+        let mut height_to_blockhash_iter = vecs.blocks.blockhash.iter()?;
+        let mut height_to_timestamp_iter = vecs.blocks.timestamp.iter()?;
 
         let utxos: Vec<Utxo> = outpoints
             .into_iter()

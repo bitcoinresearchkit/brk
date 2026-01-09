@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use brk_types::{
-    AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, TxInIndex, TxIndex, Txid,
-    TxidPrefix, TypeIndex, Unit, Vin, Vout,
+    AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, StoredU32, TxInIndex, TxIndex,
+    Txid, TxidPrefix, TypeIndex, Unit, Vin, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -39,6 +39,8 @@ impl<'a> BlockProcessor<'a> {
                     let txindex = base_txindex + block_txindex;
                     let txinindex = base_txinindex + TxInIndex::from(block_txinindex);
 
+                    let witness_size = StoredU32::from(txin.witness.size());
+
                     if tx.is_coinbase() {
                         return Ok((
                             txinindex,
@@ -47,6 +49,7 @@ impl<'a> BlockProcessor<'a> {
                                 txin,
                                 vin,
                                 outpoint: OutPoint::COINBASE,
+                                witness_size,
                             },
                         ));
                     }
@@ -66,6 +69,7 @@ impl<'a> BlockProcessor<'a> {
                                 txin,
                                 vin,
                                 outpoint,
+                                witness_size,
                             },
                         ));
                     }
@@ -86,8 +90,8 @@ impl<'a> BlockProcessor<'a> {
 
                     let txoutindex = self
                         .vecs
-                        .tx
-                        .txindex_to_first_txoutindex
+                        .transactions
+                        .first_txoutindex
                         .get_pushed_or_read(prev_txindex, &self.readers.txindex_to_first_txoutindex)?
                         .ok_or(Error::Internal("Missing txoutindex"))?
                         + vout;
@@ -96,15 +100,15 @@ impl<'a> BlockProcessor<'a> {
 
                     let outputtype = self
                         .vecs
-                        .txout
-                        .txoutindex_to_outputtype
+                        .outputs
+                        .outputtype
                         .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_outputtype)?
                         .ok_or(Error::Internal("Missing outputtype"))?;
 
                     let typeindex = self
                         .vecs
-                        .txout
-                        .txoutindex_to_typeindex
+                        .outputs
+                        .typeindex
                         .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_typeindex)?
                         .ok_or(Error::Internal("Missing typeindex"))?;
 
@@ -116,6 +120,7 @@ impl<'a> BlockProcessor<'a> {
                             outpoint,
                             outputtype,
                             typeindex,
+                            witness_size,
                         },
                     ))
                 },
@@ -151,22 +156,24 @@ impl<'a> BlockProcessor<'a> {
         let height = self.height;
 
         for (txinindex, input_source) in txins {
-            let (vin, txindex, outpoint, outputtype, typeindex) = match input_source {
+            let (vin, txindex, outpoint, outputtype, typeindex, witness_size) = match input_source {
                 InputSource::PreviousBlock {
                     vin,
                     txindex,
                     outpoint,
                     outputtype,
                     typeindex,
-                } => (vin, txindex, outpoint, outputtype, typeindex),
+                    witness_size,
+                } => (vin, txindex, outpoint, outputtype, typeindex, witness_size),
                 InputSource::SameBlock {
                     txindex,
                     txin,
                     vin,
                     outpoint,
+                    witness_size,
                 } => {
                     if outpoint.is_coinbase() {
-                        (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE)
+                        (vin, txindex, outpoint, OutputType::Unknown, TypeIndex::COINBASE, witness_size)
                     } else {
                         let info = same_block_output_info
                             .remove(&outpoint)
@@ -174,34 +181,38 @@ impl<'a> BlockProcessor<'a> {
                             .inspect_err(|_| {
                                 dbg!(&same_block_output_info, txin);
                             })?;
-                        (vin, txindex, outpoint, info.outputtype, info.typeindex)
+                        (vin, txindex, outpoint, info.outputtype, info.typeindex, witness_size)
                     }
                 }
             };
 
             if vin.is_zero() {
                 self.vecs
-                    .tx
-                    .txindex_to_first_txinindex
+                    .transactions
+                    .first_txinindex
                     .checked_push(txindex, txinindex)?;
             }
 
             self.vecs
-                .txin
-                .txinindex_to_txindex
+                .inputs
+                .txindex
                 .checked_push(txinindex, txindex)?;
             self.vecs
-                .txin
-                .txinindex_to_outpoint
+                .inputs
+                .outpoint
                 .checked_push(txinindex, outpoint)?;
             self.vecs
-                .txin
-                .txinindex_to_outputtype
+                .inputs
+                .outputtype
                 .checked_push(txinindex, outputtype)?;
             self.vecs
-                .txin
-                .txinindex_to_typeindex
+                .inputs
+                .typeindex
                 .checked_push(txinindex, typeindex)?;
+            self.vecs
+                .inputs
+                .witness_size
+                .checked_push(txinindex, witness_size)?;
 
             if !outputtype.is_address() {
                 continue;

@@ -12,26 +12,12 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let indexes_to_btc = ComputedVecsDateAverage::forced_import(
-            db,
-            "btc_velocity",
-            version,
-            indexes,
-        )?;
-
-        let indexes_to_usd = compute_dollars.then(|| {
-            ComputedVecsDateAverage::forced_import(
-                db,
-                "usd_velocity",
-                version,
-                indexes,
-            )
-            .unwrap()
-        });
-
         Ok(Self {
-            indexes_to_btc,
-            indexes_to_usd,
+            btc: ComputedVecsDateAverage::forced_import(db, "btc_velocity", version, indexes)?,
+            usd: compute_dollars.then(|| {
+                ComputedVecsDateAverage::forced_import(db, "usd_velocity", version, indexes)
+                    .unwrap()
+            }),
         })
     }
 }

@@ -144,14 +144,14 @@ impl<'a> BlockProcessor<'a> {
 
             if vout.is_zero() {
                 self.vecs
-                    .tx
-                    .txindex_to_first_txoutindex
+                    .transactions
+                    .first_txoutindex
                     .checked_push(txindex, txoutindex)?;
             }
 
             self.vecs
-                .txout
-                .txoutindex_to_txindex
+                .outputs
+                .txindex
                 .checked_push(txoutindex, txindex)?;
 
             let typeindex = if let Some(ti) = existing_typeindex {
@@ -181,29 +181,29 @@ impl<'a> BlockProcessor<'a> {
                 match outputtype {
                     OutputType::P2MS => {
                         self.vecs
-                            .output
-                            .p2msoutputindex_to_txindex
+                            .scripts
+                            .p2ms_to_txindex
                             .checked_push(self.indexes.p2msoutputindex, txindex)?;
                         self.indexes.p2msoutputindex.copy_then_increment()
                     }
                     OutputType::OpReturn => {
                         self.vecs
-                            .output
-                            .opreturnindex_to_txindex
+                            .scripts
+                            .opreturn_to_txindex
                             .checked_push(self.indexes.opreturnindex, txindex)?;
                         self.indexes.opreturnindex.copy_then_increment()
                     }
                     OutputType::Empty => {
                         self.vecs
-                            .output
-                            .emptyoutputindex_to_txindex
+                            .scripts
+                            .empty_to_txindex
                             .checked_push(self.indexes.emptyoutputindex, txindex)?;
                         self.indexes.emptyoutputindex.copy_then_increment()
                     }
                     OutputType::Unknown => {
                         self.vecs
-                            .output
-                            .unknownoutputindex_to_txindex
+                            .scripts
+                            .unknown_to_txindex
                             .checked_push(self.indexes.unknownoutputindex, txindex)?;
                         self.indexes.unknownoutputindex.copy_then_increment()
                     }
@@ -211,17 +211,14 @@ impl<'a> BlockProcessor<'a> {
                 }
             };
 
+            self.vecs.outputs.value.checked_push(txoutindex, sats)?;
             self.vecs
-                .txout
-                .txoutindex_to_value
-                .checked_push(txoutindex, sats)?;
-            self.vecs
-                .txout
-                .txoutindex_to_outputtype
+                .outputs
+                .outputtype
                 .checked_push(txoutindex, outputtype)?;
             self.vecs
-                .txout
-                .txoutindex_to_typeindex
+                .outputs
+                .typeindex
                 .checked_push(txoutindex, typeindex)?;
 
             if outputtype.is_unspendable() {

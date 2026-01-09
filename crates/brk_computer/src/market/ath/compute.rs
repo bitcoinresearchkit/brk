@@ -12,34 +12,35 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_price_ath.compute_all_time_high(
+        self.price_ath.height.compute_all_time_high(
             starting_indexes.height,
-            &price.usd.chainindexes_to_price_high.height,
+            &price.usd.split.high.height,
             exit,
         )?;
 
-        self.height_to_price_drawdown.compute_drawdown(
+        self.price_drawdown.height.compute_drawdown(
             starting_indexes.height,
-            &price.usd.chainindexes_to_price_close.height,
-            &self.height_to_price_ath,
+            &price.usd.split.close.height,
+            &self.price_ath.height,
             exit,
         )?;
 
-        self.indexes_to_price_ath.compute_all(starting_indexes, exit, |v| {
-                v.compute_all_time_high(
-                    starting_indexes.dateindex,
-                    &price.usd.timeindexes_to_price_high.dateindex,
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.price_ath.compute_rest(starting_indexes, exit, |v| {
+            v.compute_all_time_high(
+                starting_indexes.dateindex,
+                &price.usd.split.high.dateindex,
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.indexes_to_days_since_price_ath.compute_all(starting_indexes, exit, |v| {
-                let mut high_iter = price.usd.timeindexes_to_price_high.dateindex.into_iter();
+        self.days_since_price_ath
+            .compute_all(starting_indexes, exit, |v| {
+                let mut high_iter = price.usd.split.high.dateindex.into_iter();
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_price_ath.dateindex,
+                    &self.price_ath.dateindex,
                     |(i, ath, slf)| {
                         if prev.is_none() {
                             let i = i.to_usize();
@@ -62,11 +63,12 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.indexes_to_max_days_between_price_aths.compute_all(starting_indexes, exit, |v| {
+        self.max_days_between_price_aths
+            .compute_all(starting_indexes, exit, |v| {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_days_since_price_ath.dateindex,
+                    &self.days_since_price_ath.dateindex,
                     |(i, days, slf)| {
                         if prev.is_none() {
                             let i = i.to_usize();

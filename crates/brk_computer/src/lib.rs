@@ -8,7 +8,7 @@ use brk_indexer::Indexer;
 use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::Version;
-use log::info;
+use tracing::info;
 use vecdb::Exit;
 
 mod blocks;
@@ -375,6 +375,7 @@ impl Computer {
                 self.pools.compute(
                     indexer,
                     &self.indexes,
+                    &self.blocks,
                     &starting_indexes_clone,
                     exit,
                 )?;

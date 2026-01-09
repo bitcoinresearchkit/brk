@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
-use log::info;
+use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
@@ -18,21 +18,20 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // Validate computed versions against dependencies
-        let dep_version = indexer.vecs.txin.txinindex_to_outpoint.version()
-            + indexer.vecs.tx.txindex_to_first_txoutindex.version()
-            + indexer.vecs.txout.txoutindex_to_value.version();
-        self.txinindex_to_txoutindex
+        let dep_version = indexer.vecs.inputs.outpoint.version()
+            + indexer.vecs.transactions.first_txoutindex.version()
+            + indexer.vecs.outputs.value.version();
+        self.txoutindex
             .validate_computed_version_or_reset(dep_version)?;
-        self.txinindex_to_value
-            .validate_computed_version_or_reset(dep_version)?;
+        self.value.validate_computed_version_or_reset(dep_version)?;
 
-        let target = indexer.vecs.txin.txinindex_to_outpoint.len();
+        let target = indexer.vecs.inputs.outpoint.len();
         if target == 0 {
             return Ok(());
         }
 
-        let len1 = self.txinindex_to_txoutindex.len();
-        let len2 = self.txinindex_to_value.len();
+        let len1 = self.txoutindex.len();
+        let len2 = self.value.len();
         let starting = starting_indexes.txinindex.to_usize();
         let min = len1.min(len2).min(starting);
 
@@ -40,9 +39,9 @@ impl Vecs {
             return Ok(());
         }
 
-        let mut outpoint_iter = indexer.vecs.txin.txinindex_to_outpoint.iter()?;
-        let mut first_txoutindex_iter = indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
+        let mut outpoint_iter = indexer.vecs.inputs.outpoint.iter()?;
+        let mut first_txoutindex_iter = indexer.vecs.transactions.first_txoutindex.iter()?;
+        let mut value_iter = indexer.vecs.outputs.value.iter()?;
         let mut entries: Vec<Entry> = Vec::with_capacity(BATCH_SIZE);
 
         let mut batch_start = min;
@@ -81,10 +80,9 @@ impl Vecs {
 
             entries.sort_unstable_by_key(|e| e.txinindex);
             for entry in &entries {
-                self.txinindex_to_txoutindex
+                self.txoutindex
                     .truncate_push(entry.txinindex, entry.txoutindex)?;
-                self.txinindex_to_value
-                    .truncate_push(entry.txinindex, entry.value)?;
+                self.value.truncate_push(entry.txinindex, entry.value)?;
             }
 
             if batch_end < target {
@@ -92,8 +90,8 @@ impl Vecs {
             }
 
             let _lock = exit.lock();
-            self.txinindex_to_txoutindex.write()?;
-            self.txinindex_to_value.write()?;
+            self.txoutindex.write()?;
+            self.value.write()?;
             db.flush()?;
 
             batch_start = batch_end;

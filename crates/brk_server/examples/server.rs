@@ -9,7 +9,7 @@ use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_server::Server;
-use log::info;
+use tracing::info;
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -61,13 +61,13 @@ fn run() -> Result<()> {
         // Await the handle to catch both panics and errors
         match handle.await {
             Ok(Ok(())) => info!("Server shut down cleanly"),
-            Ok(Err(e)) => log::error!("Server error: {e:?}"),
+            Ok(Err(e)) => tracing::error!("Server error: {e:?}"),
             Err(e) => {
                 // JoinError - either panic or cancellation
                 if e.is_panic() {
-                    log::error!("Server panicked: {:?}", e.into_panic());
+                    tracing::error!("Server panicked: {:?}", e.into_panic());
                 } else {
-                    log::error!("Server task cancelled");
+                    tracing::error!("Server task cancelled");
                 }
             }
         }

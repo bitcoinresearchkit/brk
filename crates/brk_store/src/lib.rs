@@ -245,9 +245,14 @@ where
         self.meta.needs(height)
     }
 
+    fn export_meta(&mut self, height: Height) -> Result<()> {
+        self.meta.export(height)?;
+        Ok(())
+    }
+
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {
         if !self.has(height) {
-            self.meta.export(height)?;
+            self.export_meta(height)?;
         }
         Ok(())
     }
@@ -295,6 +300,10 @@ where
 {
     fn keyspace(&self) -> &Keyspace {
         &self.keyspace
+    }
+
+    fn export_meta(&mut self, height: Height) -> Result<()> {
+        self.export_meta(height)
     }
 
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()> {

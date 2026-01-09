@@ -9,5 +9,5 @@ repository.workspace = true
 
 [dependencies]
 libmimalloc-sys = { version = "0.1.44", features = ["extended"] }
-log = { workspace = true }
+tracing = { workspace = true }
 mimalloc = { version = "0.1.48", features = ["v3"] }

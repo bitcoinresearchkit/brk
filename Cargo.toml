@@ -43,7 +43,6 @@ bitcoincore-rpc = "0.19.0"
 brk_alloc = { version = "0.1.0-alpha.2", path = "crates/brk_alloc" }
 brk_bencher = { version = "0.1.0-alpha.2", path = "crates/brk_bencher" }
 brk_bindgen = { version = "0.1.0-alpha.2", path = "crates/brk_bindgen" }
-brk_bundler = { version = "0.1.0-alpha.2", path = "crates/brk_bundler" }
 brk_cli = { version = "0.1.0-alpha.2", path = "crates/brk_cli" }
 brk_client = { version = "0.1.0-alpha.2", path = "crates/brk_client" }
 brk_cohort = { version = "0.1.0-alpha.2", path = "crates/brk_cohort" }
@@ -51,25 +50,23 @@ brk_computer = { version = "0.1.0-alpha.2", path = "crates/brk_computer" }
 brk_error = { version = "0.1.0-alpha.2", path = "crates/brk_error" }
 brk_fetcher = { version = "0.1.0-alpha.2", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.1.0-alpha.2", path = "crates/brk_indexer" }
-brk_query = { version = "0.1.0-alpha.2", path = "crates/brk_query", features = ["tokio"] }
 brk_iterator = { version = "0.1.0-alpha.2", path = "crates/brk_iterator" }
 brk_logger = { version = "0.1.0-alpha.2", path = "crates/brk_logger" }
 brk_mcp = { version = "0.1.0-alpha.2", path = "crates/brk_mcp" }
 brk_mempool = { version = "0.1.0-alpha.2", path = "crates/brk_mempool" }
+brk_query = { version = "0.1.0-alpha.2", path = "crates/brk_query", features = ["tokio"] }
 brk_reader = { version = "0.1.0-alpha.2", path = "crates/brk_reader" }
 brk_rpc = { version = "0.1.0-alpha.2", path = "crates/brk_rpc" }
 brk_server = { version = "0.1.0-alpha.2", path = "crates/brk_server" }
 brk_store = { version = "0.1.0-alpha.2", path = "crates/brk_store" }
-brk_types = { version = "0.1.0-alpha.2", path = "crates/brk_types" }
 brk_traversable = { version = "0.1.0-alpha.2", path = "crates/brk_traversable", features = ["pco", "derive"] }
 brk_traversable_derive = { version = "0.1.0-alpha.2", path = "crates/brk_traversable_derive" }
+brk_types = { version = "0.1.0-alpha.2", path = "crates/brk_types" }
 byteview = "0.10.0"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
-env_logger = "0.11.8"
-fjall = "3.0.0"
-jiff = "0.2.17"
-log = "0.4.29"
+fjall = "3.0.1"
+jiff = "0.2.18"
 minreq = { version = "2.14.1", features = ["https", "serde_json"] }
 parking_lot = "0.12.5"
 rayon = "1.11.0"
@@ -78,10 +75,11 @@ schemars = "1.2.0"
 serde = "1.0.228"
 serde_bytes = "0.11.19"
 serde_derive = "1.0.228"
-serde_json = { version = "1.0.148", features = ["float_roundtrip"] }
+serde_json = { version = "1.0.149", features = ["float_roundtrip"] }
 smallvec = "1.15.1"
 tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
-# vecdb = { version = "0.5.4", features = ["derive", "serde_json", "pco", "schemars"] }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+# vecdb = { version = "0.5.6", features = ["derive", "serde_json", "pco", "schemars"] }
 vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 # vecdb = { git = "https://github.com/anydb-rs/anydb", features = ["derive", "serde_json", "pco"] }
 

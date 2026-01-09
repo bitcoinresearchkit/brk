@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{CheckedSub, Height, Timestamp, Version};
-use vecdb::{Database, IterableCloneableVec, LazyVecFrom1};
+use vecdb::{Database, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::DerivedComputedBlockDistribution};
+use crate::{indexes, internal::LazyBlockDistribution};
 
 impl Vecs {
     pub fn forced_import(
@@ -13,34 +13,25 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let height_to_interval = LazyVecFrom1::init(
-            "interval",
+        let interval = LazyBlockDistribution::forced_import_with_init(
+            db,
+            "block_interval",
             version,
-            indexer.vecs.block.height_to_timestamp.boxed_clone(),
+            indexer.vecs.blocks.timestamp.clone(),
+            indexes,
             |height: Height, timestamp_iter| {
-                let timestamp = timestamp_iter.get(height)?;
+                let timestamp = timestamp_iter.get_at(height.to_usize())?;
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     timestamp_iter
-                        .get(prev_h)
+                        .get_at(prev_h.to_usize())
                         .map_or(Timestamp::ZERO, |prev_t| {
                             timestamp.checked_sub(prev_t).unwrap_or(Timestamp::ZERO)
                         })
                 });
                 Some(interval)
             },
-        );
-
-        let indexes_to_block_interval = DerivedComputedBlockDistribution::forced_import(
-            db,
-            "block_interval",
-            height_to_interval.boxed_clone(),
-            version,
-            indexes,
         )?;
 
-        Ok(Self {
-            height_to_interval,
-            indexes_to_block_interval,
-        })
+        Ok(Self { interval })
     }
 }

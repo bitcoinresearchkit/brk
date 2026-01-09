@@ -55,46 +55,17 @@ where
 {
     let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
-    let mut starting_index = max_from;
-
-    if let Some(ref mut v) = first {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = last {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = min {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = max {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = average {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = sum {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = cumulative {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = median {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = pct10 {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = pct25 {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = pct75 {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = pct90 {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
+    macro_rules! validate_vec {
+        ($($vec:ident),*) => {{
+            let mut idx = max_from;
+            $(if let Some(ref mut v) = $vec {
+                idx = validate_and_start(v, combined_version, idx)?;
+            })*
+            idx
+        }};
     }
 
-    let index = starting_index;
+    let index = validate_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
 
     let needs_first = first.is_some();
     let needs_last = last.is_some();
@@ -239,42 +210,13 @@ where
 
     let _lock = exit.lock();
 
-    if let Some(v) = first {
-        v.write()?;
+    macro_rules! write_vec {
+        ($($vec:ident),*) => {
+            $(if let Some(v) = $vec { v.write()?; })*
+        };
     }
-    if let Some(v) = last {
-        v.write()?;
-    }
-    if let Some(v) = min {
-        v.write()?;
-    }
-    if let Some(v) = max {
-        v.write()?;
-    }
-    if let Some(v) = average {
-        v.write()?;
-    }
-    if let Some(v) = sum {
-        v.write()?;
-    }
-    if let Some(v) = cumulative {
-        v.write()?;
-    }
-    if let Some(v) = median {
-        v.write()?;
-    }
-    if let Some(v) = pct10 {
-        v.write()?;
-    }
-    if let Some(v) = pct25 {
-        v.write()?;
-    }
-    if let Some(v) = pct75 {
-        v.write()?;
-    }
-    if let Some(v) = pct90 {
-        v.write()?;
-    }
+
+    write_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
 
     Ok(())
 }
@@ -351,31 +293,17 @@ where
 {
     let combined_version = first_indexes.version() + count_indexes.version();
 
-    let mut starting_index = max_from;
-
-    if let Some(ref mut v) = first {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = last {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = min {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = max {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = average {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = sum {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
-    }
-    if let Some(ref mut v) = cumulative {
-        starting_index = validate_and_start(v, combined_version, starting_index)?;
+    macro_rules! validate_vec {
+        ($($vec:ident),*) => {{
+            let mut idx = max_from;
+            $(if let Some(ref mut v) = $vec {
+                idx = validate_and_start(v, combined_version, idx)?;
+            })*
+            idx
+        }};
     }
 
-    let index = starting_index;
+    let index = validate_vec!(first, last, min, max, average, sum, cumulative);
 
     let needs_first = first.is_some();
     let needs_last = last.is_some();
@@ -495,27 +423,13 @@ where
 
     let _lock = exit.lock();
 
-    if let Some(v) = first {
-        v.write()?;
+    macro_rules! write_vec {
+        ($($vec:ident),*) => {
+            $(if let Some(v) = $vec { v.write()?; })*
+        };
     }
-    if let Some(v) = last {
-        v.write()?;
-    }
-    if let Some(v) = min {
-        v.write()?;
-    }
-    if let Some(v) = max {
-        v.write()?;
-    }
-    if let Some(v) = average {
-        v.write()?;
-    }
-    if let Some(v) = sum {
-        v.write()?;
-    }
-    if let Some(v) = cumulative {
-        v.write()?;
-    }
+
+    write_vec!(first, last, min, max, average, sum, cumulative);
 
     Ok(())
 }

@@ -149,12 +149,15 @@ impl DynCohortVecs for UTXOCohortVecs {
                 state.supply.value = self
                     .metrics
                     .supply
-                    .height_to_supply
+                    .supply
+                    .sats
+                    .height
                     .read_once(prev_height)?;
                 state.supply.utxo_count = *self
                     .metrics
-                    .supply
-                    .height_to_utxo_count
+                    .outputs
+                    .utxo_count
+                    .height
                     .read_once(prev_height)?;
 
                 // Restore realized cap if present
@@ -162,7 +165,8 @@ impl DynCohortVecs for UTXOCohortVecs {
                     && let Some(realized_state) = state.realized.as_mut()
                 {
                     realized_state.cap = realized_metrics
-                        .height_to_realized_cap
+                        .realized_cap
+                        .height
                         .read_once(prev_height)?;
                 }
 

@@ -13,14 +13,12 @@ use axum::{
     serve,
 };
 use brk_error::Result;
-use brk_logger::OwoColorize;
 use brk_mcp::route::mcp_router;
 use brk_query::AsyncQuery;
-use log::{error, info};
 use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
-use tracing::Span;
+use tracing::{error, info};
 
 mod api;
 pub mod cache;
@@ -67,24 +65,17 @@ impl Server {
 
         let trace_layer = TraceLayer::new_for_http()
             .on_request(())
-            .on_response(
-                |response: &Response<Body>, latency: Duration, _span: &Span| {
-                    let latency = latency.bright_black();
-                    let status = response.status();
-                    let uri = response.extensions().get::<Uri>().unwrap();
-                    match status {
-                        StatusCode::OK => {
-                            info!("{} {} {:?}", status.as_u16().green(), uri, latency)
-                        }
-                        StatusCode::NOT_MODIFIED
-                        | StatusCode::TEMPORARY_REDIRECT
-                        | StatusCode::PERMANENT_REDIRECT => {
-                            info!("{} {} {:?}", status.as_u16().bright_black(), uri, latency)
-                        }
-                        _ => error!("{} {} {:?}", status.as_u16().red(), uri, latency),
-                    }
-                },
-            )
+            .on_response(|response: &Response<Body>, latency: Duration, _: &tracing::Span| {
+                let status = response.status().as_u16();
+                let uri = response.extensions().get::<Uri>().unwrap();
+                match response.status() {
+                    StatusCode::OK => info!(status, %uri, ?latency),
+                    StatusCode::NOT_MODIFIED
+                    | StatusCode::TEMPORARY_REDIRECT
+                    | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
+                    _ => error!(status, %uri, ?latency),
+                }
+            })
             .on_body_chunk(())
             .on_failure(())
             .on_eos(());

@@ -95,15 +95,18 @@ pub fn reset_state(
 }
 
 /// Check if we can resume from a checkpoint or need to start fresh.
-pub fn determine_start_mode(computed_min: Height, chain_state_height: Height) -> StartMode {
+///
+/// - `min_available`: minimum height we have data for across all stateful vecs
+/// - `resume_target`: the height we want to resume processing from
+pub fn determine_start_mode(min_available: Height, resume_target: Height) -> StartMode {
     // No data to resume from
-    if chain_state_height.is_zero() {
+    if resume_target.is_zero() {
         return StartMode::Fresh;
     }
 
-    match computed_min.cmp(&chain_state_height) {
-        Ordering::Greater => unreachable!("min height > chain state height"),
-        Ordering::Equal => StartMode::Resume(chain_state_height),
+    match min_available.cmp(&resume_target) {
+        Ordering::Greater => unreachable!("min_available > resume_target"),
+        Ordering::Equal => StartMode::Resume(resume_target),
         Ordering::Less => StartMode::Fresh,
     }
 }

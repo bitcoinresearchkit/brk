@@ -11,8 +11,11 @@ use super::{MinMax, SumCum};
 /// Sum + Cumulative + Average + Min + Max. Like `Full` but without percentiles.
 #[derive(Clone, Traversable)]
 pub struct Stats<I: VecIndex, T: ComputedVecValue + JsonSchema> {
+    #[traversable(flatten)]
     pub sum_cum: SumCum<I, T>,
+    #[traversable(flatten)]
     pub average: AverageVec<I, T>,
+    #[traversable(flatten)]
     pub minmax: MinMax<I, T>,
 }
 

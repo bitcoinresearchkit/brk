@@ -8,8 +8,8 @@ use brk_types::{
     OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall::{Database, PersistMode};
-use log::info;
 use rayon::prelude::*;
+use tracing::info;
 use vecdb::{AnyVec, TypedVecIterator, VecIndex, VecIterator};
 
 use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
@@ -120,6 +120,13 @@ impl Stores {
     }
 
     pub fn starting_height(&self) -> Height {
+        self.iter_any()
+            .map(|store| store.height().map(Height::incremented).unwrap_or_default())
+            .min()
+            .unwrap()
+    }
+
+    fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStore> {
         [
             &self.blockhashprefix_to_height as &dyn AnyStore,
             &self.height_to_coinbase_tag,
@@ -141,13 +148,9 @@ impl Stores {
                 .values()
                 .map(|s| s as &dyn AnyStore),
         )
-        .map(|store| store.height().map(Height::incremented).unwrap_or_default())
-        .min()
-        .unwrap()
     }
 
-    pub fn commit(&mut self, height: Height) -> Result<()> {
-        let i = Instant::now();
+    fn par_iter_any_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStore> {
         [
             &mut self.blockhashprefix_to_height as &mut dyn AnyStore,
             &mut self.height_to_coinbase_tag,
@@ -169,7 +172,12 @@ impl Stores {
                 .par_values_mut()
                 .map(|s| s as &mut dyn AnyStore),
         )
-        .try_for_each(|store| store.commit(height))?;
+    }
+
+    pub fn commit(&mut self, height: Height) -> Result<()> {
+        let i = Instant::now();
+        self.par_iter_any_mut()
+            .try_for_each(|store| store.commit(height))?;
         info!("Stores committed in {:?}", i.elapsed());
 
         let i = Instant::now();
@@ -204,8 +212,8 @@ impl Stores {
         }
 
         if starting_indexes.height != Height::ZERO {
-            vecs.block
-                .height_to_blockhash
+            vecs.blocks
+                .blockhash
                 .iter()?
                 .skip(starting_indexes.height.to_usize())
                 .map(BlockHashPrefix::from)
@@ -213,7 +221,7 @@ impl Stores {
                     self.blockhashprefix_to_height.remove(prefix);
                 });
 
-            (starting_indexes.height.to_usize()..vecs.block.height_to_blockhash.len())
+            (starting_indexes.height.to_usize()..vecs.blocks.blockhash.len())
                 .map(Height::from)
                 .for_each(|h| {
                     self.height_to_coinbase_tag.remove(h);
@@ -241,8 +249,8 @@ impl Stores {
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
-            vecs.tx
-                .txindex_to_txid
+            vecs.transactions
+                .txid
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txindex.to_usize())
@@ -266,14 +274,14 @@ impl Stores {
         }
 
         if starting_indexes.txoutindex != TxOutIndex::ZERO {
-            let mut txoutindex_to_txindex_iter = vecs.txout.txoutindex_to_txindex.iter()?;
+            let mut txoutindex_to_txindex_iter = vecs.outputs.txindex.iter()?;
             let mut txindex_to_first_txoutindex_iter =
-                vecs.tx.txindex_to_first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
+                vecs.transactions.first_txoutindex.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.outputs.outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.outputs.typeindex.iter()?;
 
             for txoutindex in
-                starting_indexes.txoutindex.to_usize()..vecs.txout.txoutindex_to_outputtype.len()
+                starting_indexes.txoutindex.to_usize()..vecs.outputs.outputtype.len()
             {
                 let outputtype = txoutindex_to_outputtype_iter.get_at_unwrap(txoutindex);
                 if !outputtype.is_address() {
@@ -304,14 +312,14 @@ impl Stores {
             // Collect outputs that were spent after the rollback point
             // We need to: 1) reset their spend status, 2) restore address stores
             let mut txindex_to_first_txoutindex_iter =
-                vecs.tx.txindex_to_first_txoutindex.iter()?;
-            let mut txoutindex_to_outputtype_iter = vecs.txout.txoutindex_to_outputtype.iter()?;
-            let mut txoutindex_to_typeindex_iter = vecs.txout.txoutindex_to_typeindex.iter()?;
-            let mut txinindex_to_txindex_iter = vecs.txin.txinindex_to_txindex.iter()?;
+                vecs.transactions.first_txoutindex.iter()?;
+            let mut txoutindex_to_outputtype_iter = vecs.outputs.outputtype.iter()?;
+            let mut txoutindex_to_typeindex_iter = vecs.outputs.typeindex.iter()?;
+            let mut txinindex_to_txindex_iter = vecs.inputs.txindex.iter()?;
 
             let outputs_to_unspend: Vec<_> = vecs
-                .txin
-                .txinindex_to_outpoint
+                .inputs
+                .outpoint
                 .iter()?
                 .enumerate()
                 .skip(starting_indexes.txinindex.to_usize())
@@ -360,7 +368,29 @@ impl Stores {
             unreachable!();
         }
 
-        self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
+        // Force-lower the height on all stores before committing.
+        // This is necessary because commit() only updates the height if needed,
+        // but during rollback we must lower it even if it's already higher.
+        let rollback_height = starting_indexes.height.decremented().unwrap_or_default();
+        self.par_iter_any_mut()
+            .try_for_each(|store| store.export_meta(rollback_height))?;
+
+        self.commit(rollback_height)?;
+
+        Ok(())
+    }
+
+    pub fn reset(&mut self) -> Result<()> {
+        info!("Resetting stores...");
+
+        // Clear all keyspaces
+        self.iter_any().try_for_each(|store| -> Result<()> {
+            store.keyspace().clear()?;
+            Ok(())
+        })?;
+
+        // Persist the cleared state
+        self.db.persist(PersistMode::SyncAll)?;
 
         Ok(())
     }

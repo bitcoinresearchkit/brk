@@ -67,22 +67,7 @@ impl ValueBlockSumCum {
         self.sats
             .compute_all(indexes, starting_indexes, exit, |v| compute(v))?;
 
-        // Compute dollars from bitcoin and price (if enabled)
-        if let (Some(dollars), Some(price)) = (self.dollars.as_mut(), price) {
-            let height_to_bitcoin = &self.bitcoin.height;
-            let height_to_price_close = &price.usd.chainindexes_to_price_close.height;
-
-            dollars.compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_from_bitcoin(
-                    starting_indexes.height,
-                    height_to_bitcoin,
-                    height_to_price_close,
-                    exit,
-                )
-            })?;
-        }
-
-        Ok(())
+        self.compute_dollars(indexes, price, starting_indexes, exit)
     }
 
     /// Derive from an external height source (e.g., a LazyVec).
@@ -98,10 +83,32 @@ impl ValueBlockSumCum {
         self.sats
             .derive_from(indexes, starting_indexes, source, exit)?;
 
+        self.compute_dollars(indexes, price, starting_indexes, exit)
+    }
+
+    /// Compute rest (derived indexes) from already-computed height.
+    pub fn compute_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.sats.compute_rest(indexes, starting_indexes, exit)?;
+        self.compute_dollars(indexes, price, starting_indexes, exit)
+    }
+
+    fn compute_dollars(
+        &mut self,
+        indexes: &indexes::Vecs,
+        price: Option<&price::Vecs>,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+    ) -> Result<()> {
         // Compute dollars from bitcoin and price (if enabled)
         if let (Some(dollars), Some(price)) = (self.dollars.as_mut(), price) {
             let height_to_bitcoin = &self.bitcoin.height;
-            let height_to_price_close = &price.usd.chainindexes_to_price_close.height;
+            let height_to_price_close = &price.usd.split.close.height;
 
             dollars.compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_from_bitcoin(

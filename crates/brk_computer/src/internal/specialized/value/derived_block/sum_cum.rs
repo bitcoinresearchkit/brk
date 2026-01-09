@@ -7,19 +7,19 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec,
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ClosePriceTimesSats, DerivedComputedBlockSumCum, LazyBlockSumCum, SatsToBitcoin},
+    internal::{
+        ClosePriceTimesSats, DerivedComputedBlockSumCum, LazyBlockSumCum, LazyComputedBlockSumCum,
+        SatsToBitcoin,
+    },
     price,
 };
-
-pub type LazyDollarsHeight = LazyVecFrom2<Height, Dollars, Height, Close<Dollars>, Height, Sats>;
 
 /// Value wrapper for derived SumCum (derives from external height source).
 #[derive(Clone, Traversable)]
 pub struct DerivedValueBlockSumCum {
     pub sats: DerivedComputedBlockSumCum<Sats>,
     pub bitcoin: LazyBlockSumCum<Bitcoin, Sats>,
-    pub dollars_source: Option<LazyDollarsHeight>,
-    pub dollars: Option<DerivedComputedBlockSumCum<Dollars>>,
+    pub dollars: Option<LazyComputedBlockSumCum<Dollars, Close<Dollars>, Sats>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -50,31 +50,28 @@ impl DerivedValueBlockSumCum {
             &sats,
         );
 
-        let (dollars_source, dollars) = if let Some(price) = price {
-            let dollars_source = LazyVecFrom2::transformed::<ClosePriceTimesSats>(
+        let dollars = if let Some(price) = price {
+            let dollars_height = LazyVecFrom2::transformed::<ClosePriceTimesSats>(
                 &format!("{name}_usd"),
                 v,
-                price.usd.chainindexes_to_price_close.height.boxed_clone(),
+                price.usd.split.close.height.boxed_clone(),
                 sats_source.boxed_clone(),
             );
 
-            let dollars = DerivedComputedBlockSumCum::forced_import(
+            Some(LazyComputedBlockSumCum::forced_import(
                 db,
                 &format!("{name}_usd"),
-                dollars_source.boxed_clone(),
                 v,
                 indexes,
-            )?;
-
-            (Some(dollars_source), Some(dollars))
+                dollars_height,
+            )?)
         } else {
-            (None, None)
+            None
         };
 
         Ok(Self {
             sats,
             bitcoin,
-            dollars_source,
             dollars,
         })
     }
@@ -90,10 +87,8 @@ impl DerivedValueBlockSumCum {
         self.sats
             .derive_from(indexes, starting_indexes, sats_source, exit)?;
 
-        if let (Some(dollars), Some(dollars_source)) =
-            (self.dollars.as_mut(), self.dollars_source.as_ref())
-        {
-            dollars.derive_from(indexes, starting_indexes, dollars_source, exit)?;
+        if let Some(dollars) = self.dollars.as_mut() {
+            dollars.derive_from(indexes, starting_indexes, exit)?;
         }
 
         Ok(())

@@ -223,17 +223,22 @@ fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Opti
             continue;
         }
 
-        // Try parsing as name-value pairs (rename = "...", wrap = "...")
-        if let Ok(meta) = attr.parse_args::<syn::MetaNameValue>()
-            && let syn::Expr::Lit(syn::ExprLit {
-                lit: syn::Lit::Str(lit_str),
-                ..
-            }) = &meta.value
-        {
-            if meta.path.is_ident("rename") {
-                rename = Some(lit_str.value());
-            } else if meta.path.is_ident("wrap") {
-                wrap = Some(lit_str.value());
+        // Try parsing as comma-separated name-value pairs (rename = "...", wrap = "...")
+        if let Ok(metas) = attr.parse_args_with(
+            syn::punctuated::Punctuated::<syn::MetaNameValue, syn::Token![,]>::parse_terminated,
+        ) {
+            for meta in metas {
+                if let syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(lit_str),
+                    ..
+                }) = &meta.value
+                {
+                    if meta.path.is_ident("rename") {
+                        rename = Some(lit_str.value());
+                    } else if meta.path.is_ident("wrap") {
+                        wrap = Some(lit_str.value());
+                    }
+                }
             }
         }
     }
@@ -259,30 +264,39 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
         .filter(|i| matches!(i.attr, FieldAttr::Normal))
         .map(|info| {
             let field_name = info.name;
-            // Use rename if specified, otherwise use field name
-            let key_str = info
-                .rename.as_deref()
-                .unwrap_or_else(|| field_name.to_string().leak());
+            let field_name_str = field_name.to_string();
+
+            // Determine outer key and inner wrap key based on which attrs are present
+            // When both wrap and rename are present: wrap is outer container, rename is inner key
+            // When only wrap: wrap is outer container, field_name is inner key
+            // When only rename: rename is outer, no inner wrapping
+            let (outer_key, inner_wrap): (&str, Option<&str>) =
+                match (info.wrap.as_deref(), info.rename.as_deref()) {
+                    (Some(wrap), Some(rename)) => (wrap, Some(rename)),
+                    (Some(wrap), None) => (wrap, Some(&field_name_str)),
+                    (None, Some(rename)) => (rename, None),
+                    (None, None) => (&field_name_str, None),
+                };
 
             // Generate tree node expression, optionally wrapped
-            let node_expr = if let Some(wrap_key) = &info.wrap {
-                quote! { brk_traversable::TreeNode::wrap(#wrap_key, nested.to_tree_node()) }
+            let node_expr = if let Some(inner_key) = inner_wrap {
+                quote! { brk_traversable::TreeNode::wrap(#inner_key, nested.to_tree_node()) }
             } else {
                 quote! { nested.to_tree_node() }
             };
 
             if info.is_option {
                 quote! {
-                    self.#field_name.as_ref().map(|nested| (String::from(#key_str), #node_expr))
+                    self.#field_name.as_ref().map(|nested| (String::from(#outer_key), #node_expr))
                 }
             } else {
-                let node_expr_self = if let Some(wrap_key) = &info.wrap {
-                    quote! { brk_traversable::TreeNode::wrap(#wrap_key, self.#field_name.to_tree_node()) }
+                let node_expr_self = if let Some(inner_key) = inner_wrap {
+                    quote! { brk_traversable::TreeNode::wrap(#inner_key, self.#field_name.to_tree_node()) }
                 } else {
                     quote! { self.#field_name.to_tree_node() }
                 };
                 quote! {
-                    Some((String::from(#key_str), #node_expr_self))
+                    Some((String::from(#outer_key), #node_expr_self))
                 }
             }
         })
@@ -328,14 +342,17 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
     };
 
     // Build collected map initialization based on what we have
+    // Use merge_entry to handle duplicate keys (e.g., multiple fields renamed to same key)
     let (init_collected, extend_flatten) = if !has_flatten {
-        // No flatten fields - simple collection, no need to extend
+        // No flatten fields - use merge_entry for each to handle duplicates
         (
             quote! {
-                let collected: std::collections::BTreeMap<_, _> = [#(#normal_entries,)*]
-                    .into_iter()
-                    .flatten()
-                    .collect();
+                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
+                    std::collections::BTreeMap::new();
+                for entry in [#(#normal_entries,)*].into_iter().flatten() {
+                    brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
+                        .expect("Conflicting values for same key");
+                }
             },
             quote! {},
         )
@@ -349,13 +366,15 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
             quote! { #(#flatten_entries)* },
         )
     } else {
-        // Both normal and flatten fields
+        // Both normal and flatten fields - use merge_entry for normal fields
         (
             quote! {
-                let mut collected: std::collections::BTreeMap<_, _> = [#(#normal_entries,)*]
-                    .into_iter()
-                    .flatten()
-                    .collect();
+                let mut collected: std::collections::BTreeMap<String, brk_traversable::TreeNode> =
+                    std::collections::BTreeMap::new();
+                for entry in [#(#normal_entries,)*].into_iter().flatten() {
+                    brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
+                        .expect("Conflicting values for same key");
+                }
             },
             quote! { #(#flatten_entries)* },
         )

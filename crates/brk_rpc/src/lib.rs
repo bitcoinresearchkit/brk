@@ -22,7 +22,7 @@ pub use bitcoincore_rpc::Auth;
 mod inner;
 
 use inner::ClientInner;
-use log::{debug, info};
+use tracing::{debug, info};
 
 ///
 /// Bitcoin Core RPC Client

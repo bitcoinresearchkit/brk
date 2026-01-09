@@ -9,8 +9,8 @@ repository.workspace = true
 build = "build.rs"
 
 [dependencies]
+brk_alloc = { workspace = true }
 brk_bindgen = { workspace = true }
-brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
@@ -24,8 +24,9 @@ brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 clap = { version = "4.5.54", features = ["derive", "string"] }
 color-eyre = { workspace = true }
-brk_alloc = { workspace = true }
-log = { workspace = true }
+importmap = "0.1.1"
+# importmap = { path = "../../../importmap" }
+tracing = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }

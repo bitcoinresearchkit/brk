@@ -32,13 +32,13 @@ impl CostBasisPercentiles {
     ) -> Result<Self> {
         let vecs = PERCENTILES.map(|p| {
             compute.then(|| {
-                ComputedDateLast::forced_import(
-                    db,
-                    &format!("{name}_cost_basis_pct{p:02}"),
-                    version + VERSION,
-                    indexes,
-                )
-                .unwrap()
+                let metric_name = if name.is_empty() {
+                    format!("cost_basis_pct{p:02}")
+                } else {
+                    format!("{name}_cost_basis_pct{p:02}")
+                };
+                ComputedDateLast::forced_import(db, &metric_name, version + VERSION, indexes)
+                    .unwrap()
             })
         });
 

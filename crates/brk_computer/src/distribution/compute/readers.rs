@@ -37,9 +37,9 @@ pub struct TxOutIterators<'a> {
 impl<'a> TxOutIterators<'a> {
     pub fn new(indexer: &'a Indexer) -> Self {
         Self {
-            value_iter: indexer.vecs.txout.txoutindex_to_value.into_iter(),
-            outputtype_iter: indexer.vecs.txout.txoutindex_to_outputtype.into_iter(),
-            typeindex_iter: indexer.vecs.txout.txoutindex_to_typeindex.into_iter(),
+            value_iter: indexer.vecs.outputs.value.into_iter(),
+            outputtype_iter: indexer.vecs.outputs.outputtype.into_iter(),
+            typeindex_iter: indexer.vecs.outputs.typeindex.into_iter(),
         }
     }
 
@@ -75,10 +75,10 @@ impl<'a> TxInIterators<'a> {
         txindex_to_height: &'a mut RangeMap<TxIndex, Height>,
     ) -> Self {
         Self {
-            value_iter: txins.spent.txinindex_to_value.into_iter(),
-            outpoint_iter: indexer.vecs.txin.txinindex_to_outpoint.into_iter(),
-            outputtype_iter: indexer.vecs.txin.txinindex_to_outputtype.into_iter(),
-            typeindex_iter: indexer.vecs.txin.txinindex_to_typeindex.into_iter(),
+            value_iter: txins.spent.value.into_iter(),
+            outpoint_iter: indexer.vecs.inputs.outpoint.into_iter(),
+            outputtype_iter: indexer.vecs.inputs.outputtype.into_iter(),
+            typeindex_iter: indexer.vecs.inputs.typeindex.into_iter(),
             txindex_to_height,
         }
     }

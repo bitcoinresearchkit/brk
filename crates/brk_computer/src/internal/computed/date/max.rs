@@ -13,7 +13,7 @@ use crate::internal::{ComputedVecValue, DerivedDateMax};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedVecsDateMax<T>
+pub struct ComputedDateMax<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -26,7 +26,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedVecsDateMax<T>
+impl<T> ComputedDateMax<T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
 {

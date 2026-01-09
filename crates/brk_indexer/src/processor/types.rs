@@ -1,7 +1,7 @@
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_types::{
-    AddressBytes, AddressHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
-    TypeIndex, Vin, Vout,
+    AddressBytes, AddressHash, OutPoint, OutputType, StoredU32, TxIndex, TxOutIndex, Txid,
+    TxidPrefix, TypeIndex, Vin, Vout,
 };
 
 #[derive(Debug)]
@@ -12,12 +12,14 @@ pub enum InputSource<'a> {
         outpoint: OutPoint,
         outputtype: OutputType,
         typeindex: TypeIndex,
+        witness_size: StoredU32,
     },
     SameBlock {
         txindex: TxIndex,
         txin: &'a TxIn,
         vin: Vin,
         outpoint: OutPoint,
+        witness_size: StoredU32,
     },
 }
 

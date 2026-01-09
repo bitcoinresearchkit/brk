@@ -1,114 +1,96 @@
-// DO NOT CHANGE, Exact format is expected in `brk_bundler`
-const CACHE_VERSION = "__VERSION__";
+const CACHE = "v1";
+const ROOT = "/";
+const API = "/api";
 
-const SHELL_FILES = ["/", "/index.html"];
+const BYPASS = new Set([
+  "/changelog", "/crate", "/discord", "/github", "/health",
+  "/install", "/mcp", "/nostr", "/service", "/status", "/version"
+]);
+
+// Match hashed filenames: name.abc12345.js/mjs/css
+const HASHED_RE = /\.[0-9a-f]{8}\.(js|mjs|css)$/;
 
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
 
-sw.addEventListener("install", (event) => {
-  console.log("sw: install");
-  event.waitUntil(
-    caches
-      .open(CACHE_VERSION)
-      .then((c) => c.addAll(SHELL_FILES))
-      .then(() => sw.skipWaiting()),
+const offline = () => new Response("Offline", {
+  status: 503,
+  headers: { "Content-Type": "text/plain" }
+});
+
+sw.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll([ROOT]))
+      .then(() => sw.skipWaiting())
   );
 });
 
-sw.addEventListener("activate", (event) => {
-  console.log("sw: active");
-  event.waitUntil(
+sw.addEventListener("activate", (e) => {
+  e.waitUntil(
     Promise.all([
       sw.clients.claim(),
-      caches
-        .keys()
-        .then((keys) =>
-          Promise.all(
-            keys
-              .filter((key) => key !== CACHE_VERSION)
-              .map((key) => caches.delete(key)),
-          ),
-        ),
-    ]),
+      caches.keys().then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      ),
+    ])
   );
 });
-
-async function indexHTMLOrOffline() {
-  return caches.match("/index.html").then((cached) => {
-    if (cached) return cached;
-    return new Response("Offline and no cached version", {
-      status: 503,
-      statusText: "Service Unavailable",
-      headers: { "Content-Type": "text/plain" },
-    });
-  });
-}
 
 sw.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // 1) Bypass API calls & non-GETs
-  if (
-    req.method !== "GET" ||
-    url.pathname.startsWith("/api") ||
-    url.pathname === "/changelog" ||
-    url.pathname === "/crate" ||
-    url.pathname === "/discord" ||
-    url.pathname === "/github" ||
-    url.pathname === "/health" ||
-    url.pathname === "/install" ||
-    url.pathname === "/mcp" ||
-    url.pathname === "/nostr" ||
-    url.pathname === "/service" ||
-    url.pathname === "/status" ||
-    url.pathname === "/version"
-  ) {
-    return; // let the browser handle it
-  }
+  // Only handle same-origin GET requests
+  if (req.method !== "GET" || url.origin !== location.origin) return;
 
-  const cache = caches.open(CACHE_VERSION);
+  const path = url.pathname;
 
-  // 2) NAVIGATION: network‐first on your shell
+  // Bypass API and redirects
+  if (path.startsWith(API) || BYPASS.has(path)) return;
+
+  // Navigation: network-first for shell
   if (req.mode === "navigate") {
     event.respondWith(
-      // Always fetch index.html
-      fetch("/index.html")
-        .then((response) => {
-          // If we got a valid 2xx back, cache it (optional) and return it
-          if (response.ok || response.status === 304) {
-            if (response.ok) {
-              const clone = response.clone();
-              cache.then((cache) => cache.put("/index.html", clone));
-            }
-            return response;
-          }
-          throw new Error("Non-2xx on shell");
+      fetch(ROOT)
+        .then((res) => {
+          if (res.ok) caches.open(CACHE).then((c) => c.put(ROOT, res.clone()));
+          return res;
         })
-        // On any failure, fall back to the cached shell
-        .catch(indexHTMLOrOffline),
+        .catch(() => caches.match(ROOT).then((c) => c || offline()))
     );
     return;
   }
 
-  // 3) For all other GETs: network-first, fallback to cache
+  // Hashed assets: cache-first (immutable)
+  if (HASHED_RE.test(path)) {
+    event.respondWith(
+      caches.match(req)
+        .then((cached) =>
+          cached ||
+          fetch(req).then((res) => {
+            if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
+            return res;
+          })
+        )
+        .catch(() => offline())
+    );
+    return;
+  }
+
+  // Other: network-first with cache fallback
+  // SPA routes (no extension) fall back to ROOT, static assets get 503
+  const isStatic = path.includes(".") && !path.endsWith(".html");
   event.respondWith(
     fetch(req)
-      .then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          cache.then((cache) => cache.put(req, clone));
-        }
-        return response;
+      .then((res) => {
+        if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
+        return res;
       })
-      .catch(async () =>
-        caches
-          .match(req)
-          .then((cached) => {
-            return cached || indexHTMLOrOffline();
-          })
-          .catch(indexHTMLOrOffline),
-      ),
+      .catch(() =>
+        caches.match(req).then((cached) =>
+          cached || (isStatic ? offline() : caches.match(ROOT).then((c) => c || offline()))
+        )
+      )
   );
 });

@@ -38,43 +38,21 @@ where
         dateindex_source: IterableBoxedVec<DateIndex, T>,
         indexes: &indexes::Vecs,
     ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($idx:ident) => {
+                LazyMax::from_source(name, v, dateindex_source.clone(), indexes.$idx.identity.boxed_clone())
+            };
+        }
+
         Self {
-            weekindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source.clone(),
-                indexes.time.weekindex_to_weekindex.boxed_clone(),
-            ),
-            monthindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source.clone(),
-                indexes.time.monthindex_to_monthindex.boxed_clone(),
-            ),
-            quarterindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source.clone(),
-                indexes.time.quarterindex_to_quarterindex.boxed_clone(),
-            ),
-            semesterindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source.clone(),
-                indexes.time.semesterindex_to_semesterindex.boxed_clone(),
-            ),
-            yearindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source.clone(),
-                indexes.time.yearindex_to_yearindex.boxed_clone(),
-            ),
-            decadeindex: LazyMax::from_source(
-                name,
-                version + VERSION,
-                dateindex_source,
-                indexes.time.decadeindex_to_decadeindex.boxed_clone(),
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

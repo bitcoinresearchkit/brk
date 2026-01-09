@@ -9,7 +9,6 @@ import { Unit } from "../utils/units.js";
  */
 export function createChainSection(ctx) {
   const { colors, brk, s, createPriceLine } = ctx;
-  const { mergeMetricPatterns } = brk;
   const {
     blocks,
     transactions,
@@ -33,7 +32,7 @@ export function createChainSection(ctx) {
    */
   const fromBlockCount = (pattern, name, unit, sumColor, cumulativeColor) => [
     s({
-      metric: mergeMetricPatterns(pattern.base, pattern.sum),
+      metric: pattern.sum,
       name: `${name} sum`,
       color: sumColor,
       unit,
@@ -55,7 +54,7 @@ export function createChainSection(ctx) {
    * @param {Unit} unit
    */
   const fromBlockSize = (pattern, name, unit) => [
-    s({ metric: pattern.distribution.average, name: `${name} avg`, unit }),
+    s({ metric: pattern.average, name: `${name} avg`, unit }),
     s({
       metric: pattern.sum,
       name: `${name} sum`,
@@ -85,35 +84,35 @@ export function createChainSection(ctx) {
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct10,
+      metric: pattern.percentiles.pct10,
       name: `${name} pct10`,
       color: colors.rose,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct25,
+      metric: pattern.percentiles.pct25,
       name: `${name} pct25`,
       color: colors.pink,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.median,
+      metric: pattern.percentiles.median,
       name: `${name} median`,
       color: colors.purple,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct75,
+      metric: pattern.percentiles.pct75,
       name: `${name} pct75`,
       color: colors.violet,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct90,
+      metric: pattern.percentiles.pct90,
       name: `${name} pct90`,
       color: colors.fuchsia,
       unit,
@@ -159,35 +158,35 @@ export function createChainSection(ctx) {
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct10,
+      metric: pattern.percentiles.pct10,
       name: `${name} pct10`,
       color: colors.rose,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct25,
+      metric: pattern.percentiles.pct25,
       name: `${name} pct25`,
       color: colors.pink,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.median,
+      metric: pattern.percentiles.median,
       name: `${name} median`,
       color: colors.purple,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct75,
+      metric: pattern.percentiles.pct75,
       name: `${name} pct75`,
       color: colors.violet,
       unit,
       defaultActive: false,
     }),
     s({
-      metric: pattern.distribution.percentiles.pct90,
+      metric: pattern.percentiles.pct90,
       name: `${name} pct90`,
       color: colors.fuchsia,
       unit,
@@ -335,7 +334,7 @@ export function createChainSection(ctx) {
    */
   const fromValuePattern = (pattern, name, sumColor, cumulativeColor) => [
     s({
-      metric: pattern.sats.base,
+      metric: pattern.sats.sum,
       name: `${name}`,
       color: sumColor,
       unit: Unit.sats,
@@ -348,7 +347,7 @@ export function createChainSection(ctx) {
       defaultActive: false,
     }),
     s({
-      metric: pattern.bitcoin.base,
+      metric: pattern.bitcoin.sum,
       name: `${name}`,
       color: sumColor,
       unit: Unit.btc,
@@ -361,7 +360,7 @@ export function createChainSection(ctx) {
       defaultActive: false,
     }),
     s({
-      metric: pattern.dollars.base,
+      metric: pattern.dollars.sum,
       name: `${name}`,
       color: sumColor,
       unit: Unit.usd,
@@ -398,7 +397,7 @@ export function createChainSection(ctx) {
       defaultActive: false,
     }),
     s({
-      metric: pattern.bitcoin.base,
+      metric: pattern.bitcoin.sum,
       name: `${name}`,
       color: sumColor,
       unit: Unit.btc,
@@ -440,16 +439,6 @@ export function createChainSection(ctx) {
           title: `Mining Dominance of ${poolName}`,
           bottom: [
             s({
-              metric: mergeMetricPatterns(
-                pool._1dDominance.base,
-                pool._1dDominance.sum,
-              ),
-              name: "1d",
-              color: colors.rose,
-              unit: Unit.percentage,
-              defaultActive: false,
-            }),
-            s({
               metric: pool._1wDominance,
               name: "1w",
               color: colors.red,
@@ -465,10 +454,7 @@ export function createChainSection(ctx) {
               defaultActive: false,
             }),
             s({
-              metric: mergeMetricPatterns(
-                pool.dominance.base,
-                pool.dominance.sum,
-              ),
+              metric: pool.dominance,
               name: "all time",
               color: colors.teal,
               unit: Unit.percentage,
@@ -481,10 +467,7 @@ export function createChainSection(ctx) {
           title: `Blocks mined by ${poolName}`,
           bottom: [
             s({
-              metric: mergeMetricPatterns(
-                pool.blocksMined.base,
-                pool.blocksMined.sum,
-              ),
+              metric: pool.blocksMined.sum,
               name: "Sum",
               unit: Unit.count,
             }),
@@ -650,10 +633,7 @@ export function createChainSection(ctx) {
             title: "Transaction Volume",
             bottom: [
               s({
-                metric: mergeMetricPatterns(
-                  transactions.volume.sentSum.sats.base,
-                  transactions.volume.sentSum.sats.rest,
-                ),
+                metric: transactions.volume.sentSum.sats.sum,
                 name: "Sent",
                 unit: Unit.sats,
               }),
@@ -663,10 +643,7 @@ export function createChainSection(ctx) {
                 unit: Unit.btc,
               }),
               s({
-                metric: mergeMetricPatterns(
-                  transactions.volume.sentSum.dollars.base,
-                  transactions.volume.sentSum.dollars.rest,
-                ),
+                metric: transactions.volume.sentSum.dollars,
                 name: "Sent",
                 unit: Unit.usd,
               }),

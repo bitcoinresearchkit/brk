@@ -22,7 +22,6 @@ where
     pub height: EagerVec<PcoVec<Height, T>>,
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
     pub rest: DerivedComputedBlockFull<T>,
 }
 

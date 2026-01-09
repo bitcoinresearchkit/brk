@@ -12,16 +12,14 @@ impl Vecs {
         indexes: &indexes::Vecs,
         compute_dollars: bool,
     ) -> Result<Self> {
-        let indexes_to_opreturn_value = ValueBlockFull::forced_import(
-            db,
-            "opreturn_value",
-            version,
-            indexes,
-            compute_dollars,
-        )?;
-
         Ok(Self {
-            indexes_to_opreturn_value,
+            opreturn: ValueBlockFull::forced_import(
+                db,
+                "opreturn_value",
+                version,
+                indexes,
+                compute_dollars,
+            )?,
         })
     }
 }

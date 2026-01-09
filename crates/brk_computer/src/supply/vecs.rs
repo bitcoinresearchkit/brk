@@ -20,5 +20,5 @@ pub struct Vecs {
     pub burned: burned::Vecs,
     pub inflation: inflation::Vecs,
     pub velocity: velocity::Vecs,
-    pub market_cap: market_cap::Vecs,
+    pub market_cap: Option<market_cap::Vecs>,
 }

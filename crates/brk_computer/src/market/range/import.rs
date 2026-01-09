@@ -10,49 +10,49 @@ impl Vecs {
         let v1 = Version::ONE;
 
         Ok(Self {
-            indexes_to_price_1w_min: ComputedDateLast::forced_import(
+            price_1w_min: ComputedDateLast::forced_import(
                 db,
                 "price_1w_min",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_1w_max: ComputedDateLast::forced_import(
+            price_1w_max: ComputedDateLast::forced_import(
                 db,
                 "price_1w_max",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_2w_min: ComputedDateLast::forced_import(
+            price_2w_min: ComputedDateLast::forced_import(
                 db,
                 "price_2w_min",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_2w_max: ComputedDateLast::forced_import(
+            price_2w_max: ComputedDateLast::forced_import(
                 db,
                 "price_2w_max",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_1m_min: ComputedDateLast::forced_import(
+            price_1m_min: ComputedDateLast::forced_import(
                 db,
                 "price_1m_min",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_1m_max: ComputedDateLast::forced_import(
+            price_1m_max: ComputedDateLast::forced_import(
                 db,
                 "price_1m_max",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_1y_min: ComputedDateLast::forced_import(
+            price_1y_min: ComputedDateLast::forced_import(
                 db,
                 "price_1y_min",
                 version + v1,
                 indexes,
             )?,
-            indexes_to_price_1y_max: ComputedDateLast::forced_import(
+            price_1y_max: ComputedDateLast::forced_import(
                 db,
                 "price_1y_max",
                 version + v1,
@@ -68,7 +68,7 @@ impl Vecs {
                 "price_true_range_2w_sum",
                 version,
             )?,
-            indexes_to_price_2w_choppiness_index: ComputedDateLast::forced_import(
+            price_2w_choppiness_index: ComputedDateLast::forced_import(
                 db,
                 "price_2w_choppiness_index",
                 version + v1,

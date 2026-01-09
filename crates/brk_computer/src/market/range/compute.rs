@@ -3,7 +3,7 @@ use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{price, ComputeIndexes};
+use crate::{ComputeIndexes, price};
 
 impl Vecs {
     pub fn compute(
@@ -12,46 +12,46 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let open = &price.usd.timeindexes_to_price_open.dateindex;
-        let low = &price.usd.timeindexes_to_price_low.dateindex;
-        let high = &price.usd.timeindexes_to_price_high.dateindex;
+        let open = &price.usd.split.open.dateindex;
+        let low = &price.usd.split.low.dateindex;
+        let high = &price.usd.split.high.dateindex;
 
-        self.indexes_to_price_1w_min.compute_all(starting_indexes, exit, |v| {
+        self.price_1w_min.compute_all(starting_indexes, exit, |v| {
             v.compute_min(starting_indexes.dateindex, low, 7, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_1w_max.compute_all(starting_indexes, exit, |v| {
+        self.price_1w_max.compute_all(starting_indexes, exit, |v| {
             v.compute_max(starting_indexes.dateindex, high, 7, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_2w_min.compute_all(starting_indexes, exit, |v| {
+        self.price_2w_min.compute_all(starting_indexes, exit, |v| {
             v.compute_min(starting_indexes.dateindex, low, 14, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_2w_max.compute_all(starting_indexes, exit, |v| {
+        self.price_2w_max.compute_all(starting_indexes, exit, |v| {
             v.compute_max(starting_indexes.dateindex, high, 14, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_1m_min.compute_all(starting_indexes, exit, |v| {
+        self.price_1m_min.compute_all(starting_indexes, exit, |v| {
             v.compute_min(starting_indexes.dateindex, low, 30, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_1m_max.compute_all(starting_indexes, exit, |v| {
+        self.price_1m_max.compute_all(starting_indexes, exit, |v| {
             v.compute_max(starting_indexes.dateindex, high, 30, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_1y_min.compute_all(starting_indexes, exit, |v| {
+        self.price_1y_min.compute_all(starting_indexes, exit, |v| {
             v.compute_min(starting_indexes.dateindex, low, 365, exit)?;
             Ok(())
         })?;
 
-        self.indexes_to_price_1y_max.compute_all(starting_indexes, exit, |v| {
+        self.price_1y_max.compute_all(starting_indexes, exit, |v| {
             v.compute_max(starting_indexes.dateindex, high, 365, exit)?;
             Ok(())
         })?;
@@ -77,14 +77,15 @@ impl Vecs {
             exit,
         )?;
 
-        self.indexes_to_price_2w_choppiness_index.compute_all(starting_indexes, exit, |v| {
+        self.price_2w_choppiness_index
+            .compute_all(starting_indexes, exit, |v| {
                 let n = 14;
                 let log10n = (n as f32).log10();
                 v.compute_transform3(
                     starting_indexes.dateindex,
                     &self.dateindex_to_price_true_range_2w_sum,
-                    &self.indexes_to_price_2w_max.dateindex,
-                    &self.indexes_to_price_2w_min.dateindex,
+                    &self.price_2w_max.dateindex,
+                    &self.price_2w_min.dateindex,
                     |(i, tr_sum, max, min, ..)| {
                         (
                             i,

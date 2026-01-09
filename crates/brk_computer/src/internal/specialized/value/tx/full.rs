@@ -1,27 +1,30 @@
-//! Value type for Full pattern from TxIndex.
+//! ValueTxFull - eager txindex Sats source + ValueDerivedTxFull (sats/bitcoin/dollars).
 
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Sats, TxIndex, Version};
-use vecdb::{CollectableVec, Database, Exit, IterableCloneableVec};
+use brk_types::{Sats, TxIndex, Version};
+use derive_more::{Deref, DerefMut};
+use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec};
 
-use crate::{
-    ComputeIndexes, indexes,
-    internal::{DerivedTxFull, DollarsTxFull, LazyDerivedTxFull, SatsToBitcoin},
-    price,
-};
+use crate::{ComputeIndexes, indexes, price};
 
-#[derive(Clone, Traversable)]
-pub struct ValueDerivedTxFull {
-    pub sats: DerivedTxFull<Sats>,
-    pub bitcoin: LazyDerivedTxFull<Bitcoin, Sats>,
-    pub dollars: Option<DollarsTxFull>,
-}
+use super::ValueDerivedTxFull;
 
 const VERSION: Version = Version::ZERO;
 
-impl ValueDerivedTxFull {
+#[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(merge)]
+pub struct ValueTxFull {
+    #[traversable(wrap = "sats")]
+    pub base: EagerVec<PcoVec<TxIndex, Sats>>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub indexes: ValueDerivedTxFull,
+}
+
+impl ValueTxFull {
     pub fn forced_import(
         db: &Database,
         name: &str,
@@ -29,33 +32,14 @@ impl ValueDerivedTxFull {
         indexes: &indexes::Vecs,
         indexer: &Indexer,
         price: Option<&price::Vecs>,
-        sats_txindex: &impl IterableCloneableVec<TxIndex, Sats>,
     ) -> Result<Self> {
         let v = version + VERSION;
-
-        let sats = DerivedTxFull::forced_import(db, name, v, indexes)?;
-
-        let bitcoin =
-            LazyDerivedTxFull::from_computed::<SatsToBitcoin>(&format!("{name}_btc"), v, &sats);
-
-        let dollars = price
-            .map(|price| {
-                DollarsTxFull::forced_import(
-                    db,
-                    &format!("{name}_usd"),
-                    v,
-                    indexes,
-                    sats_txindex.boxed_clone(),
-                    indexer.vecs.tx.txindex_to_height.boxed_clone(),
-                    price.usd.chainindexes_to_price_close.height.boxed_clone(),
-                )
-            })
-            .transpose()?;
-
+        let txindex = EagerVec::forced_import(db, name, v)?;
+        let derived =
+            ValueDerivedTxFull::forced_import(db, name, v, indexes, indexer, price, &txindex)?;
         Ok(Self {
-            sats,
-            bitcoin,
-            dollars,
+            base: txindex,
+            indexes: derived,
         })
     }
 
@@ -64,16 +48,9 @@ impl ValueDerivedTxFull {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        txindex_source: &impl CollectableVec<TxIndex, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.sats
-            .derive_from(indexer, indexes, starting_indexes, txindex_source, exit)?;
-
-        if let Some(dollars) = self.dollars.as_mut() {
-            dollars.derive_from(indexer, indexes, starting_indexes, exit)?;
-        }
-
-        Ok(())
+        self.indexes
+            .derive_from(indexer, indexes, starting_indexes, &self.base, exit)
     }
 }

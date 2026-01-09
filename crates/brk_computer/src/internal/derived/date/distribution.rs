@@ -40,55 +40,24 @@ where
         max_source: IterableBoxedVec<DateIndex, T>,
         indexes: &indexes::Vecs,
     ) -> Self {
+        let v = version + VERSION;
+
+        macro_rules! period {
+            ($idx:ident) => {
+                LazyDistribution::from_distribution(
+                    name, v, average_source.clone(), min_source.clone(), max_source.clone(),
+                    indexes.$idx.identity.boxed_clone(),
+                )
+            };
+        }
+
         Self {
-            weekindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                indexes.time.weekindex_to_weekindex.boxed_clone(),
-            ),
-            monthindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                indexes.time.monthindex_to_monthindex.boxed_clone(),
-            ),
-            quarterindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                indexes.time.quarterindex_to_quarterindex.boxed_clone(),
-            ),
-            semesterindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                indexes.time.semesterindex_to_semesterindex.boxed_clone(),
-            ),
-            yearindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source.clone(),
-                min_source.clone(),
-                max_source.clone(),
-                indexes.time.yearindex_to_yearindex.boxed_clone(),
-            ),
-            decadeindex: LazyDistribution::from_distribution(
-                name,
-                version + VERSION,
-                average_source,
-                min_source,
-                max_source,
-                indexes.time.decadeindex_to_decadeindex.boxed_clone(),
-            ),
+            weekindex: period!(weekindex),
+            monthindex: period!(monthindex),
+            quarterindex: period!(quarterindex),
+            semesterindex: period!(semesterindex),
+            yearindex: period!(yearindex),
+            decadeindex: period!(decadeindex),
         }
     }
 }

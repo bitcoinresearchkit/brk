@@ -13,17 +13,17 @@ use super::Index;
 pub struct MetricLeaf {
     /// The metric name/identifier
     pub name: String,
-    /// The value type (e.g., "Sats", "StoredF64")
-    pub value_type: String,
+    /// The Rust type (e.g., "Sats", "StoredF64")
+    pub kind: String,
     /// Available indexes for this metric
     pub indexes: BTreeSet<Index>,
 }
 
 impl MetricLeaf {
-    pub fn new(name: String, value_type: String, indexes: BTreeSet<Index>) -> Self {
+    pub fn new(name: String, kind: String, indexes: BTreeSet<Index>) -> Self {
         Self {
             name,
-            value_type,
+            kind,
             indexes,
         }
     }
@@ -40,6 +40,9 @@ pub struct MetricLeafWithSchema {
     /// The core metric metadata
     #[serde(flatten)]
     pub leaf: MetricLeaf,
+    /// JSON Schema type (e.g., "integer", "number", "string", "boolean", "array", "object")
+    #[serde(rename = "type")]
+    pub openapi_type: String,
     /// JSON Schema for the value type
     #[serde(skip)]
     pub schema: serde_json::Value,
@@ -47,7 +50,21 @@ pub struct MetricLeafWithSchema {
 
 impl MetricLeafWithSchema {
     pub fn new(leaf: MetricLeaf, schema: serde_json::Value) -> Self {
-        Self { leaf, schema }
+        let openapi_type = schema
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("object")
+            .to_string();
+        Self {
+            leaf,
+            openapi_type,
+            schema,
+        }
+    }
+
+    /// The OpenAPI/JSON Schema type
+    pub fn openapi_type(&self) -> &str {
+        &self.openapi_type
     }
 
     /// The metric name/identifier
@@ -55,9 +72,9 @@ impl MetricLeafWithSchema {
         &self.leaf.name
     }
 
-    /// The value type (e.g., "Sats", "StoredF64")
-    pub fn value_type(&self) -> &str {
-        &self.leaf.value_type
+    /// The Rust type (e.g., "Sats", "StoredF64")
+    pub fn kind(&self) -> &str {
+        &self.leaf.kind
     }
 
     /// Available indexes for this metric
@@ -98,7 +115,7 @@ const BASE: &str = "base";
 
 /// List of prefixes to remove during simplification
 static PREFIXES: LazyLock<Vec<String>> = LazyLock::new(|| {
-    ["indexes", "timeindexes", "chainindexes"]
+    ["indexes", "timeindexes", "chainindexes", "addresstype"]
         .into_iter()
         .chain(Index::all().iter().map(|i| i.serialize_long()))
         .map(|s| format!("{s}_to_"))
@@ -196,7 +213,7 @@ impl TreeNode {
         Self::Leaf(MetricLeafWithSchema::new(
             MetricLeaf::new(
                 first.name().to_string(),
-                first.value_type().to_string(),
+                first.kind().to_string(),
                 merged_indexes,
             ),
             first.schema.clone(),
@@ -205,7 +222,7 @@ impl TreeNode {
 
     /// Merges a node into the target map at the given key (consuming version).
     /// Returns None if there's a conflict.
-    fn merge_node(
+    pub fn merge_node(
         target: &mut BTreeMap<String, TreeNode>,
         key: String,
         node: TreeNode,
@@ -297,9 +314,10 @@ mod tests {
         TreeNode::Leaf(MetricLeafWithSchema {
             leaf: MetricLeaf {
                 name: name.to_string(),
-                value_type: "TestType".to_string(),
+                kind: "TestType".to_string(),
                 indexes: BTreeSet::from([index]),
             },
+            openapi_type: "object".to_string(),
             schema: serde_json::Value::Null,
         })
     }
@@ -960,7 +978,10 @@ mod tests {
         // sats wrapped, rest flattened with bitcoin/dollars as plain leaves
         let tree = branch(vec![
             // sats with wrap="sats" produces Branch { sats: Leaf }
-            ("sats", branch(vec![("sats", leaf("metric", Index::Height))])),
+            (
+                "sats",
+                branch(vec![("sats", leaf("metric", Index::Height))]),
+            ),
             // rest with flatten: LazyDerivedBlockValue fields lifted
             (
                 "rest",
@@ -1146,7 +1167,10 @@ mod tests {
                 assert!(indexes.contains(&Index::YearIndex));
             }
             TreeNode::Branch(map) => {
-                panic!("Expected Leaf, got Branch: {:?}", map.keys().collect::<Vec<_>>());
+                panic!(
+                    "Expected Leaf, got Branch: {:?}",
+                    map.keys().collect::<Vec<_>>()
+                );
             }
         }
     }
@@ -1180,7 +1204,10 @@ mod tests {
                 assert!(indexes.contains(&Index::WeekIndex));
             }
             TreeNode::Branch(map) => {
-                panic!("Expected Leaf, got Branch: {:?}", map.keys().collect::<Vec<_>>());
+                panic!(
+                    "Expected Leaf, got Branch: {:?}",
+                    map.keys().collect::<Vec<_>>()
+                );
             }
         }
     }

@@ -12,6 +12,6 @@ build = "build.rs"
 brk_error = { workspace = true }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
-log = { workspace = true }
+tracing = { workspace = true }
 minreq = { workspace = true }
 serde_json = { workspace = true }

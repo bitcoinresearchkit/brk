@@ -55,9 +55,9 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer.vecs.tx.txindex_to_height.read_once(txindex)?;
-        let block_hash = indexer.vecs.block.height_to_blockhash.read_once(height)?;
-        let block_time = indexer.vecs.block.height_to_timestamp.read_once(height)?;
+        let height = indexer.vecs.transactions.height.read_once(txindex)?;
+        let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
+        let block_time = indexer.vecs.blocks.timestamp.read_once(height)?;
 
         Ok(TxStatus {
             confirmed: true,
@@ -113,8 +113,8 @@ impl Query {
         // Calculate txoutindex
         let first_txoutindex = indexer
             .vecs
-            .tx
-            .txindex_to_first_txoutindex
+            .transactions
+            .first_txoutindex
             .read_once(txindex)?;
         let txoutindex = first_txoutindex + vout;
 
@@ -123,7 +123,7 @@ impl Query {
         let txinindex = computer
             .outputs
             .spent
-            .txoutindex_to_txinindex
+            .txinindex
             .read_once(txoutindex)?;
 
         if txinindex == TxInIndex::UNSPENT {
@@ -157,19 +157,20 @@ impl Query {
         // Get output range
         let first_txoutindex = indexer
             .vecs
-            .tx
-            .txindex_to_first_txoutindex
+            .transactions
+            .first_txoutindex
             .read_once(txindex)?;
         let next_first_txoutindex = indexer
             .vecs
-            .tx
-            .txindex_to_first_txoutindex
+            .transactions
+            .first_txoutindex
             .read_once(txindex.incremented())?;
         let output_count = usize::from(next_first_txoutindex) - usize::from(first_txoutindex);
 
         // Get spend status for each output
         let computer = self.computer();
-        let mut txoutindex_to_txinindex_iter = computer.outputs.spent.txoutindex_to_txinindex.iter()?;
+        let mut txoutindex_to_txinindex_iter =
+            computer.outputs.spent.txinindex.iter()?;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -194,21 +195,21 @@ impl Query {
         let computer = self.computer();
 
         // Get tx metadata using read_once for single lookups
-        let txid = indexer.vecs.tx.txindex_to_txid.read_once(txindex)?;
-        let height = indexer.vecs.tx.txindex_to_height.read_once(txindex)?;
-        let version = indexer.vecs.tx.txindex_to_txversion.read_once(txindex)?;
-        let lock_time = indexer.vecs.tx.txindex_to_rawlocktime.read_once(txindex)?;
-        let total_size = indexer.vecs.tx.txindex_to_total_size.read_once(txindex)?;
+        let txid = indexer.vecs.transactions.txid.read_once(txindex)?;
+        let height = indexer.vecs.transactions.height.read_once(txindex)?;
+        let version = indexer.vecs.transactions.txversion.read_once(txindex)?;
+        let lock_time = indexer.vecs.transactions.rawlocktime.read_once(txindex)?;
+        let total_size = indexer.vecs.transactions.total_size.read_once(txindex)?;
         let first_txinindex = indexer
             .vecs
-            .tx
-            .txindex_to_first_txinindex
+            .transactions
+            .first_txinindex
             .read_once(txindex)?;
-        let position = computer.positions.txindex_to_position.read_once(txindex)?;
+        let position = computer.positions.tx_position.read_once(txindex)?;
 
         // Get block info for status
-        let block_hash = indexer.vecs.block.height_to_blockhash.read_once(height)?;
-        let block_time = indexer.vecs.block.height_to_timestamp.read_once(height)?;
+        let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
+        let block_time = indexer.vecs.blocks.timestamp.read_once(height)?;
 
         // Read and decode the raw transaction from blk file
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
@@ -217,11 +218,11 @@ impl Query {
             .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
 
         // For iterating through inputs, we need iterators (multiple lookups)
-        let mut txindex_to_txid_iter = indexer.vecs.tx.txindex_to_txid.iter()?;
+        let mut txindex_to_txid_iter = indexer.vecs.transactions.txid.iter()?;
         let mut txindex_to_first_txoutindex_iter =
-            indexer.vecs.tx.txindex_to_first_txoutindex.iter()?;
-        let mut txinindex_to_outpoint_iter = indexer.vecs.txin.txinindex_to_outpoint.iter()?;
-        let mut txoutindex_to_value_iter = indexer.vecs.txout.txoutindex_to_value.iter()?;
+            indexer.vecs.transactions.first_txoutindex.iter()?;
+        let mut txinindex_to_outpoint_iter = indexer.vecs.inputs.outpoint.iter()?;
+        let mut txoutindex_to_value_iter = indexer.vecs.outputs.value.iter()?;
 
         // Build inputs with prevout information
         let input: Vec<TxIn> = tx
@@ -313,8 +314,8 @@ impl Query {
         let reader = self.reader();
         let computer = self.computer();
 
-        let total_size = indexer.vecs.tx.txindex_to_total_size.read_once(txindex)?;
-        let position = computer.positions.txindex_to_position.read_once(txindex)?;
+        let total_size = indexer.vecs.transactions.total_size.read_once(txindex)?;
+        let position = computer.positions.tx_position.read_once(txindex)?;
 
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
 
@@ -325,41 +326,25 @@ impl Query {
         let indexer = self.indexer();
 
         // Look up spending txindex directly
-        let spending_txindex = indexer
-            .vecs
-            .txin
-            .txinindex_to_txindex
-            .read_once(txinindex)?;
+        let spending_txindex = indexer.vecs.inputs.txindex.read_once(txinindex)?;
 
         // Calculate vin
         let spending_first_txinindex = indexer
             .vecs
-            .tx
-            .txindex_to_first_txinindex
+            .transactions
+            .first_txinindex
             .read_once(spending_txindex)?;
         let vin = Vin::from(usize::from(txinindex) - usize::from(spending_first_txinindex));
 
         // Get spending tx details
-        let spending_txid = indexer
-            .vecs
-            .tx
-            .txindex_to_txid
-            .read_once(spending_txindex)?;
+        let spending_txid = indexer.vecs.transactions.txid.read_once(spending_txindex)?;
         let spending_height = indexer
             .vecs
-            .tx
-            .txindex_to_height
+            .transactions
+            .height
             .read_once(spending_txindex)?;
-        let block_hash = indexer
-            .vecs
-            .block
-            .height_to_blockhash
-            .read_once(spending_height)?;
-        let block_time = indexer
-            .vecs
-            .block
-            .height_to_timestamp
-            .read_once(spending_height)?;
+        let block_hash = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
+        let block_time = indexer.vecs.blocks.timestamp.read_once(spending_height)?;
 
         Ok(TxOutspend {
             spent: true,

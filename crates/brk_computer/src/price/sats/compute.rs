@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_types::{Close, High, Low, OHLCSats, Open, Sats};
 use vecdb::Exit;
 
-use super::Vecs;
 use super::super::usd;
+use super::Vecs;
 use crate::ComputeIndexes;
 
 impl Vecs {
@@ -13,90 +13,74 @@ impl Vecs {
         usd: &usd::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        // Chain indexes in sats (1 BTC / price)
-        self.chainindexes_to_price_open_in_sats
-            .compute(starting_indexes, exit, |v| {
+        // Open: first-value aggregation (1 BTC / price)
+        self.split.open.height.compute_transform(
+            starting_indexes.height,
+            &usd.split.open.height,
+            |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
+            exit,
+        )?;
+        self.split
+            .open
+            .compute_rest(starting_indexes, exit, |v| {
                 v.compute_transform(
-                    starting_indexes.height,
-                    &usd.chainindexes_to_price_open.height,
+                    starting_indexes.dateindex,
+                    &usd.split.open.dateindex,
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.chainindexes_to_price_high_in_sats
-            .compute(starting_indexes, exit, |v| {
+        // High: max-value aggregation (sats high = 1 BTC / usd low)
+        self.split.high.height.compute_transform(
+            starting_indexes.height,
+            &usd.split.low.height,
+            |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
+            exit,
+        )?;
+        self.split
+            .high
+            .compute_rest(starting_indexes, exit, |v| {
                 v.compute_transform(
-                    starting_indexes.height,
-                    &usd.chainindexes_to_price_low.height,
+                    starting_indexes.dateindex,
+                    &usd.split.low.dateindex,
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )?;
                 Ok(())
             })?;
 
-        self.chainindexes_to_price_low_in_sats
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &usd.chainindexes_to_price_high.height,
-                    |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        // Low: min-value aggregation (sats low = 1 BTC / usd high)
+        self.split.low.height.compute_transform(
+            starting_indexes.height,
+            &usd.split.high.height,
+            |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
+            exit,
+        )?;
+        self.split.low.compute_rest(starting_indexes, exit, |v| {
+            v.compute_transform(
+                starting_indexes.dateindex,
+                &usd.split.high.dateindex,
+                |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
+                exit,
+            )?;
+            Ok(())
+        })?;
 
-        self.chainindexes_to_price_close_in_sats
-            .compute(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.height,
-                    &usd.chainindexes_to_price_close.height,
-                    |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        // Time indexes in sats
-        self.timeindexes_to_price_open_in_sats
-            .compute_all(starting_indexes, exit, |v| {
+        // Close: last-value aggregation
+        self.split.close.height.compute_transform(
+            starting_indexes.height,
+            &usd.split.close.height,
+            |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
+            exit,
+        )?;
+        self.split
+            .close
+            .compute_rest(starting_indexes, exit, |v| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &usd.timeindexes_to_price_open.dateindex,
-                    |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.timeindexes_to_price_high_in_sats
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &usd.timeindexes_to_price_low.dateindex,
-                    |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.timeindexes_to_price_low_in_sats
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &usd.timeindexes_to_price_high.dateindex,
-                    |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.timeindexes_to_price_close_in_sats
-            .compute_all(starting_indexes, exit, |v| {
-                v.compute_transform(
-                    starting_indexes.dateindex,
-                    &usd.timeindexes_to_price_close.dateindex,
+                    &usd.split.close.dateindex,
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )?;
@@ -104,12 +88,12 @@ impl Vecs {
             })?;
 
         // Height OHLC in sats
-        self.height_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.height.compute_transform4(
             starting_indexes.height,
-            &self.chainindexes_to_price_open_in_sats.height,
-            &self.chainindexes_to_price_high_in_sats.height,
-            &self.chainindexes_to_price_low_in_sats.height,
-            &self.chainindexes_to_price_close_in_sats.height,
+            &self.split.open.height,
+            &self.split.high.height,
+            &self.split.low.height,
+            &self.split.close.height,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -125,12 +109,12 @@ impl Vecs {
         )?;
 
         // DateIndex OHLC in sats
-        self.dateindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.dateindex.compute_transform4(
             starting_indexes.dateindex,
-            &self.timeindexes_to_price_open_in_sats.dateindex,
-            &self.timeindexes_to_price_high_in_sats.dateindex,
-            &self.timeindexes_to_price_low_in_sats.dateindex,
-            &self.timeindexes_to_price_close_in_sats.dateindex,
+            &self.split.open.dateindex,
+            &self.split.high.dateindex,
+            &self.split.low.dateindex,
+            &self.split.close.dateindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -146,12 +130,12 @@ impl Vecs {
         )?;
 
         // Period OHLC in sats
-        self.weekindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.week.compute_transform4(
             starting_indexes.weekindex,
-            &*self.timeindexes_to_price_open_in_sats.weekindex,
-            &*self.timeindexes_to_price_high_in_sats.weekindex,
-            &*self.timeindexes_to_price_low_in_sats.weekindex,
-            &*self.timeindexes_to_price_close_in_sats.weekindex,
+            &*self.split.open.weekindex,
+            &*self.split.high.weekindex,
+            &*self.split.low.weekindex,
+            &*self.split.close.weekindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -166,33 +150,32 @@ impl Vecs {
             exit,
         )?;
 
-        self.difficultyepoch_to_price_ohlc_in_sats
-            .compute_transform4(
-                starting_indexes.difficultyepoch,
-                &*self.chainindexes_to_price_open_in_sats.difficultyepoch,
-                &*self.chainindexes_to_price_high_in_sats.difficultyepoch,
-                &*self.chainindexes_to_price_low_in_sats.difficultyepoch,
-                &*self.chainindexes_to_price_close_in_sats.difficultyepoch,
-                |(i, open, high, low, close, _)| {
-                    (
-                        i,
-                        OHLCSats {
-                            open,
-                            high,
-                            low,
-                            close,
-                        },
-                    )
-                },
-                exit,
-            )?;
+        self.ohlc.difficultyepoch.compute_transform4(
+            starting_indexes.difficultyepoch,
+            &*self.split.open.difficultyepoch,
+            &*self.split.high.difficultyepoch,
+            &*self.split.low.difficultyepoch,
+            &*self.split.close.difficultyepoch,
+            |(i, open, high, low, close, _)| {
+                (
+                    i,
+                    OHLCSats {
+                        open,
+                        high,
+                        low,
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
 
-        self.monthindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.month.compute_transform4(
             starting_indexes.monthindex,
-            &*self.timeindexes_to_price_open_in_sats.monthindex,
-            &*self.timeindexes_to_price_high_in_sats.monthindex,
-            &*self.timeindexes_to_price_low_in_sats.monthindex,
-            &*self.timeindexes_to_price_close_in_sats.monthindex,
+            &*self.split.open.monthindex,
+            &*self.split.high.monthindex,
+            &*self.split.low.monthindex,
+            &*self.split.close.monthindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -207,12 +190,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.quarterindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.quarter.compute_transform4(
             starting_indexes.quarterindex,
-            &*self.timeindexes_to_price_open_in_sats.quarterindex,
-            &*self.timeindexes_to_price_high_in_sats.quarterindex,
-            &*self.timeindexes_to_price_low_in_sats.quarterindex,
-            &*self.timeindexes_to_price_close_in_sats.quarterindex,
+            &*self.split.open.quarterindex,
+            &*self.split.high.quarterindex,
+            &*self.split.low.quarterindex,
+            &*self.split.close.quarterindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -227,33 +210,32 @@ impl Vecs {
             exit,
         )?;
 
-        self.semesterindex_to_price_ohlc_in_sats
-            .compute_transform4(
-                starting_indexes.semesterindex,
-                &*self.timeindexes_to_price_open_in_sats.semesterindex,
-                &*self.timeindexes_to_price_high_in_sats.semesterindex,
-                &*self.timeindexes_to_price_low_in_sats.semesterindex,
-                &*self.timeindexes_to_price_close_in_sats.semesterindex,
-                |(i, open, high, low, close, _)| {
-                    (
-                        i,
-                        OHLCSats {
-                            open,
-                            high,
-                            low,
-                            close,
-                        },
-                    )
-                },
-                exit,
-            )?;
+        self.ohlc.semester.compute_transform4(
+            starting_indexes.semesterindex,
+            &*self.split.open.semesterindex,
+            &*self.split.high.semesterindex,
+            &*self.split.low.semesterindex,
+            &*self.split.close.semesterindex,
+            |(i, open, high, low, close, _)| {
+                (
+                    i,
+                    OHLCSats {
+                        open,
+                        high,
+                        low,
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
 
-        self.yearindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.year.compute_transform4(
             starting_indexes.yearindex,
-            &*self.timeindexes_to_price_open_in_sats.yearindex,
-            &*self.timeindexes_to_price_high_in_sats.yearindex,
-            &*self.timeindexes_to_price_low_in_sats.yearindex,
-            &*self.timeindexes_to_price_close_in_sats.yearindex,
+            &*self.split.open.yearindex,
+            &*self.split.high.yearindex,
+            &*self.split.low.yearindex,
+            &*self.split.close.yearindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,
@@ -268,12 +250,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.decadeindex_to_price_ohlc_in_sats.compute_transform4(
+        self.ohlc.decade.compute_transform4(
             starting_indexes.decadeindex,
-            &*self.timeindexes_to_price_open_in_sats.decadeindex,
-            &*self.timeindexes_to_price_high_in_sats.decadeindex,
-            &*self.timeindexes_to_price_low_in_sats.decadeindex,
-            &*self.timeindexes_to_price_close_in_sats.decadeindex,
+            &*self.split.open.decadeindex,
+            &*self.split.high.decadeindex,
+            &*self.split.low.decadeindex,
+            &*self.split.close.decadeindex,
             |(i, open, high, low, close, _)| {
                 (
                     i,

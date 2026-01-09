@@ -9,7 +9,6 @@ use std::{
 };
 
 use brk_alloc::Mimalloc;
-use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -18,7 +17,7 @@ use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_server::{Server, VERSION};
-use log::info;
+use tracing::info;
 use vecdb::Exit;
 
 mod config;
@@ -100,17 +99,11 @@ pub fn run() -> color_eyre::Result<()> {
                 }
             };
 
-            let websites_path;
-            let modules_path;
-
-            if let Some((websites, modules)) = find_dev_dirs() {
-                websites_path = websites;
-                modules_path = modules;
+            let websites_path = if let Some((websites, _modules)) = find_dev_dirs() {
+                websites
             } else {
                 let downloaded_brk_path = downloads_path.join(format!("brk-{VERSION}"));
-
                 let downloaded_websites_path = downloaded_brk_path.join("websites");
-                let downloaded_modules_path = downloaded_brk_path.join("modules");
 
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading source from Github...");
@@ -128,14 +121,29 @@ pub fn run() -> color_eyre::Result<()> {
                     zip.extract(downloads_path).unwrap();
                 }
 
-                websites_path = downloaded_websites_path;
-                modules_path = downloaded_modules_path;
-            }
+                downloaded_websites_path
+            };
 
             Some(websites_path.join(website.to_folder_name()))
         } else {
             None
         };
+
+        // Generate import map for cache busting
+        if let Some(ref path) = bundle_path {
+            match importmap::ImportMap::scan(path, "") {
+                Ok(map) => {
+                    let html_path = path.join("index.html");
+                    if let Ok(html) = fs::read_to_string(&html_path)
+                        && let Some(updated) = map.update_html(&html)
+                    {
+                        let _ = fs::write(&html_path, updated);
+                        info!("Updated importmap in index.html");
+                    }
+                }
+                Err(e) => tracing::error!("Failed to generate importmap: {e}"),
+            }
+        }
 
         let server = Server::new(&query, bundle_path);
 

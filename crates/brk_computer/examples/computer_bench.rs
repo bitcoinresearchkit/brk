@@ -9,7 +9,7 @@ use brk_indexer::Indexer;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use log::{debug, info};
+use tracing::{debug, info};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {

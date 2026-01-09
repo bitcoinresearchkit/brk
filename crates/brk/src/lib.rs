@@ -8,10 +8,6 @@ pub use brk_bencher as bencher;
 #[doc(inline)]
 pub use brk_bindgen as binder;
 
-#[cfg(feature = "bundler")]
-#[doc(inline)]
-pub use brk_bundler as bundler;
-
 #[cfg(feature = "client")]
 #[doc(inline)]
 pub use brk_client as client;

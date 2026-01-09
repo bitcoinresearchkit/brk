@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Dollars, Sats, Version};
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{LazyDateLast, ValueDateLast};
+use crate::internal::{LazyDateLast, ValueBlockLast, ValueDateLast};
 
 const VERSION: Version = Version::ZERO;
 
@@ -48,6 +48,44 @@ impl LazyValueDateLast {
                 v,
                 dollars_source.dateindex.boxed_clone(),
                 dollars_source,
+            )
+        });
+
+        Self { sats, bitcoin, dollars }
+    }
+
+    pub fn from_block_source<SatsTransform, BitcoinTransform, DollarsTransform>(
+        name: &str,
+        source: &ValueBlockLast,
+        version: Version,
+    ) -> Self
+    where
+        SatsTransform: UnaryTransform<Sats, Sats>,
+        BitcoinTransform: UnaryTransform<Sats, Bitcoin>,
+        DollarsTransform: UnaryTransform<Dollars, Dollars>,
+    {
+        let v = version + VERSION;
+
+        let sats = LazyDateLast::from_derived::<SatsTransform>(
+            name,
+            v,
+            source.sats.rest.dateindex.0.boxed_clone(),
+            &source.sats.rest.dates,
+        );
+
+        let bitcoin = LazyDateLast::from_derived::<BitcoinTransform>(
+            &format!("{name}_btc"),
+            v,
+            source.sats.rest.dateindex.0.boxed_clone(),
+            &source.sats.rest.dates,
+        );
+
+        let dollars = source.dollars.as_ref().map(|dollars_source| {
+            LazyDateLast::from_derived::<DollarsTransform>(
+                &format!("{name}_usd"),
+                v,
+                dollars_source.rest.dateindex.0.boxed_clone(),
+                &dollars_source.rest.dates,
             )
         });
 

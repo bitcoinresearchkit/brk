@@ -6,6 +6,6 @@ use crate::internal::ComputedBlockFull;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub indexes_to_tx_count: ComputedBlockFull<StoredU64>,
-    pub txindex_to_is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
+    pub tx_count: ComputedBlockFull<StoredU64>,
+    pub is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
 }

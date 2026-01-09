@@ -20,11 +20,11 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let blockhash = indexer.vecs.block.height_to_blockhash.read_once(height)?;
-        let difficulty = indexer.vecs.block.height_to_difficulty.read_once(height)?;
-        let timestamp = indexer.vecs.block.height_to_timestamp.read_once(height)?;
-        let size = indexer.vecs.block.height_to_total_size.read_once(height)?;
-        let weight = indexer.vecs.block.height_to_weight.read_once(height)?;
+        let blockhash = indexer.vecs.blocks.blockhash.read_once(height)?;
+        let difficulty = indexer.vecs.blocks.difficulty.read_once(height)?;
+        let timestamp = indexer.vecs.blocks.timestamp.read_once(height)?;
+        let size = indexer.vecs.blocks.total_size.read_once(height)?;
+        let weight = indexer.vecs.blocks.weight.read_once(height)?;
         let tx_count = self.tx_count_at_height(height, max_height)?;
 
         Ok(BlockInfo {
@@ -75,8 +75,8 @@ impl Query {
         Height::from(
             self.indexer()
                 .vecs
-                .block
-                .height_to_blockhash
+                .blocks
+                .blockhash
                 .len()
                 .saturating_sub(1),
         )
@@ -86,15 +86,15 @@ impl Query {
         let indexer = self.indexer();
         let computer = self.computer();
 
-        let first_txindex = indexer.vecs.tx.height_to_first_txindex.read_once(height)?;
+        let first_txindex = indexer.vecs.transactions.first_txindex.read_once(height)?;
         let next_first_txindex = if height < max_height {
             indexer
                 .vecs
-                .tx
-                .height_to_first_txindex
+                .transactions
+                .first_txindex
                 .read_once(height.incremented())?
         } else {
-            TxIndex::from(computer.indexes.transaction.txindex_to_txindex.len())
+            TxIndex::from(computer.indexes.txindex.identity.len())
         };
 
         Ok((next_first_txindex.to_usize() - first_txindex.to_usize()) as u32)

@@ -47,7 +47,7 @@ impl<'a> BlockProcessor<'a> {
             return Ok(());
         }
 
-        let mut txindex_to_txid_iter = self.vecs.tx.txindex_to_txid.into_iter();
+        let mut txindex_to_txid_iter = self.vecs.transactions.txid.into_iter();
         for ct in txs.iter() {
             let Some(prev_txindex) = ct.prev_txindex_opt else {
                 continue;
@@ -57,7 +57,7 @@ impl<'a> BlockProcessor<'a> {
                 continue;
             }
 
-            let len = self.vecs.tx.txindex_to_txid.len();
+            let len = self.vecs.transactions.txid.len();
             let prev_txid = txindex_to_txid_iter
                 .get(prev_txindex)
                 .ok_or(Error::Internal("Missing txid for txindex"))
@@ -89,32 +89,32 @@ impl<'a> BlockProcessor<'a> {
             }
 
             self.vecs
-                .tx
-                .txindex_to_height
+                .transactions
+                .height
                 .checked_push(ct.txindex, height)?;
             self.vecs
-                .tx
-                .txindex_to_txversion
+                .transactions
+                .txversion
                 .checked_push(ct.txindex, ct.tx.version.into())?;
             self.vecs
-                .tx
-                .txindex_to_txid
+                .transactions
+                .txid
                 .checked_push(ct.txindex, ct.txid)?;
             self.vecs
-                .tx
-                .txindex_to_rawlocktime
+                .transactions
+                .rawlocktime
                 .checked_push(ct.txindex, ct.tx.lock_time.into())?;
             self.vecs
-                .tx
-                .txindex_to_base_size
+                .transactions
+                .base_size
                 .checked_push(ct.txindex, ct.tx.base_size().into())?;
             self.vecs
-                .tx
-                .txindex_to_total_size
+                .transactions
+                .total_size
                 .checked_push(ct.txindex, ct.tx.total_size().into())?;
             self.vecs
-                .tx
-                .txindex_to_is_explicitly_rbf
+                .transactions
+                .is_explicitly_rbf
                 .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
         }
 

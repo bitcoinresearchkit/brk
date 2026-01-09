@@ -3,9 +3,9 @@ use brk_indexer::Indexer;
 use brk_types::{FeeRate, Sats};
 use vecdb::{Exit, unlikely};
 
-use super::Vecs;
 use super::super::size;
-use crate::{indexes, inputs, ComputeIndexes};
+use super::Vecs;
+use crate::{ComputeIndexes, indexes, inputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -18,26 +18,26 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.txindex_to_input_value.compute_sum_from_indexes(
+        self.input_value.compute_sum_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.tx.txindex_to_first_txinindex,
-            &indexes.transaction.txindex_to_input_count,
-            &txins.spent.txinindex_to_value,
+            &indexer.vecs.transactions.first_txinindex,
+            &indexes.txindex.input_count,
+            &txins.spent.value,
             exit,
         )?;
 
-        self.txindex_to_output_value.compute_sum_from_indexes(
+        self.output_value.compute_sum_from_indexes(
             starting_indexes.txindex,
-            &indexer.vecs.tx.txindex_to_first_txoutindex,
-            &indexes.transaction.txindex_to_output_count,
-            &indexer.vecs.txout.txoutindex_to_value,
+            &indexer.vecs.transactions.first_txoutindex,
+            &indexes.txindex.output_count,
+            &indexer.vecs.outputs.value,
             exit,
         )?;
 
-        self.txindex_to_fee.compute_transform2(
+        self.fee.base.compute_transform2(
             starting_indexes.txindex,
-            &self.txindex_to_input_value,
-            &self.txindex_to_output_value,
+            &self.input_value,
+            &self.output_value,
             |(i, input, output, ..)| {
                 let fee = if unlikely(input.is_max()) {
                     Sats::ZERO
@@ -49,29 +49,19 @@ impl Vecs {
             exit,
         )?;
 
-        self.txindex_to_fee_rate.compute_transform2(
+        self.fee_rate.txindex.compute_transform2(
             starting_indexes.txindex,
-            &self.txindex_to_fee,
-            &size_vecs.txindex_to_vsize,
+            &self.fee.base,
+            &size_vecs.vsize.txindex,
             |(txindex, fee, vsize, ..)| (txindex, FeeRate::from((fee, vsize))),
             exit,
         )?;
 
-        self.indexes_to_fee.derive_from(
-            indexer,
-            indexes,
-            starting_indexes,
-            &self.txindex_to_fee,
-            exit,
-        )?;
+        self.fee
+            .derive_from(indexer, indexes, starting_indexes, exit)?;
 
-        self.indexes_to_fee_rate.derive_from(
-            indexer,
-            indexes,
-            starting_indexes,
-            &self.txindex_to_fee_rate,
-            exit,
-        )?;
+        self.fee_rate
+            .derive_from(indexer, indexes, starting_indexes, exit)?;
 
         Ok(())
     }

@@ -8,6 +8,7 @@ pub trait AnyStore: Send + Sync {
     fn has(&self, height: Height) -> bool;
     fn needs(&self, height: Height) -> bool;
     fn version(&self) -> Version;
+    fn export_meta(&mut self, height: Height) -> Result<()>;
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()>;
     fn keyspace(&self) -> &Keyspace;
     fn commit(&mut self, height: Height) -> Result<()>;

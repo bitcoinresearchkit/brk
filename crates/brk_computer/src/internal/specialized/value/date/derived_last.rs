@@ -52,26 +52,35 @@ impl ValueDerivedDateLast {
         })
     }
 
-    pub fn compute_rest(
+    pub fn compute_dollars<F>(&mut self, mut compute: F) -> Result<()>
+    where
+        F: FnMut(&mut ComputedDateLast<Dollars>) -> Result<()>,
+    {
+        if let Some(dollars) = self.dollars.as_mut() {
+            compute(dollars)?;
+        }
+        Ok(())
+    }
+
+    pub fn compute_dollars_from_price(
         &mut self,
         price: Option<&price::Vecs>,
-        _starting_indexes: &ComputeIndexes,
+        starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let dateindex_to_bitcoin = &*self.bitcoin.dateindex;
-        let dateindex_to_price_close = &price.u().usd.timeindexes_to_price_close.dateindex;
-
         if let Some(dollars) = self.dollars.as_mut() {
-            dollars.compute_all(_starting_indexes, exit, |v| {
+            let dateindex_to_bitcoin = &*self.bitcoin.dateindex;
+            let dateindex_to_price_close = &price.u().usd.split.close.dateindex;
+
+            dollars.compute_all(starting_indexes, exit, |v| {
                 v.compute_from_bitcoin(
-                    _starting_indexes.dateindex,
+                    starting_indexes.dateindex,
                     dateindex_to_bitcoin,
                     dateindex_to_price_close,
                     exit,
                 )
             })?;
         }
-
         Ok(())
     }
 }
