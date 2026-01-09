@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, DerivedComputedBlockLast,
+    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, ComputedDerivedBlockLast,
     LazyDateLast, NumericValue,
 };
 
@@ -61,7 +61,7 @@ where
     pub fn from_derived_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &DerivedComputedBlockLast<S1T>,
+        source: &ComputedDerivedBlockLast<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

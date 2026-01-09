@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedBlockLast, ComputedBlockSum, ComputedDateLast, DerivedComputedBlockLast},
+    internal::{ComputedBlockLast, ComputedBlockSum, ComputedDateLast, ComputedDerivedBlockLast},
 };
 
 impl Vecs {
@@ -106,7 +106,7 @@ impl Vecs {
                 indexes,
             )?,
             // Derived from external indexer data - no height storage needed
-            difficulty: DerivedComputedBlockLast::forced_import(
+            difficulty: ComputedDerivedBlockLast::forced_import(
                 db,
                 "difficulty",
                 indexer.vecs.blocks.difficulty.boxed_clone(),

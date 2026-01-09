@@ -9,7 +9,7 @@ use vecdb::{ComputeFrom1, Database, Exit, IterableCloneableVec, LazyVecFrom1, Un
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, DerivedComputedBlockDistribution, NumericValue},
+    internal::{ComputedVecValue, ComputedDerivedBlockDistribution, NumericValue},
 };
 
 const VERSION: Version = Version::ZERO;
@@ -30,7 +30,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: DerivedComputedBlockDistribution<T>,
+    pub rest: ComputedDerivedBlockDistribution<T>,
 }
 
 impl<T, S> LazyBlockDistribution<T, S>
@@ -49,7 +49,7 @@ where
 
         let height = LazyVecFrom1::transformed::<F>(name, v, source.boxed_clone());
 
-        let rest = DerivedComputedBlockDistribution::forced_import(
+        let rest = ComputedDerivedBlockDistribution::forced_import(
             db,
             name,
             height.boxed_clone(),
@@ -72,7 +72,7 @@ where
 
         let height = LazyVecFrom1::init(name, v, source.boxed_clone(), init_fn);
 
-        let rest = DerivedComputedBlockDistribution::forced_import(
+        let rest = ComputedDerivedBlockDistribution::forced_import(
             db,
             name,
             height.boxed_clone(),

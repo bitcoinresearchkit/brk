@@ -1,4 +1,4 @@
-//! DerivedComputedBlockLast - dateindex storage + difficultyepoch + lazy time periods.
+//! ComputedDerivedBlockLast - dateindex storage + difficultyepoch + lazy time periods.
 
 use brk_error::Result;
 
@@ -10,12 +10,12 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec}
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, DerivedDateLast, LastVec, LazyLast, NumericValue},
+    internal::{ComputedVecValue, LazyPeriodsLast, LastVec, LazyLast, NumericValue},
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct DerivedComputedBlockLast<T>
+pub struct ComputedDerivedBlockLast<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -23,13 +23,13 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub dates: DerivedDateLast<T>,
+    pub dates: LazyPeriodsLast<T>,
     pub difficultyepoch: LazyLast<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedComputedBlockLast<T>
+impl<T> ComputedDerivedBlockLast<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -44,7 +44,7 @@ where
         let v = version + VERSION;
 
         Ok(Self {
-            dates: DerivedDateLast::from_source(name, v, dateindex.0.boxed_clone(), indexes),
+            dates: LazyPeriodsLast::from_source(name, v, dateindex.0.boxed_clone(), indexes),
             difficultyepoch: LazyLast::from_source(
                 name,
                 v,

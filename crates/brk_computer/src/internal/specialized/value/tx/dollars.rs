@@ -11,7 +11,7 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, LazyVecFrom3
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{DerivedDateFull, Full, LazyFull, Stats},
+    internal::{LazyPeriodsFull, Full, LazyFull, Stats},
 };
 
 /// Lazy dollars at TxIndex: `sats * price[height]`
@@ -29,7 +29,7 @@ pub struct DollarsTxFull {
     pub dateindex: Stats<DateIndex, Dollars>,
     #[deref]
     #[deref_mut]
-    pub dates: DerivedDateFull<Dollars>,
+    pub dates: LazyPeriodsFull<Dollars>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -63,7 +63,7 @@ impl DollarsTxFull {
                 indexes.difficultyepoch.identity.boxed_clone(),
             );
 
-        let dates = DerivedDateFull::from_sources(
+        let dates = LazyPeriodsFull::from_sources(
             name,
             v,
             dateindex.average.0.boxed_clone(),

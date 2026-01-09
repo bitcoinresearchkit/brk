@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
 use crate::internal::{
-    ComputedVecValue, DerivedComputedBlockSumCum, DerivedDateSumCum, LazyDateSumCum, LazySumCum,
+    ComputedVecValue, ComputedDerivedBlockSumCum, LazyPeriodsSumCum, LazyDateSumCum, LazySumCum,
     NumericValue, SumCum,
 };
 
@@ -37,7 +37,7 @@ where
         name: &str,
         version: Version,
         dateindex: &SumCum<DateIndex, S1T>,
-        periods: &DerivedDateSumCum<S1T>,
+        periods: &LazyPeriodsSumCum<S1T>,
         difficultyepoch: &LazySumCum<DifficultyEpoch, S1T, Height, DifficultyEpoch>,
     ) -> Self {
         let v = version + VERSION;
@@ -56,7 +56,7 @@ where
     pub fn from_derived_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &DerivedComputedBlockSumCum<S1T>,
+        source: &ComputedDerivedBlockSumCum<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

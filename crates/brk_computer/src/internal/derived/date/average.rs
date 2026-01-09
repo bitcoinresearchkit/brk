@@ -13,7 +13,7 @@ use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct DerivedDateAverage<T>
+pub struct LazyPeriodsAverage<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -27,7 +27,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedDateAverage<T>
+impl<T> LazyPeriodsAverage<T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
 {

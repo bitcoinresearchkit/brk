@@ -1,4 +1,4 @@
-//! DerivedComputedBlockSum - dateindex storage + difficultyepoch + lazy time periods.
+//! ComputedDerivedBlockSum - dateindex storage + difficultyepoch + lazy time periods.
 
 use brk_error::Result;
 
@@ -13,25 +13,25 @@ use vecdb::{
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, DerivedDateSum, LazySum, NumericValue, SumVec},
+    internal::{ComputedVecValue, LazyPeriodsSum, LazySum, NumericValue, SumVec},
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct DerivedComputedBlockSum<T>
+pub struct ComputedDerivedBlockSum<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub dateindex: SumVec<DateIndex, T>,
     #[deref]
     #[deref_mut]
-    pub dates: DerivedDateSum<T>,
+    pub dates: LazyPeriodsSum<T>,
     pub difficultyepoch: LazySum<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedComputedBlockSum<T>
+impl<T> ComputedDerivedBlockSum<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -46,7 +46,7 @@ where
         let v = version + VERSION;
 
         Ok(Self {
-            dates: DerivedDateSum::from_source(name, v, dateindex.0.boxed_clone(), indexes),
+            dates: LazyPeriodsSum::from_source(name, v, dateindex.0.boxed_clone(), indexes),
             difficultyepoch: LazySum::from_source_raw(
                 name,
                 v,

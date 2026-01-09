@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
 use crate::internal::{
-    ComputedVecValue, DerivedComputedBlockFull, DerivedDateFull, Full, LazyDateFull, NumericValue,
+    ComputedVecValue, ComputedDerivedBlockFull, LazyPeriodsFull, Full, LazyDateFull, NumericValue,
 };
 
 use super::super::transform::LazyTransformStats;
@@ -36,7 +36,7 @@ where
         name: &str,
         version: Version,
         dateindex: &Full<DateIndex, S1T>,
-        periods: &DerivedDateFull<S1T>,
+        periods: &LazyPeriodsFull<S1T>,
         difficultyepoch: &crate::internal::LazyFull<
             DifficultyEpoch,
             S1T,
@@ -63,7 +63,7 @@ where
     pub fn from_derived_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &DerivedComputedBlockFull<S1T>,
+        source: &ComputedDerivedBlockFull<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

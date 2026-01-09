@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, LazyVecFrom1, UnaryTransform};
 
-use crate::internal::{ComputedBlockSum, ComputedVecValue, DerivedComputedBlockSum, NumericValue};
+use crate::internal::{ComputedBlockSum, ComputedVecValue, ComputedDerivedBlockSum, NumericValue};
 
 use super::super::derived_block::LazyDerivedBlockSum;
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -53,7 +53,7 @@ where
         name: &str,
         version: Version,
         height_source: IterableBoxedVec<Height, S1T>,
-        source: &DerivedComputedBlockSum<S1T>,
+        source: &ComputedDerivedBlockSum<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

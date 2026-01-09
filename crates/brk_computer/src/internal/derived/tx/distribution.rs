@@ -16,7 +16,7 @@ use vecdb::{CollectableVec, Database, Exit, IterableCloneableVec};
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, DerivedDateDistribution, Distribution, LazyDistribution, MinMaxAverage,
+        ComputedVecValue, LazyPeriodsDistribution, Distribution, LazyDistribution, MinMaxAverage,
         NumericValue,
     },
 };
@@ -33,7 +33,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub dates: DerivedDateDistribution<T>,
+    pub dates: LazyPeriodsDistribution<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -62,7 +62,7 @@ where
                 indexes.difficultyepoch.identity.boxed_clone(),
             );
 
-        let dates = DerivedDateDistribution::from_sources(
+        let dates = LazyPeriodsDistribution::from_sources(
             name,
             v,
             dateindex.average.0.boxed_clone(),

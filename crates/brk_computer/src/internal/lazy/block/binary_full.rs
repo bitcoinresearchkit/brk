@@ -8,7 +8,7 @@ use vecdb::{BinaryTransform, IterableBoxedVec, LazyVecFrom2};
 
 use crate::internal::{ComputedBlockFull, ComputedVecValue, DerivedTxFull, NumericValue};
 
-use super::super::derived_block::LazyDerivedBlock2SumCum;
+use super::super::derived_block::LazyBinaryDerivedBlockSumCum;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -22,7 +22,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: LazyDerivedBlock2SumCum<T, S1T, S2T>,
+    pub rest: LazyBinaryDerivedBlockSumCum<T, S1T, S2T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -45,7 +45,7 @@ where
 
         Self {
             height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
-            rest: LazyDerivedBlock2SumCum::from_derived_full::<F, _, _, _, _>(
+            rest: LazyBinaryDerivedBlockSumCum::from_derived_full::<F, _, _, _, _>(
                 name,
                 v,
                 &source1.dateindex.sum_cum,

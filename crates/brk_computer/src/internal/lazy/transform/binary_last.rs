@@ -10,14 +10,14 @@ use crate::internal::{ComputedVecValue, LazyLast};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(wrap = "last")]
-pub struct LazyTransform2Last<I, T, S1T, S2T>(pub LazyVecFrom2<I, T, I, S1T, I, S2T>)
+pub struct LazyBinaryTransformLast<I, T, S1T, S2T>(pub LazyVecFrom2<I, T, I, S1T, I, S2T>)
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema,
     S1T: ComputedVecValue,
     S2T: ComputedVecValue;
 
-impl<I, T, S1T, S2T> LazyTransform2Last<I, T, S1T, S2T>
+impl<I, T, S1T, S2T> LazyBinaryTransformLast<I, T, S1T, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema + 'static,

@@ -13,7 +13,7 @@ use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct DerivedDateDistribution<T>
+pub struct LazyPeriodsDistribution<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -27,7 +27,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedDateDistribution<T>
+impl<T> LazyPeriodsDistribution<T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
 {

@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, IterableCloneableVec, LazyVecFrom1, UnaryTransform};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, DerivedComputedBlockLast,
+    ComputedBlockLast, ComputedHeightDateLast, ComputedVecValue, ComputedDerivedBlockLast,
     NumericValue,
 };
 
@@ -52,7 +52,7 @@ where
         name: &str,
         version: Version,
         height_source: IterableBoxedVec<Height, S1T>,
-        source: &DerivedComputedBlockLast<S1T>,
+        source: &ComputedDerivedBlockLast<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

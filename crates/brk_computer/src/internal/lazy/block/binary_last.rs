@@ -8,10 +8,10 @@ use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom
 
 use crate::internal::{
     ComputedBlockLast, ComputedBlockSumCum, ComputedHeightDateLast, ComputedVecValue,
-    DerivedDateLast, LazyBinaryDateLast, LazyTransform2Last, NumericValue,
+    LazyPeriodsLast, LazyBinaryDateLast, LazyBinaryTransformLast, NumericValue,
 };
 
-use super::super::derived_block::LazyDerivedBlock2Last;
+use super::super::derived_block::LazyBinaryDerivedBlockLast;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -24,7 +24,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: LazyDerivedBlock2Last<T, S1T, S2T>,
+    pub rest: LazyBinaryDerivedBlockLast<T, S1T, S2T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -54,7 +54,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 source2.height_cumulative.0.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last::from_computed_sum_cum::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockLast::from_computed_sum_cum::<F>(name, v, source1, source2),
         }
     }
 
@@ -77,7 +77,7 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last::from_computed_last::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockLast::from_computed_last::<F>(name, v, source1, source2),
         }
     }
 
@@ -100,7 +100,7 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last::from_computed_height_date_last::<F>(
+            rest: LazyBinaryDerivedBlockLast::from_computed_height_date_last::<F>(
                 name, v, source1, source2,
             ),
         }
@@ -128,14 +128,14 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last {
+            rest: LazyBinaryDerivedBlockLast {
                 dates: LazyBinaryDateLast::from_computed_and_binary_last::<F, _, _>(
                     name,
                     v,
                     &source1.rest,
                     &source2.rest.dates,
                 ),
-                difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+                difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.difficultyepoch.0.boxed_clone(),
@@ -165,7 +165,7 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last::from_computed_height_date_and_block_last::<F>(
+            rest: LazyBinaryDerivedBlockLast::from_computed_height_date_and_block_last::<F>(
                 name, v, source1, source2,
             ),
         }
@@ -193,14 +193,14 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last {
+            rest: LazyBinaryDerivedBlockLast {
                 dates: LazyBinaryDateLast::from_binary_and_block_last::<F, _, _>(
                     name,
                     v,
                     &source1.rest.dates,
                     source2,
                 ),
-                difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+                difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.rest.difficultyepoch.boxed_clone(),
@@ -233,14 +233,14 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Last {
+            rest: LazyBinaryDerivedBlockLast {
                 dates: LazyBinaryDateLast::from_both_binary_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.rest.dates,
                     &source2.rest.dates,
                 ),
-                difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+                difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.rest.difficultyepoch.boxed_clone(),
@@ -262,15 +262,15 @@ where
         difficultyepoch_source1: IterableBoxedVec<DifficultyEpoch, S1T>,
         difficultyepoch_source2: IterableBoxedVec<DifficultyEpoch, S2T>,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        dates_source1: &DerivedDateLast<S1T>,
+        dates_source1: &LazyPeriodsLast<S1T>,
         dateindex_source2: IterableBoxedVec<DateIndex, S2T>,
-        dates_source2: &DerivedDateLast<S2T>,
+        dates_source2: &LazyPeriodsLast<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         Self {
             height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
-            rest: LazyDerivedBlock2Last {
+            rest: LazyBinaryDerivedBlockLast {
                 dates: LazyBinaryDateLast::from_both_derived_last::<F>(
                     name,
                     v,
@@ -279,7 +279,7 @@ where
                     dateindex_source2,
                     dates_source2,
                 ),
-                difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+                difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     difficultyepoch_source1,

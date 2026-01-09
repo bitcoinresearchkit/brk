@@ -4,7 +4,7 @@ use brk_types::{Date, Height, Version};
 use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, LazyVecFrom1, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::DerivedComputedBlockFirst};
+use crate::{indexes, internal::ComputedDerivedBlockFirst};
 
 impl Vecs {
     pub fn forced_import(
@@ -31,7 +31,7 @@ impl Vecs {
                 |height: Height, timestamp_iter| timestamp_iter.get(height).map(Date::from),
             ),
             timestamp_fixed: height_to_timestamp_fixed,
-            timestamp: DerivedComputedBlockFirst::forced_import(
+            timestamp: ComputedDerivedBlockFirst::forced_import(
                 db,
                 "timestamp",
                 indexer.vecs.blocks.timestamp.boxed_clone(),

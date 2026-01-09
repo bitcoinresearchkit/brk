@@ -7,11 +7,11 @@ use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedBlockSumCum, ComputedVecValue, DerivedComputedBlockLast,
-    DerivedComputedBlockSumCum, NumericValue,
+    ComputedBlockLast, ComputedBlockSumCum, ComputedVecValue, ComputedDerivedBlockLast,
+    ComputedDerivedBlockSumCum, NumericValue,
 };
 
-use super::super::derived_block::LazyDerivedBlock2SumCum;
+use super::super::derived_block::LazyBinaryDerivedBlockSumCum;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -27,7 +27,7 @@ where
     pub height_cumulative: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: LazyDerivedBlock2SumCum<T, S1T, S2T>,
+    pub rest: LazyBinaryDerivedBlockSumCum<T, S1T, S2T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -60,7 +60,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 source2.height_cumulative.0.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2SumCum::from_computed_sum_raw::<F>(
+            rest: LazyBinaryDerivedBlockSumCum::from_computed_sum_raw::<F>(
                 name,
                 v,
                 &source1.dateindex,
@@ -78,8 +78,8 @@ where
         version: Version,
         height_source1: IterableBoxedVec<Height, S1T>,
         height_source2: IterableBoxedVec<Height, S2T>,
-        source1: &DerivedComputedBlockSumCum<S1T>,
-        source2: &DerivedComputedBlockSumCum<S2T>,
+        source1: &ComputedDerivedBlockSumCum<S1T>,
+        source2: &ComputedDerivedBlockSumCum<S2T>,
     ) -> Self
     where
         S1T: PartialOrd,
@@ -95,7 +95,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 source2.height_cumulative.0.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2SumCum::from_computed_sum_raw::<F>(
+            rest: LazyBinaryDerivedBlockSumCum::from_computed_sum_raw::<F>(
                 name,
                 v,
                 &source1.dateindex,
@@ -131,7 +131,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2SumCum::from_computed_last::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockSumCum::from_computed_last::<F>(name, v, source1, source2),
         }
     }
 
@@ -140,7 +140,7 @@ where
         version: Version,
         height_source1: IterableBoxedVec<Height, S1T>,
         height_source2: IterableBoxedVec<Height, S2T>,
-        source1: &DerivedComputedBlockSumCum<S1T>,
+        source1: &ComputedDerivedBlockSumCum<S1T>,
         source2: &ComputedBlockLast<S2T>,
     ) -> Self
     where
@@ -156,7 +156,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2SumCum::from_derived_computed_last::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockSumCum::from_derived_computed_last::<F>(name, v, source1, source2),
         }
     }
 
@@ -165,8 +165,8 @@ where
         version: Version,
         height_source1: IterableBoxedVec<Height, S1T>,
         height_source2: IterableBoxedVec<Height, S2T>,
-        source1: &DerivedComputedBlockSumCum<S1T>,
-        source2: &DerivedComputedBlockLast<S2T>,
+        source1: &ComputedDerivedBlockSumCum<S1T>,
+        source2: &ComputedDerivedBlockLast<S2T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -181,7 +181,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 height_source2,
             ),
-            rest: LazyDerivedBlock2SumCum::from_derived_last::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockSumCum::from_derived_last::<F>(name, v, source1, source2),
         }
     }
 
@@ -191,7 +191,7 @@ where
         height_source1: IterableBoxedVec<Height, S1T>,
         height_source2: IterableBoxedVec<Height, S2T>,
         source1: &ComputedBlockSumCum<S1T>,
-        source2: &DerivedComputedBlockLast<S2T>,
+        source2: &ComputedDerivedBlockLast<S2T>,
     ) -> Self
     where
         S1T: PartialOrd,
@@ -206,7 +206,7 @@ where
                 source1.height_cumulative.0.boxed_clone(),
                 height_source2,
             ),
-            rest: LazyDerivedBlock2SumCum::from_computed_derived_last::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockSumCum::from_computed_derived_last::<F>(name, v, source1, source2),
         }
     }
 }

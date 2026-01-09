@@ -5,7 +5,7 @@ use brk_types::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex,
 use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedVecValue, DerivedDateSumCum, SumCum};
+use crate::internal::{ComputedVecValue, LazyPeriodsSumCum, SumCum};
 
 use super::super::transform::LazyTransformSumCum;
 
@@ -36,7 +36,7 @@ where
         name: &str,
         version: Version,
         dateindex: &SumCum<DateIndex, S1T>,
-        source: &DerivedDateSumCum<S1T>,
+        source: &LazyPeriodsSumCum<S1T>,
     ) -> Self {
         let v = version + VERSION;
 

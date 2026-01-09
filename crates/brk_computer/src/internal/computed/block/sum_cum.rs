@@ -13,7 +13,7 @@ use vecdb::{
 
 use crate::{indexes, ComputeIndexes};
 
-use crate::internal::{ComputedVecValue, DerivedComputedBlockSumCum, NumericValue};
+use crate::internal::{ComputedVecValue, ComputedDerivedBlockSumCum, NumericValue};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -25,7 +25,7 @@ where
     pub height: EagerVec<PcoVec<Height, T>>,
     #[deref]
     #[deref_mut]
-    pub rest: DerivedComputedBlockSumCum<T>,
+    pub rest: ComputedDerivedBlockSumCum<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -44,7 +44,7 @@ where
 
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
 
-        let rest = DerivedComputedBlockSumCum::forced_import(
+        let rest = ComputedDerivedBlockSumCum::forced_import(
             db,
             name,
             height.boxed_clone(),

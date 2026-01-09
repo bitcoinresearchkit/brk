@@ -1,4 +1,4 @@
-//! LazyComputedBlockFull - lazy height + DerivedComputedBlockFull.
+//! LazyComputedBlockFull - lazy height + ComputedDerivedBlockFull.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -9,7 +9,7 @@ use vecdb::{Database, Exit, IterableCloneableVec, LazyVecFrom1, UnaryTransform};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, DerivedComputedBlockFull, NumericValue},
+    internal::{ComputedVecValue, ComputedDerivedBlockFull, NumericValue},
 };
 
 const VERSION: Version = Version::ZERO;
@@ -26,7 +26,7 @@ where
     pub height: LazyVecFrom1<Height, T, Height, S>,
     #[deref]
     #[deref_mut]
-    pub rest: DerivedComputedBlockFull<T>,
+    pub rest: ComputedDerivedBlockFull<T>,
 }
 
 impl<T, S> LazyComputedBlockFull<T, S>
@@ -46,7 +46,7 @@ where
         let height = LazyVecFrom1::transformed::<F>(name, v, source.boxed_clone());
 
         let rest =
-            DerivedComputedBlockFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
+            ComputedDerivedBlockFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
 
         Ok(Self { height, rest })
     }
@@ -64,7 +64,7 @@ where
         let height = LazyVecFrom1::init(name, v, source.boxed_clone(), init_fn);
 
         let rest =
-            DerivedComputedBlockFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
+            ComputedDerivedBlockFull::forced_import(db, name, height.boxed_clone(), v, indexes)?;
 
         Ok(Self { height, rest })
     }

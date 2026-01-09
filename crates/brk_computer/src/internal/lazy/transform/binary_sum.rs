@@ -12,14 +12,14 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(wrap = "sum")]
-pub struct LazyTransform2Sum<I, T, S1T, S2T>(pub LazyVecFrom2<I, T, I, S1T, I, S2T>)
+pub struct LazyBinaryTransformSum<I, T, S1T, S2T>(pub LazyVecFrom2<I, T, I, S1T, I, S2T>)
 where
     I: VecIndex,
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
     S2T: ComputedVecValue;
 
-impl<I, T, S1T, S2T> LazyTransform2Sum<I, T, S1T, S2T>
+impl<I, T, S1T, S2T> LazyBinaryTransformSum<I, T, S1T, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema + 'static,

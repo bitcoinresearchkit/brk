@@ -8,12 +8,12 @@ use vecdb::{BinaryTransform, IterableCloneableVec};
 
 use crate::internal::{
     ComputedBlockLast, ComputedBlockSumCum, ComputedHeightDateLast, ComputedVecValue,
-    LazyBinaryDateLast, LazyTransform2Last, NumericValue,
+    LazyBinaryDateLast, LazyBinaryTransformLast, NumericValue,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyDerivedBlock2Last<T, S1T = T, S2T = T>
+pub struct LazyBinaryDerivedBlockLast<T, S1T = T, S2T = T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
@@ -22,12 +22,12 @@ where
     #[deref]
     #[deref_mut]
     pub dates: LazyBinaryDateLast<T, S1T, S2T>,
-    pub difficultyepoch: LazyTransform2Last<DifficultyEpoch, T, S1T, S2T>,
+    pub difficultyepoch: LazyBinaryTransformLast<DifficultyEpoch, T, S1T, S2T>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T, S1T, S2T> LazyDerivedBlock2Last<T, S1T, S2T>
+impl<T, S1T, S2T> LazyBinaryDerivedBlockLast<T, S1T, S2T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
@@ -54,7 +54,7 @@ where
                 source2.dateindex.cumulative.boxed_clone(),
                 &source2.dates,
             ),
-            difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                 name,
                 v,
                 source1.difficultyepoch.cumulative.boxed_clone(),
@@ -77,7 +77,7 @@ where
 
         Self {
             dates: LazyBinaryDateLast::from_both_block_last::<F>(name, v, source1, source2),
-            difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                 name,
                 v,
                 source1.difficultyepoch.boxed_clone(),
@@ -105,7 +105,7 @@ where
                 &source1.rest,
                 &source2.rest,
             ),
-            difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                 name,
                 v,
                 source1.difficultyepoch.0.boxed_clone(),
@@ -133,7 +133,7 @@ where
                 &source1.rest,
                 source2,
             ),
-            difficultyepoch: LazyTransform2Last::from_vecs::<F>(
+            difficultyepoch: LazyBinaryTransformLast::from_vecs::<F>(
                 name,
                 v,
                 source1.difficultyepoch.0.boxed_clone(),

@@ -13,7 +13,7 @@ use crate::internal::ComputedVecValue;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct DerivedDateSumCum<T>
+pub struct LazyPeriodsSumCum<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -27,7 +27,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedDateSumCum<T>
+impl<T> LazyPeriodsSumCum<T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
 {

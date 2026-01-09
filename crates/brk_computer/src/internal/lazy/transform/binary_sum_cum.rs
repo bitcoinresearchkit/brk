@@ -10,7 +10,7 @@ use vecdb::{
 use crate::internal::{ComputedVecValue, LazyFull, LastVec, SumCum};
 
 #[derive(Clone, Traversable)]
-pub struct LazyTransform2SumCum<I, T, S1T = T, S2T = T>
+pub struct LazyBinaryTransformSumCum<I, T, S1T = T, S2T = T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema,
@@ -21,7 +21,7 @@ where
     pub cumulative: LazyVecFrom2<I, T, I, S1T, I, S2T>,
 }
 
-impl<I, T, S1T, S2T> LazyTransform2SumCum<I, T, S1T, S2T>
+impl<I, T, S1T, S2T> LazyBinaryTransformSumCum<I, T, S1T, S2T>
 where
     I: VecIndex,
     T: ComputedVecValue + JsonSchema + 'static,

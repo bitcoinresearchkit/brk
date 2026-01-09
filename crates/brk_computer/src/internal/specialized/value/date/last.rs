@@ -8,7 +8,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVe
 
 use crate::{ComputeIndexes, indexes, price};
 
-use super::ValueDerivedDateLast;
+use super::ValueLazyPeriodsLast;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -17,7 +17,7 @@ pub struct ValueDateLast {
     pub sats_dateindex: EagerVec<PcoVec<DateIndex, Sats>>,
     #[deref]
     #[deref_mut]
-    pub rest: ValueDerivedDateLast,
+    pub rest: ValueLazyPeriodsLast,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -32,7 +32,7 @@ impl ValueDateLast {
     ) -> Result<Self> {
         let sats_dateindex = EagerVec::forced_import(db, name, version + VERSION)?;
 
-        let rest = ValueDerivedDateLast::from_source(
+        let rest = ValueLazyPeriodsLast::from_source(
             db,
             name,
             sats_dateindex.boxed_clone(),

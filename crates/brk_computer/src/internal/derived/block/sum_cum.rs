@@ -1,4 +1,4 @@
-//! DerivedComputedBlockSumCum - aggregates derived from an external height source.
+//! ComputedDerivedBlockSumCum - aggregates derived from an external height source.
 
 use brk_error::Result;
 
@@ -14,14 +14,14 @@ use vecdb::{
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, CumulativeVec, DerivedDateSumCum, LazySumCum, NumericValue, SumCum,
+        ComputedVecValue, CumulativeVec, LazyPeriodsSumCum, LazySumCum, NumericValue, SumCum,
         compute_cumulative_extend,
     },
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct DerivedComputedBlockSumCum<T>
+pub struct ComputedDerivedBlockSumCum<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -30,13 +30,13 @@ where
     pub dateindex: SumCum<DateIndex, T>,
     #[deref]
     #[deref_mut]
-    pub dates: DerivedDateSumCum<T>,
+    pub dates: LazyPeriodsSumCum<T>,
     pub difficultyepoch: LazySumCum<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedComputedBlockSumCum<T>
+impl<T> ComputedDerivedBlockSumCum<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -52,7 +52,7 @@ where
         let height_cumulative = CumulativeVec::forced_import(db, name, v)?;
         let dateindex = SumCum::forced_import_sum_raw(db, name, v)?;
 
-        let dates = DerivedDateSumCum::from_sources(
+        let dates = LazyPeriodsSumCum::from_sources(
             name,
             v,
             dateindex.sum.0.boxed_clone(),

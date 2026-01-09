@@ -7,18 +7,18 @@ use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedBlockSumCum, ComputedVecValue, DerivedComputedBlockLast,
-    DerivedComputedBlockSumCum, DerivedDateFull, DerivedDateSumCum, LazyDate2SumCum, LazyFull,
+    ComputedBlockLast, ComputedBlockSumCum, ComputedVecValue, ComputedDerivedBlockLast,
+    ComputedDerivedBlockSumCum, LazyPeriodsFull, LazyPeriodsSumCum, LazyBinaryDateSumCum, LazyFull,
     LazySumCum, NumericValue, SumCum,
 };
 
-use super::super::transform::LazyTransform2SumCum;
+use super::super::transform::LazyBinaryTransformSumCum;
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyDerivedBlock2SumCum<T, S1T = T, S2T = T>
+pub struct LazyBinaryDerivedBlockSumCum<T, S1T = T, S2T = T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
@@ -26,11 +26,11 @@ where
 {
     #[deref]
     #[deref_mut]
-    pub dates: LazyDate2SumCum<T, S1T, S2T>,
-    pub difficultyepoch: LazyTransform2SumCum<DifficultyEpoch, T, S1T, S2T>,
+    pub dates: LazyBinaryDateSumCum<T, S1T, S2T>,
+    pub difficultyepoch: LazyBinaryTransformSumCum<DifficultyEpoch, T, S1T, S2T>,
 }
 
-impl<T, S1T, S2T> LazyDerivedBlock2SumCum<T, S1T, S2T>
+impl<T, S1T, S2T> LazyBinaryDerivedBlockSumCum<T, S1T, S2T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
@@ -41,19 +41,19 @@ where
         name: &str,
         version: Version,
         dateindex1: &SumCum<brk_types::DateIndex, S1T>,
-        periods1: &DerivedDateSumCum<S1T>,
+        periods1: &LazyPeriodsSumCum<S1T>,
         difficultyepoch1: &LazySumCum<DifficultyEpoch, S1T, Height, DifficultyEpoch>,
         dateindex2: &SumCum<brk_types::DateIndex, S2T>,
-        periods2: &DerivedDateSumCum<S2T>,
+        periods2: &LazyPeriodsSumCum<S2T>,
         difficultyepoch2: &LazySumCum<DifficultyEpoch, S2T, Height, DifficultyEpoch>,
     ) -> Self {
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_computed::<F>(
+            dates: LazyBinaryDateSumCum::from_computed::<F>(
                 name, v, dateindex1, periods1, dateindex2, periods2,
             ),
-            difficultyepoch: LazyTransform2SumCum::from_sources::<F>(
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources::<F>(
                 name,
                 v,
                 difficultyepoch1.sum.boxed_clone(),
@@ -69,10 +69,10 @@ where
         name: &str,
         version: Version,
         dateindex1: &SumCum<brk_types::DateIndex, S1T>,
-        dates1: &DerivedDateFull<S1T>,
+        dates1: &LazyPeriodsFull<S1T>,
         difficultyepoch1: &LazyFull<DifficultyEpoch, S1T, S1I, S1L>,
         dateindex2: &SumCum<brk_types::DateIndex, S2T>,
-        dates2: &DerivedDateFull<S2T>,
+        dates2: &LazyPeriodsFull<S2T>,
         difficultyepoch2: &LazyFull<DifficultyEpoch, S2T, S2I, S2L>,
     ) -> Self
     where
@@ -85,10 +85,10 @@ where
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_derived_full::<F>(
+            dates: LazyBinaryDateSumCum::from_derived_full::<F>(
                 name, v, dateindex1, dates1, dateindex2, dates2,
             ),
-            difficultyepoch: LazyTransform2SumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
+            difficultyepoch: LazyBinaryTransformSumCum::from_lazy_stats_aggregate::<F, _, _, _, _>(
                 name,
                 v,
                 difficultyepoch1,
@@ -103,19 +103,19 @@ where
         name: &str,
         version: Version,
         dateindex1: &SumCum<brk_types::DateIndex, S1T>,
-        periods1: &DerivedDateSumCum<S1T>,
+        periods1: &LazyPeriodsSumCum<S1T>,
         difficultyepoch1: &LazySumCum<DifficultyEpoch, S1T, Height, DifficultyEpoch>,
         dateindex2: &SumCum<brk_types::DateIndex, S2T>,
-        periods2: &DerivedDateSumCum<S2T>,
+        periods2: &LazyPeriodsSumCum<S2T>,
         difficultyepoch2: &LazySumCum<DifficultyEpoch, S2T, Height, DifficultyEpoch>,
     ) -> Self {
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_computed_sum_raw::<F>(
+            dates: LazyBinaryDateSumCum::from_computed_sum_raw::<F>(
                 name, v, dateindex1, periods1, dateindex2, periods2,
             ),
-            difficultyepoch: LazyTransform2SumCum::from_sources_sum_raw::<F>(
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_sum_raw::<F>(
                 name,
                 v,
                 difficultyepoch1.sum.boxed_clone(),
@@ -141,8 +141,8 @@ where
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_computed_last::<F>(name, v, source1, source2),
-            difficultyepoch: LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+            dates: LazyBinaryDateSumCum::from_computed_last::<F>(name, v, source1, source2),
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
                 name,
                 v,
                 source1.difficultyepoch.sum.boxed_clone(),
@@ -155,7 +155,7 @@ where
     pub fn from_derived_computed_last<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: &DerivedComputedBlockSumCum<S1T>,
+        source1: &ComputedDerivedBlockSumCum<S1T>,
         source2: &ComputedBlockLast<S2T>,
     ) -> Self
     where
@@ -165,8 +165,8 @@ where
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_derived_computed_last::<F>(name, v, source1, source2),
-            difficultyepoch: LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+            dates: LazyBinaryDateSumCum::from_derived_computed_last::<F>(name, v, source1, source2),
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
                 name,
                 v,
                 source1.difficultyepoch.sum.boxed_clone(),
@@ -180,7 +180,7 @@ where
         name: &str,
         version: Version,
         source1: &ComputedBlockSumCum<S1T>,
-        source2: &DerivedComputedBlockLast<S2T>,
+        source2: &ComputedDerivedBlockLast<S2T>,
     ) -> Self
     where
         S1T: PartialOrd,
@@ -189,8 +189,8 @@ where
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_computed_derived_last::<F>(name, v, source1, source2),
-            difficultyepoch: LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+            dates: LazyBinaryDateSumCum::from_computed_derived_last::<F>(name, v, source1, source2),
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
                 name,
                 v,
                 source1.difficultyepoch.sum.boxed_clone(),
@@ -203,8 +203,8 @@ where
     pub fn from_derived_last<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: &DerivedComputedBlockSumCum<S1T>,
-        source2: &DerivedComputedBlockLast<S2T>,
+        source1: &ComputedDerivedBlockSumCum<S1T>,
+        source2: &ComputedDerivedBlockLast<S2T>,
     ) -> Self
     where
         S1T: NumericValue,
@@ -213,8 +213,8 @@ where
         let v = version + VERSION;
 
         Self {
-            dates: LazyDate2SumCum::from_derived_last::<F>(name, v, source1, source2),
-            difficultyepoch: LazyTransform2SumCum::from_sources_last_sum_raw::<F>(
+            dates: LazyBinaryDateSumCum::from_derived_last::<F>(name, v, source1, source2),
+            difficultyepoch: LazyBinaryTransformSumCum::from_sources_last_sum_raw::<F>(
                 name,
                 v,
                 source1.difficultyepoch.sum.boxed_clone(),

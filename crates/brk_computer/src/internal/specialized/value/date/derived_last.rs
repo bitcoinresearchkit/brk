@@ -7,22 +7,22 @@ use vecdb::{Database, Exit, IterableBoxedVec};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedDateLast, DerivedDateLast, LazyDateLast, SatsToBitcoin},
+    internal::{ComputedDateLast, LazyPeriodsLast, LazyDateLast, SatsToBitcoin},
     price,
     traits::ComputeFromBitcoin,
     utils::OptionExt,
 };
 
 #[derive(Clone, Traversable)]
-pub struct ValueDerivedDateLast {
-    pub sats: DerivedDateLast<Sats>,
+pub struct ValueLazyPeriodsLast {
+    pub sats: LazyPeriodsLast<Sats>,
     pub bitcoin: LazyDateLast<Bitcoin, Sats>,
     pub dollars: Option<ComputedDateLast<Dollars>>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl ValueDerivedDateLast {
+impl ValueLazyPeriodsLast {
     pub fn from_source(
         db: &Database,
         name: &str,
@@ -31,7 +31,7 @@ impl ValueDerivedDateLast {
         compute_dollars: bool,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let sats = DerivedDateLast::from_source(name, version + VERSION, source.clone(), indexes);
+        let sats = LazyPeriodsLast::from_source(name, version + VERSION, source.clone(), indexes);
 
         let bitcoin = LazyDateLast::from_derived::<SatsToBitcoin>(
             &format!("{name}_btc"),

@@ -7,28 +7,28 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableCloneableVec};
 
-use crate::internal::{ComputedVecValue, DerivedComputedBlockSum, LazyTransform2Sum, NumericValue};
+use crate::internal::{ComputedVecValue, ComputedDerivedBlockSum, LazyBinaryTransformSum, NumericValue};
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
-pub struct LazyDate2Sum<T, S1T, S2T>
+pub struct LazyBinaryDateSum<T, S1T, S2T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    pub dateindex: LazyTransform2Sum<DateIndex, T, S1T, S2T>,
-    pub weekindex: LazyTransform2Sum<WeekIndex, T, S1T, S2T>,
-    pub monthindex: LazyTransform2Sum<MonthIndex, T, S1T, S2T>,
-    pub quarterindex: LazyTransform2Sum<QuarterIndex, T, S1T, S2T>,
-    pub semesterindex: LazyTransform2Sum<SemesterIndex, T, S1T, S2T>,
-    pub yearindex: LazyTransform2Sum<YearIndex, T, S1T, S2T>,
-    pub decadeindex: LazyTransform2Sum<DecadeIndex, T, S1T, S2T>,
+    pub dateindex: LazyBinaryTransformSum<DateIndex, T, S1T, S2T>,
+    pub weekindex: LazyBinaryTransformSum<WeekIndex, T, S1T, S2T>,
+    pub monthindex: LazyBinaryTransformSum<MonthIndex, T, S1T, S2T>,
+    pub quarterindex: LazyBinaryTransformSum<QuarterIndex, T, S1T, S2T>,
+    pub semesterindex: LazyBinaryTransformSum<SemesterIndex, T, S1T, S2T>,
+    pub yearindex: LazyBinaryTransformSum<YearIndex, T, S1T, S2T>,
+    pub decadeindex: LazyBinaryTransformSum<DecadeIndex, T, S1T, S2T>,
 }
 
-impl<T, S1T, S2T> LazyDate2Sum<T, S1T, S2T>
+impl<T, S1T, S2T> LazyBinaryDateSum<T, S1T, S2T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: NumericValue + JsonSchema,
@@ -37,19 +37,19 @@ where
     pub fn from_derived<F: BinaryTransform<S1T, S2T, T>>(
         name: &str,
         version: Version,
-        source1: &DerivedComputedBlockSum<S1T>,
-        source2: &DerivedComputedBlockSum<S2T>,
+        source1: &ComputedDerivedBlockSum<S1T>,
+        source2: &ComputedDerivedBlockSum<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Sum::from_boxed::<F>(name, v, source1.$p.boxed_clone(), source2.$p.boxed_clone())
+                LazyBinaryTransformSum::from_boxed::<F>(name, v, source1.$p.boxed_clone(), source2.$p.boxed_clone())
             };
         }
 
         Self {
-            dateindex: LazyTransform2Sum::from_sum::<F>(name, v, &source1.dateindex, &source2.dateindex),
+            dateindex: LazyBinaryTransformSum::from_sum::<F>(name, v, &source1.dateindex, &source2.dateindex),
             weekindex: period!(weekindex),
             monthindex: period!(monthindex),
             quarterindex: period!(quarterindex),

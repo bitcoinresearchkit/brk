@@ -1,4 +1,4 @@
-//! DerivedComputedBlockFull - height_cumulative + dateindex storage + difficultyepoch + lazy time periods.
+//! ComputedDerivedBlockFull - height_cumulative + dateindex storage + difficultyepoch + lazy time periods.
 
 use brk_error::Result;
 
@@ -11,14 +11,14 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec}
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, CumulativeVec, DerivedDateFull, Full, LazyFull, NumericValue,
+        ComputedVecValue, CumulativeVec, LazyPeriodsFull, Full, LazyFull, NumericValue,
         compute_cumulative_extend,
     },
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct DerivedComputedBlockFull<T>
+pub struct ComputedDerivedBlockFull<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -27,13 +27,13 @@ where
     pub dateindex: Full<DateIndex, T>,
     #[deref]
     #[deref_mut]
-    pub dates: DerivedDateFull<T>,
+    pub dates: LazyPeriodsFull<T>,
     pub difficultyepoch: LazyFull<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedComputedBlockFull<T>
+impl<T> ComputedDerivedBlockFull<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -49,7 +49,7 @@ where
         let dateindex = Full::forced_import(db, name, v)?;
 
         Ok(Self {
-            dates: DerivedDateFull::from_sources(
+            dates: LazyPeriodsFull::from_sources(
                 name,
                 v,
                 dateindex.distribution.average.0.boxed_clone(),

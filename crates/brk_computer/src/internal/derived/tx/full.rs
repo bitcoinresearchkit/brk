@@ -11,7 +11,7 @@ use vecdb::{CollectableVec, Database, Exit, IterableCloneableVec};
 
 use crate::{
     indexes, ComputeIndexes,
-    internal::{ComputedVecValue, DerivedDateFull, Full, LazyFull, NumericValue, Stats},
+    internal::{ComputedVecValue, LazyPeriodsFull, Full, LazyFull, NumericValue, Stats},
 };
 
 /// Aggregates from TxIndex to height/dateindex with full stats.
@@ -27,7 +27,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub dates: DerivedDateFull<T>,
+    pub dates: LazyPeriodsFull<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -58,7 +58,7 @@ where
                 indexes.difficultyepoch.identity.boxed_clone(),
             );
 
-        let dates = DerivedDateFull::from_sources(
+        let dates = LazyPeriodsFull::from_sources(
             name,
             v,
             dateindex.average.0.boxed_clone(),

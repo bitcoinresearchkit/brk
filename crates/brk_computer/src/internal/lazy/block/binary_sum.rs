@@ -6,9 +6,9 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
 
-use crate::internal::{ComputedBlockSum, ComputedVecValue, DerivedComputedBlockSum, NumericValue};
+use crate::internal::{ComputedBlockSum, ComputedVecValue, ComputedDerivedBlockSum, NumericValue};
 
-use super::super::derived_block::LazyDerivedBlock2Sum;
+use super::super::derived_block::LazyBinaryDerivedBlockSum;
 
 const VERSION: Version = Version::ZERO;
 
@@ -24,7 +24,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: LazyDerivedBlock2Sum<T, S1T, S2T>,
+    pub rest: LazyBinaryDerivedBlockSum<T, S1T, S2T>,
 }
 
 impl<T, S1T, S2T> BinaryBlockSum<T, S1T, S2T>
@@ -38,14 +38,14 @@ where
         version: Version,
         height_source1: IterableBoxedVec<Height, S1T>,
         height_source2: IterableBoxedVec<Height, S2T>,
-        source1: &DerivedComputedBlockSum<S1T>,
-        source2: &DerivedComputedBlockSum<S2T>,
+        source1: &ComputedDerivedBlockSum<S1T>,
+        source2: &ComputedDerivedBlockSum<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         Self {
             height: LazyVecFrom2::transformed::<F>(name, v, height_source1, height_source2),
-            rest: LazyDerivedBlock2Sum::from_derived::<F>(name, v, source1, source2),
+            rest: LazyBinaryDerivedBlockSum::from_derived::<F>(name, v, source1, source2),
         }
     }
 
@@ -64,7 +64,7 @@ where
                 source1.height.boxed_clone(),
                 source2.height.boxed_clone(),
             ),
-            rest: LazyDerivedBlock2Sum::from_derived::<F>(name, v, &source1.rest, &source2.rest),
+            rest: LazyBinaryDerivedBlockSum::from_derived::<F>(name, v, &source1.rest, &source2.rest),
         }
     }
 }

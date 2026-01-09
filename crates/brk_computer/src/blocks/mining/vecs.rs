@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{StoredF32, StoredF64};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedBlockSum, ComputedDateLast, DerivedComputedBlockLast,
+    ComputedBlockLast, ComputedBlockSum, ComputedDateLast, ComputedDerivedBlockLast,
 };
 
 /// Mining-related metrics: hash rate, hash price, hash value, difficulty
@@ -24,7 +24,7 @@ pub struct Vecs {
     pub hash_value_phs_min: ComputedBlockLast<StoredF32>,
     pub hash_value_rebound: ComputedBlockLast<StoredF32>,
     /// Derived from indexer - no height storage needed
-    pub difficulty: DerivedComputedBlockLast<StoredF64>,
+    pub difficulty: ComputedDerivedBlockLast<StoredF64>,
     pub difficulty_as_hash: ComputedBlockLast<StoredF32>,
     pub difficulty_adjustment: ComputedBlockSum<StoredF32>,
 }

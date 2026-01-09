@@ -6,7 +6,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{DerivedComputedBlockFull, LazyBlockFull, WeightToFullness},
+    internal::{ComputedDerivedBlockFull, LazyBlockFull, WeightToFullness},
 };
 
 impl Vecs {
@@ -16,7 +16,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let weight = DerivedComputedBlockFull::forced_import(
+        let weight = ComputedDerivedBlockFull::forced_import(
             db,
             "block_weight",
             indexer.vecs.blocks.weight.boxed_clone(),

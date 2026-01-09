@@ -14,7 +14,7 @@ use vecdb::{Database, Exit, IterableCloneableVec, LazyVecFrom2};
 
 use crate::{indexes, ComputeIndexes};
 
-use crate::internal::{ComputedVecValue, DerivedComputedBlockSumCum, NumericValue};
+use crate::internal::{ComputedVecValue, ComputedDerivedBlockSumCum, NumericValue};
 
 /// Lazy binary height + stored derived block SumCum.
 ///
@@ -33,7 +33,7 @@ where
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
-    pub rest: DerivedComputedBlockSumCum<T>,
+    pub rest: ComputedDerivedBlockSumCum<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -53,7 +53,7 @@ where
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let rest = DerivedComputedBlockSumCum::forced_import(
+        let rest = ComputedDerivedBlockSumCum::forced_import(
             db,
             name,
             height.boxed_clone(),

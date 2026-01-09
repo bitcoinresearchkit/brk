@@ -9,7 +9,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVe
 
 use crate::{ComputeIndexes, indexes};
 
-use crate::internal::{ComputedVecValue, DerivedDateMin};
+use crate::internal::{ComputedVecValue, LazyPeriodsMin};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -21,7 +21,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: DerivedDateMin<T>,
+    pub rest: LazyPeriodsMin<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -39,7 +39,7 @@ where
         let dateindex = EagerVec::forced_import(db, name, version + VERSION)?;
 
         Ok(Self {
-            rest: DerivedDateMin::from_source(
+            rest: LazyPeriodsMin::from_source(
                 name,
                 version + VERSION,
                 dateindex.boxed_clone(),

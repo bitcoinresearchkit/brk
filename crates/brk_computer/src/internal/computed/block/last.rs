@@ -10,7 +10,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVe
 
 use crate::{ComputeIndexes, indexes};
 
-use crate::internal::{ComputedVecValue, DerivedComputedBlockLast, NumericValue};
+use crate::internal::{ComputedVecValue, ComputedDerivedBlockLast, NumericValue};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -22,7 +22,7 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: DerivedComputedBlockLast<T>,
+    pub rest: ComputedDerivedBlockLast<T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -42,7 +42,7 @@ where
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, v)?;
 
         let rest =
-            DerivedComputedBlockLast::forced_import(db, name, height.boxed_clone(), v, indexes)?;
+            ComputedDerivedBlockLast::forced_import(db, name, height.boxed_clone(), v, indexes)?;
 
         Ok(Self { height, rest })
     }

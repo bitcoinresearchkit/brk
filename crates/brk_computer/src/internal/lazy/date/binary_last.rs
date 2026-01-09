@@ -8,11 +8,11 @@ use schemars::JsonSchema;
 use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2};
 
 use crate::internal::{
-    ComputedBlockLast, ComputedBlockSum, ComputedDateLast, ComputedVecValue, DerivedDateLast,
-    DerivedDateSumCum, NumericValue,
+    ComputedBlockLast, ComputedBlockSum, ComputedDateLast, ComputedVecValue, LazyPeriodsLast,
+    LazyPeriodsSumCum, NumericValue,
 };
 
-use super::super::transform::LazyTransform2Last;
+use super::super::transform::LazyBinaryTransformLast;
 
 const VERSION: Version = Version::ZERO;
 
@@ -25,12 +25,12 @@ where
     S2T: ComputedVecValue,
 {
     pub dateindex: LazyVecFrom2<DateIndex, T, DateIndex, S1T, DateIndex, S2T>,
-    pub weekindex: LazyTransform2Last<WeekIndex, T, S1T, S2T>,
-    pub monthindex: LazyTransform2Last<MonthIndex, T, S1T, S2T>,
-    pub quarterindex: LazyTransform2Last<QuarterIndex, T, S1T, S2T>,
-    pub semesterindex: LazyTransform2Last<SemesterIndex, T, S1T, S2T>,
-    pub yearindex: LazyTransform2Last<YearIndex, T, S1T, S2T>,
-    pub decadeindex: LazyTransform2Last<DecadeIndex, T, S1T, S2T>,
+    pub weekindex: LazyBinaryTransformLast<WeekIndex, T, S1T, S2T>,
+    pub monthindex: LazyBinaryTransformLast<MonthIndex, T, S1T, S2T>,
+    pub quarterindex: LazyBinaryTransformLast<QuarterIndex, T, S1T, S2T>,
+    pub semesterindex: LazyBinaryTransformLast<SemesterIndex, T, S1T, S2T>,
+    pub yearindex: LazyBinaryTransformLast<YearIndex, T, S1T, S2T>,
+    pub decadeindex: LazyBinaryTransformLast<DecadeIndex, T, S1T, S2T>,
 }
 
 impl<T, S1T, S2T> LazyBinaryDateLast<T, S1T, S2T>
@@ -49,7 +49,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -78,14 +78,14 @@ where
         name: &str,
         version: Version,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        source1: &DerivedDateLast<S1T>,
+        source1: &LazyPeriodsLast<S1T>,
         source2: &ComputedDateLast<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -114,7 +114,7 @@ where
         name: &str,
         version: Version,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        source1: &DerivedDateLast<S1T>,
+        source1: &LazyPeriodsLast<S1T>,
         source2: &ComputedBlockLast<S2T>,
     ) -> Self
     where
@@ -124,7 +124,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -153,15 +153,15 @@ where
         name: &str,
         version: Version,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        source1: &DerivedDateLast<S1T>,
+        source1: &LazyPeriodsLast<S1T>,
         dateindex_source2: IterableBoxedVec<DateIndex, S2T>,
-        source2: &DerivedDateLast<S2T>,
+        source2: &LazyPeriodsLast<S2T>,
     ) -> Self {
         let v = version + VERSION;
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -199,7 +199,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -237,7 +237,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -276,7 +276,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_lazy_last::<F, _, _, _, _>(
+                LazyBinaryTransformLast::from_lazy_last::<F, _, _, _, _>(
                     name,
                     v,
                     &source1.$p,
@@ -314,7 +314,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -353,7 +353,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -382,9 +382,9 @@ where
         name: &str,
         version: Version,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        dates1: &DerivedDateSumCum<S1T>,
+        dates1: &LazyPeriodsSumCum<S1T>,
         dateindex_source2: IterableBoxedVec<DateIndex, S2T>,
-        dates2: &DerivedDateSumCum<S2T>,
+        dates2: &LazyPeriodsSumCum<S2T>,
     ) -> Self
     where
         S1T: PartialOrd,
@@ -394,7 +394,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     dates1.$p.cumulative.boxed_clone(),
@@ -419,12 +419,12 @@ where
         }
     }
 
-    /// Create from a DerivedDateLast source and a BinaryDateLast source.
+    /// Create from a LazyPeriodsLast source and a BinaryDateLast source.
     pub fn from_derived_last_and_binary_last<F, S2aT, S2bT>(
         name: &str,
         version: Version,
         dateindex_source1: IterableBoxedVec<DateIndex, S1T>,
-        source1: &DerivedDateLast<S1T>,
+        source1: &LazyPeriodsLast<S1T>,
         source2: &LazyBinaryDateLast<S2T, S2aT, S2bT>,
     ) -> Self
     where
@@ -436,7 +436,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -477,7 +477,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -519,7 +519,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -560,7 +560,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),
@@ -603,7 +603,7 @@ where
 
         macro_rules! period {
             ($p:ident) => {
-                LazyTransform2Last::from_vecs::<F>(
+                LazyBinaryTransformLast::from_vecs::<F>(
                     name,
                     v,
                     source1.$p.boxed_clone(),

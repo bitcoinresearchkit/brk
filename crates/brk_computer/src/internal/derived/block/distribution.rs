@@ -1,4 +1,4 @@
-//! DerivedComputedBlockDistribution - dateindex storage + lazy time periods + difficultyepoch.
+//! ComputedDerivedBlockDistribution - dateindex storage + lazy time periods + difficultyepoch.
 
 use brk_error::Result;
 
@@ -11,26 +11,26 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec}
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ComputedVecValue, DerivedDateDistribution, Distribution, LazyDistribution, NumericValue,
+        ComputedVecValue, LazyPeriodsDistribution, Distribution, LazyDistribution, NumericValue,
     },
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct DerivedComputedBlockDistribution<T>
+pub struct ComputedDerivedBlockDistribution<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub dateindex: Distribution<DateIndex, T>,
     #[deref]
     #[deref_mut]
-    pub dates: DerivedDateDistribution<T>,
+    pub dates: LazyPeriodsDistribution<T>,
     pub difficultyepoch: LazyDistribution<DifficultyEpoch, T, Height, DifficultyEpoch>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> DerivedComputedBlockDistribution<T>
+impl<T> ComputedDerivedBlockDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -44,7 +44,7 @@ where
         let dateindex = Distribution::forced_import(db, name, version + VERSION)?;
         let v = version + VERSION;
 
-        let dates = DerivedDateDistribution::from_sources(
+        let dates = LazyPeriodsDistribution::from_sources(
             name,
             v,
             dateindex.average.0.boxed_clone(),

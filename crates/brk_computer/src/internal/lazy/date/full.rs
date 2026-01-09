@@ -5,7 +5,7 @@ use brk_types::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex,
 use schemars::JsonSchema;
 use vecdb::{IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedVecValue, DerivedDateFull, Full};
+use crate::internal::{ComputedVecValue, LazyPeriodsFull, Full};
 
 use super::super::transform::{LazyTransformFull, LazyTransformStats};
 
@@ -36,7 +36,7 @@ where
         name: &str,
         version: Version,
         dateindex: &Full<DateIndex, S1T>,
-        source: &DerivedDateFull<S1T>,
+        source: &LazyPeriodsFull<S1T>,
     ) -> Self {
         let v = version + VERSION;
 

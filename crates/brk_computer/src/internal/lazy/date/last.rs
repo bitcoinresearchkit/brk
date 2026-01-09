@@ -7,7 +7,7 @@ use brk_types::{
 use schemars::JsonSchema;
 use vecdb::{IterableBoxedVec, IterableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedBlockLast, ComputedDateLast, ComputedVecValue, DerivedDateLast, NumericValue};
+use crate::internal::{ComputedBlockLast, ComputedDateLast, ComputedVecValue, LazyPeriodsLast, NumericValue};
 
 use super::super::transform::LazyTransformLast;
 
@@ -55,7 +55,7 @@ where
         name: &str,
         version: Version,
         dateindex_source: IterableBoxedVec<DateIndex, S1T>,
-        source: &DerivedDateLast<S1T>,
+        source: &LazyPeriodsLast<S1T>,
     ) -> Self {
         let v = version + VERSION;
 
