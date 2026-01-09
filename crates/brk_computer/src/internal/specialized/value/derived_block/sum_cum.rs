@@ -8,7 +8,7 @@ use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec,
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ClosePriceTimesSats, ComputedDerivedBlockSumCum, LazyBlockSumCum, LazyComputedBlockSumCum,
+        ClosePriceTimesSats, ComputedDerivedBlockSumCum, LazyBlockSumCum, BlockSumCumLazyHeight,
         SatsToBitcoin,
     },
     price,
@@ -19,7 +19,7 @@ use crate::{
 pub struct DerivedValueBlockSumCum {
     pub sats: ComputedDerivedBlockSumCum<Sats>,
     pub bitcoin: LazyBlockSumCum<Bitcoin, Sats>,
-    pub dollars: Option<LazyComputedBlockSumCum<Dollars, Close<Dollars>, Sats>>,
+    pub dollars: Option<BlockSumCumLazyHeight<Dollars, Close<Dollars>, Sats>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -58,7 +58,7 @@ impl DerivedValueBlockSumCum {
                 sats_source.boxed_clone(),
             );
 
-            Some(LazyComputedBlockSumCum::forced_import(
+            Some(BlockSumCumLazyHeight::forced_import(
                 db,
                 &format!("{name}_usd"),
                 v,

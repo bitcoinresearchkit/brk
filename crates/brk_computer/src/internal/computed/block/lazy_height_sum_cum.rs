@@ -1,4 +1,4 @@
-//! Lazy binary height + stored derived SumCum.
+//! BlockSumCumLazyHeight - block sum+cumulative with lazy height transform.
 //!
 //! Use this when you need:
 //! - Lazy height (binary transform from two sources)
@@ -16,14 +16,14 @@ use crate::{indexes, ComputeIndexes};
 
 use crate::internal::{ComputedVecValue, ComputedDerivedBlockSumCum, NumericValue};
 
-/// Lazy binary height + stored derived block SumCum.
+/// Block sum+cumulative with lazy binary height transform + computed derived indexes.
 ///
 /// Height is a lazy binary transform (e.g., mask × source, or price × sats).
 /// Cumulative and dateindex are stored (computed from lazy height).
 /// Coarser periods are lazy lookups.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyComputedBlockSumCum<T, S1T = T, S2T = T>
+pub struct BlockSumCumLazyHeight<T, S1T = T, S2T = T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
@@ -38,7 +38,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T, S1T, S2T> LazyComputedBlockSumCum<T, S1T, S2T>
+impl<T, S1T, S2T> BlockSumCumLazyHeight<T, S1T, S2T>
 where
     T: NumericValue + JsonSchema,
     S1T: ComputedVecValue + JsonSchema,

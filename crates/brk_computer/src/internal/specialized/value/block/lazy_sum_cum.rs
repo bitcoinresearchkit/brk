@@ -13,7 +13,7 @@ use vecdb::{
 use crate::{
     ComputeIndexes, indexes,
     internal::{
-        ClosePriceTimesSats, ComputedVecValue, LazyBlockSumCum, LazyComputedBlockSumCum,
+        ClosePriceTimesSats, ComputedVecValue, LazyBlockSumCum, BlockSumCumLazyHeight,
         SatsToBitcoin,
     },
     price,
@@ -30,9 +30,9 @@ where
     S1T: ComputedVecValue + JsonSchema,
     S2T: ComputedVecValue + JsonSchema,
 {
-    pub sats: LazyComputedBlockSumCum<Sats, S1T, S2T>,
+    pub sats: BlockSumCumLazyHeight<Sats, S1T, S2T>,
     pub bitcoin: LazyBlockSumCum<Bitcoin, Sats>,
-    pub dollars: Option<LazyComputedBlockSumCum<Dollars, Close<Dollars>, Sats>>,
+    pub dollars: Option<BlockSumCumLazyHeight<Dollars, Close<Dollars>, Sats>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -57,7 +57,7 @@ where
         let v = version + VERSION;
 
         let sats_height = LazyVecFrom2::transformed::<F>(name, v, source1, source2);
-        let sats = LazyComputedBlockSumCum::forced_import(db, name, v, indexes, sats_height)?;
+        let sats = BlockSumCumLazyHeight::forced_import(db, name, v, indexes, sats_height)?;
 
         let bitcoin = LazyBlockSumCum::from_derived::<SatsToBitcoin>(
             &format!("{name}_btc"),
@@ -74,7 +74,7 @@ where
                 sats.height.boxed_clone(),
             );
 
-            Some(LazyComputedBlockSumCum::forced_import(
+            Some(BlockSumCumLazyHeight::forced_import(
                 db,
                 &format!("{name}_usd"),
                 v,

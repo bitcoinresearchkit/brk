@@ -1,4 +1,4 @@
-//! LazyComputedBlockFull - lazy height + ComputedDerivedBlockFull.
+//! BlockFullLazyHeight - block full with lazy height transform.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -14,10 +14,10 @@ use crate::{
 
 const VERSION: Version = Version::ZERO;
 
-/// Lazy height transform + stored/computed derived indexes.
+/// Block full aggregation with lazy height transform + computed derived indexes.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyComputedBlockFull<T, S = T>
+pub struct BlockFullLazyHeight<T, S = T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S: ComputedVecValue,
@@ -29,7 +29,7 @@ where
     pub rest: ComputedDerivedBlockFull<T>,
 }
 
-impl<T, S> LazyComputedBlockFull<T, S>
+impl<T, S> BlockFullLazyHeight<T, S>
 where
     T: NumericValue + JsonSchema,
     S: ComputedVecValue + JsonSchema,

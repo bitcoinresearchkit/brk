@@ -9,7 +9,7 @@ mod height_date_last;
 mod height_date_max;
 mod height_date_min;
 mod last;
-mod lazy_sum_cum;
+mod lazy_height_sum_cum;
 mod sum;
 mod sum_cum;
 
@@ -20,6 +20,6 @@ pub use height_date_last::*;
 pub use height_date_max::*;
 pub use height_date_min::*;
 pub use last::*;
-pub use lazy_sum_cum::*;
+pub use lazy_height_sum_cum::*;
 pub use sum::*;
 pub use sum_cum::*;
