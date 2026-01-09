@@ -7,7 +7,7 @@ use brk_types::{DateIndex, Dollars, Height, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, IterableVec};
 
-use crate::{ComputeIndexes, indexes, price, distribution::state::UTXOCohortState};
+use crate::{ComputeIndexes, distribution::state::UTXOCohortState, indexes, price};
 
 use crate::distribution::metrics::{CohortMetrics, ImportConfig, RealizedMetrics, SupplyMetrics};
 
@@ -149,7 +149,7 @@ impl DynCohortVecs for UTXOCohortVecs {
                 state.supply.value = self
                     .metrics
                     .supply
-                    .supply
+                    .total
                     .sats
                     .height
                     .read_once(prev_height)?;

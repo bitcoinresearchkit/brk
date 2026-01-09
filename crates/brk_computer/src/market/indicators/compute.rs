@@ -153,7 +153,7 @@ impl Vecs {
 
         let supply_vecs: Vec<_> = amount_range
             .iter()
-            .map(|c| &c.metrics.supply.supply.sats.dateindex.0)
+            .map(|c| &c.metrics.supply.total.sats.dateindex.0)
             .collect();
         let count_vecs: Vec<_> = amount_range
             .iter()

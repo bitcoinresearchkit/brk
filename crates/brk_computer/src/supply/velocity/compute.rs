@@ -13,7 +13,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // velocity = annualized_volume / circulating_supply
-        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.supply;
+        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total;
 
         // BTC velocity
         self.btc.compute_all(starting_indexes, exit, |v| {

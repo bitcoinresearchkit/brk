@@ -18,7 +18,7 @@ impl Vecs {
             .all
             .metrics
             .supply
-            .supply
+            .total
             .sats
             .height;
 

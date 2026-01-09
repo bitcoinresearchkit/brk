@@ -5,26 +5,26 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{DifficultyEpoch, Height, Sats, Version};
+use brk_types::{Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, ImportableVec, IterableCloneableVec, PcoVec};
 
 use crate::{ComputeIndexes, indexes, price};
 
-use super::super::block::LazyDerivedBlockValue;
+use super::super::block::{LazyDerivedBlockValue, LazyValueDifficultyEpochFromHeight};
 use super::ValueDateLast;
-use crate::internal::LazyLast;
 
 /// Value type where both height and dateindex are stored independently.
 /// Dateindex values cannot be derived from height (e.g., unrealized P&L).
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
 pub struct ValueBlockDateLast {
-    #[traversable(wrap = "sats")]
+    #[traversable(rename = "sats")]
     pub height: EagerVec<PcoVec<Height, Sats>>,
     #[traversable(flatten)]
     pub height_value: LazyDerivedBlockValue,
-    pub difficultyepoch: LazyLast<DifficultyEpoch, Sats, Height, DifficultyEpoch>,
+    #[traversable(flatten)]
+    pub difficultyepoch: LazyValueDifficultyEpochFromHeight,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -51,11 +51,12 @@ impl ValueBlockDateLast {
         let height_value =
             LazyDerivedBlockValue::from_source(name, height.boxed_clone(), v, price_source);
 
-        let difficultyepoch = LazyLast::from_source(
+        let difficultyepoch = LazyValueDifficultyEpochFromHeight::from_height_source(
             name,
-            v,
             height.boxed_clone(),
             indexes.difficultyepoch.identity.boxed_clone(),
+            price,
+            v,
         );
 
         let indexes = ValueDateLast::forced_import(db, name, v, compute_dollars, indexes)?;

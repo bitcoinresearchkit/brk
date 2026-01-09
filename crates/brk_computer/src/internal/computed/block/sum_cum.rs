@@ -21,7 +21,7 @@ pub struct ComputedBlockSumCum<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(wrap = "sum")]
+    #[traversable(rename = "sum")]
     pub height: EagerVec<PcoVec<Height, T>>,
     #[deref]
     #[deref_mut]

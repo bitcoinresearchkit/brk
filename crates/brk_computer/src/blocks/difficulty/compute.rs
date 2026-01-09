@@ -13,25 +13,23 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let mut height_to_difficultyepoch_iter =
-            indexes.height.difficultyepoch.into_iter();
-        self.difficultyepoch
-            .compute_all(starting_indexes, exit, |vec| {
-                let mut height_count_iter = indexes.dateindex.height_count.into_iter();
-                vec.compute_transform(
-                    starting_indexes.dateindex,
-                    &indexes.dateindex.first_height,
-                    |(di, height, ..)| {
-                        (
-                            di,
-                            height_to_difficultyepoch_iter
-                                .get_unwrap(height + (*height_count_iter.get_unwrap(di) - 1)),
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        let mut height_to_difficultyepoch_iter = indexes.height.difficultyepoch.into_iter();
+        self.epoch.compute_all(starting_indexes, exit, |vec| {
+            let mut height_count_iter = indexes.dateindex.height_count.into_iter();
+            vec.compute_transform(
+                starting_indexes.dateindex,
+                &indexes.dateindex.first_height,
+                |(di, height, ..)| {
+                    (
+                        di,
+                        height_to_difficultyepoch_iter
+                            .get_unwrap(height + (*height_count_iter.get_unwrap(di) - 1)),
+                    )
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         self.blocks_before_next_difficulty_adjustment.compute_all(
             indexes,

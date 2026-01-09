@@ -92,7 +92,11 @@ impl CohortMetrics {
 
     /// Get minimum length across height-indexed vectors written in block loop.
     pub fn min_stateful_height_len(&self) -> usize {
-        let mut min = self.supply.min_len().min(self.outputs.min_len()).min(self.activity.min_len());
+        let mut min = self
+            .supply
+            .min_len()
+            .min(self.outputs.min_len())
+            .min(self.activity.min_len());
 
         if let Some(realized) = &self.realized {
             min = min.min(realized.min_stateful_height_len());
@@ -124,7 +128,8 @@ impl CohortMetrics {
     /// Push state values to height-indexed vectors.
     pub fn truncate_push(&mut self, height: Height, state: &CohortState) -> Result<()> {
         self.supply.truncate_push(height, state.supply.value)?;
-        self.outputs.truncate_push(height, state.supply.utxo_count)?;
+        self.outputs
+            .truncate_push(height, state.supply.utxo_count)?;
         self.activity.truncate_push(
             height,
             state.sent,
@@ -309,8 +314,7 @@ impl CohortMetrics {
     ) -> Result<()> {
         self.supply
             .compute_rest_part1(indexes, price, starting_indexes, exit)?;
-        self.outputs
-            .compute_rest(indexes, starting_indexes, exit)?;
+        self.outputs.compute_rest(indexes, starting_indexes, exit)?;
         self.activity
             .compute_rest_part1(indexes, starting_indexes, exit)?;
 
@@ -345,7 +349,7 @@ impl CohortMetrics {
                 indexes,
                 price,
                 starting_indexes,
-                &self.supply.supply.bitcoin.height,
+                &self.supply.total.bitcoin.height,
                 height_to_market_cap,
                 dateindex_to_market_cap,
                 exit,

@@ -32,7 +32,7 @@ impl Vecs {
             .all
             .metrics
             .supply
-            .supply
+            .total
             .bitcoin
             .height;
 

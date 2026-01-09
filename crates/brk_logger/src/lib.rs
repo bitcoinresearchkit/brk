@@ -86,33 +86,40 @@ impl<const ANSI: bool> FieldVisitor<ANSI> {
 
 impl<const ANSI: bool> tracing::field::Visit for FieldVisitor<ANSI> {
     fn record_u64(&mut self, field: &Field, value: u64) {
-        if field.name() == "status" {
+        let name = field.name();
+        if name == "status" {
             self.status = Some(value);
-        } else {
-            let _ = write!(self.result, "{}={} ", field.name(), value);
+        } else if !name.starts_with("log.") {
+            let _ = write!(self.result, "{}={} ", name, value);
         }
     }
 
     fn record_i64(&mut self, field: &Field, value: i64) {
-        let _ = write!(self.result, "{}={} ", field.name(), value);
+        let name = field.name();
+        if !name.starts_with("log.") {
+            let _ = write!(self.result, "{}={} ", name, value);
+        }
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
-        if field.name() == "uri" {
+        let name = field.name();
+        if name == "uri" {
             self.uri = Some(value.to_string());
-        } else if field.name() == "message" {
+        } else if name == "message" {
             let _ = write!(self.result, "{value}");
-        } else {
-            let _ = write!(self.result, "{}={} ", field.name(), value);
+        } else if !name.starts_with("log.") {
+            let _ = write!(self.result, "{}={} ", name, value);
         }
     }
 
     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        match field.name() {
+        let name = field.name();
+        match name {
             "uri" => self.uri = Some(format!("{value:?}")),
             "latency" => self.latency = Some(format!("{value:?}")),
             "message" => { let _ = write!(self.result, "{value:?}"); }
-            _ => { let _ = write!(self.result, "{}={:?} ", field.name(), value); }
+            _ if name.starts_with("log.") => {}
+            _ => { let _ = write!(self.result, "{}={:?} ", name, value); }
         }
     }
 }
@@ -198,6 +205,9 @@ impl tracing::field::Visit for MessageVisitor<'_> {
 }
 
 pub fn init(path: Option<&Path>) -> io::Result<()> {
+    // Bridge log crate to tracing (for vecdb and other log-based crates)
+    tracing_log::LogTracer::init().ok();
+
     #[cfg(debug_assertions)]
     const DEFAULT_LEVEL: &str = "debug";
     #[cfg(not(debug_assertions))]

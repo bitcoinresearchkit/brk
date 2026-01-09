@@ -8,10 +8,7 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{
-    ComputeIndexes,
-    distribution::state::AddressCohortState,
-    indexes,
-    internal::ComputedBlockLast,
+    ComputeIndexes, distribution::state::AddressCohortState, indexes, internal::ComputedBlockLast,
     price,
 };
 
@@ -155,7 +152,7 @@ impl DynCohortVecs for AddressCohortVecs {
                 state.inner.supply.value = self
                     .metrics
                     .supply
-                    .supply
+                    .total
                     .sats
                     .height
                     .read_once(prev_height)?;

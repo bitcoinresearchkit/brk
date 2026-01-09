@@ -77,14 +77,14 @@ impl RelativeMetrics {
         let compute_rel_to_all = cfg.compute_rel_to_all();
 
         // Global sources from "all" cohort
-        let global_supply_sats_height = all_supply.map(|s| &s.supply.sats.height);
-        let global_supply_sats_difficultyepoch = all_supply.map(|s| &s.supply.sats.difficultyepoch);
-        let global_supply_sats_dates = all_supply.map(|s| &s.supply.sats.rest.dates);
-        let global_supply_sats_dateindex = all_supply.map(|s| &s.supply.sats.rest.dateindex);
-        let global_market_cap = all_supply.and_then(|s| s.supply.dollars.as_ref());
+        let global_supply_sats_height = all_supply.map(|s| &s.total.sats.height);
+        let global_supply_sats_difficultyepoch = all_supply.map(|s| &s.total.sats.difficultyepoch);
+        let global_supply_sats_dates = all_supply.map(|s| &s.total.sats.rest.dates);
+        let global_supply_sats_dateindex = all_supply.map(|s| &s.total.sats.rest.dateindex);
+        let global_market_cap = all_supply.and_then(|s| s.total.dollars.as_ref());
 
         // Own market cap source
-        let own_market_cap = supply.supply.dollars.as_ref();
+        let own_market_cap = supply.total.dollars.as_ref();
 
         Ok(Self {
             // === Supply Relative to Circulating Supply (lazy from global supply) ===
@@ -94,8 +94,8 @@ impl RelativeMetrics {
                 LazyBinaryDateLast::from_both_derived_last::<PercentageSatsF64>(
                     &cfg.name("supply_rel_to_circulating_supply"),
                     cfg.version + v1,
-                    supply.supply.sats.rest.dateindex.boxed_clone(),
-                    &supply.supply.sats.rest.dates,
+                    supply.total.sats.rest.dateindex.boxed_clone(),
+                    &supply.total.sats.rest.dates,
                     global_supply_sats_dateindex.unwrap().boxed_clone(),
                     global_supply_sats_dates.unwrap(),
                 )
@@ -107,34 +107,34 @@ impl RelativeMetrics {
                     &cfg.name("supply_in_profit_rel_to_own_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_profit.height.boxed_clone(),
-                    supply.supply.sats.height.boxed_clone(),
-                    unrealized.supply_in_profit.difficultyepoch.boxed_clone(),
-                    supply.supply.sats.difficultyepoch.boxed_clone(),
+                    supply.total.sats.height.boxed_clone(),
+                    unrealized.supply_in_profit.difficultyepoch.sats.boxed_clone(),
+                    supply.total.sats.difficultyepoch.boxed_clone(),
                     unrealized
                         .supply_in_profit
                         .indexes
                         .sats_dateindex
                         .boxed_clone(),
                     &unrealized.supply_in_profit.indexes.sats,
-                    supply.supply.sats.rest.dateindex.boxed_clone(),
-                    &supply.supply.sats.rest.dates,
+                    supply.total.sats.rest.dateindex.boxed_clone(),
+                    &supply.total.sats.rest.dates,
                 ),
             supply_in_loss_rel_to_own_supply:
                 LazyBinaryBlockLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
                     &cfg.name("supply_in_loss_rel_to_own_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_loss.height.boxed_clone(),
-                    supply.supply.sats.height.boxed_clone(),
-                    unrealized.supply_in_loss.difficultyepoch.boxed_clone(),
-                    supply.supply.sats.difficultyepoch.boxed_clone(),
+                    supply.total.sats.height.boxed_clone(),
+                    unrealized.supply_in_loss.difficultyepoch.sats.boxed_clone(),
+                    supply.total.sats.difficultyepoch.boxed_clone(),
                     unrealized
                         .supply_in_loss
                         .indexes
                         .sats_dateindex
                         .boxed_clone(),
                     &unrealized.supply_in_loss.indexes.sats,
-                    supply.supply.sats.rest.dateindex.boxed_clone(),
-                    &supply.supply.sats.rest.dates,
+                    supply.total.sats.rest.dateindex.boxed_clone(),
+                    &supply.total.sats.rest.dates,
                 ),
 
             // === Supply in Profit/Loss Relative to Circulating Supply (lazy from global supply) ===
@@ -146,7 +146,7 @@ impl RelativeMetrics {
                     cfg.version + v1,
                     unrealized.supply_in_profit.height.boxed_clone(),
                     global_supply_sats_height.unwrap().boxed_clone(),
-                    unrealized.supply_in_profit.difficultyepoch.boxed_clone(),
+                    unrealized.supply_in_profit.difficultyepoch.sats.boxed_clone(),
                     global_supply_sats_difficultyepoch.unwrap().boxed_clone(),
                     unrealized
                         .supply_in_profit
@@ -166,7 +166,7 @@ impl RelativeMetrics {
                     cfg.version + v1,
                     unrealized.supply_in_loss.height.boxed_clone(),
                     global_supply_sats_height.unwrap().boxed_clone(),
-                    unrealized.supply_in_loss.difficultyepoch.boxed_clone(),
+                    unrealized.supply_in_loss.difficultyepoch.sats.boxed_clone(),
                     global_supply_sats_difficultyepoch.unwrap().boxed_clone(),
                     unrealized
                         .supply_in_loss

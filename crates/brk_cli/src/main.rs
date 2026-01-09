@@ -55,14 +55,17 @@ pub fn run() -> color_eyre::Result<()> {
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
-    // Pre-run indexer if too far behind, then drop and reimport to reduce memory
-    let chain_height = client.get_last_height()?;
-    let indexed_height = indexer.vecs.starting_height();
-    if chain_height.saturating_sub(*indexed_height) > 1000 {
-        indexer.index(&blocks, &client, &exit)?;
-        drop(indexer);
-        Mimalloc::collect();
-        indexer = Indexer::forced_import(&config.brkdir())?;
+    #[cfg(not(debug_assertions))]
+    {
+        // Pre-run indexer if too far behind, then drop and reimport to reduce memory
+        let chain_height = client.get_last_height()?;
+        let indexed_height = indexer.vecs.starting_height();
+        if chain_height.saturating_sub(*indexed_height) > 1000 {
+            indexer.index(&blocks, &client, &exit)?;
+            drop(indexer);
+            Mimalloc::collect();
+            indexer = Indexer::forced_import(&config.brkdir())?;
+        }
     }
 
     let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;

@@ -23,7 +23,7 @@ impl Vecs {
             .all
             .metrics
             .supply
-            .supply
+            .total
             .bitcoin
             .height;
         let realized_price = &distribution

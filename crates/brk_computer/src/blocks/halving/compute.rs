@@ -14,23 +14,22 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let mut height_to_halvingepoch_iter = indexes.height.halvingepoch.into_iter();
-        self.halvingepoch
-            .compute_all(starting_indexes, exit, |vec| {
-                let mut height_count_iter = indexes.dateindex.height_count.into_iter();
-                vec.compute_transform(
-                    starting_indexes.dateindex,
-                    &indexes.dateindex.first_height,
-                    |(di, height, ..)| {
-                        (
-                            di,
-                            height_to_halvingepoch_iter
-                                .get_unwrap(height + (*height_count_iter.get_unwrap(di) - 1)),
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.epoch.compute_all(starting_indexes, exit, |vec| {
+            let mut height_count_iter = indexes.dateindex.height_count.into_iter();
+            vec.compute_transform(
+                starting_indexes.dateindex,
+                &indexes.dateindex.first_height,
+                |(di, height, ..)| {
+                    (
+                        di,
+                        height_to_halvingepoch_iter
+                            .get_unwrap(height + (*height_count_iter.get_unwrap(di) - 1)),
+                    )
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         self.blocks_before_next_halving
             .compute_all(indexes, starting_indexes, exit, |v| {

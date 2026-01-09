@@ -29,7 +29,7 @@ impl Vecs {
             .all
             .metrics
             .supply
-            .supply
+            .total
             .dollars
             .as_ref()
             .zip(transactions.volume.sent_sum.dollars.as_ref())

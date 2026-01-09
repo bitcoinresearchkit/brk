@@ -313,10 +313,16 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
                 quote! {
                     if let Some(ref nested) = self.#field_name {
                         match nested.to_tree_node() {
-                            brk_traversable::TreeNode::Branch(map) => collected.extend(map),
+                            brk_traversable::TreeNode::Branch(map) => {
+                                for (key, node) in map {
+                                    brk_traversable::TreeNode::merge_node(&mut collected, key, node)
+                                        .expect("Conflicting values for same key during flatten");
+                                }
+                            }
                             leaf @ brk_traversable::TreeNode::Leaf(_) => {
                                 // Collapsed leaf from child - insert with field name as key
-                                collected.insert(String::from(stringify!(#field_name)), leaf);
+                                brk_traversable::TreeNode::merge_node(&mut collected, String::from(stringify!(#field_name)), leaf)
+                                    .expect("Conflicting values for same key during flatten");
                             }
                         }
                     }
@@ -324,10 +330,16 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
             } else {
                 quote! {
                     match self.#field_name.to_tree_node() {
-                        brk_traversable::TreeNode::Branch(map) => collected.extend(map),
+                        brk_traversable::TreeNode::Branch(map) => {
+                            for (key, node) in map {
+                                brk_traversable::TreeNode::merge_node(&mut collected, key, node)
+                                    .expect("Conflicting values for same key during flatten");
+                            }
+                        }
                         leaf @ brk_traversable::TreeNode::Leaf(_) => {
                             // Collapsed leaf from child - insert with field name as key
-                            collected.insert(String::from(stringify!(#field_name)), leaf);
+                            brk_traversable::TreeNode::merge_node(&mut collected, String::from(stringify!(#field_name)), leaf)
+                                .expect("Conflicting values for same key during flatten");
                         }
                     }
                 }

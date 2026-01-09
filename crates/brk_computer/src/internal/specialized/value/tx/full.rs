@@ -14,9 +14,8 @@ use super::ValueDerivedTxFull;
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct ValueTxFull {
-    #[traversable(wrap = "sats")]
+    #[traversable(rename = "txindex")]
     pub base: EagerVec<PcoVec<TxIndex, Sats>>,
     #[deref]
     #[deref_mut]

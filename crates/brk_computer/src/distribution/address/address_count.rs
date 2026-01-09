@@ -225,6 +225,7 @@ impl AddressTypeToAddrCountVecs {
 #[derive(Clone, Traversable)]
 pub struct AddrCountVecs {
     pub all: ComputedBlockLast<StoredU64>,
+    #[traversable(flatten)]
     pub by_addresstype: AddressTypeToAddrCountVecs,
 }
 

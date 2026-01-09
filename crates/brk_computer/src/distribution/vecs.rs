@@ -297,13 +297,13 @@ impl Vecs {
         let supply_metrics = &self.utxo_cohorts.all.metrics.supply;
 
         let height_to_market_cap = supply_metrics
-            .supply
+            .total
             .dollars
             .as_ref()
             .map(|d| d.height.clone());
 
         let dateindex_to_market_cap = supply_metrics
-            .supply
+            .total
             .dollars
             .as_ref()
             .map(|d| d.dateindex.0.clone());
@@ -373,16 +373,10 @@ fn adjust_for_dateindex_gap(
     }
 
     // Get the dateindex at the height we want to resume at
-    let required_dateindex: usize = indexes
-        .height
-        .dateindex
-        .read_once(height_based_min)?
-        .into();
+    let required_dateindex: usize = indexes.height.dateindex.read_once(height_based_min)?.into();
 
     // If dateindex vecs are behind, restart from first height of the missing day
-    if dateindex_min < required_dateindex
-        && dateindex_min < indexes.dateindex.first_height.len()
-    {
+    if dateindex_min < required_dateindex && dateindex_min < indexes.dateindex.first_height.len() {
         Ok(indexes
             .dateindex
             .first_height

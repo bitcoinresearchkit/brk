@@ -18,7 +18,7 @@ where
     T: ComputedVecValue + PartialOrd + JsonSchema,
     S1T: ComputedVecValue,
 {
-    #[traversable(wrap = "sum")]
+    #[traversable(rename = "sum")]
     pub height: LazyVecFrom1<Height, T, Height, S1T>,
     #[deref]
     #[deref_mut]

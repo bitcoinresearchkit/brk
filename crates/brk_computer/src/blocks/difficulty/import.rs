@@ -13,12 +13,7 @@ impl Vecs {
         let v2 = Version::TWO;
 
         Ok(Self {
-            difficultyepoch: ComputedDateLast::forced_import(
-                db,
-                "difficultyepoch",
-                version,
-                indexes,
-            )?,
+            epoch: ComputedDateLast::forced_import(db, "difficultyepoch", version, indexes)?,
             blocks_before_next_difficulty_adjustment: ComputedBlockLast::forced_import(
                 db,
                 "blocks_before_next_difficulty_adjustment",

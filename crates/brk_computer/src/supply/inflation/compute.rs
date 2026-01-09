@@ -13,7 +13,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // inflation = daily_subsidy / circulating_supply * 365 * 100
-        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.supply.sats;
+        let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total.sats;
 
         self.compute_all(starting_indexes, exit, |v| {
             v.compute_transform2(

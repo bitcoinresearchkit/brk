@@ -11,7 +11,7 @@ use vecdb::{
 use crate::internal::{ComputedVecValue, LastVec, LazyLast};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
-#[traversable(wrap = "last")]
+#[traversable(transparent)]
 pub struct LazyTransformLast<I, T, S1T = T>(pub LazyVecFrom1<I, T, I, S1T>)
 where
     I: VecIndex,

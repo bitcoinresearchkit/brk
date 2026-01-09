@@ -13,6 +13,8 @@ impl Vecs {
         Self(LazyLastBlockValue::from_block_source::<
             SatsIdentity,
             DollarsIdentity,
-        >("circulating_supply", &supply_metrics.supply, version))
+        >(
+            "circulating_supply", &supply_metrics.total, version)
+        )
     }
 }

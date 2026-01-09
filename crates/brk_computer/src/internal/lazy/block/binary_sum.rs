@@ -20,7 +20,7 @@ where
     S1T: ComputedVecValue,
     S2T: ComputedVecValue,
 {
-    #[traversable(wrap = "sum")]
+    #[traversable(rename = "sum")]
     pub height: LazyVecFrom2<Height, T, Height, S1T, Height, S2T>,
     #[deref]
     #[deref_mut]
