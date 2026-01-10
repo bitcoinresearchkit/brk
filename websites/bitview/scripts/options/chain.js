@@ -18,8 +18,7 @@ export function createChainSection(ctx) {
     market,
     scripts,
     supply,
-  } = brk.tree.computed;
-  const { indexed } = brk.tree;
+  } = brk.tree;
 
   /**
    * Create sum/cumulative series from a BlockCountPattern
@@ -674,12 +673,8 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromBlockInterval(
-                transactions.size.txWeight,
-                "weight",
-                Unit.wu,
-              ),
-              ...fromBlockInterval(transactions.size.txVsize, "vsize", Unit.vb),
+              ...fromBlockInterval(transactions.size.weight, "weight", Unit.wu),
+              ...fromBlockInterval(transactions.size.vsize, "vsize", Unit.vb),
             ],
           },
           {
@@ -687,21 +682,21 @@ export function createChainSection(ctx) {
             title: "Transaction Versions",
             bottom: [
               ...fromBlockCount(
-                transactions.versions.txV1,
+                transactions.versions.v1,
                 "v1",
                 Unit.count,
                 colors.orange,
                 colors.red,
               ),
               ...fromBlockCount(
-                transactions.versions.txV2,
+                transactions.versions.v2,
                 "v2",
                 Unit.count,
                 colors.cyan,
                 colors.blue,
               ),
               ...fromBlockCount(
-                transactions.versions.txV3,
+                transactions.versions.v3,
                 "v3",
                 Unit.count,
                 colors.lime,
@@ -714,18 +709,12 @@ export function createChainSection(ctx) {
             title: "Transactions Velocity",
             bottom: [
               s({
-                metric: brk.mergeMetricPatterns(
-                  supply.velocity.btc.dateindex,
-                  supply.velocity.btc.rest,
-                ),
+                metric: supply.velocity.btc,
                 name: "bitcoin",
                 unit: Unit.ratio,
               }),
               s({
-                metric: brk.mergeMetricPatterns(
-                  supply.velocity.usd.dateindex,
-                  supply.velocity.usd.rest,
-                ),
+                metric: supply.velocity.usd,
                 name: "dollars",
                 color: colors.emerald,
                 unit: Unit.ratio,
@@ -753,9 +742,7 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Input Count",
-            bottom: [
-              ...fromCountPattern2(inputs.count.count, "Input", Unit.count),
-            ],
+            bottom: [...fromCountPattern2(inputs.count, "Input", Unit.count)],
           },
           {
             name: "Speed",
@@ -778,9 +765,7 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Output Count",
-            bottom: [
-              ...fromCountPattern2(outputs.count.count, "Output", Unit.count),
-            ],
+            bottom: [...fromCountPattern2(outputs.count, "Output", Unit.count)],
           },
           {
             name: "Speed",

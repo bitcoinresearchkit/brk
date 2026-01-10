@@ -12,8 +12,8 @@ use crate::{
     distribution::state::RealizedState,
     indexes,
     internal::{
-        BinaryBlockSum, BinaryBlockSumCum, ComputedBlockLast, ComputedBlockSum,
-        ComputedBlockSumCum, ComputedDateLast, ComputedRatioVecsDate, DollarsMinus,
+        ComputedBlockLast, ComputedBlockSum, ComputedBlockSumCum, ComputedDateLast,
+        ComputedRatioVecsDate, DollarsMinus, LazyBinaryBlockSum, LazyBinaryBlockSumCum,
         LazyBlockSum, LazyBlockSumCum, LazyDateLast, PercentageDollarsF32, StoredF32Identity,
     },
     price,
@@ -43,9 +43,9 @@ pub struct RealizedMetrics {
     pub realized_value: ComputedBlockSum<Dollars>,
 
     // === Realized vs Realized Cap Ratios (lazy) ===
-    pub realized_profit_rel_to_realized_cap: BinaryBlockSumCum<StoredF32, Dollars, Dollars>,
-    pub realized_loss_rel_to_realized_cap: BinaryBlockSumCum<StoredF32, Dollars, Dollars>,
-    pub net_realized_pnl_rel_to_realized_cap: BinaryBlockSumCum<StoredF32, Dollars, Dollars>,
+    pub realized_profit_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
+    pub realized_loss_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
+    pub net_realized_pnl_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
 
     // === Total Realized PnL ===
     pub total_realized_pnl: LazyBlockSum<Dollars>,
@@ -56,8 +56,8 @@ pub struct RealizedMetrics {
     pub value_destroyed: ComputedBlockSum<Dollars>,
 
     // === Adjusted Value (lazy: cohort - up_to_1h) ===
-    pub adjusted_value_created: Option<BinaryBlockSum<Dollars, Dollars, Dollars>>,
-    pub adjusted_value_destroyed: Option<BinaryBlockSum<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_created: Option<LazyBinaryBlockSum<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_destroyed: Option<LazyBinaryBlockSum<Dollars, Dollars, Dollars>>,
 
     // === SOPR (Spent Output Profit Ratio) ===
     pub sopr: EagerVec<PcoVec<DateIndex, StoredF64>>,
@@ -140,7 +140,7 @@ impl RealizedMetrics {
 
         // Construct lazy ratio vecs
         let realized_profit_rel_to_realized_cap =
-            BinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("realized_profit_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_profit.height.boxed_clone(),
@@ -150,7 +150,7 @@ impl RealizedMetrics {
             );
 
         let realized_loss_rel_to_realized_cap =
-            BinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("realized_loss_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_loss.height.boxed_clone(),
@@ -160,7 +160,7 @@ impl RealizedMetrics {
             );
 
         let net_realized_pnl_rel_to_realized_cap =
-            BinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
                 net_realized_pnl.height.boxed_clone(),
@@ -194,7 +194,7 @@ impl RealizedMetrics {
         let adjusted_value_created =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                BinaryBlockSum::from_computed::<DollarsMinus>(
+                LazyBinaryBlockSum::from_computed::<DollarsMinus>(
                     &cfg.name("adjusted_value_created"),
                     cfg.version,
                     &value_created,
@@ -204,7 +204,7 @@ impl RealizedMetrics {
         let adjusted_value_destroyed =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                BinaryBlockSum::from_computed::<DollarsMinus>(
+                LazyBinaryBlockSum::from_computed::<DollarsMinus>(
                     &cfg.name("adjusted_value_destroyed"),
                     cfg.version,
                     &value_destroyed,

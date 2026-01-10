@@ -9,7 +9,7 @@ use crate::{
     distribution::state::UnrealizedState,
     internal::{
         ComputedHeightDateLast, DollarsMinus, DollarsPlus, LazyBinaryBlockLast, LazyBlockLast,
-        ValueBlockDateLast,
+        ValueHeightDateLast,
     },
 };
 
@@ -19,8 +19,8 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct UnrealizedMetrics {
     // === Supply in Profit/Loss ===
-    pub supply_in_profit: ValueBlockDateLast,
-    pub supply_in_loss: ValueBlockDateLast,
+    pub supply_in_profit: ValueHeightDateLast,
+    pub supply_in_loss: ValueHeightDateLast,
 
     // === Unrealized Profit/Loss ===
     pub unrealized_profit: ComputedHeightDateLast<Dollars>,
@@ -40,7 +40,7 @@ impl UnrealizedMetrics {
         let compute_dollars = cfg.compute_dollars();
 
         // === Supply in Profit/Loss ===
-        let supply_in_profit = ValueBlockDateLast::forced_import(
+        let supply_in_profit = ValueHeightDateLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_profit"),
             cfg.version,
@@ -48,7 +48,7 @@ impl UnrealizedMetrics {
             cfg.indexes,
             cfg.price,
         )?;
-        let supply_in_loss = ValueBlockDateLast::forced_import(
+        let supply_in_loss = ValueHeightDateLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             cfg.version,

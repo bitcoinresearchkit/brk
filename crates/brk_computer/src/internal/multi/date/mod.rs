@@ -1,0 +1,25 @@
+mod average;
+mod binary_last;
+mod binary_sum;
+mod binary_sum_cum;
+mod first;
+mod last;
+mod lazy_full;
+mod lazy_last;
+mod lazy_sum;
+mod lazy_sum_cum;
+mod max;
+mod min;
+
+pub use average::*;
+pub use binary_last::*;
+pub use binary_sum::*;
+pub use binary_sum_cum::*;
+pub use first::*;
+pub use last::*;
+pub use lazy_full::*;
+pub use lazy_last::*;
+pub use lazy_sum::*;
+pub use lazy_sum_cum::*;
+pub use max::*;
+pub use min::*;

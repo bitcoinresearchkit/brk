@@ -1,11 +1,11 @@
 use brk_traversable::Traversable;
 use brk_types::StoredF64;
 
-use crate::internal::ComputedVecsDateAverage;
+use crate::internal::ComputedDateAverage;
 
 /// Velocity metrics (annualized volume / circulating supply)
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub btc: ComputedVecsDateAverage<StoredF64>,
-    pub usd: Option<ComputedVecsDateAverage<StoredF64>>,
+    pub btc: ComputedDateAverage<StoredF64>,
+    pub usd: Option<ComputedDateAverage<StoredF64>>,
 }

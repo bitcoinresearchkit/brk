@@ -206,19 +206,13 @@ function createRealizedPnlSection(ctx, args, title) {
       title: `Realized Profit And Loss ${title}`,
       bottom: [
         s({
-          metric: mergeMetricPatterns(
-            realized.realizedProfit.base,
-            realized.realizedProfit.sum,
-          ),
+          metric: realized.realizedProfit.sum,
           name: "Profit",
           color: colors.green,
           unit: Unit.usd,
         }),
         s({
-          metric: mergeMetricPatterns(
-            realized.realizedLoss.base,
-            realized.realizedLoss.sum,
-          ),
+          metric: realized.realizedLoss.sum,
           name: "Loss",
           color: colors.red,
           unit: Unit.usd,

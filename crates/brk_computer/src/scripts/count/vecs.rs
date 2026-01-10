@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{StoredF32, StoredU64};
 
-use crate::internal::{BinaryBlockFull, ComputedBlockFull};
+use crate::internal::{ComputedBlockFull, LazyBinaryBlockFull};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -24,6 +24,6 @@ pub struct Vecs {
     pub segwit: ComputedBlockFull<StoredU64>,
 
     // Adoption ratios
-    pub taproot_adoption: BinaryBlockFull<StoredF32, StoredU64, StoredU64>,
-    pub segwit_adoption: BinaryBlockFull<StoredF32, StoredU64, StoredU64>,
+    pub taproot_adoption: LazyBinaryBlockFull<StoredF32, StoredU64, StoredU64>,
+    pub segwit_adoption: LazyBinaryBlockFull<StoredF32, StoredU64, StoredU64>,
 }

@@ -5,7 +5,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{BinaryBlockFull, ComputedBlockFull, PercentageU64F32},
+    internal::{ComputedBlockFull, LazyBinaryBlockFull, PercentageU64F32},
     outputs,
 };
 
@@ -32,7 +32,7 @@ impl Vecs {
         // Adoption ratios (lazy)
         // Uses outputs.count.count as denominator (total output count)
         // At height level: per-block ratio; at dateindex level: sum-based ratio (% of new outputs)
-        let taproot_adoption = BinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
+        let taproot_adoption = LazyBinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
             "taproot_adoption",
             version,
             p2tr.height.boxed_clone(),
@@ -40,7 +40,7 @@ impl Vecs {
             &p2tr,
             &outputs.count.total_count,
         );
-        let segwit_adoption = BinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
+        let segwit_adoption = LazyBinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
             "segwit_adoption",
             version,
             segwit.height.boxed_clone(),

@@ -9,7 +9,7 @@ import { createPriceLine, createPriceLines, line } from "./constants.js";
  * @returns {PartialContext}
  */
 export function createContext({ colors, brk }) {
-  const constants = brk.tree.computed.constants;
+  const constants = brk.tree.constants;
 
   return {
     colors,

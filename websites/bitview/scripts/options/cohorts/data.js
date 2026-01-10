@@ -17,7 +17,10 @@ import {
  * @param {T} obj
  * @returns {[keyof T & string, T[keyof T & string]][]}
  */
-const entries = (obj) => /** @type {[keyof T & string, T[keyof T & string]][]} */ (Object.entries(obj));
+const entries = (obj) =>
+  /** @type {[keyof T & string, T[keyof T & string]][]} */ (
+    Object.entries(obj)
+  );
 
 /**
  * Build all cohort data from brk tree
@@ -25,8 +28,8 @@ const entries = (obj) => /** @type {[keyof T & string, T[keyof T & string]][]} *
  * @param {BrkClient} brk
  */
 export function buildCohortData(colors, brk) {
-  const utxoCohorts = brk.tree.computed.distribution.utxoCohorts;
-  const addressCohorts = brk.tree.computed.distribution.addressCohorts;
+  const utxoCohorts = brk.tree.distribution.utxoCohorts;
+  const addressCohorts = brk.tree.distribution.addressCohorts;
   const {
     TERM_NAMES,
     EPOCH_NAMES,

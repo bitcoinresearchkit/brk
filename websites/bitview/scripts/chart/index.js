@@ -384,8 +384,8 @@ function createChartElement({
           /** @type {AnyMetricPattern} */
           const timeMetric =
             index === "height"
-              ? brk.tree.computed.blocks.time.timestampFixed
-              : brk.tree.computed.blocks.time.timestamp;
+              ? brk.tree.blocks.time.timestampFixed
+              : brk.tree.blocks.time.timestamp;
           /** @type {AnyMetricPattern} */
           const valuesMetric = metric;
           const timeNode = timeMetric.by[index];

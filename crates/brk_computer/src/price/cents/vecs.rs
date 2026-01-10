@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
 use brk_types::{Cents, OHLCCents};
 
-use crate::internal::{HeightDateBytes, HeightDateLazyOHLC};
+use crate::internal::{ComputedHeightDateBytes, LazyHeightDateOHLC};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub split: HeightDateLazyOHLC<Cents, OHLCCents>,
-    pub ohlc: HeightDateBytes<OHLCCents>,
+    pub split: LazyHeightDateOHLC<Cents, OHLCCents>,
+    pub ohlc: ComputedHeightDateBytes<OHLCCents>,
 }

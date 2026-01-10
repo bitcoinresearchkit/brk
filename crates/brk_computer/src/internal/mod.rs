@@ -1,21 +1,9 @@
-mod aggregation;
 mod compute;
-mod computed;
-mod derived;
-mod group;
-mod lazy;
-mod specialized;
+mod multi;
+mod single;
 mod traits;
-mod transform;
-mod vec;
 
-pub(crate) use aggregation::*;
 pub(crate) use compute::*;
-pub(crate) use computed::*;
-pub(crate) use derived::*;
-pub(crate) use group::*;
-pub(crate) use lazy::*;
-pub(crate) use specialized::*;
+pub(crate) use multi::*;
+pub(crate) use single::*;
 pub(crate) use traits::*;
-pub(crate) use transform::*;
-pub(crate) use vec::*;

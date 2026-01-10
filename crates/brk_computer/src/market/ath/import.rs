@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        BinaryHeightDateLast, ComputedDateLast, ComputedHeightDateLast, LazyDateLast,
+        ComputedDateLast, ComputedHeightDateLast, LazyBinaryHeightDateLast, LazyDateLast,
         PercentageDiffCloseDollars, StoredU16ToYears,
     },
     price,
@@ -42,7 +42,7 @@ impl Vecs {
         );
 
         let price_drawdown =
-            BinaryHeightDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+            LazyBinaryHeightDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                 "price_drawdown",
                 version,
                 EagerVec::forced_import(db, "price_drawdown", version)?,

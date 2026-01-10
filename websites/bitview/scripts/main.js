@@ -22,7 +22,7 @@ import {
   simulationElement,
   style,
   tableElement,
-} from "./utils/elements";
+} from "./utils/elements.js";
 
 function initFrameSelectors() {
   const children = Array.from(frameSelectorsElement.children);

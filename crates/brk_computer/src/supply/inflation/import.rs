@@ -3,11 +3,11 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedVecsDateAverage};
+use crate::{indexes, internal::ComputedDateAverage};
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        Ok(Self(ComputedVecsDateAverage::forced_import(
+        Ok(Self(ComputedDateAverage::forced_import(
             db,
             "inflation_rate",
             version,

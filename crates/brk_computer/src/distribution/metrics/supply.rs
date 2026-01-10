@@ -9,7 +9,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 use crate::{
     indexes,
     internal::{
-        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyBinaryLastBlockValue,
+        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyBinaryValueBlockLast,
         ValueBlockLast,
     },
     price,
@@ -21,7 +21,7 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct SupplyMetrics {
     pub total: ValueBlockLast,
-    pub halved: LazyBinaryLastBlockValue,
+    pub halved: LazyBinaryValueBlockLast,
 }
 
 impl SupplyMetrics {
@@ -37,7 +37,7 @@ impl SupplyMetrics {
             compute_dollars,
         )?;
 
-        let supply_half = LazyBinaryLastBlockValue::from_block_source::<
+        let supply_half = LazyBinaryValueBlockLast::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalfClosePriceTimesSats,
