@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, ImportableVec, PcoVec, VecIndex, Version};
+use vecdb::{Database, EagerVec, ImportableVec, IterableBoxedVec, IterableCloneableVec, PcoVec, VecIndex, Version};
 
 use crate::internal::ComputedVecValue;
 
@@ -22,5 +22,9 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> AverageVec<I, T> {
     #[inline]
     pub fn inner(&self) -> &EagerVec<PcoVec<I, T>> {
         &self.0
+    }
+
+    pub fn boxed_clone(&self) -> IterableBoxedVec<I, T> {
+        self.0.boxed_clone()
     }
 }

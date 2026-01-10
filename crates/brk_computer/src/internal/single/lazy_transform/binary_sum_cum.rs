@@ -38,14 +38,14 @@ where
             sum: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_sum"),
                 version,
-                source1.sum.0.boxed_clone(),
-                source2.sum.0.boxed_clone(),
+                source1.boxed_sum(),
+                source2.boxed_sum(),
             ),
             cumulative: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source1.cumulative.0.boxed_clone(),
-                source2.cumulative.0.boxed_clone(),
+                source1.boxed_cumulative(),
+                source2.boxed_cumulative(),
             ),
         }
     }
@@ -61,14 +61,14 @@ where
             sum: LazyVecFrom2::transformed::<F>(
                 name,
                 version,
-                source1.sum.0.boxed_clone(),
-                source2.sum.0.boxed_clone(),
+                source1.boxed_sum(),
+                source2.boxed_sum(),
             ),
             cumulative: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source1.cumulative.0.boxed_clone(),
-                source2.cumulative.0.boxed_clone(),
+                source1.boxed_cumulative(),
+                source2.boxed_cumulative(),
             ),
         }
     }
@@ -188,14 +188,14 @@ where
             sum: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_sum"),
                 version,
-                source1.sum.0.boxed_clone(),
-                source2.0.boxed_clone(),
+                source1.boxed_sum(),
+                source2.boxed_clone(),
             ),
             cumulative: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source1.cumulative.0.boxed_clone(),
-                source2.0.boxed_clone(),
+                source1.boxed_cumulative(),
+                source2.boxed_clone(),
             ),
         }
     }
@@ -211,14 +211,14 @@ where
             sum: LazyVecFrom2::transformed::<F>(
                 name,
                 version,
-                source1.sum.0.boxed_clone(),
-                source2.0.boxed_clone(),
+                source1.boxed_sum(),
+                source2.boxed_clone(),
             ),
             cumulative: LazyVecFrom2::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source1.cumulative.0.boxed_clone(),
-                source2.0.boxed_clone(),
+                source1.boxed_cumulative(),
+                source2.boxed_clone(),
             ),
         }
     }

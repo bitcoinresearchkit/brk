@@ -8,7 +8,19 @@ import { Unit } from "../utils/units.js";
  * @returns {PartialOptionsGroup}
  */
 export function createChainSection(ctx) {
-  const { colors, brk, s, createPriceLine } = ctx;
+  const {
+    colors,
+    brk,
+    s,
+    createPriceLine,
+    fromSizePattern,
+    fromFullnessPattern,
+    fromFeeRatePattern,
+    fromCoinbasePattern,
+    fromValuePattern,
+    fromBlockCountWithUnit,
+    fromIntervalPattern,
+  } = ctx;
   const {
     blocks,
     transactions,
@@ -19,409 +31,6 @@ export function createChainSection(ctx) {
     scripts,
     supply,
   } = brk.tree;
-
-  /**
-   * Create sum/cumulative series from a BlockCountPattern
-   * @template T
-   * @param {BlockCountPattern<T>} pattern
-   * @param {string} name
-   * @param {Color} [sumColor]
-   * @param {Color} [cumulativeColor]
-   * @param {Unit} unit
-   */
-  const fromBlockCount = (pattern, name, unit, sumColor, cumulativeColor) => [
-    s({
-      metric: pattern.sum,
-      name: `${name} sum`,
-      color: sumColor,
-      unit,
-    }),
-    s({
-      metric: pattern.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor ?? colors.blue,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from BlockSizePattern (has average, min, max, percentiles)
-   * @template T
-   * @param {BlockSizePattern<T>} pattern
-   * @param {string} name
-   * @param {Unit} unit
-   */
-  const fromBlockSize = (pattern, name, unit) => [
-    s({ metric: pattern.average, name: `${name} avg`, unit }),
-    s({
-      metric: pattern.sum,
-      name: `${name} sum`,
-      color: colors.blue,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.cumulative,
-      name: `${name} cumulative`,
-      color: colors.indigo,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.min,
-      name: `${name} min`,
-      color: colors.red,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.max,
-      name: `${name} max`,
-      color: colors.green,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct10,
-      name: `${name} pct10`,
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct25,
-      name: `${name} pct25`,
-      color: colors.pink,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.median,
-      name: `${name} median`,
-      color: colors.purple,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct75,
-      name: `${name} pct75`,
-      color: colors.violet,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct90,
-      name: `${name} pct90`,
-      color: colors.fuchsia,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from CountPattern2 (has distribution with percentiles, no height index on cumulative)
-   * @template T
-   * @param {CountPattern2<T>} pattern
-   * @param {string} name
-   * @param {Unit} unit
-   */
-  const fromCountPattern2 = (pattern, name, unit) => [
-    s({ metric: pattern.average, name: `${name} Average`, unit }),
-    s({
-      metric: pattern.sum,
-      name: `${name} sum`,
-      color: colors.blue,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.cumulative,
-      name: `${name} cumulative`,
-      color: colors.indigo,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.min,
-      name: `${name} min`,
-      color: colors.red,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.max,
-      name: `${name} max`,
-      color: colors.green,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct10,
-      name: `${name} pct10`,
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct25,
-      name: `${name} pct25`,
-      color: colors.pink,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.median,
-      name: `${name} median`,
-      color: colors.purple,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct75,
-      name: `${name} pct75`,
-      color: colors.violet,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct90,
-      name: `${name} pct90`,
-      color: colors.fuchsia,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from BlockIntervalPattern (has average, min, max, percentiles)
-   * @template T
-   * @param {BlockIntervalPattern<T>} pattern
-   * @param {string} name
-   * @param {Unit} unit
-   */
-  const fromBlockInterval = (pattern, name, unit) => [
-    s({ metric: pattern.average, name: `${name} avg`, unit }),
-    s({
-      metric: pattern.min,
-      name: `${name} min`,
-      color: colors.red,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.max,
-      name: `${name} max`,
-      color: colors.green,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct10,
-      name: `${name} pct10`,
-      color: colors.rose,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct25,
-      name: `${name} pct25`,
-      color: colors.pink,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.median,
-      name: `${name} median`,
-      color: colors.purple,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct75,
-      name: `${name} pct75`,
-      color: colors.violet,
-      unit,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.percentiles.pct90,
-      name: `${name} pct90`,
-      color: colors.fuchsia,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from DollarsPattern (has base, cumulative)
-   * @template T
-   * @param {DollarsPattern<T>} pattern
-   * @param {string} name
-   * @param {Unit} unit
-   * @param {Color} [sumColor]
-   * @param {Color} [cumulativeColor]
-   */
-  const fromBitcoin = (pattern, name, unit, sumColor, cumulativeColor) => [
-    s({ metric: pattern.base, name: `${name}`, color: sumColor, unit }),
-    s({
-      metric: pattern.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor ?? colors.blue,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from CoinbasePattern (has sats, bitcoin, dollars as BitcoinPattern)
-   * BitcoinPattern has .base and .cumulative (no .sum)
-   * @param {CoinbasePattern} pattern
-   * @param {string} name
-   * @param {Color} sumColor
-   * @param {Color} cumulativeColor
-   */
-  const fromCoinbase = (pattern, name, sumColor, cumulativeColor) => [
-    s({
-      metric: pattern.sats.base,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.sats,
-    }),
-    s({
-      metric: pattern.sats.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.sats,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.bitcoin.base,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.btc,
-    }),
-    s({
-      metric: pattern.bitcoin.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.btc,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.dollars.base,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.usd,
-    }),
-    s({
-      metric: pattern.dollars.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.usd,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from ValuePattern (has sats, bitcoin, dollars as BlockCountPattern)
-   * BlockCountPattern has .base, .sum, and .cumulative
-   * @param {ValuePattern} pattern
-   * @param {string} name
-   * @param {Color} sumColor
-   * @param {Color} cumulativeColor
-   */
-  const fromValuePattern = (pattern, name, sumColor, cumulativeColor) => [
-    s({
-      metric: pattern.sats.sum,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.sats,
-    }),
-    s({
-      metric: pattern.sats.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.sats,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.bitcoin.sum,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.btc,
-    }),
-    s({
-      metric: pattern.bitcoin.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.btc,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.dollars.sum,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.usd,
-    }),
-    s({
-      metric: pattern.dollars.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.usd,
-      defaultActive: false,
-    }),
-  ];
-
-  /**
-   * Create series from RewardPattern (has .base as Indexes2<Sats>, plus bitcoin/dollars as BlockCountPattern, sats as SatsPattern)
-   * Note: SatsPattern only has cumulative and sum, so we use pattern.base for raw sats
-   * @param {RewardPattern} pattern
-   * @param {string} name
-   * @param {Color} sumColor
-   * @param {Color} cumulativeColor
-   */
-  const fromRewardPattern = (pattern, name, sumColor, cumulativeColor) => [
-    s({
-      metric: pattern.base,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.sats,
-    }),
-    s({
-      metric: pattern.sats.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.sats,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.bitcoin.sum,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.btc,
-    }),
-    s({
-      metric: pattern.bitcoin.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.btc,
-      defaultActive: false,
-    }),
-    s({
-      metric: pattern.dollarsSource,
-      name: `${name}`,
-      color: sumColor,
-      unit: Unit.usd,
-    }),
-    s({
-      metric: pattern.dollars.cumulative,
-      name: `${name} cumulative`,
-      color: cumulativeColor,
-      unit: Unit.usd,
-      defaultActive: false,
-    }),
-  ];
 
   // Build pools tree dynamically
   const poolEntries = Object.entries(pools.vecs);
@@ -503,19 +112,9 @@ export function createChainSection(ctx) {
           name: "Rewards",
           title: `Rewards collected by ${poolName}`,
           bottom: [
-            ...fromValuePattern(
-              pool.coinbase,
-              "coinbase",
-              colors.orange,
-              colors.red,
-            ),
-            ...fromRewardPattern(
-              pool.subsidy,
-              "subsidy",
-              colors.lime,
-              colors.emerald,
-            ),
-            ...fromRewardPattern(pool.fee, "fee", colors.cyan, colors.indigo),
+            ...fromValuePattern(pool.coinbase, "coinbase", colors.orange, colors.red),
+            ...fromValuePattern(pool.subsidy, "subsidy", colors.lime, colors.emerald),
+            ...fromValuePattern(pool.fee, "fee", colors.cyan, colors.indigo),
           ],
         },
         {
@@ -544,7 +143,7 @@ export function createChainSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromBlockCount(blocks.count.blockCount, "Block", Unit.count),
+              ...fromBlockCountWithUnit(blocks.count.blockCount, "Block", Unit.count),
               s({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
@@ -579,16 +178,7 @@ export function createChainSection(ctx) {
             name: "Interval",
             title: "Block Interval",
             bottom: [
-              s({
-                metric: blocks.interval.interval,
-                name: "Interval",
-                unit: Unit.secs,
-              }),
-              ...fromBlockInterval(
-                blocks.interval.blockInterval,
-                "Interval",
-                Unit.secs,
-              ),
+              ...fromIntervalPattern(blocks.interval, "Interval", Unit.secs),
               createPriceLine({ unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
@@ -596,19 +186,9 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Block Size",
             bottom: [
-              s({
-                metric: blocks.size.vbytes,
-                name: "vbytes raw",
-                unit: Unit.vb,
-              }),
-              s({
-                metric: indexed.block.weight,
-                name: "weight raw",
-                unit: Unit.wu,
-              }),
-              ...fromBlockSize(blocks.size.blockSize, "size", Unit.bytes),
-              ...fromBlockSize(blocks.weight.blockWeight, "weight", Unit.wu),
-              ...fromBlockSize(blocks.size.blockVbytes, "vbytes", Unit.vb),
+              ...fromSizePattern(blocks.size, "Size", Unit.bytes),
+              ...fromFullnessPattern(blocks.vbytes, "Vbytes", Unit.vb),
+              ...fromFullnessPattern(blocks.weight, "Weight", Unit.wu),
             ],
           },
         ],
@@ -621,7 +201,7 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Count",
-            bottom: fromBitcoin(
+            bottom: fromFullnessPattern(
               transactions.count.txCount,
               "Count",
               Unit.count,
@@ -632,7 +212,7 @@ export function createChainSection(ctx) {
             title: "Transaction Volume",
             bottom: [
               s({
-                metric: transactions.volume.sentSum.sats.sum,
+                metric: transactions.volume.sentSum.sats,
                 name: "Sent",
                 unit: Unit.sats,
               }),
@@ -647,21 +227,21 @@ export function createChainSection(ctx) {
                 unit: Unit.usd,
               }),
               s({
-                metric: transactions.volume.annualizedVolume,
+                metric: transactions.volume.annualizedVolume.sats,
                 name: "annualized",
                 color: colors.red,
                 unit: Unit.sats,
                 defaultActive: false,
               }),
               s({
-                metric: transactions.volume.annualizedVolumeBtc,
+                metric: transactions.volume.annualizedVolume.bitcoin,
                 name: "annualized",
                 color: colors.red,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
               s({
-                metric: transactions.volume.annualizedVolumeUsd,
+                metric: transactions.volume.annualizedVolume.dollars,
                 name: "annualized",
                 color: colors.lime,
                 unit: Unit.usd,
@@ -673,35 +253,17 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromBlockInterval(transactions.size.weight, "weight", Unit.wu),
-              ...fromBlockInterval(transactions.size.vsize, "vsize", Unit.vb),
+              ...fromFeeRatePattern(transactions.size.weight, "weight", Unit.wu),
+              ...fromFeeRatePattern(transactions.size.vsize, "vsize", Unit.vb),
             ],
           },
           {
             name: "Versions",
             title: "Transaction Versions",
             bottom: [
-              ...fromBlockCount(
-                transactions.versions.v1,
-                "v1",
-                Unit.count,
-                colors.orange,
-                colors.red,
-              ),
-              ...fromBlockCount(
-                transactions.versions.v2,
-                "v2",
-                Unit.count,
-                colors.cyan,
-                colors.blue,
-              ),
-              ...fromBlockCount(
-                transactions.versions.v3,
-                "v3",
-                Unit.count,
-                colors.lime,
-                colors.green,
-              ),
+              ...fromBlockCountWithUnit(transactions.versions.v1, "v1", Unit.count, colors.orange, colors.red),
+              ...fromBlockCountWithUnit(transactions.versions.v2, "v2", Unit.count, colors.cyan, colors.blue),
+              ...fromBlockCountWithUnit(transactions.versions.v3, "v3", Unit.count, colors.lime, colors.green),
             ],
           },
           {
@@ -742,7 +304,7 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Input Count",
-            bottom: [...fromCountPattern2(inputs.count, "Input", Unit.count)],
+            bottom: [...fromSizePattern(inputs.count, "Input", Unit.count)],
           },
           {
             name: "Speed",
@@ -765,7 +327,13 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "Transaction Output Count",
-            bottom: [...fromCountPattern2(outputs.count, "Output", Unit.count)],
+            bottom: [
+              ...fromSizePattern(
+                outputs.count.totalCount,
+                "Output",
+                Unit.count,
+              ),
+            ],
           },
           {
             name: "Speed",
@@ -781,23 +349,13 @@ export function createChainSection(ctx) {
         ],
       },
 
-      // UTXO
       {
         name: "UTXO",
         tree: [
           {
             name: "Count",
             title: "UTXO Count",
-            bottom: [
-              s({
-                metric: mergeMetricPatterns(
-                  outputs.count.utxoCount.base,
-                  outputs.count.utxoCount.sum,
-                ),
-                name: "Count",
-                unit: Unit.count,
-              }),
-            ],
+            bottom: fromFullnessPattern(outputs.count.utxoCount, "Count", Unit.count),
           },
         ],
       },
@@ -806,12 +364,7 @@ export function createChainSection(ctx) {
       {
         name: "Coinbase",
         title: "Coinbase Rewards",
-        bottom: fromCoinbase(
-          blocks.rewards.coinbase,
-          "Coinbase",
-          colors.orange,
-          colors.red,
-        ),
+        bottom: fromCoinbasePattern(blocks.rewards.coinbase, "Coinbase"),
       },
 
       // Subsidy
@@ -819,12 +372,7 @@ export function createChainSection(ctx) {
         name: "Subsidy",
         title: "Block Subsidy",
         bottom: [
-          ...fromCoinbase(
-            blocks.rewards.subsidy,
-            "Subsidy",
-            colors.lime,
-            colors.emerald,
-          ),
+          ...fromCoinbasePattern(blocks.rewards.subsidy, "Subsidy"),
           s({
             metric: blocks.rewards.subsidyDominance,
             name: "Dominance",
@@ -893,8 +441,9 @@ export function createChainSection(ctx) {
             title: "Fee Rate",
             bottom: [
               s({
-                metric: transactions.fees.feeRate.base,
-                name: "Rate",
+                metric: transactions.fees.feeRate.median,
+                name: "Median",
+                color: colors.purple,
                 unit: Unit.feeRate,
               }),
               s({
@@ -902,12 +451,7 @@ export function createChainSection(ctx) {
                 name: "Average",
                 color: colors.blue,
                 unit: Unit.feeRate,
-              }),
-              s({
-                metric: transactions.fees.feeRate.percentiles.median,
-                name: "Median",
-                color: colors.purple,
-                unit: Unit.feeRate,
+                defaultActive: false,
               }),
               s({
                 metric: transactions.fees.feeRate.min,
@@ -924,28 +468,28 @@ export function createChainSection(ctx) {
                 defaultActive: false,
               }),
               s({
-                metric: transactions.fees.feeRate.percentiles.pct10,
+                metric: transactions.fees.feeRate.pct10,
                 name: "pct10",
                 color: colors.rose,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
               s({
-                metric: transactions.fees.feeRate.percentiles.pct25,
+                metric: transactions.fees.feeRate.pct25,
                 name: "pct25",
                 color: colors.pink,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
               s({
-                metric: transactions.fees.feeRate.percentiles.pct75,
+                metric: transactions.fees.feeRate.pct75,
                 name: "pct75",
                 color: colors.violet,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
               s({
-                metric: transactions.fees.feeRate.percentiles.pct90,
+                metric: transactions.fees.feeRate.pct90,
                 name: "pct90",
                 color: colors.fuchsia,
                 unit: Unit.feeRate,
@@ -1004,22 +548,19 @@ export function createChainSection(ctx) {
             title: "Network Difficulty",
             bottom: [
               s({
-                metric: blocks.mining.difficulty,
+                metric: blocks.difficulty.raw,
                 name: "Difficulty",
                 unit: Unit.difficulty,
               }),
               s({
-                metric: mergeMetricPatterns(
-                  blocks.mining.difficultyAdjustment.base,
-                  blocks.mining.difficultyAdjustment.rest,
-                ),
+                metric: blocks.difficulty.adjustment,
                 name: "Adjustment",
                 color: colors.orange,
                 unit: Unit.percentage,
                 defaultActive: false,
               }),
               s({
-                metric: blocks.mining.difficultyAsHash,
+                metric: blocks.difficulty.asHash,
                 name: "As hash",
                 color: colors.default,
                 unit: Unit.hashRate,
@@ -1027,14 +568,14 @@ export function createChainSection(ctx) {
                 options: { lineStyle: 1 },
               }),
               s({
-                metric: blocks.difficulty.blocksBeforeNextDifficultyAdjustment,
+                metric: blocks.difficulty.blocksBeforeNextAdjustment,
                 name: "Blocks until adj.",
                 color: colors.indigo,
                 unit: Unit.blocks,
                 defaultActive: false,
               }),
               s({
-                metric: blocks.difficulty.daysBeforeNextDifficultyAdjustment,
+                metric: blocks.difficulty.daysBeforeNextAdjustment,
                 name: "Days until adj.",
                 color: colors.purple,
                 unit: Unit.days,
@@ -1134,7 +675,7 @@ export function createChainSection(ctx) {
                 unit: Unit.days,
               }),
               s({
-                metric: blocks.halving.halvingepoch,
+                metric: blocks.halving.epoch,
                 name: "Halving epoch",
                 color: colors.purple,
                 unit: Unit.epoch,
@@ -1173,8 +714,8 @@ export function createChainSection(ctx) {
               {
                 name: "Outputs",
                 title: "OP_RETURN Outputs",
-                bottom: fromBitcoin(
-                  scripts.count.opreturnCount,
+                bottom: fromFullnessPattern(
+                  scripts.count.opreturn,
                   "Count",
                   Unit.count,
                 ),
@@ -1190,10 +731,7 @@ export function createChainSection(ctx) {
         title: "Inflation Rate",
         bottom: [
           s({
-            metric: mergeMetricPatterns(
-              supply.inflation.indexes.dateindex,
-              supply.inflation.indexes.rest,
-            ),
+            metric: supply.inflation,
             name: "Rate",
             unit: Unit.percentage,
           }),

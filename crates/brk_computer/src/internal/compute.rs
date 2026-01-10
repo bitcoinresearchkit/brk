@@ -3,7 +3,7 @@
 //! These functions replace the Option-based compute logic in flexible builders.
 //! Each function takes optional mutable references and computes only for Some() vecs.
 
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_types::{CheckedSub, StoredU64};
 use schemars::JsonSchema;
 use vecdb::{
@@ -28,6 +28,10 @@ fn validate_and_start<I: VecIndex, T: ComputedVecValue + JsonSchema>(
 ///
 /// This function computes all requested aggregations in a single pass when possible,
 /// optimizing for the common case where multiple aggregations are needed.
+///
+/// The `skip_count` parameter allows skipping the first N items from ALL calculations.
+/// This is useful for excluding coinbase transactions (which have 0 fee) from
+/// fee/feerate aggregations.
 #[allow(clippy::too_many_arguments)]
 pub fn compute_aggregations<I, T, A>(
     max_from: I,
@@ -35,6 +39,7 @@ pub fn compute_aggregations<I, T, A>(
     first_indexes: &impl IterableVec<I, A>,
     count_indexes: &impl IterableVec<I, StoredU64>,
     exit: &Exit,
+    skip_count: usize,
     mut first: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut last: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut min: Option<&mut EagerVec<PcoVec<I, T>>>,
@@ -105,29 +110,37 @@ where
             let count_index = count_indexes_iter.next().unwrap();
             let count = *count_index as usize;
 
+            // Effective count after skipping (e.g., skip coinbase for fee calculations)
+            let effective_count = count.saturating_sub(skip_count);
+            let effective_first_index = first_index + skip_count.min(count);
+
             if let Some(ref mut first_vec) = first {
-                let f = source_iter
-                    .get(first_index)
-                    .unwrap_or_else(|| T::from(0_usize));
+                let f = if effective_count > 0 {
+                    source_iter.get_unwrap(effective_first_index)
+                } else {
+                    T::from(0_usize)
+                };
                 first_vec.truncate_push_at(idx, f)?;
             }
 
             if let Some(ref mut last_vec) = last {
-                if count == 0 {
-                    panic!("should not compute last if count can be 0");
+                if effective_count == 0 {
+                    // If all items skipped, use zero
+                    last_vec.truncate_push_at(idx, T::from(0_usize))?;
+                } else {
+                    let last_index = first_index + (count - 1);
+                    let v = source_iter.get_unwrap(last_index);
+                    last_vec.truncate_push_at(idx, v)?;
                 }
-                let last_index = first_index + (count - 1);
-                let v = source_iter.get_unwrap(last_index);
-                last_vec.truncate_push_at(idx, v)?;
             }
 
             // Fast path: only min/max needed, no sorting or allocation required
             if needs_minmax && !needs_percentiles && !needs_aggregates {
-                source_iter.set_position(first_index);
+                source_iter.set_position(effective_first_index);
                 let mut min_val: Option<T> = None;
                 let mut max_val: Option<T> = None;
 
-                for val in (&mut source_iter).take(count) {
+                for val in (&mut source_iter).take(effective_count) {
                     if needs_min {
                         min_val = Some(min_val.map_or(val, |m| if val < m { val } else { m }));
                     }
@@ -137,43 +150,94 @@ where
                 }
 
                 if let Some(ref mut min_vec) = min {
-                    min_vec.truncate_push_at(idx, min_val.unwrap())?;
+                    let v = min_val.or(max_val).unwrap_or_else(|| T::from(0_usize));
+                    min_vec.truncate_push_at(idx, v)?;
                 }
                 if let Some(ref mut max_vec) = max {
-                    max_vec.truncate_push_at(idx, max_val.unwrap())?;
+                    let v = max_val.or(min_val).unwrap_or_else(|| T::from(0_usize));
+                    max_vec.truncate_push_at(idx, v)?;
                 }
             } else if needs_percentiles || needs_aggregates || needs_minmax {
-                source_iter.set_position(first_index);
-                let mut values: Vec<T> = (&mut source_iter).take(count).collect();
+                source_iter.set_position(effective_first_index);
+                let values: Vec<T> = (&mut source_iter).take(effective_count).collect();
 
-                if needs_percentiles {
-                    values.sort_unstable();
-
+                if values.is_empty() {
+                    // Handle edge case where all items were skipped
                     if let Some(ref mut max_vec) = max {
-                        max_vec.truncate_push_at(
-                            idx,
-                            *values
-                                .last()
-                                .ok_or(Error::Internal("Empty values for percentiles"))?,
-                        )?;
+                        max_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut pct90_vec) = pct90 {
-                        pct90_vec.truncate_push_at(idx, get_percentile(&values, 0.90))?;
+                        pct90_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut pct75_vec) = pct75 {
-                        pct75_vec.truncate_push_at(idx, get_percentile(&values, 0.75))?;
+                        pct75_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut median_vec) = median {
-                        median_vec.truncate_push_at(idx, get_percentile(&values, 0.50))?;
+                        median_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut pct25_vec) = pct25 {
-                        pct25_vec.truncate_push_at(idx, get_percentile(&values, 0.25))?;
+                        pct25_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut pct10_vec) = pct10 {
-                        pct10_vec.truncate_push_at(idx, get_percentile(&values, 0.10))?;
+                        pct10_vec.truncate_push_at(idx, T::from(0_usize))?;
                     }
                     if let Some(ref mut min_vec) = min {
-                        min_vec.truncate_push_at(idx, *values.first().unwrap())?;
+                        min_vec.truncate_push_at(idx, T::from(0_usize))?;
+                    }
+                    if let Some(ref mut average_vec) = average {
+                        average_vec.truncate_push_at(idx, T::from(0_usize))?;
+                    }
+                    if let Some(ref mut sum_vec) = sum {
+                        sum_vec.truncate_push_at(idx, T::from(0_usize))?;
+                    }
+                    if let Some(ref mut cumulative_vec) = cumulative {
+                        let t = cumulative_val.unwrap();
+                        cumulative_vec.truncate_push_at(idx, t)?;
+                    }
+                } else if needs_percentiles {
+                    let mut sorted_values = values.clone();
+                    sorted_values.sort_unstable();
+
+                    if let Some(ref mut max_vec) = max {
+                        max_vec.truncate_push_at(idx, *sorted_values.last().unwrap())?;
+                    }
+                    if let Some(ref mut pct90_vec) = pct90 {
+                        pct90_vec.truncate_push_at(idx, get_percentile(&sorted_values, 0.90))?;
+                    }
+                    if let Some(ref mut pct75_vec) = pct75 {
+                        pct75_vec.truncate_push_at(idx, get_percentile(&sorted_values, 0.75))?;
+                    }
+                    if let Some(ref mut median_vec) = median {
+                        median_vec.truncate_push_at(idx, get_percentile(&sorted_values, 0.50))?;
+                    }
+                    if let Some(ref mut pct25_vec) = pct25 {
+                        pct25_vec.truncate_push_at(idx, get_percentile(&sorted_values, 0.25))?;
+                    }
+                    if let Some(ref mut pct10_vec) = pct10 {
+                        pct10_vec.truncate_push_at(idx, get_percentile(&sorted_values, 0.10))?;
+                    }
+                    if let Some(ref mut min_vec) = min {
+                        min_vec.truncate_push_at(idx, *sorted_values.first().unwrap())?;
+                    }
+
+                    if needs_aggregates {
+                        let len = values.len();
+                        let sum_val = values.into_iter().fold(T::from(0), |a, b| a + b);
+
+                        if let Some(ref mut average_vec) = average {
+                            average_vec.truncate_push_at(idx, sum_val / len)?;
+                        }
+
+                        if needs_sum_or_cumulative {
+                            if let Some(ref mut sum_vec) = sum {
+                                sum_vec.truncate_push_at(idx, sum_val)?;
+                            }
+                            if let Some(ref mut cumulative_vec) = cumulative {
+                                let t = cumulative_val.unwrap() + sum_val;
+                                cumulative_val.replace(t);
+                                cumulative_vec.truncate_push_at(idx, t)?;
+                            }
+                        }
                     }
                 } else if needs_minmax {
                     if let Some(ref mut min_vec) = min {
@@ -182,9 +246,27 @@ where
                     if let Some(ref mut max_vec) = max {
                         max_vec.truncate_push_at(idx, *values.iter().max().unwrap())?;
                     }
-                }
 
-                if needs_aggregates {
+                    if needs_aggregates {
+                        let len = values.len();
+                        let sum_val = values.into_iter().fold(T::from(0), |a, b| a + b);
+
+                        if let Some(ref mut average_vec) = average {
+                            average_vec.truncate_push_at(idx, sum_val / len)?;
+                        }
+
+                        if needs_sum_or_cumulative {
+                            if let Some(ref mut sum_vec) = sum {
+                                sum_vec.truncate_push_at(idx, sum_val)?;
+                            }
+                            if let Some(ref mut cumulative_vec) = cumulative {
+                                let t = cumulative_val.unwrap() + sum_val;
+                                cumulative_val.replace(t);
+                                cumulative_vec.truncate_push_at(idx, t)?;
+                            }
+                        }
+                    }
+                } else if needs_aggregates {
                     let len = values.len();
                     let sum_val = values.into_iter().fold(T::from(0), |a, b| a + b);
 

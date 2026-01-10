@@ -397,7 +397,12 @@ function createChartElement({
           const valuesResource = resources.useMetricEndpoint(valuesNode);
           _valuesResource = valuesResource;
 
-          series.url.set(() => `${brk.baseUrl}${valuesResource.path}`);
+          series.url.set(() => {
+            const base = brk.baseUrl.endsWith("/")
+              ? brk.baseUrl.slice(0, -1)
+              : brk.baseUrl;
+            return `${base}${valuesResource.path}`;
+          });
 
           signals.createEffect(active, (active) => {
             if (active) {

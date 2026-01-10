@@ -5,7 +5,7 @@ use vecdb::{Database, IterableCloneableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedBlockFull, LazyBinaryBlockFull, PercentageU64F32},
+    internal::{ComputedFromHeightFull, LazyBinaryFromHeightFull, PercentageU64F32},
     outputs,
 };
 
@@ -16,23 +16,23 @@ impl Vecs {
         indexes: &indexes::Vecs,
         outputs: &outputs::Vecs,
     ) -> Result<Self> {
-        let p2a = ComputedBlockFull::forced_import(db, "p2a_count", version, indexes)?;
-        let p2ms = ComputedBlockFull::forced_import(db, "p2ms_count", version, indexes)?;
-        let p2pk33 = ComputedBlockFull::forced_import(db, "p2pk33_count", version, indexes)?;
-        let p2pk65 = ComputedBlockFull::forced_import(db, "p2pk65_count", version, indexes)?;
-        let p2pkh = ComputedBlockFull::forced_import(db, "p2pkh_count", version, indexes)?;
-        let p2sh = ComputedBlockFull::forced_import(db, "p2sh_count", version, indexes)?;
-        let p2tr = ComputedBlockFull::forced_import(db, "p2tr_count", version, indexes)?;
-        let p2wpkh = ComputedBlockFull::forced_import(db, "p2wpkh_count", version, indexes)?;
-        let p2wsh = ComputedBlockFull::forced_import(db, "p2wsh_count", version, indexes)?;
+        let p2a = ComputedFromHeightFull::forced_import(db, "p2a_count", version, indexes)?;
+        let p2ms = ComputedFromHeightFull::forced_import(db, "p2ms_count", version, indexes)?;
+        let p2pk33 = ComputedFromHeightFull::forced_import(db, "p2pk33_count", version, indexes)?;
+        let p2pk65 = ComputedFromHeightFull::forced_import(db, "p2pk65_count", version, indexes)?;
+        let p2pkh = ComputedFromHeightFull::forced_import(db, "p2pkh_count", version, indexes)?;
+        let p2sh = ComputedFromHeightFull::forced_import(db, "p2sh_count", version, indexes)?;
+        let p2tr = ComputedFromHeightFull::forced_import(db, "p2tr_count", version, indexes)?;
+        let p2wpkh = ComputedFromHeightFull::forced_import(db, "p2wpkh_count", version, indexes)?;
+        let p2wsh = ComputedFromHeightFull::forced_import(db, "p2wsh_count", version, indexes)?;
 
         // Aggregate counts (computed from per-type counts)
-        let segwit = ComputedBlockFull::forced_import(db, "segwit_count", version, indexes)?;
+        let segwit = ComputedFromHeightFull::forced_import(db, "segwit_count", version, indexes)?;
 
         // Adoption ratios (lazy)
         // Uses outputs.count.count as denominator (total output count)
         // At height level: per-block ratio; at dateindex level: sum-based ratio (% of new outputs)
-        let taproot_adoption = LazyBinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
+        let taproot_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
             "taproot_adoption",
             version,
             p2tr.height.boxed_clone(),
@@ -40,7 +40,7 @@ impl Vecs {
             &p2tr,
             &outputs.count.total_count,
         );
-        let segwit_adoption = LazyBinaryBlockFull::from_height_and_txindex::<PercentageU64F32>(
+        let segwit_adoption = LazyBinaryFromHeightFull::from_height_and_txindex::<PercentageU64F32>(
             "segwit_adoption",
             version,
             segwit.height.boxed_clone(),
@@ -59,14 +59,14 @@ impl Vecs {
             p2tr,
             p2wpkh,
             p2wsh,
-            opreturn: ComputedBlockFull::forced_import(db, "opreturn_count", version, indexes)?,
-            emptyoutput: ComputedBlockFull::forced_import(
+            opreturn: ComputedFromHeightFull::forced_import(db, "opreturn_count", version, indexes)?,
+            emptyoutput: ComputedFromHeightFull::forced_import(
                 db,
                 "emptyoutput_count",
                 version,
                 indexes,
             )?,
-            unknownoutput: ComputedBlockFull::forced_import(
+            unknownoutput: ComputedFromHeightFull::forced_import(
                 db,
                 "unknownoutput_count",
                 version,

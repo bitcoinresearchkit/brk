@@ -8,8 +8,8 @@ use crate::{
     ComputeIndexes,
     distribution::state::UnrealizedState,
     internal::{
-        ComputedHeightDateLast, DollarsMinus, DollarsPlus, LazyBinaryBlockLast, LazyBlockLast,
-        ValueHeightDateLast,
+        ComputedFromHeightAndDateLast, DollarsMinus, DollarsPlus, LazyBinaryFromHeightLast, LazyFromHeightLast,
+        ValueFromHeightAndDateLast,
     },
 };
 
@@ -19,19 +19,19 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct UnrealizedMetrics {
     // === Supply in Profit/Loss ===
-    pub supply_in_profit: ValueHeightDateLast,
-    pub supply_in_loss: ValueHeightDateLast,
+    pub supply_in_profit: ValueFromHeightAndDateLast,
+    pub supply_in_loss: ValueFromHeightAndDateLast,
 
     // === Unrealized Profit/Loss ===
-    pub unrealized_profit: ComputedHeightDateLast<Dollars>,
-    pub unrealized_loss: ComputedHeightDateLast<Dollars>,
+    pub unrealized_profit: ComputedFromHeightAndDateLast<Dollars>,
+    pub unrealized_loss: ComputedFromHeightAndDateLast<Dollars>,
 
     // === Negated ===
-    pub neg_unrealized_loss: LazyBlockLast<Dollars>,
+    pub neg_unrealized_loss: LazyFromHeightLast<Dollars>,
 
     // === Net and Total ===
-    pub net_unrealized_pnl: LazyBinaryBlockLast<Dollars>,
-    pub total_unrealized_pnl: LazyBinaryBlockLast<Dollars>,
+    pub net_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
+    pub total_unrealized_pnl: LazyBinaryFromHeightLast<Dollars>,
 }
 
 impl UnrealizedMetrics {
@@ -40,7 +40,7 @@ impl UnrealizedMetrics {
         let compute_dollars = cfg.compute_dollars();
 
         // === Supply in Profit/Loss ===
-        let supply_in_profit = ValueHeightDateLast::forced_import(
+        let supply_in_profit = ValueFromHeightAndDateLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_profit"),
             cfg.version,
@@ -48,7 +48,7 @@ impl UnrealizedMetrics {
             cfg.indexes,
             cfg.price,
         )?;
-        let supply_in_loss = ValueHeightDateLast::forced_import(
+        let supply_in_loss = ValueFromHeightAndDateLast::forced_import(
             cfg.db,
             &cfg.name("supply_in_loss"),
             cfg.version,
@@ -58,13 +58,13 @@ impl UnrealizedMetrics {
         )?;
 
         // === Unrealized Profit/Loss ===
-        let unrealized_profit = ComputedHeightDateLast::forced_import(
+        let unrealized_profit = ComputedFromHeightAndDateLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_profit"),
             cfg.version,
             cfg.indexes,
         )?;
-        let unrealized_loss = ComputedHeightDateLast::forced_import(
+        let unrealized_loss = ComputedFromHeightAndDateLast::forced_import(
             cfg.db,
             &cfg.name("unrealized_loss"),
             cfg.version,
@@ -72,20 +72,20 @@ impl UnrealizedMetrics {
         )?;
 
         // === Negated ===
-        let neg_unrealized_loss = LazyBlockLast::from_computed_height_date::<Negate>(
+        let neg_unrealized_loss = LazyFromHeightLast::from_computed_height_date::<Negate>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
             &unrealized_loss,
         );
 
         // === Net and Total ===
-        let net_unrealized_pnl = LazyBinaryBlockLast::from_computed_height_date_last::<DollarsMinus>(
+        let net_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_height_date_last::<DollarsMinus>(
             &cfg.name("net_unrealized_pnl"),
             cfg.version,
             &unrealized_profit,
             &unrealized_loss,
         );
-        let total_unrealized_pnl = LazyBinaryBlockLast::from_computed_height_date_last::<DollarsPlus>(
+        let total_unrealized_pnl = LazyBinaryFromHeightLast::from_computed_height_date_last::<DollarsPlus>(
             &cfg.name("total_unrealized_pnl"),
             cfg.version,
             &unrealized_profit,

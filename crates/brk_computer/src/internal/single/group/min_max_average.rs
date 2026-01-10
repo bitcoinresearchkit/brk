@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{AnyVec, Database, Exit, IterableVec, VecIndex, VecValue, Version};
+use vecdb::{AnyVec, Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec, VecIndex, VecValue, Version};
 
-use crate::internal::{AverageVec, ComputedVecValue};
+use crate::internal::{AverageVec, ComputedVecValue, MaxVec, MinVec};
 
 use super::MinMax;
 
@@ -41,6 +41,7 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> MinMaxAverage<I, T> {
             first_indexes,
             count_indexes,
             exit,
+            0, // min_skip_count
             None, // first
             None, // last
             Some(&mut self.minmax.min.0),
@@ -101,5 +102,27 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> MinMaxAverage<I, T> {
 
     pub fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(self.len()))
+    }
+
+    // Accessors
+    pub fn min(&self) -> &MinVec<I, T> {
+        &self.minmax.min
+    }
+
+    pub fn max(&self) -> &MaxVec<I, T> {
+        &self.minmax.max
+    }
+
+    // Boxed accessors
+    pub fn boxed_average(&self) -> IterableBoxedVec<I, T> {
+        self.average.0.boxed_clone()
+    }
+
+    pub fn boxed_min(&self) -> IterableBoxedVec<I, T> {
+        self.minmax.min.0.boxed_clone()
+    }
+
+    pub fn boxed_max(&self) -> IterableBoxedVec<I, T> {
+        self.minmax.max.0.boxed_clone()
     }
 }

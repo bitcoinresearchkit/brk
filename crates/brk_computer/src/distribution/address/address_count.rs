@@ -8,7 +8,7 @@ use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, PcoVec, TypedVecIterator,
 };
 
-use crate::{ComputeIndexes, indexes, internal::ComputedBlockLast};
+use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightLast};
 
 /// Address count per address type (runtime state).
 #[derive(Debug, Default, Deref, DerefMut)]
@@ -78,11 +78,11 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
 
 /// Address count per address type, with height + derived indexes.
 #[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct AddressTypeToAddrCountVecs(ByAddressType<ComputedBlockLast<StoredU64>>);
+pub struct AddressTypeToAddrCountVecs(ByAddressType<ComputedFromHeightLast<StoredU64>>);
 
-impl From<ByAddressType<ComputedBlockLast<StoredU64>>> for AddressTypeToAddrCountVecs {
+impl From<ByAddressType<ComputedFromHeightLast<StoredU64>>> for AddressTypeToAddrCountVecs {
     #[inline]
-    fn from(value: ByAddressType<ComputedBlockLast<StoredU64>>) -> Self {
+    fn from(value: ByAddressType<ComputedFromHeightLast<StoredU64>>) -> Self {
         Self(value)
     }
 }
@@ -95,8 +95,8 @@ impl AddressTypeToAddrCountVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self::from(
-            ByAddressType::<ComputedBlockLast<StoredU64>>::new_with_name(|type_name| {
-                ComputedBlockLast::forced_import(
+            ByAddressType::<ComputedFromHeightLast<StoredU64>>::new_with_name(|type_name| {
+                ComputedFromHeightLast::forced_import(
                     db,
                     &format!("{type_name}_{name}"),
                     version,
@@ -224,7 +224,7 @@ impl AddressTypeToAddrCountVecs {
 
 #[derive(Clone, Traversable)]
 pub struct AddrCountVecs {
-    pub all: ComputedBlockLast<StoredU64>,
+    pub all: ComputedFromHeightLast<StoredU64>,
     #[traversable(flatten)]
     pub by_addresstype: AddressTypeToAddrCountVecs,
 }
@@ -237,7 +237,7 @@ impl AddrCountVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            all: ComputedBlockLast::forced_import(db, name, version, indexes)?,
+            all: ComputedFromHeightLast::forced_import(db, name, version, indexes)?,
             by_addresstype: AddressTypeToAddrCountVecs::forced_import(db, name, version, indexes)?,
         })
     }

@@ -32,7 +32,7 @@ where
         Self(LazyVecFrom1::transformed::<F>(
             name,
             version,
-            source.0.boxed_clone(),
+            source.boxed_clone(),
         ))
     }
 

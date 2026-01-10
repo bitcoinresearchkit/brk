@@ -313,7 +313,7 @@ impl CohortMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.supply
-            .compute_rest_part1(indexes, price, starting_indexes, exit)?;
+            .compute_rest_part1(indexes, starting_indexes, exit)?;
         self.outputs.compute_rest(indexes, starting_indexes, exit)?;
         self.activity
             .compute_rest_part1(indexes, starting_indexes, exit)?;

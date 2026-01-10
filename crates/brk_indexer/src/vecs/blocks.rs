@@ -9,8 +9,10 @@ use crate::parallel_import;
 #[derive(Clone, Traversable)]
 pub struct BlocksVecs {
     pub blockhash: BytesVec<Height, BlockHash>,
+    #[traversable(wrap = "difficulty", rename = "raw")]
     pub difficulty: PcoVec<Height, StoredF64>,
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
+    #[traversable(wrap = "time")]
     pub timestamp: PcoVec<Height, Timestamp>,
     pub total_size: PcoVec<Height, StoredU64>,
     pub weight: PcoVec<Height, Weight>,

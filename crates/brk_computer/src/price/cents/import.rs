@@ -3,14 +3,14 @@ use brk_types::{DateIndex, Height, OHLCCents, Version};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom1};
 
 use super::Vecs;
-use crate::internal::{ComputedHeightDateBytes, LazyHeightDateOHLC, LazyOHLC};
+use crate::internal::{ComputedHeightAndDateBytes, LazyHeightAndDateOHLC, LazyOHLC};
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let ohlc: ComputedHeightDateBytes<OHLCCents> =
-            ComputedHeightDateBytes::forced_import(db, "ohlc_cents", version)?;
+        let ohlc: ComputedHeightAndDateBytes<OHLCCents> =
+            ComputedHeightAndDateBytes::forced_import(db, "ohlc_cents", version)?;
 
-        let components = LazyHeightDateOHLC {
+        let components = LazyHeightAndDateOHLC {
             height: LazyOHLC {
                 open: LazyVecFrom1::init(
                     "price_open_cents",

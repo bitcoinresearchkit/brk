@@ -3,11 +3,11 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::DerivedTxFull};
+use crate::{indexes, internal::TxDerivedFull};
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
-        Ok(Self(DerivedTxFull::forced_import(
+        Ok(Self(TxDerivedFull::forced_import(
             db,
             "input_count",
             version,

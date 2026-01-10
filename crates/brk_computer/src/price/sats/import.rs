@@ -5,14 +5,14 @@ use vecdb::{Database, EagerVec, ImportableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{OHLCComputedVecs, OHLCPeriodVecs},
+    internal::{ComputedOHLC, LazyFromHeightAndDateOHLC},
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
-            split: OHLCComputedVecs::forced_import(db, "price_sats", version, indexes)?,
-            ohlc: OHLCPeriodVecs {
+            split: ComputedOHLC::forced_import(db, "price_sats", version, indexes)?,
+            ohlc: LazyFromHeightAndDateOHLC {
                 dateindex: EagerVec::forced_import(db, "price_ohlc_sats", version)?,
                 week: EagerVec::forced_import(db, "price_ohlc_sats", version)?,
                 month: EagerVec::forced_import(db, "price_ohlc_sats", version)?,

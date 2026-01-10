@@ -4,8 +4,8 @@ use brk_types::StoredU64;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableVec,
-    PcoVec, VecIndex, VecValue, Version,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, GenericStoredVec, ImportableVec, IterableBoxedVec,
+    IterableCloneableVec, IterableVec, PcoVec, VecIndex, VecValue, Version,
 };
 
 use crate::internal::ComputedVecValue;
@@ -22,6 +22,10 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> FirstVec<I, T> {
     #[inline]
     pub fn inner(&self) -> &EagerVec<PcoVec<I, T>> {
         &self.0
+    }
+
+    pub fn boxed_clone(&self) -> IterableBoxedVec<I, T> {
+        self.0.boxed_clone()
     }
 
     /// Compute first values from a source vec.

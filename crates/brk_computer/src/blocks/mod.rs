@@ -44,7 +44,9 @@ pub struct Vecs {
 
     pub count: CountVecs,
     pub interval: IntervalVecs,
+    #[traversable(flatten)]
     pub size: SizeVecs,
+    #[traversable(flatten)]
     pub weight: WeightVecs,
     pub time: TimeVecs,
     pub mining: MiningVecs,

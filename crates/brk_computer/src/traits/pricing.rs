@@ -28,7 +28,7 @@ use brk_traversable::Traversable;
 /// |------|-------|--------|----------|
 /// | `Data` | Computer top-level | `PricingData` | `()` |
 /// | `PriceRef<'a>` | Function params | `&price::Vecs` | `()` |
-/// | `ComputedDollarsHeight` | Value wrappers (Height) | `ComputedBlock<Dollars>` | `()` |
+/// | `ComputedDollarsHeight` | Value wrappers (Height) | `ComputedFromHeight<Dollars>` | `()` |
 /// | `ComputedDollarsDateIndex` | Value wrappers (DateIndex) | `ComputedVecsDate<Dollars>` | `()` |
 /// | `StdDevBandsUsd` | StdDev USD bands | `StdDevBandsUsdData` | `()` |
 /// | `RatioUsd` | Ratio USD variants | `RatioUsdData` | `()` |

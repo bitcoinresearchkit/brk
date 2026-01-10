@@ -1,4 +1,4 @@
-//! ComputedTxDistribution - eager txindex source + derived distribution.
+//! ComputedFromTxDistribution - eager txindex source + derived distribution.
 
 use brk_error::Result;
 use brk_indexer::Indexer;
@@ -10,14 +10,14 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec};
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedVecValue, DerivedTxDistribution, NumericValue},
+    internal::{ComputedVecValue, TxDerivedDistribution, NumericValue},
 };
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedTxDistribution<T>
+pub struct ComputedFromTxDistribution<T>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -25,10 +25,10 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub distribution: DerivedTxDistribution<T>,
+    pub distribution: TxDerivedDistribution<T>,
 }
 
-impl<T> ComputedTxDistribution<T>
+impl<T> ComputedFromTxDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -40,7 +40,7 @@ where
     ) -> Result<Self> {
         let v = version + VERSION;
         let txindex = EagerVec::forced_import(db, name, v)?;
-        let distribution = DerivedTxDistribution::forced_import(db, name, v, indexes)?;
+        let distribution = TxDerivedDistribution::forced_import(db, name, v, indexes)?;
         Ok(Self { txindex, distribution })
     }
 
@@ -51,7 +51,27 @@ where
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.distribution
-            .derive_from(indexer, indexes, starting_indexes, &self.txindex, exit)
+        self.derive_from_with_skip(indexer, indexes, starting_indexes, exit, 0)
+    }
+
+    /// Derive from source, skipping first N transactions per block from all calculations.
+    ///
+    /// Use `skip_count: 1` to exclude coinbase transactions from fee/feerate stats.
+    pub fn derive_from_with_skip(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &ComputeIndexes,
+        exit: &Exit,
+        skip_count: usize,
+    ) -> Result<()> {
+        self.distribution.derive_from_with_skip(
+            indexer,
+            indexes,
+            starting_indexes,
+            &self.txindex,
+            exit,
+            skip_count,
+        )
     }
 }

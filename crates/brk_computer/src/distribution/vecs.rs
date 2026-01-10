@@ -43,9 +43,9 @@ pub struct Vecs {
 
     pub addr_count: AddrCountVecs,
     pub empty_addr_count: AddrCountVecs,
-    pub loadedaddressindex_to_loadedaddressindex:
+    pub loadedaddressindex:
         LazyVecFrom1<LoadedAddressIndex, LoadedAddressIndex, LoadedAddressIndex, LoadedAddressData>,
-    pub emptyaddressindex_to_emptyaddressindex:
+    pub emptyaddressindex:
         LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 }
 
@@ -90,13 +90,13 @@ impl Vecs {
         )?;
 
         // Identity mappings for traversable
-        let loadedaddressindex_to_loadedaddressindex = LazyVecFrom1::init(
+        let loadedaddressindex = LazyVecFrom1::init(
             "loadedaddressindex",
             version,
             loadedaddressindex_to_loadedaddressdata.boxed_clone(),
             |index, _| Some(index),
         );
-        let emptyaddressindex_to_emptyaddressindex = LazyVecFrom1::init(
+        let emptyaddressindex = LazyVecFrom1::init(
             "emptyaddressindex",
             version,
             emptyaddressindex_to_emptyaddressdata.boxed_clone(),
@@ -125,8 +125,8 @@ impl Vecs {
                 loaded: loadedaddressindex_to_loadedaddressdata,
                 empty: emptyaddressindex_to_emptyaddressdata,
             },
-            loadedaddressindex_to_loadedaddressindex,
-            emptyaddressindex_to_emptyaddressindex,
+            loadedaddressindex,
+            emptyaddressindex,
 
             db,
         };

@@ -4,7 +4,7 @@ use brk_types::{TxIndex, VSize, Version, Weight};
 use vecdb::{Database, IterableCloneableVec, LazyVecFrom2, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::LazyTxDistribution};
+use crate::{indexes, internal::LazyFromTxDistribution};
 
 impl Vecs {
     pub fn forced_import(
@@ -42,14 +42,14 @@ impl Vecs {
         );
 
         Ok(Self {
-            vsize: LazyTxDistribution::forced_import(
+            vsize: LazyFromTxDistribution::forced_import(
                 db,
                 "tx_vsize",
                 version,
                 txindex_to_vsize,
                 indexes,
             )?,
-            weight: LazyTxDistribution::forced_import(
+            weight: LazyFromTxDistribution::forced_import(
                 db,
                 "tx_weight",
                 version,

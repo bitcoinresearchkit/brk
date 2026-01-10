@@ -43,6 +43,9 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
         syntax.constructor(&field.rust_type, &path_expr)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         syntax.constructor(&accessor.name, &path_expr)
+    } else if field.is_branch() {
+        // Non-pattern branch - instantiate the nested struct
+        syntax.constructor(&field.rust_type, &path_expr)
     } else {
         panic!(
             "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
@@ -72,6 +75,9 @@ pub fn generate_tree_path_field<S: LanguageSyntax>(
         syntax.constructor(&field.rust_type, &path_expr)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         syntax.constructor(&accessor.name, &path_expr)
+    } else if field.is_branch() {
+        // Non-pattern branch - instantiate the nested struct
+        syntax.constructor(&field.rust_type, &path_expr)
     } else {
         panic!(
             "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",

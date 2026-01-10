@@ -22,8 +22,7 @@ impl Query {
             .sats
             .dateindex
             .distribution
-            .average
-            .0
+            .average()
             .iter();
 
         Ok(iter.collect(|di, ts, h| {

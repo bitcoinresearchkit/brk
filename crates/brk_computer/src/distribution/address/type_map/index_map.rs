@@ -92,6 +92,11 @@ impl<T> AddressTypeToTypeIndexMap<T> {
         self.0.into_iter()
     }
 
+    /// Consume and return the inner ByAddressType.
+    pub fn into_inner(self) -> ByAddressType<FxHashMap<TypeIndex, T>> {
+        self.0
+    }
+
     /// Iterate mutably over entries by address type.
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut FxHashMap<TypeIndex, T>)> {
         self.0.iter_mut()

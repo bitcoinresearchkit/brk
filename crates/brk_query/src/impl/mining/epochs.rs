@@ -27,7 +27,7 @@ pub fn iter_difficulty_epochs(
         .first_height
         .iter();
     let mut epoch_to_timestamp_iter = computer.blocks.time.timestamp.difficultyepoch.iter();
-    let mut epoch_to_difficulty_iter = computer.blocks.mining.difficulty.difficultyepoch.iter();
+    let mut epoch_to_difficulty_iter = computer.blocks.difficulty.raw.difficultyepoch.iter();
 
     let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);
     let mut prev_difficulty: Option<f64> = None;

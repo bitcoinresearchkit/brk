@@ -5,10 +5,9 @@ use vecdb::{Exit, IterableVec, TypedVecIterator, VecIndex};
 
 use super::super::count;
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, price, transactions};
+use crate::{ComputeIndexes, indexes, transactions};
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
     pub fn compute(
         &mut self,
         indexer: &Indexer,
@@ -16,11 +15,10 @@ impl Vecs {
         count_vecs: &count::Vecs,
         transactions_fees: &transactions::FeesVecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         self.coinbase
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 let mut txindex_to_first_txoutindex_iter =
                     indexer.vecs.transactions.first_txoutindex.iter()?;
                 let mut txindex_to_output_count_iter =
@@ -84,7 +82,7 @@ impl Vecs {
         }
 
         self.subsidy
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform2(
                     starting_indexes.height,
                     &self.coinbase.sats.height,
@@ -104,7 +102,7 @@ impl Vecs {
             })?;
 
         self.unclaimed_rewards
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     &self.subsidy.sats.height,

@@ -12,9 +12,9 @@ use crate::{
     distribution::state::RealizedState,
     indexes,
     internal::{
-        ComputedBlockLast, ComputedBlockSum, ComputedBlockSumCum, ComputedDateLast,
-        ComputedRatioVecsDate, DollarsMinus, LazyBinaryBlockSum, LazyBinaryBlockSumCum,
-        LazyBlockSum, LazyBlockSumCum, LazyDateLast, PercentageDollarsF32, StoredF32Identity,
+        ComputedFromHeightLast, ComputedFromHeightSum, ComputedFromHeightSumCum, ComputedFromDateLast,
+        ComputedFromDateRatio, DollarsMinus, LazyBinaryFromHeightSum, LazyBinaryFromHeightSumCum,
+        LazyFromHeightSum, LazyFromHeightSumCum, LazyFromDateLast, PercentageDollarsF32, StoredF32Identity,
     },
     price,
 };
@@ -25,39 +25,39 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct RealizedMetrics {
     // === Realized Cap ===
-    pub realized_cap: ComputedBlockLast<Dollars>,
-    pub realized_price: ComputedBlockLast<Dollars>,
-    pub realized_price_extra: ComputedRatioVecsDate,
-    pub realized_cap_rel_to_own_market_cap: Option<ComputedBlockLast<StoredF32>>,
-    pub realized_cap_30d_delta: ComputedDateLast<Dollars>,
+    pub realized_cap: ComputedFromHeightLast<Dollars>,
+    pub realized_price: ComputedFromHeightLast<Dollars>,
+    pub realized_price_extra: ComputedFromDateRatio,
+    pub realized_cap_rel_to_own_market_cap: Option<ComputedFromHeightLast<StoredF32>>,
+    pub realized_cap_30d_delta: ComputedFromDateLast<Dollars>,
 
     // === MVRV (Market Value to Realized Value) ===
     // Proxy for realized_price_extra.ratio (close / realized_price = market_cap / realized_cap)
-    pub mvrv: LazyDateLast<StoredF32>,
+    pub mvrv: LazyFromDateLast<StoredF32>,
 
     // === Realized Profit/Loss ===
-    pub realized_profit: ComputedBlockSumCum<Dollars>,
-    pub realized_loss: ComputedBlockSumCum<Dollars>,
-    pub neg_realized_loss: LazyBlockSumCum<Dollars>,
-    pub net_realized_pnl: ComputedBlockSumCum<Dollars>,
-    pub realized_value: ComputedBlockSum<Dollars>,
+    pub realized_profit: ComputedFromHeightSumCum<Dollars>,
+    pub realized_loss: ComputedFromHeightSumCum<Dollars>,
+    pub neg_realized_loss: LazyFromHeightSumCum<Dollars>,
+    pub net_realized_pnl: ComputedFromHeightSumCum<Dollars>,
+    pub realized_value: ComputedFromHeightSum<Dollars>,
 
     // === Realized vs Realized Cap Ratios (lazy) ===
-    pub realized_profit_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
-    pub realized_loss_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
-    pub net_realized_pnl_rel_to_realized_cap: LazyBinaryBlockSumCum<StoredF32, Dollars, Dollars>,
+    pub realized_profit_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+    pub realized_loss_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
+    pub net_realized_pnl_rel_to_realized_cap: LazyBinaryFromHeightSumCum<StoredF32, Dollars, Dollars>,
 
     // === Total Realized PnL ===
-    pub total_realized_pnl: LazyBlockSum<Dollars>,
+    pub total_realized_pnl: LazyFromHeightSum<Dollars>,
     pub realized_profit_to_loss_ratio: Option<EagerVec<PcoVec<DateIndex, StoredF64>>>,
 
     // === Value Created/Destroyed ===
-    pub value_created: ComputedBlockSum<Dollars>,
-    pub value_destroyed: ComputedBlockSum<Dollars>,
+    pub value_created: ComputedFromHeightSum<Dollars>,
+    pub value_destroyed: ComputedFromHeightSum<Dollars>,
 
     // === Adjusted Value (lazy: cohort - up_to_1h) ===
-    pub adjusted_value_created: Option<LazyBinaryBlockSum<Dollars, Dollars, Dollars>>,
-    pub adjusted_value_destroyed: Option<LazyBinaryBlockSum<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_created: Option<LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>>,
+    pub adjusted_value_destroyed: Option<LazyBinaryFromHeightSum<Dollars, Dollars, Dollars>>,
 
     // === SOPR (Spent Output Profit Ratio) ===
     pub sopr: EagerVec<PcoVec<DateIndex, StoredF64>>,
@@ -73,9 +73,9 @@ pub struct RealizedMetrics {
     pub sell_side_risk_ratio_30d_ema: EagerVec<PcoVec<DateIndex, StoredF32>>,
 
     // === Net Realized PnL Deltas ===
-    pub net_realized_pnl_cumulative_30d_delta: ComputedDateLast<Dollars>,
-    pub net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: ComputedDateLast<StoredF32>,
-    pub net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: ComputedDateLast<StoredF32>,
+    pub net_realized_pnl_cumulative_30d_delta: ComputedFromDateLast<Dollars>,
+    pub net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap: ComputedFromDateLast<StoredF32>,
+    pub net_realized_pnl_cumulative_30d_delta_rel_to_market_cap: ComputedFromDateLast<StoredF32>,
 }
 
 impl RealizedMetrics {
@@ -87,35 +87,35 @@ impl RealizedMetrics {
         let compute_adjusted = cfg.compute_adjusted();
 
         // Import combined types using forced_import which handles height + derived
-        let realized_cap = ComputedBlockLast::forced_import(
+        let realized_cap = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("realized_cap"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let realized_profit = ComputedBlockSumCum::forced_import(
+        let realized_profit = ComputedFromHeightSumCum::forced_import(
             cfg.db,
             &cfg.name("realized_profit"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let realized_loss = ComputedBlockSumCum::forced_import(
+        let realized_loss = ComputedFromHeightSumCum::forced_import(
             cfg.db,
             &cfg.name("realized_loss"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let neg_realized_loss = LazyBlockSumCum::from_computed::<Negate>(
+        let neg_realized_loss = LazyFromHeightSumCum::from_computed::<Negate>(
             &cfg.name("neg_realized_loss"),
             cfg.version + v1,
             realized_loss.height.boxed_clone(),
             &realized_loss,
         );
 
-        let net_realized_pnl = ComputedBlockSumCum::forced_import(
+        let net_realized_pnl = ComputedFromHeightSumCum::forced_import(
             cfg.db,
             &cfg.name("net_realized_pnl"),
             cfg.version,
@@ -123,7 +123,7 @@ impl RealizedMetrics {
         )?;
 
         // realized_value is the source for total_realized_pnl (they're identical)
-        let realized_value = ComputedBlockSum::forced_import(
+        let realized_value = ComputedFromHeightSum::forced_import(
             cfg.db,
             &cfg.name("realized_value"),
             cfg.version,
@@ -131,7 +131,7 @@ impl RealizedMetrics {
         )?;
 
         // total_realized_pnl is a lazy alias to realized_value
-        let total_realized_pnl = LazyBlockSum::from_computed::<Ident>(
+        let total_realized_pnl = LazyFromHeightSum::from_computed::<Ident>(
             &cfg.name("total_realized_pnl"),
             cfg.version + v1,
             realized_value.height.boxed_clone(),
@@ -140,7 +140,7 @@ impl RealizedMetrics {
 
         // Construct lazy ratio vecs
         let realized_profit_rel_to_realized_cap =
-            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("realized_profit_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_profit.height.boxed_clone(),
@@ -150,7 +150,7 @@ impl RealizedMetrics {
             );
 
         let realized_loss_rel_to_realized_cap =
-            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("realized_loss_rel_to_realized_cap"),
                 cfg.version + v1,
                 realized_loss.height.boxed_clone(),
@@ -160,7 +160,7 @@ impl RealizedMetrics {
             );
 
         let net_realized_pnl_rel_to_realized_cap =
-            LazyBinaryBlockSumCum::from_computed_last::<PercentageDollarsF32>(
+            LazyBinaryFromHeightSumCum::from_computed_last::<PercentageDollarsF32>(
                 &cfg.name("net_realized_pnl_rel_to_realized_cap"),
                 cfg.version + v1,
                 net_realized_pnl.height.boxed_clone(),
@@ -169,21 +169,21 @@ impl RealizedMetrics {
                 &realized_cap,
             );
 
-        let realized_price = ComputedBlockLast::forced_import(
+        let realized_price = ComputedFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("realized_price"),
             cfg.version + v1,
             cfg.indexes,
         )?;
 
-        let value_created = ComputedBlockSum::forced_import(
+        let value_created = ComputedFromHeightSum::forced_import(
             cfg.db,
             &cfg.name("value_created"),
             cfg.version,
             cfg.indexes,
         )?;
 
-        let value_destroyed = ComputedBlockSum::forced_import(
+        let value_destroyed = ComputedFromHeightSum::forced_import(
             cfg.db,
             &cfg.name("value_destroyed"),
             cfg.version,
@@ -194,7 +194,7 @@ impl RealizedMetrics {
         let adjusted_value_created =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryBlockSum::from_computed::<DollarsMinus>(
+                LazyBinaryFromHeightSum::from_computed::<DollarsMinus>(
                     &cfg.name("adjusted_value_created"),
                     cfg.version,
                     &value_created,
@@ -204,7 +204,7 @@ impl RealizedMetrics {
         let adjusted_value_destroyed =
             (compute_adjusted && cfg.up_to_1h_realized.is_some()).then(|| {
                 let up_to_1h = cfg.up_to_1h_realized.unwrap();
-                LazyBinaryBlockSum::from_computed::<DollarsMinus>(
+                LazyBinaryFromHeightSum::from_computed::<DollarsMinus>(
                     &cfg.name("adjusted_value_destroyed"),
                     cfg.version,
                     &value_destroyed,
@@ -213,7 +213,7 @@ impl RealizedMetrics {
             });
 
         // Create realized_price_extra first so we can reference its ratio for MVRV proxy
-        let realized_price_extra = ComputedRatioVecsDate::forced_import(
+        let realized_price_extra = ComputedFromDateRatio::forced_import(
             cfg.db,
             &cfg.name("realized_price"),
             Some(&realized_price),
@@ -225,7 +225,7 @@ impl RealizedMetrics {
 
         // MVRV is a lazy proxy for realized_price_extra.ratio
         // ratio = close / realized_price = market_cap / realized_cap = MVRV
-        let mvrv = LazyDateLast::from_source::<StoredF32Identity>(
+        let mvrv = LazyFromDateLast::from_source::<StoredF32Identity>(
             &cfg.name("mvrv"),
             cfg.version,
             &realized_price_extra.ratio,
@@ -238,7 +238,7 @@ impl RealizedMetrics {
             realized_price_extra,
             realized_cap_rel_to_own_market_cap: extended
                 .then(|| {
-                    ComputedBlockLast::forced_import(
+                    ComputedFromHeightLast::forced_import(
                         cfg.db,
                         &cfg.name("realized_cap_rel_to_own_market_cap"),
                         cfg.version,
@@ -246,7 +246,7 @@ impl RealizedMetrics {
                     )
                 })
                 .transpose()?,
-            realized_cap_30d_delta: ComputedDateLast::forced_import(
+            realized_cap_30d_delta: ComputedFromDateLast::forced_import(
                 cfg.db,
                 &cfg.name("realized_cap_30d_delta"),
                 cfg.version,
@@ -338,21 +338,21 @@ impl RealizedMetrics {
             )?,
 
             // === Net Realized PnL Deltas ===
-            net_realized_pnl_cumulative_30d_delta: ComputedDateLast::forced_import(
+            net_realized_pnl_cumulative_30d_delta: ComputedFromDateLast::forced_import(
                 cfg.db,
                 &cfg.name("net_realized_pnl_cumulative_30d_delta"),
                 cfg.version + v3,
                 cfg.indexes,
             )?,
             net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap:
-                ComputedDateLast::forced_import(
+                ComputedFromDateLast::forced_import(
                     cfg.db,
                     &cfg.name("net_realized_pnl_cumulative_30d_delta_rel_to_realized_cap"),
                     cfg.version + v3,
                     cfg.indexes,
                 )?,
             net_realized_pnl_cumulative_30d_delta_rel_to_market_cap:
-                ComputedDateLast::forced_import(
+                ComputedFromDateLast::forced_import(
                     cfg.db,
                     &cfg.name("net_realized_pnl_cumulative_30d_delta_rel_to_market_cap"),
                     cfg.version + v3,

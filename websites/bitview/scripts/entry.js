@@ -5,7 +5,7 @@
  *
  * @import { Signal, Signals, Accessor } from "./signals.js";
  *
- * @import { BrkClient, CatalogTree_Computed_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Computed_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Computed_Distribution_UtxoCohorts_All as AllUtxoPattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, BitcoinPattern, BlockSizePattern, BlockIntervalPattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, SentPattern as RewardPattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, DollarsPattern, CountPattern2 } from "./modules/brk-client/index.js"
+ * @import { BrkClient, CatalogTree_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Distribution_UtxoCohorts_All as AllUtxoPattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, SizePattern, FullnessPattern, FeeRatePattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, AddrCountPattern, CatalogTree_Blocks_Interval as IntervalPattern } from "./modules/brk-client/index.js"
  *
  * @import { Resources, MetricResource } from './resources.js'
  *
@@ -55,7 +55,7 @@
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasisPercentiles }} CohortWithCostBasisPercentiles
  *
  * Tree branch types
- * @typedef {InstanceType<typeof BrkClient>["tree"]["computed"]["market"]} Market
+ * @typedef {InstanceType<typeof BrkClient>["tree"]["market"]} Market
  * @typedef {Market["movingAverage"]} MarketMovingAverage
  * @typedef {Market["dca"]} MarketDca
  *
@@ -65,7 +65,3 @@
  * Chartable index IDs (subset of IndexName that can be charted)
  * @typedef {"height" | "dateindex" | "weekindex" | "monthindex" | "quarterindex" | "semesterindex" | "yearindex" | "decadeindex"} ChartableIndex
  */
-
-// DO NOT CHANGE, Exact format is expected in `brk_bundler`
-// @ts-ignore
-import("./main.js");

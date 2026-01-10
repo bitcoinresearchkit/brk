@@ -4,7 +4,7 @@ use brk_types::{StoredU64, TxVersion};
 use vecdb::{Exit, TypedVecIterator};
 
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, internal::ComputedBlockSumCum};
+use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightSumCum};
 
 impl Vecs {
     pub fn compute(
@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        let tx_vany = |tx_vany: &mut ComputedBlockSumCum<StoredU64>, txversion: TxVersion| {
+        let tx_vany = |tx_vany: &mut ComputedFromHeightSumCum<StoredU64>, txversion: TxVersion| {
             let mut txversion_iter = indexer.vecs.transactions.txversion.iter()?;
             tx_vany.compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_filtered_count_from_indexes(

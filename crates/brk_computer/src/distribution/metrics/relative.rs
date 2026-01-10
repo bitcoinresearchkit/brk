@@ -4,7 +4,7 @@ use brk_types::{Dollars, Sats, StoredF32, StoredF64, Version};
 use vecdb::IterableCloneableVec;
 
 use crate::internal::{
-    LazyBinaryBlockLast, LazyBinaryDateLast, NegPercentageDollarsF32, NegRatio32,
+    LazyBinaryFromHeightLast, LazyBinaryFromDateLast, NegPercentageDollarsF32, NegRatio32,
     PercentageDollarsF32, PercentageSatsF64, Ratio32,
 };
 
@@ -15,49 +15,49 @@ use super::{ImportConfig, SupplyMetrics, UnrealizedMetrics};
 #[derive(Clone, Traversable)]
 pub struct RelativeMetrics {
     // === Supply Relative to Circulating Supply (lazy from global supply) ===
-    pub supply_rel_to_circulating_supply: Option<LazyBinaryDateLast<StoredF64, Sats, Sats>>,
+    pub supply_rel_to_circulating_supply: Option<LazyBinaryFromDateLast<StoredF64, Sats, Sats>>,
 
     // === Supply in Profit/Loss Relative to Own Supply (lazy) ===
-    pub supply_in_profit_rel_to_own_supply: LazyBinaryBlockLast<StoredF64, Sats, Sats>,
-    pub supply_in_loss_rel_to_own_supply: LazyBinaryBlockLast<StoredF64, Sats, Sats>,
+    pub supply_in_profit_rel_to_own_supply: LazyBinaryFromHeightLast<StoredF64, Sats, Sats>,
+    pub supply_in_loss_rel_to_own_supply: LazyBinaryFromHeightLast<StoredF64, Sats, Sats>,
 
     // === Supply in Profit/Loss Relative to Circulating Supply (lazy from global supply) ===
     pub supply_in_profit_rel_to_circulating_supply:
-        Option<LazyBinaryBlockLast<StoredF64, Sats, Sats>>,
+        Option<LazyBinaryFromHeightLast<StoredF64, Sats, Sats>>,
     pub supply_in_loss_rel_to_circulating_supply:
-        Option<LazyBinaryBlockLast<StoredF64, Sats, Sats>>,
+        Option<LazyBinaryFromHeightLast<StoredF64, Sats, Sats>>,
 
     // === Unrealized vs Market Cap (lazy from global market cap) ===
     pub unrealized_profit_rel_to_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
-    pub unrealized_loss_rel_to_market_cap: Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
+    pub unrealized_loss_rel_to_market_cap: Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub neg_unrealized_loss_rel_to_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub net_unrealized_pnl_rel_to_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 
     // === NUPL (Net Unrealized Profit/Loss) ===
-    pub nupl: Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+    pub nupl: Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 
     // === Unrealized vs Own Market Cap (lazy) ===
     pub unrealized_profit_rel_to_own_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub unrealized_loss_rel_to_own_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub neg_unrealized_loss_rel_to_own_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub net_unrealized_pnl_rel_to_own_market_cap:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 
     // === Unrealized vs Own Total Unrealized PnL (lazy) ===
     pub unrealized_profit_rel_to_own_total_unrealized_pnl:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub unrealized_loss_rel_to_own_total_unrealized_pnl:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub neg_unrealized_loss_rel_to_own_total_unrealized_pnl:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
     pub net_unrealized_pnl_rel_to_own_total_unrealized_pnl:
-        Option<LazyBinaryBlockLast<StoredF32, Dollars, Dollars>>,
+        Option<LazyBinaryFromHeightLast<StoredF32, Dollars, Dollars>>,
 }
 
 impl RelativeMetrics {
@@ -91,7 +91,7 @@ impl RelativeMetrics {
             supply_rel_to_circulating_supply: (compute_rel_to_all
                 && global_supply_sats_dates.is_some())
             .then(|| {
-                LazyBinaryDateLast::from_both_derived_last::<PercentageSatsF64>(
+                LazyBinaryFromDateLast::from_both_derived_last::<PercentageSatsF64>(
                     &cfg.name("supply_rel_to_circulating_supply"),
                     cfg.version + v1,
                     supply.total.sats.rest.dateindex.boxed_clone(),
@@ -103,7 +103,7 @@ impl RelativeMetrics {
 
             // === Supply in Profit/Loss Relative to Own Supply (lazy) ===
             supply_in_profit_rel_to_own_supply:
-                LazyBinaryBlockLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
+                LazyBinaryFromHeightLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
                     &cfg.name("supply_in_profit_rel_to_own_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_profit.height.boxed_clone(),
@@ -120,7 +120,7 @@ impl RelativeMetrics {
                     &supply.total.sats.rest.dates,
                 ),
             supply_in_loss_rel_to_own_supply:
-                LazyBinaryBlockLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
+                LazyBinaryFromHeightLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
                     &cfg.name("supply_in_loss_rel_to_own_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_loss.height.boxed_clone(),
@@ -141,7 +141,7 @@ impl RelativeMetrics {
             supply_in_profit_rel_to_circulating_supply: (compute_rel_to_all
                 && global_supply_sats_height.is_some())
             .then(|| {
-                LazyBinaryBlockLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
+                LazyBinaryFromHeightLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
                     &cfg.name("supply_in_profit_rel_to_circulating_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_profit.height.boxed_clone(),
@@ -161,7 +161,7 @@ impl RelativeMetrics {
             supply_in_loss_rel_to_circulating_supply: (compute_rel_to_all
                 && global_supply_sats_height.is_some())
             .then(|| {
-                LazyBinaryBlockLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
+                LazyBinaryFromHeightLast::from_height_difficultyepoch_dates::<PercentageSatsF64>(
                     &cfg.name("supply_in_loss_rel_to_circulating_supply"),
                     cfg.version + v1,
                     unrealized.supply_in_loss.height.boxed_clone(),
@@ -182,8 +182,10 @@ impl RelativeMetrics {
             // === Unrealized vs Market Cap (lazy from global market cap) ===
             unrealized_profit_rel_to_market_cap:
                 global_market_cap.map(|mc| {
-                    LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                    LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                         PercentageDollarsF32,
+                        _,
+                        _,
                     >(
                         &cfg.name("unrealized_profit_rel_to_market_cap"),
                         cfg.version + v2,
@@ -193,8 +195,10 @@ impl RelativeMetrics {
                 }),
             unrealized_loss_rel_to_market_cap:
                 global_market_cap.map(|mc| {
-                    LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                    LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                         PercentageDollarsF32,
+                        _,
+                        _,
                     >(
                         &cfg.name("unrealized_loss_rel_to_market_cap"),
                         cfg.version + v2,
@@ -203,8 +207,10 @@ impl RelativeMetrics {
                     )
                 }),
             neg_unrealized_loss_rel_to_market_cap: global_market_cap.map(|mc| {
-                LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                     NegPercentageDollarsF32,
+                    _,
+                    _,
                 >(
                     &cfg.name("neg_unrealized_loss_rel_to_market_cap"),
                     cfg.version + v2,
@@ -213,8 +219,10 @@ impl RelativeMetrics {
                 )
             }),
             net_unrealized_pnl_rel_to_market_cap: global_market_cap.map(|mc| {
-                LazyBinaryBlockLast::from_binary_block_and_computed_block_last::<
+                LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
                     PercentageDollarsF32,
+                    _,
+                    _,
                     _,
                     _,
                 >(
@@ -227,8 +235,10 @@ impl RelativeMetrics {
 
             // NUPL is a proxy for net_unrealized_pnl_rel_to_market_cap
             nupl: global_market_cap.map(|mc| {
-                LazyBinaryBlockLast::from_binary_block_and_computed_block_last::<
+                LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
                     PercentageDollarsF32,
+                    _,
+                    _,
                     _,
                     _,
                 >(
@@ -243,8 +253,10 @@ impl RelativeMetrics {
             unrealized_profit_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
                     own_market_cap.map(|mc| {
-                        LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                        LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                             PercentageDollarsF32,
+                            _,
+                            _,
                         >(
                             &cfg.name("unrealized_profit_rel_to_own_market_cap"),
                             cfg.version + v2,
@@ -257,8 +269,10 @@ impl RelativeMetrics {
             unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
                     own_market_cap.map(|mc| {
-                        LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                        LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                             PercentageDollarsF32,
+                            _,
+                            _,
                         >(
                             &cfg.name("unrealized_loss_rel_to_own_market_cap"),
                             cfg.version + v2,
@@ -271,8 +285,10 @@ impl RelativeMetrics {
             neg_unrealized_loss_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
                     own_market_cap.map(|mc| {
-                        LazyBinaryBlockLast::from_computed_height_date_and_block_last::<
+                        LazyBinaryFromHeightLast::from_computed_height_date_and_lazy_binary_block_last::<
                             NegPercentageDollarsF32,
+                            _,
+                            _,
                         >(
                             &cfg.name("neg_unrealized_loss_rel_to_own_market_cap"),
                             cfg.version + v2,
@@ -285,8 +301,10 @@ impl RelativeMetrics {
             net_unrealized_pnl_rel_to_own_market_cap: (extended && compute_rel_to_all)
                 .then(|| {
                     own_market_cap.map(|mc| {
-                        LazyBinaryBlockLast::from_binary_block_and_computed_block_last::<
+                        LazyBinaryFromHeightLast::from_binary_block_and_lazy_binary_block_last::<
                             PercentageDollarsF32,
+                            _,
+                            _,
                             _,
                             _,
                         >(
@@ -301,7 +319,7 @@ impl RelativeMetrics {
 
             // === Unrealized vs Own Total Unrealized PnL (lazy, optional) ===
             unrealized_profit_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryBlockLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
                     &cfg.name("unrealized_profit_rel_to_own_total_unrealized_pnl"),
                     cfg.version,
                     &unrealized.unrealized_profit,
@@ -309,7 +327,7 @@ impl RelativeMetrics {
                 )
             }),
             unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryBlockLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<Ratio32, _, _>(
                     &cfg.name("unrealized_loss_rel_to_own_total_unrealized_pnl"),
                     cfg.version,
                     &unrealized.unrealized_loss,
@@ -317,7 +335,7 @@ impl RelativeMetrics {
                 )
             }),
             neg_unrealized_loss_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryBlockLast::from_computed_height_date_and_binary_block::<NegRatio32, _, _>(
+                LazyBinaryFromHeightLast::from_computed_height_date_and_binary_block::<NegRatio32, _, _>(
                     &cfg.name("neg_unrealized_loss_rel_to_own_total_unrealized_pnl"),
                     cfg.version,
                     &unrealized.unrealized_loss,
@@ -325,7 +343,7 @@ impl RelativeMetrics {
                 )
             }),
             net_unrealized_pnl_rel_to_own_total_unrealized_pnl: extended.then(|| {
-                LazyBinaryBlockLast::from_both_binary_block::<Ratio32, _, _, _, _>(
+                LazyBinaryFromHeightLast::from_both_binary_block::<Ratio32, _, _, _, _>(
                     &cfg.name("net_unrealized_pnl_rel_to_own_total_unrealized_pnl"),
                     cfg.version + v1,
                     &unrealized.net_unrealized_pnl,

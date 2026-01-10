@@ -33,15 +33,12 @@ pub fn process_address_updates(
 ) -> Result<()> {
     info!("Processing address updates...");
 
+    let i = Instant::now();
     let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
     let loaded_result = process_loaded_addresses(addresses_data, loaded_updates)?;
-    let all_updates = empty_result.merge(loaded_result);
+    address_indexes.par_batch_update(empty_result, loaded_result)?;
 
-    for (address_type, sorted) in all_updates.into_sorted_iter() {
-        for (typeindex, any_index) in sorted {
-            address_indexes.update_or_push(address_type, typeindex, any_index)?;
-        }
-    }
+    info!("Processed address updates in {:?}", i.elapsed());
 
     Ok(())
 }

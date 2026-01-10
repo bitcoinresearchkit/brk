@@ -4,7 +4,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{BinaryTransform, IterableBoxedVec, IterableCloneableVec, LazyVecFrom2, VecIndex};
+use vecdb::{BinaryTransform, IterableBoxedVec, LazyVecFrom2, VecIndex};
 
 use crate::internal::{ComputedVecValue, SumVec};
 
@@ -37,8 +37,8 @@ where
         Self(LazyVecFrom2::transformed::<F>(
             name,
             v,
-            source1.0.boxed_clone(),
-            source2.0.boxed_clone(),
+            source1.boxed_clone(),
+            source2.boxed_clone(),
         ))
     }
 

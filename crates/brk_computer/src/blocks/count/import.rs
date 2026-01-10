@@ -10,13 +10,13 @@ use crate::{
         TARGET_BLOCKS_PER_YEAR,
     },
     indexes,
-    internal::{ComputedBlockLast, ComputedBlockSumCum, LazyPeriodVecs},
+    internal::{ComputedFromHeightLast, ComputedFromHeightSumCum, LazyFromDate},
 };
 
 impl Vecs {
     pub fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
         Ok(Self {
-            block_count_target: LazyPeriodVecs::new(
+            block_count_target: LazyFromDate::new(
                 "block_count_target",
                 version,
                 indexes,
@@ -28,30 +28,30 @@ impl Vecs {
                 |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_YEAR)),
                 |_, _| Some(StoredU64::from(TARGET_BLOCKS_PER_DECADE)),
             ),
-            block_count: ComputedBlockSumCum::forced_import(db, "block_count", version, indexes)?,
+            block_count: ComputedFromHeightSumCum::forced_import(db, "block_count", version, indexes)?,
             _24h_start: ImportableVec::forced_import(db, "24h_start", version)?,
             _1w_start: ImportableVec::forced_import(db, "1w_start", version)?,
             _1m_start: ImportableVec::forced_import(db, "1m_start", version)?,
             _1y_start: ImportableVec::forced_import(db, "1y_start", version)?,
-            _24h_block_count: ComputedBlockLast::forced_import(
+            _24h_block_count: ComputedFromHeightLast::forced_import(
                 db,
                 "24h_block_count",
                 version,
                 indexes,
             )?,
-            _1w_block_count: ComputedBlockLast::forced_import(
+            _1w_block_count: ComputedFromHeightLast::forced_import(
                 db,
                 "1w_block_count",
                 version,
                 indexes,
             )?,
-            _1m_block_count: ComputedBlockLast::forced_import(
+            _1m_block_count: ComputedFromHeightLast::forced_import(
                 db,
                 "1m_block_count",
                 version,
                 indexes,
             )?,
-            _1y_block_count: ComputedBlockLast::forced_import(
+            _1y_block_count: ComputedFromHeightLast::forced_import(
                 db,
                 "1y_block_count",
                 version,

@@ -3,7 +3,7 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{IterableBoxedVec, IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{IterableBoxedVec, LazyVecFrom1, UnaryTransform, VecIndex};
 
 use crate::internal::{ComputedVecValue, SumCum};
 
@@ -33,12 +33,12 @@ where
             sum: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_sum"),
                 version,
-                source.sum.0.boxed_clone(),
+                source.boxed_sum(),
             ),
             cumulative: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source.cumulative.0.boxed_clone(),
+                source.boxed_cumulative(),
             ),
         }
     }
@@ -50,11 +50,11 @@ where
         source: &SumCum<I, S1T>,
     ) -> Self {
         Self {
-            sum: LazyVecFrom1::transformed::<F>(name, version, source.sum.0.boxed_clone()),
+            sum: LazyVecFrom1::transformed::<F>(name, version, source.boxed_sum()),
             cumulative: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source.cumulative.0.boxed_clone(),
+                source.boxed_cumulative(),
             ),
         }
     }

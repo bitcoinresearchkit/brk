@@ -28,15 +28,6 @@ pub fn extract_inner_type(type_str: &str) -> String {
     type_str.to_string()
 }
 
-/// Extract JSON type from a schema ("integer", "number", "string", etc).
-pub fn schema_to_json_type(schema: &Value) -> String {
-    schema
-        .get("type")
-        .and_then(|v| v.as_str())
-        .unwrap_or("object")
-        .to_string()
-}
-
 /// Extract type name from a JSON Schema $ref path.
 /// E.g., "#/definitions/MyType" -> "MyType", "#/$defs/Foo" -> "Foo"
 pub fn ref_to_type_name(ref_path: &str) -> Option<&str> {

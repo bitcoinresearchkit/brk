@@ -32,8 +32,27 @@ where
         source: IterableBoxedVec<S1I, T>,
         len_source: IterableBoxedVec<I, S2T>,
     ) -> Self {
+        Self::from_source_inner(&format!("{name}_min"), version, source, len_source)
+    }
+
+    /// Create from source without adding _min suffix.
+    pub fn from_source_raw(
+        name: &str,
+        version: Version,
+        source: IterableBoxedVec<S1I, T>,
+        len_source: IterableBoxedVec<I, S2T>,
+    ) -> Self {
+        Self::from_source_inner(name, version, source, len_source)
+    }
+
+    fn from_source_inner(
+        name: &str,
+        version: Version,
+        source: IterableBoxedVec<S1I, T>,
+        len_source: IterableBoxedVec<I, S2T>,
+    ) -> Self {
         Self(LazyVecFrom2::init(
-            &format!("{name}_min"),
+            name,
             version + VERSION,
             source,
             len_source,

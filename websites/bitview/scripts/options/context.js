@@ -1,4 +1,16 @@
-import { s, fromBlockCount, fromBitcoin, fromBlockSize } from "./series.js";
+import {
+  s,
+  fromBlockCount,
+  fromBitcoin,
+  fromBlockSize,
+  fromSizePattern,
+  fromFullnessPattern,
+  fromFeeRatePattern,
+  fromCoinbasePattern,
+  fromValuePattern,
+  fromBlockCountWithUnit,
+  fromIntervalPattern,
+} from "./series.js";
 import { createPriceLine, createPriceLines, line } from "./constants.js";
 
 /**
@@ -23,6 +35,20 @@ export function createContext({ colors, brk }) {
       fromBitcoin(colors, pattern, title, color),
     fromBlockSize: (pattern, title, color) =>
       fromBlockSize(colors, pattern, title, color),
+    fromSizePattern: (pattern, title, unit) =>
+      fromSizePattern(colors, pattern, title, unit),
+    fromFullnessPattern: (pattern, title, unit) =>
+      fromFullnessPattern(colors, pattern, title, unit),
+    fromFeeRatePattern: (pattern, title, unit) =>
+      fromFeeRatePattern(colors, pattern, title, unit),
+    fromCoinbasePattern: (pattern, title) =>
+      fromCoinbasePattern(colors, pattern, title),
+    fromValuePattern: (pattern, title, sumColor, cumulativeColor) =>
+      fromValuePattern(colors, pattern, title, sumColor, cumulativeColor),
+    fromBlockCountWithUnit: (pattern, title, unit, sumColor, cumulativeColor) =>
+      fromBlockCountWithUnit(colors, pattern, title, unit, sumColor, cumulativeColor),
+    fromIntervalPattern: (pattern, title, unit, color) =>
+      fromIntervalPattern(colors, pattern, title, unit, color),
 
     createPriceLine: (args) => createPriceLine({ constants, colors, ...args }),
     createPriceLines: (args) =>

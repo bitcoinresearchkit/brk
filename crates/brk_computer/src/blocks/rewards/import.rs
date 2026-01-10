@@ -5,7 +5,8 @@ use vecdb::{Database, EagerVec, ImportableVec};
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedDateLast, ValueBlockFull, ValueBlockHeight, ValueBlockSumCum},
+    internal::{ComputedFromDateLast, ValueFromHeightFull, ValueHeight, ValueFromHeightSumCum},
+    price,
 };
 
 impl Vecs {
@@ -13,41 +14,31 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        compute_dollars: bool,
+        price: Option<&price::Vecs>,
     ) -> Result<Self> {
+        let compute_dollars = price.is_some();
+
         Ok(Self {
-            _24h_coinbase_sum: ValueBlockHeight::forced_import(
+            _24h_coinbase_sum: ValueHeight::forced_import(
                 db,
                 "24h_coinbase_sum",
                 version,
                 compute_dollars,
             )?,
-            coinbase: ValueBlockFull::forced_import(
-                db,
-                "coinbase",
-                version,
-                indexes,
-                compute_dollars,
-            )?,
-            subsidy: ValueBlockFull::forced_import(
-                db,
-                "subsidy",
-                version,
-                indexes,
-                compute_dollars,
-            )?,
-            unclaimed_rewards: ValueBlockSumCum::forced_import(
+            coinbase: ValueFromHeightFull::forced_import(db, "coinbase", version, indexes, price)?,
+            subsidy: ValueFromHeightFull::forced_import(db, "subsidy", version, indexes, price)?,
+            unclaimed_rewards: ValueFromHeightSumCum::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,
                 indexes,
-                compute_dollars,
+                price,
             )?,
             fee_dominance: EagerVec::forced_import(db, "fee_dominance", version)?,
             subsidy_dominance: EagerVec::forced_import(db, "subsidy_dominance", version)?,
             subsidy_usd_1y_sma: compute_dollars
                 .then(|| {
-                    ComputedDateLast::forced_import(db, "subsidy_usd_1y_sma", version, indexes)
+                    ComputedFromDateLast::forced_import(db, "subsidy_usd_1y_sma", version, indexes)
                 })
                 .transpose()?,
         })

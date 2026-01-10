@@ -42,10 +42,7 @@ export function createMarketSection(ctx) {
         title: "Market Capitalization",
         bottom: [
           s({
-            metric: brk.mergeMetricPatterns(
-              supply.marketCap.height,
-              supply.marketCap.indexes,
-            ),
+            metric: supply.marketCap,
             name: "Capitalization",
             unit: Unit.usd,
           }),

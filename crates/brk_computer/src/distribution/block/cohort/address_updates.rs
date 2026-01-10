@@ -3,6 +3,7 @@ use brk_types::{
     AnyAddressIndex, EmptyAddressData, EmptyAddressIndex, LoadedAddressData, LoadedAddressIndex,
     OutputType, TypeIndex,
 };
+use vecdb::AnyVec;
 
 use crate::distribution::{AddressTypeToTypeIndexMap, AddressesDataVecs};
 
@@ -51,14 +52,29 @@ pub fn process_loaded_addresses(
         addresses_data.loaded.update(index, data)?;
     }
 
-    // Phase 3: Pushes (fills holes, then grows)
-    let mut result = AddressTypeToTypeIndexMap::default();
-    for (address_type, typeindex, data) in pushes {
+    // Phase 3: Pushes (fill holes first, then pure pushes)
+    let mut result = AddressTypeToTypeIndexMap::with_capacity(pushes.len() / 4);
+    let holes_count = addresses_data.loaded.holes().len();
+    let mut pushes_iter = pushes.into_iter();
+
+    for (address_type, typeindex, data) in pushes_iter.by_ref().take(holes_count) {
         let index = addresses_data.loaded.fill_first_hole_or_push(data)?;
         result
             .get_mut(address_type)
             .unwrap()
             .insert(typeindex, AnyAddressIndex::from(index));
+    }
+
+    // Pure pushes - no holes remain
+    addresses_data.loaded.reserve_pushed(pushes_iter.len());
+    let mut next_index = addresses_data.loaded.len();
+    for (address_type, typeindex, data) in pushes_iter {
+        addresses_data.loaded.push(data);
+        result
+            .get_mut(address_type)
+            .unwrap()
+            .insert(typeindex, AnyAddressIndex::from(LoadedAddressIndex::from(next_index)));
+        next_index += 1;
     }
 
     Ok(result)
@@ -107,14 +123,29 @@ pub fn process_empty_addresses(
         addresses_data.empty.update(index, data)?;
     }
 
-    // Phase 3: Pushes (fills holes, then grows)
-    let mut result = AddressTypeToTypeIndexMap::default();
-    for (address_type, typeindex, data) in pushes {
+    // Phase 3: Pushes (fill holes first, then pure pushes)
+    let mut result = AddressTypeToTypeIndexMap::with_capacity(pushes.len() / 4);
+    let holes_count = addresses_data.empty.holes().len();
+    let mut pushes_iter = pushes.into_iter();
+
+    for (address_type, typeindex, data) in pushes_iter.by_ref().take(holes_count) {
         let index = addresses_data.empty.fill_first_hole_or_push(data)?;
         result
             .get_mut(address_type)
             .unwrap()
             .insert(typeindex, AnyAddressIndex::from(index));
+    }
+
+    // Pure pushes - no holes remain
+    addresses_data.empty.reserve_pushed(pushes_iter.len());
+    let mut next_index = addresses_data.empty.len();
+    for (address_type, typeindex, data) in pushes_iter {
+        addresses_data.empty.push(data);
+        result
+            .get_mut(address_type)
+            .unwrap()
+            .insert(typeindex, AnyAddressIndex::from(EmptyAddressIndex::from(next_index)));
+        next_index += 1;
     }
 
     Ok(result)

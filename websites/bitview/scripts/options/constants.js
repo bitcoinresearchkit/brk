@@ -3,7 +3,7 @@
 /**
  * Get constant pattern by number dynamically from tree
  * Examples: 0 → constant0, 38.2 → constant382, -1 → constantMinus1
- * @param {BrkClient["tree"]["computed"]["constants"]} constants
+ * @param {BrkClient["tree"]["constants"]} constants
  * @param {number} num
  * @returns {AnyMetricPattern}
  */
@@ -22,7 +22,7 @@ export function getConstant(constants, num) {
 /**
  * Create a price line series (horizontal reference line)
  * @param {Object} args
- * @param {BrkClient["tree"]["computed"]["constants"]} args.constants
+ * @param {BrkClient["tree"]["constants"]} args.constants
  * @param {Colors} args.colors
  * @param {number} [args.number]
  * @param {string} [args.name]
@@ -59,7 +59,7 @@ export function createPriceLine({
 /**
  * Create multiple price lines from an array of numbers
  * @param {Object} args
- * @param {BrkClient["tree"]["computed"]["constants"]} args.constants
+ * @param {BrkClient["tree"]["constants"]} args.constants
  * @param {Colors} args.colors
  * @param {number[]} args.numbers
  * @param {Unit} args.unit

@@ -3,7 +3,7 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{LazyVecFrom1, UnaryTransform, VecIndex};
 
 use crate::internal::{ComputedVecValue, Full};
 
@@ -19,6 +19,7 @@ where
     pub average: LazyVecFrom1<I, T, I, S1T>,
     pub min: LazyVecFrom1<I, T, I, S1T>,
     pub max: LazyVecFrom1<I, T, I, S1T>,
+    #[traversable(flatten)]
     pub percentiles: LazyPercentiles<I, T, S1T>,
     pub sum: LazyVecFrom1<I, T, I, S1T>,
     pub cumulative: LazyVecFrom1<I, T, I, S1T>,
@@ -39,17 +40,17 @@ where
             average: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_average"),
                 version,
-                source.distribution.average.0.boxed_clone(),
+                source.boxed_average(),
             ),
             min: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_min"),
                 version,
-                source.distribution.minmax.min.0.boxed_clone(),
+                source.boxed_min(),
             ),
             max: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_max"),
                 version,
-                source.distribution.minmax.max.0.boxed_clone(),
+                source.boxed_max(),
             ),
             percentiles: LazyPercentiles::from_percentiles::<F>(
                 name,
@@ -59,12 +60,12 @@ where
             sum: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_sum"),
                 version,
-                source.sum_cum.sum.0.boxed_clone(),
+                source.boxed_sum(),
             ),
             cumulative: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_cumulative"),
                 version,
-                source.sum_cum.cumulative.0.boxed_clone(),
+                source.boxed_cumulative(),
             ),
         }
     }

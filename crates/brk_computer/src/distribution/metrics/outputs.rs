@@ -4,21 +4,21 @@ use brk_types::{Height, StoredU64};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 
-use crate::{ComputeIndexes, indexes, internal::ComputedBlockLast};
+use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightLast};
 
 use super::ImportConfig;
 
 /// Output metrics for a cohort.
 #[derive(Clone, Traversable)]
 pub struct OutputsMetrics {
-    pub utxo_count: ComputedBlockLast<StoredU64>,
+    pub utxo_count: ComputedFromHeightLast<StoredU64>,
 }
 
 impl OutputsMetrics {
     /// Import output metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            utxo_count: ComputedBlockLast::forced_import(
+            utxo_count: ComputedFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
                 cfg.version,

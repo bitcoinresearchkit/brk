@@ -24,7 +24,6 @@ impl Vecs {
         self.supply.compute(
             indexes,
             starting_indexes,
-            price,
             distribution,
             &self.activity,
             exit,

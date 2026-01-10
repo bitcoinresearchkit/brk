@@ -322,7 +322,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.minCostBasis,
+              metric: tree.costBasis.min,
               name: useGroupName ? name : "Min",
               color,
               unit: Unit.usd,
@@ -334,7 +334,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.maxCostBasis,
+              metric: tree.costBasis.max,
               name: useGroupName ? name : "Max",
               color,
               unit: Unit.usd,
@@ -355,7 +355,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
  * @returns {PartialOptionsTree}
  */
 function createActivitySection(ctx, list, useGroupName, title) {
-  const { s, brk } = ctx;
+  const { s } = ctx;
 
   return [
     {

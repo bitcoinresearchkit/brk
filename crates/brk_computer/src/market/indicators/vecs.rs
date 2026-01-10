@@ -2,12 +2,12 @@ use brk_traversable::Traversable;
 use brk_types::{DateIndex, Dollars, StoredF32};
 use vecdb::{EagerVec, LazyVecFrom2, PcoVec};
 
-use crate::internal::{ComputedDateLast, LazyBinaryDateLast};
+use crate::internal::{ComputedFromDateLast, LazyBinaryFromDateLast};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub puell_multiple: Option<ComputedDateLast<StoredF32>>,
-    pub nvt: Option<LazyBinaryDateLast<StoredF32, Dollars, Dollars>>,
+    pub puell_multiple: Option<ComputedFromDateLast<StoredF32>>,
+    pub nvt: Option<LazyBinaryFromDateLast<StoredF32, Dollars, Dollars>>,
 
     pub rsi_gains: EagerVec<PcoVec<DateIndex, StoredF32>>,
     pub rsi_losses: EagerVec<PcoVec<DateIndex, StoredF32>>,

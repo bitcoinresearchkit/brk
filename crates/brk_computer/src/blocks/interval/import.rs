@@ -4,7 +4,7 @@ use brk_types::{CheckedSub, Height, Timestamp, Version};
 use vecdb::{Database, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::LazyBlockDistribution};
+use crate::{indexes, internal::LazyFromHeightDistribution};
 
 impl Vecs {
     pub fn forced_import(
@@ -13,7 +13,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let interval = LazyBlockDistribution::forced_import_with_init(
+        let interval = LazyFromHeightDistribution::forced_import_with_init(
             db,
             "block_interval",
             version,

@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, GenericStoredVec, IterableVec};
 
 use crate::{
-    ComputeIndexes, distribution::state::AddressCohortState, indexes, internal::ComputedBlockLast,
+    ComputeIndexes, distribution::state::AddressCohortState, indexes, internal::ComputedFromHeightLast,
     price,
 };
 
@@ -32,7 +32,7 @@ pub struct AddressCohortVecs {
     #[traversable(flatten)]
     pub metrics: CohortMetrics,
 
-    pub addr_count: ComputedBlockLast<StoredU64>,
+    pub addr_count: ComputedFromHeightLast<StoredU64>,
 }
 
 impl AddressCohortVecs {
@@ -73,7 +73,7 @@ impl AddressCohortVecs {
 
             metrics: CohortMetrics::forced_import(&cfg, all_supply)?,
 
-            addr_count: ComputedBlockLast::forced_import(
+            addr_count: ComputedFromHeightLast::forced_import(
                 db,
                 &cfg.name("addr_count"),
                 version + VERSION,

@@ -9,9 +9,9 @@ use crate::{
     blocks,
     indexes::{self, ComputeIndexes},
     internal::{
-        ComputedBlockLast, ComputedBlockSumCum, ComputedDateLast, DollarsPlus, LazyBinaryBlockLast,
-        LazyValueBlockSumCum, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin,
-        ValueBinaryBlock,
+        ComputedFromHeightLast, ComputedFromHeightSumCum, ComputedFromDateLast, DollarsPlus, LazyBinaryFromHeightLast,
+        LazyValueFromHeightSumCum, MaskSats, PercentageU32F32, SatsPlus, SatsPlusToBitcoin,
+        ValueBinaryFromHeight,
     },
     price, transactions,
 };
@@ -20,21 +20,21 @@ use crate::{
 pub struct Vecs {
     slug: PoolSlug,
 
-    pub blocks_mined: ComputedBlockSumCum<StoredU32>,
-    pub _24h_blocks_mined: ComputedBlockLast<StoredU32>,
-    pub _1w_blocks_mined: ComputedBlockLast<StoredU32>,
-    pub _1m_blocks_mined: ComputedBlockLast<StoredU32>,
-    pub _1y_blocks_mined: ComputedBlockLast<StoredU32>,
-    pub subsidy: LazyValueBlockSumCum<StoredU32, Sats>,
-    pub fee: LazyValueBlockSumCum<StoredU32, Sats>,
-    pub coinbase: ValueBinaryBlock,
-    pub dominance: LazyBinaryBlockLast<StoredF32, StoredU32, StoredU32>,
+    pub blocks_mined: ComputedFromHeightSumCum<StoredU32>,
+    pub _24h_blocks_mined: ComputedFromHeightLast<StoredU32>,
+    pub _1w_blocks_mined: ComputedFromHeightLast<StoredU32>,
+    pub _1m_blocks_mined: ComputedFromHeightLast<StoredU32>,
+    pub _1y_blocks_mined: ComputedFromHeightLast<StoredU32>,
+    pub subsidy: LazyValueFromHeightSumCum<StoredU32, Sats>,
+    pub fee: LazyValueFromHeightSumCum<StoredU32, Sats>,
+    pub coinbase: ValueBinaryFromHeight,
+    pub dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
 
-    pub _24h_dominance: LazyBinaryBlockLast<StoredF32, StoredU32, StoredU32>,
-    pub _1w_dominance: LazyBinaryBlockLast<StoredF32, StoredU32, StoredU32>,
-    pub _1m_dominance: LazyBinaryBlockLast<StoredF32, StoredU32, StoredU32>,
-    pub _1y_dominance: LazyBinaryBlockLast<StoredF32, StoredU32, StoredU32>,
-    pub days_since_block: ComputedDateLast<StoredU16>,
+    pub _24h_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub _1w_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub _1m_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub _1y_dominance: LazyBinaryFromHeightLast<StoredF32, StoredU32, StoredU32>,
+    pub days_since_block: ComputedFromDateLast<StoredU16>,
 }
 
 impl Vecs {
@@ -51,18 +51,18 @@ impl Vecs {
         let version = parent_version;
 
         let blocks_mined =
-            ComputedBlockSumCum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
+            ComputedFromHeightSumCum::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
 
         let _24h_blocks_mined =
-            ComputedBlockLast::forced_import(db, &suffix("24h_blocks_mined"), version, indexes)?;
+            ComputedFromHeightLast::forced_import(db, &suffix("24h_blocks_mined"), version, indexes)?;
         let _1w_blocks_mined =
-            ComputedBlockLast::forced_import(db, &suffix("1w_blocks_mined"), version, indexes)?;
+            ComputedFromHeightLast::forced_import(db, &suffix("1w_blocks_mined"), version, indexes)?;
         let _1m_blocks_mined =
-            ComputedBlockLast::forced_import(db, &suffix("1m_blocks_mined"), version, indexes)?;
+            ComputedFromHeightLast::forced_import(db, &suffix("1m_blocks_mined"), version, indexes)?;
         let _1y_blocks_mined =
-            ComputedBlockLast::forced_import(db, &suffix("1y_blocks_mined"), version, indexes)?;
+            ComputedFromHeightLast::forced_import(db, &suffix("1y_blocks_mined"), version, indexes)?;
 
-        let subsidy = LazyValueBlockSumCum::forced_import::<MaskSats>(
+        let subsidy = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
             db,
             &suffix("subsidy"),
             version,
@@ -72,7 +72,7 @@ impl Vecs {
             price,
         )?;
 
-        let fee = LazyValueBlockSumCum::forced_import::<MaskSats>(
+        let fee = LazyValueFromHeightSumCum::forced_import::<MaskSats>(
             db,
             &suffix("fee"),
             version,
@@ -83,31 +83,31 @@ impl Vecs {
         )?;
 
         Ok(Self {
-            dominance: LazyBinaryBlockLast::from_computed_sum_cum::<PercentageU32F32>(
+            dominance: LazyBinaryFromHeightLast::from_computed_sum_cum::<PercentageU32F32>(
                 &suffix("dominance"),
                 version,
                 &blocks_mined,
                 &blocks.count.block_count,
             ),
-            _24h_dominance: LazyBinaryBlockLast::from_computed_last::<PercentageU32F32>(
+            _24h_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("24h_dominance"),
                 version,
                 &_24h_blocks_mined,
                 &blocks.count._24h_block_count,
             ),
-            _1w_dominance: LazyBinaryBlockLast::from_computed_last::<PercentageU32F32>(
+            _1w_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("1w_dominance"),
                 version,
                 &_1w_blocks_mined,
                 &blocks.count._1w_block_count,
             ),
-            _1m_dominance: LazyBinaryBlockLast::from_computed_last::<PercentageU32F32>(
+            _1m_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("1m_dominance"),
                 version,
                 &_1m_blocks_mined,
                 &blocks.count._1m_block_count,
             ),
-            _1y_dominance: LazyBinaryBlockLast::from_computed_last::<PercentageU32F32>(
+            _1y_dominance: LazyBinaryFromHeightLast::from_computed_last::<PercentageU32F32>(
                 &suffix("1y_dominance"),
                 version,
                 &_1y_blocks_mined,
@@ -119,7 +119,7 @@ impl Vecs {
             _1w_blocks_mined,
             _1m_blocks_mined,
             _1y_blocks_mined,
-            coinbase: ValueBinaryBlock::from_lazy::<
+            coinbase: ValueBinaryFromHeight::from_lazy::<
                 SatsPlus,
                 SatsPlusToBitcoin,
                 DollarsPlus,
@@ -128,7 +128,7 @@ impl Vecs {
             >(&suffix("coinbase"), version, &subsidy, &fee),
             subsidy,
             fee,
-            days_since_block: ComputedDateLast::forced_import(
+            days_since_block: ComputedFromDateLast::forced_import(
                 db,
                 &suffix("days_since_block"),
                 version,

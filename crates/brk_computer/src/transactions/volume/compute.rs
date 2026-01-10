@@ -5,7 +5,7 @@ use vecdb::Exit;
 
 use super::super::{count, fees};
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, inputs, outputs, price};
+use crate::{ComputeIndexes, indexes, inputs, outputs};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -18,11 +18,10 @@ impl Vecs {
         inputs_count: &inputs::CountVecs,
         outputs_count: &outputs::CountVecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         self.sent_sum
-            .compute_all(indexes, price, starting_indexes, exit, |v| {
+            .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.transactions.first_txindex,

@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedBlockLast, ComputedDateLast},
+    internal::{ComputedFromHeightLast, ComputedFromDateLast},
 };
 
 impl Vecs {
@@ -13,14 +13,14 @@ impl Vecs {
         let v2 = Version::TWO;
 
         Ok(Self {
-            epoch: ComputedDateLast::forced_import(db, "halvingepoch", version, indexes)?,
-            blocks_before_next_halving: ComputedBlockLast::forced_import(
+            epoch: ComputedFromDateLast::forced_import(db, "halvingepoch", version, indexes)?,
+            blocks_before_next_halving: ComputedFromHeightLast::forced_import(
                 db,
                 "blocks_before_next_halving",
                 version + v2,
                 indexes,
             )?,
-            days_before_next_halving: ComputedBlockLast::forced_import(
+            days_before_next_halving: ComputedFromHeightLast::forced_import(
                 db,
                 "days_before_next_halving",
                 version + v2,

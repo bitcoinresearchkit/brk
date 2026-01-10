@@ -314,13 +314,8 @@ impl Computer {
             // Scripts (needed for outputs.count.utxo_count)
             info!("Computing scripts...");
             let i = Instant::now();
-            self.scripts.compute(
-                indexer,
-                &self.indexes,
-                self.price.as_ref(),
-                &starting_indexes,
-                exit,
-            )?;
+            self.scripts
+                .compute(indexer, &self.indexes, &starting_indexes, exit)?;
             info!("Computed scripts in {:?}", i.elapsed());
 
             // Outputs depends on inputs and scripts (for utxo_count)
@@ -345,7 +340,6 @@ impl Computer {
                 &self.inputs,
                 &self.outputs,
                 &starting_indexes,
-                self.price.as_ref(),
                 exit,
             )?;
             info!("Computed transactions in {:?}", i.elapsed());
@@ -358,7 +352,6 @@ impl Computer {
                 &self.indexes,
                 &self.transactions,
                 &starting_indexes,
-                self.price.as_ref(),
                 exit,
             )?;
             info!("Computed blocks in {:?}", i.elapsed());
@@ -426,7 +419,6 @@ impl Computer {
             &self.transactions,
             &self.distribution,
             &starting_indexes,
-            self.price.as_ref(),
             exit,
         )?;
         info!("Computed supply in {:?}", i.elapsed());

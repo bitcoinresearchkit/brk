@@ -1,3 +1,4 @@
+// @ts-nocheck
 interface Options {
     /**
      * Width in pixels to be applied to node before rendering.

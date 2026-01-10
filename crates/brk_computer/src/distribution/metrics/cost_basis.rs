@@ -8,7 +8,7 @@ use crate::{
     ComputeIndexes,
     distribution::state::CohortState,
     indexes,
-    internal::{ComputedBlockLast, CostBasisPercentiles},
+    internal::{ComputedFromHeightLast, CostBasisPercentiles},
 };
 
 use super::ImportConfig;
@@ -17,10 +17,10 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct CostBasisMetrics {
     /// Minimum cost basis for any UTXO at this height
-    pub min: ComputedBlockLast<Dollars>,
+    pub min: ComputedFromHeightLast<Dollars>,
 
     /// Maximum cost basis for any UTXO at this height
-    pub max: ComputedBlockLast<Dollars>,
+    pub max: ComputedFromHeightLast<Dollars>,
 
     /// Cost basis distribution percentiles (median, quartiles, etc.)
     pub percentiles: Option<CostBasisPercentiles>,
@@ -32,13 +32,13 @@ impl CostBasisMetrics {
         let extended = cfg.extended();
 
         Ok(Self {
-            min: ComputedBlockLast::forced_import(
+            min: ComputedFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("min_cost_basis"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            max: ComputedBlockLast::forced_import(
+            max: ComputedFromHeightLast::forced_import(
                 cfg.db,
                 &cfg.name("max_cost_basis"),
                 cfg.version,

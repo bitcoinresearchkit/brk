@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedRatioVecsDate, DollarsTimesTenths, LazyDateLast},
+    internal::{ComputedFromDateRatio, DollarsTimesTenths, LazyFromDateLast},
     price,
 };
 
@@ -16,7 +16,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
-        let price_1w_sma = ComputedRatioVecsDate::forced_import(
+        let price_1w_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_1w_sma",
             None,
@@ -25,7 +25,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_8d_sma = ComputedRatioVecsDate::forced_import(
+        let price_8d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_8d_sma",
             None,
@@ -34,7 +34,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_13d_sma = ComputedRatioVecsDate::forced_import(
+        let price_13d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_13d_sma",
             None,
@@ -43,7 +43,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_21d_sma = ComputedRatioVecsDate::forced_import(
+        let price_21d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_21d_sma",
             None,
@@ -52,7 +52,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_1m_sma = ComputedRatioVecsDate::forced_import(
+        let price_1m_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_1m_sma",
             None,
@@ -61,7 +61,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_34d_sma = ComputedRatioVecsDate::forced_import(
+        let price_34d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_34d_sma",
             None,
@@ -70,7 +70,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_55d_sma = ComputedRatioVecsDate::forced_import(
+        let price_55d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_55d_sma",
             None,
@@ -79,7 +79,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_89d_sma = ComputedRatioVecsDate::forced_import(
+        let price_89d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_89d_sma",
             None,
@@ -88,7 +88,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_111d_sma = ComputedRatioVecsDate::forced_import(
+        let price_111d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_111d_sma",
             None,
@@ -97,7 +97,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_144d_sma = ComputedRatioVecsDate::forced_import(
+        let price_144d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_144d_sma",
             None,
@@ -106,7 +106,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_200d_sma = ComputedRatioVecsDate::forced_import(
+        let price_200d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_200d_sma",
             None,
@@ -115,7 +115,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_350d_sma = ComputedRatioVecsDate::forced_import(
+        let price_350d_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_350d_sma",
             None,
@@ -124,7 +124,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_1y_sma = ComputedRatioVecsDate::forced_import(
+        let price_1y_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_1y_sma",
             None,
@@ -133,7 +133,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_2y_sma = ComputedRatioVecsDate::forced_import(
+        let price_2y_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_2y_sma",
             None,
@@ -142,7 +142,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_200w_sma = ComputedRatioVecsDate::forced_import(
+        let price_200w_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_200w_sma",
             None,
@@ -151,7 +151,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_4y_sma = ComputedRatioVecsDate::forced_import(
+        let price_4y_sma = ComputedFromDateRatio::forced_import(
             db,
             "price_4y_sma",
             None,
@@ -161,7 +161,7 @@ impl Vecs {
             price,
         )?;
 
-        let price_1w_ema = ComputedRatioVecsDate::forced_import(
+        let price_1w_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_1w_ema",
             None,
@@ -170,7 +170,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_8d_ema = ComputedRatioVecsDate::forced_import(
+        let price_8d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_8d_ema",
             None,
@@ -179,7 +179,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_12d_ema = ComputedRatioVecsDate::forced_import(
+        let price_12d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_12d_ema",
             None,
@@ -188,7 +188,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_13d_ema = ComputedRatioVecsDate::forced_import(
+        let price_13d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_13d_ema",
             None,
@@ -197,7 +197,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_21d_ema = ComputedRatioVecsDate::forced_import(
+        let price_21d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_21d_ema",
             None,
@@ -206,7 +206,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_26d_ema = ComputedRatioVecsDate::forced_import(
+        let price_26d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_26d_ema",
             None,
@@ -215,7 +215,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_1m_ema = ComputedRatioVecsDate::forced_import(
+        let price_1m_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_1m_ema",
             None,
@@ -224,7 +224,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_34d_ema = ComputedRatioVecsDate::forced_import(
+        let price_34d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_34d_ema",
             None,
@@ -233,7 +233,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_55d_ema = ComputedRatioVecsDate::forced_import(
+        let price_55d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_55d_ema",
             None,
@@ -242,7 +242,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_89d_ema = ComputedRatioVecsDate::forced_import(
+        let price_89d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_89d_ema",
             None,
@@ -251,7 +251,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_144d_ema = ComputedRatioVecsDate::forced_import(
+        let price_144d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_144d_ema",
             None,
@@ -260,7 +260,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_200d_ema = ComputedRatioVecsDate::forced_import(
+        let price_200d_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_200d_ema",
             None,
@@ -269,7 +269,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_1y_ema = ComputedRatioVecsDate::forced_import(
+        let price_1y_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_1y_ema",
             None,
@@ -278,7 +278,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_2y_ema = ComputedRatioVecsDate::forced_import(
+        let price_2y_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_2y_ema",
             None,
@@ -287,7 +287,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_200w_ema = ComputedRatioVecsDate::forced_import(
+        let price_200w_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_200w_ema",
             None,
@@ -296,7 +296,7 @@ impl Vecs {
             true,
             price,
         )?;
-        let price_4y_ema = ComputedRatioVecsDate::forced_import(
+        let price_4y_ema = ComputedFromDateRatio::forced_import(
             db,
             "price_4y_ema",
             None,
@@ -307,19 +307,19 @@ impl Vecs {
         )?;
 
         let price_200d_sma_source = price_200d_sma.price.as_ref().unwrap();
-        let price_200d_sma_x2_4 = LazyDateLast::from_source::<DollarsTimesTenths<24>>(
+        let price_200d_sma_x2_4 = LazyFromDateLast::from_source::<DollarsTimesTenths<24>>(
             "price_200d_sma_x2_4",
             version,
             price_200d_sma_source,
         );
-        let price_200d_sma_x0_8 = LazyDateLast::from_source::<DollarsTimesTenths<8>>(
+        let price_200d_sma_x0_8 = LazyFromDateLast::from_source::<DollarsTimesTenths<8>>(
             "price_200d_sma_x0_8",
             version,
             price_200d_sma_source,
         );
 
         let price_350d_sma_source = price_350d_sma.price.as_ref().unwrap();
-        let price_350d_sma_x2 = LazyDateLast::from_source::<DollarsTimesTenths<20>>(
+        let price_350d_sma_x2 = LazyFromDateLast::from_source::<DollarsTimesTenths<20>>(
             "price_350d_sma_x2",
             version,
             price_350d_sma_source,

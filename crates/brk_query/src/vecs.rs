@@ -104,8 +104,6 @@ impl<'a> Vecs<'a> {
                 .collect(),
             )
             .merge_branches()
-            .unwrap()
-            .simplify()
             .unwrap(),
         );
         this.matcher = Some(QuickMatch::new(&this.metrics));

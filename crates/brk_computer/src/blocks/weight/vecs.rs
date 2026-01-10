@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
 use brk_types::{StoredF32, Weight};
 
-use crate::internal::{ComputedDerivedBlockFull, LazyBlockFull};
+use crate::internal::{ComputedHeightDerivedFull, LazyFromHeightFull};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub weight: ComputedDerivedBlockFull<Weight>,
-    pub fullness: LazyBlockFull<StoredF32, Weight>,
+    pub weight: ComputedHeightDerivedFull<Weight>,
+    pub fullness: LazyFromHeightFull<StoredF32, Weight>,
 }

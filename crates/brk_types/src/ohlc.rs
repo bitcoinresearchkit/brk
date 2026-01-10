@@ -391,6 +391,7 @@ impl Bytes for OHLCSats {
     Pco,
     JsonSchema,
 )]
+#[schemars(transparent)]
 #[repr(transparent)]
 pub struct Open<T>(T);
 
@@ -521,6 +522,7 @@ where
     Pco,
     JsonSchema,
 )]
+#[schemars(transparent)]
 #[repr(transparent)]
 pub struct High<T>(T);
 
@@ -651,6 +653,7 @@ where
     Pco,
     JsonSchema,
 )]
+#[schemars(transparent)]
 #[repr(transparent)]
 pub struct Low<T>(T);
 
@@ -781,6 +784,7 @@ where
     Pco,
     JsonSchema,
 )]
+#[schemars(transparent)]
 #[repr(transparent)]
 pub struct Close<T>(T);
 

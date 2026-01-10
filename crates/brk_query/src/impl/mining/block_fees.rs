@@ -21,8 +21,7 @@ impl Query {
             .fee
             .sats
             .dateindex
-            .average
-            .0
+            .average()
             .iter();
 
         Ok(iter.collect(|di, ts, h| {

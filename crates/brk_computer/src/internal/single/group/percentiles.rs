@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{Database, VecIndex, Version};
+use vecdb::{Database, IterableBoxedVec, IterableCloneableVec, VecIndex, Version};
 
 use crate::internal::{ComputedVecValue, MedianVec, Pct10Vec, Pct25Vec, Pct75Vec, Pct90Vec};
 
@@ -24,5 +24,26 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Percentiles<I, T> {
             pct75: Pct75Vec::forced_import(db, name, version)?,
             pct90: Pct90Vec::forced_import(db, name, version)?,
         })
+    }
+
+    // Boxed accessors
+    pub fn boxed_pct10(&self) -> IterableBoxedVec<I, T> {
+        self.pct10.0.boxed_clone()
+    }
+
+    pub fn boxed_pct25(&self) -> IterableBoxedVec<I, T> {
+        self.pct25.0.boxed_clone()
+    }
+
+    pub fn boxed_median(&self) -> IterableBoxedVec<I, T> {
+        self.median.0.boxed_clone()
+    }
+
+    pub fn boxed_pct75(&self) -> IterableBoxedVec<I, T> {
+        self.pct75.0.boxed_clone()
+    }
+
+    pub fn boxed_pct90(&self) -> IterableBoxedVec<I, T> {
+        self.pct90.0.boxed_clone()
     }
 }

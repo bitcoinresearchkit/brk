@@ -21,10 +21,9 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version;
-        let compute_dollars = price.is_some();
 
         let count = CountVecs::forced_import(&db, version, indexes, outputs)?;
-        let value = ValueVecs::forced_import(&db, version, indexes, compute_dollars)?;
+        let value = ValueVecs::forced_import(&db, version, indexes, price)?;
 
         let this = Self { db, count, value };
 

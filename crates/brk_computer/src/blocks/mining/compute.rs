@@ -1,47 +1,27 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_types::{StoredF32, StoredF64};
 use vecdb::Exit;
 
-use super::super::{ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64, count, rewards};
+use super::super::{ONE_TERA_HASH, TARGET_BLOCKS_PER_DAY_F64, count, difficulty, rewards};
 use super::Vecs;
 use crate::{ComputeIndexes, indexes};
 
 impl Vecs {
     pub fn compute(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         count_vecs: &count::Vecs,
+        difficulty_vecs: &difficulty::Vecs,
         rewards_vecs: &rewards::Vecs,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.difficulty.derive_from(
-            indexes,
-            starting_indexes,
-            &indexer.vecs.blocks.difficulty,
-            exit,
-        )?;
-
-        self.difficulty_as_hash
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                let multiplier = 2.0_f64.powi(32) / 600.0;
-                v.compute_transform(
-                    starting_indexes.height,
-                    &indexer.vecs.blocks.difficulty,
-                    |(i, v, ..)| (i, StoredF32::from(*v * multiplier)),
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
         self.hash_rate
             .compute_all(indexes, starting_indexes, exit, |v| {
                 v.compute_transform2(
                     starting_indexes.height,
                     &count_vecs._24h_block_count.height,
-                    &self.difficulty_as_hash.height,
+                    &difficulty_vecs.as_hash.height,
                     |(i, block_count_sum, difficulty_as_hash, ..)| {
                         (
                             i,
@@ -95,17 +75,6 @@ impl Vecs {
                     starting_indexes.dateindex,
                     self.hash_rate.dateindex.inner(),
                     365,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.difficulty_adjustment
-            .compute_all(indexes, starting_indexes, exit, |v| {
-                v.compute_percentage_change(
-                    starting_indexes.height,
-                    &indexer.vecs.blocks.difficulty,
-                    1,
                     exit,
                 )?;
                 Ok(())

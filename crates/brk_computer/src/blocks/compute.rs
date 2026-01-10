@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{ComputeIndexes, indexes, price, transactions};
+use crate::{ComputeIndexes, indexes, transactions};
 
 use super::Vecs;
 
@@ -13,7 +13,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         transactions: &transactions::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         // Core block metrics
@@ -29,7 +28,8 @@ impl Vecs {
         self.time.compute(indexes, starting_indexes, exit)?;
 
         // Epoch metrics
-        self.difficulty.compute(indexes, starting_indexes, exit)?;
+        self.difficulty
+            .compute(indexer, indexes, starting_indexes, exit)?;
         self.halving.compute(indexes, starting_indexes, exit)?;
 
         // Rewards depends on count and transactions fees
@@ -39,15 +39,14 @@ impl Vecs {
             &self.count,
             &transactions.fees,
             starting_indexes,
-            price,
             exit,
         )?;
 
-        // Mining depends on count and rewards
+        // Mining depends on count, difficulty, and rewards
         self.mining.compute(
-            indexer,
             indexes,
             &self.count,
+            &self.difficulty,
             &self.rewards,
             starting_indexes,
             exit,

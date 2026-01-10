@@ -3,14 +3,13 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{ComputeIndexes, distribution, indexes, price};
+use crate::{ComputeIndexes, distribution, indexes};
 
 impl Vecs {
     pub fn compute(
         &mut self,
         indexes: &indexes::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
@@ -25,7 +24,7 @@ impl Vecs {
             .height;
 
         self.vaulted_supply
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,
@@ -36,7 +35,7 @@ impl Vecs {
             })?;
 
         self.active_supply
-            .compute_all(indexes, price, starting_indexes, exit, |vec| {
+            .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     circulating_supply,

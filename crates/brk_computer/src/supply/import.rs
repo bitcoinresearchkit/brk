@@ -28,7 +28,7 @@ impl Vecs {
         let circulating = super::circulating::Vecs::import(version, distribution);
 
         // Burned/unspendable supply - computed from scripts
-        let burned = super::burned::Vecs::forced_import(&db, version, indexes, compute_dollars)?;
+        let burned = super::burned::Vecs::forced_import(&db, version, indexes, price)?;
 
         // Inflation rate
         let inflation = super::inflation::Vecs::forced_import(&db, version, indexes)?;

@@ -22,13 +22,12 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version;
-        let compute_dollars = price.is_some();
 
         let count = CountVecs::forced_import(&db, version, indexer, indexes)?;
         let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
         let fees = FeesVecs::forced_import(&db, version, indexer, indexes, price)?;
         let versions = VersionsVecs::forced_import(&db, version, indexes)?;
-        let volume = VolumeVecs::forced_import(&db, version, indexes, compute_dollars)?;
+        let volume = VolumeVecs::forced_import(&db, version, indexes, price)?;
 
         let this = Self {
             db,

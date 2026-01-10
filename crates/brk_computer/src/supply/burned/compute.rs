@@ -3,7 +3,7 @@ use brk_types::{Height, Sats};
 use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec, TypedVecIterator, VecIndex};
 
 use super::Vecs;
-use crate::{ComputeIndexes, blocks, indexes, price, scripts};
+use crate::{ComputeIndexes, blocks, indexes, scripts};
 
 impl Vecs {
     pub fn compute(
@@ -12,12 +12,11 @@ impl Vecs {
         scripts: &scripts::Vecs,
         blocks: &blocks::Vecs,
         starting_indexes: &ComputeIndexes,
-        price: Option<&price::Vecs>,
         exit: &Exit,
     ) -> Result<()> {
         // 1. Compute opreturn supply - copy per-block opreturn values from scripts
         self.opreturn
-            .compute_all(indexes, price, starting_indexes, exit, |height_vec| {
+            .compute_all(indexes, starting_indexes, exit, |height_vec| {
                 // Validate computed versions against dependencies
 
                 let opreturn_dep_version = scripts.value.opreturn.sats.height.version();
@@ -53,7 +52,7 @@ impl Vecs {
         let unclaimed_height = &blocks.rewards.unclaimed_rewards.sats.height;
 
         self.unspendable
-            .compute_all(indexes, price, starting_indexes, exit, |height_vec| {
+            .compute_all(indexes, starting_indexes, exit, |height_vec| {
                 let unspendable_dep_version =
                     opreturn_height.version() + unclaimed_height.version();
                 height_vec.validate_computed_version_or_reset(unspendable_dep_version)?;

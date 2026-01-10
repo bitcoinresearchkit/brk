@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ComputedDateLast, ComputedHeightDateLast, LazyBinaryHeightDateLast, LazyDateLast,
+        ComputedFromDateLast, ComputedFromHeightAndDateLast, LazyBinaryFromHeightAndDateLast, LazyFromDateLast,
         PercentageDiffCloseDollars, StoredU16ToYears,
     },
     price,
@@ -19,12 +19,12 @@ impl Vecs {
         indexes: &indexes::Vecs,
         price: &price::Vecs,
     ) -> Result<Self> {
-        let price_ath = ComputedHeightDateLast::forced_import(db, "price_ath", version, indexes)?;
+        let price_ath = ComputedFromHeightAndDateLast::forced_import(db, "price_ath", version, indexes)?;
 
         let max_days_between_price_aths =
-            ComputedDateLast::forced_import(db, "max_days_between_price_aths", version, indexes)?;
+            ComputedFromDateLast::forced_import(db, "max_days_between_price_aths", version, indexes)?;
 
-        let max_years_between_price_aths = LazyDateLast::from_computed::<StoredU16ToYears>(
+        let max_years_between_price_aths = LazyFromDateLast::from_computed::<StoredU16ToYears>(
             "max_years_between_price_aths",
             version,
             max_days_between_price_aths.dateindex.boxed_clone(),
@@ -32,9 +32,9 @@ impl Vecs {
         );
 
         let days_since_price_ath =
-            ComputedDateLast::forced_import(db, "days_since_price_ath", version, indexes)?;
+            ComputedFromDateLast::forced_import(db, "days_since_price_ath", version, indexes)?;
 
-        let years_since_price_ath = LazyDateLast::from_computed::<StoredU16ToYears>(
+        let years_since_price_ath = LazyFromDateLast::from_computed::<StoredU16ToYears>(
             "years_since_price_ath",
             version,
             days_since_price_ath.dateindex.boxed_clone(),
@@ -42,7 +42,7 @@ impl Vecs {
         );
 
         let price_drawdown =
-            LazyBinaryHeightDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+            LazyBinaryFromHeightAndDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                 "price_drawdown",
                 version,
                 EagerVec::forced_import(db, "price_drawdown", version)?,

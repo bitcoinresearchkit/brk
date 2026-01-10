@@ -298,7 +298,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  * @returns {PartialOptionsTree}
  */
 function createRealizedPnlSection(ctx, args, title) {
-  const { colors, s, brk } = ctx;
+  const { colors, s } = ctx;
   const { tree } = args;
 
   return [
@@ -307,19 +307,13 @@ function createRealizedPnlSection(ctx, args, title) {
       title: `Realized Profit And Loss ${title}`,
       bottom: [
         s({
-          metric: mergeMetricPatterns(
-            tree.realized.realizedProfit.base,
-            tree.realized.realizedProfit.sum,
-          ),
+          metric: tree.realized.realizedProfit.sum,
           name: "Profit",
           color: colors.green,
           unit: Unit.usd,
         }),
         s({
-          metric: mergeMetricPatterns(
-            tree.realized.realizedLoss.base,
-            tree.realized.realizedLoss.sum,
-          ),
+          metric: tree.realized.realizedLoss.sum,
           name: "Loss",
           color: colors.red,
           defaultActive: false,
@@ -437,7 +431,7 @@ function createCostBasisSectionWithPercentiles(ctx, list, useGroupName, title) {
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.minCostBasis,
+              metric: tree.costBasis.min,
               name: useGroupName ? name : "Min",
               color,
               unit: Unit.usd,
@@ -449,7 +443,7 @@ function createCostBasisSectionWithPercentiles(ctx, list, useGroupName, title) {
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.maxCostBasis,
+              metric: tree.costBasis.max,
               name: useGroupName ? name : "Max",
               color,
               unit: Unit.usd,
@@ -486,7 +480,7 @@ function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.minCostBasis,
+              metric: tree.costBasis.min,
               name: useGroupName ? name : "Min",
               color,
               unit: Unit.usd,
@@ -498,7 +492,7 @@ function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
             s({
-              metric: tree.costBasis.maxCostBasis,
+              metric: tree.costBasis.max,
               name: useGroupName ? name : "Max",
               color,
               unit: Unit.usd,
@@ -519,7 +513,7 @@ function createCostBasisSectionBasic(ctx, list, useGroupName, title) {
  * @returns {PartialOptionsTree}
  */
 function createActivitySection(ctx, list, useGroupName, title) {
-  const { s, brk } = ctx;
+  const { s } = ctx;
 
   return [
     {
@@ -530,10 +524,7 @@ function createActivitySection(ctx, list, useGroupName, title) {
           title: `Coinblocks Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             s({
-              metric: mergeMetricPatterns(
-                tree.activity.coinblocksDestroyed.base,
-                tree.activity.coinblocksDestroyed.sum,
-              ),
+              metric: tree.activity.coinblocksDestroyed.sum,
               name: useGroupName ? name : "Coinblocks",
               color,
               unit: Unit.coinblocks,
@@ -545,10 +536,7 @@ function createActivitySection(ctx, list, useGroupName, title) {
           title: `Coindays Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
             s({
-              metric: mergeMetricPatterns(
-                tree.activity.coindaysDestroyed.base,
-                tree.activity.coindaysDestroyed.sum,
-              ),
+              metric: tree.activity.coindaysDestroyed.sum,
               name: useGroupName ? name : "Coindays",
               color,
               unit: Unit.coindays,

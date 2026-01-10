@@ -5,10 +5,10 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use brk_types::TreeNode;
+use brk_types::{TreeNode, extract_json_type};
 
 use super::analyze_all_field_positions;
-use crate::{PatternField, StructuralPattern, schema_to_json_type, to_pascal_case};
+use crate::{PatternField, StructuralPattern, to_pascal_case};
 
 /// Context for pattern detection, holding all intermediate state.
 struct PatternContext {
@@ -147,6 +147,11 @@ fn detect_generic_patterns(
 }
 
 /// Normalize fields by replacing concrete value types with "T".
+///
+/// Handles two cases:
+/// 1. All leaves have identical types (e.g., all `Sats`) -> normalize to `T`
+/// 2. All leaves have wrapper types with the same inner type (e.g., `Open<Sats>`, `High<Sats>`)
+///    -> normalize to `Open<T>`, `High<T>`, etc.
 fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternField>, String)> {
     let leaf_types: Vec<&str> = fields
         .iter()
@@ -159,28 +164,75 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
     }
 
     let first_type = leaf_types[0];
-    if !leaf_types.iter().all(|t| *t == first_type) {
-        return None;
+
+    // Case 1: All leaf types are identical
+    if leaf_types.iter().all(|t| *t == first_type) {
+        let normalized = fields
+            .iter()
+            .map(|f| {
+                if f.is_branch() {
+                    f.clone()
+                } else {
+                    PatternField {
+                        name: f.name.clone(),
+                        rust_type: "T".to_string(),
+                        json_type: "T".to_string(),
+                        indexes: f.indexes.clone(),
+                        type_param: None,
+                    }
+                }
+            })
+            .collect();
+        return Some((normalized, crate::extract_inner_type(first_type)));
     }
 
-    let normalized = fields
+    // Case 2: Check if all leaves have wrapper types with the same inner type
+    // e.g., Open<Sats>, High<Sats>, Low<Sats>, Close<Sats> all have inner type Sats
+    let inner_types: Vec<String> = leaf_types
         .iter()
-        .map(|f| {
-            if f.is_branch() {
-                f.clone()
-            } else {
-                PatternField {
-                    name: f.name.clone(),
-                    rust_type: "T".to_string(),
-                    json_type: "T".to_string(),
-                    indexes: f.indexes.clone(),
-                    type_param: None,
-                }
-            }
-        })
+        .map(|t| crate::extract_inner_type(t))
         .collect();
 
-    Some((normalized, crate::extract_inner_type(first_type)))
+    let first_inner = &inner_types[0];
+
+    // Only proceed if inner types differ from originals (meaning they had wrappers)
+    // and all inner types are the same
+    if inner_types.iter().all(|t| t == first_inner)
+        && inner_types.iter().zip(leaf_types.iter()).any(|(inner, orig)| inner != *orig)
+    {
+        let normalized = fields
+            .iter()
+            .map(|f| {
+                if f.is_branch() {
+                    f.clone()
+                } else {
+                    PatternField {
+                        name: f.name.clone(),
+                        rust_type: replace_inner_type(&f.rust_type, "T"),
+                        json_type: replace_inner_type(&f.json_type, "T"),
+                        indexes: f.indexes.clone(),
+                        type_param: None,
+                    }
+                }
+            })
+            .collect();
+        return Some((normalized, first_inner.clone()));
+    }
+
+    None
+}
+
+/// Replace the inner type of a wrapper generic with a new type.
+/// e.g., `Open<Sats>` with replacement `T` -> `Open<T>`
+fn replace_inner_type(type_str: &str, replacement: &str) -> String {
+    if let Some(start) = type_str.find('<')
+        && let Some(end) = type_str.rfind('>')
+        && start < end
+    {
+        format!("{}<{}>", &type_str[..start], replacement)
+    } else {
+        replacement.to_string()
+    }
 }
 
 /// Recursively resolve branch patterns bottom-up.
@@ -200,7 +252,7 @@ fn resolve_branch_patterns(
         let (rust_type, json_type, indexes, child_fields) = match child_node {
             TreeNode::Leaf(leaf) => (
                 leaf.kind().to_string(),
-                schema_to_json_type(&leaf.schema),
+                extract_json_type(&leaf.schema),
                 leaf.indexes().clone(),
                 Vec::new(),
             ),

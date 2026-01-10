@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::LazyLock,
-};
+use std::collections::{BTreeMap, BTreeSet};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -48,13 +45,40 @@ pub struct MetricLeafWithSchema {
     pub schema: serde_json::Value,
 }
 
+/// Extract JSON type from a schema, following $ref if needed.
+pub fn extract_json_type(schema: &serde_json::Value) -> String {
+    // Direct type field
+    if let Some(t) = schema.get("type").and_then(|v| v.as_str()) {
+        return t.to_string();
+    }
+
+    // Handle $ref - look up in definitions
+    if let Some(ref_path) = schema.get("$ref").and_then(|v| v.as_str()) {
+        if let Some(def_name) = ref_path.rsplit('/').next() {
+            // Check both "$defs" (draft 2020-12) and "definitions" (older drafts)
+            for defs_key in &["$defs", "definitions"] {
+                if let Some(defs) = schema.get(defs_key) {
+                    if let Some(def) = defs.get(def_name) {
+                        return extract_json_type(def);
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle allOf with single element
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
+        if all_of.len() == 1 {
+            return extract_json_type(&all_of[0]);
+        }
+    }
+
+    "object".to_string()
+}
+
 impl MetricLeafWithSchema {
     pub fn new(leaf: MetricLeaf, schema: serde_json::Value) -> Self {
-        let openapi_type = schema
-            .get("type")
-            .and_then(|v| v.as_str())
-            .unwrap_or("object")
-            .to_string();
+        let openapi_type = extract_json_type(&schema);
         Self {
             leaf,
             openapi_type,
@@ -112,15 +136,6 @@ pub enum TreeNode {
 }
 
 const BASE: &str = "base";
-
-/// List of prefixes to remove during simplification
-static PREFIXES: LazyLock<Vec<String>> = LazyLock::new(|| {
-    ["indexes", "timeindexes", "chainindexes", "addresstype"]
-        .into_iter()
-        .chain(Index::all().iter().map(|i| i.serialize_long()))
-        .map(|s| format!("{s}_to_"))
-        .collect()
-});
 
 impl TreeNode {
     pub fn is_empty(&self) -> bool {
@@ -272,35 +287,6 @@ impl TreeNode {
                         Some(())
                     }
                 }
-            }
-        }
-    }
-
-    /// Recursively simplifies the tree by removing known prefixes from keys (consuming version).
-    /// If multiple keys map to the same simplified name, checks for conflicts.
-    /// Returns None if there are conflicts (same simplified key, different values).
-    pub fn simplify(self) -> Option<Self> {
-        match self {
-            Self::Leaf(_) => Some(self),
-            Self::Branch(map) => {
-                let mut simplified: BTreeMap<String, TreeNode> = BTreeMap::new();
-
-                for (key, node) in map {
-                    // Recursively simplify the child node first
-                    let simplified_node = node.simplify()?;
-
-                    // Remove prefixes from the key
-                    let simplified_key = PREFIXES
-                        .iter()
-                        .find_map(|prefix| key.strip_prefix(prefix))
-                        .map(String::from)
-                        .unwrap_or(key);
-
-                    // Try to merge into the result
-                    Self::merge_node(&mut simplified, simplified_key, simplified_node)?;
-                }
-
-                Some(Self::Branch(simplified))
             }
         }
     }

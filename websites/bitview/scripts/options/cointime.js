@@ -273,7 +273,7 @@ export function createCointimeSection(ctx) {
             title: "Compare Cointime Capitalizations",
             bottom: [
               s({
-                metric: supply.marketCap.height,
+                metric: supply.marketCap,
                 name: "Market",
                 color: colors.default,
                 unit: Unit.usd,
@@ -295,7 +295,7 @@ export function createCointimeSection(ctx) {
             bottom: [
               s({ metric, name, color, unit: Unit.usd }),
               s({
-                metric: supply.marketCap.height,
+                metric: supply.marketCap,
                 name: "Market",
                 color: colors.default,
                 unit: Unit.usd,
@@ -318,19 +318,19 @@ export function createCointimeSection(ctx) {
         bottom: [
           // All supply (different pattern structure)
           s({
-            metric: all.supply.supply.sats,
+            metric: all.supply.total.sats,
             name: "All",
             color: colors.orange,
             unit: Unit.sats,
           }),
           s({
-            metric: all.supply.supply.bitcoin,
+            metric: all.supply.total.bitcoin,
             name: "All",
             color: colors.orange,
             unit: Unit.btc,
           }),
           s({
-            metric: all.supply.supply.dollars,
+            metric: all.supply.total.dollars,
             name: "All",
             color: colors.orange,
             unit: Unit.usd,
@@ -432,10 +432,7 @@ export function createCointimeSection(ctx) {
             title: "Cointime-Adjusted Inflation Rate",
             bottom: [
               s({
-                metric: mergeMetricPatterns(
-                  supply.inflation.indexes.dateindex,
-                  supply.inflation.indexes.rest,
-                ),
+                metric: supply.inflation,
                 name: "Base",
                 color: colors.orange,
                 unit: Unit.percentage,
@@ -454,7 +451,7 @@ export function createCointimeSection(ctx) {
             title: "Cointime-Adjusted Transactions Velocity",
             bottom: [
               s({
-                metric: supply.velocity.btc.dateindex,
+                metric: supply.velocity.btc,
                 name: "BTC",
                 color: colors.orange,
                 unit: Unit.ratio,
@@ -466,10 +463,7 @@ export function createCointimeSection(ctx) {
                 unit: Unit.ratio,
               }),
               s({
-                metric: mergeMetricPatterns(
-                  supply.velocity.usd.dateindex,
-                  supply.velocity.usd.rest,
-                ),
+                metric: supply.velocity.usd,
                 name: "USD",
                 color: colors.emerald,
                 unit: Unit.ratio,

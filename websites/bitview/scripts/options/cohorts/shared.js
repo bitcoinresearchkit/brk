@@ -14,19 +14,19 @@ export function createSingleSupplySeries(ctx, cohort) {
 
   return [
     s({
-      metric: tree.supply.supply.sats,
+      metric: tree.supply.total.sats,
       name: "Supply",
       color: colors.default,
       unit: Unit.sats,
     }),
     s({
-      metric: tree.supply.supply.bitcoin,
+      metric: tree.supply.total.bitcoin,
       name: "Supply",
       color: colors.default,
       unit: Unit.btc,
     }),
     s({
-      metric: tree.supply.supply.dollars,
+      metric: tree.supply.total.dollars,
       name: "Supply",
       color: colors.default,
       unit: Unit.usd,
@@ -78,21 +78,21 @@ export function createSingleSupplySeries(ctx, cohort) {
       unit: Unit.usd,
     }),
     s({
-      metric: tree.supply.supplyHalf.sats,
+      metric: tree.supply.halved.sats,
       name: "half",
       color: colors.gray,
       unit: Unit.sats,
       options: { lineStyle: 4 },
     }),
     s({
-      metric: tree.supply.supplyHalf.bitcoin,
+      metric: tree.supply.halved.bitcoin,
       name: "half",
       color: colors.gray,
       unit: Unit.btc,
       options: { lineStyle: 4 },
     }),
     s({
-      metric: tree.supply.supplyHalf.dollars,
+      metric: tree.supply.halved.dollars,
       name: "half",
       color: colors.gray,
       unit: Unit.usd,
@@ -147,9 +147,9 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
   const constant100 = brk.tree.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({ metric: tree.supply.supply.sats, name, color, unit: Unit.sats }),
-    s({ metric: tree.supply.supply.bitcoin, name, color, unit: Unit.btc }),
-    s({ metric: tree.supply.supply.dollars, name, color, unit: Unit.usd }),
+    s({ metric: tree.supply.total.sats, name, color, unit: Unit.sats }),
+    s({ metric: tree.supply.total.bitcoin, name, color, unit: Unit.btc }),
+    s({ metric: tree.supply.total.dollars, name, color, unit: Unit.usd }),
     "supplyRelToCirculatingSupply" in tree.relative
       ? s({
           metric: tree.relative.supplyRelToCirculatingSupply,
@@ -255,7 +255,7 @@ export function createUtxoCountSeries(ctx, list, useGroupName) {
 
   return list.flatMap(({ color, name, tree }) => [
     s({
-      metric: tree.supply.utxoCount,
+      metric: tree.outputs.utxoCount,
       name: useGroupName ? name : "Count",
       color,
       unit: Unit.count,
@@ -351,13 +351,13 @@ export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
 
   return list.flatMap(({ color, name, tree }) => [
     s({
-      metric: tree.costBasis.minCostBasis,
+      metric: tree.costBasis.min,
       name: useGroupName ? `${name} min` : "Min",
       color,
       unit: Unit.usd,
     }),
     s({
-      metric: tree.costBasis.maxCostBasis,
+      metric: tree.costBasis.max,
       name: useGroupName ? `${name} max` : "Max",
       color,
       unit: Unit.usd,

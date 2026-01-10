@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, DCA_CLASS_NAMES, DCA_PERIOD_NAMES, Vecs};
 use crate::{
     indexes,
-    internal::{ComputedDateLast, LazyBinaryDateLast, PercentageDiffCloseDollars, ValueDateLast},
+    internal::{ComputedFromDateLast, LazyBinaryFromDateLast, PercentageDiffCloseDollars, ValueFromDateLast},
     price,
 };
 
@@ -18,12 +18,12 @@ impl Vecs {
     ) -> Result<Self> {
         // DCA by period - stack (KISS)
         let period_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueDateLast::forced_import(db, &format!("{name}_dca_stack"), version, true, indexes)
+            ValueFromDateLast::forced_import(db, &format!("{name}_dca_stack"), version, true, indexes)
         })?;
 
         // DCA by period - average price
         let period_average_price = ByDcaPeriod::try_new(|name, _days| {
-            ComputedDateLast::forced_import(
+            ComputedFromDateLast::forced_import(
                 db,
                 &format!("{name}_dca_average_price"),
                 version,
@@ -35,7 +35,7 @@ impl Vecs {
             DCA_PERIOD_NAMES
                 .zip_ref(&period_average_price)
                 .map(|(name, average_price)| {
-                    LazyBinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryFromDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                         &format!("{name}_dca_returns"),
                         version,
                         &price.usd.split.close,
@@ -45,12 +45,12 @@ impl Vecs {
 
         // DCA by period - CAGR
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
-            ComputedDateLast::forced_import(db, &format!("{name}_dca_cagr"), version, indexes)
+            ComputedFromDateLast::forced_import(db, &format!("{name}_dca_cagr"), version, indexes)
         })?;
 
         // Lump sum by period - stack (KISS)
         let period_lump_sum_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueDateLast::forced_import(
+            ValueFromDateLast::forced_import(
                 db,
                 &format!("{name}_lump_sum_stack"),
                 version,
@@ -61,19 +61,19 @@ impl Vecs {
 
         // DCA by year class - stack (KISS)
         let class_stack = ByDcaClass::try_new(|name, _year, _dateindex| {
-            ValueDateLast::forced_import(db, &format!("{name}_stack"), version, true, indexes)
+            ValueFromDateLast::forced_import(db, &format!("{name}_stack"), version, true, indexes)
         })?;
 
         // DCA by year class - average price
         let class_average_price = ByDcaClass::try_new(|name, _year, _dateindex| {
-            ComputedDateLast::forced_import(db, &format!("{name}_average_price"), version, indexes)
+            ComputedFromDateLast::forced_import(db, &format!("{name}_average_price"), version, indexes)
         })?;
 
         let class_returns =
             DCA_CLASS_NAMES
                 .zip_ref(&class_average_price)
                 .map(|(name, average_price)| {
-                    LazyBinaryDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
+                    LazyBinaryFromDateLast::from_computed_both_last::<PercentageDiffCloseDollars>(
                         &format!("{name}_returns"),
                         version,
                         &price.usd.split.close,

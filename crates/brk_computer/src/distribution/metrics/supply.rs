@@ -9,10 +9,9 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, GenericStoredVec};
 use crate::{
     indexes,
     internal::{
-        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyBinaryValueBlockLast,
-        ValueBlockLast,
+        HalfClosePriceTimesSats, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyBinaryValueFromHeightLast,
+        ValueFromHeightLast,
     },
-    price,
 };
 
 use super::ImportConfig;
@@ -20,24 +19,22 @@ use super::ImportConfig;
 /// Supply metrics for a cohort.
 #[derive(Clone, Traversable)]
 pub struct SupplyMetrics {
-    pub total: ValueBlockLast,
-    pub halved: LazyBinaryValueBlockLast,
+    pub total: ValueFromHeightLast,
+    pub halved: LazyBinaryValueFromHeightLast,
 }
 
 impl SupplyMetrics {
     /// Import supply metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let compute_dollars = cfg.compute_dollars();
-
-        let supply = ValueBlockLast::forced_import(
+        let supply = ValueFromHeightLast::forced_import(
             cfg.db,
             &cfg.name("supply"),
             cfg.version,
             cfg.indexes,
-            compute_dollars,
+            cfg.price,
         )?;
 
-        let supply_half = LazyBinaryValueBlockLast::from_block_source::<
+        let supply_half = LazyBinaryValueFromHeightLast::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalfClosePriceTimesSats,
@@ -100,11 +97,9 @@ impl SupplyMetrics {
     pub fn compute_rest_part1(
         &mut self,
         indexes: &indexes::Vecs,
-        price: Option<&price::Vecs>,
         starting_indexes: &ComputeIndexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.total
-            .compute_rest(indexes, price, starting_indexes, exit)
+        self.total.compute_rest(indexes, starting_indexes, exit)
     }
 }

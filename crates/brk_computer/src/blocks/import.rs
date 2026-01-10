@@ -25,16 +25,15 @@ impl Vecs {
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         let version = parent_version;
-        let compute_dollars = price.is_some();
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
         let interval = IntervalVecs::forced_import(&db, version, indexer, indexes)?;
         let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
         let weight = WeightVecs::forced_import(&db, version, indexer, indexes)?;
         let time = TimeVecs::forced_import(&db, version, indexer, indexes)?;
-        let mining = MiningVecs::forced_import(&db, version, indexer, indexes)?;
-        let rewards = RewardsVecs::forced_import(&db, version, indexes, compute_dollars)?;
-        let difficulty = DifficultyVecs::forced_import(&db, version, indexes)?;
+        let mining = MiningVecs::forced_import(&db, version, indexes)?;
+        let rewards = RewardsVecs::forced_import(&db, version, indexes, price)?;
+        let difficulty = DifficultyVecs::forced_import(&db, version, indexer, indexes)?;
         let halving = HalvingVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {

@@ -4,7 +4,7 @@ use brk_types::{Height, StoredU64, Version};
 use vecdb::{Database, IterableCloneableVec, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, internal::{ComputedDerivedBlockFull, LazyBlockFullHeight}};
+use crate::{indexes, internal::{ComputedHeightDerivedFull, LazyComputedFromHeightFull}};
 
 impl Vecs {
     pub fn forced_import(
@@ -14,7 +14,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vbytes: LazyBlockFullHeight::forced_import_with_init(
+            vbytes: LazyComputedFromHeightFull::forced_import_with_init(
                 db,
                 "block_vbytes",
                 version,
@@ -26,7 +26,7 @@ impl Vecs {
                         .map(|w| StoredU64::from(w.to_vbytes_floor()))
                 },
             )?,
-            size: ComputedDerivedBlockFull::forced_import(
+            size: ComputedHeightDerivedFull::forced_import(
                 db,
                 "block_size",
                 indexer.vecs.blocks.total_size.boxed_clone(),

@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
 use brk_types::Timestamp;
 
-use crate::internal::LazyBlockDistribution;
+use crate::internal::LazyFromHeightDistribution;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
     #[traversable(flatten)]
-    pub interval: LazyBlockDistribution<Timestamp>,
+    pub interval: LazyFromHeightDistribution<Timestamp>,
 }

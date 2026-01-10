@@ -5,7 +5,7 @@ use vecdb::{Database, EagerVec, ImportableVec, IterableCloneableVec, LazyVecFrom
 use super::{super::moving_average, Vecs};
 use crate::{
     distribution, indexes,
-    internal::{ComputedDateLast, DifferenceF32, LazyBinaryDateLast, Ratio32, RsiFormula},
+    internal::{ComputedFromDateLast, DifferenceF32, LazyBinaryFromDateLast, Ratio32, RsiFormula},
     transactions,
 };
 
@@ -34,9 +34,13 @@ impl Vecs {
             .as_ref()
             .zip(transactions.volume.sent_sum.dollars.as_ref())
             .map(|(market_cap, volume)| {
-                LazyBinaryDateLast::from_block_last_and_height_sum::<Ratio32>(
-                    "nvt", v, market_cap, volume,
-                )
+                LazyBinaryFromDateLast::from_lazy_binary_block_last_and_lazy_binary_sum::<
+                    Ratio32,
+                    _,
+                    _,
+                    _,
+                    _,
+                >("nvt", v, market_cap, volume)
             });
 
         let rsi_gains = EagerVec::forced_import(db, "rsi_gains", v)?;
@@ -85,7 +89,7 @@ impl Vecs {
 
         Ok(Self {
             puell_multiple: compute_dollars
-                .then(|| ComputedDateLast::forced_import(db, "puell_multiple", v, indexes))
+                .then(|| ComputedFromDateLast::forced_import(db, "puell_multiple", v, indexes))
                 .transpose()?,
             nvt,
             rsi_gains,

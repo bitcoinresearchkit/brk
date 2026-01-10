@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, IterableVec, VecIndex, VecValue, Version};
+use vecdb::{Database, Exit, IterableBoxedVec, IterableCloneableVec, IterableVec, VecIndex, VecValue, Version};
 
-use crate::internal::ComputedVecValue;
+use crate::internal::{AverageVec, ComputedVecValue, CumulativeVec, MaxVec, MinVec, SumVec};
 
 use super::{Distribution, SumCum};
 
@@ -39,17 +39,36 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
     where
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
+        self.compute_with_skip(max_from, source, first_indexes, count_indexes, exit, 0)
+    }
+
+    /// Compute all stats, skipping first N items from all calculations.
+    ///
+    /// Use `skip_count: 1` to exclude coinbase transactions from fee/feerate stats.
+    pub fn compute_with_skip<A>(
+        &mut self,
+        max_from: I,
+        source: &impl IterableVec<A, T>,
+        first_indexes: &impl IterableVec<I, A>,
+        count_indexes: &impl IterableVec<I, brk_types::StoredU64>,
+        exit: &Exit,
+        skip_count: usize,
+    ) -> Result<()>
+    where
+        A: VecIndex + VecValue + brk_types::CheckedSub<A>,
+    {
         crate::internal::compute_aggregations(
             max_from,
             source,
             first_indexes,
             count_indexes,
             exit,
+            skip_count,
             None, // first
             None, // last
-            Some(&mut self.distribution.minmax.min.0),
-            Some(&mut self.distribution.minmax.max.0),
-            Some(&mut self.distribution.average.0),
+            Some(&mut self.distribution.min_max_average.minmax.min.0),
+            Some(&mut self.distribution.min_max_average.minmax.max.0),
+            Some(&mut self.distribution.min_max_average.average.0),
             Some(&mut self.sum_cum.sum.0),
             Some(&mut self.sum_cum.cumulative.0),
             Some(&mut self.distribution.percentiles.median.0),
@@ -91,18 +110,60 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
             // Source vecs
             None, // first not in Full
             None, // last not in Full
-            Some(&source.distribution.minmax.min.0),
-            Some(&source.distribution.minmax.max.0),
-            Some(&source.distribution.average.0),
+            Some(&source.distribution.min_max_average.minmax.min.0),
+            Some(&source.distribution.min_max_average.minmax.max.0),
+            Some(&source.distribution.min_max_average.average.0),
             Some(&source.sum_cum.sum.0),
             // Target vecs
             None, // first
             None, // last
-            Some(&mut self.distribution.minmax.min.0),
-            Some(&mut self.distribution.minmax.max.0),
-            Some(&mut self.distribution.average.0),
+            Some(&mut self.distribution.min_max_average.minmax.min.0),
+            Some(&mut self.distribution.min_max_average.minmax.max.0),
+            Some(&mut self.distribution.min_max_average.average.0),
             Some(&mut self.sum_cum.sum.0),
             Some(&mut self.sum_cum.cumulative.0),
         )
+    }
+
+    // Accessors
+    pub fn average(&self) -> &AverageVec<I, T> {
+        self.distribution.average()
+    }
+
+    pub fn min(&self) -> &MinVec<I, T> {
+        self.distribution.min()
+    }
+
+    pub fn max(&self) -> &MaxVec<I, T> {
+        self.distribution.max()
+    }
+
+    pub fn sum(&self) -> &SumVec<I, T> {
+        &self.sum_cum.sum
+    }
+
+    pub fn cumulative(&self) -> &CumulativeVec<I, T> {
+        &self.sum_cum.cumulative
+    }
+
+    // Boxed accessors
+    pub fn boxed_average(&self) -> IterableBoxedVec<I, T> {
+        self.distribution.boxed_average()
+    }
+
+    pub fn boxed_min(&self) -> IterableBoxedVec<I, T> {
+        self.distribution.boxed_min()
+    }
+
+    pub fn boxed_max(&self) -> IterableBoxedVec<I, T> {
+        self.distribution.boxed_max()
+    }
+
+    pub fn boxed_sum(&self) -> IterableBoxedVec<I, T> {
+        self.sum_cum.sum.0.boxed_clone()
+    }
+
+    pub fn boxed_cumulative(&self) -> IterableBoxedVec<I, T> {
+        self.sum_cum.cumulative.0.boxed_clone()
     }
 }

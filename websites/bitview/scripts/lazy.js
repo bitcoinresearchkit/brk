@@ -3,7 +3,7 @@ const imports = {
     return import("./signals.js").then((d) => d.default);
   },
   async leanQr() {
-    return import("./modules/lean-qr/2.6.0/index.mjs").then((d) => d);
+    return import("./modules/lean-qr/2.6.1/index.mjs").then((d) => d);
   },
   async ufuzzy() {
     return import("./modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.mjs").then(

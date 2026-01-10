@@ -1,9 +1,9 @@
 use brk_traversable::Traversable;
 
-use crate::internal::ValueBlockLast;
+use crate::internal::ValueFromHeightLast;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    pub vaulted_supply: ValueBlockLast,
-    pub active_supply: ValueBlockLast,
+    pub vaulted_supply: ValueFromHeightLast,
+    pub active_supply: ValueFromHeightLast,
 }

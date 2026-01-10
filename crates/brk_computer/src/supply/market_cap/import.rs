@@ -4,7 +4,7 @@ use vecdb::IterableCloneableVec;
 use super::Vecs;
 use crate::{
     distribution,
-    internal::{DollarsIdentity, LazyBlockLast},
+    internal::{DollarsIdentity, LazyFromHeightLast},
 };
 
 impl Vecs {
@@ -12,7 +12,7 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         supply_metrics.total.dollars.as_ref().map(|d| {
-            Self(LazyBlockLast::from_computed::<DollarsIdentity>(
+            Self(LazyFromHeightLast::from_lazy_binary_computed::<DollarsIdentity, _, _>(
                 "market_cap",
                 version,
                 d.height.boxed_clone(),

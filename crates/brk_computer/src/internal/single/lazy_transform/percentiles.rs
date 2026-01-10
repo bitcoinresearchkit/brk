@@ -3,7 +3,7 @@
 use brk_traversable::Traversable;
 use brk_types::Version;
 use schemars::JsonSchema;
-use vecdb::{IterableCloneableVec, LazyVecFrom1, UnaryTransform, VecIndex};
+use vecdb::{LazyVecFrom1, UnaryTransform, VecIndex};
 
 use crate::internal::{ComputedVecValue, Percentiles};
 
@@ -36,27 +36,27 @@ where
             pct10: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_pct10"),
                 version,
-                source.pct10.0.boxed_clone(),
+                source.boxed_pct10(),
             ),
             pct25: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_pct25"),
                 version,
-                source.pct25.0.boxed_clone(),
+                source.boxed_pct25(),
             ),
             median: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_median"),
                 version,
-                source.median.0.boxed_clone(),
+                source.boxed_median(),
             ),
             pct75: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_pct75"),
                 version,
-                source.pct75.0.boxed_clone(),
+                source.boxed_pct75(),
             ),
             pct90: LazyVecFrom1::transformed::<F>(
                 &format!("{name}_pct90"),
                 version,
-                source.pct90.0.boxed_clone(),
+                source.boxed_pct90(),
             ),
         }
     }

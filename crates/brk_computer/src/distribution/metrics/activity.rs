@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, EagerVec, Exit, GenericStoredVec, ImportableVe
 
 use crate::{
     ComputeIndexes, indexes,
-    internal::{ComputedBlockSumCum, LazyComputedValueBlockSumCum},
+    internal::{ComputedFromHeightSumCum, LazyComputedValueFromHeightSumCum},
 };
 
 use super::ImportConfig;
@@ -15,7 +15,7 @@ use super::ImportConfig;
 #[derive(Clone, Traversable)]
 pub struct ActivityMetrics {
     /// Total satoshis sent at each height + derived indexes
-    pub sent: LazyComputedValueBlockSumCum,
+    pub sent: LazyComputedValueFromHeightSumCum,
 
     /// Satoshi-blocks destroyed (supply * blocks_old when spent)
     pub satblocks_destroyed: EagerVec<PcoVec<Height, Sats>>,
@@ -24,17 +24,17 @@ pub struct ActivityMetrics {
     pub satdays_destroyed: EagerVec<PcoVec<Height, Sats>>,
 
     /// Coin-blocks destroyed (in BTC rather than sats)
-    pub coinblocks_destroyed: ComputedBlockSumCum<StoredF64>,
+    pub coinblocks_destroyed: ComputedFromHeightSumCum<StoredF64>,
 
     /// Coin-days destroyed (in BTC rather than sats)
-    pub coindays_destroyed: ComputedBlockSumCum<StoredF64>,
+    pub coindays_destroyed: ComputedFromHeightSumCum<StoredF64>,
 }
 
 impl ActivityMetrics {
     /// Import activity metrics from database.
     pub fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            sent: LazyComputedValueBlockSumCum::forced_import(
+            sent: LazyComputedValueFromHeightSumCum::forced_import(
                 cfg.db,
                 &cfg.name("sent"),
                 cfg.version,
@@ -54,14 +54,14 @@ impl ActivityMetrics {
                 cfg.version,
             )?,
 
-            coinblocks_destroyed: ComputedBlockSumCum::forced_import(
+            coinblocks_destroyed: ComputedFromHeightSumCum::forced_import(
                 cfg.db,
                 &cfg.name("coinblocks_destroyed"),
                 cfg.version,
                 cfg.indexes,
             )?,
 
-            coindays_destroyed: ComputedBlockSumCum::forced_import(
+            coindays_destroyed: ComputedFromHeightSumCum::forced_import(
                 cfg.db,
                 &cfg.name("coindays_destroyed"),
                 cfg.version,

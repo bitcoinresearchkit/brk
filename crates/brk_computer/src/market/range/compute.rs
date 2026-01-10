@@ -56,7 +56,7 @@ impl Vecs {
             Ok(())
         })?;
 
-        self.dateindex_to_price_true_range.compute_transform3(
+        self.price_true_range.compute_transform3(
             starting_indexes.dateindex,
             open,
             high,
@@ -70,9 +70,9 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex_to_price_true_range_2w_sum.compute_sum(
+        self.price_true_range_2w_sum.compute_sum(
             starting_indexes.dateindex,
-            &self.dateindex_to_price_true_range,
+            &self.price_true_range,
             14,
             exit,
         )?;
@@ -83,7 +83,7 @@ impl Vecs {
                 let log10n = (n as f32).log10();
                 v.compute_transform3(
                     starting_indexes.dateindex,
-                    &self.dateindex_to_price_true_range_2w_sum,
+                    &self.price_true_range_2w_sum,
                     &self.price_2w_max.dateindex,
                     &self.price_2w_min.dateindex,
                     |(i, tr_sum, max, min, ..)| {

@@ -5,9 +5,9 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use brk_types::{Index, TreeNode};
+use brk_types::{Index, TreeNode, extract_json_type};
 
-use crate::{IndexSetPattern, PatternField, child_type_name, schema_to_json_type};
+use crate::{IndexSetPattern, PatternField, child_type_name};
 
 /// Get the first leaf name from a tree node.
 pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
@@ -36,7 +36,7 @@ pub fn get_node_fields(
             let (rust_type, json_type, indexes) = match node {
                 TreeNode::Leaf(leaf) => (
                     leaf.kind().to_string(),
-                    schema_to_json_type(&leaf.schema),
+                    extract_json_type(&leaf.schema),
                     leaf.indexes().clone(),
                 ),
                 TreeNode::Branch(grandchildren) => {
@@ -229,7 +229,7 @@ pub fn get_fields_with_child_info(
             let (rust_type, json_type, indexes, child_fields) = match node {
                 TreeNode::Leaf(leaf) => (
                     leaf.kind().to_string(),
-                    schema_to_json_type(&leaf.schema),
+                    extract_json_type(&leaf.schema),
                     leaf.indexes().clone(),
                     None,
                 ),

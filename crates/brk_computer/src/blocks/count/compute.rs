@@ -5,7 +5,7 @@ use vecdb::{EagerVec, Exit, PcoVec, TypedVecIterator};
 
 use super::super::time;
 use super::Vecs;
-use crate::{ComputeIndexes, indexes, internal::ComputedBlockLast};
+use crate::{ComputeIndexes, indexes, internal::ComputedFromHeightLast};
 
 impl Vecs {
     pub fn compute(
@@ -104,7 +104,7 @@ impl Vecs {
         get_field: F,
     ) -> Result<()>
     where
-        F: FnOnce(&mut Self) -> &mut ComputedBlockLast<StoredU32>,
+        F: FnOnce(&mut Self) -> &mut ComputedFromHeightLast<StoredU32>,
     {
         get_field(self).compute_all(indexes, starting_indexes, exit, |v| {
             v.compute_transform(
