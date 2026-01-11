@@ -295,13 +295,14 @@ pub fn schema_to_python_type_ctx(schema: &Value, current_type: Option<&str>) -> 
     "Any".to_string()
 }
 
-/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "number" -> "int")
+/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "integer" -> "int")
 pub fn js_type_to_python(js_type: &str) -> String {
     if let Some(inner) = js_type.strip_suffix("[]") {
         format!("List[{}]", js_type_to_python(inner))
     } else {
         match js_type {
-            "number" => "int".to_string(),
+            "integer" => "int".to_string(),
+            "number" => "float".to_string(),
             "boolean" => "bool".to_string(),
             "string" => "str".to_string(),
             "null" => "None".to_string(),

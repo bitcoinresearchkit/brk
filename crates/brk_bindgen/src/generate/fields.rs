@@ -6,6 +6,8 @@
 
 use std::fmt::Write;
 
+use brk_types::MetricLeafWithSchema;
+
 use crate::{ClientMetadata, LanguageSyntax, PatternField, StructuralPattern};
 
 /// Create a path suffix from a name.
@@ -124,8 +126,14 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
             syntax.constructor(&field.rust_type, &path_expr)
         }
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-        syntax.constructor(&accessor.name, &path_expr)
+        // Leaf field - use actual metric name if provided
+        if let Some(metric_name) = pattern_base {
+            let path = syntax.string_literal(metric_name);
+            syntax.constructor(&accessor.name, &path)
+        } else {
+            let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
+            syntax.constructor(&accessor.name, &path_expr)
+        }
     } else if field.is_branch() {
         // Non-pattern branch - instantiate the nested struct
         let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
@@ -139,4 +147,54 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
     };
 
     writeln!(output, "{}", syntax.field_init(indent, &field_name, &type_ann, &value)).unwrap();
+}
+
+/// Generate a leaf field using the actual metric name from the TreeNode::Leaf.
+///
+/// This is the shared implementation for all language backends. It uses
+/// `leaf.name()` directly to get the correct metric name, avoiding any
+/// path concatenation that could produce incorrect names.
+///
+/// # Arguments
+/// * `output` - The string buffer to write to
+/// * `syntax` - The language syntax implementation
+/// * `client_expr` - The client expression (e.g., "client.clone()", "this", "client")
+/// * `tree_field_name` - The field name from the tree structure
+/// * `leaf` - The Leaf node containing the actual metric name and indexes
+/// * `metadata` - Client metadata for looking up index patterns
+/// * `indent` - Indentation string
+pub fn generate_leaf_field<S: LanguageSyntax>(
+    output: &mut String,
+    syntax: &S,
+    client_expr: &str,
+    tree_field_name: &str,
+    leaf: &MetricLeafWithSchema,
+    metadata: &ClientMetadata,
+    indent: &str,
+) {
+    let field_name = syntax.field_name(tree_field_name);
+    let accessor = metadata
+        .find_index_set_pattern(leaf.indexes())
+        .unwrap_or_else(|| {
+            panic!(
+                "Metric '{}' has no matching index pattern. All metrics must be indexed.",
+                leaf.name()
+            )
+        });
+
+    let type_ann = metadata.field_type_annotation_from_leaf(leaf, syntax.generic_syntax());
+    let metric_name = syntax.string_literal(leaf.name());
+    let value = format!(
+        "{}({}, {})",
+        syntax.constructor_name(&accessor.name),
+        client_expr,
+        metric_name
+    );
+
+    writeln!(
+        output,
+        "{}",
+        syntax.field_init(indent, &field_name, &type_ann, &value)
+    )
+    .unwrap();
 }

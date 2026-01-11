@@ -7,8 +7,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use brk_types::{Index, TreeNode, extract_json_type};
 
-use crate::analysis::names::analyze_pattern_level;
-use crate::{IndexSetPattern, PatternField, child_type_name};
+use crate::{IndexSetPattern, PatternField, analysis::names::analyze_pattern_level, child_type_name};
 
 /// Get the first leaf name from a tree node.
 pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
@@ -111,122 +110,29 @@ fn collect_indexes_from_tree(
     }
 }
 
-/// Get the metric base for a pattern instance by analyzing all leaf descendants.
+/// Get the metric base for a pattern instance by analyzing direct children.
 ///
-/// For root-level instances (no common prefix/suffix among leaves), returns empty string.
-/// For cohort-level instances, returns the common prefix or suffix among all leaves.
+/// Uses field names and first leaf names from direct children to determine
+/// the common base via `analyze_pattern_level`.
 pub fn get_pattern_instance_base(node: &TreeNode) -> String {
-    let leaf_names = get_all_leaf_names(node);
-    find_common_base(&leaf_names)
+    let child_names = get_direct_children_for_analysis(node);
+    if child_names.is_empty() {
+        return String::new();
+    }
+    analyze_pattern_level(&child_names).base
 }
 
-/// Find the common base from a set of metric names.
-/// Tries prefix, suffix, then strips first/last segments and retries.
-fn find_common_base(names: &[String]) -> String {
-    if names.is_empty() {
-        return String::new();
+/// Get (field_name, first_leaf_name) pairs for direct children of a branch node.
+fn get_direct_children_for_analysis(node: &TreeNode) -> Vec<(String, String)> {
+    match node {
+        TreeNode::Leaf(leaf) => vec![(leaf.name().to_string(), leaf.name().to_string())],
+        TreeNode::Branch(children) => children
+            .iter()
+            .filter_map(|(field_name, child)| {
+                get_first_leaf_name(child).map(|leaf_name| (field_name.clone(), leaf_name))
+            })
+            .collect(),
     }
-
-    // Try common prefix
-    let common_prefix = find_common_prefix_at_underscore(names);
-    if !common_prefix.is_empty() {
-        return common_prefix.trim_end_matches('_').to_string();
-    }
-
-    // Try common suffix
-    let common_suffix = find_common_suffix_at_underscore(names);
-    if !common_suffix.is_empty() {
-        return common_suffix.trim_start_matches('_').to_string();
-    }
-
-    // If neither works, the common part may be in the middle.
-    // Strip the first underscore segment (varying prefix) and try again.
-    let stripped_prefix: Vec<String> = names
-        .iter()
-        .filter_map(|name| name.split_once('_').map(|(_, rest)| rest.to_string()))
-        .collect();
-
-    if stripped_prefix.len() == names.len() {
-        let common_prefix = find_common_prefix_at_underscore(&stripped_prefix);
-        if !common_prefix.is_empty() {
-            return common_prefix.trim_end_matches('_').to_string();
-        }
-    }
-
-    // Try stripping last segment (varying suffix) and look for common suffix
-    let stripped_suffix: Vec<String> = names
-        .iter()
-        .filter_map(|name| name.rsplit_once('_').map(|(rest, _)| rest.to_string()))
-        .collect();
-
-    if stripped_suffix.len() == names.len() {
-        let common_suffix = find_common_suffix_at_underscore(&stripped_suffix);
-        if !common_suffix.is_empty() {
-            return common_suffix.trim_start_matches('_').to_string();
-        }
-    }
-
-    String::new()
-}
-
-/// Find the longest common prefix at an underscore boundary.
-fn find_common_prefix_at_underscore(names: &[String]) -> String {
-    if names.is_empty() {
-        return String::new();
-    }
-
-    let first = &names[0];
-    if first.is_empty() {
-        return String::new();
-    }
-
-    // Find character-by-character common prefix
-    let mut prefix_len = 0;
-    for (i, ch) in first.chars().enumerate() {
-        if names.iter().all(|n| n.chars().nth(i) == Some(ch)) {
-            prefix_len = i + 1;
-        } else {
-            break;
-        }
-    }
-
-    if prefix_len == 0 {
-        return String::new();
-    }
-
-    let raw_prefix = &first[..prefix_len];
-
-    // If raw_prefix exactly matches a leaf name, it's a complete metric name.
-    // In this case, return it with trailing underscore (will be trimmed by caller).
-    if names.iter().any(|n| n == raw_prefix) {
-        return format!("{}_", raw_prefix);
-    }
-
-    // Find the last underscore position to get a clean boundary
-    if let Some(last_underscore) = raw_prefix.rfind('_')
-        && last_underscore > 0
-    {
-        let clean_prefix = &first[..=last_underscore];
-        // Verify this still works for all names
-        if names.iter().all(|n| n.starts_with(clean_prefix)) {
-            return clean_prefix.to_string();
-        }
-    }
-
-    // If no underscore boundary works, check if full prefix ends at underscore
-    if raw_prefix.ends_with('_') {
-        return raw_prefix.to_string();
-    }
-
-    String::new()
-}
-
-/// Find the longest common suffix at an underscore boundary.
-fn find_common_suffix_at_underscore(names: &[String]) -> String {
-    // Reverse strings, find common prefix, reverse result
-    let reversed: Vec<String> = names.iter().map(|s| s.chars().rev().collect()).collect();
-    let prefix = find_common_prefix_at_underscore(&reversed);
-    prefix.chars().rev().collect()
 }
 
 /// Infer the accumulated name for a child node based on a descendant leaf name.

@@ -102,4 +102,11 @@ pub trait LanguageSyntax {
     /// - Python/JavaScript: `'value'` (single quotes)
     /// - Rust: `"value"` (double quotes)
     fn string_literal(&self, value: &str) -> String;
+
+    /// Get the constructor name/prefix for a type.
+    ///
+    /// - Python: `TypeName`
+    /// - JavaScript: `createTypeName`
+    /// - Rust: `TypeName::new`
+    fn constructor_name(&self, type_name: &str) -> String;
 }

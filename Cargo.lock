@@ -422,7 +422,6 @@ version = "0.1.0-alpha.2"
 dependencies = [
  "libmimalloc-sys",
  "mimalloc",
- "tracing",
 ]
 
 [[package]]
@@ -450,10 +449,8 @@ dependencies = [
  "brk_query",
  "brk_types",
  "oas3",
- "schemars",
  "serde",
  "serde_json",
- "vecdb",
 ]
 
 [[package]]
@@ -461,7 +458,6 @@ name = "brk_cli"
 version = "0.1.0-alpha.2"
 dependencies = [
  "brk_alloc",
- "brk_bindgen",
  "brk_computer",
  "brk_error",
  "brk_fetcher",
@@ -493,7 +489,6 @@ dependencies = [
  "brk_types",
  "minreq",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -657,9 +652,6 @@ dependencies = [
  "derive_more",
  "jiff",
  "quickmatch",
- "schemars",
- "serde",
- "serde_json",
  "tokio",
  "vecdb",
 ]

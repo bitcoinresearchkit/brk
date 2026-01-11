@@ -32,7 +32,7 @@ npm publish --access public
 echo ""
 echo "=== Python package ==="
 cd "$ROOT_DIR/packages/brk_client"
-uv run pydoc-markdown > docs/API.md
+uvx pydoc-markdown > docs/API.md
 uv build
 uv publish
 

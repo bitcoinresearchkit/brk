@@ -6,8 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, PatternField, child_type_name, get_node_fields, get_pattern_instance_base,
-    prepare_tree_node, to_snake_case,
+    ClientMetadata, PatternField, PythonSyntax, child_type_name, generate_leaf_field,
+    get_node_fields, get_pattern_instance_base, prepare_tree_node, to_snake_case,
 };
 
 use super::client::field_type_with_generic;
@@ -50,7 +50,8 @@ fn generate_tree_class(
     )
     .unwrap();
 
-    for ((field, child_fields_opt), (_child_name, child_node)) in
+    let syntax = PythonSyntax;
+    for ((field, child_fields_opt), (child_name, child_node)) in
         ctx.fields_with_child_info.iter().zip(ctx.children.iter())
     {
         // Look up type parameter for generic patterns
@@ -72,14 +73,8 @@ fn generate_tree_class(
             )
             .unwrap();
         } else if let TreeNode::Leaf(leaf) = child_node {
-            // Leaf node: use actual metric name
-            let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
-            writeln!(
-                output,
-                "        self.{}: {} = {}(client, '{}')",
-                field_name_py, py_type, accessor.name, leaf.name()
-            )
-            .unwrap();
+            // Leaf node: use shared helper
+            generate_leaf_field(output, &syntax, "client", child_name, leaf, metadata, "        ");
         } else if field.is_branch() {
             // Non-parameterizable pattern or regular branch: generate inline class
             let inline_class = child_type_name(name, &field.name);

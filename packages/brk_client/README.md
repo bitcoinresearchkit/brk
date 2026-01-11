@@ -2,7 +2,7 @@
 
 Python client for the [Bitcoin Research Kit](https://bitcoinresearchkit.org) - a suite of tools to extract, compute and display data stored on a Bitcoin Core node.
 
-[API Documentation](/docs/API.md)
+[Documentation](/DOCS.md)
 
 ## Installation
 

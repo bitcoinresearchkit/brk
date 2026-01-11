@@ -86,4 +86,8 @@ impl LanguageSyntax for RustSyntax {
     fn string_literal(&self, value: &str) -> String {
         format!("\"{}\".to_string()", value)
     }
+
+    fn constructor_name(&self, type_name: &str) -> String {
+        format!("{}::new", type_name)
+    }
 }

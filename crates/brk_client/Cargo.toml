@@ -15,6 +15,3 @@ brk_cohort = { workspace = true }
 brk_types = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
-
-[dev-dependencies]
-serde_json = { workspace = true }

@@ -96,4 +96,8 @@ impl LanguageSyntax for JavaScriptSyntax {
     fn string_literal(&self, value: &str) -> String {
         format!("'{}'", value)
     }
+
+    fn constructor_name(&self, type_name: &str) -> String {
+        format!("create{}", type_name)
+    }
 }

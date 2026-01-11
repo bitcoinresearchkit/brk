@@ -6,8 +6,9 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, Endpoint, PatternField, child_type_name, get_first_leaf_name, get_node_fields,
-    get_pattern_instance_base, infer_accumulated_name, prepare_tree_node, to_camel_case,
+    ClientMetadata, Endpoint, JavaScriptSyntax, PatternField, child_type_name, generate_leaf_field,
+    get_first_leaf_name, get_node_fields, get_pattern_instance_base, infer_accumulated_name,
+    prepare_tree_node, to_camel_case,
 };
 
 use super::api::generate_api_methods;
@@ -142,33 +143,24 @@ fn generate_tree_initializer(
 ) {
     let indent_str = "  ".repeat(indent);
 
+    let syntax = JavaScriptSyntax;
     if let TreeNode::Branch(children) = node {
-        for (i, (child_name, child_node)) in children.iter().enumerate() {
-            let field_name = to_camel_case(child_name);
-            let comma = if i < children.len() - 1 { "," } else { "" };
-
+        for (child_name, child_node) in children.iter() {
             match child_node {
                 TreeNode::Leaf(leaf) => {
-                    let accessor = metadata
-                        .find_index_set_pattern(leaf.indexes())
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "Metric '{}' has no matching index pattern. All metrics must be indexed.",
-                                leaf.name()
-                            )
-                        });
-                    writeln!(
+                    // Use shared helper for leaf fields
+                    generate_leaf_field(
                         output,
-                        "{}{}: create{}(this, '{}'){}",
-                        indent_str,
-                        field_name,
-                        accessor.name,
-                        leaf.name(),
-                        comma
-                    )
-                    .unwrap();
+                        &syntax,
+                        "this",
+                        child_name,
+                        leaf,
+                        metadata,
+                        &indent_str,
+                    );
                 }
                 TreeNode::Branch(grandchildren) => {
+                    let field_name = to_camel_case(child_name);
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
                     // Only use pattern factory if pattern is parameterizable
                     let pattern_name = pattern_lookup
@@ -179,8 +171,8 @@ fn generate_tree_initializer(
                         let arg = get_pattern_instance_base(child_node);
                         writeln!(
                             output,
-                            "{}{}: create{}(this, '{}'){}",
-                            indent_str, field_name, pattern_name, arg, comma
+                            "{}{}: create{}(this, '{}'),",
+                            indent_str, field_name, pattern_name, arg
                         )
                         .unwrap();
                     } else {
@@ -195,7 +187,7 @@ fn generate_tree_initializer(
                             pattern_lookup,
                             metadata,
                         );
-                        writeln!(output, "{}}}{}", indent_str, comma).unwrap();
+                        writeln!(output, "{}}},", indent_str).unwrap();
                     }
                 }
             }

@@ -2,10 +2,10 @@ use std::fmt::Display;
 
 use derive_more::Deref;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Metric name
-#[derive(Debug, Clone, Deref, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deref, Serialize, Deserialize, JsonSchema)]
 #[serde(transparent)]
 #[schemars(
     with = "String",

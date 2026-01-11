@@ -21,7 +21,7 @@ fn main() -> brk_client::Result<()> {
         .close
         .by
         .dateindex()
-        .range(None, Some(-3))?;
+        .range(Some(-3), None)?;
     println!("Last 3 price close values: {:?}", price_close);
 
     // Fetch block data
@@ -32,11 +32,22 @@ fn main() -> brk_client::Result<()> {
         .block_count
         .sum
         .by
-        .height()
-        .range(None, Some(-3))?;
+        .dateindex()
+        .range(Some(-3), None)?;
     println!("Last 3 block count values: {:?}", block_count);
 
     // Fetch supply data
+    //
+    dbg!(
+        client
+            .tree()
+            .supply
+            .circulating
+            .bitcoin
+            .by
+            .dateindex()
+            .path()
+    );
     let circulating = client
         .tree()
         .supply
@@ -44,12 +55,12 @@ fn main() -> brk_client::Result<()> {
         .bitcoin
         .by
         .dateindex()
-        .range(None, Some(-3))?;
+        .range(Some(-3), None)?;
     println!("Last 3 circulating supply values: {:?}", circulating);
 
     // Using generic metric fetching
     let metricdata =
-        client.get_metric_by_index("dateindex", "price_close", None, None, None, None)?;
+        client.get_metric_by_index("dateindex", "price_close", None, None, Some("-3"), None)?;
     println!("Generic fetch result count: {}", metricdata.data.len());
 
     Ok(())

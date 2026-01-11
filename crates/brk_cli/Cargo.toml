@@ -10,7 +10,6 @@ build = "build.rs"
 
 [dependencies]
 brk_alloc = { workspace = true }
-brk_bindgen = { workspace = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }

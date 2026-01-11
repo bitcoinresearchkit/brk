@@ -7,6 +7,7 @@ pub fn js_type_to_rust(js_type: &str) -> String {
     } else {
         match js_type {
             "string" => "String".to_string(),
+            "integer" => "i64".to_string(),
             "number" => "f64".to_string(),
             "boolean" => "bool".to_string(),
             "*" => "serde_json::Value".to_string(),

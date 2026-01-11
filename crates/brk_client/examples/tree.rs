@@ -1,15 +1,54 @@
 //! Comprehensive test that fetches all endpoints in the tree.
 //!
-//! This example demonstrates how to iterate over all metrics and fetch data
-//! from each endpoint. Run with: cargo run --example test_all_endpoints
+//! This example demonstrates how to recursively traverse the metrics catalog tree
+//! and fetch data from each endpoint. Run with: cargo run --example tree
 
-use brk_client::{BrkClient, Index};
+use brk_client::BrkClient;
+use brk_types::{Index, TreeNode};
+use std::collections::BTreeSet;
+
+/// A collected metric with its path and available indexes.
+struct CollectedMetric {
+    path: String,
+    name: String,
+    indexes: BTreeSet<Index>,
+}
+
+/// Recursively collect all metrics from the tree.
+fn collect_metrics(node: &TreeNode, path: &str) -> Vec<CollectedMetric> {
+    let mut metrics = Vec::new();
+
+    match node {
+        TreeNode::Branch(children) => {
+            for (key, child) in children {
+                let child_path = if path.is_empty() {
+                    key.clone()
+                } else {
+                    format!("{}.{}", path, key)
+                };
+                metrics.extend(collect_metrics(child, &child_path));
+            }
+        }
+        TreeNode::Leaf(leaf) => {
+            metrics.push(CollectedMetric {
+                path: path.to_string(),
+                name: leaf.name().to_string(),
+                indexes: leaf.indexes().clone(),
+            });
+        }
+    }
+
+    metrics
+}
 
 fn main() -> brk_client::Result<()> {
     let client = BrkClient::new("http://localhost:3110");
 
-    // Get all metrics from the tree
-    let metrics = client.all_metrics();
+    // Get the metrics catalog tree
+    let tree = client.get_metrics_catalog()?;
+
+    // Recursively collect all metrics
+    let metrics = collect_metrics(&tree, "");
     println!("\nFound {} metrics", metrics.len());
 
     let mut success = 0;
@@ -17,36 +56,28 @@ fn main() -> brk_client::Result<()> {
     let mut errors: Vec<String> = Vec::new();
 
     for metric in &metrics {
-        let name = metric.name();
-        let indexes = metric.indexes();
-
-        for index in indexes {
-            let path = format!("/api/metric/{}/{}", name, index.serialize_long());
-            match client.get::<serde_json::Value>(&format!("{}?to=-3", path)) {
+        for index in &metric.indexes {
+            let index_str = index.serialize_long();
+            match client.get_metric_by_index(index_str, &metric.name, None, None, Some("-3"), None)
+            {
                 Ok(data) => {
-                    let count = data
-                        .get("data")
-                        .and_then(|d| d.as_array())
-                        .map(|a| a.len())
-                        .unwrap_or(0);
+                    let count = data.data.len();
                     if count != 3 {
                         failed += 1;
                         let error_msg = format!(
-                            "FAIL: {}.{} -> expected 3, got {}",
-                            name,
-                            index.serialize_long(),
-                            count
+                            "FAIL: {}.by.{} -> expected 3, got {}",
+                            metric.path, index_str, count
                         );
                         errors.push(error_msg.clone());
                         println!("{}", error_msg);
                     } else {
                         success += 1;
-                        println!("OK: {}.{} -> {} items", name, index.serialize_long(), count);
+                        println!("OK: {}.by.{} -> {} items", metric.path, index_str, count);
                     }
                 }
                 Err(e) => {
                     failed += 1;
-                    let error_msg = format!("FAIL: {}.{} -> {}", name, index.serialize_long(), e);
+                    let error_msg = format!("FAIL: {}.by.{} -> {}", metric.path, index_str, e);
                     errors.push(error_msg.clone());
                     println!("{}", error_msg);
                 }

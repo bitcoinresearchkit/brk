@@ -7,8 +7,8 @@ use brk_types::TreeNode;
 
 use crate::{
     ClientMetadata, LanguageSyntax, PatternField, RustSyntax, child_type_name,
-    generate_tree_node_field, get_node_fields, get_pattern_instance_base, prepare_tree_node,
-    to_snake_case,
+    generate_leaf_field, generate_tree_node_field, get_node_fields, get_pattern_instance_base,
+    prepare_tree_node, to_snake_case,
 };
 
 use super::client::field_type_with_generic;
@@ -100,16 +100,21 @@ fn generate_tree_node(
                 field_name, child_struct, path_expr
             )
             .unwrap();
-        } else {
-            // Leaf field
-            generate_tree_node_field(
+        } else if let TreeNode::Leaf(leaf) = child_node {
+            // Leaf field - use shared helper
+            generate_leaf_field(
                 output,
                 &syntax,
-                field_info,
+                "client.clone()",
+                child_name,
+                leaf,
                 metadata,
                 "            ",
-                child_name,
-                None,
+            );
+        } else {
+            panic!(
+                "Field '{}' is a leaf with no TreeNode::Leaf. This shouldn't happen.",
+                field_info.name
             );
         }
     }

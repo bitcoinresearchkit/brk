@@ -162,12 +162,12 @@ impl<T: DeserializeOwned> Endpoint<T> {{
     }}
 
     /// Fetch all data points for this metric/index.
-    pub fn get(&self) -> Result<Vec<T>> {{
+    pub fn get(&self) -> Result<MetricData<T>> {{
         self.client.get(&self.path())
     }}
 
     /// Fetch data points within a range.
-    pub fn range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {{
+    pub fn range(&self, from: Option<i64>, to: Option<i64>) -> Result<MetricData<T>> {{
         let mut params = Vec::new();
         if let Some(f) = from {{ params.push(format!("from={{}}", f)); }}
         if let Some(t) = to {{ params.push(format!("to={{}}", t)); }}

@@ -85,4 +85,8 @@ impl LanguageSyntax for PythonSyntax {
     fn string_literal(&self, value: &str) -> String {
         format!("'{}'", value)
     }
+
+    fn constructor_name(&self, type_name: &str) -> String {
+        type_name.to_string()
+    }
 }
