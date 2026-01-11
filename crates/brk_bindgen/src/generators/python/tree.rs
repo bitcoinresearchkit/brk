@@ -6,11 +6,9 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, PatternField, PythonSyntax, child_type_name, generate_leaf_field,
+    ClientMetadata, GenericSyntax, PatternField, PythonSyntax, child_type_name, generate_leaf_field,
     get_node_fields, get_pattern_instance_base, prepare_tree_node, to_snake_case,
 };
-
-use super::client::field_type_with_generic;
 
 /// Generate tree classes
 pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -54,12 +52,13 @@ fn generate_tree_class(
     for ((field, child_fields_opt), (child_name, child_node)) in
         ctx.fields_with_child_info.iter().zip(ctx.children.iter())
     {
-        // Look up type parameter for generic patterns
-        let generic_value_type = child_fields_opt
-            .as_ref()
-            .and_then(|cf| metadata.get_type_param(cf))
-            .map(String::as_str);
-        let py_type = field_type_with_generic(field, metadata, false, generic_value_type);
+        let py_type = metadata.resolve_tree_field_type(
+            field,
+            child_fields_opt.as_deref(),
+            name,
+            child_name,
+            GenericSyntax::PYTHON,
+        );
         let field_name_py = to_snake_case(&field.name);
 
         if metadata.is_pattern_type(&field.rust_type) && metadata.is_parameterizable(&field.rust_type)

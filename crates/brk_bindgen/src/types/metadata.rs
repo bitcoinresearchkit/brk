@@ -85,25 +85,23 @@ impl ClientMetadata {
     }
 
     /// Resolve the type name for a tree field, considering parameterizability.
-    /// If the field matches a parameterizable pattern, returns type annotation from callback.
+    /// If the field matches a parameterizable pattern, returns type annotation.
     /// Otherwise returns the inline type name (parent_child format).
-    pub fn resolve_tree_field_type<F>(
+    pub fn resolve_tree_field_type(
         &self,
+        field: &PatternField,
         child_fields: Option<&[PatternField]>,
         parent_name: &str,
         child_name: &str,
-        type_annotation_fn: F,
-    ) -> String
-    where
-        F: FnOnce(Option<&str>) -> String,
-    {
+        syntax: GenericSyntax,
+    ) -> String {
         match child_fields {
             Some(cf) if self.is_parameterizable_fields(cf) => {
                 let generic_value_type = self.get_type_param(cf).map(String::as_str);
-                type_annotation_fn(generic_value_type)
+                self.field_type_annotation(field, false, generic_value_type, syntax)
             }
             Some(_) => crate::child_type_name(parent_name, child_name),
-            None => type_annotation_fn(None),
+            None => self.field_type_annotation(field, false, None, syntax),
         }
     }
 

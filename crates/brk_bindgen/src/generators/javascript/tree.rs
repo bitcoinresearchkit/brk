@@ -6,13 +6,13 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, Endpoint, JavaScriptSyntax, PatternField, child_type_name, generate_leaf_field,
-    get_first_leaf_name, get_node_fields, get_pattern_instance_base, infer_accumulated_name,
-    prepare_tree_node, to_camel_case,
+    ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, child_type_name,
+    generate_leaf_field, get_first_leaf_name, get_node_fields, get_pattern_instance_base,
+    infer_accumulated_name, prepare_tree_node, to_camel_case,
 };
 
 use super::api::generate_api_methods;
-use super::client::{field_type_with_generic, generate_static_constants};
+use super::client::generate_static_constants;
 
 /// Generate JSDoc typedefs for the catalog tree.
 pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -49,10 +49,11 @@ fn generate_tree_typedef(
         ctx.fields_with_child_info.iter().zip(ctx.children.iter())
     {
         let js_type = metadata.resolve_tree_field_type(
+            field,
             child_fields.as_deref(),
             name,
             child_name,
-            |generic| field_type_with_generic(field, metadata, false, generic),
+            GenericSyntax::JAVASCRIPT,
         );
 
         writeln!(

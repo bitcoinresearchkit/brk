@@ -10,9 +10,8 @@ use brk_types::{pools, Index};
 use serde::Serialize;
 
 use crate::{
-    ClientMetadata, GenericSyntax, IndexSetPattern, PatternField, PythonSyntax,
-    StructuralPattern, VERSION, generate_parameterized_field, generate_tree_path_field,
-    index_to_field_name,
+    ClientMetadata, IndexSetPattern, PythonSyntax, StructuralPattern, VERSION,
+    generate_parameterized_field, generate_tree_path_field, index_to_field_name,
 };
 
 /// Generate class-level constants for the BrkClient class.
@@ -340,14 +339,4 @@ pub fn generate_structural_patterns(
 
         writeln!(output).unwrap();
     }
-}
-
-/// Get Python type annotation for a field with optional generic value type.
-pub fn field_type_with_generic(
-    field: &PatternField,
-    metadata: &ClientMetadata,
-    is_generic: bool,
-    generic_value_type: Option<&str>,
-) -> String {
-    metadata.field_type_annotation(field, is_generic, generic_value_type, GenericSyntax::PYTHON)
 }

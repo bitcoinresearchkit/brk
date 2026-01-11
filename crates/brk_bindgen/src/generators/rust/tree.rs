@@ -6,12 +6,10 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, LanguageSyntax, PatternField, RustSyntax, child_type_name,
+    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax, child_type_name,
     generate_leaf_field, generate_tree_node_field, get_node_fields, get_pattern_instance_base,
     prepare_tree_node, to_snake_case,
 };
-
-use super::client::field_type_with_generic;
 
 /// Generate tree structs.
 pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -49,10 +47,11 @@ fn generate_tree_node(
     {
         let field_name = to_snake_case(&field.name);
         let type_annotation = metadata.resolve_tree_field_type(
+            field,
             child_fields.as_deref(),
             name,
             child_name,
-            |generic| field_type_with_generic(field, metadata, false, generic),
+            GenericSyntax::RUST,
         );
         writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
     }

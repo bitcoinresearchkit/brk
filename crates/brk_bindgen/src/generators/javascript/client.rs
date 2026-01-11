@@ -11,9 +11,8 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    ClientMetadata, GenericSyntax, IndexSetPattern, JavaScriptSyntax, PatternField,
-    StructuralPattern, VERSION, generate_parameterized_field, generate_tree_path_field,
-    to_camel_case,
+    ClientMetadata, GenericSyntax, IndexSetPattern, JavaScriptSyntax, StructuralPattern, VERSION,
+    generate_parameterized_field, generate_tree_path_field, to_camel_case,
 };
 
 /// Generate the base BrkClient class with HTTP functionality.
@@ -324,7 +323,8 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " * @typedef {{Object}} {}", pattern.name).unwrap();
         for field in &pattern.fields {
-            let js_type = field_type_annotation(field, metadata, pattern.is_generic);
+            let js_type =
+                metadata.field_type_annotation(field, pattern.is_generic, None, GenericSyntax::JAVASCRIPT);
             writeln!(
                 output,
                 " * @property {{{}}} {}",
@@ -370,18 +370,4 @@ pub fn generate_structural_patterns(
         writeln!(output, "  }};").unwrap();
         writeln!(output, "}}\n").unwrap();
     }
-}
-
-fn field_type_annotation(field: &PatternField, metadata: &ClientMetadata, is_generic: bool) -> String {
-    metadata.field_type_annotation(field, is_generic, None, GenericSyntax::JAVASCRIPT)
-}
-
-/// Get field type with specific generic value type.
-pub fn field_type_with_generic(
-    field: &PatternField,
-    metadata: &ClientMetadata,
-    is_generic: bool,
-    generic_value_type: Option<&str>,
-) -> String {
-    metadata.field_type_annotation(field, is_generic, generic_value_type, GenericSyntax::JAVASCRIPT)
 }

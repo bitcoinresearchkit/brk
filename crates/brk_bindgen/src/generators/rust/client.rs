@@ -3,9 +3,8 @@
 use std::fmt::Write;
 
 use crate::{
-    ClientMetadata, GenericSyntax, IndexSetPattern, PatternField, RustSyntax,
-    StructuralPattern, generate_parameterized_field, generate_tree_path_field,
-    index_to_field_name, to_snake_case,
+    ClientMetadata, GenericSyntax, IndexSetPattern, RustSyntax, StructuralPattern,
+    generate_parameterized_field, generate_tree_path_field, index_to_field_name, to_snake_case,
 };
 
 /// Generate import statements.
@@ -315,7 +314,7 @@ pub fn generate_pattern_structs(
         for field in &pattern.fields {
             let field_name = to_snake_case(&field.name);
             let type_annotation =
-                field_type_with_generic(field, metadata, pattern.is_generic, None);
+                metadata.field_type_annotation(field, pattern.is_generic, None, GenericSyntax::RUST);
             writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
         }
 
@@ -367,14 +366,4 @@ pub fn generate_pattern_structs(
         writeln!(output, "    }}").unwrap();
         writeln!(output, "}}\n").unwrap();
     }
-}
-
-/// Get Rust type annotation for a field with optional generic value type.
-pub fn field_type_with_generic(
-    field: &PatternField,
-    metadata: &ClientMetadata,
-    is_generic: bool,
-    generic_value_type: Option<&str>,
-) -> String {
-    metadata.field_type_annotation(field, is_generic, generic_value_type, GenericSyntax::RUST)
 }
