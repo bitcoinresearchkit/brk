@@ -21,13 +21,13 @@ impl DataRangeFormat {
         self.format
     }
 
-    pub fn set_from(mut self, from: i64) -> Self {
-        self.range = self.range.set_from(from);
+    pub fn set_start(mut self, start: i64) -> Self {
+        self.range = self.range.set_start(start);
         self
     }
 
-    pub fn set_to(mut self, to: i64) -> Self {
-        self.range = self.range.set_to(to);
+    pub fn set_end(mut self, end: i64) -> Self {
+        self.range = self.range.set_end(end);
         self
     }
 

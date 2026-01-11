@@ -86,8 +86,8 @@ impl Query {
         params: &DataRangeFormat,
     ) -> Result<Output> {
         let len = metric.len();
-        let from = params.from().map(|from| metric.i64_to_usize(from));
-        let to = params.to_for_len(len).map(|to| metric.i64_to_usize(to));
+        let from = params.start().map(|start| metric.i64_to_usize(start));
+        let to = params.end_for_len(len).map(|end| metric.i64_to_usize(end));
 
         Ok(match params.format() {
             Format::CSV => Output::CSV(Self::columns_to_csv(
@@ -112,18 +112,18 @@ impl Query {
         // Use min length across metrics for consistent count resolution
         let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
 
-        let from = params.from().map(|from| {
+        let from = params.start().map(|start| {
             metrics
                 .iter()
-                .map(|v| v.i64_to_usize(from))
+                .map(|v| v.i64_to_usize(start))
                 .min()
                 .unwrap_or_default()
         });
 
-        let to = params.to_for_len(min_len).map(|to| {
+        let to = params.end_for_len(min_len).map(|end| {
             metrics
                 .iter()
-                .map(|v| v.i64_to_usize(to))
+                .map(|v| v.i64_to_usize(end))
                 .min()
                 .unwrap_or_default()
         });
@@ -200,7 +200,7 @@ impl Query {
 
         let metric = vecs.first().expect("search guarantees non-empty on success");
 
-        let weight = Self::weight(&vecs, params.from(), params.to_for_len(metric.len()));
+        let weight = Self::weight(&vecs, params.start(), params.end_for_len(metric.len()));
         if weight > max_weight {
             return Err(Error::WeightExceeded {
                 requested: weight,
@@ -225,7 +225,7 @@ impl Query {
         let vecs = self.search(&params)?;
 
         let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
-        let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
+        let weight = Self::weight(&vecs, params.start(), params.end_for_len(min_len));
         if weight > max_weight {
             return Err(Error::WeightExceeded {
                 requested: weight,

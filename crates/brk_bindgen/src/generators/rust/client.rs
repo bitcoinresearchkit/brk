@@ -82,8 +82,7 @@ impl BrkClientBase {{
         }}
     }}
 
-    /// Make a GET request.
-    pub fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T> {{
+    fn get(&self, path: &str) -> Result<minreq::Response> {{
         let base = self.base_url.trim_end_matches('/');
         let url = format!("{{}}{{}}", base, path);
         let response = minreq::get(&url)
@@ -97,8 +96,21 @@ impl BrkClientBase {{
             }});
         }}
 
-        response
+        Ok(response)
+    }}
+
+    /// Make a GET request and deserialize JSON response.
+    pub fn get_json<T: DeserializeOwned>(&self, path: &str) -> Result<T> {{
+        self.get(path)?
             .json()
+            .map_err(|e| BrkError {{ message: e.to_string() }})
+    }}
+
+    /// Make a GET request and return raw text response.
+    pub fn get_text(&self, path: &str) -> Result<String> {{
+        self.get(path)?
+            .as_str()
+            .map(|s| s.to_string())
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
 }}
@@ -162,21 +174,21 @@ impl<T: DeserializeOwned> Endpoint<T> {{
 
     /// Fetch all data points for this metric/index.
     pub fn get(&self) -> Result<MetricData<T>> {{
-        self.client.get(&self.path())
+        self.client.get_json(&self.path())
     }}
 
     /// Fetch data points within a range.
-    pub fn range(&self, from: Option<i64>, to: Option<i64>) -> Result<MetricData<T>> {{
+    pub fn range(&self, start: Option<i64>, end: Option<i64>) -> Result<MetricData<T>> {{
         let mut params = Vec::new();
-        if let Some(f) = from {{ params.push(format!("from={{}}", f)); }}
-        if let Some(t) = to {{ params.push(format!("to={{}}", t)); }}
+        if let Some(s) = start {{ params.push(format!("start={{}}", s)); }}
+        if let Some(e) = end {{ params.push(format!("end={{}}", e)); }}
         let p = self.path();
         let path = if params.is_empty() {{
             p
         }} else {{
             format!("{{}}?{{}}", p, params.join("&"))
         }};
-        self.client.get(&path)
+        self.client.get_json(&path)
     }}
 
     /// Get the endpoint path.

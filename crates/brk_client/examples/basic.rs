@@ -1,6 +1,7 @@
 //! Basic example of using the BRK client.
 
 use brk_client::{BrkClient, BrkClientOptions};
+use brk_types::{FormatResponse, Index, Metric};
 
 fn main() -> brk_client::Result<()> {
     // Create client with default options
@@ -12,9 +13,9 @@ fn main() -> brk_client::Result<()> {
         timeout_secs: 60,
     });
 
-    // Fetch price data using the typed tree API
+    // Fetch price data using the typed metrics API
     let price_close = client
-        .tree()
+        .metrics()
         .price
         .usd
         .split
@@ -26,7 +27,7 @@ fn main() -> brk_client::Result<()> {
 
     // Fetch block data
     let block_count = client
-        .tree()
+        .metrics()
         .blocks
         .count
         .block_count
@@ -40,7 +41,7 @@ fn main() -> brk_client::Result<()> {
     //
     dbg!(
         client
-            .tree()
+            .metrics()
             .supply
             .circulating
             .bitcoin
@@ -49,7 +50,7 @@ fn main() -> brk_client::Result<()> {
             .path()
     );
     let circulating = client
-        .tree()
+        .metrics()
         .supply
         .circulating
         .bitcoin
@@ -59,9 +60,20 @@ fn main() -> brk_client::Result<()> {
     println!("Last 3 circulating supply values: {:?}", circulating);
 
     // Using generic metric fetching
-    let metricdata =
-        client.get_metric_by_index("dateindex", "price_close", None, None, Some("-3"), None)?;
-    println!("Generic fetch result count: {}", metricdata.data.len());
+    let metricdata = client.get_metric_by_index(
+        Metric::from("price_close"),
+        Index::DateIndex,
+        Some(-3),
+        None,
+        None,
+        None,
+    )?;
+    match metricdata {
+        FormatResponse::Json(m) => {
+            println!("Generic fetch result count: {}", m.data.len());
+        }
+        FormatResponse::Csv(_) => panic!(),
+    };
 
     Ok(())
 }

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -17,5 +19,11 @@ impl Limit {
 impl Default for Limit {
     fn default() -> Self {
         Self::DEFAULT
+    }
+}
+
+impl fmt::Display for Limit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

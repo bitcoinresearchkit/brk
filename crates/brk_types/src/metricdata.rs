@@ -14,30 +14,30 @@ pub struct MetricData<T = Value> {
     /// Total number of data points in the metric
     pub total: usize,
     /// Start index (inclusive) of the returned range
-    pub from: usize,
+    pub start: usize,
     /// End index (exclusive) of the returned range
-    pub to: usize,
+    pub end: usize,
     /// The metric data
     pub data: Vec<T>,
 }
 
 impl MetricData {
-    /// Write metric data as JSON to buffer: `{"total":N,"from":N,"to":N,"data":[...]}`
+    /// Write metric data as JSON to buffer: `{"total":N,"start":N,"end":N,"data":[...]}`
     pub fn serialize(
         vec: &dyn AnySerializableVec,
-        from: Option<usize>,
-        to: Option<usize>,
+        start: Option<usize>,
+        end: Option<usize>,
         buf: &mut Vec<u8>,
     ) -> vecdb::Result<()> {
         let total = vec.len();
-        let from_idx = from.unwrap_or(0);
-        let to_idx = to.unwrap_or(total).min(total);
+        let start_idx = start.unwrap_or(0);
+        let end_idx = end.unwrap_or(total).min(total);
 
         write!(
             buf,
-            r#"{{"total":{total},"from":{from_idx},"to":{to_idx},"data":"#
+            r#"{{"total":{total},"start":{start_idx},"end":{end_idx},"data":"#
         )?;
-        vec.write_json(from, to, buf)?;
+        vec.write_json(start, end, buf)?;
         buf.push(b'}');
         Ok(())
     }

@@ -10,10 +10,10 @@ use super::types::js_type_to_rust;
 pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(
         output,
-        r#"/// Main BRK client with catalog tree and API methods.
+        r#"/// Main BRK client with metrics tree and API methods.
 pub struct BrkClient {{
     base: Arc<BrkClientBase>,
-    tree: CatalogTree,
+    metrics: MetricsTree,
 }}
 
 impl BrkClient {{
@@ -23,20 +23,20 @@ impl BrkClient {{
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {{
         let base = Arc::new(BrkClientBase::new(base_url));
-        let tree = CatalogTree::new(base.clone(), String::new());
-        Self {{ base, tree }}
+        let metrics = MetricsTree::new(base.clone(), String::new());
+        Self {{ base, metrics }}
     }}
 
     /// Create a new client with options.
     pub fn with_options(options: BrkClientOptions) -> Self {{
         let base = Arc::new(BrkClientBase::with_options(options));
-        let tree = CatalogTree::new(base.clone(), String::new());
-        Self {{ base, tree }}
+        let metrics = MetricsTree::new(base.clone(), String::new());
+        Self {{ base, metrics }}
     }}
 
-    /// Get the catalog tree for navigating metrics.
-    pub fn tree(&self) -> &CatalogTree {{
-        &self.tree
+    /// Get the metrics tree for navigating metrics.
+    pub fn metrics(&self) -> &MetricsTree {{
+        &self.metrics
     }}
 "#,
         VERSION = VERSION
@@ -56,11 +56,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = endpoint
+        let base_return_type = endpoint
             .response_type
             .as_deref()
             .map(js_type_to_rust)
             .unwrap_or_else(|| "serde_json::Value".to_string());
+
+        let return_type = if endpoint.supports_csv {
+            format!("FormatResponse<{}>", base_return_type)
+        } else {
+            base_return_type.clone()
+        };
 
         writeln!(
             output,
@@ -83,10 +89,10 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         )
         .unwrap();
 
-        let path = build_path_template(&endpoint.path);
+        let (path, index_arg) = build_path_template(endpoint);
 
         if endpoint.query_params.is_empty() {
-            writeln!(output, "        self.base.get(&format!(\"{}\"))", path).unwrap();
+            writeln!(output, "        self.base.get_json(&format!(\"{}\"{}))", path, index_arg).unwrap();
         } else {
             writeln!(output, "        let mut query = Vec::new();").unwrap();
             for param in &endpoint.query_params {
@@ -107,12 +113,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 }
             }
             writeln!(output, "        let query_str = if query.is_empty() {{ String::new() }} else {{ format!(\"?{{}}\", query.join(\"&\")) }};").unwrap();
-            writeln!(
-                output,
-                "        self.base.get(&format!(\"{}{{}}\", query_str))",
-                path
-            )
-            .unwrap();
+            writeln!(output, "        let path = format!(\"{}{{}}\"{}, query_str);", path, index_arg).unwrap();
+
+            if endpoint.supports_csv {
+                writeln!(output, "        if format == Some(Format::CSV) {{").unwrap();
+                writeln!(output, "            self.base.get_text(&path).map(FormatResponse::Csv)").unwrap();
+                writeln!(output, "        }} else {{").unwrap();
+                writeln!(output, "            self.base.get_json(&path).map(FormatResponse::Json)").unwrap();
+                writeln!(output, "        }}").unwrap();
+            } else {
+                writeln!(output, "        self.base.get_json(&path)").unwrap();
+            }
         }
 
         writeln!(output, "    }}\n").unwrap();
@@ -126,19 +137,36 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
 fn build_method_params(endpoint: &Endpoint) -> String {
     let mut params = Vec::new();
     for param in &endpoint.path_params {
-        params.push(format!(", {}: &str", param.name));
+        let rust_type = param_type_to_rust(&param.param_type);
+        params.push(format!(", {}: {}", param.name, rust_type));
     }
     for param in &endpoint.query_params {
+        let rust_type = param_type_to_rust(&param.param_type);
         if param.required {
-            params.push(format!(", {}: &str", param.name));
+            params.push(format!(", {}: {}", param.name, rust_type));
         } else {
-            params.push(format!(", {}: Option<&str>", param.name));
+            params.push(format!(", {}: Option<{}>", param.name, rust_type));
         }
     }
     params.join("")
 }
 
-/// OpenAPI path placeholders `{param}` are already valid Rust format string syntax.
-fn build_path_template(path: &str) -> &str {
-    path
+/// Convert parameter type to Rust type for function signatures.
+fn param_type_to_rust(param_type: &str) -> String {
+    match param_type {
+        "string" | "*" => "&str".to_string(),
+        "integer" | "number" => "i64".to_string(),
+        "boolean" => "bool".to_string(),
+        other => other.to_string(), // Domain types like Index, Metric, Format
+    }
+}
+
+/// Build path template and extra format args for Index params.
+fn build_path_template(endpoint: &Endpoint) -> (String, &'static str) {
+    let has_index_param = endpoint.path_params.iter().any(|p| p.name == "index" && p.param_type == "Index");
+    if has_index_param {
+        (endpoint.path.replace("{index}", "{}"), ", index.serialize_long()")
+    } else {
+        (endpoint.path.clone(), "")
+    }
 }

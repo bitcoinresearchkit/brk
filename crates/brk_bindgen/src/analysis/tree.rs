@@ -17,6 +17,20 @@ pub fn get_first_leaf_name(node: &TreeNode) -> Option<String> {
     }
 }
 
+/// Get the shortest leaf name from a tree node.
+///
+/// This is useful for pattern base analysis where we want the "base" case
+/// (e.g., the leaf without suffix like `_btc` or `_usd`).
+fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
+    match node {
+        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
+        TreeNode::Branch(children) => children
+            .values()
+            .filter_map(get_shortest_leaf_name)
+            .min_by_key(|name| name.len()),
+    }
+}
+
 /// Get all leaf names from a tree node.
 pub fn get_all_leaf_names(node: &TreeNode) -> Vec<String> {
     match node {
@@ -122,14 +136,17 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> String {
     analyze_pattern_level(&child_names).base
 }
 
-/// Get (field_name, first_leaf_name) pairs for direct children of a branch node.
+/// Get (field_name, shortest_leaf_name) pairs for direct children of a branch node.
+///
+/// Uses the shortest leaf name from each child subtree to find the "base" case
+/// (the leaf without suffix modifiers like `_btc` or `_usd`).
 fn get_direct_children_for_analysis(node: &TreeNode) -> Vec<(String, String)> {
     match node {
         TreeNode::Leaf(leaf) => vec![(leaf.name().to_string(), leaf.name().to_string())],
         TreeNode::Branch(children) => children
             .iter()
             .filter_map(|(field_name, child)| {
-                get_first_leaf_name(child).map(|leaf_name| (field_name.clone(), leaf_name))
+                get_shortest_leaf_name(child).map(|leaf_name| (field_name.clone(), leaf_name))
             })
             .collect(),
     }

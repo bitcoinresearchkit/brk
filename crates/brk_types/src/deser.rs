@@ -17,6 +17,9 @@ where
         if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
             s = s[1..s.len() - 1].to_string();
         }
+        if s == "null" || s.is_empty() {
+            return Ok(None);
+        }
         s.parse::<i64>().map(Some).map_err(serde::de::Error::custom)
     } else if let Some(n) = value.as_i64() {
         Ok(Some(n))
@@ -40,6 +43,9 @@ where
     if let Some(mut s) = value.as_str().map(|s| s.to_string()) {
         if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
             s = s[1..s.len() - 1].to_string();
+        }
+        if s == "null" || s.is_empty() {
+            return Ok(None);
         }
         s.parse::<usize>()
             .map(Some)

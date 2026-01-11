@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, io};
 
 use crate::ref_to_type_name;
 use oas3::Spec;
-use oas3::spec::{ObjectOrReference, Operation, ParameterIn, PathItem, Schema, SchemaTypeSet};
+use oas3::spec::{ObjectOrReference, ObjectSchema, Operation, ParameterIn, PathItem, Schema, SchemaType, SchemaTypeSet};
 use serde_json::Value;
 
 /// Type schema extracted from OpenAPI components
@@ -31,6 +31,8 @@ pub struct Endpoint {
     pub response_type: Option<String>,
     /// Whether this endpoint is deprecated
     pub deprecated: bool,
+    /// Whether this endpoint supports CSV format (text/csv content type)
+    pub supports_csv: bool,
 }
 
 impl Endpoint {
@@ -186,10 +188,11 @@ fn get_operations(path_item: &PathItem) -> Vec<(String, &Operation)> {
 }
 
 fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<Endpoint> {
-    let path_params = extract_parameters(operation, ParameterIn::Path);
+    let path_params = extract_path_parameters(path, operation);
     let query_params = extract_parameters(operation, ParameterIn::Query);
 
     let response_type = extract_response_type(operation);
+    let supports_csv = check_csv_support(operation);
 
     Some(Endpoint {
         method: method.to_string(),
@@ -202,7 +205,49 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         query_params,
         response_type,
         deprecated: operation.deprecated.unwrap_or(false),
+        supports_csv,
     })
+}
+
+/// Check if the endpoint supports CSV format (has text/csv in 200 response content types).
+fn check_csv_support(operation: &Operation) -> bool {
+    let Some(responses) = operation.responses.as_ref() else {
+        return false;
+    };
+    let Some(response) = responses.get("200") else {
+        return false;
+    };
+    match response {
+        ObjectOrReference::Object(response) => response.content.contains_key("text/csv"),
+        ObjectOrReference::Ref { .. } => false,
+    }
+}
+
+/// Extract path parameters in the order they appear in the path URL.
+fn extract_path_parameters(path: &str, operation: &Operation) -> Vec<Parameter> {
+    // Extract parameter names from the path in order (e.g., "/api/metric/{metric}/{index}" -> ["metric", "index"])
+    let path_order: Vec<&str> = path
+        .split('/')
+        .filter_map(|segment| {
+            segment
+                .strip_prefix('{')
+                .and_then(|s| s.strip_suffix('}'))
+        })
+        .collect();
+
+    // Get all path parameters from the operation
+    let params = extract_parameters(operation, ParameterIn::Path);
+
+    // Sort by position in the path
+    let mut sorted_params: Vec<Parameter> = params;
+    sorted_params.sort_by_key(|p| {
+        path_order
+            .iter()
+            .position(|&name| name == p.name)
+            .unwrap_or(usize::MAX)
+    });
+
+    sorted_params
 }
 
 fn extract_parameters(operation: &Operation, location: ParameterIn) -> Vec<Parameter> {
@@ -271,25 +316,36 @@ fn schema_type_from_schema(schema: &Schema) -> Option<String> {
     }
 }
 
-fn schema_to_type_name(schema: &oas3::spec::ObjectSchema) -> Option<String> {
+fn schema_to_type_name(schema: &ObjectSchema) -> Option<String> {
     let schema_type = schema.schema_type.as_ref()?;
 
     match schema_type {
-        SchemaTypeSet::Single(t) => match t {
-            oas3::spec::SchemaType::String => Some("string".to_string()),
-            oas3::spec::SchemaType::Number => Some("number".to_string()),
-            oas3::spec::SchemaType::Integer => Some("number".to_string()),
-            oas3::spec::SchemaType::Boolean => Some("boolean".to_string()),
-            oas3::spec::SchemaType::Array => {
-                let inner = match &schema.items {
-                    Some(boxed_schema) => schema_type_from_schema(boxed_schema),
-                    None => Some("*".to_string()),
-                };
-                inner.map(|t| format!("{}[]", t))
-            }
-            oas3::spec::SchemaType::Object => Some("Object".to_string()),
-            oas3::spec::SchemaType::Null => Some("null".to_string()),
-        },
-        SchemaTypeSet::Multiple(_) => Some("*".to_string()),
+        SchemaTypeSet::Single(t) => single_type_to_name(t, schema),
+        SchemaTypeSet::Multiple(types) => {
+            // For nullable types like ["integer", "null"], return the non-null type
+            types
+                .iter()
+                .find(|t| !matches!(t, SchemaType::Null))
+                .and_then(|t| single_type_to_name(t, schema))
+                .or(Some("*".to_string()))
+        }
+    }
+}
+
+fn single_type_to_name(t: &SchemaType, schema: &ObjectSchema) -> Option<String> {
+    match t {
+        SchemaType::String => Some("string".to_string()),
+        SchemaType::Number => Some("number".to_string()),
+        SchemaType::Integer => Some("number".to_string()),
+        SchemaType::Boolean => Some("boolean".to_string()),
+        SchemaType::Array => {
+            let inner = match &schema.items {
+                Some(boxed_schema) => schema_type_from_schema(boxed_schema),
+                None => Some("*".to_string()),
+            };
+            inner.map(|t| format!("{}[]", t))
+        }
+        SchemaType::Object => Some("Object".to_string()),
+        SchemaType::Null => Some("null".to_string()),
     }
 }

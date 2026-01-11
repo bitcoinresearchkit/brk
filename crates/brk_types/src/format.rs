@@ -1,3 +1,5 @@
+use std::fmt;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -11,6 +13,15 @@ pub enum Format {
     JSON,
     #[serde(alias = "csv")]
     CSV,
+}
+
+impl fmt::Display for Format {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Format::JSON => write!(f, "json"),
+            Format::CSV => write!(f, "csv"),
+        }
+    }
 }
 
 impl From<Option<String>> for Format {

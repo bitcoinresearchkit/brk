@@ -12,13 +12,13 @@ use crate::{
 
 /// Generate tree classes
 pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
-    writeln!(output, "# Catalog tree classes\n").unwrap();
+    writeln!(output, "# Metrics tree classes\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
     let mut generated = HashSet::new();
     generate_tree_class(
         output,
-        "CatalogTree",
+        "MetricsTree",
         catalog,
         &pattern_lookup,
         metadata,
@@ -39,8 +39,30 @@ fn generate_tree_class(
         return;
     };
 
+    // Generate child classes FIRST (post-order traversal)
+    // This ensures children are defined before parent references them
+    for (child_name, child_node) in ctx.children.iter() {
+        if let TreeNode::Branch(grandchildren) = child_node {
+            let child_fields = get_node_fields(grandchildren, pattern_lookup);
+
+            // Generate inline class if no pattern match OR pattern is not parameterizable
+            if !metadata.is_parameterizable_fields(&child_fields) {
+                let child_class = child_type_name(name, child_name);
+                generate_tree_class(
+                    output,
+                    &child_class,
+                    child_node,
+                    pattern_lookup,
+                    metadata,
+                    generated,
+                );
+            }
+        }
+    }
+
+    // THEN generate the current class (after all children are defined)
     writeln!(output, "class {}:", name).unwrap();
-    writeln!(output, "    \"\"\"Catalog tree node.\"\"\"").unwrap();
+    writeln!(output, "    \"\"\"Metrics tree node.\"\"\"").unwrap();
     writeln!(output, "    ").unwrap();
     writeln!(
         output,
@@ -92,24 +114,4 @@ fn generate_tree_class(
     }
 
     writeln!(output).unwrap();
-
-    // Generate child classes
-    for (child_name, child_node) in ctx.children {
-        if let TreeNode::Branch(grandchildren) = child_node {
-            let child_fields = get_node_fields(grandchildren, pattern_lookup);
-
-            // Generate inline class if no pattern match OR pattern is not parameterizable
-            if !metadata.is_parameterizable_fields(&child_fields) {
-                let child_class = child_type_name(name, child_name);
-                generate_tree_class(
-                    output,
-                    &child_class,
-                    child_node,
-                    pattern_lookup,
-                    metadata,
-                    generated,
-                );
-            }
-        }
-    }
 }

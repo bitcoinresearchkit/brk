@@ -7,29 +7,29 @@ use crate::{de_unquote_i64, de_unquote_usize};
 #[derive(Default, Debug, Deserialize, JsonSchema)]
 pub struct DataRange {
     /// Inclusive starting index, if negative counts from end
-    #[serde(default, alias = "f", deserialize_with = "de_unquote_i64")]
+    #[serde(default, alias = "s", alias = "from", alias = "f", deserialize_with = "de_unquote_i64")]
     #[schemars(example = 0, example = -1, example = -10, example = -1000)]
-    from: Option<i64>,
+    start: Option<i64>,
 
     /// Exclusive ending index, if negative counts from end
-    #[serde(default, alias = "t", deserialize_with = "de_unquote_i64")]
+    #[serde(default, alias = "e", alias = "to", alias = "t", deserialize_with = "de_unquote_i64")]
     #[schemars(example = 1000)]
-    to: Option<i64>,
+    end: Option<i64>,
 
-    /// Number of values to return (ignored if `to` is set)
+    /// Number of values to return (ignored if `end` is set)
     #[serde(default, alias = "c", deserialize_with = "de_unquote_usize")]
     #[schemars(example = 1, example = 10, example = 100)]
     count: Option<usize>,
 }
 
 impl DataRange {
-    pub fn set_from(mut self, from: i64) -> Self {
-        self.from.replace(from);
+    pub fn set_start(mut self, start: i64) -> Self {
+        self.start.replace(start);
         self
     }
 
-    pub fn set_to(mut self, to: i64) -> Self {
-        self.to.replace(to);
+    pub fn set_end(mut self, end: i64) -> Self {
+        self.end.replace(end);
         self
     }
 
@@ -38,27 +38,27 @@ impl DataRange {
         self
     }
 
-    /// Get the raw `from` value
-    pub fn from(&self) -> Option<i64> {
-        self.from
+    /// Get the raw `start` value
+    pub fn start(&self) -> Option<i64> {
+        self.start
     }
 
-    /// Get `to` value, computing it from `from + count` if `to` is unset but `count` is set.
-    /// Requires the vec length to resolve negative `from` indices before adding count.
-    pub fn to_for_len(&self, len: usize) -> Option<i64> {
-        if self.to.is_some() {
-            return self.to;
+    /// Get `end` value, computing it from `start + count` if `end` is unset but `count` is set.
+    /// Requires the vec length to resolve negative `start` indices before adding count.
+    pub fn end_for_len(&self, len: usize) -> Option<i64> {
+        if self.end.is_some() {
+            return self.end;
         }
 
         self.count.map(|count| {
-            let resolved_from = self.resolve_index(self.from, len, 0);
-            (resolved_from + count).min(len) as i64
+            let resolved_start = self.resolve_index(self.start, len, 0);
+            (resolved_start + count).min(len) as i64
         })
     }
 
     /// Returns a string for etag/cache key generation that captures all range parameters
     pub fn etag_suffix(&self) -> String {
-        format!("{:?}{:?}{:?}", self.from, self.to, self.count)
+        format!("{:?}{:?}{:?}", self.start, self.end, self.count)
     }
 
     fn resolve_index(&self, idx: Option<i64>, len: usize, default: usize) -> usize {

@@ -81,25 +81,48 @@ class BrkClientBase:
     """Base HTTP client for making requests."""
 
     def __init__(self, base_url: str, timeout: float = 30.0):
-        self.base_url = base_url
-        self.timeout = timeout
-        self._client = httpx.Client(timeout=timeout)
+        parsed = urlparse(base_url)
+        self._host = parsed.netloc
+        self._secure = parsed.scheme == 'https'
+        self._timeout = timeout
+        self._conn: Optional[Union[HTTPSConnection, HTTPConnection]] = None
 
-    def get(self, path: str) -> Any:
-        """Make a GET request."""
+    def _connect(self) -> Union[HTTPSConnection, HTTPConnection]:
+        """Get or create HTTP connection."""
+        if self._conn is None:
+            if self._secure:
+                self._conn = HTTPSConnection(self._host, timeout=self._timeout)
+            else:
+                self._conn = HTTPConnection(self._host, timeout=self._timeout)
+        return self._conn
+
+    def get(self, path: str) -> bytes:
+        """Make a GET request and return raw bytes."""
         try:
-            base = self.base_url.rstrip('/')
-            response = self._client.get(f"{{base}}{{path}}")
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            raise BrkError(f"HTTP error: {{e.response.status_code}}", e.response.status_code)
-        except httpx.RequestError as e:
+            conn = self._connect()
+            conn.request("GET", path)
+            res = conn.getresponse()
+            data = res.read()
+            if res.status >= 400:
+                raise BrkError(f"HTTP error: {{res.status}}", res.status)
+            return data
+        except (ConnectionError, OSError, TimeoutError) as e:
+            self._conn = None
             raise BrkError(str(e))
+
+    def get_json(self, path: str) -> Any:
+        """Make a GET request and return JSON."""
+        return json.loads(self.get(path))
+
+    def get_text(self, path: str) -> str:
+        """Make a GET request and return text."""
+        return self.get(path).decode()
 
     def close(self):
         """Close the HTTP client."""
-        self._client.close()
+        if self._conn:
+            self._conn.close()
+            self._conn = None
 
     def __enter__(self):
         return self
@@ -124,8 +147,8 @@ pub fn generate_endpoint_class(output: &mut String) {
         r#"class MetricData(TypedDict, Generic[T]):
     """Metric data with range information."""
     total: int
-    from_: int  # 'from' is reserved in Python
-    to: int
+    start: int
+    end: int
     data: List[T]
 
 
@@ -143,18 +166,18 @@ class MetricEndpoint(Generic[T]):
 
     def get(self) -> MetricData[T]:
         """Fetch all data points for this metric/index."""
-        return self._client.get(self.path())
+        return self._client.get_json(self.path())
 
-    def range(self, from_val: Optional[int] = None, to_val: Optional[int] = None) -> MetricData[T]:
+    def range(self, start: Optional[int] = None, end: Optional[int] = None) -> MetricData[T]:
         """Fetch data points within a range."""
         params = []
-        if from_val is not None:
-            params.append(f"from={{from_val}}")
-        if to_val is not None:
-            params.append(f"to={{to_val}}")
+        if start is not None:
+            params.append(f"start={{start}}")
+        if end is not None:
+            params.append(f"end={{end}}")
         query = "&".join(params)
         p = self.path()
-        return self._client.get(f"{{p}}?{{query}}" if query else p)
+        return self._client.get_json(f"{{p}}?{{query}}" if query else p)
 
     def path(self) -> str:
         """Get the endpoint path."""

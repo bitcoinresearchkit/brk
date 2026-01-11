@@ -52,8 +52,8 @@ class BrkError extends Error {{
  * @template T
  * @typedef {{Object}} MetricData
  * @property {{number}} total - Total number of data points
- * @property {{number}} from - Start index (inclusive)
- * @property {{number}} to - End index (exclusive)
+ * @property {{number}} start - Start index (inclusive)
+ * @property {{number}} end - End index (exclusive)
  * @property {{T[]}} data - The metric data
  */
 /** @typedef {{MetricData<unknown>}} AnyMetricData */
@@ -62,7 +62,7 @@ class BrkError extends Error {{
  * @template T
  * @typedef {{Object}} MetricEndpoint
  * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} get - Fetch all data points
- * @property {{(from?: number, to?: number, onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} range - Fetch data in range
+ * @property {{(start?: number, end?: number, onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} range - Fetch data in range
  * @property {{string}} path - The endpoint path
  */
 /** @typedef {{MetricEndpoint<unknown>}} AnyMetricEndpoint */
@@ -89,13 +89,13 @@ class BrkError extends Error {{
 function _endpoint(client, name, index) {{
   const p = `/api/metric/${{name}}/${{index}}`;
   return {{
-    get: (onUpdate) => client.get(p, onUpdate),
-    range: (from, to, onUpdate) => {{
+    get: (onUpdate) => client.getJson(p, onUpdate),
+    range: (start, end, onUpdate) => {{
       const params = new URLSearchParams();
-      if (from !== undefined) params.set('from', String(from));
-      if (to !== undefined) params.set('to', String(to));
+      if (start !== undefined) params.set('start', String(start));
+      if (end !== undefined) params.set('end', String(end));
       const query = params.toString();
-      return client.get(query ? `${{p}}?${{query}}` : p, onUpdate);
+      return client.getJson(query ? `${{p}}?${{query}}` : p, onUpdate);
     }},
     get path() {{ return p; }},
   }};
@@ -115,13 +115,25 @@ class BrkClientBase {{
   }}
 
   /**
+   * @param {{string}} path
+   * @returns {{Promise<Response>}}
+   */
+  async get(path) {{
+    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${{base}}${{path}}`;
+    const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
+    if (!res.ok) throw new BrkError(`HTTP ${{res.status}}`, res.status);
+    return res;
+  }}
+
+  /**
    * Make a GET request with stale-while-revalidate caching
    * @template T
    * @param {{string}} path
    * @param {{(value: T) => void}} [onUpdate] - Called when data is available
    * @returns {{Promise<T>}}
    */
-  async get(path, onUpdate) {{
+  async getJson(path, onUpdate) {{
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     const url = `${{base}}${{path}}`;
     const cache = await _cachePromise;
@@ -135,8 +147,7 @@ class BrkClientBase {{
     }}
 
     try {{
-      const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
-      if (!res.ok) throw new BrkError(`HTTP ${{res.status}}`, res.status);
+      const res = await this.get(path);
       if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) return cachedJson;
 
       const cloned = res.clone();
@@ -148,6 +159,16 @@ class BrkClientBase {{
       if (cachedJson) return cachedJson;
       throw e;
     }}
+  }}
+
+  /**
+   * Make a GET request and return raw text (for CSV responses)
+   * @param {{string}} path
+   * @returns {{Promise<string>}}
+   */
+  async getText(path) {{
+    const res = await this.get(path);
+    return res.text();
   }}
 }}
 

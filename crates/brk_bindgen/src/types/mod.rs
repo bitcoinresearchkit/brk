@@ -21,9 +21,21 @@ pub struct GenericSyntax {
 }
 
 impl GenericSyntax {
-    pub const PYTHON: Self = Self { open: '[', close: ']', default_type: "Any" };
-    pub const JAVASCRIPT: Self = Self { open: '<', close: '>', default_type: "unknown" };
-    pub const RUST: Self = Self { open: '<', close: '>', default_type: "_" };
+    pub const PYTHON: Self = Self {
+        open: '[',
+        close: ']',
+        default_type: "Any",
+    };
+    pub const JAVASCRIPT: Self = Self {
+        open: '<',
+        close: '>',
+        default_type: "unknown",
+    };
+    pub const RUST: Self = Self {
+        open: '<',
+        close: '>',
+        default_type: "_",
+    };
 
     pub fn wrap(&self, name: &str, type_param: &str) -> String {
         // Convert the type_param from Rust syntax to target syntax
@@ -46,11 +58,11 @@ impl GenericSyntax {
 /// Extract the innermost type from nested generics.
 /// E.g., `Close<Cents>` -> `Cents`, `Foo<Bar<Baz>>` -> `Baz`
 fn extract_inner_type_recursive(type_str: &str) -> String {
-    if let Some(start) = type_str.find('<') {
-        if let Some(end) = type_str.rfind('>') {
-            let inner = &type_str[start + 1..end];
-            return extract_inner_type_recursive(inner);
-        }
+    if let Some(start) = type_str.find('<')
+        && let Some(end) = type_str.rfind('>')
+    {
+        let inner = &type_str[start + 1..end];
+        return extract_inner_type_recursive(inner);
     }
     type_str.to_string()
 }

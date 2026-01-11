@@ -2,8 +2,7 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, Uri},
-    response::{IntoResponse, Redirect, Response},
-    routing::get,
+    response::{IntoResponse, Response},
 };
 use brk_query::{
     DataRangeFormat, MetricSelection, MetricSelectionLegacy, PaginatedMetrics, Pagination,
@@ -31,10 +30,23 @@ pub trait ApiMetricsRoutes {
 
 impl ApiMetricsRoutes for ApiRouter<AppState> {
     fn add_metrics_routes(self) -> Self {
-        self
-            .route("/api/metric", get(Redirect::temporary("/api/metrics")))
-            .route("/api/metrics", get(Redirect::temporary("/api#tag/metrics")))
-            .api_route(
+        self.api_route(
+            "/api/metrics",
+            get_with(
+                async |headers: HeaderMap, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metrics_catalog().clone())).await
+                },
+                |op| op
+                    .metrics_tag()
+                    .summary("Metrics catalog")
+                    .description(
+                        "Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure."
+                    )
+                    .ok_response::<TreeNode>()
+                    .not_modified(),
+            ),
+        )
+        .api_route(
             "/api/metrics/count",
             get_with(
                 async |
@@ -85,22 +97,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .summary("Metrics list")
                     .description("Paginated list of available metrics")
                     .ok_response::<PaginatedMetrics>()
-                    .not_modified(),
-            ),
-        )
-        .api_route(
-            "/api/metrics/catalog",
-            get_with(
-                async |headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metrics_catalog().clone())).await
-                },
-                |op| op
-                    .metrics_tag()
-                    .summary("Metrics catalog")
-                    .description(
-                        "Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure."
-                    )
-                    .ok_response::<TreeNode>()
                     .not_modified(),
             ),
         )
@@ -177,6 +173,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         Use query parameters to filter by date range and format (json/csv)."
                     )
                     .ok_response::<MetricData>()
+                    .csv_response()
                     .not_modified()
                     .not_found(),
             ),
@@ -193,6 +190,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         Returns an array of MetricData objects."
                     )
                     .ok_response::<Vec<MetricData>>()
+                    .csv_response()
                     .not_modified(),
             ),
         )

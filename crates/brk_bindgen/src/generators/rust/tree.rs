@@ -13,13 +13,13 @@ use crate::{
 
 /// Generate tree structs.
 pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
-    writeln!(output, "// Catalog tree\n").unwrap();
+    writeln!(output, "// Metrics tree\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
     let mut generated = HashSet::new();
     generate_tree_node(
         output,
-        "CatalogTree",
+        "MetricsTree",
         catalog,
         &pattern_lookup,
         metadata,
@@ -39,7 +39,7 @@ fn generate_tree_node(
         return;
     };
 
-    writeln!(output, "/// Catalog tree node.").unwrap();
+    writeln!(output, "/// Metrics tree node.").unwrap();
     writeln!(output, "pub struct {} {{", name).unwrap();
 
     for ((field, child_fields), (child_name, _)) in

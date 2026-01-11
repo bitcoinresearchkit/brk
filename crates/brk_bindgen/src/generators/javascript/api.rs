@@ -12,7 +12,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = normalize_return_type(endpoint.response_type.as_deref().unwrap_or("*"));
+        let base_return_type =
+            normalize_return_type(endpoint.response_type.as_deref().unwrap_or("*"));
+        let return_type = if endpoint.supports_csv {
+            format!("{} | string", base_return_type)
+        } else {
+            base_return_type
+        };
 
         writeln!(output, "  /**").unwrap();
         if let Some(summary) = &endpoint.summary {
@@ -58,7 +64,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
         if endpoint.query_params.is_empty() {
-            writeln!(output, "    return this.get(`{}`);", path).unwrap();
+            writeln!(output, "    return this.getJson(`{}`);", path).unwrap();
         } else {
             writeln!(output, "    const params = new URLSearchParams();").unwrap();
             for param in &endpoint.query_params {
@@ -79,12 +85,16 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 }
             }
             writeln!(output, "    const query = params.toString();").unwrap();
-            writeln!(
-                output,
-                "    return this.get(`{}${{query ? '?' + query : ''}}`);",
-                path
-            )
-            .unwrap();
+            writeln!(output, "    const path = `{}${{query ? '?' + query : ''}}`;", path).unwrap();
+
+            if endpoint.supports_csv {
+                writeln!(output, "    if (format === 'csv') {{").unwrap();
+                writeln!(output, "      return this.getText(path);").unwrap();
+                writeln!(output, "    }}").unwrap();
+                writeln!(output, "    return this.getJson(path);").unwrap();
+            } else {
+                writeln!(output, "    return this.getJson(path);").unwrap();
+            }
         }
 
         writeln!(output, "  }}\n").unwrap();

@@ -10,12 +10,12 @@ impl Query {
         let min_len = metrics.iter().map(|v| v.len()).min().unwrap_or(0);
 
         let from = params
-            .from()
-            .map(|from| metrics.iter().map(|v| v.i64_to_usize(from)).min().unwrap_or_default());
+            .start()
+            .map(|start| metrics.iter().map(|v| v.i64_to_usize(start)).min().unwrap_or_default());
 
         let to = params
-            .to_for_len(min_len)
-            .map(|to| metrics.iter().map(|v| v.i64_to_usize(to)).min().unwrap_or_default());
+            .end_for_len(min_len)
+            .map(|end| metrics.iter().map(|v| v.i64_to_usize(end)).min().unwrap_or_default());
 
         let format = params.format();
 
@@ -60,7 +60,7 @@ impl Query {
         let vecs = self.search(&params)?;
 
         let min_len = vecs.iter().map(|v| v.len()).min().expect("search guarantees non-empty");
-        let weight = Self::weight(&vecs, params.from(), params.to_for_len(min_len));
+        let weight = Self::weight(&vecs, params.start(), params.end_for_len(min_len));
         if weight > max_weight {
             return Err(Error::WeightExceeded {
                 requested: weight,

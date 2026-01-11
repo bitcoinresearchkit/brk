@@ -16,7 +16,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
-dependencies = ["httpx>=0.25.0"]
 
 [project.urls]
 Homepage = "https://bitcoinresearchkit.org"
@@ -24,7 +23,6 @@ Repository = "https://github.com/bitcoinresearchkit/brk"
 
 [dependency-groups]
 dev = [
-    "lazydocs>=0.4.8",
     "pydoc-markdown>=4.8.2",
     "pytest",
 ]

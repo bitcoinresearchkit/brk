@@ -24,13 +24,14 @@ pub fn generate_python_client(
 
     writeln!(output, "# Auto-generated BRK Python client").unwrap();
     writeln!(output, "# Do not edit manually\n").unwrap();
-    writeln!(output, "from __future__ import annotations").unwrap();
     writeln!(
         output,
         "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol"
     )
     .unwrap();
-    writeln!(output, "import httpx\n").unwrap();
+    writeln!(output, "from http.client import HTTPSConnection, HTTPConnection").unwrap();
+    writeln!(output, "from urllib.parse import urlparse").unwrap();
+    writeln!(output, "import json\n").unwrap();
     writeln!(output, "T = TypeVar('T')\n").unwrap();
 
     types::generate_type_definitions(&mut output, schemas);

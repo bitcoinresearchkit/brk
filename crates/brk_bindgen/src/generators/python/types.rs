@@ -17,67 +17,81 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 
     let sorted_names = topological_sort_schemas(schemas);
 
-    for name in sorted_names {
-        if MANUAL_GENERIC_TYPES.contains(&name.as_str()) {
-            continue;
-        }
+    // Partition into simple type aliases and TypedDict classes
+    // Generate type aliases first to avoid forward reference issues
+    let (type_aliases, typed_dicts): (Vec<_>, Vec<_>) = sorted_names
+        .into_iter()
+        .filter(|name| !MANUAL_GENERIC_TYPES.contains(&name.as_str()))
+        .filter(|name| schemas.contains_key(name))
+        .partition(|name| {
+            schemas
+                .get(name)
+                .map(|s| s.get("properties").is_none())
+                .unwrap_or(false)
+        });
 
-        let Some(schema) = schemas.get(&name) else {
-            continue;
-        };
+    // Generate simple type aliases first
+    // Quote references to TypedDicts since they're defined after
+    let typed_dict_set: HashSet<_> = typed_dicts.iter().cloned().collect();
+    for name in type_aliases {
+        let schema = &schemas[&name];
         let type_desc = schema.get("description").and_then(|d| d.as_str());
-
-        if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
-            writeln!(output, "class {}(TypedDict):", name).unwrap();
-
-            // Collect field descriptions for Attributes section
-            let field_docs: Vec<(String, Option<&str>)> = props
-                .iter()
-                .map(|(prop_name, prop_schema)| {
-                    let safe_name = escape_python_keyword(prop_name);
-                    let desc = prop_schema.get("description").and_then(|d| d.as_str());
-                    (safe_name, desc)
-                })
-                .collect();
-            let has_field_docs = field_docs.iter().any(|(_, d)| d.is_some());
-
-            // Generate docstring if we have type description or field descriptions
-            if type_desc.is_some() || has_field_docs {
-                writeln!(output, "    \"\"\"").unwrap();
-                if let Some(desc) = type_desc {
-                    for line in desc.lines() {
-                        writeln!(output, "    {}", line).unwrap();
-                    }
-                }
-                if has_field_docs {
-                    if type_desc.is_some() {
-                        writeln!(output).unwrap();
-                    }
-                    writeln!(output, "    Attributes:").unwrap();
-                    for (field_name, desc) in &field_docs {
-                        if let Some(d) = desc {
-                            writeln!(output, "        {}: {}", field_name, d).unwrap();
-                        }
-                    }
-                }
-                writeln!(output, "    \"\"\"").unwrap();
+        let py_type = schema_to_python_type_quoting(schema, Some(&name), &typed_dict_set);
+        if let Some(desc) = type_desc {
+            for line in desc.lines() {
+                writeln!(output, "# {}", line).unwrap();
             }
+        }
+        writeln!(output, "{} = {}", name, py_type).unwrap();
+    }
 
-            for (prop_name, prop_schema) in props {
-                let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
+    // Then generate TypedDict classes
+    for name in typed_dicts {
+        let schema = &schemas[&name];
+        let type_desc = schema.get("description").and_then(|d| d.as_str());
+        let props = schema.get("properties").and_then(|p| p.as_object()).unwrap();
+
+        writeln!(output, "class {}(TypedDict):", name).unwrap();
+
+        // Collect field descriptions for Attributes section
+        let field_docs: Vec<(String, Option<&str>)> = props
+            .iter()
+            .map(|(prop_name, prop_schema)| {
                 let safe_name = escape_python_keyword(prop_name);
-                writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
-            }
-            writeln!(output).unwrap();
-        } else {
-            let py_type = schema_to_python_type_ctx(schema, Some(&name));
+                let desc = prop_schema.get("description").and_then(|d| d.as_str());
+                (safe_name, desc)
+            })
+            .collect();
+        let has_field_docs = field_docs.iter().any(|(_, d)| d.is_some());
+
+        // Generate docstring if we have type description or field descriptions
+        if type_desc.is_some() || has_field_docs {
+            writeln!(output, "    \"\"\"").unwrap();
             if let Some(desc) = type_desc {
                 for line in desc.lines() {
-                    writeln!(output, "# {}", line).unwrap();
+                    writeln!(output, "    {}", line).unwrap();
                 }
             }
-            writeln!(output, "{} = {}", name, py_type).unwrap();
+            if has_field_docs {
+                if type_desc.is_some() {
+                    writeln!(output).unwrap();
+                }
+                writeln!(output, "    Attributes:").unwrap();
+                for (field_name, desc) in &field_docs {
+                    if let Some(d) = desc {
+                        writeln!(output, "        {}: {}", field_name, d).unwrap();
+                    }
+                }
+            }
+            writeln!(output, "    \"\"\"").unwrap();
         }
+
+        for (prop_name, prop_schema) in props {
+            let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
+            let safe_name = escape_python_keyword(prop_name);
+            writeln!(output, "    {}: {}", safe_name, prop_type).unwrap();
+        }
+        writeln!(output).unwrap();
     }
     writeln!(output).unwrap();
 }
@@ -192,6 +206,70 @@ fn json_type_to_python(ty: &str, schema: &Value, current_type: Option<&str>) -> 
         }
         _ => "Any".to_string(),
     }
+}
+
+/// Convert JSON Schema to Python type, quoting types in the given set
+fn schema_to_python_type_quoting(
+    schema: &Value,
+    current_type: Option<&str>,
+    quote_types: &HashSet<String>,
+) -> String {
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
+        for item in all_of {
+            let resolved = schema_to_python_type_quoting(item, current_type, quote_types);
+            if resolved != "Any" {
+                return resolved;
+            }
+        }
+    }
+
+    // Handle $ref
+    if let Some(ref_path) = schema.get("$ref").and_then(|r| r.as_str()) {
+        let type_name = ref_to_type_name(ref_path).unwrap_or("Any");
+        // Quote self-references or types in quote_types set
+        if current_type == Some(type_name) || quote_types.contains(type_name) {
+            return format!("\"{}\"", type_name);
+        }
+        return type_name.to_string();
+    }
+
+    // Handle enum (array of string values)
+    if let Some(enum_values) = schema.get("enum").and_then(|e| e.as_array()) {
+        let literals: Vec<String> = enum_values
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| format!("\"{}\"", s))
+            .collect();
+        if !literals.is_empty() {
+            return format!("Literal[{}]", literals.join(", "));
+        }
+    }
+
+    if let Some(variants) = schema
+        .get("anyOf")
+        .or_else(|| schema.get("oneOf"))
+        .and_then(|v| v.as_array())
+    {
+        let types: Vec<String> = variants
+            .iter()
+            .map(|v| schema_to_python_type_quoting(v, current_type, quote_types))
+            .collect();
+        let filtered: Vec<_> = types.iter().filter(|t| *t != "Any").collect();
+        if !filtered.is_empty() {
+            return format!(
+                "Union[{}]",
+                filtered
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
+        return format!("Union[{}]", types.join(", "));
+    }
+
+    // Fall back to regular conversion for other cases
+    schema_to_python_type_ctx(schema, current_type)
 }
 
 /// Convert JSON Schema to Python type with context for detecting self-references

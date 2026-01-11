@@ -14,7 +14,7 @@ use crate::{
 use super::api::generate_api_methods;
 use super::client::generate_static_constants;
 
-/// Generate JSDoc typedefs for the catalog tree.
+/// Generate JSDoc typedefs for the metrics tree.
 pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree typedefs\n").unwrap();
 
@@ -22,7 +22,7 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
     let mut generated = HashSet::new();
     generate_tree_typedef(
         output,
-        "CatalogTree",
+        "MetricsTree",
         catalog,
         &pattern_lookup,
         metadata,
@@ -98,7 +98,7 @@ pub fn generate_main_client(
     writeln!(output, "/**").unwrap();
     writeln!(
         output,
-        " * Main BRK client with catalog tree and API methods"
+        " * Main BRK client with metrics tree and API methods"
     )
     .unwrap();
     writeln!(output, " * @extends BrkClientBase").unwrap();
@@ -112,14 +112,14 @@ pub fn generate_main_client(
     writeln!(output, "   */").unwrap();
     writeln!(output, "  constructor(options) {{").unwrap();
     writeln!(output, "    super(options);").unwrap();
-    writeln!(output, "    /** @type {{CatalogTree}} */").unwrap();
-    writeln!(output, "    this.tree = this._buildTree('');").unwrap();
+    writeln!(output, "    /** @type {{MetricsTree}} */").unwrap();
+    writeln!(output, "    this.metrics = this._buildTree('');").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @private").unwrap();
     writeln!(output, "   * @param {{string}} basePath").unwrap();
-    writeln!(output, "   * @returns {{CatalogTree}}").unwrap();
+    writeln!(output, "   * @returns {{MetricsTree}}").unwrap();
     writeln!(output, "   */").unwrap();
     writeln!(output, "  _buildTree(basePath) {{").unwrap();
     writeln!(output, "    return {{").unwrap();

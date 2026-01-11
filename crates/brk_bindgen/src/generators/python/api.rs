@@ -12,7 +12,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output, "class BrkClient(BrkClientBase):").unwrap();
     writeln!(
         output,
-        "    \"\"\"Main BRK client with catalog tree and API methods.\"\"\""
+        "    \"\"\"Main BRK client with metrics tree and API methods.\"\"\""
     )
     .unwrap();
     writeln!(output).unwrap();
@@ -26,7 +26,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     )
     .unwrap();
     writeln!(output, "        super().__init__(base_url, timeout)").unwrap();
-    writeln!(output, "        self.tree = CatalogTree(self)").unwrap();
+    writeln!(output, "        self.metrics = MetricsTree(self)").unwrap();
     writeln!(output).unwrap();
 
     // Generate API methods
@@ -41,13 +41,19 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let return_type = normalize_return_type(
+        let base_return_type = normalize_return_type(
             &endpoint
                 .response_type
                 .as_deref()
                 .map(js_type_to_python)
                 .unwrap_or_else(|| "Any".to_string()),
         );
+
+        let return_type = if endpoint.supports_csv {
+            format!("Union[{}, str]", base_return_type)
+        } else {
+            base_return_type
+        };
 
         // Build method signature
         let params = build_method_params(endpoint);
@@ -79,9 +85,9 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         if endpoint.query_params.is_empty() {
             if endpoint.path_params.is_empty() {
-                writeln!(output, "        return self.get('{}')", path).unwrap();
+                writeln!(output, "        return self.get_json('{}')", path).unwrap();
             } else {
-                writeln!(output, "        return self.get(f'{}')", path).unwrap();
+                writeln!(output, "        return self.get_json(f'{}')", path).unwrap();
             }
         } else {
             writeln!(output, "        params = []").unwrap();
@@ -107,10 +113,18 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             writeln!(output, "        query = '&'.join(params)").unwrap();
             writeln!(
                 output,
-                "        return self.get(f'{}{{\"?\" + query if query else \"\"}}')",
+                "        path = f'{}{{\"?\" + query if query else \"\"}}'",
                 path
             )
             .unwrap();
+
+            if endpoint.supports_csv {
+                writeln!(output, "        if format == 'csv':").unwrap();
+                writeln!(output, "            return self.get_text(path)").unwrap();
+                writeln!(output, "        return self.get_json(path)").unwrap();
+            } else {
+                writeln!(output, "        return self.get_json(path)").unwrap();
+            }
         }
 
         writeln!(output).unwrap();

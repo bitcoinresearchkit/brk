@@ -1,3 +1,4 @@
+use aide::openapi::{MediaType, ReferenceOr, StatusCode};
 use aide::transform::{TransformOperation, TransformResponse};
 use axum::Json;
 use schemars::JsonSchema;
@@ -23,6 +24,8 @@ pub trait TransformResponseExtended<'t> {
     where
         R: JsonSchema,
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>;
+    /// 200 with text/csv content type (adds CSV as alternative response format)
+    fn csv_response(self) -> Self;
     /// 400
     fn bad_request(self) -> Self;
     /// 404
@@ -80,6 +83,19 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>,
     {
         self.response_with::<200, Json<R>, _>(|res| f(res.description("Successful response")))
+    }
+
+    fn csv_response(mut self) -> Self {
+        // Add text/csv content type to existing 200 response
+        if let Some(responses) = &mut self.inner_mut().responses
+            && let Some(ReferenceOr::Item(response)) =
+                responses.responses.get_mut(&StatusCode::Code(200))
+        {
+            response
+                .content
+                .insert("text/csv".into(), MediaType::default());
+        }
+        self
     }
 
     fn bad_request(self) -> Self {

@@ -1,18 +1,20 @@
+# Run:
+# uv run pytest tests/basic.py -s
+
 from __future__ import print_function
 
 from brk_client import BrkClient
 
 
 def test_client_creation():
-    client = BrkClient("http://localhost:3110")
-    assert client.base_url == "http://localhost:3110"
+    BrkClient("http://localhost:3110")
 
 
 def test_tree_exists():
     client = BrkClient("http://localhost:3110")
-    assert hasattr(client, "tree")
-    assert hasattr(client.tree, "price")
-    assert hasattr(client.tree, "blocks")
+    assert hasattr(client, "metrics")
+    assert hasattr(client.metrics, "price")
+    assert hasattr(client.metrics, "blocks")
 
 
 def test_fetch_block():
@@ -20,28 +22,35 @@ def test_fetch_block():
     print(client.get_block_height(800000))
 
 
-def test_fetch_any_metric():
+def test_fetch_json_metric():
     client = BrkClient("http://localhost:3110")
-    print(client.get_metric_by_index("dateindex", "price_close"))
+    a = client.get_metric_by_index("price_close", "dateindex")
+    print(a)
+
+
+def test_fetch_csv_metric():
+    client = BrkClient("http://localhost:3110")
+    a = client.get_metric_by_index("price_close", "dateindex", -10, None, None, "csv")
+    print(a)
 
 
 def test_fetch_typed_metric():
     client = BrkClient("http://localhost:3110")
-    a = client.tree.constants.constant_0.by.dateindex().range(-10)
+    a = client.metrics.constants.constant_0.by.dateindex().range(-10)
     print(a)
-    b = client.tree.outputs.count.utxo_count.by.height().range(-10)
+    b = client.metrics.outputs.count.utxo_count.by.height().range(-10)
     print(b)
-    c = client.tree.price.usd.split.close.by.dateindex().range(-10)
+    c = client.metrics.price.usd.split.close.by.dateindex().range(-10)
     print(c)
-    d = client.tree.market.dca.period_lump_sum_stack._10y.dollars.by.dateindex().range(
+    d = client.metrics.market.dca.period_lump_sum_stack._10y.dollars.by.dateindex().range(
         -10
     )
     print(d)
-    e = client.tree.market.dca.class_average_price._2017.by.dateindex().range(-10)
+    e = client.metrics.market.dca.class_average_price._2017.by.dateindex().range(-10)
     print(e)
-    f = client.tree.distribution.address_cohorts.amount_range._10k_sats_to_100k_sats.activity.sent.dollars.cumulative.by.dateindex().range(
+    f = client.metrics.distribution.address_cohorts.amount_range._10k_sats_to_100k_sats.activity.sent.dollars.cumulative.by.dateindex().range(
         -10
     )
     print(f)
-    g = client.tree.price.usd.ohlc.by.dateindex().range(-10)
+    g = client.metrics.price.usd.ohlc.by.dateindex().range(-10)
     print(g)
