@@ -42,8 +42,8 @@ export function buildCohortData(colors, brk) {
     SPENDABLE_TYPE_NAMES,
   } = brk;
 
-  // Base cohort representing "all"
-  /** @type {UtxoCohortObject} */
+  // Base cohort representing "all" - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
+  /** @type {CohortAll} */
   const cohortAll = {
     name: "",
     title: "",
@@ -51,28 +51,27 @@ export function buildCohortData(colors, brk) {
     tree: utxoCohorts.all,
   };
 
-  /** @type {UtxoCohortObject} */
-  const cohortAllForComparison = {
-    name: "all",
-    title: "",
-    color: colors.default,
-    tree: utxoCohorts.all,
+  // Term cohorts - split because short is CohortFull, long is CohortWithPercentiles
+  const shortNames = TERM_NAMES.short;
+  /** @type {CohortFull} */
+  const termShort = {
+    name: shortNames.short,
+    title: shortNames.long,
+    color: colors[termColors.short],
+    tree: utxoCohorts.term.short,
   };
 
-  // Term cohorts (short/long term holders)
-  /** @type {readonly UtxoCohortObject[]} */
-  const terms = entries(utxoCohorts.term).map(([key, tree]) => {
-    const names = TERM_NAMES[key];
-    return {
-      name: names.short,
-      title: names.long,
-      color: colors[termColors[key]],
-      tree,
-    };
-  });
+  const longNames = TERM_NAMES.long;
+  /** @type {CohortWithPercentiles} */
+  const termLong = {
+    name: longNames.short,
+    title: longNames.long,
+    color: colors[termColors.long],
+    tree: utxoCohorts.term.long,
+  };
 
-  // Max age cohorts (up to X time)
-  /** @type {readonly UtxoCohortObject[]} */
+  // Max age cohorts (up to X time) - CohortWithAdjusted (adjustedSopr only)
+  /** @type {readonly CohortWithAdjusted[]} */
   const upToDate = entries(utxoCohorts.maxAge).map(([key, tree]) => {
     const names = MAX_AGE_NAMES[key];
     return {
@@ -83,8 +82,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Min age cohorts (from X time)
-  /** @type {readonly UtxoCohortObject[]} */
+  // Min age cohorts (from X time) - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const fromDate = entries(utxoCohorts.minAge).map(([key, tree]) => {
     const names = MIN_AGE_NAMES[key];
     return {
@@ -95,8 +94,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Age range cohorts
-  /** @type {readonly UtxoCohortObject[]} */
+  // Age range cohorts - CohortWithPercentiles (percentiles only)
+  /** @type {readonly CohortWithPercentiles[]} */
   const dateRange = entries(utxoCohorts.ageRange).map(([key, tree]) => {
     const names = AGE_RANGE_NAMES[key];
     return {
@@ -107,8 +106,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // Epoch cohorts
-  /** @type {readonly UtxoCohortObject[]} */
+  // Epoch cohorts - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const epoch = entries(utxoCohorts.epoch).map(([key, tree]) => {
     const names = EPOCH_NAMES[key];
     return {
@@ -119,8 +118,8 @@ export function buildCohortData(colors, brk) {
     };
   });
 
-  // UTXOs above amount
-  /** @type {readonly UtxoCohortObject[]} */
+  // UTXOs above amount - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const utxosAboveAmount = entries(utxoCohorts.geAmount).map(([key, tree]) => {
     const names = GE_AMOUNT_NAMES[key];
     return {
@@ -145,8 +144,8 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // UTXOs under amount
-  /** @type {readonly UtxoCohortObject[]} */
+  // UTXOs under amount - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const utxosUnderAmount = entries(utxoCohorts.ltAmount).map(([key, tree]) => {
     const names = LT_AMOUNT_NAMES[key];
     return {
@@ -171,8 +170,8 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // UTXOs amount ranges
-  /** @type {readonly UtxoCohortObject[]} */
+  // UTXOs amount ranges - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const utxosAmountRanges = entries(utxoCohorts.amountRange).map(
     ([key, tree]) => {
       const names = AMOUNT_RANGE_NAMES[key];
@@ -199,8 +198,8 @@ export function buildCohortData(colors, brk) {
     },
   );
 
-  // Spendable type cohorts
-  /** @type {readonly UtxoCohortObject[]} */
+  // Spendable type cohorts - CohortBasic (neither adjustedSopr nor percentiles)
+  /** @type {readonly CohortBasic[]} */
   const type = entries(utxoCohorts.type).map(([key, tree]) => {
     const names = SPENDABLE_TYPE_NAMES[key];
     return {
@@ -213,8 +212,8 @@ export function buildCohortData(colors, brk) {
 
   return {
     cohortAll,
-    cohortAllForComparison,
-    terms,
+    termShort,
+    termLong,
     upToDate,
     fromDate,
     dateRange,

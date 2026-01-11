@@ -81,6 +81,7 @@ impl std::hash::Hash for PatternField {
         self.name.hash(state);
         self.rust_type.hash(state);
         self.json_type.hash(state);
+        self.indexes.hash(state);
     }
 }
 
@@ -89,6 +90,7 @@ impl PartialEq for PatternField {
         self.name == other.name
             && self.rust_type == other.rust_type
             && self.json_type == other.json_type
+            && self.indexes == other.indexes
     }
 }
 

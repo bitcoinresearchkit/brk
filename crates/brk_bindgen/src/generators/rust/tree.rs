@@ -6,8 +6,9 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, PatternField, RustSyntax, child_type_name, generate_tree_node_field,
-    get_fields_with_child_info, get_node_fields, get_pattern_instance_base, to_snake_case,
+    ClientMetadata, LanguageSyntax, PatternField, RustSyntax, child_type_name,
+    generate_tree_node_field, get_node_fields, get_pattern_instance_base, prepare_tree_node,
+    to_snake_case,
 };
 
 use super::client::field_type_with_generic;
@@ -36,38 +37,23 @@ fn generate_tree_node(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let TreeNode::Branch(children) = node else {
+    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
         return;
     };
-
-    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
-    let fields: Vec<PatternField> = fields_with_child_info
-        .iter()
-        .map(|(f, _)| f.clone())
-        .collect();
-
-    if let Some(pattern_name) = pattern_lookup.get(&fields)
-        && pattern_name != name
-    {
-        return;
-    }
-
-    if generated.contains(name) {
-        return;
-    }
-    generated.insert(name.to_string());
 
     writeln!(output, "/// Catalog tree node.").unwrap();
     writeln!(output, "pub struct {} {{", name).unwrap();
 
-    for (field, child_fields) in &fields_with_child_info {
+    for ((field, child_fields), (child_name, _)) in
+        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
+    {
         let field_name = to_snake_case(&field.name);
-        // Look up type parameter for generic patterns
-        let generic_value_type = child_fields
-            .as_ref()
-            .and_then(|cf| metadata.get_type_param(cf))
-            .map(String::as_str);
-        let type_annotation = field_type_with_generic(field, metadata, false, generic_value_type);
+        let type_annotation = metadata.resolve_tree_field_type(
+            child_fields.as_deref(),
+            name,
+            child_name,
+            |generic| field_type_with_generic(field, metadata, false, generic),
+        );
         writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
     }
 
@@ -82,29 +68,61 @@ fn generate_tree_node(
     writeln!(output, "        Self {{").unwrap();
 
     let syntax = RustSyntax;
-    for (field, (child_name, child_node)) in fields.iter().zip(children.iter()) {
-        // Detect pattern base for parameterizable patterns
-        let pattern_base = if metadata.is_pattern_type(&field.rust_type) {
-            let pattern = metadata.find_pattern(&field.rust_type);
-            if pattern.is_some_and(|p| p.is_parameterizable()) {
-                Some(get_pattern_instance_base(child_node))
-            } else {
-                None
-            }
+    for ((field_info, child_fields), (child_name, child_node)) in
+        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
+    {
+        let field_name = to_snake_case(&field_info.name);
+
+        // Check if this is a pattern type and if it's parameterizable
+        let is_parameterizable = child_fields
+            .as_ref()
+            .is_some_and(|cf| metadata.is_parameterizable_fields(cf));
+
+        if metadata.is_pattern_type(&field_info.rust_type) && is_parameterizable {
+            // Parameterizable pattern: use pattern constructor with metric base
+            let pattern_base = get_pattern_instance_base(child_node);
+            generate_tree_node_field(
+                output,
+                &syntax,
+                field_info,
+                metadata,
+                "            ",
+                child_name,
+                Some(&pattern_base),
+            );
+        } else if child_fields.is_some() {
+            // Non-parameterizable pattern or regular branch: use inline struct
+            let child_struct = child_type_name(name, child_name);
+            let path_expr = syntax.path_expr("base_path", &format!("_{}", child_name));
+            writeln!(
+                output,
+                "            {}: {}::new(client.clone(), {}),",
+                field_name, child_struct, path_expr
+            )
+            .unwrap();
         } else {
-            None
-        };
-        generate_tree_node_field(output, &syntax, field, metadata, "            ", child_name, pattern_base.as_deref());
+            // Leaf field
+            generate_tree_node_field(
+                output,
+                &syntax,
+                field_info,
+                metadata,
+                "            ",
+                child_name,
+                None,
+            );
+        }
     }
 
     writeln!(output, "        }}").unwrap();
     writeln!(output, "    }}").unwrap();
     writeln!(output, "}}\n").unwrap();
 
-    for (child_name, child_node) in children {
+    for (child_name, child_node) in ctx.children {
         if let TreeNode::Branch(grandchildren) = child_node {
             let child_fields = get_node_fields(grandchildren, pattern_lookup);
-            if !pattern_lookup.contains_key(&child_fields) {
+            // Generate child struct if no pattern match OR pattern is not parameterizable
+            if !metadata.is_parameterizable_fields(&child_fields) {
                 let child_struct = child_type_name(name, child_name);
                 generate_tree_node(
                     output,

@@ -10,7 +10,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["movingAverage"]} args.movingAverage
  */
 export function createOnchainSection(ctx, { indicators, movingAverage }) {
-  const { s, colors, createPriceLine } = ctx;
+  const { line, colors, createPriceLine } = ctx;
 
   return {
     name: "On-chain",
@@ -19,13 +19,13 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
         name: "Pi Cycle",
         title: "Pi Cycle Top Indicator",
         top: [
-          s({
+          line({
             metric: movingAverage.price111dSma.price,
             name: "111d SMA",
             color: colors.green,
             unit: Unit.usd,
           }),
-          s({
+          line({
             metric: movingAverage.price350dSmaX2,
             name: "350d SMA x2",
             color: colors.red,
@@ -33,7 +33,7 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
           }),
         ],
         bottom: [
-          s({
+          line({
             metric: indicators.piCycle,
             name: "Pi Cycle",
             color: colors.purple,
@@ -46,7 +46,7 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
         name: "Puell Multiple",
         title: "Puell Multiple",
         bottom: [
-          s({
+          line({
             metric: indicators.puellMultiple,
             name: "Puell",
             color: colors.green,
@@ -58,7 +58,7 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
         name: "NVT",
         title: "Network Value to Transactions Ratio",
         bottom: [
-          s({
+          line({
             metric: indicators.nvt,
             name: "NVT",
             color: colors.orange,
@@ -70,7 +70,7 @@ export function createOnchainSection(ctx, { indicators, movingAverage }) {
         name: "Gini",
         title: "Gini Coefficient",
         bottom: [
-          s({
+          line({
             metric: indicators.gini,
             name: "Gini",
             color: colors.red,

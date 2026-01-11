@@ -21,10 +21,24 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 
         let js_type = schema_to_js_type(schema, Some(name));
 
+        let type_desc = schema.get("description").and_then(|d| d.as_str());
+
         if is_primitive_alias(schema) {
-            writeln!(output, "/** @typedef {{{}}} {} */", js_type, name).unwrap();
+            if let Some(desc) = type_desc {
+                writeln!(output, "/**").unwrap();
+                write_jsdoc_description(output, desc);
+                writeln!(output, " *").unwrap();
+                writeln!(output, " * @typedef {{{}}} {}", js_type, name).unwrap();
+                writeln!(output, " */").unwrap();
+            } else {
+                writeln!(output, "/** @typedef {{{}}} {} */", js_type, name).unwrap();
+            }
         } else if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
             writeln!(output, "/**").unwrap();
+            if let Some(desc) = type_desc {
+                write_jsdoc_description(output, desc);
+                writeln!(output, " *").unwrap();
+            }
             writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
             for (prop_name, prop_schema) in props {
                 let prop_type = schema_to_js_type(prop_schema, Some(name));
@@ -35,19 +49,41 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
                     .unwrap_or(false);
                 let optional = if required { "" } else { "=" };
                 let safe_name = to_camel_case(prop_name);
+                let prop_desc = prop_schema
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .map(|d| format!(" - {}", d))
+                    .unwrap_or_default();
                 writeln!(
                     output,
-                    " * @property {{{}{}}} {}",
-                    prop_type, optional, safe_name
+                    " * @property {{{}{}}} {}{}",
+                    prop_type, optional, safe_name, prop_desc
                 )
                 .unwrap();
             }
+            writeln!(output, " */").unwrap();
+        } else if let Some(desc) = type_desc {
+            writeln!(output, "/**").unwrap();
+            write_jsdoc_description(output, desc);
+            writeln!(output, " *").unwrap();
+            writeln!(output, " * @typedef {{{}}} {}", js_type, name).unwrap();
             writeln!(output, " */").unwrap();
         } else {
             writeln!(output, "/** @typedef {{{}}} {} */", js_type, name).unwrap();
         }
     }
     writeln!(output).unwrap();
+}
+
+/// Write a multi-line description with proper JSDoc formatting.
+fn write_jsdoc_description(output: &mut String, desc: &str) {
+    for line in desc.lines() {
+        if line.is_empty() {
+            writeln!(output, " *").unwrap();
+        } else {
+            writeln!(output, " * {}", line).unwrap();
+        }
+    }
 }
 
 fn is_primitive_alias(schema: &Value) -> bool {

@@ -121,19 +121,98 @@
  * @property {Color} color
  * @property {UtxoCohortPattern} tree
  *
- * Age cohorts (term, maxAge, minAge, ageRange, epoch) - have cost basis percentiles
- * @typedef {Object} AgeCohortObject
- * @property {string} name
- * @property {string} title
- * @property {Color} color
- * @property {PatternWithCostBasisPercentiles} tree
+ * ============================================================================
+ * UTXO Cohort Pattern Types (based on brk client patterns)
+ * ============================================================================
  *
- * Amount cohorts (geAmount, ltAmount, amountRange, type) - no cost basis percentiles
- * @typedef {Object} AmountCohortObject
+ * Patterns with adjustedSopr + percentiles + RelToMarketCap:
+ *   - ShortTermPattern (term.short)
+ * @typedef {ShortTermPattern} PatternFull
+ *
+ * The "All" pattern is special - has adjustedSopr + percentiles but NO RelToMarketCap
+ * @typedef {AllUtxoPattern} PatternAll
+ *
+ * Patterns with adjustedSopr only (RealizedPattern4, CostBasisPattern):
+ *   - MaxAgePattern (maxAge.*)
+ * @typedef {MaxAgePattern} PatternWithAdjusted
+ *
+ * Patterns with percentiles only (RealizedPattern2, CostBasisPattern2):
+ *   - LongTermPattern (term.long)
+ *   - AgeRangePattern (ageRange.*)
+ * @typedef {LongTermPattern | AgeRangePattern} PatternWithPercentiles
+ *
+ * Patterns with neither (RealizedPattern/2, CostBasisPattern):
+ *   - BasicUtxoPattern (minAge.*, geAmount.*, ltAmount.*)
+ *   - EpochPattern (epoch.*)
+ * @typedef {BasicUtxoPattern | EpochPattern} PatternBasic
+ *
+ * ============================================================================
+ * Cohort Object Types (by capability)
+ * ============================================================================
+ *
+ * All cohort: adjustedSopr + percentiles but NO RelToMarketCap (special)
+ * @typedef {Object} CohortAll
  * @property {string} name
  * @property {string} title
  * @property {Color} color
- * @property {UtxoAmountPattern} tree
+ * @property {PatternAll} tree
+ *
+ * Full cohort: adjustedSopr + percentiles + RelToMarketCap (term.short)
+ * @typedef {Object} CohortFull
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternFull} tree
+ *
+ * Cohort with adjustedSopr only (maxAge.*)
+ * @typedef {Object} CohortWithAdjusted
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternWithAdjusted} tree
+ *
+ * Cohort with percentiles only (term.long, ageRange.*)
+ * @typedef {Object} CohortWithPercentiles
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternWithPercentiles} tree
+ *
+ * Basic cohort: neither (minAge.*, epoch.*, amount cohorts)
+ * @typedef {Object} CohortBasic
+ * @property {string} name
+ * @property {string} title
+ * @property {Color} color
+ * @property {PatternBasic} tree
+ *
+ * ============================================================================
+ * Cohort Group Types (by capability)
+ * ============================================================================
+ *
+ * @typedef {Object} CohortGroupFull
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortFull[]} list
+ *
+ * @typedef {Object} CohortGroupWithAdjusted
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortWithAdjusted[]} list
+ *
+ * @typedef {Object} CohortGroupWithPercentiles
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortWithPercentiles[]} list
+ *
+ * @typedef {Object} CohortGroupBasic
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly CohortBasic[]} list
+ *
+ * @typedef {Object} UtxoCohortGroupObject
+ * @property {string} name
+ * @property {string} title
+ * @property {readonly UtxoCohortObject[]} list
  *
  * @typedef {Object} AddressCohortObject
  * @property {string} name
@@ -143,20 +222,6 @@
  *
  * @typedef {UtxoCohortObject | AddressCohortObject} CohortObject
  *
- * @typedef {Object} UtxoCohortGroupObject
- * @property {string} name
- * @property {string} title
- * @property {readonly UtxoCohortObject[]} list
- *
- * @typedef {Object} AgeCohortGroupObject
- * @property {string} name
- * @property {string} title
- * @property {readonly AgeCohortObject[]} list
- *
- * @typedef {Object} AmountCohortGroupObject
- * @property {string} name
- * @property {string} title
- * @property {readonly AmountCohortObject[]} list
  *
  * @typedef {Object} AddressCohortGroupObject
  * @property {string} name
@@ -168,7 +233,9 @@
  * @typedef {Object} PartialContext
  * @property {Colors} colors
  * @property {BrkClient} brk
- * @property {(args: { metric: AnyMetricPattern, name: string, unit: Unit, color?: Color, defaultActive?: boolean, options?: LineSeriesPartialOptions }) => AnyFetchedSeriesBlueprint} s
+ * @property {LineSeriesFn} line
+ * @property {BaselineSeriesFn} baseline
+ * @property {HistogramSeriesFn} histogram
  * @property {(pattern: BlockCountPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCount
  * @property {(pattern: FullnessPattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoin
  * @property {(pattern: SizePattern<any>, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockSize
@@ -177,11 +244,13 @@
  * @property {(pattern: FeeRatePattern<any>, title: string, unit: Unit) => AnyFetchedSeriesBlueprint[]} fromFeeRatePattern
  * @property {(pattern: CoinbasePattern, title: string) => AnyFetchedSeriesBlueprint[]} fromCoinbasePattern
  * @property {(pattern: ValuePattern, title: string, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromValuePattern
+ * @property {(pattern: { sum: AnyMetricPattern, cumulative: AnyMetricPattern }, title: string, unit: Unit, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBitcoinPatternWithUnit
  * @property {(pattern: BlockCountPattern<any>, title: string, unit: Unit, sumColor?: Color, cumulativeColor?: Color) => AnyFetchedSeriesBlueprint[]} fromBlockCountWithUnit
  * @property {(pattern: IntervalPattern, title: string, unit: Unit, color?: Color) => AnyFetchedSeriesBlueprint[]} fromIntervalPattern
+ * @property {(pattern: SupplyPattern, title: string, color?: Color) => AnyFetchedSeriesBlueprint[]} fromSupplyPattern
  * @property {(args: { number?: number, name?: string, defaultActive?: boolean, lineStyle?: LineStyle, color?: Color, unit: Unit }) => FetchedLineSeriesBlueprint} createPriceLine
  * @property {(args: { numbers: number[], unit: Unit }) => FetchedLineSeriesBlueprint[]} createPriceLines
- * @property {(args: { constant: AnyMetricPattern, name: string, unit: Unit, color?: Color, lineStyle?: number, defaultActive?: boolean }) => FetchedLineSeriesBlueprint} line
+ * @property {(args: { constant: AnyMetricPattern, name: string, unit: Unit, color?: Color, lineStyle?: number, defaultActive?: boolean }) => FetchedLineSeriesBlueprint} constantLine
  */
 
 // Re-export for type consumers

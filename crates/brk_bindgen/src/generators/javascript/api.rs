@@ -21,24 +21,29 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         if let Some(desc) = &endpoint.description
             && endpoint.summary.as_ref() != Some(desc)
         {
-            writeln!(output, "   * @description {}", desc).unwrap();
+            writeln!(output, "   *").unwrap();
+            writeln!(output, "   * {}", desc).unwrap();
+        }
+
+        if !endpoint.path_params.is_empty() || !endpoint.query_params.is_empty() {
+            writeln!(output, "   *").unwrap();
         }
 
         for param in &endpoint.path_params {
-            let desc = param.description.as_deref().unwrap_or("");
+            let desc = format_param_desc(param.description.as_deref());
             writeln!(
                 output,
-                "   * @param {{{}}} {} {}",
+                "   * @param {{{}}} {}{}",
                 param.param_type, param.name, desc
             )
             .unwrap();
         }
         for param in &endpoint.query_params {
             let optional = if param.required { "" } else { "=" };
-            let desc = param.description.as_deref().unwrap_or("");
+            let desc = format_param_desc(param.description.as_deref());
             writeln!(
                 output,
-                "   * @param {{{}{}}} [{}] {}",
+                "   * @param {{{}{}}} [{}]{}",
                 param.param_type, optional, param.name, desc
             )
             .unwrap();
@@ -118,4 +123,12 @@ fn normalize_return_type(return_type: &str) -> String {
         result = result.replace(type_name, &format!("Any{}", type_name));
     }
     result
+}
+
+/// Format param description with dash prefix, or empty string if no description.
+fn format_param_desc(desc: Option<&str>) -> String {
+    match desc {
+        Some(d) if !d.is_empty() => format!(" - {}", d),
+        _ => String::new(),
+    }
 }

@@ -27,7 +27,7 @@ pub fn generate_python_client(
     writeln!(output, "from __future__ import annotations").unwrap();
     writeln!(
         output,
-        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Final, Union, Protocol"
+        "from typing import TypeVar, Generic, Any, Optional, List, Literal, TypedDict, Union, Protocol"
     )
     .unwrap();
     writeln!(output, "import httpx\n").unwrap();

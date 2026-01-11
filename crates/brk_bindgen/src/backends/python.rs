@@ -11,7 +11,7 @@ impl LanguageSyntax for PythonSyntax {
     }
 
     fn path_expr(&self, base_var: &str, suffix: &str) -> String {
-        format!("f'{{{{{}}}}}{}'", base_var, suffix)
+        format!("f'{{{}}}{}'", base_var, suffix)
     }
 
     fn position_expr(&self, pos: &FieldNamePosition, base_var: &str) -> String {
@@ -21,20 +21,19 @@ impl LanguageSyntax for PythonSyntax {
                 if let Some(suffix) = s.strip_prefix('_') {
                     format!("_m({}, '{}')", base_var, suffix)
                 } else {
-                    format!("f'{{{{{}}}}}{}'", base_var, s)
+                    format!("f'{{{}}}{}'", base_var, s)
                 }
             }
             FieldNamePosition::Prepend(s) => {
                 // Handle empty acc case for prepend
+                // Want to produce: (f'prefix_{acc}' if acc else 'prefix')
                 if let Some(prefix) = s.strip_suffix('_') {
                     format!(
-                        "(f'{s}{{{{{base_var}}}}}' if {base_var} else '{prefix}')",
-                        s = s,
-                        base_var = base_var,
-                        prefix = prefix
+                        "(f'{}{{{}}}' if {} else '{}')",
+                        s, base_var, base_var, prefix
                     )
                 } else {
-                    format!("f'{}{{{{{}}}}}'", s, base_var)
+                    format!("f'{}{{{}}}'" , s, base_var)
                 }
             }
             FieldNamePosition::Identity => base_var.to_string(),
@@ -80,7 +79,7 @@ impl LanguageSyntax for PythonSyntax {
     }
 
     fn index_field_name(&self, index_name: &str) -> String {
-        format!("by_{}", to_snake_case(index_name))
+        to_snake_case(index_name)
     }
 
     fn string_literal(&self, value: &str) -> String {

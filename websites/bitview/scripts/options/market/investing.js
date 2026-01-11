@@ -40,7 +40,7 @@ export function buildDcaClasses(colors, dca) {
  * @param {Market["returns"]} args.returns
  */
 export function createInvestingSection(ctx, { dca, lookback, returns }) {
-  const { s, colors, createPriceLine } = ctx;
+  const { line, baseline, colors, createPriceLine } = ctx;
   const dcaClasses = buildDcaClasses(colors, dca);
 
   return {
@@ -77,13 +77,13 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Cost basis",
                 title: `${name} DCA vs Lump Sum (Cost Basis)`,
                 top: [
-                  s({
+                  line({
                     metric: dcaCostBasis,
                     name: "DCA",
                     color: colors.green,
                     unit: Unit.usd,
                   }),
-                  s({
+                  line({
                     metric: priceAgo,
                     name: "Lump sum",
                     color: colors.orange,
@@ -95,17 +95,15 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Returns",
                 title: `${name} DCA vs Lump Sum (Returns)`,
                 bottom: [
-                  /** @type {AnyFetchedSeriesBlueprint} */ ({
+                  baseline({
                     metric: dcaReturns,
-                    title: "DCA",
-                    type: "Baseline",
+                    name: "DCA",
                     unit: Unit.percentage,
                   }),
-                  /** @type {AnyFetchedSeriesBlueprint} */ ({
+                  baseline({
                     metric: priceReturns,
-                    title: "Lump sum",
-                    type: "Baseline",
-                    colors: [colors.lime, colors.red],
+                    name: "Lump sum",
+                    color: [colors.lime, colors.red],
                     unit: Unit.percentage,
                   }),
                   createPriceLine({ unit: Unit.percentage }),
@@ -115,37 +113,37 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Stack",
                 title: `${name} DCA vs Lump Sum Stack ($100/day)`,
                 bottom: [
-                  s({
+                  line({
                     metric: dcaStack.sats,
                     name: "DCA",
                     color: colors.green,
                     unit: Unit.sats,
                   }),
-                  s({
+                  line({
                     metric: dcaStack.bitcoin,
                     name: "DCA",
                     color: colors.green,
                     unit: Unit.btc,
                   }),
-                  s({
+                  line({
                     metric: dcaStack.dollars,
                     name: "DCA",
                     color: colors.green,
                     unit: Unit.usd,
                   }),
-                  s({
+                  line({
                     metric: lumpSumStack.sats,
                     name: "Lump sum",
                     color: colors.orange,
                     unit: Unit.sats,
                   }),
-                  s({
+                  line({
                     metric: lumpSumStack.bitcoin,
                     name: "Lump sum",
                     color: colors.orange,
                     unit: Unit.btc,
                   }),
-                  s({
+                  line({
                     metric: lumpSumStack.dollars,
                     name: "Lump sum",
                     color: colors.orange,
@@ -171,7 +169,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 title: "DCA Cost Basis by Year",
                 top: dcaClasses.map(
                   ({ year, color, defaultActive, costBasis }) =>
-                    s({
+                    line({
                       metric: costBasis,
                       name: `${year}`,
                       color,
@@ -183,16 +181,14 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
               {
                 name: "Returns",
                 title: "DCA Returns by Year",
-                bottom: dcaClasses.map(
-                  ({ year, color, defaultActive, returns }) =>
-                    /** @type {AnyFetchedSeriesBlueprint} */ ({
-                      metric: returns,
-                      title: `${year}`,
-                      type: "Baseline",
-                      color,
-                      defaultActive,
-                      unit: Unit.percentage,
-                    }),
+                bottom: dcaClasses.map(({ year, color, defaultActive, returns }) =>
+                  baseline({
+                    metric: returns,
+                    name: `${year}`,
+                    color,
+                    defaultActive,
+                    unit: Unit.percentage,
+                  }),
                 ),
               },
               {
@@ -200,21 +196,21 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 title: "DCA Stack by Year ($100/day)",
                 bottom: dcaClasses.flatMap(
                   ({ year, color, defaultActive, stack }) => [
-                    s({
+                    line({
                       metric: stack.sats,
                       name: `${year}`,
                       color,
                       defaultActive,
                       unit: Unit.sats,
                     }),
-                    s({
+                    line({
                       metric: stack.bitcoin,
                       name: `${year}`,
                       color,
                       defaultActive,
                       unit: Unit.btc,
                     }),
-                    s({
+                    line({
                       metric: stack.dollars,
                       name: `${year}`,
                       color,
@@ -234,7 +230,7 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Cost basis",
                 title: `DCA Class ${year} Cost Basis`,
                 top: [
-                  s({
+                  line({
                     metric: costBasis,
                     name: "Cost basis",
                     color,
@@ -246,10 +242,9 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Returns",
                 title: `DCA Class ${year} Returns`,
                 bottom: [
-                  /** @type {AnyFetchedSeriesBlueprint} */ ({
+                  baseline({
                     metric: returns,
-                    title: "Returns",
-                    type: "Baseline",
+                    name: "Returns",
                     color,
                     unit: Unit.percentage,
                   }),
@@ -259,19 +254,19 @@ export function createInvestingSection(ctx, { dca, lookback, returns }) {
                 name: "Stack",
                 title: `DCA Class ${year} Stack ($100/day)`,
                 bottom: [
-                  s({
+                  line({
                     metric: stack.sats,
                     name: "Stack",
                     color,
                     unit: Unit.sats,
                   }),
-                  s({
+                  line({
                     metric: stack.bitcoin,
                     name: "Stack",
                     color,
                     unit: Unit.btc,
                   }),
-                  s({
+                  line({
                     metric: stack.dollars,
                     name: "Stack",
                     color,

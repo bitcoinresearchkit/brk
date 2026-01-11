@@ -53,24 +53,24 @@ pub fn extract_json_type(schema: &serde_json::Value) -> String {
     }
 
     // Handle $ref - look up in definitions
-    if let Some(ref_path) = schema.get("$ref").and_then(|v| v.as_str()) {
-        if let Some(def_name) = ref_path.rsplit('/').next() {
-            // Check both "$defs" (draft 2020-12) and "definitions" (older drafts)
-            for defs_key in &["$defs", "definitions"] {
-                if let Some(defs) = schema.get(defs_key) {
-                    if let Some(def) = defs.get(def_name) {
-                        return extract_json_type(def);
-                    }
-                }
+    if let Some(ref_path) = schema.get("$ref").and_then(|v| v.as_str())
+        && let Some(def_name) = ref_path.rsplit('/').next()
+    {
+        // Check both "$defs" (draft 2020-12) and "definitions" (older drafts)
+        for defs_key in &["$defs", "definitions"] {
+            if let Some(defs) = schema.get(defs_key)
+                && let Some(def) = defs.get(def_name)
+            {
+                return extract_json_type(def);
             }
         }
     }
 
     // Handle allOf with single element
-    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array()) {
-        if all_of.len() == 1 {
-            return extract_json_type(&all_of[0]);
-        }
+    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array())
+        && all_of.len() == 1
+    {
+        return extract_json_type(&all_of[0]);
     }
 
     "object".to_string()

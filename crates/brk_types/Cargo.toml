@@ -16,7 +16,7 @@ derive_more = { workspace = true }
 itoa = "1.0.17"
 jiff = { workspace = true }
 num_enum = "0.7.5"
-rapidhash = "4.2.0"
+rapidhash = "4.2.1"
 ryu = "1.0.22"
 schemars = { workspace = true }
 serde = { workspace = true }

@@ -25,8 +25,44 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         let Some(schema) = schemas.get(&name) else {
             continue;
         };
+        let type_desc = schema.get("description").and_then(|d| d.as_str());
+
         if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
             writeln!(output, "class {}(TypedDict):", name).unwrap();
+
+            // Collect field descriptions for Attributes section
+            let field_docs: Vec<(String, Option<&str>)> = props
+                .iter()
+                .map(|(prop_name, prop_schema)| {
+                    let safe_name = escape_python_keyword(prop_name);
+                    let desc = prop_schema.get("description").and_then(|d| d.as_str());
+                    (safe_name, desc)
+                })
+                .collect();
+            let has_field_docs = field_docs.iter().any(|(_, d)| d.is_some());
+
+            // Generate docstring if we have type description or field descriptions
+            if type_desc.is_some() || has_field_docs {
+                writeln!(output, "    \"\"\"").unwrap();
+                if let Some(desc) = type_desc {
+                    for line in desc.lines() {
+                        writeln!(output, "    {}", line).unwrap();
+                    }
+                }
+                if has_field_docs {
+                    if type_desc.is_some() {
+                        writeln!(output).unwrap();
+                    }
+                    writeln!(output, "    Attributes:").unwrap();
+                    for (field_name, desc) in &field_docs {
+                        if let Some(d) = desc {
+                            writeln!(output, "        {}: {}", field_name, d).unwrap();
+                        }
+                    }
+                }
+                writeln!(output, "    \"\"\"").unwrap();
+            }
+
             for (prop_name, prop_schema) in props {
                 let prop_type = schema_to_python_type_ctx(prop_schema, Some(&name));
                 let safe_name = escape_python_keyword(prop_name);
@@ -35,6 +71,11 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             writeln!(output).unwrap();
         } else {
             let py_type = schema_to_python_type_ctx(schema, Some(&name));
+            if let Some(desc) = type_desc {
+                for line in desc.lines() {
+                    writeln!(output, "# {}", line).unwrap();
+                }
+            }
             writeln!(output, "{} = {}", name, py_type).unwrap();
         }
     }

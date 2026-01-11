@@ -6,9 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, Endpoint, PatternField, child_type_name, get_fields_with_child_info,
-    get_first_leaf_name, get_node_fields, get_pattern_instance_base, infer_accumulated_name,
-    to_camel_case,
+    ClientMetadata, Endpoint, PatternField, child_type_name, get_first_leaf_name, get_node_fields,
+    get_pattern_instance_base, infer_accumulated_name, prepare_tree_node, to_camel_case,
 };
 
 use super::api::generate_api_methods;
@@ -38,36 +37,23 @@ fn generate_tree_typedef(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let TreeNode::Branch(children) = node else {
+    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
         return;
     };
-
-    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
-    let fields: Vec<PatternField> = fields_with_child_info
-        .iter()
-        .map(|(f, _)| f.clone())
-        .collect();
-
-    if pattern_lookup.contains_key(&fields)
-        && pattern_lookup.get(&fields) != Some(&name.to_string())
-    {
-        return;
-    }
-
-    if generated.contains(name) {
-        return;
-    }
-    generated.insert(name.to_string());
 
     writeln!(output, "/**").unwrap();
     writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
 
-    for (field, child_fields) in &fields_with_child_info {
-        let generic_value_type = child_fields
-            .as_ref()
-            .and_then(|cf| metadata.get_type_param(cf))
-            .map(String::as_str);
-        let js_type = field_type_with_generic(field, metadata, false, generic_value_type);
+    for ((field, child_fields), (child_name, _)) in
+        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
+    {
+        let js_type = metadata.resolve_tree_field_type(
+            child_fields.as_deref(),
+            name,
+            child_name,
+            |generic| field_type_with_generic(field, metadata, false, generic),
+        );
+
         writeln!(
             output,
             " * @property {{{}}} {}",
@@ -79,10 +65,11 @@ fn generate_tree_typedef(
 
     writeln!(output, " */\n").unwrap();
 
-    for (child_name, child_node) in children {
+    for (child_name, child_node) in ctx.children {
         if let TreeNode::Branch(grandchildren) = child_node {
             let child_fields = get_node_fields(grandchildren, pattern_lookup);
-            if !pattern_lookup.contains_key(&child_fields) {
+            // Generate typedef if no pattern match OR pattern is not parameterizable
+            if !metadata.is_parameterizable_fields(&child_fields) {
                 let child_type = child_type_name(name, child_name);
                 generate_tree_typedef(
                     output,
@@ -183,22 +170,13 @@ fn generate_tree_initializer(
                 }
                 TreeNode::Branch(grandchildren) => {
                     let child_fields = get_node_fields(grandchildren, pattern_lookup);
-                    if let Some(pattern_name) = pattern_lookup.get(&child_fields) {
-                        let pattern = metadata
-                            .structural_patterns
-                            .iter()
-                            .find(|p| &p.name == pattern_name);
-                        let is_parameterizable =
-                            pattern.map(|p| p.is_parameterizable()).unwrap_or(false);
+                    // Only use pattern factory if pattern is parameterizable
+                    let pattern_name = pattern_lookup
+                        .get(&child_fields)
+                        .filter(|name| metadata.is_parameterizable(name));
 
-                        let arg = if is_parameterizable {
-                            get_pattern_instance_base(child_node)
-                        } else if accumulated_name.is_empty() {
-                            format!("/{}", child_name)
-                        } else {
-                            format!("{}/{}", accumulated_name, child_name)
-                        };
-
+                    if let Some(pattern_name) = pattern_name {
+                        let arg = get_pattern_instance_base(child_node);
                         writeln!(
                             output,
                             "{}{}: create{}(this, '{}'){}",

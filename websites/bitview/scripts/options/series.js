@@ -3,18 +3,80 @@
 import { Unit } from "../utils/units.js";
 
 /**
- * Create a single series from a tree accessor
+ * Create a Line series
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric - Tree accessor with .by property
- * @param {string} args.name - Display name for the series
+ * @param {AnyMetricPattern} args.metric
+ * @param {string} args.name
+ * @param {Unit} args.unit
  * @param {Color} [args.color]
- * @param {Unit} [args.unit]
  * @param {boolean} [args.defaultActive]
  * @param {LineSeriesPartialOptions} [args.options]
- * @returns {AnyFetchedSeriesBlueprint}
+ * @returns {FetchedLineSeriesBlueprint}
  */
-export function s({ metric, name, color, defaultActive, unit, options }) {
+export function line({ metric, name, color, defaultActive, unit, options }) {
   return {
+    metric,
+    title: name,
+    color,
+    unit,
+    defaultActive,
+    options,
+  };
+}
+
+/**
+ * Create a Baseline series
+ * @param {Object} args
+ * @param {AnyMetricPattern} args.metric
+ * @param {string} args.name
+ * @param {Unit} args.unit
+ * @param {Color | [Color, Color]} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @param {BaselineSeriesPartialOptions} [args.options]
+ * @returns {FetchedBaselineSeriesBlueprint}
+ */
+export function baseline({
+  metric,
+  name,
+  color,
+  defaultActive,
+  unit,
+  options,
+}) {
+  const isTuple = Array.isArray(color);
+  return {
+    type: /** @type {const} */ ("Baseline"),
+    metric,
+    title: name,
+    color: isTuple ? undefined : color,
+    colors: isTuple ? color : undefined,
+    unit,
+    defaultActive,
+    options,
+  };
+}
+
+/**
+ * Create a Histogram series
+ * @param {Object} args
+ * @param {AnyMetricPattern} args.metric
+ * @param {string} args.name
+ * @param {Unit} args.unit
+ * @param {Color | [Color, Color]} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @param {HistogramSeriesPartialOptions} [args.options]
+ * @returns {FetchedHistogramSeriesBlueprint}
+ */
+export function histogram({
+  metric,
+  name,
+  color,
+  defaultActive,
+  unit,
+  options,
+}) {
+  return {
+    type: /** @type {const} */ ("Histogram"),
     metric,
     title: name,
     color,
@@ -424,7 +486,13 @@ export function fromCoinbasePattern(colors, pattern, title) {
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromValuePattern(colors, pattern, title, sumColor, cumulativeColor) {
+export function fromValuePattern(
+  colors,
+  pattern,
+  title,
+  sumColor,
+  cumulativeColor,
+) {
   return [
     {
       metric: pattern.sats.sum,
@@ -469,6 +537,41 @@ export function fromValuePattern(colors, pattern, title, sumColor, cumulativeCol
 }
 
 /**
+ * Create sum/cumulative series from a BitcoinPattern ({ sum, cumulative }) with explicit unit and colors
+ * @param {Colors} colors
+ * @param {{ sum: AnyMetricPattern, cumulative: AnyMetricPattern }} pattern
+ * @param {string} title
+ * @param {Unit} unit
+ * @param {Color} [sumColor]
+ * @param {Color} [cumulativeColor]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function fromBitcoinPatternWithUnit(
+  colors,
+  pattern,
+  title,
+  unit,
+  sumColor,
+  cumulativeColor,
+) {
+  return [
+    {
+      metric: pattern.sum,
+      title: `${title} sum`,
+      color: sumColor,
+      unit,
+    },
+    {
+      metric: pattern.cumulative,
+      title: `${title} cumulative`,
+      color: cumulativeColor ?? colors.blue,
+      unit,
+      defaultActive: false,
+    },
+  ];
+}
+
+/**
  * Create sum/cumulative series from a BlockCountPattern with explicit unit and colors
  * @param {Colors} colors
  * @param {BlockCountPattern<any>} pattern
@@ -478,7 +581,14 @@ export function fromValuePattern(colors, pattern, title, sumColor, cumulativeCol
  * @param {Color} [cumulativeColor]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function fromBlockCountWithUnit(colors, pattern, title, unit, sumColor, cumulativeColor) {
+export function fromBlockCountWithUnit(
+  colors,
+  pattern,
+  title,
+  unit,
+  sumColor,
+  cumulativeColor,
+) {
   return [
     {
       metric: pattern.sum,
@@ -508,13 +618,92 @@ export function fromBlockCountWithUnit(colors, pattern, title, unit, sumColor, c
 export function fromIntervalPattern(colors, pattern, title, unit, color) {
   return [
     { metric: pattern.base, title, color, unit },
-    { metric: pattern.average, title: `${title} avg`, color: colors.purple, unit, defaultActive: false },
-    { metric: pattern.min, title: `${title} min`, color: colors.red, unit, defaultActive: false },
-    { metric: pattern.max, title: `${title} max`, color: colors.green, unit, defaultActive: false },
-    { metric: pattern.median, title: `${title} median`, color: colors.violet, unit, defaultActive: false },
-    { metric: pattern.pct10, title: `${title} pct10`, color: colors.rose, unit, defaultActive: false },
-    { metric: pattern.pct25, title: `${title} pct25`, color: colors.pink, unit, defaultActive: false },
-    { metric: pattern.pct75, title: `${title} pct75`, color: colors.fuchsia, unit, defaultActive: false },
-    { metric: pattern.pct90, title: `${title} pct90`, color: colors.amber, unit, defaultActive: false },
+    {
+      metric: pattern.average,
+      title: `${title} avg`,
+      color: colors.purple,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.min,
+      title: `${title} min`,
+      color: colors.red,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.max,
+      title: `${title} max`,
+      color: colors.green,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.median,
+      title: `${title} median`,
+      color: colors.violet,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct10,
+      title: `${title} pct10`,
+      color: colors.rose,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct25,
+      title: `${title} pct25`,
+      color: colors.pink,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct75,
+      title: `${title} pct75`,
+      color: colors.fuchsia,
+      unit,
+      defaultActive: false,
+    },
+    {
+      metric: pattern.pct90,
+      title: `${title} pct90`,
+      color: colors.amber,
+      unit,
+      defaultActive: false,
+    },
+  ];
+}
+
+/**
+ * Create series from a SupplyPattern (sats/bitcoin/dollars, no sum/cumulative)
+ * @param {Colors} colors
+ * @param {SupplyPattern} pattern
+ * @param {string} title
+ * @param {Color} [color]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function fromSupplyPattern(colors, pattern, title, color) {
+  return [
+    {
+      metric: pattern.sats,
+      title,
+      color: color ?? colors.default,
+      unit: Unit.sats,
+    },
+    {
+      metric: pattern.bitcoin,
+      title,
+      color: color ?? colors.default,
+      unit: Unit.btc,
+    },
+    {
+      metric: pattern.dollars,
+      title,
+      color: color ?? colors.default,
+      unit: Unit.usd,
+    },
   ];
 }

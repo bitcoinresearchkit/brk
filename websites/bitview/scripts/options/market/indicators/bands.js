@@ -10,7 +10,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["movingAverage"]} args.movingAverage
  */
 export function createBandsSection(ctx, { range, movingAverage }) {
-  const { s, colors } = ctx;
+  const { line, colors } = ctx;
 
   return {
     name: "Bands",
@@ -46,8 +46,13 @@ export function createBandsSection(ctx, { range, movingAverage }) {
           name: id,
           title: `Bitcoin Price ${title} MinMax Bands`,
           top: [
-            s({ metric: min, name: "Min", color: colors.red, unit: Unit.usd }),
-            s({
+            line({
+              metric: min,
+              name: "Min",
+              color: colors.red,
+              unit: Unit.usd,
+            }),
+            line({
               metric: max,
               name: "Max",
               color: colors.green,
@@ -60,19 +65,19 @@ export function createBandsSection(ctx, { range, movingAverage }) {
         name: "Mayer Multiple",
         title: "Mayer Multiple",
         top: [
-          s({
+          line({
             metric: movingAverage.price200dSma.price,
             name: "200d SMA",
             color: colors.yellow,
             unit: Unit.usd,
           }),
-          s({
+          line({
             metric: movingAverage.price200dSmaX24,
             name: "200d SMA x2.4",
             color: colors.green,
             unit: Unit.usd,
           }),
-          s({
+          line({
             metric: movingAverage.price200dSmaX08,
             name: "200d SMA x0.8",
             color: colors.red,

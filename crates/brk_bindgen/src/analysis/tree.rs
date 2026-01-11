@@ -7,6 +7,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use brk_types::{Index, TreeNode, extract_json_type};
 
+use crate::analysis::names::analyze_pattern_level;
 use crate::{IndexSetPattern, PatternField, child_type_name};
 
 /// Get the first leaf name from a tree node.
@@ -116,20 +117,53 @@ fn collect_indexes_from_tree(
 /// For cohort-level instances, returns the common prefix or suffix among all leaves.
 pub fn get_pattern_instance_base(node: &TreeNode) -> String {
     let leaf_names = get_all_leaf_names(node);
-    if leaf_names.is_empty() {
+    find_common_base(&leaf_names)
+}
+
+/// Find the common base from a set of metric names.
+/// Tries prefix, suffix, then strips first/last segments and retries.
+fn find_common_base(names: &[String]) -> String {
+    if names.is_empty() {
         return String::new();
     }
 
-    // First try to find a common prefix
-    let common_prefix = find_common_prefix_at_underscore(&leaf_names);
+    // Try common prefix
+    let common_prefix = find_common_prefix_at_underscore(names);
     if !common_prefix.is_empty() {
         return common_prefix.trim_end_matches('_').to_string();
     }
 
-    // If no common prefix, try to find a common suffix
-    let common_suffix = find_common_suffix_at_underscore(&leaf_names);
+    // Try common suffix
+    let common_suffix = find_common_suffix_at_underscore(names);
     if !common_suffix.is_empty() {
         return common_suffix.trim_start_matches('_').to_string();
+    }
+
+    // If neither works, the common part may be in the middle.
+    // Strip the first underscore segment (varying prefix) and try again.
+    let stripped_prefix: Vec<String> = names
+        .iter()
+        .filter_map(|name| name.split_once('_').map(|(_, rest)| rest.to_string()))
+        .collect();
+
+    if stripped_prefix.len() == names.len() {
+        let common_prefix = find_common_prefix_at_underscore(&stripped_prefix);
+        if !common_prefix.is_empty() {
+            return common_prefix.trim_end_matches('_').to_string();
+        }
+    }
+
+    // Try stripping last segment (varying suffix) and look for common suffix
+    let stripped_suffix: Vec<String> = names
+        .iter()
+        .filter_map(|name| name.rsplit_once('_').map(|(rest, _)| rest.to_string()))
+        .collect();
+
+    if stripped_suffix.len() == names.len() {
+        let common_suffix = find_common_suffix_at_underscore(&stripped_suffix);
+        if !common_suffix.is_empty() {
+            return common_suffix.trim_start_matches('_').to_string();
+        }
     }
 
     String::new()

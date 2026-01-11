@@ -65,6 +65,48 @@ impl ClientMetadata {
         self.find_pattern(name).is_some_and(|p| p.is_generic)
     }
 
+    /// Check if a pattern by name is parameterizable.
+    pub fn is_parameterizable(&self, name: &str) -> bool {
+        self.find_pattern(name).is_some_and(|p| p.is_parameterizable())
+    }
+
+    /// Check if child fields match a parameterizable pattern.
+    /// Returns true only if the fields match a pattern AND that pattern is parameterizable.
+    pub fn is_parameterizable_fields(&self, fields: &[PatternField]) -> bool {
+        self.concrete_to_pattern
+            .get(fields)
+            .or_else(|| {
+                self.structural_patterns
+                    .iter()
+                    .find(|p| p.fields == fields)
+                    .map(|p| &p.name)
+            })
+            .is_some_and(|name| self.is_parameterizable(name))
+    }
+
+    /// Resolve the type name for a tree field, considering parameterizability.
+    /// If the field matches a parameterizable pattern, returns type annotation from callback.
+    /// Otherwise returns the inline type name (parent_child format).
+    pub fn resolve_tree_field_type<F>(
+        &self,
+        child_fields: Option<&[PatternField]>,
+        parent_name: &str,
+        child_name: &str,
+        type_annotation_fn: F,
+    ) -> String
+    where
+        F: FnOnce(Option<&str>) -> String,
+    {
+        match child_fields {
+            Some(cf) if self.is_parameterizable_fields(cf) => {
+                let generic_value_type = self.get_type_param(cf).map(String::as_str);
+                type_annotation_fn(generic_value_type)
+            }
+            Some(_) => crate::child_type_name(parent_name, child_name),
+            None => type_annotation_fn(None),
+        }
+    }
+
     /// Get the type parameter for a generic pattern given its concrete fields.
     pub fn get_type_param(&self, fields: &[PatternField]) -> Option<&String> {
         self.concrete_to_type_param.get(fields)

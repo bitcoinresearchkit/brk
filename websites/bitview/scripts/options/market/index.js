@@ -12,7 +12,7 @@ import { createInvestingSection } from "./investing.js";
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection(ctx) {
-  const { colors, brk, s } = ctx;
+  const { colors, brk, line } = ctx;
   const { market, supply } = brk.tree;
   const {
     movingAverage,
@@ -41,7 +41,7 @@ export function createMarketSection(ctx) {
         name: "Capitalization",
         title: "Market Capitalization",
         bottom: [
-          s({
+          line({
             metric: supply.marketCap,
             name: "Capitalization",
             unit: Unit.usd,
@@ -53,27 +53,31 @@ export function createMarketSection(ctx) {
       {
         name: "All Time High",
         title: "All Time High",
-        top: [s({ metric: ath.priceAth, name: "ATH", unit: Unit.usd })],
+        top: [line({ metric: ath.priceAth, name: "ATH", unit: Unit.usd })],
         bottom: [
-          s({
+          line({
             metric: ath.priceDrawdown,
             name: "Drawdown",
             color: colors.red,
             unit: Unit.percentage,
           }),
-          s({ metric: ath.daysSincePriceAth, name: "Since", unit: Unit.days }),
-          s({
+          line({
+            metric: ath.daysSincePriceAth,
+            name: "Since",
+            unit: Unit.days,
+          }),
+          line({
             metric: ath.yearsSincePriceAth,
             name: "Since",
             unit: Unit.years,
           }),
-          s({
+          line({
             metric: ath.maxDaysBetweenPriceAths,
             name: "Max",
             color: colors.red,
             unit: Unit.days,
           }),
-          s({
+          line({
             metric: ath.maxYearsBetweenPriceAths,
             name: "Max",
             color: colors.red,

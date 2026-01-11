@@ -9,7 +9,7 @@ import { periodIdToName } from "./utils.js";
  * @param {Market["returns"]} returns
  */
 export function createPerformanceSection(ctx, returns) {
-  const { colors, createPriceLine } = ctx;
+  const { colors, baseline, createPriceLine } = ctx;
 
   return {
     name: "Performance",
@@ -35,19 +35,17 @@ export function createPerformanceSection(ctx, returns) {
         name,
         title: `${name} Performance`,
         bottom: [
-          /** @type {AnyFetchedSeriesBlueprint} */ ({
+          baseline({
             metric: priceReturns,
-            title: "Total",
-            type: "Baseline",
+            name: "Total",
             unit: Unit.percentage,
           }),
           ...(cagr
             ? [
-                /** @type {AnyFetchedSeriesBlueprint} */ ({
+                baseline({
                   metric: cagr,
-                  title: "CAGR",
-                  type: "Baseline",
-                  colors: [colors.lime, colors.pink],
+                  name: "CAGR",
+                  color: [colors.lime, colors.pink],
                   unit: Unit.percentage,
                 }),
               ]

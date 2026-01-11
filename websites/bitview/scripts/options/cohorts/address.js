@@ -135,7 +135,7 @@ export function createAddressCohortFolder(ctx, args) {
  * @returns {PartialOptionsTree}
  */
 function createRealizedPriceOptions(ctx, args, title) {
-  const { s } = ctx;
+  const { line } = ctx;
   const { tree, color } = args;
 
   return [
@@ -143,7 +143,7 @@ function createRealizedPriceOptions(ctx, args, title) {
       name: "price",
       title: `Realized Price ${title}`,
       top: [
-        s({
+        line({
           metric: tree.realized.realizedPrice,
           name: "Realized",
           color,
@@ -163,11 +163,11 @@ function createRealizedPriceOptions(ctx, args, title) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
-  const { s, createPriceLine } = ctx;
+  const { line, baseline, createPriceLine } = ctx;
   const isSingle = !("list" in args);
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.realized.realizedCap,
       name: useGroupName ? name : "Capitalization",
       color,
@@ -175,10 +175,9 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
     }),
     ...(isSingle
       ? [
-          /** @type {AnyFetchedSeriesBlueprint} */ ({
-            type: "Baseline",
+          baseline({
             metric: tree.realized.realizedCap30dDelta,
-            title: "30d Change",
+            name: "30d Change",
             unit: Unit.usd,
             defaultActive: false,
           }),
@@ -197,7 +196,7 @@ function createRealizedCapWithExtras(ctx, list, args, useGroupName) {
  * @returns {PartialOptionsTree}
  */
 function createRealizedPnlSection(ctx, args, title) {
-  const { colors, s } = ctx;
+  const { colors, line } = ctx;
   const { realized } = args.tree;
 
   return [
@@ -205,13 +204,13 @@ function createRealizedPnlSection(ctx, args, title) {
       name: "pnl",
       title: `Realized Profit And Loss ${title}`,
       bottom: [
-        s({
+        line({
           metric: realized.realizedProfit.sum,
           name: "Profit",
           color: colors.green,
           unit: Unit.usd,
         }),
-        s({
+        line({
           metric: realized.realizedLoss.sum,
           name: "Loss",
           color: colors.red,
@@ -219,20 +218,20 @@ function createRealizedPnlSection(ctx, args, title) {
           defaultActive: false,
         }),
         // RealizedPattern (address cohorts) doesn't have realizedProfitToLossRatio
-        s({
+        line({
           metric: realized.totalRealizedPnl,
           name: "Total",
           color: colors.default,
           defaultActive: false,
           unit: Unit.usd,
         }),
-        s({
+        line({
           metric: realized.negRealizedLoss.sum,
           name: "Negative Loss",
           color: colors.red,
           unit: Unit.usd,
         }),
-        s({
+        line({
           metric: realized.negRealizedLoss.cumulative,
           name: "Negative Loss",
           color: colors.red,
@@ -252,7 +251,7 @@ function createRealizedPnlSection(ctx, args, title) {
  * @returns {PartialOptionsTree}
  */
 function createUnrealizedSection(ctx, list, useGroupName, title) {
-  const { colors, s } = ctx;
+  const { colors, line, baseline } = ctx;
 
   return [
     {
@@ -262,12 +261,10 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           name: "nupl",
           title: `Net Unrealized Profit/Loss ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
-            /** @type {AnyFetchedSeriesBlueprint} */ ({
-              type: "Baseline",
+            baseline({
               metric: tree.unrealized.netUnrealizedPnl,
-              title: useGroupName ? name : "NUPL",
-              color: useGroupName ? color : undefined,
-              colors: useGroupName ? undefined : [colors.red, colors.green],
+              name: useGroupName ? name : "NUPL",
+              color: useGroupName ? color : [colors.red, colors.green],
               unit: Unit.ratio,
               options: { baseValue: { price: 0 } },
             }),
@@ -277,7 +274,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           name: "profit",
           title: `Unrealized Profit ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
-            s({
+            line({
               metric: tree.unrealized.unrealizedProfit,
               name: useGroupName ? name : "Profit",
               color,
@@ -289,7 +286,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
           name: "loss",
           title: `Unrealized Loss ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
-            s({
+            line({
               metric: tree.unrealized.unrealizedLoss,
               name: useGroupName ? name : "Loss",
               color,
@@ -311,7 +308,7 @@ function createUnrealizedSection(ctx, list, useGroupName, title) {
  * @returns {PartialOptionsTree}
  */
 function createCostBasisSection(ctx, list, useGroupName, title) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return [
     {
@@ -321,7 +318,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
           name: "min",
           title: `Min Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({
+            line({
               metric: tree.costBasis.min,
               name: useGroupName ? name : "Min",
               color,
@@ -333,7 +330,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
           name: "max",
           title: `Max Cost Basis ${title}`,
           top: list.map(({ color, name, tree }) =>
-            s({
+            line({
               metric: tree.costBasis.max,
               name: useGroupName ? name : "Max",
               color,
@@ -355,7 +352,7 @@ function createCostBasisSection(ctx, list, useGroupName, title) {
  * @returns {PartialOptionsTree}
  */
 function createActivitySection(ctx, list, useGroupName, title) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return [
     {
@@ -365,13 +362,13 @@ function createActivitySection(ctx, list, useGroupName, title) {
           name: "coinblocks destroyed",
           title: `Coinblocks Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
-            s({
+            line({
               metric: tree.activity.coinblocksDestroyed.sum,
               name: useGroupName ? name : "Coinblocks",
               color,
               unit: Unit.coinblocks,
             }),
-            s({
+            line({
               metric: tree.activity.coinblocksDestroyed.cumulative,
               name: useGroupName ? name : "Coinblocks",
               color,
@@ -383,13 +380,13 @@ function createActivitySection(ctx, list, useGroupName, title) {
           name: "coindays destroyed",
           title: `Coindays Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, tree }) => [
-            s({
+            line({
               metric: tree.activity.coindaysDestroyed.sum,
               name: useGroupName ? name : "Coindays",
               color,
               unit: Unit.coindays,
             }),
-            s({
+            line({
               metric: tree.activity.coindaysDestroyed.cumulative,
               name: useGroupName ? name : "Coindays",
               color,

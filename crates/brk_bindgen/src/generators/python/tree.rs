@@ -6,8 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, PatternField, child_type_name, get_fields_with_child_info, get_node_fields,
-    get_pattern_instance_base, to_snake_case,
+    ClientMetadata, PatternField, child_type_name, get_node_fields, get_pattern_instance_base,
+    prepare_tree_node, to_snake_case,
 };
 
 use super::client::field_type_with_generic;
@@ -37,27 +37,9 @@ fn generate_tree_class(
     metadata: &ClientMetadata,
     generated: &mut HashSet<String>,
 ) {
-    let TreeNode::Branch(children) = node else {
+    let Some(ctx) = prepare_tree_node(node, name, pattern_lookup, metadata, generated) else {
         return;
     };
-
-    let fields_with_child_info = get_fields_with_child_info(children, name, pattern_lookup);
-    let fields: Vec<PatternField> = fields_with_child_info
-        .iter()
-        .map(|(f, _)| f.clone())
-        .collect();
-
-    // Skip if this matches a pattern (already generated)
-    if pattern_lookup.contains_key(&fields)
-        && pattern_lookup.get(&fields) != Some(&name.to_string())
-    {
-        return;
-    }
-
-    if generated.contains(name) {
-        return;
-    }
-    generated.insert(name.to_string());
 
     writeln!(output, "class {}:", name).unwrap();
     writeln!(output, "    \"\"\"Catalog tree node.\"\"\"").unwrap();
@@ -69,7 +51,7 @@ fn generate_tree_class(
     .unwrap();
 
     for ((field, child_fields_opt), (_child_name, child_node)) in
-        fields_with_child_info.iter().zip(children.iter())
+        ctx.fields_with_child_info.iter().zip(ctx.children.iter())
     {
         // Look up type parameter for generic patterns
         let generic_value_type = child_fields_opt
@@ -79,44 +61,35 @@ fn generate_tree_class(
         let py_type = field_type_with_generic(field, metadata, false, generic_value_type);
         let field_name_py = to_snake_case(&field.name);
 
-        if metadata.is_pattern_type(&field.rust_type) {
-            let pattern = metadata.find_pattern(&field.rust_type);
-            let is_parameterizable = pattern.is_some_and(|p| p.is_parameterizable());
-
-            if is_parameterizable {
-                let metric_base = get_pattern_instance_base(child_node);
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, '{}')",
-                    field_name_py, py_type, field.rust_type, metric_base
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
-                    field_name_py, py_type, field.rust_type, field.name
-                )
-                .unwrap();
-            }
-        } else if metadata.field_uses_accessor(field) {
+        if metadata.is_pattern_type(&field.rust_type) && metadata.is_parameterizable(&field.rust_type)
+        {
+            // Parameterizable pattern: use pattern class with metric base
+            let metric_base = get_pattern_instance_base(child_node);
+            writeln!(
+                output,
+                "        self.{}: {} = {}(client, '{}')",
+                field_name_py, py_type, field.rust_type, metric_base
+            )
+            .unwrap();
+        } else if let TreeNode::Leaf(leaf) = child_node {
+            // Leaf node: use actual metric name
             let accessor = metadata.find_index_set_pattern(&field.indexes).unwrap();
             writeln!(
                 output,
-                "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
-                field_name_py, py_type, accessor.name, field.name
+                "        self.{}: {} = {}(client, '{}')",
+                field_name_py, py_type, accessor.name, leaf.name()
             )
             .unwrap();
         } else if field.is_branch() {
-            // Non-pattern branch - instantiate the nested class
+            // Non-parameterizable pattern or regular branch: generate inline class
+            let inline_class = child_type_name(name, &field.name);
             writeln!(
                 output,
-                "        self.{}: {} = {}(client, f'{{base_path}}_{}')",
-                field_name_py, py_type, field.rust_type, field.name
+                "        self.{}: {} = {}(client)",
+                field_name_py, inline_class, inline_class
             )
             .unwrap();
         } else {
-            // All metrics must be indexed - this should not be reached
             panic!(
                 "Field '{}' has no matching index pattern. All metrics must be indexed.",
                 field.name
@@ -127,10 +100,12 @@ fn generate_tree_class(
     writeln!(output).unwrap();
 
     // Generate child classes
-    for (child_name, child_node) in children {
+    for (child_name, child_node) in ctx.children {
         if let TreeNode::Branch(grandchildren) = child_node {
             let child_fields = get_node_fields(grandchildren, pattern_lookup);
-            if !pattern_lookup.contains_key(&child_fields) {
+
+            // Generate inline class if no pattern match OR pattern is not parameterizable
+            if !metadata.is_parameterizable_fields(&child_fields) {
                 let child_class = child_type_name(name, child_name);
                 generate_tree_class(
                     output,

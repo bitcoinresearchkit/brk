@@ -15,7 +15,7 @@ use super::{
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
 /// block-based (height, txindex), and address/output type indexes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[schemars(example = Index::DateIndex)]
 pub enum Index {

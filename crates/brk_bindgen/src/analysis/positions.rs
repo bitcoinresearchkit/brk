@@ -93,12 +93,41 @@ fn collect_positions_bottom_up(
     }
 }
 
+/// Check if a list of positions contains incompatible values.
+///
+/// Positions are incompatible if there are multiple different non-Identity positions,
+/// meaning different pattern instances use different naming conventions.
+fn has_incompatible_positions(positions: &[FieldNamePosition]) -> bool {
+    let non_identity: Vec<_> = positions
+        .iter()
+        .filter(|p| !matches!(p, FieldNamePosition::Identity))
+        .collect();
+
+    if non_identity.len() <= 1 {
+        return false;
+    }
+
+    // Check if all non-identity positions are the same
+    let first = &non_identity[0];
+    non_identity.iter().skip(1).any(|p| p != first)
+}
+
 /// Merge multiple observed positions for each field into a single position.
-/// Uses the first non-Identity position found, as Identity from root-level
-/// instances is now handled by passing empty `acc`.
+///
+/// Returns an empty map if any field has incompatible positions across instances,
+/// which will cause `is_parameterizable()` to return false for the pattern.
 fn merge_field_positions(
     field_positions: &HashMap<String, Vec<FieldNamePosition>>,
 ) -> HashMap<String, FieldNamePosition> {
+    // First check for incompatible positions
+    for positions in field_positions.values() {
+        if has_incompatible_positions(positions) {
+            // Incompatible positions found - pattern cannot be parameterized
+            return HashMap::new();
+        }
+    }
+
+    // All positions are compatible, proceed with merge
     field_positions
         .iter()
         .filter_map(|(field_name, positions)| {

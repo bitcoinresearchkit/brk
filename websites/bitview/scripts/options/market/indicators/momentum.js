@@ -8,7 +8,7 @@ import { Unit } from "../../../utils/units.js";
  * @param {Market["indicators"]} indicators
  */
 export function createMomentumSection(ctx, indicators) {
-  const { s, colors, createPriceLine } = ctx;
+  const { line, histogram, colors, createPriceLine } = ctx;
 
   return {
     name: "Momentum",
@@ -17,20 +17,20 @@ export function createMomentumSection(ctx, indicators) {
         name: "RSI",
         title: "Relative Strength Index (14d)",
         bottom: [
-          s({
+          line({
             metric: indicators.rsi14d,
             name: "RSI",
             color: colors.indigo,
             unit: Unit.index,
           }),
-          s({
+          line({
             metric: indicators.rsi14dMin,
             name: "Min",
             color: colors.red,
             defaultActive: false,
             unit: Unit.index,
           }),
-          s({
+          line({
             metric: indicators.rsi14dMax,
             name: "Max",
             color: colors.green,
@@ -38,7 +38,11 @@ export function createMomentumSection(ctx, indicators) {
             unit: Unit.index,
           }),
           createPriceLine({ unit: Unit.index, number: 70 }),
-          createPriceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+          createPriceLine({
+            unit: Unit.index,
+            number: 50,
+            defaultActive: false,
+          }),
           createPriceLine({ unit: Unit.index, number: 30 }),
         ],
       },
@@ -46,19 +50,19 @@ export function createMomentumSection(ctx, indicators) {
         name: "StochRSI",
         title: "Stochastic RSI",
         bottom: [
-          // s({
+          // line({
           //   metric: indicators.stochRsi,
           //   name: "Stoch RSI",
           //   color: colors.purple,
           //   unit: Unit.index,
           // }),
-          s({
+          line({
             metric: indicators.stochRsiK,
             name: "K",
             color: colors.blue,
             unit: Unit.index,
           }),
-          s({
+          line({
             metric: indicators.stochRsiD,
             name: "D",
             color: colors.orange,
@@ -72,8 +76,8 @@ export function createMomentumSection(ctx, indicators) {
       //   name: "Stochastic",
       //   title: "Stochastic Oscillator",
       //   bottom: [
-      //     s({ metric: indicators.stochK, name: "K", color: colors.blue, unit: Unit.index }),
-      //     s({ metric: indicators.stochD, name: "D", color: colors.orange, unit: Unit.index }),
+      //     line({ metric: indicators.stochK, name: "K", color: colors.blue, unit: Unit.index }),
+      //     line({ metric: indicators.stochD, name: "D", color: colors.orange, unit: Unit.index }),
       //     createPriceLine({ unit: Unit.index, number: 80 }),
       //     createPriceLine({ unit: Unit.index, number: 20 }),
       //   ],
@@ -82,22 +86,21 @@ export function createMomentumSection(ctx, indicators) {
         name: "MACD",
         title: "Moving Average Convergence Divergence",
         bottom: [
-          s({
+          line({
             metric: indicators.macdLine,
             name: "MACD",
             color: colors.blue,
             unit: Unit.usd,
           }),
-          s({
+          line({
             metric: indicators.macdSignal,
             name: "Signal",
             color: colors.orange,
             unit: Unit.usd,
           }),
-          /** @type {FetchedHistogramSeriesBlueprint} */ ({
+          histogram({
             metric: indicators.macdHistogram,
-            title: "Histogram",
-            type: "Histogram",
+            name: "Histogram",
             unit: Unit.usd,
           }),
           createPriceLine({ unit: Unit.usd }),

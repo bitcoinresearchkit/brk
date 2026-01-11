@@ -9,23 +9,23 @@ import { Unit } from "../../utils/units.js";
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createSingleSupplySeries(ctx, cohort) {
-  const { colors, s, createPriceLine } = ctx;
+  const { colors, line, createPriceLine } = ctx;
   const { tree } = cohort;
 
   return [
-    s({
+    line({
       metric: tree.supply.total.sats,
       name: "Supply",
       color: colors.default,
       unit: Unit.sats,
     }),
-    s({
+    line({
       metric: tree.supply.total.bitcoin,
       name: "Supply",
       color: colors.default,
       unit: Unit.btc,
     }),
-    s({
+    line({
       metric: tree.supply.total.dollars,
       name: "Supply",
       color: colors.default,
@@ -33,7 +33,7 @@ export function createSingleSupplySeries(ctx, cohort) {
     }),
     ...("supplyRelToCirculatingSupply" in tree.relative
       ? [
-          s({
+          line({
             metric: tree.relative.supplyRelToCirculatingSupply,
             name: "Supply",
             color: colors.default,
@@ -41,57 +41,57 @@ export function createSingleSupplySeries(ctx, cohort) {
           }),
         ]
       : []),
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.sats,
       name: "In Profit",
       color: colors.green,
       unit: Unit.sats,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.bitcoin,
       name: "In Profit",
       color: colors.green,
       unit: Unit.btc,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.dollars,
       name: "In Profit",
       color: colors.green,
       unit: Unit.usd,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.sats,
       name: "In Loss",
       color: colors.red,
       unit: Unit.sats,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.bitcoin,
       name: "In Loss",
       color: colors.red,
       unit: Unit.btc,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.dollars,
       name: "In Loss",
       color: colors.red,
       unit: Unit.usd,
     }),
-    s({
+    line({
       metric: tree.supply.halved.sats,
       name: "half",
       color: colors.gray,
       unit: Unit.sats,
       options: { lineStyle: 4 },
     }),
-    s({
+    line({
       metric: tree.supply.halved.bitcoin,
       name: "half",
       color: colors.gray,
       unit: Unit.btc,
       options: { lineStyle: 4 },
     }),
-    s({
+    line({
       metric: tree.supply.halved.dollars,
       name: "half",
       color: colors.gray,
@@ -100,13 +100,13 @@ export function createSingleSupplySeries(ctx, cohort) {
     }),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
-          s({
+          line({
             metric: tree.relative.supplyInProfitRelToCirculatingSupply,
             name: "In Profit",
             color: colors.green,
             unit: Unit.pctSupply,
           }),
-          s({
+          line({
             metric: tree.relative.supplyInLossRelToCirculatingSupply,
             name: "In Loss",
             color: colors.red,
@@ -114,13 +114,13 @@ export function createSingleSupplySeries(ctx, cohort) {
           }),
         ]
       : []),
-    s({
+    line({
       metric: tree.relative.supplyInProfitRelToOwnSupply,
       name: "In Profit",
       color: colors.green,
       unit: Unit.pctOwn,
     }),
-    s({
+    line({
       metric: tree.relative.supplyInLossRelToOwnSupply,
       name: "In Loss",
       color: colors.red,
@@ -143,21 +143,21 @@ export function createSingleSupplySeries(ctx, cohort) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyTotalSeries(ctx, list) {
-  const { s, brk } = ctx;
+  const { line, brk } = ctx;
   const constant100 = brk.tree.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({ metric: tree.supply.total.sats, name, color, unit: Unit.sats }),
-    s({ metric: tree.supply.total.bitcoin, name, color, unit: Unit.btc }),
-    s({ metric: tree.supply.total.dollars, name, color, unit: Unit.usd }),
+    line({ metric: tree.supply.total.sats, name, color, unit: Unit.sats }),
+    line({ metric: tree.supply.total.bitcoin, name, color, unit: Unit.btc }),
+    line({ metric: tree.supply.total.dollars, name, color, unit: Unit.usd }),
     "supplyRelToCirculatingSupply" in tree.relative
-      ? s({
+      ? line({
           metric: tree.relative.supplyRelToCirculatingSupply,
           name,
           color,
           unit: Unit.pctSupply,
         })
-      : s({ metric: constant100, name, color, unit: Unit.pctSupply }),
+      : line({ metric: constant100, name, color, unit: Unit.pctSupply }),
   ]);
 }
 
@@ -168,22 +168,22 @@ export function createGroupedSupplyTotalSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyInProfitSeries(ctx, list) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.sats,
       name,
       color,
       unit: Unit.sats,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.bitcoin,
       name,
       color,
       unit: Unit.btc,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInProfit.dollars,
       name,
       color,
@@ -191,7 +191,7 @@ export function createGroupedSupplyInProfitSeries(ctx, list) {
     }),
     ...("supplyInProfitRelToCirculatingSupply" in tree.relative
       ? [
-          s({
+          line({
             metric: tree.relative.supplyInProfitRelToCirculatingSupply,
             name,
             color,
@@ -209,22 +209,22 @@ export function createGroupedSupplyInProfitSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createGroupedSupplyInLossSeries(ctx, list) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.sats,
       name,
       color,
       unit: Unit.sats,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.bitcoin,
       name,
       color,
       unit: Unit.btc,
     }),
-    s({
+    line({
       metric: tree.unrealized.supplyInLoss.dollars,
       name,
       color,
@@ -232,7 +232,7 @@ export function createGroupedSupplyInLossSeries(ctx, list) {
     }),
     ...("supplyInLossRelToCirculatingSupply" in tree.relative
       ? [
-          s({
+          line({
             metric: tree.relative.supplyInLossRelToCirculatingSupply,
             name,
             color,
@@ -251,10 +251,10 @@ export function createGroupedSupplyInLossSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createUtxoCountSeries(ctx, list, useGroupName) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.outputs.utxoCount,
       name: useGroupName ? name : "Count",
       color,
@@ -271,10 +271,10 @@ export function createUtxoCountSeries(ctx, list, useGroupName) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createAddressCountSeries(ctx, list, useGroupName) {
-  const { s, colors } = ctx;
+  const { line, colors } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.addrCount,
       name: useGroupName ? name : "Count",
       color: useGroupName ? color : colors.orange,
@@ -290,10 +290,10 @@ export function createAddressCountSeries(ctx, list, useGroupName) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedPriceSeries(ctx, list) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.map(({ color, name, tree }) =>
-    s({ metric: tree.realized.realizedPrice, name, color, unit: Unit.usd }),
+    line({ metric: tree.realized.realizedPrice, name, color, unit: Unit.usd }),
   );
 }
 
@@ -304,11 +304,11 @@ export function createRealizedPriceSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedPriceRatioSeries(ctx, list) {
-  const { s, createPriceLine } = ctx;
+  const { line, createPriceLine } = ctx;
 
   return [
     ...list.map(({ color, name, tree }) =>
-      s({
+      line({
         metric: tree.realized.realizedPriceExtra.ratio,
         name,
         color,
@@ -327,10 +327,10 @@ export function createRealizedPriceRatioSeries(ctx, list) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createRealizedCapSeries(ctx, list, useGroupName) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.realized.realizedCap,
       name: useGroupName ? name : "Capitalization",
       color,
@@ -347,16 +347,16 @@ export function createRealizedCapSeries(ctx, list, useGroupName) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => [
-    s({
+    line({
       metric: tree.costBasis.min,
       name: useGroupName ? `${name} min` : "Min",
       color,
       unit: Unit.usd,
     }),
-    s({
+    line({
       metric: tree.costBasis.max,
       name: useGroupName ? `${name} max` : "Max",
       color,
@@ -373,39 +373,39 @@ export function createCostBasisMinMaxSeries(ctx, list, useGroupName) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export function createCostBasisPercentilesSeries(ctx, list, useGroupName) {
-  const { s } = ctx;
+  const { line } = ctx;
 
   return list.flatMap(({ color, name, tree }) => {
     const percentiles = tree.costBasis.percentiles;
     return [
-      s({
+      line({
         metric: percentiles.costBasisPct10,
         name: useGroupName ? `${name} p10` : "p10",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
-      s({
+      line({
         metric: percentiles.costBasisPct25,
         name: useGroupName ? `${name} p25` : "p25",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
-      s({
+      line({
         metric: percentiles.costBasisPct50,
         name: useGroupName ? `${name} p50` : "p50",
         color,
         unit: Unit.usd,
       }),
-      s({
+      line({
         metric: percentiles.costBasisPct75,
         name: useGroupName ? `${name} p75` : "p75",
         color,
         unit: Unit.usd,
         defaultActive: false,
       }),
-      s({
+      line({
         metric: percentiles.costBasisPct90,
         name: useGroupName ? `${name} p90` : "p90",
         color,

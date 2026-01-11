@@ -11,7 +11,7 @@ export function createChainSection(ctx) {
   const {
     colors,
     brk,
-    s,
+    line,
     createPriceLine,
     fromSizePattern,
     fromFullnessPattern,
@@ -20,6 +20,7 @@ export function createChainSection(ctx) {
     fromValuePattern,
     fromBlockCountWithUnit,
     fromIntervalPattern,
+    fromSupplyPattern,
   } = ctx;
   const {
     blocks,
@@ -46,22 +47,33 @@ export function createChainSection(ctx) {
           name: "Dominance",
           title: `Mining Dominance of ${poolName}`,
           bottom: [
-            s({
+            line({
+              metric: pool._24hDominance,
+              name: "24h",
+              color: colors.orange,
+              unit: Unit.percentage,
+              defaultActive: false,
+            }),
+            line({
               metric: pool._1wDominance,
               name: "1w",
               color: colors.red,
               unit: Unit.percentage,
               defaultActive: false,
             }),
-            s({ metric: pool._1mDominance, name: "1m", unit: Unit.percentage }),
-            s({
+            line({
+              metric: pool._1mDominance,
+              name: "1m",
+              unit: Unit.percentage,
+            }),
+            line({
               metric: pool._1yDominance,
               name: "1y",
               color: colors.lime,
               unit: Unit.percentage,
               defaultActive: false,
             }),
-            s({
+            line({
               metric: pool.dominance,
               name: "all time",
               color: colors.teal,
@@ -74,32 +86,32 @@ export function createChainSection(ctx) {
           name: "Blocks mined",
           title: `Blocks mined by ${poolName}`,
           bottom: [
-            s({
+            line({
               metric: pool.blocksMined.sum,
               name: "Sum",
               unit: Unit.count,
             }),
-            s({
+            line({
               metric: pool.blocksMined.cumulative,
               name: "Cumulative",
               color: colors.blue,
               unit: Unit.count,
             }),
-            s({
+            line({
               metric: pool._1wBlocksMined,
               name: "1w Sum",
               color: colors.red,
               unit: Unit.count,
               defaultActive: false,
             }),
-            s({
+            line({
               metric: pool._1mBlocksMined,
               name: "1m Sum",
               color: colors.pink,
               unit: Unit.count,
               defaultActive: false,
             }),
-            s({
+            line({
               metric: pool._1yBlocksMined,
               name: "1y Sum",
               color: colors.purple,
@@ -112,8 +124,18 @@ export function createChainSection(ctx) {
           name: "Rewards",
           title: `Rewards collected by ${poolName}`,
           bottom: [
-            ...fromValuePattern(pool.coinbase, "coinbase", colors.orange, colors.red),
-            ...fromValuePattern(pool.subsidy, "subsidy", colors.lime, colors.emerald),
+            ...fromValuePattern(
+              pool.coinbase,
+              "coinbase",
+              colors.orange,
+              colors.red,
+            ),
+            ...fromValuePattern(
+              pool.subsidy,
+              "subsidy",
+              colors.lime,
+              colors.emerald,
+            ),
             ...fromValuePattern(pool.fee, "fee", colors.cyan, colors.indigo),
           ],
         },
@@ -121,7 +143,7 @@ export function createChainSection(ctx) {
           name: "Days since block",
           title: `Days since ${poolName} mined a block`,
           bottom: [
-            s({
+            line({
               metric: pool.daysSinceBlock,
               name: "Since block",
               unit: Unit.days,
@@ -143,29 +165,33 @@ export function createChainSection(ctx) {
             name: "Count",
             title: "Block Count",
             bottom: [
-              ...fromBlockCountWithUnit(blocks.count.blockCount, "Block", Unit.count),
-              s({
+              ...fromBlockCountWithUnit(
+                blocks.count.blockCount,
+                "Block",
+                Unit.count,
+              ),
+              line({
                 metric: blocks.count.blockCountTarget,
                 name: "Target",
                 color: colors.gray,
                 unit: Unit.count,
                 options: { lineStyle: 4 },
               }),
-              s({
+              line({
                 metric: blocks.count._1wBlockCount,
                 name: "1w sum",
                 color: colors.red,
                 unit: Unit.count,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.count._1mBlockCount,
                 name: "1m sum",
                 color: colors.pink,
                 unit: Unit.count,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.count._1yBlockCount,
                 name: "1y sum",
                 color: colors.purple,
@@ -211,36 +237,36 @@ export function createChainSection(ctx) {
             name: "Volume",
             title: "Transaction Volume",
             bottom: [
-              s({
+              line({
                 metric: transactions.volume.sentSum.sats,
                 name: "Sent",
                 unit: Unit.sats,
               }),
-              s({
+              line({
                 metric: transactions.volume.sentSum.bitcoin,
                 name: "Sent",
                 unit: Unit.btc,
               }),
-              s({
+              line({
                 metric: transactions.volume.sentSum.dollars,
                 name: "Sent",
                 unit: Unit.usd,
               }),
-              s({
+              line({
                 metric: transactions.volume.annualizedVolume.sats,
                 name: "annualized",
                 color: colors.red,
                 unit: Unit.sats,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.volume.annualizedVolume.bitcoin,
                 name: "annualized",
                 color: colors.red,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.volume.annualizedVolume.dollars,
                 name: "annualized",
                 color: colors.lime,
@@ -253,7 +279,11 @@ export function createChainSection(ctx) {
             name: "Size",
             title: "Transaction Size",
             bottom: [
-              ...fromFeeRatePattern(transactions.size.weight, "weight", Unit.wu),
+              ...fromFeeRatePattern(
+                transactions.size.weight,
+                "weight",
+                Unit.wu,
+              ),
               ...fromFeeRatePattern(transactions.size.vsize, "vsize", Unit.vb),
             ],
           },
@@ -261,21 +291,39 @@ export function createChainSection(ctx) {
             name: "Versions",
             title: "Transaction Versions",
             bottom: [
-              ...fromBlockCountWithUnit(transactions.versions.v1, "v1", Unit.count, colors.orange, colors.red),
-              ...fromBlockCountWithUnit(transactions.versions.v2, "v2", Unit.count, colors.cyan, colors.blue),
-              ...fromBlockCountWithUnit(transactions.versions.v3, "v3", Unit.count, colors.lime, colors.green),
+              ...fromBlockCountWithUnit(
+                transactions.versions.v1,
+                "v1",
+                Unit.count,
+                colors.orange,
+                colors.red,
+              ),
+              ...fromBlockCountWithUnit(
+                transactions.versions.v2,
+                "v2",
+                Unit.count,
+                colors.cyan,
+                colors.blue,
+              ),
+              ...fromBlockCountWithUnit(
+                transactions.versions.v3,
+                "v3",
+                Unit.count,
+                colors.lime,
+                colors.green,
+              ),
             ],
           },
           {
             name: "Velocity",
             title: "Transactions Velocity",
             bottom: [
-              s({
+              line({
                 metric: supply.velocity.btc,
                 name: "bitcoin",
                 unit: Unit.ratio,
               }),
-              s({
+              line({
                 metric: supply.velocity.usd,
                 name: "dollars",
                 color: colors.emerald,
@@ -287,7 +335,7 @@ export function createChainSection(ctx) {
             name: "Speed",
             title: "Transactions Per Second",
             bottom: [
-              s({
+              line({
                 metric: transactions.volume.txPerSec,
                 name: "Transactions",
                 unit: Unit.perSec,
@@ -310,7 +358,7 @@ export function createChainSection(ctx) {
             name: "Speed",
             title: "Inputs Per Second",
             bottom: [
-              s({
+              line({
                 metric: transactions.volume.inputsPerSec,
                 name: "Inputs",
                 unit: Unit.perSec,
@@ -339,7 +387,7 @@ export function createChainSection(ctx) {
             name: "Speed",
             title: "Outputs Per Second",
             bottom: [
-              s({
+              line({
                 metric: transactions.volume.outputsPerSec,
                 name: "Outputs",
                 unit: Unit.perSec,
@@ -355,7 +403,13 @@ export function createChainSection(ctx) {
           {
             name: "Count",
             title: "UTXO Count",
-            bottom: fromFullnessPattern(outputs.count.utxoCount, "Count", Unit.count),
+            bottom: [
+              line({
+                metric: outputs.count.utxoCount,
+                name: "Count",
+                unit: Unit.count,
+              }),
+            ],
           },
         ],
       },
@@ -373,7 +427,7 @@ export function createChainSection(ctx) {
         title: "Block Subsidy",
         bottom: [
           ...fromCoinbasePattern(blocks.rewards.subsidy, "Subsidy"),
-          s({
+          line({
             metric: blocks.rewards.subsidyDominance,
             name: "Dominance",
             color: colors.purple,
@@ -391,43 +445,43 @@ export function createChainSection(ctx) {
             name: "Total",
             title: "Transaction Fees",
             bottom: [
-              s({
+              line({
                 metric: transactions.fees.fee.sats.sum,
                 name: "Sum",
                 unit: Unit.sats,
               }),
-              s({
+              line({
                 metric: transactions.fees.fee.sats.cumulative,
                 name: "Cumulative",
                 color: colors.blue,
                 unit: Unit.sats,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.fee.bitcoin.sum,
                 name: "Sum",
                 unit: Unit.btc,
               }),
-              s({
+              line({
                 metric: transactions.fees.fee.bitcoin.cumulative,
                 name: "Cumulative",
                 color: colors.blue,
                 unit: Unit.btc,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.fee.dollars.sum,
                 name: "Sum",
                 unit: Unit.usd,
               }),
-              s({
+              line({
                 metric: transactions.fees.fee.dollars.cumulative,
                 name: "Cumulative",
                 color: colors.blue,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.rewards.feeDominance,
                 name: "Dominance",
                 color: colors.purple,
@@ -440,55 +494,55 @@ export function createChainSection(ctx) {
             name: "Rate",
             title: "Fee Rate",
             bottom: [
-              s({
+              line({
                 metric: transactions.fees.feeRate.median,
                 name: "Median",
                 color: colors.purple,
                 unit: Unit.feeRate,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.average,
                 name: "Average",
                 color: colors.blue,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.min,
                 name: "Min",
                 color: colors.red,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.max,
                 name: "Max",
                 color: colors.green,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.pct10,
                 name: "pct10",
                 color: colors.rose,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.pct25,
                 name: "pct25",
                 color: colors.pink,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.pct75,
                 name: "pct75",
                 color: colors.violet,
                 unit: Unit.feeRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: transactions.fees.feeRate.pct90,
                 name: "pct90",
                 color: colors.fuchsia,
@@ -508,33 +562,33 @@ export function createChainSection(ctx) {
             name: "Hashrate",
             title: "Network Hashrate",
             bottom: [
-              s({
+              line({
                 metric: blocks.mining.hashRate,
                 name: "Hashrate",
                 unit: Unit.hashRate,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashRate1wSma,
                 name: "1w SMA",
                 color: colors.red,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashRate1mSma,
                 name: "1m SMA",
                 color: colors.orange,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashRate2mSma,
                 name: "2m SMA",
                 color: colors.yellow,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashRate1ySma,
                 name: "1y SMA",
                 color: colors.lime,
@@ -547,19 +601,19 @@ export function createChainSection(ctx) {
             name: "Difficulty",
             title: "Network Difficulty",
             bottom: [
-              s({
+              line({
                 metric: blocks.difficulty.raw,
                 name: "Difficulty",
                 unit: Unit.difficulty,
               }),
-              s({
+              line({
                 metric: blocks.difficulty.adjustment,
                 name: "Adjustment",
                 color: colors.orange,
                 unit: Unit.percentage,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.difficulty.asHash,
                 name: "As hash",
                 color: colors.default,
@@ -567,14 +621,14 @@ export function createChainSection(ctx) {
                 defaultActive: false,
                 options: { lineStyle: 1 },
               }),
-              s({
+              line({
                 metric: blocks.difficulty.blocksBeforeNextAdjustment,
                 name: "Blocks until adj.",
                 color: colors.indigo,
                 unit: Unit.blocks,
                 defaultActive: false,
               }),
-              s({
+              line({
                 metric: blocks.difficulty.daysBeforeNextAdjustment,
                 name: "Days until adj.",
                 color: colors.purple,
@@ -587,32 +641,32 @@ export function createChainSection(ctx) {
             name: "Hash Price",
             title: "Hash Price",
             bottom: [
-              s({
+              line({
                 metric: blocks.mining.hashPriceThs,
                 name: "TH/s",
                 color: colors.emerald,
                 unit: Unit.usdPerThsPerDay,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashPricePhs,
                 name: "PH/s",
                 color: colors.emerald,
                 unit: Unit.usdPerPhsPerDay,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashPriceRebound,
                 name: "Rebound",
                 color: colors.yellow,
                 unit: Unit.percentage,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashPriceThsMin,
                 name: "TH/s Min",
                 color: colors.red,
                 unit: Unit.usdPerThsPerDay,
                 options: { lineStyle: 1 },
               }),
-              s({
+              line({
                 metric: blocks.mining.hashPricePhsMin,
                 name: "PH/s Min",
                 color: colors.red,
@@ -625,32 +679,32 @@ export function createChainSection(ctx) {
             name: "Hash Value",
             title: "Hash Value",
             bottom: [
-              s({
+              line({
                 metric: blocks.mining.hashValueThs,
                 name: "TH/s",
                 color: colors.orange,
                 unit: Unit.satsPerThsPerDay,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashValuePhs,
                 name: "PH/s",
                 color: colors.orange,
                 unit: Unit.satsPerPhsPerDay,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashValueRebound,
                 name: "Rebound",
                 color: colors.yellow,
                 unit: Unit.percentage,
               }),
-              s({
+              line({
                 metric: blocks.mining.hashValueThsMin,
                 name: "TH/s Min",
                 color: colors.red,
                 unit: Unit.satsPerThsPerDay,
                 options: { lineStyle: 1 },
               }),
-              s({
+              line({
                 metric: blocks.mining.hashValuePhsMin,
                 name: "PH/s Min",
                 color: colors.red,
@@ -663,18 +717,18 @@ export function createChainSection(ctx) {
             name: "Halving",
             title: "Halving Info",
             bottom: [
-              s({
+              line({
                 metric: blocks.halving.blocksBeforeNextHalving,
                 name: "Blocks until halving",
                 unit: Unit.blocks,
               }),
-              s({
+              line({
                 metric: blocks.halving.daysBeforeNextHalving,
                 name: "Days until halving",
                 color: colors.orange,
                 unit: Unit.days,
               }),
-              s({
+              line({
                 metric: blocks.halving.epoch,
                 name: "Halving epoch",
                 color: colors.purple,
@@ -687,7 +741,7 @@ export function createChainSection(ctx) {
             name: "Puell Multiple",
             title: "Puell Multiple",
             bottom: [
-              s({
+              line({
                 metric: market.indicators.puellMultiple,
                 name: "Puell Multiple",
                 unit: Unit.ratio,
@@ -709,6 +763,11 @@ export function createChainSection(ctx) {
         name: "Unspendable",
         tree: [
           {
+            name: "Supply",
+            title: "Unspendable Supply",
+            bottom: fromValuePattern(supply.burned.unspendable, "Supply"),
+          },
+          {
             name: "OP_RETURN",
             tree: [
               {
@@ -720,9 +779,21 @@ export function createChainSection(ctx) {
                   Unit.count,
                 ),
               },
+              {
+                name: "Supply",
+                title: "OP_RETURN Supply",
+                bottom: fromValuePattern(supply.burned.opreturn, "Supply"),
+              },
             ],
           },
         ],
+      },
+
+      // Supply
+      {
+        name: "Supply",
+        title: "Circulating Supply",
+        bottom: fromSupplyPattern(supply.circulating, "Supply"),
       },
 
       // Inflation
@@ -730,12 +801,19 @@ export function createChainSection(ctx) {
         name: "Inflation",
         title: "Inflation Rate",
         bottom: [
-          s({
+          line({
             metric: supply.inflation,
             name: "Rate",
             unit: Unit.percentage,
           }),
         ],
+      },
+
+      // Unclaimed Rewards
+      {
+        name: "Unclaimed Rewards",
+        title: "Unclaimed Block Rewards",
+        bottom: fromValuePattern(blocks.rewards.unclaimedRewards, "Unclaimed"),
       },
     ],
   };

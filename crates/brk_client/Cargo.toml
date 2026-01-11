@@ -1,15 +1,20 @@
 [package]
 name = "brk_client"
-description = "A BRK API client"
+description = "Rust client for the Bitcoin Research Kit API"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 build = "build.rs"
+keywords = ["bitcoin", "blockchain", "analytics", "on-chain"]
+categories = ["api-bindings", "cryptography::cryptocurrencies"]
 
 [dependencies]
 brk_cohort = { workspace = true }
 brk_types = { workspace = true }
 minreq = { workspace = true }
 serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

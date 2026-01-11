@@ -17,7 +17,7 @@ function createCointimePriceWithRatioOptions(
   ctx,
   { title, legend, price, ratio, color },
 ) {
-  const { s, colors, createPriceLine } = ctx;
+  const { line, colors, createPriceLine } = ctx;
 
   // Percentile USD mappings
   const percentileUsdMap = [
@@ -68,15 +68,15 @@ function createCointimePriceWithRatioOptions(
     {
       name: "price",
       title,
-      top: [s({ metric: price, name: legend, color, unit: Unit.usd })],
+      top: [line({ metric: price, name: legend, color, unit: Unit.usd })],
     },
     {
       name: "Ratio",
       title: `${title} Ratio`,
       top: [
-        s({ metric: price, name: legend, color, unit: Unit.usd }),
+        line({ metric: price, name: legend, color, unit: Unit.usd }),
         ...percentileUsdMap.map(({ name: pctName, prop, color: pctColor }) =>
-          s({
+          line({
             metric: prop,
             name: pctName,
             color: pctColor,
@@ -87,45 +87,45 @@ function createCointimePriceWithRatioOptions(
         ),
       ],
       bottom: [
-        s({ metric: ratio.ratio, name: "Ratio", color, unit: Unit.ratio }),
-        s({
+        line({ metric: ratio.ratio, name: "Ratio", color, unit: Unit.ratio }),
+        line({
           metric: ratio.ratio1wSma,
           name: "1w SMA",
           color: colors.lime,
           unit: Unit.ratio,
         }),
-        s({
+        line({
           metric: ratio.ratio1mSma,
           name: "1m SMA",
           color: colors.teal,
           unit: Unit.ratio,
         }),
-        s({
+        line({
           metric: ratio.ratio1ySd.sma,
           name: "1y SMA",
           color: colors.sky,
           unit: Unit.ratio,
         }),
-        s({
+        line({
           metric: ratio.ratio2ySd.sma,
           name: "2y SMA",
           color: colors.indigo,
           unit: Unit.ratio,
         }),
-        s({
+        line({
           metric: ratio.ratio4ySd.sma,
           name: "4y SMA",
           color: colors.purple,
           unit: Unit.ratio,
         }),
-        s({
+        line({
           metric: ratio.ratioSd.sma,
           name: "All SMA",
           color: colors.rose,
           unit: Unit.ratio,
         }),
         ...percentileMap.map(({ name: pctName, prop, color: pctColor }) =>
-          s({
+          line({
             metric: prop,
             name: pctName,
             color: pctColor,
@@ -143,10 +143,15 @@ function createCointimePriceWithRatioOptions(
         name: nameAddon,
         title: `${title} ${titleAddon} Z-Score`,
         top: getSdBands(sd).map(({ name: bandName, prop, color: bandColor }) =>
-          s({ metric: prop, name: bandName, color: bandColor, unit: Unit.usd }),
+          line({
+            metric: prop,
+            name: bandName,
+            color: bandColor,
+            unit: Unit.usd,
+          }),
         ),
         bottom: [
-          s({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
+          line({ metric: sd.zscore, name: "Z-Score", color, unit: Unit.sd }),
           createPriceLine({ unit: Unit.sd, number: 3 }),
           createPriceLine({ unit: Unit.sd, number: 2 }),
           createPriceLine({ unit: Unit.sd, number: 1 }),
@@ -166,7 +171,7 @@ function createCointimePriceWithRatioOptions(
  * @returns {PartialOptionsGroup}
  */
 export function createCointimeSection(ctx) {
-  const { colors, brk, s } = ctx;
+  const { colors, brk, line } = ctx;
   const { cointime, distribution, supply } = brk.tree;
   const { pricing, cap, activity, supply: cointimeSupply, adjusted } = cointime;
   const { all } = distribution.utxoCohorts;
@@ -248,7 +253,7 @@ export function createCointimeSection(ctx) {
             name: "Compare",
             title: "Compare Cointime Prices",
             top: cointimePrices.map(({ price, name, color }) =>
-              s({ metric: price, name, color, unit: Unit.usd }),
+              line({ metric: price, name, color, unit: Unit.usd }),
             ),
           },
           ...cointimePrices.map(({ price, ratio, name, color, title }) => ({
@@ -272,20 +277,20 @@ export function createCointimeSection(ctx) {
             name: "Compare",
             title: "Compare Cointime Capitalizations",
             bottom: [
-              s({
+              line({
                 metric: supply.marketCap,
                 name: "Market",
                 color: colors.default,
                 unit: Unit.usd,
               }),
-              s({
+              line({
                 metric: all.realized.realizedCap,
                 name: "Realized",
                 color: colors.orange,
                 unit: Unit.usd,
               }),
               ...cointimeCapitalizations.map(({ metric, name, color }) =>
-                s({ metric, name, color, unit: Unit.usd }),
+                line({ metric, name, color, unit: Unit.usd }),
               ),
             ],
           },
@@ -293,14 +298,14 @@ export function createCointimeSection(ctx) {
             name,
             title,
             bottom: [
-              s({ metric, name, color, unit: Unit.usd }),
-              s({
+              line({ metric, name, color, unit: Unit.usd }),
+              line({
                 metric: supply.marketCap,
                 name: "Market",
                 color: colors.default,
                 unit: Unit.usd,
               }),
-              s({
+              line({
                 metric: all.realized.realizedCap,
                 name: "Realized",
                 color: colors.orange,
@@ -317,19 +322,19 @@ export function createCointimeSection(ctx) {
         title: "Cointime Supply",
         bottom: [
           // All supply (different pattern structure)
-          s({
+          line({
             metric: all.supply.total.sats,
             name: "All",
             color: colors.orange,
             unit: Unit.sats,
           }),
-          s({
+          line({
             metric: all.supply.total.bitcoin,
             name: "All",
             color: colors.orange,
             unit: Unit.btc,
           }),
-          s({
+          line({
             metric: all.supply.total.dollars,
             name: "All",
             color: colors.orange,
@@ -340,9 +345,9 @@ export function createCointimeSection(ctx) {
             [cointimeSupply.vaultedSupply, "Vaulted", colors.lime],
             [cointimeSupply.activeSupply, "Active", colors.rose],
           ]).flatMap(([supplyItem, name, color]) => [
-            s({ metric: supplyItem.sats, name, color, unit: Unit.sats }),
-            s({ metric: supplyItem.bitcoin, name, color, unit: Unit.btc }),
-            s({ metric: supplyItem.dollars, name, color, unit: Unit.usd }),
+            line({ metric: supplyItem.sats, name, color, unit: Unit.sats }),
+            line({ metric: supplyItem.bitcoin, name, color, unit: Unit.btc }),
+            line({ metric: supplyItem.dollars, name, color, unit: Unit.usd }),
           ]),
         ],
       },
@@ -352,19 +357,19 @@ export function createCointimeSection(ctx) {
         name: "Liveliness & Vaultedness",
         title: "Liveliness & Vaultedness",
         bottom: [
-          s({
+          line({
             metric: activity.liveliness,
             name: "Liveliness",
             color: colors.rose,
             unit: Unit.ratio,
           }),
-          s({
+          line({
             metric: activity.vaultedness,
             name: "Vaultedness",
             color: colors.lime,
             unit: Unit.ratio,
           }),
-          s({
+          line({
             metric: activity.activityToVaultednessRatio,
             name: "Liveliness / Vaultedness",
             color: colors.purple,
@@ -379,13 +384,13 @@ export function createCointimeSection(ctx) {
         title: "Coinblocks",
         bottom: [
           // Destroyed comes from the all cohort's activity
-          s({
+          line({
             metric: all.activity.coinblocksDestroyed.sum,
             name: "Destroyed",
             color: colors.red,
             unit: Unit.coinblocks,
           }),
-          s({
+          line({
             metric: all.activity.coinblocksDestroyed.cumulative,
             name: "Cumulative Destroyed",
             color: colors.red,
@@ -393,26 +398,26 @@ export function createCointimeSection(ctx) {
             unit: Unit.coinblocks,
           }),
           // Created and stored from cointime
-          s({
+          line({
             metric: activity.coinblocksCreated.sum,
             name: "Created",
             color: colors.orange,
             unit: Unit.coinblocks,
           }),
-          s({
+          line({
             metric: activity.coinblocksCreated.cumulative,
             name: "Cumulative Created",
             color: colors.orange,
             defaultActive: false,
             unit: Unit.coinblocks,
           }),
-          s({
+          line({
             metric: activity.coinblocksStored.sum,
             name: "Stored",
             color: colors.green,
             unit: Unit.coinblocks,
           }),
-          s({
+          line({
             metric: activity.coinblocksStored.cumulative,
             name: "Cumulative Stored",
             color: colors.green,
@@ -431,13 +436,13 @@ export function createCointimeSection(ctx) {
             name: "Inflation",
             title: "Cointime-Adjusted Inflation Rate",
             bottom: [
-              s({
+              line({
                 metric: supply.inflation,
                 name: "Base",
                 color: colors.orange,
                 unit: Unit.percentage,
               }),
-              s({
+              line({
                 metric: adjusted.cointimeAdjInflationRate,
                 name: "Adjusted",
                 color: colors.purple,
@@ -450,25 +455,25 @@ export function createCointimeSection(ctx) {
             name: "Velocity",
             title: "Cointime-Adjusted Transactions Velocity",
             bottom: [
-              s({
+              line({
                 metric: supply.velocity.btc,
                 name: "BTC",
                 color: colors.orange,
                 unit: Unit.ratio,
               }),
-              s({
+              line({
                 metric: adjusted.cointimeAdjTxBtcVelocity,
                 name: "Adj. BTC",
                 color: colors.red,
                 unit: Unit.ratio,
               }),
-              s({
+              line({
                 metric: supply.velocity.usd,
                 name: "USD",
                 color: colors.emerald,
                 unit: Unit.ratio,
               }),
-              s({
+              line({
                 metric: adjusted.cointimeAdjTxUsdVelocity,
                 name: "Adj. USD",
                 color: colors.lime,

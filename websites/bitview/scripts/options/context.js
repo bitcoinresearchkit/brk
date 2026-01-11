@@ -1,5 +1,7 @@
 import {
-  s,
+  line,
+  baseline,
+  histogram,
   fromBlockCount,
   fromBitcoin,
   fromBlockSize,
@@ -8,10 +10,12 @@ import {
   fromFeeRatePattern,
   fromCoinbasePattern,
   fromValuePattern,
+  fromBitcoinPatternWithUnit,
   fromBlockCountWithUnit,
   fromIntervalPattern,
+  fromSupplyPattern,
 } from "./series.js";
-import { createPriceLine, createPriceLines, line } from "./constants.js";
+import { createPriceLine, createPriceLines, constantLine } from "./constants.js";
 
 /**
  * Create a context object with all dependencies for building partial options
@@ -28,7 +32,9 @@ export function createContext({ colors, brk }) {
     brk,
 
     // Series helpers
-    s,
+    line,
+    baseline,
+    histogram,
     fromBlockCount: (pattern, title, color) =>
       fromBlockCount(colors, pattern, title, color),
     fromBitcoin: (pattern, title, color) =>
@@ -45,14 +51,38 @@ export function createContext({ colors, brk }) {
       fromCoinbasePattern(colors, pattern, title),
     fromValuePattern: (pattern, title, sumColor, cumulativeColor) =>
       fromValuePattern(colors, pattern, title, sumColor, cumulativeColor),
+    fromBitcoinPatternWithUnit: (
+      pattern,
+      title,
+      unit,
+      sumColor,
+      cumulativeColor,
+    ) =>
+      fromBitcoinPatternWithUnit(
+        colors,
+        pattern,
+        title,
+        unit,
+        sumColor,
+        cumulativeColor,
+      ),
     fromBlockCountWithUnit: (pattern, title, unit, sumColor, cumulativeColor) =>
-      fromBlockCountWithUnit(colors, pattern, title, unit, sumColor, cumulativeColor),
+      fromBlockCountWithUnit(
+        colors,
+        pattern,
+        title,
+        unit,
+        sumColor,
+        cumulativeColor,
+      ),
     fromIntervalPattern: (pattern, title, unit, color) =>
       fromIntervalPattern(colors, pattern, title, unit, color),
+    fromSupplyPattern: (pattern, title, color) =>
+      fromSupplyPattern(colors, pattern, title, color),
 
     createPriceLine: (args) => createPriceLine({ constants, colors, ...args }),
     createPriceLines: (args) =>
       createPriceLines({ constants, colors, ...args }),
-    line: (args) => line({ colors, ...args }),
+    constantLine: (args) => constantLine({ colors, ...args }),
   };
 }

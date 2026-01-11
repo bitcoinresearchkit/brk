@@ -4,7 +4,11 @@ import { localhost } from "../utils/env.js";
 import { createContext } from "./context.js";
 import {
   buildCohortData,
-  createUtxoCohortFolder,
+  createCohortFolderAll,
+  createCohortFolderFull,
+  createCohortFolderWithAdjusted,
+  createCohortFolderWithPercentiles,
+  createCohortFolderBasic,
   createAddressCohortFolder,
 } from "./cohorts/index.js";
 import { createMarketSection } from "./market/index.js";
@@ -28,8 +32,8 @@ export function createPartialOptions({ colors, brk }) {
   // Build cohort data
   const {
     cohortAll,
-    cohortAllForComparison,
-    terms,
+    termShort,
+    termLong,
     upToDate,
     fromDate,
     dateRange,
@@ -43,11 +47,15 @@ export function createPartialOptions({ colors, brk }) {
     type,
   } = buildCohortData(colors, brk);
 
-  // Helper to map UTXO cohorts
-  const mapUtxoCohorts = (/** @type {any} */ cohort) => createUtxoCohortFolder(ctx, cohort);
-
-  // Helper to map Address cohorts
-  const mapAddressCohorts = (/** @type {any} */ cohort) => createAddressCohortFolder(ctx, cohort);
+  // Helpers to map cohorts by capability type
+  /** @param {CohortWithAdjusted} cohort */
+  const mapWithAdjusted = (cohort) => createCohortFolderWithAdjusted(ctx, cohort);
+  /** @param {CohortWithPercentiles} cohort */
+  const mapWithPercentiles = (cohort) => createCohortFolderWithPercentiles(ctx, cohort);
+  /** @param {CohortBasic} cohort */
+  const mapBasic = (cohort) => createCohortFolderBasic(ctx, cohort);
+  /** @param {AddressCohortObject} cohort */
+  const mapAddressCohorts = (cohort) => createAddressCohortFolder(ctx, cohort);
 
   return [
     // Debug explorer (localhost only)
@@ -75,123 +83,120 @@ export function createPartialOptions({ colors, brk }) {
         {
           name: "Cohorts",
           tree: [
-            // All UTXOs
-            createUtxoCohortFolder(ctx, cohortAll),
+            // All UTXOs - CohortAll (adjustedSopr + percentiles but no RelToMarketCap)
+            createCohortFolderAll(ctx, cohortAll),
 
-            // Terms (STH/LTH)
+            // Terms (STH/LTH) - Short is Full, Long is WithPercentiles
             {
               name: "terms",
               tree: [
-                createUtxoCohortFolder(ctx, {
-                  name: "Compare",
-                  title: "UTXOs Term",
-                  list: [...terms, cohortAllForComparison],
-                }),
-                ...terms.map(mapUtxoCohorts),
+                // Individual cohorts with their specific capabilities
+                createCohortFolderFull(ctx, termShort),
+                createCohortFolderWithPercentiles(ctx, termLong),
               ],
             },
 
-            // Epochs
+            // Epochs - CohortBasic (neither adjustedSopr nor percentiles)
             {
               name: "Epochs",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "Epoch",
-                  list: [...epoch, cohortAllForComparison],
+                  list: epoch,
                 }),
-                ...epoch.map(mapUtxoCohorts),
+                ...epoch.map(mapBasic),
               ],
             },
 
-            // Types
+            // Types - CohortBasic
             {
               name: "types",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "Type",
-                  list: [...type, cohortAllForComparison],
+                  list: type,
                 }),
-                ...type.map(mapUtxoCohorts),
+                ...type.map(mapBasic),
               ],
             },
 
-            // UTXOs Up to age
+            // UTXOs Up to age - CohortWithAdjusted (adjustedSopr only)
             {
               name: "UTXOs Up to age",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderWithAdjusted(ctx, {
                   name: "Compare",
                   title: "UTXOs Up To Age",
-                  list: [...upToDate, cohortAllForComparison],
+                  list: upToDate,
                 }),
-                ...upToDate.map(mapUtxoCohorts),
+                ...upToDate.map(mapWithAdjusted),
               ],
             },
 
-            // UTXOs from age
+            // UTXOs from age - CohortBasic
             {
               name: "UTXOs from age",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "UTXOs from age",
-                  list: [...fromDate, cohortAllForComparison],
+                  list: fromDate,
                 }),
-                ...fromDate.map(mapUtxoCohorts),
+                ...fromDate.map(mapBasic),
               ],
             },
 
-            // UTXOs age ranges
+            // UTXOs age ranges - CohortWithPercentiles (percentiles only)
             {
               name: "UTXOs age Ranges",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderWithPercentiles(ctx, {
                   name: "Compare",
                   title: "UTXOs Age Range",
-                  list: [...dateRange, cohortAllForComparison],
+                  list: dateRange,
                 }),
-                ...dateRange.map(mapUtxoCohorts),
+                ...dateRange.map(mapWithPercentiles),
               ],
             },
 
-            // UTXOs under amounts
+            // UTXOs under amounts - CohortBasic
             {
               name: "UTXOs under amounts",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "UTXOs under amount",
-                  list: [...utxosUnderAmount, cohortAllForComparison],
+                  list: utxosUnderAmount,
                 }),
-                ...utxosUnderAmount.map(mapUtxoCohorts),
+                ...utxosUnderAmount.map(mapBasic),
               ],
             },
 
-            // UTXOs above amounts
+            // UTXOs above amounts - CohortBasic
             {
               name: "UTXOs Above Amounts",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "UTXOs Above Amount",
-                  list: [...utxosAboveAmount, cohortAllForComparison],
+                  list: utxosAboveAmount,
                 }),
-                ...utxosAboveAmount.map(mapUtxoCohorts),
+                ...utxosAboveAmount.map(mapBasic),
               ],
             },
 
-            // UTXOs between amounts
+            // UTXOs between amounts - CohortBasic
             {
               name: "UTXOs between amounts",
               tree: [
-                createUtxoCohortFolder(ctx, {
+                createCohortFolderBasic(ctx, {
                   name: "Compare",
                   title: "UTXOs between amounts",
-                  list: [...utxosAmountRanges, cohortAllForComparison],
+                  list: utxosAmountRanges,
                 }),
-                ...utxosAmountRanges.map(mapUtxoCohorts),
+                ...utxosAmountRanges.map(mapBasic),
               ],
             },
 

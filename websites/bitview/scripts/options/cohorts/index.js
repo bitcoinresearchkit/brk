@@ -6,7 +6,13 @@
 export { buildCohortData } from "./data.js";
 
 // Cohort folder builders (type-safe!)
-export { createUtxoCohortFolder, createAgeCohortFolder, createAmountCohortFolder } from "./utxo.js";
+export {
+  createCohortFolderAll,
+  createCohortFolderFull,
+  createCohortFolderWithAdjusted,
+  createCohortFolderWithPercentiles,
+  createCohortFolderBasic,
+} from "./utxo.js";
 export { createAddressCohortFolder } from "./address.js";
 
 // Shared helpers

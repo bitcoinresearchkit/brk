@@ -22,7 +22,7 @@
   ],
   "license": "MIT",
   "main": "index.js",
-  "name": "@bitcoinresearchkit/client",
+  "name": "brk-client",
   "repository": {
     "directory": "modules/brk-client",
     "type": "git",

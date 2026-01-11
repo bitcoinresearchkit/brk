@@ -5,7 +5,7 @@
  *
  * @import { Signal, Signals, Accessor } from "./signals.js";
  *
- * @import { BrkClient, CatalogTree_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Distribution_UtxoCohorts_All as AllUtxoPattern, _10yTo12yPattern as MinAgePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, SizePattern, FullnessPattern, FeeRatePattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, AddrCountPattern, CatalogTree_Blocks_Interval as IntervalPattern } from "./modules/brk-client/index.js"
+ * @import { BrkClient, CatalogTree_Distribution_UtxoCohorts as UtxoCohortTree, CatalogTree_Distribution_AddressCohorts as AddressCohortTree, CatalogTree_Distribution_UtxoCohorts_All as AllUtxoPattern, CatalogTree_Distribution_UtxoCohorts_Term_Short as ShortTermPattern, CatalogTree_Distribution_UtxoCohorts_Term_Long as LongTermPattern, _10yPattern as MaxAgePattern, _10yTo12yPattern as AgeRangePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, _100btcPattern as BasicUtxoPattern, _0satsPattern2 as EpochPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, SizePattern, FullnessPattern, FeeRatePattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, AddrCountPattern, CatalogTree_Blocks_Interval as IntervalPattern, _24hCoinbaseSumPattern as SupplyPattern, RelativePattern, RelativePattern2, RelativePattern5, CatalogTree_Distribution_UtxoCohorts_All_Relative as AllRelativePattern } from "./modules/brk-client/index.js"
  *
  * @import { Resources, MetricResource } from './resources.js'
  *
@@ -15,7 +15,9 @@
  *
  * @import { WebSockets } from "./utils/ws.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, UtxoCohortGroupObject, AddressCohortGroupObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, AgeCohortObject, AmountCohortObject, AgeCohortGroupObject, AmountCohortGroupObject } from "./options/partial.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, PartialContext, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupBasic, UtxoCohortGroupObject, AddressCohortGroupObject } from "./options/partial.js"
+ *
+ * @import { line as LineSeriesFn, baseline as BaselineSeriesFn, histogram as HistogramSeriesFn } from "./options/series.js"
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
  *
@@ -34,17 +36,22 @@
  * @typedef {keyof PoolIdToPoolName} PoolId
  *
  * Pattern unions by cohort type
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} UtxoCohortPattern
+ * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} UtxoCohortPattern
  * @typedef {AddressAmountPattern} AddressCohortPattern
  * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
  *
+ * Relative pattern capability types
+ * @typedef {RelativePattern | RelativePattern5} RelativeWithMarketCap
+ * @typedef {RelativePattern2 | RelativePattern5} RelativeWithOwnMarketCap
+ * @typedef {RelativePattern2 | RelativePattern5 | AllRelativePattern} RelativeWithOwnPnl
+ *
  * Capability-based pattern groupings (patterns that have specific properties)
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithRealizedPrice
+ * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithRealizedPrice
  * @typedef {AllUtxoPattern} PatternWithFullRealized
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithNupl
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithCostBasis
- * @typedef {AllUtxoPattern | MinAgePattern | UtxoAmountPattern} PatternWithActivity
- * @typedef {AllUtxoPattern | MinAgePattern} PatternWithCostBasisPercentiles
+ * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithNupl
+ * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithCostBasis
+ * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithActivity
+ * @typedef {AllUtxoPattern | AgeRangePattern} PatternWithCostBasisPercentiles
  *
  * Cohort objects with specific pattern capabilities
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithRealizedPrice }} CohortWithRealizedPrice

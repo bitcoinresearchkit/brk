@@ -1,5 +1,7 @@
 /** Constant helpers for creating price lines and reference lines */
 
+import { line } from "./series.js";
+
 /**
  * Get constant pattern by number dynamically from tree
  * Examples: 0 → constant0, 38.2 → constant382, -1 → constantMinus1
@@ -92,7 +94,7 @@ export function createPriceLines({ constants, colors, numbers, unit }) {
  * @param {boolean} [args.defaultActive]
  * @returns {FetchedLineSeriesBlueprint}
  */
-export function line({
+export function constantLine({
   colors,
   constant,
   name,
@@ -101,9 +103,9 @@ export function line({
   lineStyle,
   defaultActive,
 }) {
-  return {
+  return line({
     metric: constant,
-    title: name,
+    name,
     unit,
     defaultActive,
     color: color ?? colors.gray,
@@ -112,5 +114,5 @@ export function line({
       lastValueVisible: false,
       crosshairMarkerVisible: false,
     },
-  };
+  });
 }
