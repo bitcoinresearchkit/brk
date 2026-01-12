@@ -26,9 +26,10 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_info()).await
                     },
                     |op| {
-                        op.mempool_tag()
+                        op.id("get_mempool")
+                            .mempool_tag()
                             .summary("Mempool statistics")
-                            .description("Get current mempool statistics including transaction count, total vsize, and total fees.")
+                            .description("Get current mempool statistics including transaction count, total vsize, and total fees.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*")
                             .ok_response::<MempoolInfo>()
                             .server_error()
                     },
@@ -41,9 +42,10 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_txids()).await
                     },
                     |op| {
-                        op.mempool_tag()
+                        op.id("get_mempool_txids")
+                            .mempool_tag()
                             .summary("Mempool transaction IDs")
-                            .description("Get all transaction IDs currently in the mempool.")
+                            .description("Get all transaction IDs currently in the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*")
                             .ok_response::<Vec<Txid>>()
                             .server_error()
                     },
@@ -56,9 +58,10 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         state.cached_json(&headers, CacheStrategy::MaxAge(3), |q| q.recommended_fees()).await
                     },
                     |op| {
-                        op.mempool_tag()
+                        op.id("get_recommended_fees")
+                            .mempool_tag()
                             .summary("Recommended fees")
-                            .description("Get recommended fee rates for different confirmation targets based on current mempool state.")
+                            .description("Get recommended fee rates for different confirmation targets based on current mempool state.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*")
                             .ok_response::<RecommendedFees>()
                             .server_error()
                     },
@@ -71,9 +74,10 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         state.cached_json(&headers, CacheStrategy::MaxAge(5), |q| q.mempool_blocks()).await
                     },
                     |op| {
-                        op.mempool_tag()
+                        op.id("get_mempool_blocks")
+                            .mempool_tag()
                             .summary("Projected mempool blocks")
-                            .description("Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.")
+                            .description("Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*")
                             .ok_response::<Vec<MempoolBlock>>()
                             .server_error()
                     },

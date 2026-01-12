@@ -8,7 +8,7 @@ use brk_types::{
 use serde_json::Value;
 use tracing::info;
 
-use crate::{PriceSource, default_retry};
+use crate::{PriceSource, check_response, default_retry};
 
 #[derive(Default, Clone)]
 #[allow(clippy::upper_case_acronyms)]
@@ -49,8 +49,8 @@ impl BRK {
             );
             info!("Fetching {url} ...");
 
-            let body: Value =
-                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
+            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
                 .ok_or(Error::Parse("Expected JSON array".into()))?
@@ -90,8 +90,8 @@ impl BRK {
             );
             info!("Fetching {url}...");
 
-            let body: Value =
-                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
+            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
                 .ok_or(Error::Parse("Expected JSON array".into()))?

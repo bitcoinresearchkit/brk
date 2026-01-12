@@ -14,7 +14,7 @@ Requirements:
 - ~400 GB disk space
 - 12+ GB RAM recommended
 
-See the [CLI README](../crates/brk_cli/README.md) for configuration options.
+See the [CLI documentation](https://docs.rs/brk_cli) for configuration options.
 
 ## Professional Hosting
 

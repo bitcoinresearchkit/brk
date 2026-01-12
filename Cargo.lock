@@ -489,6 +489,7 @@ dependencies = [
  "brk_types",
  "minreq",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

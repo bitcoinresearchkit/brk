@@ -60,7 +60,7 @@ fn main() -> brk_client::Result<()> {
     println!("Last 3 circulating supply values: {:?}", circulating);
 
     // Using generic metric fetching
-    let metricdata = client.get_metric_by_index(
+    let metricdata = client.get_metric(
         Metric::from("price_close"),
         Index::DateIndex,
         Some(-3),

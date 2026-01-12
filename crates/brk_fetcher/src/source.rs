@@ -98,8 +98,8 @@ impl<T: PriceSource> TrackedSource<T> {
                         self.name(),
                         self.cooldown.as_secs()
                     );
-                    self.unhealthy_since = Some(Instant::now());
                 }
+                self.unhealthy_since = Some(Instant::now());
             }
             Err(_) => {} // Transient - no change
         }
@@ -137,5 +137,6 @@ impl<T: PriceSource> PriceSource for TrackedSource<T> {
 
     fn clear(&mut self) {
         self.source.clear();
+        self.reset_health();
     }
 }

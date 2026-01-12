@@ -124,6 +124,9 @@ pub enum Error {
     #[error("Fetch failed after retries: {0}")]
     FetchFailed(String),
 
+    #[error("HTTP {status}: {url}")]
+    HttpStatus { status: u16, url: String },
+
     #[error("Version mismatch at {path:?}: expected {expected}, found {found}")]
     VersionMismatch {
         path: PathBuf,
@@ -141,6 +144,8 @@ impl Error {
         match self {
             Error::Minreq(e) => is_minreq_error_permanent(e),
             Error::IO(e) => is_io_error_permanent(e),
+            // 403 Forbidden suggests IP/geo blocking; 429 and 5xx are transient
+            Error::HttpStatus { status, .. } => *status == 403,
             // Other errors are data/parsing related, not network - treat as transient
             _ => false,
         }

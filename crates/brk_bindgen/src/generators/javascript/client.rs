@@ -23,15 +23,22 @@ pub fn generate_base_client(output: &mut String) {
  * @typedef {{Object}} BrkClientOptions
  * @property {{string}} baseUrl - Base URL for the API
  * @property {{number}} [timeout] - Request timeout in milliseconds
+ * @property {{string|boolean}} [cache] - Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
  */
 
 const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
 const _runIdle = (/** @type {{VoidFunction}} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
+const _defaultCacheName = '__BRK_CLIENT__';
 
-/** @type {{Promise<Cache | null>}} */
-const _cachePromise = _isBrowser
-  ? caches.open('__BRK_CLIENT__').catch(() => null)
-  : Promise.resolve(null);
+/**
+ * @param {{string|boolean|undefined}} cache
+ * @returns {{Promise<Cache | null>}}
+ */
+const _openCache = (cache) => {{
+  if (!_isBrowser || cache === false) return Promise.resolve(null);
+  const name = typeof cache === 'string' ? cache : _defaultCacheName;
+  return caches.open(name).catch(() => null);
+}};
 
 /**
  * Custom error class for BRK client errors
@@ -112,6 +119,8 @@ class BrkClientBase {{
     const isString = typeof options === 'string';
     this.baseUrl = isString ? options : options.baseUrl;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
+    /** @type {{Promise<Cache | null>}} */
+    this._cachePromise = _openCache(isString ? undefined : options.cache);
   }}
 
   /**
@@ -136,7 +145,7 @@ class BrkClientBase {{
   async getJson(path, onUpdate) {{
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     const url = `${{base}}${{path}}`;
-    const cache = await _cachePromise;
+    const cache = await this._cachePromise;
     const cachedRes = await cache?.match(url);
     const cachedJson = cachedRes ? await cachedRes.json() : null;
 

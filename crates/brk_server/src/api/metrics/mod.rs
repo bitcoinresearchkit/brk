@@ -37,10 +37,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metrics_catalog().clone())).await
                 },
                 |op| op
+                    .id("get_metrics_tree")
                     .metrics_tag()
                     .summary("Metrics catalog")
                     .description(
-                        "Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure."
+                        "Returns the complete hierarchical catalog of available metrics organized as a tree structure. \
+                        Metrics are grouped by categories and subcategories."
                     )
                     .ok_response::<TreeNode>()
                     .not_modified(),
@@ -56,9 +58,10 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.metric_count())).await
                 },
                 |op| op
+                    .id("get_metrics_count")
                     .metrics_tag()
                     .summary("Metric count")
-                    .description("Current metric count")
+                    .description("Returns the number of metrics available per index type.")
                     .ok_response::<Vec<MetricCount>>()
                     .not_modified(),
             ),
@@ -73,6 +76,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.indexes().to_vec())).await
                 },
                 |op| op
+                    .id("get_indexes")
                     .metrics_tag()
                     .summary("List available indexes")
                     .description(
@@ -93,9 +97,10 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.metrics(pagination))).await
                 },
                 |op| op
+                    .id("list_metrics")
                     .metrics_tag()
                     .summary("Metrics list")
-                    .description("Paginated list of available metrics")
+                    .description("Paginated flat list of all available metric names. Use `page` query param for pagination.")
                     .ok_response::<PaginatedMetrics>()
                     .not_modified(),
             ),
@@ -112,6 +117,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, move |q| Ok(q.match_metric(&path.metric, query.limit))).await
                 },
                 |op| op
+                    .id("search_metrics")
                     .metrics_tag()
                     .summary("Search metrics")
                     .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
@@ -136,10 +142,11 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     }).await
                 },
                 |op| op
+                    .id("get_metric_info")
                     .metrics_tag()
                     .summary("Get supported indexes for a metric")
                     .description(
-                        "Returns the list of indexes are supported by the specified metric. \
+                        "Returns the list of indexes supported by the specified metric. \
                         For example, `realized_price` might be available on dateindex, weekindex, and monthindex."
                     )
                     .ok_response::<Vec<Index>>()
@@ -166,6 +173,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     .await
                 },
                 |op| op
+                    .id("get_metric")
                     .metrics_tag()
                     .summary("Get metric data")
                     .description(
@@ -183,11 +191,12 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             get_with(
                 bulk::handler,
                 |op| op
+                    .id("get_metrics")
                     .metrics_tag()
                     .summary("Bulk metric data")
                     .description(
                         "Fetch multiple metrics in a single request. Supports filtering by index and date range. \
-                        Returns an array of MetricData objects."
+                        Returns an array of MetricData objects. For a single metric, use `get_metric` instead."
                     )
                     .ok_response::<Vec<MetricData>>()
                     .csv_response()

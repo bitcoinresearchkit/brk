@@ -2875,56 +2875,6 @@ impl Price111dSmaPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct PercentilesPattern {
-    pub cost_basis_pct05: MetricPattern4<Dollars>,
-    pub cost_basis_pct10: MetricPattern4<Dollars>,
-    pub cost_basis_pct15: MetricPattern4<Dollars>,
-    pub cost_basis_pct20: MetricPattern4<Dollars>,
-    pub cost_basis_pct25: MetricPattern4<Dollars>,
-    pub cost_basis_pct30: MetricPattern4<Dollars>,
-    pub cost_basis_pct35: MetricPattern4<Dollars>,
-    pub cost_basis_pct40: MetricPattern4<Dollars>,
-    pub cost_basis_pct45: MetricPattern4<Dollars>,
-    pub cost_basis_pct50: MetricPattern4<Dollars>,
-    pub cost_basis_pct55: MetricPattern4<Dollars>,
-    pub cost_basis_pct60: MetricPattern4<Dollars>,
-    pub cost_basis_pct65: MetricPattern4<Dollars>,
-    pub cost_basis_pct70: MetricPattern4<Dollars>,
-    pub cost_basis_pct75: MetricPattern4<Dollars>,
-    pub cost_basis_pct80: MetricPattern4<Dollars>,
-    pub cost_basis_pct85: MetricPattern4<Dollars>,
-    pub cost_basis_pct90: MetricPattern4<Dollars>,
-    pub cost_basis_pct95: MetricPattern4<Dollars>,
-}
-
-impl PercentilesPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            cost_basis_pct05: MetricPattern4::new(client.clone(), _m(&acc, "pct05")),
-            cost_basis_pct10: MetricPattern4::new(client.clone(), _m(&acc, "pct10")),
-            cost_basis_pct15: MetricPattern4::new(client.clone(), _m(&acc, "pct15")),
-            cost_basis_pct20: MetricPattern4::new(client.clone(), _m(&acc, "pct20")),
-            cost_basis_pct25: MetricPattern4::new(client.clone(), _m(&acc, "pct25")),
-            cost_basis_pct30: MetricPattern4::new(client.clone(), _m(&acc, "pct30")),
-            cost_basis_pct35: MetricPattern4::new(client.clone(), _m(&acc, "pct35")),
-            cost_basis_pct40: MetricPattern4::new(client.clone(), _m(&acc, "pct40")),
-            cost_basis_pct45: MetricPattern4::new(client.clone(), _m(&acc, "pct45")),
-            cost_basis_pct50: MetricPattern4::new(client.clone(), _m(&acc, "pct50")),
-            cost_basis_pct55: MetricPattern4::new(client.clone(), _m(&acc, "pct55")),
-            cost_basis_pct60: MetricPattern4::new(client.clone(), _m(&acc, "pct60")),
-            cost_basis_pct65: MetricPattern4::new(client.clone(), _m(&acc, "pct65")),
-            cost_basis_pct70: MetricPattern4::new(client.clone(), _m(&acc, "pct70")),
-            cost_basis_pct75: MetricPattern4::new(client.clone(), _m(&acc, "pct75")),
-            cost_basis_pct80: MetricPattern4::new(client.clone(), _m(&acc, "pct80")),
-            cost_basis_pct85: MetricPattern4::new(client.clone(), _m(&acc, "pct85")),
-            cost_basis_pct90: MetricPattern4::new(client.clone(), _m(&acc, "pct90")),
-            cost_basis_pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct ActivePriceRatioPattern {
     pub ratio: MetricPattern4<StoredF32>,
     pub ratio_1m_sma: MetricPattern4<StoredF32>,
@@ -2970,6 +2920,56 @@ impl ActivePriceRatioPattern {
             ratio_pct99: MetricPattern4::new(client.clone(), _m(&acc, "pct99")),
             ratio_pct99_usd: MetricPattern4::new(client.clone(), _m(&acc, "pct99_usd")),
             ratio_sd: Ratio1ySdPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct PercentilesPattern {
+    pub cost_basis_pct05: MetricPattern4<Dollars>,
+    pub cost_basis_pct10: MetricPattern4<Dollars>,
+    pub cost_basis_pct15: MetricPattern4<Dollars>,
+    pub cost_basis_pct20: MetricPattern4<Dollars>,
+    pub cost_basis_pct25: MetricPattern4<Dollars>,
+    pub cost_basis_pct30: MetricPattern4<Dollars>,
+    pub cost_basis_pct35: MetricPattern4<Dollars>,
+    pub cost_basis_pct40: MetricPattern4<Dollars>,
+    pub cost_basis_pct45: MetricPattern4<Dollars>,
+    pub cost_basis_pct50: MetricPattern4<Dollars>,
+    pub cost_basis_pct55: MetricPattern4<Dollars>,
+    pub cost_basis_pct60: MetricPattern4<Dollars>,
+    pub cost_basis_pct65: MetricPattern4<Dollars>,
+    pub cost_basis_pct70: MetricPattern4<Dollars>,
+    pub cost_basis_pct75: MetricPattern4<Dollars>,
+    pub cost_basis_pct80: MetricPattern4<Dollars>,
+    pub cost_basis_pct85: MetricPattern4<Dollars>,
+    pub cost_basis_pct90: MetricPattern4<Dollars>,
+    pub cost_basis_pct95: MetricPattern4<Dollars>,
+}
+
+impl PercentilesPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cost_basis_pct05: MetricPattern4::new(client.clone(), _m(&acc, "pct05")),
+            cost_basis_pct10: MetricPattern4::new(client.clone(), _m(&acc, "pct10")),
+            cost_basis_pct15: MetricPattern4::new(client.clone(), _m(&acc, "pct15")),
+            cost_basis_pct20: MetricPattern4::new(client.clone(), _m(&acc, "pct20")),
+            cost_basis_pct25: MetricPattern4::new(client.clone(), _m(&acc, "pct25")),
+            cost_basis_pct30: MetricPattern4::new(client.clone(), _m(&acc, "pct30")),
+            cost_basis_pct35: MetricPattern4::new(client.clone(), _m(&acc, "pct35")),
+            cost_basis_pct40: MetricPattern4::new(client.clone(), _m(&acc, "pct40")),
+            cost_basis_pct45: MetricPattern4::new(client.clone(), _m(&acc, "pct45")),
+            cost_basis_pct50: MetricPattern4::new(client.clone(), _m(&acc, "pct50")),
+            cost_basis_pct55: MetricPattern4::new(client.clone(), _m(&acc, "pct55")),
+            cost_basis_pct60: MetricPattern4::new(client.clone(), _m(&acc, "pct60")),
+            cost_basis_pct65: MetricPattern4::new(client.clone(), _m(&acc, "pct65")),
+            cost_basis_pct70: MetricPattern4::new(client.clone(), _m(&acc, "pct70")),
+            cost_basis_pct75: MetricPattern4::new(client.clone(), _m(&acc, "pct75")),
+            cost_basis_pct80: MetricPattern4::new(client.clone(), _m(&acc, "pct80")),
+            cost_basis_pct85: MetricPattern4::new(client.clone(), _m(&acc, "pct85")),
+            cost_basis_pct90: MetricPattern4::new(client.clone(), _m(&acc, "pct90")),
+            cost_basis_pct95: MetricPattern4::new(client.clone(), _m(&acc, "pct95")),
         }
     }
 }
@@ -3391,6 +3391,40 @@ impl<T: DeserializeOwned> PeriodAveragePricePattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct FullnessPattern<T> {
+    pub average: MetricPattern2<T>,
+    pub base: MetricPattern11<T>,
+    pub cumulative: MetricPattern2<T>,
+    pub max: MetricPattern2<T>,
+    pub median: MetricPattern6<T>,
+    pub min: MetricPattern2<T>,
+    pub pct10: MetricPattern6<T>,
+    pub pct25: MetricPattern6<T>,
+    pub pct75: MetricPattern6<T>,
+    pub pct90: MetricPattern6<T>,
+    pub sum: MetricPattern2<T>,
+}
+
+impl<T: DeserializeOwned> FullnessPattern<T> {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            average: MetricPattern2::new(client.clone(), _m(&acc, "average")),
+            base: MetricPattern11::new(client.clone(), acc.clone()),
+            cumulative: MetricPattern2::new(client.clone(), _m(&acc, "cumulative")),
+            max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
+            median: MetricPattern6::new(client.clone(), _m(&acc, "median")),
+            min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
+            pct10: MetricPattern6::new(client.clone(), _m(&acc, "pct10")),
+            pct25: MetricPattern6::new(client.clone(), _m(&acc, "pct25")),
+            pct75: MetricPattern6::new(client.clone(), _m(&acc, "pct75")),
+            pct90: MetricPattern6::new(client.clone(), _m(&acc, "pct90")),
+            sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct ClassAveragePricePattern<T> {
     pub _2015: MetricPattern4<T>,
     pub _2016: MetricPattern4<T>,
@@ -3445,40 +3479,6 @@ impl<T: DeserializeOwned> DollarsPattern<T> {
             average: MetricPattern2::new(client.clone(), _m(&acc, "average")),
             base: MetricPattern11::new(client.clone(), acc.clone()),
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
-            median: MetricPattern6::new(client.clone(), _m(&acc, "median")),
-            min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
-            pct10: MetricPattern6::new(client.clone(), _m(&acc, "pct10")),
-            pct25: MetricPattern6::new(client.clone(), _m(&acc, "pct25")),
-            pct75: MetricPattern6::new(client.clone(), _m(&acc, "pct75")),
-            pct90: MetricPattern6::new(client.clone(), _m(&acc, "pct90")),
-            sum: MetricPattern2::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct FullnessPattern<T> {
-    pub average: MetricPattern2<T>,
-    pub base: MetricPattern11<T>,
-    pub cumulative: MetricPattern2<T>,
-    pub max: MetricPattern2<T>,
-    pub median: MetricPattern6<T>,
-    pub min: MetricPattern2<T>,
-    pub pct10: MetricPattern6<T>,
-    pub pct25: MetricPattern6<T>,
-    pub pct75: MetricPattern6<T>,
-    pub pct90: MetricPattern6<T>,
-    pub sum: MetricPattern2<T>,
-}
-
-impl<T: DeserializeOwned> FullnessPattern<T> {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            average: MetricPattern2::new(client.clone(), _m(&acc, "average")),
-            base: MetricPattern11::new(client.clone(), acc.clone()),
-            cumulative: MetricPattern2::new(client.clone(), _m(&acc, "cumulative")),
             max: MetricPattern2::new(client.clone(), _m(&acc, "max")),
             median: MetricPattern6::new(client.clone(), _m(&acc, "median")),
             min: MetricPattern2::new(client.clone(), _m(&acc, "min")),
@@ -3732,6 +3732,93 @@ impl _0satsPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct _10yTo12yPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern2,
+    pub outputs: OutputsPattern,
+    pub realized: RealizedPattern2,
+    pub relative: RelativePattern2,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yTo12yPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern2::new(client.clone(), acc.clone()),
+            outputs: OutputsPattern::new(client.clone(), acc.clone()),
+            realized: RealizedPattern2::new(client.clone(), acc.clone()),
+            relative: RelativePattern2::new(client.clone(), acc.clone()),
+            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _10yPattern {
+    pub activity: ActivityPattern2,
+    pub cost_basis: CostBasisPattern,
+    pub outputs: OutputsPattern,
+    pub realized: RealizedPattern4,
+    pub relative: RelativePattern,
+    pub supply: SupplyPattern2,
+    pub unrealized: UnrealizedPattern,
+}
+
+impl _10yPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: ActivityPattern2::new(client.clone(), acc.clone()),
+            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
+            outputs: OutputsPattern::new(client.clone(), acc.clone()),
+            realized: RealizedPattern4::new(client.clone(), acc.clone()),
+            relative: RelativePattern::new(client.clone(), acc.clone()),
+            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
+            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct UnrealizedPattern {
+    pub neg_unrealized_loss: MetricPattern1<Dollars>,
+    pub net_unrealized_pnl: MetricPattern1<Dollars>,
+    pub supply_in_loss: ActiveSupplyPattern,
+    pub supply_in_profit: ActiveSupplyPattern,
+    pub total_unrealized_pnl: MetricPattern1<Dollars>,
+    pub unrealized_loss: MetricPattern1<Dollars>,
+    pub unrealized_profit: MetricPattern1<Dollars>,
+}
+
+impl UnrealizedPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            neg_unrealized_loss: MetricPattern1::new(
+                client.clone(),
+                _m(&acc, "neg_unrealized_loss"),
+            ),
+            net_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
+            supply_in_loss: ActiveSupplyPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
+            supply_in_profit: ActiveSupplyPattern::new(
+                client.clone(),
+                _m(&acc, "supply_in_profit"),
+            ),
+            total_unrealized_pnl: MetricPattern1::new(
+                client.clone(),
+                _m(&acc, "total_unrealized_pnl"),
+            ),
+            unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss")),
+            unrealized_profit: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct _0satsPattern2 {
     pub activity: ActivityPattern2,
     pub cost_basis: CostBasisPattern,
@@ -3776,32 +3863,6 @@ impl _100btcPattern {
             cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
             outputs: OutputsPattern::new(client.clone(), acc.clone()),
             realized: RealizedPattern::new(client.clone(), acc.clone()),
-            relative: RelativePattern::new(client.clone(), acc.clone()),
-            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _10yPattern {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern,
-    pub outputs: OutputsPattern,
-    pub realized: RealizedPattern4,
-    pub relative: RelativePattern,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern::new(client.clone(), acc.clone()),
-            outputs: OutputsPattern::new(client.clone(), acc.clone()),
-            realized: RealizedPattern4::new(client.clone(), acc.clone()),
             relative: RelativePattern::new(client.clone(), acc.clone()),
             supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
             unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
@@ -3885,67 +3946,6 @@ impl PeriodCagrPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _10yTo12yPattern {
-    pub activity: ActivityPattern2,
-    pub cost_basis: CostBasisPattern2,
-    pub outputs: OutputsPattern,
-    pub realized: RealizedPattern2,
-    pub relative: RelativePattern2,
-    pub supply: SupplyPattern2,
-    pub unrealized: UnrealizedPattern,
-}
-
-impl _10yTo12yPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: ActivityPattern2::new(client.clone(), acc.clone()),
-            cost_basis: CostBasisPattern2::new(client.clone(), acc.clone()),
-            outputs: OutputsPattern::new(client.clone(), acc.clone()),
-            realized: RealizedPattern2::new(client.clone(), acc.clone()),
-            relative: RelativePattern2::new(client.clone(), acc.clone()),
-            supply: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
-            unrealized: UnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct UnrealizedPattern {
-    pub neg_unrealized_loss: MetricPattern1<Dollars>,
-    pub net_unrealized_pnl: MetricPattern1<Dollars>,
-    pub supply_in_loss: ActiveSupplyPattern,
-    pub supply_in_profit: ActiveSupplyPattern,
-    pub total_unrealized_pnl: MetricPattern1<Dollars>,
-    pub unrealized_loss: MetricPattern1<Dollars>,
-    pub unrealized_profit: MetricPattern1<Dollars>,
-}
-
-impl UnrealizedPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            neg_unrealized_loss: MetricPattern1::new(
-                client.clone(),
-                _m(&acc, "neg_unrealized_loss"),
-            ),
-            net_unrealized_pnl: MetricPattern1::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
-            supply_in_loss: ActiveSupplyPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
-            supply_in_profit: ActiveSupplyPattern::new(
-                client.clone(),
-                _m(&acc, "supply_in_profit"),
-            ),
-            total_unrealized_pnl: MetricPattern1::new(
-                client.clone(),
-                _m(&acc, "total_unrealized_pnl"),
-            ),
-            unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss")),
-            unrealized_profit: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_profit")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct ActivityPattern2 {
     pub coinblocks_destroyed: BlockCountPattern<StoredF64>,
     pub coindays_destroyed: BlockCountPattern<StoredF64>,
@@ -3997,21 +3997,19 @@ impl<T: DeserializeOwned> SplitPattern2<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CostBasisPattern2 {
-    pub max: MetricPattern1<Dollars>,
-    pub min: MetricPattern1<Dollars>,
-    pub percentiles: PercentilesPattern,
+pub struct UnclaimedRewardsPattern {
+    pub bitcoin: BitcoinPattern<Bitcoin>,
+    pub dollars: BlockCountPattern<Dollars>,
+    pub sats: BlockCountPattern<Sats>,
 }
 
-impl CostBasisPattern2 {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+impl UnclaimedRewardsPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            max: MetricPattern1::new(client.clone(), format!("{base_path}_max")),
-            min: MetricPattern1::new(client.clone(), format!("{base_path}_min")),
-            percentiles: PercentilesPattern::new(
-                client.clone(),
-                format!("{base_path}_percentiles"),
-            ),
+            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
+            dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
+            sats: BlockCountPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -4030,42 +4028,6 @@ impl ActiveSupplyPattern {
             bitcoin: MetricPattern1::new(client.clone(), _m(&acc, "btc")),
             dollars: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
             sats: MetricPattern1::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct _2015Pattern {
-    pub bitcoin: MetricPattern4<Bitcoin>,
-    pub dollars: MetricPattern4<Dollars>,
-    pub sats: MetricPattern4<Sats>,
-}
-
-impl _2015Pattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
-            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
-            sats: MetricPattern4::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct CoinbasePattern2 {
-    pub bitcoin: BlockCountPattern<Bitcoin>,
-    pub dollars: BlockCountPattern<Dollars>,
-    pub sats: BlockCountPattern<Sats>,
-}
-
-impl CoinbasePattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            bitcoin: BlockCountPattern::new(client.clone(), _m(&acc, "btc")),
-            dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
-            sats: BlockCountPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -4107,19 +4069,57 @@ impl SegwitAdoptionPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct UnclaimedRewardsPattern {
-    pub bitcoin: BitcoinPattern<Bitcoin>,
+pub struct _2015Pattern {
+    pub bitcoin: MetricPattern4<Bitcoin>,
+    pub dollars: MetricPattern4<Dollars>,
+    pub sats: MetricPattern4<Sats>,
+}
+
+impl _2015Pattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bitcoin: MetricPattern4::new(client.clone(), _m(&acc, "btc")),
+            dollars: MetricPattern4::new(client.clone(), _m(&acc, "usd")),
+            sats: MetricPattern4::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoinbasePattern2 {
+    pub bitcoin: BlockCountPattern<Bitcoin>,
     pub dollars: BlockCountPattern<Dollars>,
     pub sats: BlockCountPattern<Sats>,
 }
 
-impl UnclaimedRewardsPattern {
+impl CoinbasePattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            bitcoin: BitcoinPattern::new(client.clone(), _m(&acc, "btc")),
+            bitcoin: BlockCountPattern::new(client.clone(), _m(&acc, "btc")),
             dollars: BlockCountPattern::new(client.clone(), _m(&acc, "usd")),
             sats: BlockCountPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CostBasisPattern2 {
+    pub max: MetricPattern1<Dollars>,
+    pub min: MetricPattern1<Dollars>,
+    pub percentiles: PercentilesPattern,
+}
+
+impl CostBasisPattern2 {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            max: MetricPattern1::new(client.clone(), format!("{base_path}_max")),
+            min: MetricPattern1::new(client.clone(), format!("{base_path}_min")),
+            percentiles: PercentilesPattern::new(
+                client.clone(),
+                format!("{base_path}_percentiles"),
+            ),
         }
     }
 }
@@ -4157,6 +4157,22 @@ impl _1dReturns1mSdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct SupplyPattern2 {
+    pub halved: ActiveSupplyPattern,
+    pub total: ActiveSupplyPattern,
+}
+
+impl SupplyPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            halved: ActiveSupplyPattern::new(client.clone(), _m(&acc, "half")),
+            total: ActiveSupplyPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct RelativePattern4 {
     pub supply_in_loss_rel_to_own_supply: MetricPattern1<StoredF64>,
     pub supply_in_profit_rel_to_own_supply: MetricPattern1<StoredF64>,
@@ -4174,37 +4190,6 @@ impl RelativePattern4 {
                 client.clone(),
                 _m(&acc, "profit_rel_to_own_supply"),
             ),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
-    pub halved: ActiveSupplyPattern,
-    pub total: ActiveSupplyPattern,
-}
-
-impl SupplyPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            halved: ActiveSupplyPattern::new(client.clone(), _m(&acc, "half")),
-            total: ActiveSupplyPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SatsPattern<T> {
-    pub ohlc: MetricPattern1<T>,
-    pub split: SplitPattern2<T>,
-}
-
-impl<T: DeserializeOwned> SatsPattern<T> {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            ohlc: MetricPattern1::new(client.clone(), format!("{base_path}_ohlc")),
-            split: SplitPattern2::new(client.clone(), format!("{base_path}_split")),
         }
     }
 }
@@ -4237,6 +4222,21 @@ impl<T: DeserializeOwned> BlockCountPattern<T> {
         Self {
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
             sum: MetricPattern1::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct SatsPattern<T> {
+    pub ohlc: MetricPattern1<T>,
+    pub split: SplitPattern2<T>,
+}
+
+impl<T: DeserializeOwned> SatsPattern<T> {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            ohlc: MetricPattern1::new(client.clone(), format!("{base_path}_ohlc")),
+            split: SplitPattern2::new(client.clone(), format!("{base_path}_split")),
         }
     }
 }
@@ -8128,7 +8128,11 @@ impl BrkClient {
 
     /// Address information
     ///
-    /// Retrieve comprehensive information about a Bitcoin address including balance, transaction history, UTXOs, and estimated investment metrics. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR, etc.).
+    /// Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
+    ///
+    /// Endpoint: `GET /api/address/{address}`
     pub fn get_address(&self, address: Address) -> Result<AddressStats> {
         self.base.get_json(&format!("/api/address/{address}"))
     }
@@ -8136,6 +8140,10 @@ impl BrkClient {
     /// Address transaction IDs
     ///
     /// Get transaction IDs for an address, newest first. Use after_txid for pagination.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs`
     pub fn get_address_txs(
         &self,
         address: Address,
@@ -8161,7 +8169,11 @@ impl BrkClient {
     /// Address confirmed transactions
     ///
     /// Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
-    pub fn get_address_txs_chain(
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/chain`
+    pub fn get_address_confirmed_txs(
         &self,
         address: Address,
         after_txid: Option<&str>,
@@ -8186,69 +8198,101 @@ impl BrkClient {
     /// Address mempool transactions
     ///
     /// Get unconfirmed transaction IDs for an address from the mempool (up to 50).
-    pub fn get_address_txs_mempool(&self, address: Address) -> Result<Vec<Txid>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/mempool`
+    pub fn get_address_mempool_txs(&self, address: Address) -> Result<Vec<Txid>> {
         self.base
             .get_json(&format!("/api/address/{address}/txs/mempool"))
     }
 
     /// Address UTXOs
     ///
-    /// Get unspent transaction outputs for an address.
-    pub fn get_address_utxo(&self, address: Address) -> Result<Vec<Utxo>> {
+    /// Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/utxo`
+    pub fn get_address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {
         self.base.get_json(&format!("/api/address/{address}/utxo"))
     }
 
     /// Block by height
     ///
     /// Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
-    pub fn get_block_height(&self, height: Height) -> Result<BlockInfo> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
+    ///
+    /// Endpoint: `GET /api/block-height/{height}`
+    pub fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
         self.base.get_json(&format!("/api/block-height/{height}"))
     }
 
     /// Block information
     ///
     /// Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
-    pub fn get_block_by_hash(&self, hash: BlockHash) -> Result<BlockInfo> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}`
+    pub fn get_block(&self, hash: BlockHash) -> Result<BlockInfo> {
         self.base.get_json(&format!("/api/block/{hash}"))
     }
 
     /// Raw block
     ///
     /// Returns the raw block data in binary format.
-    pub fn get_block_by_hash_raw(&self, hash: BlockHash) -> Result<Vec<f64>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/raw`
+    pub fn get_block_raw(&self, hash: BlockHash) -> Result<Vec<f64>> {
         self.base.get_json(&format!("/api/block/{hash}/raw"))
     }
 
     /// Block status
     ///
     /// Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
-    pub fn get_block_by_hash_status(&self, hash: BlockHash) -> Result<BlockStatus> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/status`
+    pub fn get_block_status(&self, hash: BlockHash) -> Result<BlockStatus> {
         self.base.get_json(&format!("/api/block/{hash}/status"))
     }
 
     /// Transaction ID at index
     ///
     /// Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
-    pub fn get_block_by_hash_txid_by_index(&self, hash: BlockHash, index: TxIndex) -> Result<Txid> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txid/{index}`
+    pub fn get_block_txid(&self, hash: BlockHash, index: TxIndex) -> Result<Txid> {
         self.base
             .get_json(&format!("/api/block/{hash}/txid/{index}"))
     }
 
     /// Block transaction IDs
     ///
-    /// Retrieve all transaction IDs in a block by block hash.
-    pub fn get_block_by_hash_txids(&self, hash: BlockHash) -> Result<Vec<Txid>> {
+    /// Retrieve all transaction IDs in a block. Returns an array of txids in block order.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txids`
+    pub fn get_block_txids(&self, hash: BlockHash) -> Result<Vec<Txid>> {
         self.base.get_json(&format!("/api/block/{hash}/txids"))
     }
 
     /// Block transactions (paginated)
     ///
     /// Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
-    pub fn get_block_by_hash_txs_by_start_index(
-        &self,
-        hash: BlockHash,
-        start_index: TxIndex,
-    ) -> Result<Vec<Transaction>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txs/{start_index}`
+    pub fn get_block_txs(&self, hash: BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
         self.base
             .get_json(&format!("/api/block/{hash}/txs/{start_index}"))
     }
@@ -8256,6 +8300,10 @@ impl BrkClient {
     /// Recent blocks
     ///
     /// Retrieve the last 10 blocks. Returns block metadata for each block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+    ///
+    /// Endpoint: `GET /api/blocks`
     pub fn get_blocks(&self) -> Result<Vec<BlockInfo>> {
         self.base.get_json(&format!("/api/blocks"))
     }
@@ -8263,35 +8311,51 @@ impl BrkClient {
     /// Blocks from height
     ///
     /// Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
-    pub fn get_blocks_by_height(&self, height: Height) -> Result<Vec<BlockInfo>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+    ///
+    /// Endpoint: `GET /api/blocks/{height}`
+    pub fn get_blocks_from_height(&self, height: Height) -> Result<Vec<BlockInfo>> {
         self.base.get_json(&format!("/api/blocks/{height}"))
     }
 
     /// Mempool statistics
     ///
     /// Get current mempool statistics including transaction count, total vsize, and total fees.
-    pub fn get_mempool_info(&self) -> Result<MempoolInfo> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
+    ///
+    /// Endpoint: `GET /api/mempool/info`
+    pub fn get_mempool(&self) -> Result<MempoolInfo> {
         self.base.get_json(&format!("/api/mempool/info"))
     }
 
     /// Mempool transaction IDs
     ///
     /// Get all transaction IDs currently in the mempool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
+    ///
+    /// Endpoint: `GET /api/mempool/txids`
     pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
         self.base.get_json(&format!("/api/mempool/txids"))
     }
 
     /// Get supported indexes for a metric
     ///
-    /// Returns the list of indexes are supported by the specified metric. For example, `realized_price` might be available on dateindex, weekindex, and monthindex.
-    pub fn get_metric(&self, metric: Metric) -> Result<Vec<Index>> {
+    /// Returns the list of indexes supported by the specified metric. For example, `realized_price` might be available on dateindex, weekindex, and monthindex.
+    ///
+    /// Endpoint: `GET /api/metric/{metric}`
+    pub fn get_metric_info(&self, metric: Metric) -> Result<Vec<Index>> {
         self.base.get_json(&format!("/api/metric/{metric}"))
     }
 
     /// Get metric data
     ///
     /// Fetch data for a specific metric at the given index. Use query parameters to filter by date range and format (json/csv).
-    pub fn get_metric_by_index(
+    ///
+    /// Endpoint: `GET /api/metric/{metric}/{index}`
+    pub fn get_metric(
         &self,
         metric: Metric,
         index: Index,
@@ -8332,15 +8396,19 @@ impl BrkClient {
 
     /// Metrics catalog
     ///
-    /// Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories. Best viewed in an interactive JSON viewer (e.g., Firefox's built-in JSON viewer) for easy navigation of the nested structure.
-    pub fn get_metrics(&self) -> Result<TreeNode> {
+    /// Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories.
+    ///
+    /// Endpoint: `GET /api/metrics`
+    pub fn get_metrics_tree(&self) -> Result<TreeNode> {
         self.base.get_json(&format!("/api/metrics"))
     }
 
     /// Bulk metric data
     ///
-    /// Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects.
-    pub fn get_metrics_bulk(
+    /// Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects. For a single metric, use `get_metric` instead.
+    ///
+    /// Endpoint: `GET /api/metrics/bulk`
+    pub fn get_metrics(
         &self,
         metrics: Metrics,
         index: Index,
@@ -8379,7 +8447,9 @@ impl BrkClient {
 
     /// Metric count
     ///
-    /// Current metric count
+    /// Returns the number of metrics available per index type.
+    ///
+    /// Endpoint: `GET /api/metrics/count`
     pub fn get_metrics_count(&self) -> Result<Vec<MetricCount>> {
         self.base.get_json(&format!("/api/metrics/count"))
     }
@@ -8387,14 +8457,18 @@ impl BrkClient {
     /// List available indexes
     ///
     /// Returns all available indexes with their accepted query aliases. Use any alias when querying metrics.
-    pub fn get_metrics_indexes(&self) -> Result<Vec<IndexInfo>> {
+    ///
+    /// Endpoint: `GET /api/metrics/indexes`
+    pub fn get_indexes(&self) -> Result<Vec<IndexInfo>> {
         self.base.get_json(&format!("/api/metrics/indexes"))
     }
 
     /// Metrics list
     ///
-    /// Paginated list of available metrics
-    pub fn get_metrics_list(&self, page: Option<i64>) -> Result<PaginatedMetrics> {
+    /// Paginated flat list of all available metric names. Use `page` query param for pagination.
+    ///
+    /// Endpoint: `GET /api/metrics/list`
+    pub fn list_metrics(&self, page: Option<i64>) -> Result<PaginatedMetrics> {
         let mut query = Vec::new();
         if let Some(v) = page {
             query.push(format!("page={}", v));
@@ -8411,11 +8485,9 @@ impl BrkClient {
     /// Search metrics
     ///
     /// Fuzzy search for metrics by name. Supports partial matches and typos.
-    pub fn get_metrics_search_by_metric(
-        &self,
-        metric: Metric,
-        limit: Option<Limit>,
-    ) -> Result<Vec<Metric>> {
+    ///
+    /// Endpoint: `GET /api/metrics/search/{metric}`
+    pub fn search_metrics(&self, metric: Metric, limit: Option<Limit>) -> Result<Vec<Metric>> {
         let mut query = Vec::new();
         if let Some(v) = limit {
             query.push(format!("limit={}", v));
@@ -8431,22 +8503,34 @@ impl BrkClient {
 
     /// Transaction information
     ///
-    /// Retrieve complete transaction data by transaction ID (txid). Returns the full transaction details including inputs, outputs, and metadata. The transaction data is read directly from the blockchain data files.
-    pub fn get_tx_by_txid(&self, txid: Txid) -> Result<Transaction> {
+    /// Retrieve complete transaction data by transaction ID (txid). Returns inputs, outputs, fee, size, and confirmation status.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}`
+    pub fn get_tx(&self, txid: Txid) -> Result<Transaction> {
         self.base.get_json(&format!("/api/tx/{txid}"))
     }
 
     /// Transaction hex
     ///
     /// Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.
-    pub fn get_tx_by_txid_hex(&self, txid: Txid) -> Result<Hex> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/hex`
+    pub fn get_tx_hex(&self, txid: Txid) -> Result<Hex> {
         self.base.get_json(&format!("/api/tx/{txid}/hex"))
     }
 
     /// Output spend status
     ///
     /// Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.
-    pub fn get_tx_by_txid_outspend_by_vout(&self, txid: Txid, vout: Vout) -> Result<TxOutspend> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-outspend)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/outspend/{vout}`
+    pub fn get_tx_outspend(&self, txid: Txid, vout: Vout) -> Result<TxOutspend> {
         self.base
             .get_json(&format!("/api/tx/{txid}/outspend/{vout}"))
     }
@@ -8454,21 +8538,33 @@ impl BrkClient {
     /// All output spend statuses
     ///
     /// Get the spending status of all outputs in a transaction. Returns an array with the spend status for each output.
-    pub fn get_tx_by_txid_outspends(&self, txid: Txid) -> Result<Vec<TxOutspend>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-outspends)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/outspends`
+    pub fn get_tx_outspends(&self, txid: Txid) -> Result<Vec<TxOutspend>> {
         self.base.get_json(&format!("/api/tx/{txid}/outspends"))
     }
 
     /// Transaction status
     ///
     /// Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.
-    pub fn get_tx_by_txid_status(&self, txid: Txid) -> Result<TxStatus> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-status)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/status`
+    pub fn get_tx_status(&self, txid: Txid) -> Result<TxStatus> {
         self.base.get_json(&format!("/api/tx/{txid}/status"))
     }
 
     /// Difficulty adjustment
     ///
     /// Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
-    pub fn get_v1_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
+    ///
+    /// Endpoint: `GET /api/v1/difficulty-adjustment`
+    pub fn get_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
         self.base
             .get_json(&format!("/api/v1/difficulty-adjustment"))
     }
@@ -8476,24 +8572,45 @@ impl BrkClient {
     /// Projected mempool blocks
     ///
     /// Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
-    pub fn get_v1_fees_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/mempool-blocks`
+    pub fn get_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
         self.base.get_json(&format!("/api/v1/fees/mempool-blocks"))
     }
 
     /// Recommended fees
     ///
     /// Get recommended fee rates for different confirmation targets based on current mempool state.
-    pub fn get_v1_fees_recommended(&self) -> Result<RecommendedFees> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/recommended`
+    pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
         self.base.get_json(&format!("/api/v1/fees/recommended"))
+    }
+
+    /// Block fee rates (WIP)
+    ///
+    /// **Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
+    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<serde_json::Value> {
+        self.base
+            .get_json(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
     }
 
     /// Block fees
     ///
     /// Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_v1_mining_blocks_fees_by_time_period(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<Vec<BlockFeesEntry>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
+    pub fn get_block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
         self.base
             .get_json(&format!("/api/v1/mining/blocks/fees/{time_period}"))
     }
@@ -8501,10 +8618,11 @@ impl BrkClient {
     /// Block rewards
     ///
     /// Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_v1_mining_blocks_rewards_by_time_period(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<Vec<BlockRewardsEntry>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
+    pub fn get_block_rewards(&self, time_period: TimePeriod) -> Result<Vec<BlockRewardsEntry>> {
         self.base
             .get_json(&format!("/api/v1/mining/blocks/rewards/{time_period}"))
     }
@@ -8512,10 +8630,11 @@ impl BrkClient {
     /// Block sizes and weights
     ///
     /// Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_v1_mining_blocks_sizes_weights_by_time_period(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<BlockSizesWeights> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
+    pub fn get_block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
         self.base.get_json(&format!(
             "/api/v1/mining/blocks/sizes-weights/{time_period}"
         ))
@@ -8524,23 +8643,35 @@ impl BrkClient {
     /// Block by timestamp
     ///
     /// Find the block closest to a given UNIX timestamp.
-    pub fn get_v1_mining_blocks_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
+    pub fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
         self.base
             .get_json(&format!("/api/v1/mining/blocks/timestamp/{timestamp}"))
     }
 
     /// Difficulty adjustments (all time)
     ///
-    /// Get historical difficulty adjustments. Returns array of [timestamp, height, difficulty, change_percent].
-    pub fn get_v1_mining_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
+    /// Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments`
+    pub fn get_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
         self.base
             .get_json(&format!("/api/v1/mining/difficulty-adjustments"))
     }
 
     /// Difficulty adjustments
     ///
-    /// Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y. Returns array of [timestamp, height, difficulty, change_percent].
-    pub fn get_v1_mining_difficulty_adjustments_by_time_period(
+    /// Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
+    pub fn get_difficulty_adjustments_by_period(
         &self,
         time_period: TimePeriod,
     ) -> Result<Vec<DifficultyAdjustmentEntry>> {
@@ -8552,17 +8683,22 @@ impl BrkClient {
     /// Network hashrate (all time)
     ///
     /// Get network hashrate and difficulty data for all time.
-    pub fn get_v1_mining_hashrate(&self) -> Result<HashrateSummary> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate`
+    pub fn get_hashrate(&self) -> Result<HashrateSummary> {
         self.base.get_json(&format!("/api/v1/mining/hashrate"))
     }
 
     /// Network hashrate
     ///
     /// Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_v1_mining_hashrate_by_time_period(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<HashrateSummary> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
+    pub fn get_hashrate_by_period(&self, time_period: TimePeriod) -> Result<HashrateSummary> {
         self.base
             .get_json(&format!("/api/v1/mining/hashrate/{time_period}"))
     }
@@ -8570,24 +8706,33 @@ impl BrkClient {
     /// Mining pool details
     ///
     /// Get detailed information about a specific mining pool including block counts and shares for different time periods.
-    pub fn get_v1_mining_pool_by_slug(&self, slug: PoolSlug) -> Result<PoolDetail> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}`
+    pub fn get_pool(&self, slug: PoolSlug) -> Result<PoolDetail> {
         self.base.get_json(&format!("/api/v1/mining/pool/{slug}"))
     }
 
     /// List all mining pools
     ///
     /// Get list of all known mining pools with their identifiers.
-    pub fn get_v1_mining_pools(&self) -> Result<Vec<PoolInfo>> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pools`
+    pub fn get_pools(&self) -> Result<Vec<PoolInfo>> {
         self.base.get_json(&format!("/api/v1/mining/pools"))
     }
 
     /// Mining pool statistics
     ///
     /// Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
-    pub fn get_v1_mining_pools_by_time_period(
-        &self,
-        time_period: TimePeriod,
-    ) -> Result<PoolsSummary> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pools/{time_period}`
+    pub fn get_pool_stats(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
         self.base
             .get_json(&format!("/api/v1/mining/pools/{time_period}"))
     }
@@ -8595,10 +8740,11 @@ impl BrkClient {
     /// Mining reward statistics
     ///
     /// Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
-    pub fn get_v1_mining_reward_stats_by_block_count(
-        &self,
-        block_count: i64,
-    ) -> Result<RewardStats> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
+    pub fn get_reward_stats(&self, block_count: i64) -> Result<RewardStats> {
         self.base
             .get_json(&format!("/api/v1/mining/reward-stats/{block_count}"))
     }
@@ -8606,7 +8752,11 @@ impl BrkClient {
     /// Validate address
     ///
     /// Validate a Bitcoin address and get information about its type and scriptPubKey.
-    pub fn get_v1_validate_address(&self, address: &str) -> Result<AddressValidation> {
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
+    ///
+    /// Endpoint: `GET /api/v1/validate-address/{address}`
+    pub fn validate_address(&self, address: &str) -> Result<AddressValidation> {
         self.base
             .get_json(&format!("/api/v1/validate-address/{address}"))
     }
@@ -8614,6 +8764,8 @@ impl BrkClient {
     /// Health check
     ///
     /// Returns the health status of the API server
+    ///
+    /// Endpoint: `GET /health`
     pub fn get_health(&self) -> Result<Health> {
         self.base.get_json(&format!("/health"))
     }
@@ -8621,6 +8773,8 @@ impl BrkClient {
     /// API version
     ///
     /// Returns the current version of the API server
+    ///
+    /// Endpoint: `GET /version`
     pub fn get_version(&self) -> Result<String> {
         self.base.get_json(&format!("/version"))
     }

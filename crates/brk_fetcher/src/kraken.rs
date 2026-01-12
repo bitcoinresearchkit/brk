@@ -6,7 +6,7 @@ use serde_json::Value;
 use tracing::info;
 
 use crate::{
-    PriceSource, default_retry,
+    PriceSource, check_response, default_retry,
     ohlc::{compute_ohlc_from_range, date_from_timestamp, ohlc_from_array, timestamp_from_secs},
 };
 
@@ -39,8 +39,8 @@ impl Kraken {
         default_retry(|_| {
             let url = Self::url(1);
             info!("Fetching {url} ...");
-            let json: Value =
-                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
+            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let json: Value = serde_json::from_slice(&bytes)?;
             Self::parse_ohlc_response(&json)
         })
     }
@@ -61,8 +61,8 @@ impl Kraken {
         default_retry(|_| {
             let url = Self::url(1440);
             info!("Fetching {url} ...");
-            let json: Value =
-                serde_json::from_slice(minreq::get(url).with_timeout(30).send()?.as_bytes())?;
+            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let json: Value = serde_json::from_slice(&bytes)?;
             Self::parse_date_ohlc_response(&json)
         })
     }

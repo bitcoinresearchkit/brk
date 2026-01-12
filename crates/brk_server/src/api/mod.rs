@@ -58,7 +58,8 @@ impl ApiRoutes for ApiRouter<AppState> {
                             .await
                     },
                     |op| {
-                        op.server_tag()
+                        op.id("get_version")
+                            .server_tag()
                             .summary("API version")
                             .description("Returns the current version of the API server")
                             .ok_response::<String>()
@@ -77,7 +78,8 @@ impl ApiRoutes for ApiRouter<AppState> {
                         })
                     },
                     |op| {
-                        op.server_tag()
+                        op.id("get_health")
+                            .server_tag()
                             .summary("Health check")
                             .description("Returns the health status of the API server")
                             .ok_response::<Health>()

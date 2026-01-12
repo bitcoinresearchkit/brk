@@ -22,6 +22,19 @@ pub use source::{PriceSource, TrackedSource};
 
 const MAX_RETRIES: usize = 12 * 60; // 12 hours of retrying
 
+/// Check HTTP response status and return bytes or error
+pub fn check_response(response: minreq::Response, url: &str) -> Result<Vec<u8>> {
+    let status = response.status_code as u16;
+    if (200..300).contains(&status) {
+        Ok(response.into_bytes())
+    } else {
+        Err(Error::HttpStatus {
+            status,
+            url: url.to_string(),
+        })
+    }
+}
+
 #[derive(Clone)]
 pub struct Fetcher {
     pub binance: Option<TrackedSource<Binance>>,

@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, Parameter, generators::MANUAL_GENERIC_TYPES, to_camel_case};
+use crate::{Endpoint, Parameter, generators::{MANUAL_GENERIC_TYPES, write_description}, to_camel_case};
 
 /// Generate API methods for the BrkClient class.
 pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
@@ -28,8 +28,12 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             && endpoint.summary.as_ref() != Some(desc)
         {
             writeln!(output, "   *").unwrap();
-            writeln!(output, "   * {}", desc).unwrap();
+            write_description(output, desc, "   * ", "   *");
         }
+
+        // Add endpoint path
+        writeln!(output, "   *").unwrap();
+        writeln!(output, "   * Endpoint: `{} {}`", endpoint.method.to_uppercase(), endpoint.path).unwrap();
 
         if !endpoint.path_params.is_empty() || !endpoint.query_params.is_empty() {
             writeln!(output, "   *").unwrap();

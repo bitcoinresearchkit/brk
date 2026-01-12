@@ -32,9 +32,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Height, |q| q.difficulty_adjustment()).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_difficulty_adjustment")
+                        .mining_tag()
                         .summary("Difficulty adjustment")
-                        .description("Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.")
+                        .description("Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*")
                         .ok_response::<DifficultyAdjustment>()
                         .not_modified()
                         .server_error()
@@ -49,9 +50,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::Static, |q| Ok(q.all_pools())).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_pools")
+                        .mining_tag()
                         .summary("List all mining pools")
-                        .description("Get list of all known mining pools with their identifiers.")
+                        .description("Get list of all known mining pools with their identifiers.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*")
                         .ok_response::<Vec<PoolInfo>>()
                         .not_modified()
                         .server_error()
@@ -65,9 +67,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("{:?}", path.time_period)), move |q| q.mining_pools(path.time_period)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_pool_stats")
+                        .mining_tag()
                         .summary("Mining pool statistics")
-                        .description("Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+                        .description("Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*")
                         .ok_response::<PoolsSummary>()
                         .not_modified()
                         .server_error()
@@ -81,9 +84,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(path.slug), move |q| q.pool_detail(path.slug)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_pool")
+                        .mining_tag()
                         .summary("Mining pool details")
-                        .description("Get detailed information about a specific mining pool including block counts and shares for different time periods.")
+                        .description("Get detailed information about a specific mining pool including block counts and shares for different time periods.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*")
                         .ok_response::<PoolDetail>()
                         .not_modified()
                         .not_found()
@@ -98,9 +102,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with("hashrate"), |q| q.hashrate(None)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_hashrate")
+                        .mining_tag()
                         .summary("Network hashrate (all time)")
-                        .description("Get network hashrate and difficulty data for all time.")
+                        .description("Get network hashrate and difficulty data for all time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*")
                         .ok_response::<HashrateSummary>()
                         .not_modified()
                         .server_error()
@@ -114,9 +119,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("hashrate-{:?}", path.time_period)), move |q| q.hashrate(Some(path.time_period))).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_hashrate_by_period")
+                        .mining_tag()
                         .summary("Network hashrate")
-                        .description("Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+                        .description("Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*")
                         .ok_response::<HashrateSummary>()
                         .not_modified()
                         .server_error()
@@ -130,9 +136,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with("diff-adj"), |q| q.difficulty_adjustments(None)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_difficulty_adjustments")
+                        .mining_tag()
                         .summary("Difficulty adjustments (all time)")
-                        .description("Get historical difficulty adjustments. Returns array of [timestamp, height, difficulty, change_percent].")
+                        .description("Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*")
                         .ok_response::<Vec<DifficultyAdjustmentEntry>>()
                         .not_modified()
                         .server_error()
@@ -146,9 +153,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("diff-adj-{:?}", path.time_period)), move |q| q.difficulty_adjustments(Some(path.time_period))).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_difficulty_adjustments_by_period")
+                        .mining_tag()
                         .summary("Difficulty adjustments")
-                        .description("Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y. Returns array of [timestamp, height, difficulty, change_percent].")
+                        .description("Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*")
                         .ok_response::<Vec<DifficultyAdjustmentEntry>>()
                         .not_modified()
                         .server_error()
@@ -162,9 +170,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("fees-{:?}", path.time_period)), move |q| q.block_fees(path.time_period)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_block_fees")
+                        .mining_tag()
                         .summary("Block fees")
-                        .description("Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+                        .description("Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*")
                         .ok_response::<Vec<BlockFeesEntry>>()
                         .not_modified()
                         .server_error()
@@ -178,32 +187,34 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("rewards-{:?}", path.time_period)), move |q| q.block_rewards(path.time_period)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_block_rewards")
+                        .mining_tag()
                         .summary("Block rewards")
-                        .description("Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+                        .description("Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*")
                         .ok_response::<Vec<BlockRewardsEntry>>()
                         .not_modified()
                         .server_error()
                 },
             ),
         )
-        // TODO: Disabled - dateindex doesn't have percentile fields (see block_fee_rates.rs)
-        // .api_route(
-        //     "/api/v1/mining/blocks/fee-rates/{time_period}",
-        //     get_with(
-        //         async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
-        //             state.cached_json(&headers, CacheStrategy::height_with(format!("feerates-{:?}", path.time_period)), move |q| q.block_fee_rates(path.time_period)).await
-        //         },
-        //         |op| {
-        //             op.mining_tag()
-        //                 .summary("Block fee rates")
-        //                 .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
-        //                 .ok_response::<Vec<BlockFeeRatesEntry>>()
-        //                 .not_modified()
-        //                 .server_error()
-        //         },
-        //     ),
-        // )
+        .api_route(
+            "/api/v1/mining/blocks/fee-rates/{time_period}",
+            get_with(
+                async |Path(_path): Path<TimePeriodParam>| {
+                    axum::Json(serde_json::json!({
+                        "status": "wip",
+                        "message": "This endpoint is work in progress. Percentile fields are not yet available."
+                    }))
+                },
+                |op| {
+                    op.id("get_block_fee_rates")
+                        .mining_tag()
+                        .summary("Block fee rates (WIP)")
+                        .description("**Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
+                        .ok_response::<serde_json::Value>()
+                },
+            ),
+        )
         .api_route(
             "/api/v1/mining/blocks/sizes-weights/{time_period}",
             get_with(
@@ -211,9 +222,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("sizes-{:?}", path.time_period)), move |q| q.block_sizes_weights(path.time_period)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_block_sizes_weights")
+                        .mining_tag()
                         .summary("Block sizes and weights")
-                        .description("Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y")
+                        .description("Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*")
                         .ok_response::<BlockSizesWeights>()
                         .not_modified()
                         .server_error()
@@ -227,9 +239,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     state.cached_json(&headers, CacheStrategy::height_with(format!("reward-stats-{}", path.block_count)), move |q| q.reward_stats(path.block_count)).await
                 },
                 |op| {
-                    op.mining_tag()
+                    op.id("get_reward_stats")
+                        .mining_tag()
                         .summary("Mining reward statistics")
-                        .description("Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.")
+                        .description("Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*")
                         .ok_response::<RewardStats>()
                         .not_modified()
                         .server_error()

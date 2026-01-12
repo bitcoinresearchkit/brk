@@ -1,84 +1,43 @@
 # Bitcoin Research Kit
 
-<div align="center">
+**Open-source Bitcoin analytics infrastructure.**
 
-  <p>
-    <strong>A suite of Rust crates for working with Bitcoin data.</strong>
-  </p>
+[![MIT Licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/bitcoinresearchkit/brk/blob/main/docs/LICENSE.md)
+[![Crates.io](https://img.shields.io/crates/v/brk.svg)](https://crates.io/crates/brk)
+[![docs.rs](https://img.shields.io/docsrs/brk)](https://docs.rs/brk)
+[![Discord](https://img.shields.io/discord/1350431684562124850?logo=discord)](https://discord.gg/WACpShCB7M)
 
-  <p>
-    <a href="https://github.com/bitcoinresearchkit/brk/blob/main/docs/LICENSE.md"><img alt="MIT Licensed" src="https://img.shields.io/badge/license-MIT-blue.svg"/></a>
-    <a href="https://crates.io/crates/brk"><img alt="Crates.io" src="https://img.shields.io/crates/v/brk.svg"/></a>
-    <a href="https://docs.rs/brk"><img alt="docs.rs" src="https://img.shields.io/docsrs/brk"/></a>
-    <a href="https://discord.gg/WACpShCB7M"><img alt="Discord" src="https://img.shields.io/discord/1350431684562124850?logo=discord"/></a>
-  </p>
+[Homepage](https://bitcoinresearchkit.org) · [**Bitview**](https://bitview.space) · [API Reference](https://bitcoinresearchkit.org/api)
 
-</div>
+---
 
-[Homepage](https://bitcoinresearchkit.org) · [API Docs](https://bitcoinresearchkit.org/api) · [Charts](https://bitview.space) · [Changelog](https://github.com/bitcoinresearchkit/brk/blob/main/docs/CHANGELOG.md)
+BRK parses, indexes, and analyzes Bitcoin blockchain data. It combines on-chain analytics (like [Glassnode](https://glassnode.com)), block exploration (like [mempool.space](https://mempool.space)), and address indexing (like [electrs](https://github.com/romanz/electrs)) into a single self-hostable package.
 
-## About
+## See It In Action
 
-BRK is a toolkit for parsing, indexing, and analyzing Bitcoin blockchain data. It combines functionality similar to [Glassnode](https://glassnode.com) (on-chain analytics), [mempool.space](https://mempool.space) (block explorer), and [electrs](https://github.com/romanz/electrs) (address indexing) into a single self-hostable package.
+[**Bitview**](https://bitview.space) is a web application built entirely on BRK. It offers interactive charts for exploring Bitcoin on-chain metrics—price models, supply dynamics, holder behavior, network activity, and more. Browse it to see what's possible with the data BRK provides.
 
-- **Parse** blocks directly from Bitcoin Core's data files
-- **Index** transactions, addresses, and UTXOs
-- **Compute** derived metrics across multiple time resolutions
-- **Monitor** mempool with fee estimation and projected block building
-- **Serve** data via REST API and web interface
-- **Query** addresses, transactions, blocks, and analytics
+## What It Provides
 
-The crates can be used together as a complete solution, or independently for specific needs.
+**On-Chain Metrics** — Thousands of derived metrics: market indicators (realized cap, MVRV, SOPR, NVT), supply analysis (circulating, liquid, illiquid), holder cohorts (by balance, age, address type), and pricing models. This is what sets BRK apart from typical block explorers.
 
-Built on [`rust-bitcoin`], [`vecdb`], and [`fjall`].
+**Blockchain Data** — Blocks, transactions, addresses, UTXOs. The API follows mempool.space's format for compatibility with existing tools.
 
-## Crates
+**Multiple Indexes** — Query data by date, block height, halving epoch, address type, UTXO age, and more. Enables flexible time-series queries and cohort analysis.
 
-**Entry Points**
+**Mempool** — Real-time fee estimation, projected blocks, unconfirmed transaction tracking.
 
-| Crate | Purpose |
-|-------|---------|
-| [`brk`](./crates/brk) | Umbrella crate, re-exports all components via feature flags |
-| [`brk_cli`](./crates/brk_cli) | CLI binary (`cargo install --locked brk_cli`) |
+**REST API** — JSON and CSV output with OpenAPI documentation.
 
-**Core**
+**MCP Server** — Model Context Protocol integration for AI assistants and LLMs.
 
-| Crate | Purpose |
-|-------|---------|
-| [`brk_reader`](./crates/brk_reader) | Read blocks from `blk*.dat` with parallel parsing and XOR decoding |
-| [`brk_indexer`](./crates/brk_indexer) | Index transactions, addresses, and UTXOs |
-| [`brk_computer`](./crates/brk_computer) | Compute derived metrics (realized cap, MVRV, SOPR, cohorts, etc.) |
-| [`brk_mempool`](./crates/brk_mempool) | Monitor mempool, estimate fees, project upcoming blocks |
-| [`brk_query`](./crates/brk_query) | Query interface for indexed and computed data |
-| [`brk_server`](./crates/brk_server) | REST API with OpenAPI docs |
+## Get Started
 
-**Data & Storage**
+**Use the Public API** — Access data without running infrastructure. Client libraries available for [JavaScript](https://www.npmjs.com/package/brk-client), [Python](https://pypi.org/project/brk-client/), and [Rust](https://crates.io/crates/brk_client). See the [API reference](https://bitcoinresearchkit.org/api) for endpoints.
 
-| Crate | Purpose |
-|-------|---------|
-| [`brk_types`](./crates/brk_types) | Domain types: `Height`, `Sats`, `Txid`, addresses, etc. |
-| [`brk_store`](./crates/brk_store) | Key-value storage (fjall wrapper) |
-| [`brk_fetcher`](./crates/brk_fetcher) | Fetch price data from exchanges |
-| [`brk_rpc`](./crates/brk_rpc) | Bitcoin Core RPC client |
-| [`brk_iterator`](./crates/brk_iterator) | Unified block iteration with automatic source selection |
-| [`brk_grouper`](./crates/brk_grouper) | UTXO and address cohort filtering |
-| [`brk_traversable`](./crates/brk_traversable) | Navigate hierarchical data structures |
+**Self-Host** — Run your own instance with Bitcoin Core. Install via `cargo install --locked brk_cli` or use [Docker](https://github.com/bitcoinresearchkit/brk/tree/main/docker). Requires ~400 GB disk and 12+ GB RAM. See the [hosting guide](./HOSTING.md).
 
-**Clients & Integration**
-
-| Crate | Purpose |
-|-------|---------|
-| [`brk_mcp`](./crates/brk_mcp) | Model Context Protocol server for LLM integration |
-| [`brk_binder`](./crates/brk_binder) | Generate typed clients (Rust, JavaScript, Python) |
-| [`brk_client`](./crates/brk_client) | Generated Rust API client |
-
-**Internal**
-
-| Crate | Purpose |
-|-------|---------|
-| [`brk_error`](./crates/brk_error) | Error types |
-| [`brk_logger`](./crates/brk_logger) | Logging infrastructure |
-| [`brk_bencher`](./crates/brk_bencher) | Benchmarking utilities |
+**Use as a Library** — Build custom tools with the Rust crates. Use individual components or the [umbrella crate](https://docs.rs/brk). See [architecture](./ARCHITECTURE.md) for how they fit together.
 
 ## Architecture
 
@@ -89,51 +48,18 @@ blk*.dat ──▶ Reader ──┐
                       └──▶ Mempool ───────────────┘
 ```
 
-- `Reader` parses `blk*.dat` files directly
-- `RPC Client` connects to Bitcoin Core
-- `Indexer` builds lookup tables from blocks
-- `Computer` derives metrics from indexed data
-- `Mempool` tracks unconfirmed transactions
-- `Query` provides unified access to all data
-- `Server` exposes `Query` as REST API
+**Reader** parses Bitcoin Core's block files. **Indexer** builds lookup tables. **Computer** derives metrics. **Mempool** tracks unconfirmed transactions. **Query** provides unified data access. **Server** exposes the REST API.
 
-## Usage
+[Detailed architecture](./ARCHITECTURE.md) · [All crates](https://docs.rs/brk)
 
-**As a library:**
+## Links
 
-```rust
-use brk::{reader::Reader, indexer::Indexer, computer::Computer};
-
-let reader = Reader::new(blocks_dir, &rpc);
-let indexer = Indexer::forced_import(&brk_dir)?;
-let computer = Computer::forced_import(&brk_dir, &indexer, None)?;
-```
-
-**As a CLI:** See [`brk_cli`](./crates/brk_cli)
-
-**Public API:** [bitcoinresearchkit.org/api](https://bitcoinresearchkit.org/api)
-
-## Documentation
-
-- [Changelog](./docs/CHANGELOG.md)
-- [TODO](./docs/TODO.md)
-- [Hosting](./docs/HOSTING.md)
-- [Support](./docs/SUPPORT.md)
-
-## Contributing
-
-Contributions are welcome. See [open issues](https://github.com/bitcoinresearchkit/brk/issues).
-
-Join the discussion on [Discord](https://discord.gg/WACpShCB7M) or [Nostr](https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6).
-
-## Acknowledgments
-
-Development supported by [OpenSats](https://opensats.org/).
+- [Changelog](./CHANGELOG.md)
+- [Support](./SUPPORT.md)
+- [Contributing](https://github.com/bitcoinresearchkit/brk/issues)
+- Community: [Discord](https://discord.gg/WACpShCB7M) · [Nostr](https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6)
+- Development supported by [OpenSats](https://opensats.org/)
 
 ## License
 
-[MIT](https://github.com/bitcoinresearchkit/brk/blob/main/docs/LICENSE.md)
-
-[`rust-bitcoin`]: https://github.com/rust-bitcoin/rust-bitcoin
-[`vecdb`]: https://github.com/anydb-rs/anydb
-[`fjall`]: https://github.com/fjall-rs/fjall
+[MIT](./LICENSE.md)

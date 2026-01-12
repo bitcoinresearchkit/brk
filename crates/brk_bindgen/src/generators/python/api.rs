@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, Parameter, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, to_snake_case};
+use crate::{Endpoint, Parameter, escape_python_keyword, generators::{MANUAL_GENERIC_TYPES, write_description}, to_snake_case};
 
 use super::client::generate_class_constants;
 use super::types::js_type_to_python;
@@ -69,16 +69,31 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             (Some(summary), Some(desc)) if summary != desc => {
                 writeln!(output, "        \"\"\"{}.", summary.trim_end_matches('.')).unwrap();
                 writeln!(output).unwrap();
-                writeln!(output, "        {}\"\"\"", desc).unwrap();
+                write_description(output, desc, "        ", "");
             }
             (Some(summary), _) => {
-                writeln!(output, "        \"\"\"{}\"\"\"", summary).unwrap();
+                writeln!(output, "        \"\"\"{}", summary).unwrap();
             }
             (None, Some(desc)) => {
-                writeln!(output, "        \"\"\"{}\"\"\"", desc).unwrap();
+                // First line includes opening quotes
+                let mut lines = desc.lines();
+                if let Some(first) = lines.next() {
+                    writeln!(output, "        \"\"\"{}", first).unwrap();
+                }
+                for line in lines {
+                    if line.is_empty() {
+                        writeln!(output).unwrap();
+                    } else {
+                        writeln!(output, "        {}", line).unwrap();
+                    }
+                }
             }
-            (None, None) => {}
+            (None, None) => {
+                write!(output, "        \"\"\"").unwrap();
+            }
         }
+        writeln!(output).unwrap();
+        writeln!(output, "        Endpoint: `{} {}`\"\"\"", endpoint.method.to_uppercase(), endpoint.path).unwrap();
 
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);

@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, VERSION, to_snake_case};
+use crate::{Endpoint, VERSION, generators::write_description, to_snake_case};
 
 use super::types::js_type_to_rust;
 
@@ -78,8 +78,11 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             && endpoint.summary.as_ref() != Some(desc)
         {
             writeln!(output, "    ///").unwrap();
-            writeln!(output, "    /// {}", desc).unwrap();
+            write_description(output, desc, "    /// ", "    ///");
         }
+        // Add endpoint path
+        writeln!(output, "    ///").unwrap();
+        writeln!(output, "    /// Endpoint: `{} {}`", endpoint.method.to_uppercase(), endpoint.path).unwrap();
 
         let params = build_method_params(endpoint);
         writeln!(

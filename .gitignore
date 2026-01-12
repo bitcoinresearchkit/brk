@@ -17,6 +17,7 @@ _*
 /*.py
 /api.json
 /*.json
+/*.html
 
 # Logs
 *.log*
