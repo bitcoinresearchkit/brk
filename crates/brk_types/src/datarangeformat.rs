@@ -2,7 +2,7 @@ use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{DataRange, Format};
+use crate::{DataRange, Format, Limit};
 
 /// Data range with output format for API query parameters
 #[derive(Default, Debug, Deref, Deserialize, JsonSchema)]
@@ -31,8 +31,8 @@ impl DataRangeFormat {
         self
     }
 
-    pub fn set_count(mut self, count: usize) -> Self {
-        self.range = self.range.set_count(count);
+    pub fn set_limit(mut self, limit: Limit) -> Self {
+        self.range = self.range.set_limit(limit);
         self
     }
 }

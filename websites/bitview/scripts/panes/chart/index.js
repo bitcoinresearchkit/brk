@@ -331,7 +331,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    metric: brk.tree.price.usd.ohlc,
+                    metric: brk.metrics.price.usd.ohlc,
                     name: "Price",
                     unit: topUnit,
                     setDataCallback: printLatest,
@@ -341,7 +341,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    metric: brk.tree.price.usd.split.close,
+                    metric: brk.metrics.price.usd.split.close,
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -361,7 +361,7 @@ export function init({
                 case null:
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    metric: brk.tree.price.sats.ohlc,
+                    metric: brk.metrics.price.sats.ohlc,
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
@@ -372,7 +372,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    metric: brk.tree.price.sats.split.close,
+                    metric: brk.metrics.price.sats.split.close,
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,

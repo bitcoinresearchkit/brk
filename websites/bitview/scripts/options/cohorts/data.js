@@ -1,4 +1,4 @@
-/** Build cohort data arrays from brk.tree */
+/** Build cohort data arrays from brk.metrics */
 
 import {
   termColors,
@@ -28,8 +28,8 @@ const entries = (obj) =>
  * @param {BrkClient} brk
  */
 export function buildCohortData(colors, brk) {
-  const utxoCohorts = brk.tree.distribution.utxoCohorts;
-  const addressCohorts = brk.tree.distribution.addressCohorts;
+  const utxoCohorts = brk.metrics.distribution.utxoCohorts;
+  const addressCohorts = brk.metrics.distribution.addressCohorts;
   const {
     TERM_NAMES,
     EPOCH_NAMES,

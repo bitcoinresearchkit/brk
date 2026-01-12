@@ -15,7 +15,11 @@ import {
   fromIntervalPattern,
   fromSupplyPattern,
 } from "./series.js";
-import { createPriceLine, createPriceLines, constantLine } from "./constants.js";
+import {
+  createPriceLine,
+  createPriceLines,
+  constantLine,
+} from "./constants.js";
 
 /**
  * Create a context object with all dependencies for building partial options
@@ -25,7 +29,7 @@ import { createPriceLine, createPriceLines, constantLine } from "./constants.js"
  * @returns {PartialContext}
  */
 export function createContext({ colors, brk }) {
-  const constants = brk.tree.constants;
+  const constants = brk.metrics.constants;
 
   return {
     colors,

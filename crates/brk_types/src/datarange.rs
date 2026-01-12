@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{de_unquote_i64, de_unquote_usize};
+use crate::{de_unquote_i64, de_unquote_limit, Limit};
 
 /// Range parameters for slicing data
 #[derive(Default, Debug, Deserialize, JsonSchema)]
@@ -16,10 +16,9 @@ pub struct DataRange {
     #[schemars(example = 1000)]
     end: Option<i64>,
 
-    /// Number of values to return (ignored if `end` is set)
-    #[serde(default, alias = "c", deserialize_with = "de_unquote_usize")]
-    #[schemars(example = 1, example = 10, example = 100)]
-    count: Option<usize>,
+    /// Maximum number of values to return (ignored if `end` is set)
+    #[serde(default, alias = "l", alias = "count", alias = "c", deserialize_with = "de_unquote_limit")]
+    limit: Option<Limit>,
 }
 
 impl DataRange {
@@ -33,8 +32,8 @@ impl DataRange {
         self
     }
 
-    pub fn set_count(mut self, count: usize) -> Self {
-        self.count.replace(count);
+    pub fn set_limit(mut self, limit: Limit) -> Self {
+        self.limit.replace(limit);
         self
     }
 
@@ -43,22 +42,22 @@ impl DataRange {
         self.start
     }
 
-    /// Get `end` value, computing it from `start + count` if `end` is unset but `count` is set.
-    /// Requires the vec length to resolve negative `start` indices before adding count.
+    /// Get `end` value, computing it from `start + limit` if `end` is unset but `limit` is set.
+    /// Requires the vec length to resolve negative `start` indices before adding limit.
     pub fn end_for_len(&self, len: usize) -> Option<i64> {
         if self.end.is_some() {
             return self.end;
         }
 
-        self.count.map(|count| {
+        self.limit.map(|limit| {
             let resolved_start = self.resolve_index(self.start, len, 0);
-            (resolved_start + count).min(len) as i64
+            (resolved_start + *limit).min(len) as i64
         })
     }
 
     /// Returns a string for etag/cache key generation that captures all range parameters
     pub fn etag_suffix(&self) -> String {
-        format!("{:?}{:?}{:?}", self.start, self.end, self.count)
+        format!("{:?}{:?}{:?}", self.start, self.end, self.limit)
     }
 
     fn resolve_index(&self, idx: Option<i64>, len: usize, default: usize) -> usize {

@@ -31,7 +31,7 @@ export function createChainSection(ctx) {
     market,
     scripts,
     supply,
-  } = brk.tree;
+  } = brk.metrics;
 
   // Build pools tree dynamically
   const poolEntries = Object.entries(pools.vecs);

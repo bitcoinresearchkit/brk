@@ -172,7 +172,7 @@ function createCointimePriceWithRatioOptions(
  */
 export function createCointimeSection(ctx) {
   const { colors, brk, line } = ctx;
-  const { cointime, distribution, supply } = brk.tree;
+  const { cointime, distribution, supply } = brk.metrics;
   const { pricing, cap, activity, supply: cointimeSupply, adjusted } = cointime;
   const { all } = distribution.utxoCohorts;
 

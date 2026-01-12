@@ -17,7 +17,7 @@ import { collect, markUsed, logUnused } from "./unused.js";
  * @param {Signal<string | null>} args.qrcode
  */
 export function initOptions({ colors, signals, brk, qrcode }) {
-  collect(brk.tree);
+  collect(brk.metrics);
 
   const LS_SELECTED_KEY = `selected_path`;
 
@@ -56,9 +56,7 @@ export function initOptions({ colors, signals, brk, qrcode }) {
         );
       }
       if (!blueprint.unit) {
-        throw new Error(
-          `Blueprint missing unit: ${blueprint.title}`,
-        );
+        throw new Error(`Blueprint missing unit: ${blueprint.title}`);
       }
       markUsed(blueprint.metric);
       const unit = blueprint.unit;

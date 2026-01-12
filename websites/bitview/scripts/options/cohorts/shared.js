@@ -144,7 +144,7 @@ export function createSingleSupplySeries(ctx, cohort) {
  */
 export function createGroupedSupplyTotalSeries(ctx, list) {
   const { line, brk } = ctx;
-  const constant100 = brk.tree.constants.constant100;
+  const constant100 = brk.metrics.constants.constant100;
 
   return list.flatMap(({ color, name, tree }) => [
     line({ metric: tree.supply.total.sats, name, color, unit: Unit.sats }),

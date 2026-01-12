@@ -13,7 +13,7 @@ import { createInvestingSection } from "./investing.js";
  */
 export function createMarketSection(ctx) {
   const { colors, brk, line } = ctx;
-  const { market, supply } = brk.tree;
+  const { market, supply } = brk.metrics;
   const {
     movingAverage,
     ath,
