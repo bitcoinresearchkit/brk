@@ -10,7 +10,6 @@
     />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <script type="module" src="/scripts/main.js"></script>
 
     <!-- ------ -->
     <!-- Styles -->
@@ -1515,126 +1514,16 @@
       }
     </style>
 
-    <!-- ------- -->
-    <!-- Scripts -->
-    <!-- ------- -->
-
-    <script>
-      const preferredColorSchemeMatchMedia = window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      );
-
-      const themeColor = window.document.createElement("meta");
-      themeColor.name = "theme-color";
-      window.document.getElementsByTagName("head")[0].appendChild(themeColor);
-
-      /** @param {boolean} dark */
-      function updateThemeColor(dark) {
-        const theme = getComputedStyle(
-          window.document.documentElement,
-        ).getPropertyValue(dark ? "--black" : "--white");
-        themeColor.content = theme;
-      }
-
-      updateThemeColor(preferredColorSchemeMatchMedia.matches);
-      preferredColorSchemeMatchMedia.addEventListener(
-        "change",
-        ({ matches }) => {
-          updateThemeColor(matches);
-        },
-      );
-
-      if ("standalone" in window.navigator && !!window.navigator.standalone) {
-        window.document.documentElement.dataset.display = "standalone";
-      }
-
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/service-worker.js", {
-            scope: "/",
-          });
-        });
-      }
-    </script>
-
     <!-- IMPORTMAP -->
-    <link rel="modulepreload" href="/scripts/chart/index.024e5d6b.js">
-    <link rel="modulepreload" href="/scripts/chart/oklch.21450255.js">
-    <link rel="modulepreload" href="/scripts/entry.7b7383d1.js">
-    <link rel="modulepreload" href="/scripts/lazy.1ae52534.js">
-    <link rel="modulepreload" href="/scripts/main.22a5bd79.js">
-    <link rel="modulepreload" href="/scripts/modules/brk-client/index.74c13abc.js">
-    <link rel="modulepreload" href="/scripts/modules/brk-client/tests/basic.b92ff866.js">
-    <link rel="modulepreload" href="/scripts/modules/brk-client/tests/tree.ba9474f7.js">
-    <link rel="modulepreload" href="/scripts/modules/lean-qr/2.6.1/index.09195c13.mjs">
-    <link rel="modulepreload" href="/scripts/modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.803b7fb0.mjs">
-    <link rel="modulepreload" href="/scripts/modules/lightweight-charts/5.0.9/dist/lightweight-charts.standalone.production.1e264451.mjs">
-    <link rel="modulepreload" href="/scripts/modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.5c2a821a.mjs">
-    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.6/dist/index.0f951334.mjs">
-    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/index.070574d6.js">
-    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/index.e9e389fe.mjs">
-    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/worker.1265d9cd.js">
-    <link rel="modulepreload" href="/scripts/modules/solidjs-signals/0.6.3/dist/prod.2f80e335.js">
-    <link rel="modulepreload" href="/scripts/modules/solidjs-signals/0.8.5/dist/prod.8ae56250.js">
-    <link rel="modulepreload" href="/scripts/options/_partial_old.62bf3faa.js">
-    <link rel="modulepreload" href="/scripts/options/chain.c173ace8.js">
-    <link rel="modulepreload" href="/scripts/options/cohorts/address.2e8a42cb.js">
-    <link rel="modulepreload" href="/scripts/options/cohorts/data.11381d83.js">
-    <link rel="modulepreload" href="/scripts/options/cohorts/index.b0e57c9d.js">
-    <link rel="modulepreload" href="/scripts/options/cohorts/shared.87b9837c.js">
-    <link rel="modulepreload" href="/scripts/options/cohorts/utxo.f0e69857.js">
-    <link rel="modulepreload" href="/scripts/options/cointime.e25633d9.js">
-    <link rel="modulepreload" href="/scripts/options/colors/cohorts.262d4551.js">
-    <link rel="modulepreload" href="/scripts/options/colors/index.a54dc83f.js">
-    <link rel="modulepreload" href="/scripts/options/colors/misc.bee7dbee.js">
-    <link rel="modulepreload" href="/scripts/options/constants.16dfce27.js">
-    <link rel="modulepreload" href="/scripts/options/context.8bf2932e.js">
-    <link rel="modulepreload" href="/scripts/options/full.11772605.js">
-    <link rel="modulepreload" href="/scripts/options/market/averages.d95aa3e1.js">
-    <link rel="modulepreload" href="/scripts/options/market/index.e3b750d6.js">
-    <link rel="modulepreload" href="/scripts/options/market/indicators/bands.81b19b83.js">
-    <link rel="modulepreload" href="/scripts/options/market/indicators/index.70e9b3e4.js">
-    <link rel="modulepreload" href="/scripts/options/market/indicators/momentum.48e71442.js">
-    <link rel="modulepreload" href="/scripts/options/market/indicators/onchain.f75ddfd9.js">
-    <link rel="modulepreload" href="/scripts/options/market/indicators/volatility.08ec92d7.js">
-    <link rel="modulepreload" href="/scripts/options/market/investing.57ded805.js">
-    <link rel="modulepreload" href="/scripts/options/market/performance.36c7ad40.js">
-    <link rel="modulepreload" href="/scripts/options/market/utils.e3e058d8.js">
-    <link rel="modulepreload" href="/scripts/options/partial.ab8fdf12.js">
-    <link rel="modulepreload" href="/scripts/options/series.5a2a34ed.js">
-    <link rel="modulepreload" href="/scripts/options/types.64db5149.js">
-    <link rel="modulepreload" href="/scripts/options/unused.24a71427.js">
-    <link rel="modulepreload" href="/scripts/panes/chart/index.947ceee8.js">
-    <link rel="modulepreload" href="/scripts/panes/chart/screenshot.adc8da89.js">
-    <link rel="modulepreload" href="/scripts/panes/explorer.91a5a9ae.js">
-    <link rel="modulepreload" href="/scripts/panes/nav.0338dc4b.js">
-    <link rel="modulepreload" href="/scripts/panes/search.0338dc4b.js">
-    <link rel="modulepreload" href="/scripts/panes/simulation.abf9ee5d.js">
-    <link rel="modulepreload" href="/scripts/panes/table.00486691.js">
-    <link rel="modulepreload" href="/scripts/resources.77bdf76f.js">
-    <link rel="modulepreload" href="/scripts/signals.2ba0669e.js">
-    <link rel="modulepreload" href="/scripts/utils/array.1863f57c.js">
-    <link rel="modulepreload" href="/scripts/utils/colors.c95b2e03.js">
-    <link rel="modulepreload" href="/scripts/utils/date.12ad717d.js">
-    <link rel="modulepreload" href="/scripts/utils/dom.4d99f37f.js">
-    <link rel="modulepreload" href="/scripts/utils/elements.6fe024ed.js">
-    <link rel="modulepreload" href="/scripts/utils/env.594127e7.js">
-    <link rel="modulepreload" href="/scripts/utils/format.4bdbfe40.js">
-    <link rel="modulepreload" href="/scripts/utils/serde.f9c7ed2b.js">
-    <link rel="modulepreload" href="/scripts/utils/storage.cbd2ff9c.js">
-    <link rel="modulepreload" href="/scripts/utils/timing.ae6a47b8.js">
-    <link rel="modulepreload" href="/scripts/utils/units.30278ea7.js">
-    <link rel="modulepreload" href="/scripts/utils/url.20469bf9.js">
-    <link rel="modulepreload" href="/scripts/utils/ws.fe3fb4b1.js">
     <script type="importmap">
     {
       "imports": {
         "/scripts/chart/index.js": "/scripts/chart/index.024e5d6b.js",
         "/scripts/chart/oklch.js": "/scripts/chart/oklch.21450255.js",
-        "/scripts/entry.js": "/scripts/entry.7b7383d1.js",
+        "/scripts/entry.js": "/scripts/entry.93446a1b.js",
         "/scripts/lazy.js": "/scripts/lazy.1ae52534.js",
         "/scripts/main.js": "/scripts/main.22a5bd79.js",
-        "/scripts/modules/brk-client/index.js": "/scripts/modules/brk-client/index.74c13abc.js",
+        "/scripts/modules/brk-client/index.js": "/scripts/modules/brk-client/index.664c39c8.js",
         "/scripts/modules/brk-client/tests/basic.js": "/scripts/modules/brk-client/tests/basic.b92ff866.js",
         "/scripts/modules/brk-client/tests/tree.js": "/scripts/modules/brk-client/tests/tree.ba9474f7.js",
         "/scripts/modules/lean-qr/2.6.1/index.mjs": "/scripts/modules/lean-qr/2.6.1/index.09195c13.mjs",
@@ -1700,7 +1589,118 @@
       }
     }
     </script>
+    <link rel="modulepreload" href="/scripts/chart/index.024e5d6b.js">
+    <link rel="modulepreload" href="/scripts/chart/oklch.21450255.js">
+    <link rel="modulepreload" href="/scripts/entry.93446a1b.js">
+    <link rel="modulepreload" href="/scripts/lazy.1ae52534.js">
+    <link rel="modulepreload" href="/scripts/main.22a5bd79.js">
+    <link rel="modulepreload" href="/scripts/modules/brk-client/index.664c39c8.js">
+    <link rel="modulepreload" href="/scripts/modules/brk-client/tests/basic.b92ff866.js">
+    <link rel="modulepreload" href="/scripts/modules/brk-client/tests/tree.ba9474f7.js">
+    <link rel="modulepreload" href="/scripts/modules/lean-qr/2.6.1/index.09195c13.mjs">
+    <link rel="modulepreload" href="/scripts/modules/leeoniya-ufuzzy/1.0.19/dist/uFuzzy.803b7fb0.mjs">
+    <link rel="modulepreload" href="/scripts/modules/lightweight-charts/5.0.9/dist/lightweight-charts.standalone.production.1e264451.mjs">
+    <link rel="modulepreload" href="/scripts/modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.5c2a821a.mjs">
+    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.6/dist/index.0f951334.mjs">
+    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/index.070574d6.js">
+    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/index.e9e389fe.mjs">
+    <link rel="modulepreload" href="/scripts/modules/modern-screenshot/4.6.7/dist/worker.1265d9cd.js">
+    <link rel="modulepreload" href="/scripts/modules/solidjs-signals/0.6.3/dist/prod.2f80e335.js">
+    <link rel="modulepreload" href="/scripts/modules/solidjs-signals/0.8.5/dist/prod.8ae56250.js">
+    <link rel="modulepreload" href="/scripts/options/_partial_old.62bf3faa.js">
+    <link rel="modulepreload" href="/scripts/options/chain.c173ace8.js">
+    <link rel="modulepreload" href="/scripts/options/cohorts/address.2e8a42cb.js">
+    <link rel="modulepreload" href="/scripts/options/cohorts/data.11381d83.js">
+    <link rel="modulepreload" href="/scripts/options/cohorts/index.b0e57c9d.js">
+    <link rel="modulepreload" href="/scripts/options/cohorts/shared.87b9837c.js">
+    <link rel="modulepreload" href="/scripts/options/cohorts/utxo.f0e69857.js">
+    <link rel="modulepreload" href="/scripts/options/cointime.e25633d9.js">
+    <link rel="modulepreload" href="/scripts/options/colors/cohorts.262d4551.js">
+    <link rel="modulepreload" href="/scripts/options/colors/index.a54dc83f.js">
+    <link rel="modulepreload" href="/scripts/options/colors/misc.bee7dbee.js">
+    <link rel="modulepreload" href="/scripts/options/constants.16dfce27.js">
+    <link rel="modulepreload" href="/scripts/options/context.8bf2932e.js">
+    <link rel="modulepreload" href="/scripts/options/full.11772605.js">
+    <link rel="modulepreload" href="/scripts/options/market/averages.d95aa3e1.js">
+    <link rel="modulepreload" href="/scripts/options/market/index.e3b750d6.js">
+    <link rel="modulepreload" href="/scripts/options/market/indicators/bands.81b19b83.js">
+    <link rel="modulepreload" href="/scripts/options/market/indicators/index.70e9b3e4.js">
+    <link rel="modulepreload" href="/scripts/options/market/indicators/momentum.48e71442.js">
+    <link rel="modulepreload" href="/scripts/options/market/indicators/onchain.f75ddfd9.js">
+    <link rel="modulepreload" href="/scripts/options/market/indicators/volatility.08ec92d7.js">
+    <link rel="modulepreload" href="/scripts/options/market/investing.57ded805.js">
+    <link rel="modulepreload" href="/scripts/options/market/performance.36c7ad40.js">
+    <link rel="modulepreload" href="/scripts/options/market/utils.e3e058d8.js">
+    <link rel="modulepreload" href="/scripts/options/partial.ab8fdf12.js">
+    <link rel="modulepreload" href="/scripts/options/series.5a2a34ed.js">
+    <link rel="modulepreload" href="/scripts/options/types.64db5149.js">
+    <link rel="modulepreload" href="/scripts/options/unused.24a71427.js">
+    <link rel="modulepreload" href="/scripts/panes/chart/index.947ceee8.js">
+    <link rel="modulepreload" href="/scripts/panes/chart/screenshot.adc8da89.js">
+    <link rel="modulepreload" href="/scripts/panes/explorer.91a5a9ae.js">
+    <link rel="modulepreload" href="/scripts/panes/nav.0338dc4b.js">
+    <link rel="modulepreload" href="/scripts/panes/search.0338dc4b.js">
+    <link rel="modulepreload" href="/scripts/panes/simulation.abf9ee5d.js">
+    <link rel="modulepreload" href="/scripts/panes/table.00486691.js">
+    <link rel="modulepreload" href="/scripts/resources.77bdf76f.js">
+    <link rel="modulepreload" href="/scripts/signals.2ba0669e.js">
+    <link rel="modulepreload" href="/scripts/utils/array.1863f57c.js">
+    <link rel="modulepreload" href="/scripts/utils/colors.c95b2e03.js">
+    <link rel="modulepreload" href="/scripts/utils/date.12ad717d.js">
+    <link rel="modulepreload" href="/scripts/utils/dom.4d99f37f.js">
+    <link rel="modulepreload" href="/scripts/utils/elements.6fe024ed.js">
+    <link rel="modulepreload" href="/scripts/utils/env.594127e7.js">
+    <link rel="modulepreload" href="/scripts/utils/format.4bdbfe40.js">
+    <link rel="modulepreload" href="/scripts/utils/serde.f9c7ed2b.js">
+    <link rel="modulepreload" href="/scripts/utils/storage.cbd2ff9c.js">
+    <link rel="modulepreload" href="/scripts/utils/timing.ae6a47b8.js">
+    <link rel="modulepreload" href="/scripts/utils/units.30278ea7.js">
+    <link rel="modulepreload" href="/scripts/utils/url.20469bf9.js">
+    <link rel="modulepreload" href="/scripts/utils/ws.fe3fb4b1.js">
     <!-- /IMPORTMAP -->
+
+    <!-- ------- -->
+    <!-- Scripts -->
+    <!-- ------- -->
+
+    <script>
+      const preferredColorSchemeMatchMedia = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
+
+      const themeColor = window.document.createElement("meta");
+      themeColor.name = "theme-color";
+      window.document.getElementsByTagName("head")[0].appendChild(themeColor);
+
+      /** @param {boolean} dark */
+      function updateThemeColor(dark) {
+        const theme = getComputedStyle(
+          window.document.documentElement,
+        ).getPropertyValue(dark ? "--black" : "--white");
+        themeColor.content = theme;
+      }
+
+      updateThemeColor(preferredColorSchemeMatchMedia.matches);
+      preferredColorSchemeMatchMedia.addEventListener(
+        "change",
+        ({ matches }) => {
+          updateThemeColor(matches);
+        },
+      );
+
+      if ("standalone" in window.navigator && !!window.navigator.standalone) {
+        window.document.documentElement.dataset.display = "standalone";
+      }
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/service-worker.js", {
+            scope: "/",
+          });
+        });
+      }
+    </script>
+    <script type="module" src="/scripts/main.js"></script>
 
     <!-- --- -->
     <!-- PWA -->

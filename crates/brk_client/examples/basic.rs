@@ -22,7 +22,8 @@ fn main() -> brk_client::Result<()> {
         .close
         .by
         .dateindex()
-        .range(Some(-3), None)?;
+        .from(-3)
+        .json()?;
     println!("Last 3 price close values: {:?}", price_close);
 
     // Fetch block data
@@ -34,7 +35,8 @@ fn main() -> brk_client::Result<()> {
         .sum
         .by
         .dateindex()
-        .range(Some(-3), None)?;
+        .from(-3)
+        .json()?;
     println!("Last 3 block count values: {:?}", block_count);
 
     // Fetch supply data
@@ -56,7 +58,8 @@ fn main() -> brk_client::Result<()> {
         .bitcoin
         .by
         .dateindex()
-        .range(Some(-3), None)?;
+        .from(-3)
+        .csv()?;
     println!("Last 3 circulating supply values: {:?}", circulating);
 
     // Using generic metric fetching

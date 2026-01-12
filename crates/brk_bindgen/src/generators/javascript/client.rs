@@ -67,43 +67,128 @@ class BrkError extends Error {{
 
 /**
  * @template T
- * @typedef {{Object}} MetricEndpoint
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} get - Fetch all data points
- * @property {{(start?: number, end?: number, onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} range - Fetch data in range
+ * @typedef {{Object}} MetricEndpointBuilder
+ * @property {{(n: number) => RangeBuilder<T>}} first - Fetch first n data points
+ * @property {{(n: number) => RangeBuilder<T>}} last - Fetch last n data points
+ * @property {{(start: number, end: number) => RangeBuilder<T>}} range - Set explicit range [start, end)
+ * @property {{(start: number) => FromBuilder<T>}} from - Set start position, chain with take() or to()
+ * @property {{(end: number) => ToBuilder<T>}} to - Set end position, chain with takeLast() or from()
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON (all data)
+ * @property {{() => Promise<string>}} csv - Execute and return CSV (all data)
  * @property {{string}} path - The endpoint path
  */
-/** @typedef {{MetricEndpoint<unknown>}} AnyMetricEndpoint */
+/** @typedef {{MetricEndpointBuilder<unknown>}} AnyMetricEndpointBuilder */
+
+/**
+ * @template T
+ * @typedef {{Object}} FromBuilder
+ * @property {{(n: number) => RangeBuilder<T>}} take - Take n items from start position
+ * @property {{(end: number) => RangeBuilder<T>}} to - Set end position
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
+ * @property {{() => Promise<string>}} csv - Execute and return CSV
+ */
+
+/**
+ * @template T
+ * @typedef {{Object}} ToBuilder
+ * @property {{(n: number) => RangeBuilder<T>}} takeLast - Take last n items before end position
+ * @property {{(start: number) => RangeBuilder<T>}} from - Set start position
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
+ * @property {{() => Promise<string>}} csv - Execute and return CSV
+ */
+
+/**
+ * @template T
+ * @typedef {{Object}} RangeBuilder
+ * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} json - Execute and return JSON
+ * @property {{() => Promise<string>}} csv - Execute and return CSV
+ */
 
 /**
  * @template T
  * @typedef {{Object}} MetricPattern
  * @property {{string}} name - The metric name
- * @property {{Partial<Record<Index, MetricEndpoint<T>>>}} by - Index endpoints (lazy getters)
+ * @property {{Partial<Record<Index, MetricEndpointBuilder<T>>>}} by - Index endpoints (lazy getters)
  * @property {{() => Index[]}} indexes - Get the list of available indexes
- * @property {{(index: Index) => MetricEndpoint<T>|undefined}} get - Get an endpoint for a specific index
+ * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
 
 /** @typedef {{MetricPattern<unknown>}} AnyMetricPattern */
 
 /**
- * Create an endpoint for a metric index.
+ * Create a metric endpoint builder with typestate pattern.
  * @template T
  * @param {{BrkClientBase}} client
  * @param {{string}} name - The metric vec name
  * @param {{Index}} index - The index name
- * @returns {{MetricEndpoint<T>}}
+ * @returns {{MetricEndpointBuilder<T>}}
  */
 function _endpoint(client, name, index) {{
   const p = `/api/metric/${{name}}/${{index}}`;
-  return {{
-    get: (onUpdate) => client.getJson(p, onUpdate),
-    range: (start, end, onUpdate) => {{
-      const params = new URLSearchParams();
-      if (start !== undefined) params.set('start', String(start));
-      if (end !== undefined) params.set('end', String(end));
-      const query = params.toString();
-      return client.getJson(query ? `${{p}}?${{query}}` : p, onUpdate);
+
+  /**
+   * @param {{number}} [start]
+   * @param {{number}} [end]
+   * @param {{string}} [format]
+   * @returns {{string}}
+   */
+  const buildPath = (start, end, format) => {{
+    const params = new URLSearchParams();
+    if (start !== undefined) params.set('start', String(start));
+    if (end !== undefined) params.set('end', String(end));
+    if (format) params.set('format', format);
+    const query = params.toString();
+    return query ? `${{p}}?${{query}}` : p;
+  }};
+
+  /**
+   * @param {{number}} [start]
+   * @param {{number}} [end]
+   * @returns {{RangeBuilder<T>}}
+   */
+  const rangeBuilder = (start, end) => ({{
+    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
+      return client.getJson(buildPath(start, end), onUpdate);
     }},
+    csv() {{ return client.getText(buildPath(start, end, 'csv')); }},
+  }});
+
+  /**
+   * @param {{number}} start
+   * @returns {{FromBuilder<T>}}
+   */
+  const fromBuilder = (start) => ({{
+    take(/** @type {{number}} */ n) {{ return rangeBuilder(start, start + n); }},
+    to(/** @type {{number}} */ end) {{ return rangeBuilder(start, end); }},
+    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
+      return client.getJson(buildPath(start, undefined), onUpdate);
+    }},
+    csv() {{ return client.getText(buildPath(start, undefined, 'csv')); }},
+  }});
+
+  /**
+   * @param {{number}} end
+   * @returns {{ToBuilder<T>}}
+   */
+  const toBuilder = (end) => ({{
+    takeLast(/** @type {{number}} */ n) {{ return rangeBuilder(end - n, end); }},
+    from(/** @type {{number}} */ start) {{ return rangeBuilder(start, end); }},
+    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
+      return client.getJson(buildPath(undefined, end), onUpdate);
+    }},
+    csv() {{ return client.getText(buildPath(undefined, end, 'csv')); }},
+  }});
+
+  return {{
+    first(/** @type {{number}} */ n) {{ return rangeBuilder(undefined, n); }},
+    last(/** @type {{number}} */ n) {{ return rangeBuilder(-n, undefined); }},
+    range(/** @type {{number}} */ start, /** @type {{number}} */ end) {{ return rangeBuilder(start, end); }},
+    from(/** @type {{number}} */ start) {{ return fromBuilder(start); }},
+    to(/** @type {{number}} */ end) {{ return toBuilder(end); }},
+    json(/** @type {{((value: MetricData<T>) => void) | undefined}} */ onUpdate) {{
+      return client.getJson(buildPath(), onUpdate);
+    }},
+    csv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
     get path() {{ return p; }},
   }};
 }}
@@ -272,7 +357,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         let by_fields: Vec<String> = pattern
             .indexes
             .iter()
-            .map(|idx| format!("{}: MetricEndpoint<T>", idx.serialize_long()))
+            .map(|idx| format!("{}: MetricEndpointBuilder<T>", idx.serialize_long()))
             .collect();
         let by_type = format!("{{ {} }}", by_fields.join(", "));
 
@@ -280,7 +365,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, " * @template T").unwrap();
         writeln!(
             output,
-            " * @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpoint<T>|undefined }}}} {}",
+            " * @typedef {{{{ name: string, by: {}, indexes: () => Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {}",
             by_type, pattern.name
         )
         .unwrap();

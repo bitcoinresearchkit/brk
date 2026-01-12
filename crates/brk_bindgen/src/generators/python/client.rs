@@ -140,7 +140,7 @@ def _m(acc: str, s: str) -> str:
     .unwrap();
 }
 
-/// Generate the MetricData and MetricEndpoint classes
+/// Generate the MetricData and MetricEndpointBuilder classes
 pub fn generate_endpoint_class(output: &mut String) {
     writeln!(
         output,
@@ -156,36 +156,191 @@ pub fn generate_endpoint_class(output: &mut String) {
 AnyMetricData = MetricData[Any]
 
 
-class MetricEndpoint(Generic[T]):
-    """An endpoint for a specific metric + index combination."""
+class _EndpointConfig:
+    """Shared endpoint configuration."""
+    client: BrkClientBase
+    name: str
+    index: Index
+    start: Optional[int]
+    end: Optional[int]
 
-    def __init__(self, client: BrkClientBase, name: str, index: str):
-        self._client = client
-        self._name = name
-        self._index = index
-
-    def get(self) -> MetricData[T]:
-        """Fetch all data points for this metric/index."""
-        return self._client.get_json(self.path())
-
-    def range(self, start: Optional[int] = None, end: Optional[int] = None) -> MetricData[T]:
-        """Fetch data points within a range."""
-        params = []
-        if start is not None:
-            params.append(f"start={{start}}")
-        if end is not None:
-            params.append(f"end={{end}}")
-        query = "&".join(params)
-        p = self.path()
-        return self._client.get_json(f"{{p}}?{{query}}" if query else p)
+    def __init__(self, client: BrkClientBase, name: str, index: Index,
+                 start: Optional[int] = None, end: Optional[int] = None):
+        self.client = client
+        self.name = name
+        self.index = index
+        self.start = start
+        self.end = end
 
     def path(self) -> str:
-        """Get the endpoint path."""
-        return f"/api/metric/{{self._name}}/{{self._index}}"
+        return f"/api/metric/{{self.name}}/{{self.index}}"
+
+    def _build_path(self, format: Optional[str] = None) -> str:
+        params = []
+        if self.start is not None:
+            params.append(f"start={{self.start}}")
+        if self.end is not None:
+            params.append(f"end={{self.end}}")
+        if format is not None:
+            params.append(f"format={{format}}")
+        query = "&".join(params)
+        p = self.path()
+        return f"{{p}}?{{query}}" if query else p
+
+    def get_json(self) -> Any:
+        return self.client.get_json(self._build_path())
+
+    def get_csv(self) -> str:
+        return self.client.get_text(self._build_path(format='csv'))
+
+
+class RangeBuilder(Generic[T]):
+    """Final builder with range fully specified. Can only call json() or csv()."""
+
+    def __init__(self, config: _EndpointConfig):
+        self._config = config
+
+    def json(self) -> MetricData[T]:
+        """Execute the query and return parsed JSON data."""
+        return self._config.get_json()
+
+    def csv(self) -> str:
+        """Execute the query and return CSV data as a string."""
+        return self._config.get_csv()
+
+
+class FromBuilder(Generic[T]):
+    """Builder after calling from(start). Can chain with take() or to()."""
+
+    def __init__(self, config: _EndpointConfig):
+        self._config = config
+
+    def take(self, n: int) -> RangeBuilder[T]:
+        """Take n items from the start position."""
+        start = self._config.start or 0
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            start, start + n
+        ))
+
+    def to(self, end: int) -> RangeBuilder[T]:
+        """Set the end position."""
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            self._config.start, end
+        ))
+
+    def json(self) -> MetricData[T]:
+        """Execute the query and return parsed JSON data (from start to end of data)."""
+        return self._config.get_json()
+
+    def csv(self) -> str:
+        """Execute the query and return CSV data as a string."""
+        return self._config.get_csv()
+
+
+class ToBuilder(Generic[T]):
+    """Builder after calling to(end). Can chain with take_last() or from()."""
+
+    def __init__(self, config: _EndpointConfig):
+        self._config = config
+
+    def take_last(self, n: int) -> RangeBuilder[T]:
+        """Take last n items before the end position."""
+        end = self._config.end or 0
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            end - n, end
+        ))
+
+    def from_(self, start: int) -> RangeBuilder[T]:
+        """Set the start position."""
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            start, self._config.end
+        ))
+
+    def json(self) -> MetricData[T]:
+        """Execute the query and return parsed JSON data (from start of data to end)."""
+        return self._config.get_json()
+
+    def csv(self) -> str:
+        """Execute the query and return CSV data as a string."""
+        return self._config.get_csv()
+
+
+class MetricEndpointBuilder(Generic[T]):
+    """Initial builder for metric endpoint queries.
+
+    Use method chaining to specify the data range, then call json() or csv() to execute.
+
+    Examples:
+        # Get all data
+        endpoint.json()
+
+        # Get last 10 points
+        endpoint.last(10).json()
+
+        # Get range [100, 200)
+        endpoint.range(100, 200).json()
+
+        # Get 10 points starting from position 100
+        endpoint.from_(100).take(10).json()
+    """
+
+    def __init__(self, client: BrkClientBase, name: str, index: Index):
+        self._config = _EndpointConfig(client, name, index)
+
+    def first(self, n: int) -> RangeBuilder[T]:
+        """Fetch the first n data points."""
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            None, n
+        ))
+
+    def last(self, n: int) -> RangeBuilder[T]:
+        """Fetch the last n data points."""
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            -n, None
+        ))
+
+    def range(self, start: int, end: int) -> RangeBuilder[T]:
+        """Set an explicit range [start, end)."""
+        return RangeBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            start, end
+        ))
+
+    def from_(self, start: int) -> FromBuilder[T]:
+        """Set the start position. Chain with take() or to()."""
+        return FromBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            start, None
+        ))
+
+    def to(self, end: int) -> ToBuilder[T]:
+        """Set the end position. Chain with take_last() or from_()."""
+        return ToBuilder(_EndpointConfig(
+            self._config.client, self._config.name, self._config.index,
+            None, end
+        ))
+
+    def json(self) -> MetricData[T]:
+        """Execute the query and return parsed JSON data (all data)."""
+        return self._config.get_json()
+
+    def csv(self) -> str:
+        """Execute the query and return CSV data as a string (all data)."""
+        return self._config.get_csv()
+
+    def path(self) -> str:
+        """Get the base endpoint path."""
+        return self._config.path()
 
 
 # Type alias for non-generic usage
-AnyMetricEndpoint = MetricEndpoint[Any]
+AnyMetricEndpointBuilder = MetricEndpointBuilder[Any]
 
 
 class MetricPattern(Protocol[T]):
@@ -200,8 +355,8 @@ class MetricPattern(Protocol[T]):
         """Get the list of available indexes for this metric."""
         ...
 
-    def get(self, index: str) -> Optional[MetricEndpoint[T]]:
-        """Get an endpoint for a specific index, if supported."""
+    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
+        """Get an endpoint builder for a specific index, if supported."""
         ...
 
 "#
@@ -237,10 +392,10 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
             let index_name = index.serialize_long();
-            writeln!(output, "    def {}(self) -> MetricEndpoint[T]:", method_name).unwrap();
+            writeln!(output, "    def {}(self) -> MetricEndpointBuilder[T]:", method_name).unwrap();
             writeln!(
                 output,
-                "        return MetricEndpoint(self._client, self._name, '{}')",
+                "        return MetricEndpointBuilder(self._client, self._name, '{}')",
                 index_name
             )
             .unwrap();
@@ -288,8 +443,8 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output).unwrap();
 
         // Generate get(index) method
-        writeln!(output, "    def get(self, index: str) -> Optional[MetricEndpoint[T]]:").unwrap();
-        writeln!(output, "        \"\"\"Get an endpoint for a specific index, if supported.\"\"\"").unwrap();
+        writeln!(output, "    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:").unwrap();
+        writeln!(output, "        \"\"\"Get an endpoint builder for a specific index, if supported.\"\"\"").unwrap();
         for (i, index) in pattern.indexes.iter().enumerate() {
             let method_name = index_to_field_name(index);
             let index_name = index.serialize_long();

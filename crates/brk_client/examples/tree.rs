@@ -45,7 +45,7 @@ fn main() -> brk_client::Result<()> {
     let client = BrkClient::new("http://localhost:3110");
 
     // Get the metrics catalog tree
-    let tree = client.get_metrics_catalog()?;
+    let tree = client.get_metrics_tree()?;
 
     // Recursively collect all metrics
     let metrics = collect_metrics(&tree, "");
@@ -58,10 +58,16 @@ fn main() -> brk_client::Result<()> {
     for metric in &metrics {
         for index in &metric.indexes {
             let index_str = index.serialize_long();
-            match client.get_metric_by_index(index_str, &metric.name, None, None, Some("-3"), None)
-            {
-                Ok(data) => {
-                    let count = data.data.len();
+            match client.get_metric(
+                metric.name.as_str().into(),
+                *index,
+                None,
+                None,
+                Some("-3"),
+                None,
+            ) {
+                Ok(response) => {
+                    let count = response.json().data.len();
                     if count != 3 {
                         failed += 1;
                         let error_msg = format!(

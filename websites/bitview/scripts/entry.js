@@ -5,7 +5,8 @@
  *
  * @import { Signal, Signals, Accessor } from "./signals.js";
  *
- * @import { BrkClient, MetricsTree_Distribution_UtxoCohorts as UtxoCohortTree, MetricsTree_Distribution_AddressCohorts as AddressCohortTree, MetricsTree_Distribution_UtxoCohorts_All as AllUtxoPattern, MetricsTree_Distribution_UtxoCohorts_Term_Short as ShortTermPattern, MetricsTree_Distribution_UtxoCohorts_Term_Long as LongTermPattern, _10yPattern as MaxAgePattern, _10yTo12yPattern as AgeRangePattern, _0satsPattern2 as UtxoAmountPattern, _0satsPattern as AddressAmountPattern, _100btcPattern as BasicUtxoPattern, _0satsPattern2 as EpochPattern, Ratio1ySdPattern, Dollars, Price111dSmaPattern as EmaRatioPattern, Index, BlockCountPattern, SizePattern, FullnessPattern, FeeRatePattern, CoinbasePattern, ActivePriceRatioPattern, _0satsPattern, UnclaimedRewardsPattern as ValuePattern, Metric, MetricPattern, AnyMetricPattern, MetricEndpoint, MetricData, AnyMetricEndpoint, AnyMetricData, AddrCountPattern, MetricsTree_Blocks_Interval as IntervalPattern, _24hCoinbaseSumPattern as SupplyPattern, RelativePattern, RelativePattern2, RelativePattern5, MetricsTree_Distribution_UtxoCohorts_All_Relative as AllRelativePattern } from "./modules/brk-client/index.js"
+ * @import * as Brk from "./modules/brk-client/index.js"
+ * @import { BrkClient} from "./modules/brk-client/index.js"
  *
  * @import { Resources, MetricResource } from './resources.js'
  *
@@ -60,11 +61,6 @@
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasis }} CohortWithCostBasis
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithActivity }} CohortWithActivity
  * @typedef {{ name: string, title: string, color: Color, tree: PatternWithCostBasisPercentiles }} CohortWithCostBasisPercentiles
- *
- * Tree branch types
- * @typedef {InstanceType<typeof BrkClient>["tree"]["market"]} Market
- * @typedef {Market["movingAverage"]} MarketMovingAverage
- * @typedef {Market["dca"]} MarketDca
  *
  * Generic tree node type for walking
  * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode

@@ -141,8 +141,8 @@ pub trait AnyMetricPattern {{
 
 /// Generic trait for metric patterns with endpoint access.
 pub trait MetricPattern<T>: AnyMetricPattern {{
-    /// Get an endpoint for a specific index, if supported.
-    fn get(&self, index: Index) -> Option<Endpoint<T>>;
+    /// Get an endpoint builder for a specific index, if supported.
+    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>>;
 }}
 
 "#
@@ -150,50 +150,199 @@ pub trait MetricPattern<T>: AnyMetricPattern {{
     .unwrap();
 }
 
-/// Generate the Endpoint struct.
+/// Generate the MetricEndpointBuilder structs with typestate pattern.
 pub fn generate_endpoint(output: &mut String) {
     writeln!(
         output,
-        r#"/// An endpoint for a specific metric + index combination.
-pub struct Endpoint<T> {{
+        r#"/// Shared endpoint configuration.
+#[derive(Clone)]
+struct EndpointConfig {{
     client: Arc<BrkClientBase>,
     name: Arc<str>,
     index: Index,
+    start: Option<i64>,
+    end: Option<i64>,
+}}
+
+impl EndpointConfig {{
+    fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {{
+        Self {{ client, name, index, start: None, end: None }}
+    }}
+
+    fn path(&self) -> String {{
+        format!("/api/metric/{{}}/{{}}", self.name, self.index.serialize_long())
+    }}
+
+    fn build_path(&self, format: Option<&str>) -> String {{
+        let mut params = Vec::new();
+        if let Some(s) = self.start {{ params.push(format!("start={{}}", s)); }}
+        if let Some(e) = self.end {{ params.push(format!("end={{}}", e)); }}
+        if let Some(fmt) = format {{ params.push(format!("format={{}}", fmt)); }}
+        let p = self.path();
+        if params.is_empty() {{ p }} else {{ format!("{{}}?{{}}", p, params.join("&")) }}
+    }}
+
+    fn get_json<T: DeserializeOwned>(&self, format: Option<&str>) -> Result<T> {{
+        self.client.get_json(&self.build_path(format))
+    }}
+
+    fn get_text(&self, format: Option<&str>) -> Result<String> {{
+        self.client.get_text(&self.build_path(format))
+    }}
+}}
+
+/// Initial builder for metric endpoint queries.
+///
+/// Use method chaining to specify the data range, then call `json()` or `csv()` to execute.
+///
+/// # Examples
+/// ```ignore
+/// // Get all data
+/// endpoint.json()?;
+///
+/// // Get last 10 points
+/// endpoint.last(10).json()?;
+///
+/// // Get range [100, 200)
+/// endpoint.range(100, 200).json()?;
+///
+/// // Get 10 points starting from position 100
+/// endpoint.from(100).take(10).json()?;
+/// ```
+pub struct MetricEndpointBuilder<T> {{
+    config: EndpointConfig,
     _marker: std::marker::PhantomData<T>,
 }}
 
-impl<T: DeserializeOwned> Endpoint<T> {{
+impl<T: DeserializeOwned> MetricEndpointBuilder<T> {{
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {{
-        Self {{
-            client,
-            name,
-            index,
-            _marker: std::marker::PhantomData,
-        }}
+        Self {{ config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }}
     }}
 
-    /// Fetch all data points for this metric/index.
-    pub fn get(&self) -> Result<MetricData<T>> {{
-        self.client.get_json(&self.path())
+    /// Fetch the first n data points.
+    pub fn first(mut self, n: u64) -> RangeBuilder<T> {{
+        self.config.end = Some(n as i64);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Fetch data points within a range.
-    pub fn range(&self, start: Option<i64>, end: Option<i64>) -> Result<MetricData<T>> {{
-        let mut params = Vec::new();
-        if let Some(s) = start {{ params.push(format!("start={{}}", s)); }}
-        if let Some(e) = end {{ params.push(format!("end={{}}", e)); }}
-        let p = self.path();
-        let path = if params.is_empty() {{
-            p
-        }} else {{
-            format!("{{}}?{{}}", p, params.join("&"))
-        }};
-        self.client.get_json(&path)
+    /// Fetch the last n data points.
+    pub fn last(mut self, n: u64) -> RangeBuilder<T> {{
+        self.config.start = Some(-(n as i64));
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
     }}
 
-    /// Get the endpoint path.
+    /// Set an explicit range [start, end).
+    pub fn range(mut self, start: i64, end: i64) -> RangeBuilder<T> {{
+        self.config.start = Some(start);
+        self.config.end = Some(end);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Set the start position. Chain with `take(n)` or `to(end)`.
+    pub fn from(mut self, start: i64) -> FromBuilder<T> {{
+        self.config.start = Some(start);
+        FromBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Set the end position. Chain with `takeLast(n)` or `from(start)`.
+    pub fn to(mut self, end: i64) -> ToBuilder<T> {{
+        self.config.end = Some(end);
+        ToBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Execute the query and return parsed JSON data (all data).
+    pub fn json(self) -> Result<MetricData<T>> {{
+        self.config.get_json(None)
+    }}
+
+    /// Execute the query and return CSV data as a string (all data).
+    pub fn csv(self) -> Result<String> {{
+        self.config.get_text(Some("csv"))
+    }}
+
+    /// Get the base endpoint path.
     pub fn path(&self) -> String {{
-        format!("/api/metric/{{}}/{{}}", self.name, self.index.serialize_long())
+        self.config.path()
+    }}
+}}
+
+/// Builder after calling `from(start)`. Can chain with `take(n)` or `to(end)`.
+pub struct FromBuilder<T> {{
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<T>,
+}}
+
+impl<T: DeserializeOwned> FromBuilder<T> {{
+    /// Take n items from the start position.
+    pub fn take(mut self, n: u64) -> RangeBuilder<T> {{
+        let start = self.config.start.unwrap_or(0);
+        self.config.end = Some(start + n as i64);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Set the end position.
+    pub fn to(mut self, end: i64) -> RangeBuilder<T> {{
+        self.config.end = Some(end);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Execute the query and return parsed JSON data (from start to end of data).
+    pub fn json(self) -> Result<MetricData<T>> {{
+        self.config.get_json(None)
+    }}
+
+    /// Execute the query and return CSV data as a string.
+    pub fn csv(self) -> Result<String> {{
+        self.config.get_text(Some("csv"))
+    }}
+}}
+
+/// Builder after calling `to(end)`. Can chain with `takeLast(n)` or `from(start)`.
+pub struct ToBuilder<T> {{
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<T>,
+}}
+
+impl<T: DeserializeOwned> ToBuilder<T> {{
+    /// Take last n items before the end position.
+    pub fn take_last(mut self, n: u64) -> RangeBuilder<T> {{
+        let end = self.config.end.unwrap_or(0);
+        self.config.start = Some(end - n as i64);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Set the start position.
+    pub fn from(mut self, start: i64) -> RangeBuilder<T> {{
+        self.config.start = Some(start);
+        RangeBuilder {{ config: self.config, _marker: std::marker::PhantomData }}
+    }}
+
+    /// Execute the query and return parsed JSON data (from start of data to end).
+    pub fn json(self) -> Result<MetricData<T>> {{
+        self.config.get_json(None)
+    }}
+
+    /// Execute the query and return CSV data as a string.
+    pub fn csv(self) -> Result<String> {{
+        self.config.get_text(Some("csv"))
+    }}
+}}
+
+/// Final builder with range fully specified. Can only call `json()` or `csv()`.
+pub struct RangeBuilder<T> {{
+    config: EndpointConfig,
+    _marker: std::marker::PhantomData<T>,
+}}
+
+impl<T: DeserializeOwned> RangeBuilder<T> {{
+    /// Execute the query and return parsed JSON data.
+    pub fn json(self) -> Result<MetricData<T>> {{
+        self.config.get_json(None)
+    }}
+
+    /// Execute the query and return CSV data as a string.
+    pub fn csv(self) -> Result<String> {{
+        self.config.get_text(Some("csv"))
     }}
 }}
 
@@ -225,10 +374,10 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         writeln!(output, "impl<T: DeserializeOwned> {}<T> {{", by_name).unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);
-            writeln!(output, "    pub fn {}(&self) -> Endpoint<T> {{", method_name).unwrap();
+            writeln!(output, "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{", method_name).unwrap();
             writeln!(
                 output,
-                "        Endpoint::new(self.client.clone(), self.name.clone(), Index::{})",
+                "        MetricEndpointBuilder::new(self.client.clone(), self.name.clone(), Index::{})",
                 index
             )
             .unwrap();
@@ -291,7 +440,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
 
         // Implement MetricPattern<T> trait
         writeln!(output, "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{", pattern.name).unwrap();
-        writeln!(output, "    fn get(&self, index: Index) -> Option<Endpoint<T>> {{").unwrap();
+        writeln!(output, "    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{").unwrap();
         writeln!(output, "        match index {{").unwrap();
         for index in &pattern.indexes {
             let method_name = index_to_field_name(index);

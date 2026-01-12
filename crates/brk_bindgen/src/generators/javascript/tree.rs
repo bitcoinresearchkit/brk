@@ -127,6 +127,20 @@ pub fn generate_main_client(
     writeln!(output, "    }};").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
+    writeln!(output, "  /**").unwrap();
+    writeln!(output, "   * Create a dynamic metric endpoint builder for any metric/index combination.").unwrap();
+    writeln!(output, "   *").unwrap();
+    writeln!(output, "   * Use this for programmatic access when the metric name is determined at runtime.").unwrap();
+    writeln!(output, "   * For type-safe access, use the `metrics` tree instead.").unwrap();
+    writeln!(output, "   *").unwrap();
+    writeln!(output, "   * @param {{string}} metric - The metric name").unwrap();
+    writeln!(output, "   * @param {{Index}} index - The index name").unwrap();
+    writeln!(output, "   * @returns {{MetricEndpointBuilder<unknown>}}").unwrap();
+    writeln!(output, "   */").unwrap();
+    writeln!(output, "  metric(metric, index) {{").unwrap();
+    writeln!(output, "    return _endpoint(this, metric, index);").unwrap();
+    writeln!(output, "  }}\n").unwrap();
+
     generate_api_methods(output, endpoints);
 
     writeln!(output, "}}\n").unwrap();

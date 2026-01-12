@@ -23,7 +23,7 @@ brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 clap = { version = "4.5.54", features = ["derive", "string"] }
 color-eyre = { workspace = true }
-importmap = "0.1.1"
+importmap = "0.1.2"
 # importmap = { path = "../../../importmap" }
 tracing = { workspace = true }
 minreq = { workspace = true }

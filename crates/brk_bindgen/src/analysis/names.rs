@@ -162,11 +162,21 @@ pub fn analyze_pattern_level(child_names: &[(String, String)]) -> PatternAnalysi
         positions.insert(field_name.clone(), FieldNamePosition::Identity);
     }
 
-    // Use the first name as base (they're all independent)
-    let base = child_names
-        .first()
-        .map(|(_, n)| n.clone())
-        .unwrap_or_default();
+    // Check if all fields are "true Identity" (field_name == effective_name)
+    // In that case, the base should be empty since metrics are accessed directly by field name
+    let all_true_identity = child_names
+        .iter()
+        .all(|(field_name, effective)| field_name == effective);
+
+    let base = if all_true_identity {
+        String::new()
+    } else {
+        // Use the first name as base (they're all independent but have different names)
+        child_names
+            .first()
+            .map(|(_, n)| n.clone())
+            .unwrap_or_default()
+    };
 
     PatternAnalysis {
         common: CommonDenominator::None,

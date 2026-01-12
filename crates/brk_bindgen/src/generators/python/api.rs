@@ -29,6 +29,16 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output, "        self.metrics = MetricsTree(self)").unwrap();
     writeln!(output).unwrap();
 
+    // Generate metric() method for dynamic metric access
+    writeln!(output, "    def metric(self, metric: str, index: Index) -> MetricEndpointBuilder[Any]:").unwrap();
+    writeln!(output, "        \"\"\"Create a dynamic metric endpoint builder for any metric/index combination.").unwrap();
+    writeln!(output).unwrap();
+    writeln!(output, "        Use this for programmatic access when the metric name is determined at runtime.").unwrap();
+    writeln!(output, "        For type-safe access, use the `metrics` tree instead.").unwrap();
+    writeln!(output, "        \"\"\"").unwrap();
+    writeln!(output, "        return MetricEndpointBuilder(self, metric, index)").unwrap();
+    writeln!(output).unwrap();
+
     // Generate API methods
     generate_api_methods(output, endpoints);
 }

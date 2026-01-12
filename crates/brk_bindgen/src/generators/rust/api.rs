@@ -38,6 +38,25 @@ impl BrkClient {{
     pub fn metrics(&self) -> &MetricsTree {{
         &self.metrics
     }}
+
+    /// Create a dynamic metric endpoint builder for any metric/index combination.
+    ///
+    /// Use this for programmatic access when the metric name is determined at runtime.
+    /// For type-safe access, use the `metrics()` tree instead.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let data = client.metric("realized_price", Index::Height)
+    ///     .last(10)
+    ///     .json::<f64>()?;
+    /// ```
+    pub fn metric(&self, metric: impl Into<Metric>, index: Index) -> MetricEndpointBuilder<serde_json::Value> {{
+        MetricEndpointBuilder::new(
+            self.base.clone(),
+            Arc::from(metric.into().as_str()),
+            index,
+        )
+    }}
 "#,
         VERSION = VERSION
     )

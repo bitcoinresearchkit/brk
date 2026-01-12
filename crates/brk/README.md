@@ -13,7 +13,7 @@ Single dependency to access any BRK component. Enable only what you need via fea
 brk = { version = "0.1", features = ["query", "types"] }
 ```
 
-```rust
+```rust,ignore
 use brk::query::Query;
 use brk::types::Height;
 ```
