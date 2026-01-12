@@ -6,7 +6,7 @@ use std::{
     io::{Read, Seek, SeekFrom},
     mem,
     ops::ControlFlow,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::Arc,
     thread,
     time::Duration,
@@ -73,6 +73,10 @@ impl ReaderInner {
 
     pub fn client(&self) -> &Client {
         &self.client
+    }
+
+    pub fn blocks_dir(&self) -> &Path {
+        &self.blocks_dir
     }
 
     pub fn blk_index_to_blk_path(&self) -> RwLockReadGuard<'_, BlkIndexToBlkPath> {

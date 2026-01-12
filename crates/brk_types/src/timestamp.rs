@@ -79,6 +79,11 @@ impl Timestamp {
     pub fn now() -> Self {
         Self::from(jiff::Timestamp::now())
     }
+
+    /// Returns an ISO 8601 formatted string
+    pub fn to_iso8601(self) -> String {
+        jiff::Timestamp::from(self).to_string()
+    }
 }
 
 impl From<u32> for Timestamp {

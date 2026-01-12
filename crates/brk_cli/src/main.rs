@@ -82,6 +82,7 @@ pub fn run() -> color_eyre::Result<()> {
     let website = config.website();
 
     let downloads_path = config.downloads_dir();
+    let data_path = config.brkdir();
 
     let future = async move {
         let bundle_path = if website.is_some() {
@@ -148,7 +149,7 @@ pub fn run() -> color_eyre::Result<()> {
             }
         }
 
-        let server = Server::new(&query, bundle_path);
+        let server = Server::new(&query, data_path, bundle_path);
 
         tokio::spawn(async move {
             server.serve(true).await.unwrap();

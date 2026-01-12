@@ -1,25 +1,24 @@
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 use aide::{
-    axum::{ApiRouter, routing::get_with},
+    axum::ApiRouter,
     openapi::OpenApi,
 };
 use axum::{
-    Extension, Json,
-    extract::State,
+    Extension,
     http::HeaderMap,
     response::{Html, Redirect, Response},
     routing::get,
 };
-use brk_types::Health;
 
 use crate::{
-    CacheStrategy, VERSION,
+    VERSION,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
-        metrics::ApiMetricsRoutes, mining::MiningRoutes, transactions::TxRoutes,
+        metrics::ApiMetricsRoutes, mining::MiningRoutes, server::ServerRoutes,
+        transactions::TxRoutes,
     },
-    extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
+    extended::{HeaderMapExtended, ResponseExtended},
 };
 
 use super::AppState;
@@ -30,6 +29,7 @@ mod mempool;
 mod metrics;
 mod mining;
 mod openapi;
+mod server;
 mod transactions;
 
 pub use openapi::*;
@@ -46,46 +46,8 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_mining_routes()
             .add_tx_routes()
             .add_metrics_routes()
+            .add_server_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
-            .api_route(
-                "/version",
-                get_with(
-                    async |headers: HeaderMap, State(state): State<AppState>| {
-                        state
-                            .cached_json(&headers, CacheStrategy::Static, |_| {
-                                Ok(env!("CARGO_PKG_VERSION"))
-                            })
-                            .await
-                    },
-                    |op| {
-                        op.id("get_version")
-                            .server_tag()
-                            .summary("API version")
-                            .description("Returns the current version of the API server")
-                            .ok_response::<String>()
-                            .not_modified()
-                    },
-                ),
-            )
-            .api_route(
-                "/health",
-                get_with(
-                    async || -> Json<Health> {
-                        Json(Health {
-                            status: Cow::Borrowed("healthy"),
-                            service: Cow::Borrowed("brk"),
-                            timestamp: jiff::Timestamp::now().to_string(),
-                        })
-                    },
-                    |op| {
-                        op.id("get_health")
-                            .server_tag()
-                            .summary("Health check")
-                            .description("Returns the health status of the API server")
-                            .ok_response::<Health>()
-                    },
-                ),
-            )
             .route(
                 "/api.json",
                 get(

@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, time::Instant};
 
 use derive_more::Deref;
 
@@ -7,6 +7,8 @@ use axum::{
     http::{HeaderMap, Response},
 };
 use brk_query::AsyncQuery;
+use brk_rpc::Client;
+use jiff::Timestamp;
 use quick_cache::sync::Cache;
 use serde::Serialize;
 
@@ -19,8 +21,12 @@ use crate::{
 pub struct AppState {
     #[deref]
     pub query: AsyncQuery,
-    pub path: Option<PathBuf>,
+    pub data_path: PathBuf,
+    pub files_path: Option<PathBuf>,
     pub cache: Arc<Cache<String, Bytes>>,
+    pub client: Client,
+    pub started_at: Timestamp,
+    pub started_instant: Instant,
 }
 
 impl AppState {

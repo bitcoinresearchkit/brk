@@ -33,7 +33,7 @@ fn any_handler(
     state: AppState,
     path: Option<extract::Path<String>>,
 ) -> Response {
-    let files_path = state.path.as_ref().unwrap();
+    let files_path = state.files_path.as_ref().unwrap();
 
     if let Some(path) = path.as_ref() {
         // Sanitize path components to prevent traversal attacks

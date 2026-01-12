@@ -3,8 +3,14 @@ const ROOT = "/";
 const API = "/api";
 
 const BYPASS = new Set([
-  "/changelog", "/crate", "/discord", "/github", "/health",
-  "/install", "/mcp", "/nostr", "/service", "/status", "/version"
+  "/changelog",
+  "/crate",
+  "/discord",
+  "/github",
+  "/install",
+  "/nostr",
+  "/service",
+  "/status",
 ]);
 
 // Match hashed filenames: name.abc12345.js/mjs/css
@@ -13,16 +19,18 @@ const HASHED_RE = /\.[0-9a-f]{8}\.(js|mjs|css)$/;
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
 
-const offline = () => new Response("Offline", {
-  status: 503,
-  headers: { "Content-Type": "text/plain" }
-});
+const offline = () =>
+  new Response("Offline", {
+    status: 503,
+    headers: { "Content-Type": "text/plain" },
+  });
 
 sw.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE)
+    caches
+      .open(CACHE)
       .then((c) => c.addAll([ROOT]))
-      .then(() => sw.skipWaiting())
+      .then(() => sw.skipWaiting()),
   );
 });
 
@@ -30,10 +38,14 @@ sw.addEventListener("activate", (e) => {
   e.waitUntil(
     Promise.all([
       sw.clients.claim(),
-      caches.keys().then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-      ),
-    ])
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+          ),
+        ),
+    ]),
   );
 });
 
@@ -57,7 +69,7 @@ sw.addEventListener("fetch", (event) => {
           if (res.ok) caches.open(CACHE).then((c) => c.put(ROOT, res.clone()));
           return res;
         })
-        .catch(() => caches.match(ROOT).then((c) => c || offline()))
+        .catch(() => caches.match(ROOT).then((c) => c || offline())),
     );
     return;
   }
@@ -65,15 +77,18 @@ sw.addEventListener("fetch", (event) => {
   // Hashed assets: cache-first (immutable)
   if (HASHED_RE.test(path)) {
     event.respondWith(
-      caches.match(req)
-        .then((cached) =>
-          cached ||
-          fetch(req).then((res) => {
-            if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
-            return res;
-          })
+      caches
+        .match(req)
+        .then(
+          (cached) =>
+            cached ||
+            fetch(req).then((res) => {
+              if (res.ok)
+                caches.open(CACHE).then((c) => c.put(req, res.clone()));
+              return res;
+            }),
         )
-        .catch(() => offline())
+        .catch(() => offline()),
     );
     return;
   }
@@ -88,9 +103,15 @@ sw.addEventListener("fetch", (event) => {
         return res;
       })
       .catch(() =>
-        caches.match(req).then((cached) =>
-          cached || (isStatic ? offline() : caches.match(ROOT).then((c) => c || offline()))
-        )
-      )
+        caches
+          .match(req)
+          .then(
+            (cached) =>
+              cached ||
+              (isStatic
+                ? offline()
+                : caches.match(ROOT).then((c) => c || offline())),
+          ),
+      ),
   );
 });

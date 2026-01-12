@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{panic, path::PathBuf, sync::Arc, time::Duration};
+use std::{panic, path::PathBuf, sync::Arc, time::{Duration, Instant}};
 
 use aide::axum::ApiRouter;
 use axum::{
@@ -37,11 +37,15 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: &AsyncQuery, files_path: Option<PathBuf>) -> Self {
+    pub fn new(query: &AsyncQuery, data_path: PathBuf, files_path: Option<PathBuf>) -> Self {
         Self(AppState {
+            client: query.client().clone(),
             query: query.clone(),
-            path: files_path,
+            data_path,
+            files_path,
             cache: Arc::new(Cache::new(5_000)),
+            started_at: jiff::Timestamp::now(),
+            started_instant: Instant::now(),
         })
     }
 
@@ -83,7 +87,7 @@ impl Server {
         let vecs = state.query.inner().vecs();
         let router = ApiRouter::new()
             .add_api_routes()
-            .add_files_routes(state.path.as_ref())
+            .add_files_routes(state.files_path.as_ref())
             .route(
                 "/discord",
                 get(Redirect::temporary("https://discord.gg/WACpShCB7M")),

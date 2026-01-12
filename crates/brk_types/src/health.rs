@@ -9,4 +9,8 @@ pub struct Health {
     pub status: Cow<'static, str>,
     pub service: Cow<'static, str>,
     pub timestamp: String,
+    /// Server start time (ISO 8601)
+    pub started_at: String,
+    /// Uptime in seconds
+    pub uptime_seconds: u64,
 }

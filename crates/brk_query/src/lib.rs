@@ -7,6 +7,7 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
+use brk_rpc::Client;
 use brk_types::Height;
 use vecdb::AnyStoredVec;
 
@@ -32,6 +33,7 @@ pub use vecs::Vecs;
 pub struct Query(Arc<QueryInner<'static>>);
 struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
+    client: Client,
     reader: Reader,
     indexer: &'a Indexer,
     computer: &'a Computer,
@@ -45,6 +47,7 @@ impl Query {
         computer: &Computer,
         mempool: Option<Mempool>,
     ) -> Self {
+        let client = reader.client().clone();
         let reader = reader.clone();
         let indexer = Box::leak(Box::new(indexer.clone()));
         let computer = Box::leak(Box::new(computer.clone()));
@@ -52,6 +55,7 @@ impl Query {
 
         Self(Arc::new(QueryInner {
             vecs,
+            client,
             reader,
             indexer,
             computer,
@@ -67,6 +71,16 @@ impl Query {
     #[inline]
     pub fn reader(&self) -> &Reader {
         &self.0.reader
+    }
+
+    #[inline]
+    pub fn client(&self) -> &Client {
+        &self.0.client
+    }
+
+    #[inline]
+    pub fn blocks_dir(&self) -> &std::path::Path {
+        self.0.reader.blocks_dir()
     }
 
     #[inline]

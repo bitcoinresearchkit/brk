@@ -31,3 +31,13 @@ pub fn write_description(output: &mut String, desc: &str, prefix: &str, empty_pr
         }
     }
 }
+
+/// Replace generic types with their Any variants in return types.
+/// Used by JS and Python generators.
+pub fn normalize_return_type(return_type: &str) -> String {
+    let mut result = return_type.to_string();
+    for type_name in MANUAL_GENERIC_TYPES {
+        result = result.replace(type_name, &format!("Any{}", type_name));
+    }
+    result
+}

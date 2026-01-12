@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{Endpoint, Parameter, generators::{MANUAL_GENERIC_TYPES, write_description}, to_camel_case};
+use crate::{Endpoint, Parameter, generators::{normalize_return_type, write_description}, to_camel_case};
 
 /// Generate API methods for the BrkClient class.
 pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
@@ -126,15 +126,6 @@ fn build_path_template(path: &str, path_params: &[Parameter]) -> String {
         let placeholder = format!("{{{}}}", param.name);
         let interpolation = format!("${{{}}}", param.name);
         result = result.replace(&placeholder, &interpolation);
-    }
-    result
-}
-
-/// Replace generic types with their Any variants in return types.
-fn normalize_return_type(return_type: &str) -> String {
-    let mut result = return_type.to_string();
-    for type_name in MANUAL_GENERIC_TYPES {
-        result = result.replace(type_name, &format!("Any{}", type_name));
     }
     result
 }

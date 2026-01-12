@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use serde_json::Value;
 
-use crate::{TypeSchemas, generators::MANUAL_GENERIC_TYPES, ref_to_type_name, to_camel_case};
+use crate::{TypeSchemas, generators::{MANUAL_GENERIC_TYPES, write_description}, ref_to_type_name, to_camel_case};
 
 /// Generate JSDoc type definitions from OpenAPI schemas.
 pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
@@ -26,7 +26,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         if is_primitive_alias(schema) {
             if let Some(desc) = type_desc {
                 writeln!(output, "/**").unwrap();
-                write_jsdoc_description(output, desc);
+                write_description(output, desc, " * ", " *");
                 writeln!(output, " *").unwrap();
                 writeln!(output, " * @typedef {{{}}} {}", js_type, name).unwrap();
                 writeln!(output, " */").unwrap();
@@ -36,7 +36,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         } else if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
             writeln!(output, "/**").unwrap();
             if let Some(desc) = type_desc {
-                write_jsdoc_description(output, desc);
+                write_description(output, desc, " * ", " *");
                 writeln!(output, " *").unwrap();
             }
             writeln!(output, " * @typedef {{Object}} {}", name).unwrap();
@@ -64,7 +64,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
             writeln!(output, " */").unwrap();
         } else if let Some(desc) = type_desc {
             writeln!(output, "/**").unwrap();
-            write_jsdoc_description(output, desc);
+            write_description(output, desc, " * ", " *");
             writeln!(output, " *").unwrap();
             writeln!(output, " * @typedef {{{}}} {}", js_type, name).unwrap();
             writeln!(output, " */").unwrap();
@@ -73,17 +73,6 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         }
     }
     writeln!(output).unwrap();
-}
-
-/// Write a multi-line description with proper JSDoc formatting.
-fn write_jsdoc_description(output: &mut String, desc: &str) {
-    for line in desc.lines() {
-        if line.is_empty() {
-            writeln!(output, " *").unwrap();
-        } else {
-            writeln!(output, " * {}", line).unwrap();
-        }
-    }
 }
 
 fn is_primitive_alias(schema: &Value) -> bool {
