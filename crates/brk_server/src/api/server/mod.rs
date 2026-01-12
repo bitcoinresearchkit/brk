@@ -74,7 +74,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         .server_tag()
                         .summary("Disk usage")
                         .description(
-                            "Returns the disk space used by the indexed data.",
+                            "Returns the disk space used by BRK and Bitcoin data.",
                         )
                         .ok_response::<DiskUsage>()
                         .not_modified()
